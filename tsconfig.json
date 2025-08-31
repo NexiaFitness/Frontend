@@ -1,0 +1,34 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": [
+            "DOM",
+            "ESNext"
+        ],
+        "moduleResolution": "bundler",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "apps/web/src/*"
+            ],
+            "@shared/*": [
+                "packages/shared/*"
+            ],
+            "@ui/*": [
+                "packages/ui-web/*"
+            ]
+        }
+    },
+    "include": [
+        "apps",
+        "packages"
+    ],
+    "exclude": [
+        "node_modules",
+        "dist"
+    ]
+}

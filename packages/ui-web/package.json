@@ -1,13 +1,37 @@
 {
-  "name": "ui-web",
+  "name": "@nexia/ui-web",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+  "description": "Web UI components for NEXIA",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./styles": "./dist/styles.css"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "scripts": {
+  "build:css": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles.css --minify",
+  "build:ts": "tsc -p tsconfig.json",
+  "build": "pnpm run build:ts && pnpm run build:css",
+  "dev": "tailwindcss -i ./src/styles/globals.css -o ./dist/styles.css --watch"
+}
+
+,
+  "peerDependencies": {
+    "react": "^18.0.0 || ^19.0.0",
+    "react-dom": "^18.0.0 || ^19.0.0"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@types/node": "^24.3.0",
+    "@types/react": "^19.1.12",
+    "@types/react-dom": "^19.1.9",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.8.3"
+  },
   "packageManager": "pnpm@10.15.0"
 }
