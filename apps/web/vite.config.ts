@@ -11,4 +11,7 @@ export default defineConfig({
       "@ui": path.resolve(__dirname, "../../packages/ui-web"),
     },
   },
+  css: {
+    postcss: path.resolve(__dirname, "../../packages/ui-web/postcss.config.js"),
+  },
 });
