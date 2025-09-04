@@ -16,6 +16,7 @@ import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice"
 import type { AppDispatch } from "@shared/store";
 import type { LoginCredentials } from "@shared/types/auth";
 
+
 interface LoginFormData {
   email: string;      // UI sigue mostrando "email" al usuario
   password: string;

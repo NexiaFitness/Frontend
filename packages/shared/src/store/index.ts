@@ -1,23 +1,21 @@
 /**
  * Store global de Redux para NEXIA
  * Configura Redux Toolkit + RTK Query + authSlice
- * Conecta los módulos de API (authApi, etc.) y estado local
  * 
- * @author Frontend Team
+ * @author Frontend
  * @since v1.0.0
  */
 
 import { configureStore } from "@reduxjs/toolkit";
-import { baseApi } from "@shared/api/baseApi";
 import { setupListeners } from "@reduxjs/toolkit/query";
+import { baseApi } from "@shared/api/baseApi";
 import authReducer from "./authSlice";
 
+// Configuración de store
 export const store = configureStore({
     reducer: {
-        // RTK Query API slice
-        [baseApi.reducerPath]: baseApi.reducer,
-        // Auth state slice
         auth: authReducer,
+        [baseApi.reducerPath]: baseApi.reducer,
     },
     middleware: (getDefaultMiddleware) =>
         getDefaultMiddleware().concat(baseApi.middleware),
@@ -27,5 +25,5 @@ export const store = configureStore({
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 
-// Habilita re-fetch automático en eventos como reconexión a red o cambio de pestaña
+// Listeners de RTK Query (re-fetch automático)
 setupListeners(store.dispatch);

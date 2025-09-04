@@ -1,0 +1,18 @@
+{
+    "extends": "../../tsconfig.json",
+    "compilerOptions": {
+        "jsx": "react-jsx",
+        "outDir": "./dist",
+        "declaration": true,
+        "module": "ESNext",
+        "moduleResolution": "bundler",
+        "skipLibCheck": true
+    },
+    "include": [
+        "src/**/*"
+    ],
+    "exclude": [
+        "../shared/**/*",
+        "../ui-web/**/*"
+    ]
+}

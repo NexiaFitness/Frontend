@@ -15,11 +15,20 @@
             "@/*": [
                 "apps/web/src/*"
             ],
+            "@shared": [
+                "packages/shared/src"
+            ],
             "@shared/*": [
-                "packages/shared/*"
+                "packages/shared/src/*"
+            ],
+            "@nexia/ui-shared": [
+                "packages/ui-shared/src"
+            ],
+            "@nexia/ui-shared/*": [
+                "packages/ui-shared/src/*"
             ],
             "@ui/*": [
-                "packages/ui-web/*"
+                "packages/ui-web/src/*"
             ]
         }
     },
