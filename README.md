@@ -10,88 +10,95 @@ frontend/
 ├── apps/
 │   └── web/                           # Main React application
 │       ├── public/
-│       │   └── vite.svg              # Static assets
+│       │   └── assets/               # ✅ Logo and static assets
 │       ├── src/
 │       │   ├── components/           # App-specific components
-│       │   │   ├── auth/            # ✅ Authentication components (ready)
-│       │   │   ├── dashboard/       # ✅ Dashboard components (ready)
-│       │   │   └── layout/          # ✅ Layout components (ready)
+│       │   │   ├── auth/            # ✅ Authentication components
+│       │   │   │   ├── AuthLayout.tsx    # ✅ 50/50 glassmorphism layout
+│       │   │   │   ├── LoginForm.tsx     # ✅ Complete login form with validation
+│       │   │   │   ├── RegisterForm.tsx  # ✅ Complete register form with validation
+│       │   │   │   └── NexiaLogo.tsx     # ✅ Reusable logo component
+│       │   │   ├── dashboard/       # 📋 Planned dashboard components
+│       │   │   └── layout/          # 📋 Layout components (planned)
 │       │   ├── pages/
-│       │   │   └── TestUi.tsx        # ✅ Test page for UI components
-│       │   ├── assets/
-│       │   │   └── react.svg         # React assets
-│       │   ├── App.tsx               # ✅ Updated with React Router
-│       │   ├── main.tsx              # ✅ Redux Provider + Router setup
-│       │   ├── index.css             # Base CSS
-│       │   └── vite-env.d.ts         # Vite type definitions
-│       ├── index.html                # HTML template
-│       ├── package.json              # ✅ Added react-router-dom dependency
-│       ├── vite.config.ts            # ✅ Vite configuration with aliases
-│       ├── tsconfig.app.json         # TypeScript app configuration
-│       ├── tsconfig.json             # TypeScript configuration
-│       ├── tsconfig.node.json        # TypeScript Node configuration
-│       └── eslint.config.js          # ESLint configuration
+│       │   │   ├── auth/            # ✅ Authentication pages
+│       │   │   │   ├── Login.tsx         # ✅ Login page implementation
+│       │   │   │   ├── Register.tsx      # ✅ Register page implementation  
+│       │   │   │   └── ForgotPassword.tsx # ✅ Password recovery page
+│       │   │   └── TestUi.tsx        # ✅ Component library test page
+│       │   ├── App.tsx               # ✅ React Router setup
+│       │   ├── main.tsx              # ✅ Redux Provider + Router
+│       │   └── index.css             # Base CSS with gradients
+│       ├── vite.config.ts            # ✅ Vite configuration with monorepo aliases
+│       └── package.json              # ✅ Dependencies and scripts
 ├── packages/
-│   ├── shared/                       # Universal business logic and state
-│   │   ├── api/
-│   │   │   ├── authApi.ts           # ✅ RTK Query authentication endpoints
-│   │   │   └── baseApi.ts           # ✅ RTK Query base configuration
-│   │   ├── config/
-│   │   │   └── constants.ts         # ✅ Application constants
-│   │   ├── store/
-│   │   │   └── index.ts             # ✅ Redux Toolkit store configuration
-│   │   ├── types/
-│   │   │   └── auth.ts              # ✅ TypeScript authentication types
-│   │   └── package.json             # Shared package configuration
-│   ├── ui-web/                       # ✅ NEW: Web component library
-│   │   ├── src/
-│   │   │   ├── components/
-│   │   │   │   ├── feedback/        # ✅ Feedback components (alerts, toasts)
-│   │   │   │   ├── forms/
-│   │   │   │   │   └── Button.tsx   # ✅ Button component with variants
-│   │   │   │   ├── layout/          # ✅ Layout components (headers, sidebars)
-│   │   │   │   └── index.ts         # ✅ Component exports
-│   │   │   ├── styles/
-│   │   │   │   └── globals.css      # ✅ Tailwind base styles
-│   │   │   └── index.ts             # ✅ Package entry point
-│   │   ├── dist/                     # ✅ Build output directory
-│   │   │   ├── index.js             # Compiled components
-│   │   │   ├── index.d.ts           # TypeScript declarations
-│   │   │   └── styles.css           # Compiled Tailwind CSS
-│   │   ├── .gitignore               # Git ignore rules for ui-web
-│   │   ├── LICENSE                  # Package license
-│   │   ├── package.json             # ✅ Component library configuration
-│   │   ├── postcss.config.js        # ✅ PostCSS configuration
-│   │   ├── README.md                # Component library documentation
-│   │   ├── tailwind.config.js       # ✅ Tailwind CSS configuration
-│   │   ├── tsconfig.buildinfo       # TypeScript build info
+│   ├── shared/                       # ✅ Universal business logic and state
+│   │   ├── src/                     # ✅ CONSISTENT src/ structure
+│   │   │   ├── api/
+│   │   │   │   ├── authApi.ts       # ✅ RTK Query authentication endpoints
+│   │   │   │   └── baseApi.ts       # ✅ RTK Query base configuration
+│   │   │   ├── config/
+│   │   │   │   └── constants.ts     # ✅ Application constants
+│   │   │   ├── store/
+│   │   │   │   ├── index.ts         # ✅ Redux Toolkit store configuration
+│   │   │   │   └── authSlice.ts     # ✅ Authentication slice
+│   │   │   ├── types/
+│   │   │   │   └── auth.ts          # ✅ TypeScript authentication types
+│   │   │   └── index.ts             # ✅ Package re-exports
+│   │   ├── package.json             # ✅ Shared package configuration
 │   │   └── tsconfig.json            # ✅ TypeScript configuration
-│   └── config/                       # Shared configurations (placeholder)
-│       └── package.json              # Config package (basic)
-├── .gitignore                        # Git ignore rules
-├── LICENSE                           # Project license
-├── package.json                      # Root package configuration
-├── pnpm-lock.yaml                    # ✅ Updated dependencies lockfile
-├── pnpm-workspace.yaml               # Workspace configuration
-├── README.md                         # This file
-└── tsconfig.json                     # Root TypeScript configuration
+│   ├── ui-shared/                   # ✅ NEW: Shared hooks and validation
+│   │   ├── src/                     # ✅ CONSISTENT src/ structure  
+│   │   │   ├── hooks/
+│   │   │   │   └── useAuthForm.ts   # ✅ Reusable form hook for auth
+│   │   │   ├── utils/
+│   │   │   │   └── validation.ts    # ✅ Form validation utilities
+│   │   │   └── index.ts             # ✅ Package exports
+│   │   ├── package.json             # ✅ Package configuration
+│   │   └── tsconfig.json            # ✅ TypeScript configuration
+│   └── ui-web/                      # ✅ Web component library
+│       ├── src/                     # ✅ CONSISTENT src/ structure
+│       │   ├── components/
+│       │   │   ├── auth/            # ✅ Auth-specific components
+│       │   │   │   └── ServerErrorBanner.tsx # ✅ Error display component
+│       │   │   ├── feedback/        # ✅ Feedback components
+│       │   │   ├── forms/
+│       │   │   │   ├── Button.tsx   # ✅ Button component with variants
+│       │   │   │   └── Input.tsx    # ✅ Input component with validation
+│       │   │   └── layout/          # ✅ Layout components
+│       │   ├── styles/
+│       │   │   ├── backgrounds.ts   # ✅ Background gradient utilities
+│       │   │   └── globals.css      # ✅ Tailwind base styles
+│       │   └── index.ts             # ✅ Package entry point
+│       ├── dist/                    # ✅ Build output directory
+│       ├── package.json             # ✅ Component library configuration
+│       ├── postcss.config.js        # ✅ PostCSS configuration
+│       ├── tailwind.config.js       # ✅ Tailwind CSS configuration
+│       └── tsconfig.json            # ✅ TypeScript configuration
+├── .gitignore                       # Git ignore rules
+├── package.json                     # Root package configuration
+├── pnpm-lock.yaml                   # ✅ Updated dependencies lockfile
+├── pnpm-workspace.yaml              # Workspace configuration
+├── README.md                        # This file
+└── tsconfig.json                    # Root TypeScript configuration
 ```
 
 **Technology Stack:**
 - **Framework:** Vite + React 18 + TypeScript 5
-- **Package Manager:** pnpm (workspace configuration)
+- **Package Manager:** pnpm (monorepo workspace)
 - **State Management:** Redux Toolkit + RTK Query ✅ **IMPLEMENTED**
-- **Authentication:** JWT Bearer tokens with automatic header injection
+- **Authentication:** JWT Bearer tokens with automatic header injection ✅ **IMPLEMENTED**
 - **UI Components:** Custom component library with Tailwind CSS ✅ **IMPLEMENTED**
-- **Routing:** React Router v7 ✅ **IMPLEMENTED**
-- **Styling:** Tailwind CSS v3.4.17 ✅ **IMPLEMENTED**
+- **Routing:** React Router DOM ✅ **IMPLEMENTED**  
+- **Styling:** Tailwind CSS v3.4+ with custom gradients ✅ **IMPLEMENTED**
 - **Build System:** TypeScript + Tailwind CSS compilation ✅ **IMPLEMENTED**
+- **Node.js:** v22.19.0 LTS ✅ **UPGRADED**
 
 ## Quick Start
 
 ### Prerequisites
-- Node.js 20.19+ or 22.12+ (current: requires upgrade from 20.16.0)
-- pnpm 8.0+
+- **Node.js v22.19.0+ LTS** ✅ **VERIFIED COMPATIBLE**
+- **pnpm 10.15.0+**
 
 ### Installation
 ```bash
@@ -102,17 +109,20 @@ cd Frontend
 # Install dependencies for all packages
 pnpm install
 
-# Build component library
+# Build all packages in correct order
+pnpm -F shared build
+pnpm -F @nexia/ui-shared build
 pnpm -F @nexia/ui-web build
 
 # Start development server
-cd apps/web
-pnpm dev
+pnpm -F web dev
 ```
 
-The application will be available at:
-- **Main app:** `http://localhost:5173`
-- **Component test page:** `http://localhost:5173/test-ui`
+**Application URLs:**
+- **Main app:** `http://localhost:5173/`
+- **Login page:** `http://localhost:5173/login`
+- **Register page:** `http://localhost:5173/register` 
+- **Component test:** `http://localhost:5173/test-ui`
 
 ## Development Workflow
 
@@ -122,339 +132,293 @@ The application will be available at:
 - `feature/*` - Feature branches
 
 ### Current Branch Status
-**`feature/auth-ui-implementation`** ✅ COMPLETE
-- Component library foundation implemented
-- Tailwind CSS integrated and building
-- Button component with variants functional
-- React Router configured
-- Ready for Pull Request
+**`feature/auth-pages`** ✅ **COMPLETE & FUNCTIONAL**
+- ✅ **Monorepo architecture** with consistent `src/` structure
+- ✅ **Authentication system** complete (login, register, forgot password)
+- ✅ **Backend integration** with RTK Query + FastAPI
+- ✅ **Component library** operational with reusable components
+- ✅ **Form validation** with custom hooks and utilities
+- ✅ **UI/UX implementation** following Figma designs
+- **Status:** Ready for Pull Request to develop
 
-### Working with the Monorepo
+## Architecture Implementation Details
 
-```bash
-# Install dependencies for all packages
-pnpm install
+### Consistent Monorepo Structure ✅ **IMPLEMENTED**
 
-# Build component library
-pnpm -F @nexia/ui-web build
-
-# Build CSS only (component library)
-pnpm -F @nexia/ui-web run build:css
-
-# Watch CSS changes (component library)
-pnpm -F @nexia/ui-web run dev
-
-# Start web app development server
-cd apps/web && pnpm dev
+**All packages follow consistent `src/` structure:**
+```
+packages/
+├── shared/src/          # Business logic, store, APIs  
+├── ui-shared/src/       # Hooks, validations, utilities
+└── ui-web/src/          # UI components, styles
 ```
 
-### Component Development Workflow
+### Authentication System ✅ **COMPLETE**
 
-```bash
-# Create new component in ui-web
-cd packages/ui-web/src/components/forms/
-# Create NewComponent.tsx
+**Pages Implemented:**
+- **Login (`/login`)** - Email/password with validation and error handling
+- **Register (`/register`)** - Full registration form with confirmation
+- **Forgot Password (`/forgot-password`)** - Password recovery workflow
 
-# Export component
-# Add export to packages/ui-web/src/components/index.ts
-
-# Build component library
-pnpm -F @nexia/ui-web build
-
-# Use in web app
-# Import from '@nexia/ui-web' in apps/web/src/
-```
-
-## Technical Implementation Details
-
-### Component Library (`packages/ui-web/`)
-
-**Current Components:**
-- ✅ **Button** - Primary/Secondary variants, SM/MD/LG sizes, loading states
-
-**Build Pipeline:**
-```bash
-# TypeScript compilation → dist/index.js + index.d.ts  
-pnpm run build:ts
-
-# Tailwind CSS compilation → dist/styles.css
-pnpm run build:css
-
-# Full build (both)
-pnpm run build
-```
-
-**Usage in Web App:**
+**Backend Integration:**
 ```typescript
-import { Button } from '@nexia/ui-web';
-import '@nexia/ui-web/styles';
-
-export default function LoginForm() {
-  return (
-    <Button variant="primary" size="md">
-      Sign In
-    </Button>
-  );
-}
-```
-
-### Tailwind CSS Configuration
-
-**Location:** `packages/ui-web/tailwind.config.js`
-
-**Custom Theme Extensions:**
-- Primary color palette (blue shades)
-- Gray color palette for secondary elements
-- Inter font family
-- Custom component classes (`.btn-primary`, `.btn-secondary`)
-- Forms plugin integrated
-- Dark mode support (class-based)
-
-**Content Paths:**
-```javascript
-content: ["./src/**/*.{js,ts,jsx,tsx}"]
-```
-
-### React Router Implementation
-
-**Routes Available:**
-- `/` - Home page
-- `/test-ui` - Component library test page
-
-**Authentication Routes (Planned):**
-- `/auth/login` - Login form
-- `/auth/register` - Registration form
-- `/auth/forgot-password` - Password recovery
-
-### Redux Toolkit + RTK Query
-
-**Available API Hooks:**
-```typescript
+// RTK Query hooks available
 import {
   useLoginMutation,
   useRegisterMutation,
-  useForgotPasswordMutation,
-  useResetPasswordMutation,
-  useGetCurrentUserQuery
-} from '@shared/api/authApi';
+  useForgotPasswordMutation
+} from "@shared/api/authApi";
 ```
 
-**Backend Integration:**
-- Base URL: `https://nexiaapp.com/api/v1`
-- Automatic JWT token injection
-- Role-based access (Admin/Trainer/Athlete)
+**Form Management:**
+```typescript
+// Reusable form hook
+import { useAuthForm, validateLoginForm } from "@nexia/ui-shared";
+```
+
+### Component Library ✅ **OPERATIONAL**
+
+**Available Components:**
+```typescript
+import { 
+  Button,           // Primary/Secondary variants, sizes, loading states
+  Input,            // Text/email/password with validation display
+  ServerErrorBanner // Error handling component
+} from "@nexia/ui-web";
+```
+
+**Styling System:**
+- **Tailwind CSS** with custom configuration
+- **Glassmorphism effects** for auth layouts
+- **Corporate gradients** matching brand identity
+- **Responsive design** mobile-first approach
+
+### Build System ✅ **OPTIMIZED**
+
+**Build Commands:**
+```bash
+# Build all packages
+pnpm -F shared build        # TypeScript compilation
+pnpm -F @nexia/ui-shared build  # Hooks and utilities
+pnpm -F @nexia/ui-web build     # UI components + CSS
+
+# Development server
+pnpm -F web dev              # Vite dev server with HMR
+```
+
+**Alias Configuration:**
+```typescript
+// Vite aliases configured
+"@shared"          → "packages/shared/src"
+"@nexia/ui-shared" → "packages/ui-shared/src" 
+"@nexia/ui-web"    → "packages/ui-web/src"
+```
+
+## Current Implementation Status
+
+### ✅ **COMPLETED - Authentication Foundation**
+- [x] **Node.js v22.19.0** upgrade and compatibility verification
+- [x] **Monorepo architecture** with consistent src/ structure across packages
+- [x] **Authentication pages** - Login, Register, Forgot Password
+- [x] **Form validation** - Custom hooks with error handling
+- [x] **Backend integration** - RTK Query with FastAPI endpoints
+- [x] **Component library** - Button, Input, ServerErrorBanner
+- [x] **Routing system** - React Router with authentication routes
+- [x] **State management** - Redux Toolkit with auth slice
+- [x] **UI/UX implementation** - Glassmorphism layouts matching Figma
+- [x] **Build pipeline** - All packages compiling and functional
+- [x] **Development workflow** - Hot reload and monorepo imports working
+
+### 🚧 **IN PROGRESS - Next Sprint**
+- [ ] **Dashboard layout** - Main application interface
+- [ ] **Client onboarding** - Multi-step wizard implementation  
+- [ ] **Navigation system** - Sidebar and header components
+- [ ] **Protected routes** - Authentication guards
+
+### 📋 **PLANNED - Future Development**
+- [ ] **Training planning** - Workout creation interface
+- [ ] **Client management** - CRUD operations for clients
+- [ ] **Data visualization** - Charts and analytics components
+- [ ] **Mobile responsiveness** - Tablet and phone optimizations
+- [ ] **Testing implementation** - Jest + React Testing Library
+- [ ] **React Native app** - Mobile application using shared packages
+
+## Backend Integration
+
+**API Configuration:**
+- **Base URL:** `https://nexiaapp.com/api/v1`
+- **Authentication:** JWT Bearer tokens
+- **Role System:** Admin, Trainer, Athlete
 
 **Test Credentials:**
-- Trainer: `trainer@test.com` / `YourPass123`
-- Admin: `admin@test.com` / `AdminPass123`
-- Athlete: `athlete@test.com` / `AthletePass123`
-
-## File Locations Reference
-
-### Configuration Files
-
-| File | Location | Purpose |
-|------|----------|---------|
-| `tailwind.config.js` | `packages/ui-web/` | Tailwind CSS configuration |
-| `postcss.config.js` | `packages/ui-web/` | PostCSS configuration |
-| `tsconfig.json` | `packages/ui-web/` | TypeScript config for components |
-| `tsconfig.json` | `apps/web/` | TypeScript config for web app |
-| `vite.config.ts` | `apps/web/` | Vite bundler configuration |
-| `package.json` | `packages/ui-web/` | Component library package config |
-
-### Component Architecture
-
-**Atomic Design Structure (Prepared):**
-```
-packages/ui-web/src/components/
-├── forms/                    # Form-related components
-│   └── Button.tsx           # ✅ Implemented
-├── atoms/                    # Basic building blocks (planned)
-├── molecules/                # Component combinations (planned)  
-├── organisms/                # Complex UI sections (planned)
-├── templates/                # Page layouts (planned)
-└── index.ts                 # ✅ Central exports
+```javascript
+// Available for development testing
+trainer@test.com / YourPass123
+admin@test.com / AdminPass123
+athlete@test.com / AthletePass123
 ```
 
-### Build Outputs
-
-| Output | Location | Description |
-|--------|----------|-------------|
-| `index.js` | `packages/ui-web/dist/` | Compiled components |
-| `index.d.ts` | `packages/ui-web/dist/` | TypeScript declarations |
-| `styles.css` | `packages/ui-web/dist/` | Compiled Tailwind CSS (~10KB) |
+**RTK Query Integration:**
+```typescript
+// Automatic token management
+const { data, error, isLoading } = useLoginMutation();
+```
 
 ## Commands Reference
 
 ### Development Commands
 ```bash
-# Start development (from project root)
-cd apps/web && pnpm dev
+# Start development server
+pnpm -F web dev
 
 # Build component library
 pnpm -F @nexia/ui-web build
 
-# Watch CSS changes
-pnpm -F @nexia/ui-web run dev
+# Build all packages
+pnpm -F shared build && pnpm -F @nexia/ui-shared build && pnpm -F @nexia/ui-web build
 
-# Test component library
-# Navigate to http://localhost:5173/test-ui
-```
-
-### Build Commands
-```bash
-# Build everything (when configured)
-pnpm run build
-
-# Build specific package
-pnpm -F @nexia/ui-web build
-pnpm -F web build
+# Clean all builds
+rm -rf packages/*/dist/
 ```
 
 ### Package Management
 ```bash
-# Add dependency to component library
+# Add dependency to specific package
 pnpm -F @nexia/ui-web add <package>
-
-# Add dependency to web app
 pnpm -F web add <package>
-
-# Add dependency to shared
 pnpm -F shared add <package>
 
 # Add dev dependency
-pnpm -F @nexia/ui-web add -D <package>
+pnpm -F <package> add -D <package>
 ```
 
-## Current Implementation Status
+### Git Workflow
+```bash
+# Current feature branch
+git status                           # Check current changes
+git add .                           # Stage changes
+git commit -m "feat: description"   # Commit with semantic versioning
+git push origin feature/auth-pages   # Push to remote branch
 
-### ✅ COMPLETED (Foundation Phase)
-- [x] Monorepo architecture with pnpm workspaces
-- [x] Redux Toolkit + RTK Query integration
-- [x] Component library infrastructure (`packages/ui-web/`)
-- [x] Tailwind CSS configuration and build pipeline
-- [x] TypeScript compilation for component exports
-- [x] React Router implementation with test routes
-- [x] Button component with variants and proper styling
-- [x] Import/export system working between packages
-- [x] Development and build workflows established
-
-### 🚧 IN PROGRESS (Next Phase)
-- [ ] Input component (text, email, password variants)
-- [ ] LoginForm organism using Button + Input + RTK Query hooks
-- [ ] RegisterForm organism with validation
-- [ ] AuthLayout template for authentication pages
-- [ ] Error handling and loading states
-
-### 📋 PLANNED (Future Phases)
-- [ ] Client onboarding wizard components
-- [ ] Dashboard layout and components
-- [ ] Training planning interface components
-- [ ] Mobile responsive optimizations
-- [ ] Component testing with Jest + React Testing Library
-- [ ] Storybook documentation for component library
-
-## React Native Preparation
-
-This monorepo architecture supports React Native expansion:
-
-**Shared Logic:** `packages/shared/` (Redux, APIs, types, utils) - 100% reusable in mobile
-
-**Platform-Specific UI:**
+# Create Pull Request to develop branch
 ```
-packages/
-├── ui-web/        # ✅ Web components (Tailwind CSS)
-└── ui-native/     # 📋 Future mobile components (StyleSheet)
-```
-
-**Design Token Strategy:**
-- Colors and spacing will be extracted to `packages/shared/tokens/`
-- Web components use Tailwind classes consuming shared tokens
-- Mobile components use StyleSheet consuming same shared tokens
-
-## Performance Optimizations
-
-- **CSS Optimization:** Tailwind purges unused classes (10KB output)
-- **TypeScript:** Strict mode enabled with proper tree shaking
-- **Build Pipeline:** Separate CSS and JS compilation for optimal loading
-- **Component Architecture:** Atomic design prevents code duplication
-- **Import Strategy:** Named exports for optimal bundle splitting
 
 ## Troubleshooting
 
-### Common Issues
+### Build Issues
 
-**"tailwindcss command not found"**
+**Package resolution errors:**
 ```bash
-# Use full path or pnpm script
-./node_modules/.bin/tailwindcss --help
-# or
-pnpm run build:css
-```
-
-**Import errors from @nexia/ui-web**
-```bash
-# Ensure component library is built
+# Clean and rebuild in correct order
+rm -rf packages/*/dist/
+pnpm -F shared build
+pnpm -F @nexia/ui-shared build  
 pnpm -F @nexia/ui-web build
-
-# Check exports in packages/ui-web/src/components/index.ts
 ```
 
-**Styles not applying**
+**Import resolution errors:**
 ```typescript
-// Import styles in component
-import '@nexia/ui-web/styles';
+// Verify alias configuration in apps/web/vite.config.ts
+resolve: {
+  alias: {
+    "@shared": path.resolve(__dirname, "../../packages/shared/src"),
+    "@nexia/ui-shared": path.resolve(__dirname, "../../packages/ui-shared/src"),
+    "@nexia/ui-web": path.resolve(__dirname, "../../packages/ui-web/src"),
+  }
+}
 ```
 
-### Development Setup Issues
+### Development Issues
 
-**Node.js Version Warning**
-- Current: 20.16.0
-- Required: 20.19+ or 22.12+
-- Status: Non-critical, development works correctly
+**Node.js version compatibility:**
+- **Required:** v22.19.0+ LTS
+- **Current:** ✅ v22.19.0 verified
+- **Status:** Fully compatible with Vite 7.1.4
+
+**Hot reload not working:**
+```bash
+# Clear Vite cache
+rm -rf apps/web/node_modules/.vite
+pnpm -F web dev
+```
+
+## Performance Optimizations
+
+- **CSS Purging:** Tailwind removes unused classes (optimized output)
+- **Tree Shaking:** TypeScript + Vite eliminate dead code
+- **Component Splitting:** Atomic design prevents code duplication  
+- **Build Pipeline:** Separate compilation for optimal loading
+- **Import Strategy:** Named exports for bundle optimization
 
 ## Contributing
 
-1. Follow established atomic design component structure
-2. Use RTK Query for all API communications
-3. Components must have TypeScript interfaces for all props
-4. Include component in `packages/ui-web/src/components/index.ts` exports
-5. Test components on `/test-ui` page before committing
-6. Build component library before creating PR
-7. Follow existing Tailwind CSS class patterns
-8. Maintain code consistency with existing patterns
+### Development Standards
+1. **Consistent architecture** - All packages use `src/` structure
+2. **TypeScript strict mode** - No `any` types, proper interfaces
+3. **Component documentation** - Header comments for all files
+4. **Professional git commits** - Semantic versioning with detailed messages
+5. **Testing integration** - Components tested before merging
+6. **Code review process** - All PRs reviewed before develop merge
+
+### Component Development
+```bash
+# 1. Create component in appropriate package
+cd packages/ui-web/src/components/forms/
+# Create NewComponent.tsx
+
+# 2. Export component  
+# Add to packages/ui-web/src/components/index.ts
+
+# 3. Build package
+pnpm -F @nexia/ui-web build
+
+# 4. Test in app
+# Import in apps/web/src/ and test functionality
+
+# 5. Commit and push
+git add . && git commit -m "feat(ui-web): add NewComponent"
+```
 
 ## Architecture Decisions
 
-**Why Tailwind CSS in `packages/ui-web/`:**
-- Platform-specific styling (React Native uses StyleSheet)
-- Professional component library approach
-- Optimal build pipeline with CSS compilation
-- Scalable for large component libraries
+**Why Consistent src/ Structure:**
+- **Predictable navigation** - All packages follow same pattern
+- **Import consistency** - Aliases work uniformly across packages
+- **Scalability** - Easy to add new packages following pattern
+- **Professional standard** - Industry best practice for monorepos
 
-**Why Atomic Design Structure:**
-- Prevents component library chaos
-- Clear component hierarchy and reusability
-- Industry standard for design systems
-- Scalable architecture for large applications
+**Why Three Package Split:**
+- **`shared/`** - Universal business logic (APIs, store, types)
+- **`ui-shared/`** - Reusable hooks and utilities  
+- **`ui-web/`** - Platform-specific UI components
+- **Future:** `ui-native/` for React Native components
 
-**Why Monorepo with pnpm:**
-- Share business logic between web and future mobile
-- Consistent TypeScript configuration
-- Optimized dependency management
-- Professional development workflow
+**Why RTK Query Over Other Solutions:**
+- **Automatic caching** - Optimized API call management
+- **TypeScript integration** - Full type safety end-to-end
+- **Redux DevTools** - Excellent debugging capabilities
+- **Backend compatibility** - Works seamlessly with FastAPI
 
 ## Support
 
-For technical questions or issues:
-1. Check component library build: `pnpm -F @nexia/ui-web build`
-2. Verify imports and exports in test page
-3. Check browser console for detailed error messages
-4. Create GitHub issue with detailed description
+**Technical Issues:**
+1. **Check build status:** Verify all packages compiled successfully
+2. **Verify Node.js version:** Must be v22.19.0+ for compatibility
+3. **Clear caches:** Remove `node_modules/.vite` and `dist/` folders
+4. **Check browser console:** Look for detailed error messages
+5. **Create GitHub issue:** Include error details and reproduction steps
+
+**Development Questions:**
+- **Architecture:** Reference this README for structure guidelines
+- **Components:** Check `/test-ui` page for component examples  
+- **API Integration:** Review RTK Query hooks in `shared/api/`
+- **Styling:** Examine Tailwind configuration in `ui-web/`
 
 ---
 
-**Last Updated:** August 31, 2025  
-**Architecture Version:** 2.0  
-**Current Branch:** `feature/auth-ui-implementation`  
-**Status:** Foundation complete, ready for authentication forms development
+**Last Updated:** September 4, 2025  
+**Architecture Version:** 3.0  
+**Current Branch:** `feature/auth-pages`  
+**Status:** ✅ Complete authentication system, ready for dashboard development  
+**Node.js:** v22.19.0 LTS  
+**Total Development Time:** 2 days intensive implementation
