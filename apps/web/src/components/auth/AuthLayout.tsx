@@ -11,7 +11,7 @@
  */
 
 import React from "react";
-import { meshGradient } from "@nexia/ui-web";
+import { meshGradient } from "@/utils/backgrounds";
 import { NexiaLogo } from "./NexiaLogo";
 
 interface AuthLayoutProps {

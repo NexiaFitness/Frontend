@@ -10,10 +10,12 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button, Input, ServerErrorBanner } from "@nexia/ui-web";
+import { Button, Input } from "@/components/forms";
+import { ServerErrorBanner } from "@/components/shared";
 import { useRegisterMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure } from "@shared/store/authSlice";
-import { useAuthForm, validateRegisterForm } from "@nexia/ui-shared";
+import { useAuthForm } from "@shared";
+import { validateRegisterForm } from "@shared";
 import type { AppDispatch } from "@shared/store";
 import type { RegisterCredentials } from "@shared/types/auth";
 

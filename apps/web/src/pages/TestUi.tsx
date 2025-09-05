@@ -8,7 +8,7 @@
  */
 
 import React from "react";
-import { Button } from "@nexia/ui-web";
+import { Button } from "@/components/forms";
 
 const TestUi: React.FC = () => {
     const meshGradientStyle = {

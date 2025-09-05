@@ -1,31 +1,29 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
     content: [
-  "./src/**/*.{js,ts,jsx,tsx}",          // dentro de ui-web
-  "../../apps/web/src/**/*.{js,ts,jsx,tsx}", // tu app web
-  "../../packages/ui-web/src/**/*.{js,ts,jsx,tsx}" // componentes locales de ui-web
-],
-
+        "./src/**/*.{js,ts,jsx,tsx}",            // solo la app web
+        "../../packages/shared/src/**/*.{ts,tsx}" // librería shared
+    ],
     theme: {
         extend: {
             colors: {
                 primary: {
                     50: '#eff6ff',
                     300: '#60a5fa',
-                    400: '#38b6ff',  // Color corporativo NEXIA
-                    500: '#38b6ff',  // Color corporativo NEXIA
-                    600: '#2da1e6',  // Hover más oscuro
+                    400: '#38b6ff',
+                    500: '#38b6ff',
+                    600: '#2da1e6',
                     700: '#1d4ed8',
-                    800: '#ff33c5ff', // un naranja fuerte de prueba
+                    800: '#ff33c5ff',
                 },
-                // Alias directo para color corporativo
                 nexia: '#38b6ff',
-                // Colores NEXIA del mesh gradient
                 turquoise: '#56E0DB',
                 mint: '#C0EFE5',
                 seashell: '#FFECE3',
                 skyblue: '#7ECFDE',
                 platinum: '#DAE1E2',
+                'sidebar-header': 'rgba(4, 21, 32, 1)',
+                'sidebar-nav': 'rgba(84, 160, 207, 1)',
             },
             borderRadius: {
                 '4xl': '2rem',
@@ -38,7 +36,5 @@ module.exports = {
             },
         },
     },
-    plugins: [
-        require('@tailwindcss/forms'),
-    ],
+    plugins: [require("@tailwindcss/forms")],
 };

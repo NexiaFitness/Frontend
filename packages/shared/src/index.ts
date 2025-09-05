@@ -1,15 +1,8 @@
-/**
- * Punto de entrada del paquete shared
- * Reexporta APIs, store y tipos para ser usados desde otros paquetes
- *
- * @since v1.0.0
- */
-
 // API
 export * from "./api/authApi";
 export * from "./api/baseApi";
 
-// Store
+// Store  
 export * from "./store/authSlice";
 export * from "./store";
 
@@ -18,3 +11,9 @@ export * from "./types/auth";
 
 // Config
 export * from "./config/constants";
+
+// Hooks
+export { useAuthForm } from './hooks/useAuthForm';
+
+// Utils
+export * from './utils/validation';

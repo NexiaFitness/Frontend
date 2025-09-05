@@ -1,21 +1,41 @@
 /**
  * App principal
- * Configura las rutas de React Router
+ * Configura las rutas de React Router con protección de auth
  */
 import React from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
 import TestUi from "./pages/TestUi";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import "@nexia/ui-web/styles";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import TrainerDashboard from "./pages/dashboard/TrainerDashboard";
+import type { RootState } from "@shared/store";
 
 function App() {
+  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+
   return (
     <Routes>
-      <Route path="/" element={<h1 className="text-2xl p-4">Home Page</h1>} />
+      {/* Redirección inteligente en home */}
+      <Route 
+        path="/" 
+        element={
+          isAuthenticated ? (
+            <Navigate to="/dashboard" replace />
+          ) : (
+            <Navigate to="/auth/login" replace />
+          )
+        } 
+      />
+      
       <Route path="/test-ui" element={<TestUi />} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/auth/login" element={<Login />} />
+      <Route path="/auth/register" element={<Register />} />
+      <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+      
+      {/* Ruta protegida del dashboard */}
+      <Route path="/dashboard" element={<TrainerDashboard />} />
     </Routes>
   );
 }

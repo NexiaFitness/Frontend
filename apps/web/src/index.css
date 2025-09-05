@@ -1,20 +1,14 @@
+/**
+ * Estilos base para la aplicación web principal
+ * Configuración Tailwind centralizada tras migración arquitectónica
+ * 
+ * @ruta apps/web/src/index.css
+ */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
 @tailwind base;
-@tailwind components;
+@tailwind components; 
 @tailwind utilities;
 
 /* Estilos globales adicionales opcionales */
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-}

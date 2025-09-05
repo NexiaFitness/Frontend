@@ -20,24 +20,17 @@
             ],
             "@shared/*": [
                 "packages/shared/src/*"
-            ],
-            "@nexia/ui-shared": [
-                "packages/ui-shared/src"
-            ],
-            "@nexia/ui-shared/*": [
-                "packages/ui-shared/src/*"
-            ],
-            "@ui/*": [
-                "packages/ui-web/src/*"
             ]
         }
     },
     "include": [
-        "apps",
-        "packages"
+        "apps/web",
+        "packages/shared"
     ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "packages/ui-web",
+        "packages/ui-shared"
     ]
 }

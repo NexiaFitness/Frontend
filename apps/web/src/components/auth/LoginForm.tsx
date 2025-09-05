@@ -10,7 +10,7 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button, Input } from "@nexia/ui-web";
+import { Button, Input } from "@/components/forms";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
 import type { AppDispatch } from "@shared/store";
@@ -25,7 +25,7 @@ interface LoginFormData {
 export const LoginForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  
+
   // RTK Query hook - maneja la llamada al servidor
   const [login, { isLoading }] = useLoginMutation();
 
@@ -52,11 +52,11 @@ export const LoginForm: React.FC = () => {
         [field]: undefined,
       }));
     }
-    
+
     // Limpiar error de servidor cuando usuario escribe
     if (serverError) {
       setServerError(null);
-      dispatch(clearError());
+      dispatch(clearError(undefined));
     }
   };
 
@@ -86,7 +86,8 @@ export const LoginForm: React.FC = () => {
 
     // Limpiar errores previos
     setServerError(null);
-    dispatch(clearError());
+    dispatch(clearError(undefined));
+
 
     try {
       // Llamada real al backend
@@ -96,22 +97,22 @@ export const LoginForm: React.FC = () => {
       };
 
       const response = await login(credentials).unwrap();
-      
+
       // Login exitoso - actualizar estado Redux
       dispatch(loginSuccess({
         user: response.user,
         token: response.access_token,
       }));
 
-      // Navegación a Home Page (página principal)
-      navigate("/");
-      
+      // Navegación a dashboard entrenador
+      navigate("/dashboard");
+
     } catch (error: any) {
       console.error("Login falló:", error);
-      
+
       // Manejo de errores profesional
       let errorMessage = "Error de conexión. Intenta de nuevo.";
-      
+
       if (error?.status === 401) {
         errorMessage = "Correo o contraseña incorrectos";
       } else if (error?.status === 429) {
@@ -119,7 +120,7 @@ export const LoginForm: React.FC = () => {
       } else if (error?.data?.detail) {
         errorMessage = error.data.detail;
       }
-      
+
       setServerError(errorMessage);
       dispatch(loginFailure(errorMessage));
     }
@@ -139,7 +140,7 @@ export const LoginForm: React.FC = () => {
         <h1 className="text-5xl font-bold mb-2 text-primary-400">
           Bienvenido
         </h1>
-        
+
         <p className="text-gray-600">
           Inicia sesión en tu cuenta para continuar
         </p>

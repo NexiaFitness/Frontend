@@ -65,10 +65,9 @@ export const authSlice: Slice<AuthState> = createSlice({
         },
 
         // Acción para limpiar errores
-        clearError: (state: AuthState, _action: PayloadAction<void>) => {
+        clearError: (state) => {
             state.error = null;
         },
-
 
         // Acción para indicar loading
         setLoading: (state: AuthState, action: PayloadAction<boolean>) => {

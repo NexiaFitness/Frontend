@@ -10,6 +10,16 @@
   "scripts": {
     "dev": "pnpm -F web dev",
     "build": "pnpm -r build",
-    "clean": "rm -rf node_modules pnpm-lock.yaml **/node_modules **/dist"
+    "build:web": "pnpm -F web build",
+    "clean": "rm -rf node_modules pnpm-lock.yaml **/node_modules **/dist",
+    "clean:cache": "rm -rf node_modules/.vite apps/web/node_modules/.vite"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
   }
 }

@@ -108,3 +108,17 @@ export const validateRegisterForm = (formData: {
         errors,
     };
 };
+
+export const validateForgotPasswordForm = (formData: {
+    email: string;
+}): ValidationResult => {
+    const errors: Record<string, string> = {};
+
+    const emailError = validateEmail(formData.email);
+    if (emailError) errors.email = emailError;
+
+    return {
+        isValid: Object.keys(errors).length === 0,
+        errors,
+    };
+};
