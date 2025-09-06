@@ -15,20 +15,22 @@
             "@/*": [
                 "apps/web/src/*"
             ],
-            "@shared/*": [
-                "packages/shared/*"
+            "@shared": [
+                "packages/shared/src"
             ],
-            "@ui/*": [
-                "packages/ui-web/*"
+            "@shared/*": [
+                "packages/shared/src/*"
             ]
         }
     },
     "include": [
-        "apps",
-        "packages"
-    ],
+        "apps/web",
+        "packages/shared"
+, "tailwind.config.js"    ],
     "exclude": [
         "node_modules",
-        "dist"
+        "dist",
+        "packages/ui-web",
+        "packages/ui-shared"
     ]
 }

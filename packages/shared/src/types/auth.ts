@@ -1,7 +1,7 @@
 /**
  * Tipos TypeScript para sistema de autenticación
  * Define interfaces para usuarios, credenciales y respuestas API
- * Mantiene consistencia con backend FastAPI de Sosina
+ * CORREGIDO: Alineado con backend FastAPI de Sosina
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -12,29 +12,28 @@ import { USER_ROLES } from "@shared/config/constants";
 // User Role Types
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
-// User Entity
+// User Entity (CORREGIDO para coincidir con respuesta real del backend)
 export interface User {
-    id: string;
+    id: number;
     email: string;
-    firstName: string;
-    lastName: string;
+    nombre: string;     // Backend usa español, no first_name
+    apellidos: string;  // Backend usa español, no last_name
     role: UserRole;
-    isActive: boolean;
-    createdAt: string;
-    updatedAt: string;
+    is_active: boolean;
+    created_at: string;
 }
 
-// Authentication Credentials
+// Authentication Credentials (CORREGIDO según backend real)
 export interface LoginCredentials {
-    email: string;
+    username: string;    // Backend espera username, no email
     password: string;
 }
 
 export interface RegisterCredentials {
     email: string;
     password: string;
-    firstName: string;
-    lastName: string;
+    nombre: string;      // Backend usa español
+    apellidos: string;   // Backend usa español
     role: UserRole;
 }
 
@@ -44,36 +43,36 @@ export interface ForgotPasswordData {
 
 export interface ResetPasswordData {
     token: string;
-    newPassword: string;
+    password: string;    // Simplificado, mantenemos consistencia
 }
 
-// API Response Types
+// API Response Types - CORREGIDO según respuesta real del backend
 export interface AuthResponse {
+    access_token: string;
+    token_type: string;      // Siempre "bearer"
+    expires_in: number;      // Segundos hasta expiración (1800 = 30 min)
     user: User;
-    token: string;
-    refreshToken: string;
 }
 
-export interface LoginResponse extends AuthResponse { }
+export interface LoginResponse extends AuthResponse {}
 
-export interface RegisterResponse extends AuthResponse { }
+export interface RegisterResponse extends AuthResponse {}
 
-// Auth State
+// Auth State - para Redux slice
 export interface AuthState {
     user: User | null;
     token: string | null;
-    refreshToken: string | null;
     isAuthenticated: boolean;
     isLoading: boolean;
     error: string | null;
 }
 
-// Auth Actions
+// Auth Actions - para Redux slice  
 export interface AuthActions {
     login: (credentials: LoginCredentials) => Promise<void>;
     register: (credentials: RegisterCredentials) => Promise<void>;
     logout: () => void;
     forgotPassword: (data: ForgotPasswordData) => Promise<void>;
     resetPassword: (data: ResetPasswordData) => Promise<void>;
-    refreshAuth: () => Promise<void>;
+    clearError: () => void;
 }

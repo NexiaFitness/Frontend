@@ -7,8 +7,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "@shared": path.resolve(__dirname, "../../packages/shared"),
-      "@ui": path.resolve(__dirname, "../../packages/ui-web"),
+      "@shared": path.resolve(__dirname, "../../packages/shared/src"),
     },
+  },
+  optimizeDeps: {
+    include: ["react", "react-dom"],
   },
 });

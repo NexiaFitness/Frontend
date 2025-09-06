@@ -1,6 +1,6 @@
 /**
  * Configuración base de RTK Query para NEXIA
- * Centraliza la configuración de API: baseUrl, headers y reintentos
+ * ARREGLADO: Respeta headers personalizados y no interfiere con login form-urlencoded
  * Se extiende en servicios específicos como authApi, clientsApi, etc.
  * 
  * @author Frontend Team
@@ -10,14 +10,20 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import { API_CONFIG, AUTH_CONFIG } from "@shared/config/constants";
 
-// BaseQuery personalizado para añadir token automáticamente
+// BaseQuery personalizado que respeta headers personalizados
 const baseQuery = fetchBaseQuery({
     baseUrl: API_CONFIG.BASE_URL,
-    prepareHeaders: (headers: Headers) => {
-        const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
-        if (token) {
-            headers.set("Authorization", `Bearer ${token}`);
+    prepareHeaders: (headers, { endpoint }) => {
+        // Solo añadir Authorization si NO es login (login no necesita token)
+        if (endpoint !== 'login') {
+            const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            if (token) {
+                headers.set("Authorization", `Bearer ${token}`);
+            }
         }
+        
+        // NO sobreescribir Content-Type si ya está establecido por el endpoint
+        // Esto permite que authApi.ts establezca application/x-www-form-urlencoded
         return headers;
     },
 });

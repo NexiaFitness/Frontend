@@ -1,7 +1,7 @@
 /**
  * API de autenticación usando RTK Query
+ * CORREGIDO: Formato form-urlencoded para login según backend FastAPI OAuth2
  * Define endpoints: login, register, forgotPassword, resetPassword, getCurrentUser
- * Genera hooks automáticos para el consumo en componentes React
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -19,22 +19,31 @@ import type {
 
 export const authApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // Login
+        // Login - FastAPI OAuth2 requiere form-urlencoded
         login: builder.mutation<AuthResponse, LoginCredentials>({
             query: (credentials) => ({
                 url: "/auth/login",
                 method: "POST",
-                body: credentials,
+                body: new URLSearchParams({
+                    username: credentials.username,
+                    password: credentials.password,
+                }),
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                },
             }),
             invalidatesTags: ["Auth", "User"],
         }),
 
-        // Registro
+        // Registro - JSON format normal
         register: builder.mutation<AuthResponse, RegisterCredentials>({
             query: (credentials) => ({
                 url: "/auth/register",
                 method: "POST",
                 body: credentials,
+                headers: {
+                    "Content-Type": "application/json",
+                },
             }),
             invalidatesTags: ["Auth", "User"],
         }),
