@@ -9,6 +9,7 @@ import TestUi from "./pages/TestUi";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
+import ResetPassword from "./pages/auth/ResetPassword";
 import TrainerDashboard from "./pages/dashboard/TrainerDashboard";
 import type { RootState } from "@shared/store";
 
@@ -33,6 +34,7 @@ function App() {
       <Route path="/auth/login" element={<Login />} />
       <Route path="/auth/register" element={<Register />} />
       <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+      <Route path="/auth/reset-password" element={<ResetPassword />} />
       
       {/* Ruta protegida del dashboard */}
       <Route path="/dashboard" element={<TrainerDashboard />} />

@@ -70,16 +70,15 @@ export const RegisterForm: React.FC = () => {
                 role: "trainer",
             };
 
-            const response = await register(credentials).unwrap();
+            await register(credentials).unwrap();
 
-            dispatch(
-                loginSuccess({
-                    user: response.user,
-                    token: response.access_token,
-                })
-            );
-
-            navigate("/");
+            // Redirigir a login con mensaje de éxito (backend no devuelve token en registro)
+            navigate("/auth/login", {
+                state: {
+                    message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
+                    email: formData.email
+                }
+            });
         } catch (error: any) {
             const errorMessage = handleServerError(error);
             dispatch(loginFailure(errorMessage));
@@ -87,7 +86,7 @@ export const RegisterForm: React.FC = () => {
     };
 
     const handleLogin = () => {
-        navigate("/login");
+        navigate("/auth/login");
     };
 
     return (
@@ -108,7 +107,7 @@ export const RegisterForm: React.FC = () => {
                     value={formData.email}
                     onChange={handleInputChange("email")}
                     error={errors.email}
-                    placeholder="nexiafitness.demo@gmail.com"
+                    placeholder="Introduce tu correo electrónico"
                     isRequired
                     disabled={isLoading}
                 />
@@ -166,7 +165,7 @@ export const RegisterForm: React.FC = () => {
                     isLoading={isLoading}
                     className="w-full"
                 >
-                    {isLoading ? "Creando cuenta..." : "Sign Up"}
+                    {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
 
                 <div className="text-center text-sm text-gray-600">

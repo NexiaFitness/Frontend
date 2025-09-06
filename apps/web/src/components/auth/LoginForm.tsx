@@ -9,7 +9,7 @@
 
 import React from "react";
 import { useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Input } from "@/components/forms";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
@@ -25,17 +25,19 @@ interface LoginFormData {
 export const LoginForm: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // RTK Query hook - maneja la llamada al servidor
   const [login, { isLoading }] = useLoginMutation();
 
   const [formData, setFormData] = React.useState<LoginFormData>({
-    email: "",
+    email: location.state?.email || "",
     password: "",
   });
 
   const [errors, setErrors] = React.useState<Partial<LoginFormData>>({});
   const [serverError, setServerError] = React.useState<string | null>(null);
+  const successMessage = location.state?.message;
 
   const handleInputChange = (field: keyof LoginFormData) => (
     e: React.ChangeEvent<HTMLInputElement>
@@ -145,6 +147,15 @@ export const LoginForm: React.FC = () => {
           Inicia sesión en tu cuenta para continuar
         </p>
       </div>
+
+      {/* Mensaje de éxito del registro */}
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+          <p className="text-green-800 text-sm font-medium">
+            {successMessage}
+          </p>
+        </div>
+      )}
 
       {/* Error del servidor */}
       {serverError && (

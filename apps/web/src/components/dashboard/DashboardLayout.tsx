@@ -1,7 +1,7 @@
 /**
- * Layout principal del dashboard del entrenador con diseño corregido
- * meshGradient de fondo, espaciado correcto y UI limpia
- * Convertido completamente a Tailwind CSS sin inline styles
+ * Layout principal del dashboard del entrenador con logout profesional
+ * Implementación con createAsyncThunk para manejo profesional de estados
+ * UX profesional con loading states automáticos y manejo de errores
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -18,11 +18,22 @@ import type { AppDispatch, RootState } from "@shared/store";
 export const DashboardLayout: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
-    const { user } = useSelector((state: RootState) => state.auth);
+    const { user, isLoading, error } = useSelector((state: RootState) => state.auth);
 
-    const handleLogout = () => {
-        dispatch(logout(undefined));
-        navigate("/auth/login");
+    const handleLogout = async () => {
+        try {
+            // Ejecutar async thunk de logout profesional
+            await dispatch(logout()).unwrap();
+
+            // Navegación automática tras logout exitoso
+            navigate("/auth/login", { replace: true });
+        } catch (logoutError) {
+            // Error ya manejado por el async thunk
+            console.warn('Logout completed with warnings:', logoutError);
+
+            // Navegar de todas formas por seguridad
+            navigate("/auth/login", { replace: true });
+        }
     };
 
     return (
@@ -30,6 +41,25 @@ export const DashboardLayout: React.FC = () => {
             className="min-h-screen flex"
             style={{ background: meshGradientInverted }}
         >
+            {/* Overlay de loading durante logout - automático con async thunk */}
+            {isLoading && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+                    <div className="bg-white rounded-2xl p-8 text-center shadow-2xl">
+                        <div className="animate-spin w-8 h-8 border-4 border-primary-600 border-t-transparent rounded-full mx-auto mb-4"></div>
+                        <p className="text-slate-700 font-medium">Cerrando sesión...</p>
+                        <p className="text-slate-500 text-sm mt-2">Procesando logout de forma segura</p>
+                    </div>
+                </div>
+            )}
+
+            {/* Error de logout si ocurre */}
+            {error && (
+                <div className="fixed top-4 right-4 z-50 bg-red-100 border border-red-300 rounded-lg p-4 shadow-lg">
+                    <p className="text-red-700 text-sm font-medium">Error durante logout</p>
+                    <p className="text-red-600 text-xs mt-1">{error}</p>
+                </div>
+            )}
+
             {/* Sidebar */}
             <aside className="w-80 flex flex-col">
                 {/* Sección 1: Header NEXIA */}
@@ -45,29 +75,44 @@ export const DashboardLayout: React.FC = () => {
                     <div className="bg-slate-800 rounded-lg px-6 py-4">
                         <span className="text-white font-semibold">Dashboard</span>
                     </div>
-                    <div className="py-4 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg px-6 transition cursor-pointer mt-4">
+                    <div className="py-4 text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg px-6 transition cursor-pointer mt-4">
                         Client Onboarding
                     </div>
-                    <div className="py-4 text-slate-300 hover:text-white hover:bg-slate-800 rounded-lg px-6 transition cursor-pointer mt-4">
+                    <div className="py-4 text-slate-200 hover:text-white hover:bg-slate-800 rounded-lg px-6 transition cursor-pointer mt-4">
                         Training Planning
                     </div>
                 </nav>
 
-                {/* Sección 3: User info y logout */}
+                {/* Sección 3: User info y logout profesional */}
                 <div className="p-6 bg-sidebar-nav pt-8 pb-8">
                     <div className="text-center mb-6">
                         <p className="text-white font-medium">
                             {user?.nombre} {user?.apellidos}
                         </p>
-                        <p className="text-slate-400 text-sm">Professional Trainer</p>
+                        <p className="text-slate-200 text-sm">Professional Trainer</p>
+
                     </div>
+
                     <div className="px-4 mb-6">
                         <Button
                             variant="secondary"
                             onClick={handleLogout}
-                            className="w-full py-3 bg-white text-black border-2 border-sidebar-header hover:bg-sidebar-header hover:text-white transition-colors"
+                            disabled={isLoading}
+                            className={`
+                                w-full py-3 bg-white text-black border-2 border-sidebar-header 
+                                hover:bg-sidebar-header hover:text-white transition-colors
+                                disabled:opacity-50 disabled:cursor-not-allowed
+                                ${isLoading ? 'animate-pulse' : ''}
+                            `}
                         >
-                            Cerrar Sesión
+                            {isLoading ? (
+                                <div className="flex items-center justify-center">
+                                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
+                                    Cerrando...
+                                </div>
+                            ) : (
+                                'Cerrar Sesión'
+                            )}
                         </Button>
                     </div>
                 </div>
@@ -115,10 +160,11 @@ export const DashboardLayout: React.FC = () => {
                     <Button
                         variant="secondary"
                         size="lg"
-                        className="px-10 py-4 text-lg font-semibold bg-white/20 backdrop-blur-sm border-white/30 text-white hover:bg-white/30"
+                        className="px-10 py-4 text-lg font-semibold bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30"
                     >
                         Training Planning
                     </Button>
+
                 </div>
 
                 {/* Recent Clients card */}

@@ -28,7 +28,7 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
   helperText?: string;
 }
 
-const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-400 text-red-500 focus:text-green-600 caret-primary-600`;
+const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-400 text-gray-900 caret-primary-600`;
 
 const sizeStyles: Record<InputSize, string> = {
   sm: "px-3 py-1.5 text-sm",
@@ -41,7 +41,8 @@ const stateStyles = {
   error: "border-red-500 focus:border-red-500 focus:ring-red-500",
 };
 
-const labelStyles = "block text-sm font-medium text-black mb-1";
+const labelStyles = "block text-sm font-medium text-gray-600 mb-1";
+
 const errorStyles = "mt-1 text-sm text-red-600 dark:text-red-400";
 const helperStyles = "mt-1 text-sm text-gray-500 dark:text-gray-400";
 
@@ -59,8 +60,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     },
     ref
   ) => {
-    console.log("INPUT COMPONENT RENDERING - VERSION 456", new Date().getTime());
-    
     const hasError = Boolean(error);
 
     return (

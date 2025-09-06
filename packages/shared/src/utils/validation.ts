@@ -122,3 +122,29 @@ export const validateForgotPasswordForm = (formData: {
         errors,
     };
 };
+
+export const validateResetPasswordForm = (formData: {
+    token: string;
+    newPassword: string;
+    confirmPassword: string;
+}): ValidationResult => {
+    const errors: Record<string, string> = {};
+
+    // Validar token
+    if (!formData.token?.trim()) {
+        errors.token = "Token de recuperación es obligatorio";
+    }
+
+    // Validar nueva contraseña
+    const passwordError = validatePassword(formData.newPassword);
+    if (passwordError) errors.newPassword = passwordError;
+
+    // Validar confirmación de contraseña
+    const confirmPasswordError = validateConfirmPassword(formData.newPassword, formData.confirmPassword);
+    if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
+
+    return {
+        isValid: Object.keys(errors).length === 0,
+        errors,
+    };
+};
