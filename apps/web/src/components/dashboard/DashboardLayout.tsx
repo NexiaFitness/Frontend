@@ -9,7 +9,7 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/forms";
+import { Button } from "@shared";
 import { meshGradientInverted } from "@/utils/backgrounds";
 import { logout } from "@shared/store/authSlice";
 import { NexiaLogo } from "../auth/NexiaLogo";

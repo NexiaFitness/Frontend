@@ -9,7 +9,7 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Input } from "@/components/forms";
+import { Button, Input } from "@shared";
 import { ServerErrorBanner } from "@/components/shared";
 import { useForgotPasswordMutation } from "@shared/api/authApi";
 import { useAuthForm } from "@shared";

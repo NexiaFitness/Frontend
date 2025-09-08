@@ -1,227 +1,177 @@
 /**
- * Formulario de login en español según wireframes
- * CONECTADO: Integración real con backend FastAPI de Sosina
- * Maneja autenticación, navegación y error handling profesional
+ * Formulario de login refactorizado usando arquitectura reutilizable
+ * Migrado de estado manual a useAuthForm para consistencia
+ * Usa validateLoginForm + useAuthForm + ServerErrorBanner
  * 
  * @author Frontend Team
- * @since v1.0.0
+ * @since v2.0.0
  */
 
 import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Input } from "@/components/forms";
+import { Button, Input } from "@shared";
+import { ServerErrorBanner } from "@/components/shared";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
+import { useAuthForm, validateLoginForm } from "@shared";
 import type { AppDispatch } from "@shared/store";
 import type { LoginCredentials } from "@shared/types/auth";
 
-
 interface LoginFormData {
-  email: string;      // UI sigue mostrando "email" al usuario
-  password: string;
+    email: string;
+    password: string;
 }
 
 export const LoginForm: React.FC = () => {
-  const dispatch = useDispatch<AppDispatch>();
-  const navigate = useNavigate();
-  const location = useLocation();
+    const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    // RTK Query hook
+    const [login, { isLoading }] = useLoginMutation();
+    
+    // Initial state con email del estado de navegación si existe
+    const initialFormState: LoginFormData = {
+        email: location.state?.email || "",
+        password: "",
+    };
 
-  // RTK Query hook - maneja la llamada al servidor
-  const [login, { isLoading }] = useLoginMutation();
+    // useAuthForm hook para consistencia con otros formularios
+    const {
+        formData,
+        errors,
+        serverError,
+        handleInputChange,
+        validateForm,
+        handleServerError,
+        clearErrors,
+    } = useAuthForm({
+        initialState: initialFormState,
+        validate: validateLoginForm,
+    });
 
-  const [formData, setFormData] = React.useState<LoginFormData>({
-    email: location.state?.email || "",
-    password: "",
-  });
+    // Mensaje de éxito del registro si viene de register
+    const successMessage = location.state?.message;
 
-  const [errors, setErrors] = React.useState<Partial<LoginFormData>>({});
-  const [serverError, setServerError] = React.useState<string | null>(null);
-  const successMessage = location.state?.message;
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-  const handleInputChange = (field: keyof LoginFormData) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: e.target.value,
-    }));
+        if (!validateForm()) return;
+        clearErrors();
 
-    // Limpiar errores cuando usuario escribe
-    if (errors[field]) {
-      setErrors(prev => ({
-        ...prev,
-        [field]: undefined,
-      }));
-    }
+        try {
+            // Preparar credenciales para API - Backend espera username, no email
+            const credentials: LoginCredentials = {
+                username: formData.email,  // UI muestra "email" pero backend espera "username"
+                password: formData.password,
+            };
 
-    // Limpiar error de servidor cuando usuario escribe
-    if (serverError) {
-      setServerError(null);
-      dispatch(clearError(undefined));
-    }
-  };
+            const response = await login(credentials).unwrap();
+            
+            // Despachar acción de éxito - Backend retorna access_token
+            dispatch(loginSuccess({
+                user: response.user,
+                token: response.access_token,
+            }));
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<LoginFormData> = {};
+            // Navegar a destino apropiado
+            const redirectTo = location.state?.from || "/dashboard";
+            navigate(redirectTo, { replace: true });
 
-    if (!formData.email) {
-      newErrors.email = "El correo es obligatorio";
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Introduce un correo válido";
-    }
+        } catch (error: any) {
+            const errorMessage = handleServerError(error);
+            dispatch(loginFailure(errorMessage));
+        }
+    };
 
-    if (!formData.password) {
-      newErrors.password = "La contraseña es obligatoria";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "La contraseña debe tener al menos 6 caracteres";
-    }
+    const handleForgotPassword = () => {
+        navigate("/auth/forgot-password");
+    };
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    const handleRegister = () => {
+        navigate("/auth/register");
+    };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    return (
+        <div className="space-y-6">
+            <div className="text-center">
+                <h1 className="text-5xl font-bold mb-2 text-primary-400">
+                    Bienvenido de vuelta
+                </h1>
+                <p className="text-gray-600">
+                    Inicia sesión en tu cuenta de NEXIA
+                </p>
+            </div>
 
-    if (!validateForm()) return;
+            {/* Mensaje de éxito del registro */}
+            {successMessage && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-green-800 text-sm font-medium">
+                        {successMessage}
+                    </p>
+                </div>
+            )}
 
-    // Limpiar errores previos
-    setServerError(null);
-    dispatch(clearError(undefined));
+            {/* Banner de error del servidor */}
+            <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
+            <form onSubmit={handleSubmit} className="space-y-5">
+                <Input
+                    type="email"
+                    label="Correo electrónico"
+                    value={formData.email}
+                    onChange={handleInputChange("email")}
+                    error={errors.email}
+                    placeholder="Introduce tu correo electrónico"
+                    isRequired
+                    disabled={isLoading}
+                />
 
-    try {
-      // Llamada real al backend
-      const credentials: LoginCredentials = {
-        username: formData.email,
-        password: formData.password,
-      };
+                <Input
+                    type="password"
+                    label="Contraseña"
+                    value={formData.password}
+                    onChange={handleInputChange("password")}
+                    error={errors.password}
+                    placeholder="Introduce tu contraseña"
+                    isRequired
+                    disabled={isLoading}
+                />
 
-      const response = await login(credentials).unwrap();
+                <Button
+                    type="submit"
+                    variant="primary"
+                    size="lg"
+                    isLoading={isLoading}
+                    className="w-full"
+                >
+                    {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
+                </Button>
 
-      // Login exitoso - actualizar estado Redux
-      dispatch(loginSuccess({
-        user: response.user,
-        token: response.access_token,
-      }));
+                <div className="flex flex-col space-y-3 text-center text-sm">
+                    <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
+                        disabled={isLoading}
+                    >
+                        ¿Olvidaste tu contraseña?
+                    </button>
 
-      // Navegación a dashboard entrenador
-      navigate("/dashboard");
-
-    } catch (error: any) {
-      console.error("Login falló:", error);
-
-      // Manejo de errores profesional
-      let errorMessage = "Error de conexión. Intenta de nuevo.";
-
-      if (error?.status === 401) {
-        errorMessage = "Correo o contraseña incorrectos";
-      } else if (error?.status === 429) {
-        errorMessage = "Demasiados intentos. Espera un momento.";
-      } else if (error?.data?.detail) {
-        errorMessage = error.data.detail;
-      }
-
-      setServerError(errorMessage);
-      dispatch(loginFailure(errorMessage));
-    }
-  };
-
-  const handleForgotPassword = () => {
-    navigate("/auth/forgot-password");
-  };
-
-  const handleRegister = () => {
-    navigate("/auth/register");
-  };
-
-  return (
-    <div className="space-y-6">
-      <div className="text-center">
-        <h1 className="text-5xl font-bold mb-2 text-primary-400">
-          Bienvenido
-        </h1>
-
-        <p className="text-gray-600">
-          Inicia sesión en tu cuenta para continuar
-        </p>
-      </div>
-
-      {/* Mensaje de éxito del registro */}
-      {successMessage && (
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-green-800 text-sm font-medium">
-            {successMessage}
-          </p>
+                    <div className="text-gray-600">
+                        ¿No tienes cuenta?{" "}
+                        <button
+                            type="button"
+                            onClick={handleRegister}
+                            className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
+                            disabled={isLoading}
+                        >
+                            Regístrate aquí
+                        </button>
+                    </div>
+                </div>
+            </form>
         </div>
-      )}
-
-      {/* Error del servidor */}
-      {serverError && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-800 text-sm font-medium">
-            {serverError}
-          </p>
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <Input
-          type="email"
-          label="Correo electrónico"
-          value={formData.email}
-          onChange={handleInputChange("email")}
-          error={errors.email}
-          placeholder="Introduce tu correo electrónico"
-          isRequired
-          disabled={isLoading}
-        />
-
-        <Input
-          type="password"
-          label="Contraseña"
-          value={formData.password}
-          onChange={handleInputChange("password")}
-          error={errors.password}
-          placeholder="Introduce tu contraseña"
-          isRequired
-          disabled={isLoading}
-        />
-
-        <div className="text-center">
-          <button
-            type="button"
-            onClick={handleForgotPassword}
-            className="text-sm text-blue-600 hover:text-blue-700 underline disabled:opacity-50"
-            disabled={isLoading}
-          >
-            ¿Olvidaste tu contraseña?
-          </button>
-        </div>
-
-        <Button
-          type="submit"
-          variant="primary"
-          size="lg"
-          isLoading={isLoading}
-          className="w-full"
-        >
-          {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
-        </Button>
-
-        <div className="text-center text-sm text-gray-600">
-          ¿No tienes una cuenta?{" "}
-          <button
-            type="button"
-            onClick={handleRegister}
-            className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
-            disabled={isLoading}
-          >
-            Regístrate
-          </button>
-        </div>
-      </form>
-    </div>
-  );
+    );
 };

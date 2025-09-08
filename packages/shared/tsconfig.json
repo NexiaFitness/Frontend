@@ -6,7 +6,11 @@
         "declaration": true,
         "declarationMap": true,
         "emitDeclarationOnly": false,
-        "outDir": "./dist"
+        "outDir": "./dist",
+        /* Configuración explícita para imports */
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "jsx": "react-jsx"
     },
     "include": [
         "src/**/*"

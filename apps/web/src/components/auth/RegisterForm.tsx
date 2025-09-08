@@ -2,6 +2,8 @@
  * Formulario de registro usando arquitectura reutilizable.
  * Usa useAuthForm hook + validation utilities + ServerErrorBanner.
  * Sin duplicación de código respecto a LoginForm.
+ * Incluye selector de roles dinámico usando FormSelect.
+ * Components migrados a @shared para reutilización web/móvil.
  * 
  * @author Frontend
  * @since v1.0.0
@@ -10,15 +12,15 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button, Input } from "@/components/forms";
+import { Button, Input, FormSelect } from "@shared";
 import { ServerErrorBanner } from "@/components/shared";
 import { useRegisterMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure } from "@shared/store/authSlice";
-import { useAuthForm } from "@shared";
+import { useAuthForm, USER_ROLES } from "@shared";
 import { validateRegisterForm } from "@shared";
 import type { AppDispatch } from "@shared/store";
-import type { RegisterCredentials } from "@shared/types/auth";
-
+import type { RegisterCredentials, UserRole } from "@shared/types/auth";
+import type { SelectOption } from "@shared";
 
 interface RegisterFormData {
     email: string;
@@ -26,6 +28,7 @@ interface RegisterFormData {
     confirmPassword: string;
     nombre: string;
     apellidos: string;
+    role: UserRole;
 }
 
 const initialFormState: RegisterFormData = {
@@ -34,7 +37,14 @@ const initialFormState: RegisterFormData = {
     confirmPassword: "",
     nombre: "",
     apellidos: "",
+    role: "" as UserRole,
 };
+
+// Opciones para el selector de roles - Solo registro público
+const roleOptions: SelectOption[] = [
+    { value: USER_ROLES.TRAINER, label: "Entrenador Personal" },
+    { value: USER_ROLES.ATHLETE, label: "Atleta" },
+];
 
 export const RegisterForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -67,7 +77,7 @@ export const RegisterForm: React.FC = () => {
                 password: formData.password,
                 nombre: formData.nombre,
                 apellidos: formData.apellidos,
-                role: "trainer",
+                role: formData.role,
             };
 
             await register(credentials).unwrap();
@@ -135,6 +145,17 @@ export const RegisterForm: React.FC = () => {
                         disabled={isLoading}
                     />
                 </div>
+
+                <FormSelect
+                    label="Tipo de cuenta"
+                    value={formData.role}
+                    onChange={handleInputChange("role")}
+                    options={roleOptions}
+                    error={errors.role}
+                    placeholder="Selecciona tu tipo de cuenta"
+                    isRequired
+                    disabled={isLoading}
+                />
 
                 <Input
                     type="password"

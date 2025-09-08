@@ -63,6 +63,16 @@ export const validateLastName = (apellidos: string): string | undefined => {
     return validateRequired(apellidos, "Los apellidos");
 };
 
+export const validateRole = (role: string): string | undefined => {
+    if (!role) {
+        return "Selecciona tu tipo de cuenta";
+    }
+    if (role !== 'athlete' && role !== 'trainer') {
+        return "Tipo de cuenta no válido";
+    }
+    return undefined;
+};
+
 // Validadores de formularios específicos
 export const validateLoginForm = (formData: { email: string; password: string }): ValidationResult => {
     const errors: Record<string, string> = {};
@@ -85,6 +95,7 @@ export const validateRegisterForm = (formData: {
     confirmPassword: string;
     nombre: string;
     apellidos: string;
+    role: string;
 }): ValidationResult => {
     const errors: Record<string, string> = {};
 
@@ -102,6 +113,9 @@ export const validateRegisterForm = (formData: {
 
     const apellidosError = validateLastName(formData.apellidos);
     if (apellidosError) errors.apellidos = apellidosError;
+
+    const roleError = validateRole(formData.role);
+    if (roleError) errors.role = roleError;
 
     return {
         isValid: Object.keys(errors).length === 0,

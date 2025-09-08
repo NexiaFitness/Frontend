@@ -3,6 +3,6 @@
   "compilerOptions": {
     "jsx": "react-jsx"
   },
-  "include": ["src"],
+  "include": ["src", "../../packages/shared/src/components/forms/FormSelect.tsx"],
   "exclude": ["node_modules", "dist"]
 }

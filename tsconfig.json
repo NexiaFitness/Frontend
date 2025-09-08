@@ -7,6 +7,7 @@
             "ESNext"
         ],
         "moduleResolution": "bundler",
+        "jsx": "react-jsx",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
@@ -25,8 +26,9 @@
     },
     "include": [
         "apps/web",
-        "packages/shared"
-, "tailwind.config.js"    ],
+        "packages/shared",
+        "tailwind.config.js"
+    ],
     "exclude": [
         "node_modules",
         "dist",
