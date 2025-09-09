@@ -8,71 +8,96 @@ Professional fitness training management platform frontend built with modern web
 ```
 frontend/
 ├── apps/
-│   └── web/                           # React application
+│   └── web/                           # React application (Vite + TS)
+│       ├── dist/                      # Build output
+│       ├── node_modules/
 │       ├── public/
-│       │   └── assets/               # Logo and static assets
+│       │   ├── assets/
+│       │   │   └── Logo sin fondo blanco.png
+│       │   └── vite.svg
 │       ├── src/
-│       │   ├── components/           # All UI components centralized
-│       │   │   ├── auth/            # Authentication components
-│       │   │   │   ├── AuthLayout.tsx    # 50/50 glassmorphism layout
-│       │   │   │   ├── LoginForm.tsx     # Complete login form with validation
-│       │   │   │   ├── RegisterForm.tsx  # Complete register form with validation
-│       │   │   │   ├── ForgotPasswordForm.tsx # Password recovery form
-│       │   │   │   ├── ResetPasswordForm.tsx  # Password reset form
-│       │   │   │   └── NexiaLogo.tsx     # Reusable logo component
-│       │   │   ├── dashboard/       # Dashboard components
+│       │   ├── assets/
+│       │   │   └── react.svg
+│       │   ├── components/
+│       │   │   ├── auth/              # Auth-specific components
+│       │   │   │   ├── AuthLayout.tsx
+│       │   │   │   ├── ForgotPasswordForm.tsx
+│       │   │   │   ├── LoginForm.tsx
+│       │   │   │   ├── LoginForm.tsx.backup
+│       │   │   │   ├── NexiaLogo.tsx
+│       │   │   │   ├── ProtectedRoute.tsx
+│       │   │   │   ├── RegisterForm.tsx
+│       │   │   │   └── ResetPasswordForm.tsx
+│       │   │   ├── dashboard/
+│       │   │   │   └── DashboardLayout.tsx
+│       │   │   ├── forms/
+│       │   │   │   └── index.ts        # Components migrated to @shared
+│       │   │   └── shared/
+│       │   │       ├── index.ts
+│       │   │       └── ServerErrorBanner.tsx
+│       │   ├── pages/                  # Page-level components
+│       │   │   ├── auth/
+│       │   │   │   ├── ForgotPassword.tsx
+│       │   │   │   ├── Login.tsx
+│       │   │   │   ├── Register.tsx
+│       │   │   │   └── ResetPassword.tsx
+│       │   │   ├── dashboard/
 │       │   │   │   └── TrainerDashboard.tsx
-│       │   │   ├── forms/           # Reusable form components
-│       │   │   │   ├── Button.tsx   # Button component with variants
-│       │   │   │   └── Input.tsx    # Input component with validation
-│       │   │   ├── layout/          # Layout components
-│       │   │   └── shared/          # Cross-role shared components
-│       │   │       └── ServerErrorBanner.tsx # Error display component
-│       │   ├── pages/
-│       │   │   ├── auth/            # Authentication pages
-│       │   │   │   ├── Login.tsx         # Login page implementation
-│       │   │   │   ├── Register.tsx      # Register page implementation  
-│       │   │   │   ├── ForgotPassword.tsx # Password recovery page
-│       │   │   │   └── ResetPassword.tsx  # Password reset page
-│       │   │   └── dashboard/       # Dashboard pages
-│       │   │       └── TrainerDashboard.tsx
-│       │   ├── hooks/               # UI-specific custom hooks
-│       │   ├── utils/               # UI utilities and helpers
-│       │   ├── styles/              # Styling files
-│       │   │   └── backgrounds.ts   # Background gradient utilities
-│       │   ├── App.tsx              # React Router setup
-│       │   ├── main.tsx             # Redux Provider + Router
-│       │   └── index.css            # Base CSS with Tailwind directives
-│       ├── tailwind.config.js       # Tailwind CSS configuration
-│       ├── postcss.config.js        # PostCSS configuration
-│       ├── vite.config.ts           # Vite configuration with aliases
-│       └── package.json             # Dependencies and scripts
+│       │   │   └── TestUi.tsx
+│       │   ├── utils/
+│       │   │   └── backgrounds.ts
+│       │   ├── App.css
+│       │   ├── App.tsx
+│       │   ├── index.css
+│       │   ├── main.tsx
+│       │   └── vite-env.d.ts
+│       ├── eslint.config.js
+│       ├── index.html
+│       ├── package.json
+│       ├── postcss.config.js
+│       ├── README.md
+│       ├── tailwind.config.js
+│       ├── tsconfig.app.json
+│       ├── tsconfig.json
+│       ├── tsconfig.node.json
+│       ├── tsconfig.tsbuildinfo
+│       └── vite.config.ts
 ├── packages/
-│   └── shared/                      # Cross-platform business logic
+│   ├── config/
+│   │   └── package.json                # Minimal package config
+│   └── shared/                         # Cross-platform shared logic
 │       ├── src/
 │       │   ├── api/
-│       │   │   ├── authApi.ts       # RTK Query authentication endpoints
-│       │   │   └── baseApi.ts       # RTK Query base configuration
+│       │   │   ├── authApi.ts
+│       │   │   └── baseApi.ts
+│       │   ├── components/
+│       │   │   ├── forms/              # Reusable form components
+│       │   │   │   ├── Button.tsx      # Button with variants and sizes
+│       │   │   │   ├── FormSelect.tsx  # Select with role selector capability
+│       │   │   │   ├── Input.tsx       # Input with validation states
+│       │   │   │   └── index.ts        # Centralized exports
+│       │   │   └── index.ts            # Component exports
 │       │   ├── config/
-│       │   │   └── constants.ts     # Application constants
+│       │   │   └── constants.ts
+│       │   ├── hooks/
+│       │   │   └── useAuthForm.ts
 │       │   ├── store/
-│       │   │   ├── index.ts         # Redux Toolkit store configuration
-│       │   │   └── authSlice.ts     # Authentication slice
+│       │   │   ├── authSlice.ts
+│       │   │   └── index.ts
 │       │   ├── types/
-│       │   │   └── auth.ts          # TypeScript authentication types
-│       │   ├── hooks/               # Business logic hooks
-│       │   │   └── useAuthForm.ts   # Reusable form hook for auth
+│       │   │   └── auth.ts
 │       │   ├── utils/
-│       │   │   └── validation.ts    # Form validation utilities
-│       │   └── index.ts             # Package re-exports
-│       ├── package.json             # Package configuration
-│       └── tsconfig.json            # TypeScript configuration
-├── .gitignore                       # Git ignore rules
-├── package.json                     # Root package configuration
-├── pnpm-lock.yaml                   # Dependencies lockfile
-├── pnpm-workspace.yaml              # Workspace configuration
-├── README.md                        # This file
-└── tsconfig.json                    # Root TypeScript configuration
+│       │   │   └── validation.ts
+│       │   └── index.ts
+│       ├── package.json
+│       └── tsconfig.json
+├── .gitignore
+├── LICENSE
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── README.md
+└── tsconfig.json
 ```
 
 **Technology Stack:**
@@ -80,7 +105,7 @@ frontend/
 - **Package Manager:** pnpm (monorepo workspace)
 - **State Management:** Redux Toolkit + RTK Query
 - **Authentication:** JWT Bearer tokens with automatic header injection
-- **UI Components:** Centralized component library with Tailwind CSS
+- **UI Components:** Centralized component library in shared package with Tailwind CSS
 - **Routing:** React Router DOM
 - **Styling:** Tailwind CSS v3.4+ with custom gradients
 - **Build System:** TypeScript + Tailwind CSS compilation
@@ -125,18 +150,19 @@ pnpm -F web dev
 
 **Authentication System - COMPLETE:**
 - Login, Register, Forgot Password, Reset Password pages
+- **Dynamic role selector** in registration (Trainer/Athlete options)
 - Form validation with custom hooks and error handling
 - Backend integration via RTK Query with FastAPI
 - JWT token management with automatic header injection
 - Glassmorphism UI design matching Figma specifications
 - Hot reload fully functional
 
-**Architecture - OPTIMIZED:**
-- Eliminated packages/ui-web and packages/ui-shared
-- Centralized all UI components in apps/web/src/components/
-- Simplified import paths and dependency management
-- Tailwind CSS configuration unified in web app
-- Resolved hot reload issues for improved development experience
+**Component Architecture - MIGRATED TO SHARED:**
+- **Form components centralized** in packages/shared for web/mobile reusability
+- Button, Input, FormSelect components with consistent Tailwind styling
+- Unified import system via @shared namespace
+- TypeScript strict mode with proper exports and type definitions
+- Visual consistency between all form elements
 
 ## Core Components
 
@@ -145,16 +171,18 @@ pnpm -F web dev
 // Available in src/components/auth/
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
-import { RegisterForm } from "@/components/auth/RegisterForm";
+import { RegisterForm } from "@/components/auth/RegisterForm";       // Now includes role selector
 import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 ```
 
-### Form Components
+### Form Components (Shared Package)
 ```typescript
-// Available in src/components/forms/
-import { Button } from "@/components/forms/Button";        // Primary/Secondary variants
-import { Input } from "@/components/forms/Input";          // Text/email/password with validation
+// Available from shared package - centralized for web/mobile
+import { Button, Input, FormSelect } from "@shared";
+import type { ButtonVariant, ButtonSize } from "@shared";
+import type { InputType, InputSize } from "@shared";
+import type { SelectOption, SelectSize } from "@shared";
 ```
 
 ### Shared Components
@@ -166,9 +194,34 @@ import { ServerErrorBanner } from "@/components/shared/ServerErrorBanner"; // Er
 ### Business Logic Hooks
 ```typescript
 // Available from shared package
-import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateLoginForm, validateResetPasswordForm } from "@shared/utils/validation";
+import { useAuthForm } from "@shared";
+import { validateLoginForm, validateRegisterForm, validateResetPasswordForm } from "@shared";
 ```
+
+### Configuration and Constants
+```typescript
+// Available from shared package
+import { USER_ROLES, API_CONFIG, AUTH_CONFIG, ROUTES } from "@shared";
+```
+
+## Registration System
+
+### Role-Based Registration
+The registration system now includes dynamic role selection:
+
+```typescript
+// Available roles for public registration
+const roleOptions = [
+    { value: USER_ROLES.TRAINER, label: "Entrenador Personal" },
+    { value: USER_ROLES.ATHLETE, label: "Atleta" },
+    // ADMIN role excluded from public registration
+];
+```
+
+**Security Features:**
+- Admin role creation restricted to internal processes
+- Role validation integrated with form validation system
+- Dynamic form behavior based on selected role
 
 ## Backend Integration
 
@@ -186,6 +239,18 @@ import {
   useForgotPasswordMutation,
   useResetPasswordMutation
 } from "@shared/api/authApi";
+```
+
+**Registration Flow:**
+```typescript
+// RegisterForm now sends dynamic role data
+const credentials: RegisterCredentials = {
+  email: formData.email,
+  password: formData.password,
+  nombre: formData.nombre,
+  apellidos: formData.apellidos,
+  role: formData.role, // Dynamic role selection
+};
 ```
 
 **Test Credentials:**
@@ -215,7 +280,7 @@ pnpm -F web type-check
 
 ### Package Management
 ```bash
-# Build shared package
+# Build shared package (required after component changes)
 pnpm -F shared build
 
 # Add dependency to web app
@@ -242,24 +307,37 @@ pnpm -F web format
 
 ## Architecture Decisions
 
-### Why Simplified Structure
-The previous architecture with separate ui-web and ui-shared packages created unnecessary complexity:
-
-**Problems Solved:**
-- **Hot reload issues:** Tailwind changes now reflect immediately
-- **Over-engineering:** Eliminated component library for single consumer
-- **Development friction:** No more manual rebuilds between changes
-- **Import complexity:** Simplified import paths and dependencies
+### Component Migration to Shared Package
+Components have been migrated from apps/web to packages/shared for scalability:
 
 **Benefits Achieved:**
-- **Faster development:** Hot reload works seamlessly
-- **Clearer organization:** All UI components in logical locations
-- **Better maintainability:** Single source of truth for UI components
-- **Scalable preparation:** Ready for mobile while keeping shared business logic
+- **Cross-platform reusability:** Ready for future mobile development
+- **Consistent styling:** All form components use identical Tailwind classes
+- **Centralized maintenance:** Single source of truth for UI components
+- **Type safety:** Proper TypeScript exports with shared type definitions
+- **Development efficiency:** Unified import system via @shared namespace
+
+### Form Component Consistency
+All form components now maintain visual and behavioral consistency:
+
+```typescript
+// Consistent styling approach across Button, Input, and FormSelect
+const baseStyles = `block w-full rounded-md border transition-colors 
+  focus:outline-none focus:ring-2 focus:ring-primary-600 
+  focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 
+  disabled:cursor-not-allowed`;
+```
+
+**Visual Features:**
+- Identical label styling with white asterisks for required fields
+- Consistent error and helper text styling
+- Dynamic color states (gray-400 for placeholders, gray-900 for values)
+- Unified size variants (sm, md, lg) across all components
 
 ### Role-Based Architecture
 Aligned with backend's unified RBAC API:
 - Single login endpoint for all user roles
+- Dynamic role selection in registration form
 - Conditional routing based on user role after authentication
 - Shared components across admin, trainer, and athlete interfaces
 - Centralized state management for cross-role functionality
@@ -277,12 +355,25 @@ resolve: {
 }
 ```
 
+### TypeScript Configuration
+```json
+// packages/shared/tsconfig.json - Optimized for component compilation
+{
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
+  }
+}
+```
+
 ### Tailwind Configuration
 ```javascript
 // apps/web/tailwind.config.js - Optimized for component scanning
 content: [
   "./index.html",
   "./src/**/*.{js,ts,jsx,tsx}",
+  "../../packages/shared/src/**/*.{js,ts,jsx,tsx}", // Include shared components
 ]
 ```
 
@@ -291,13 +382,15 @@ content: [
 - **CSS Purging:** Tailwind removes unused classes in production
 - **Tree Shaking:** TypeScript + Vite eliminate dead code
 - **Component Co-location:** Related components grouped for optimal loading
-- **Centralized Imports:** Simplified dependency resolution
+- **Shared Package Compilation:** Pre-built components for faster development
 - **Hot Reload:** Immediate feedback during development
+- **Centralized Dependencies:** Reduced bundle size through shared components
 
 ## Development Standards
 
 ### File Organization
-- **Components:** Organized by feature/role in logical directories
+- **Form Components:** Centralized in packages/shared/src/components/forms/
+- **App Components:** Feature-specific components in apps/web/src/components/
 - **Hooks:** Business logic hooks in shared, UI hooks in web app
 - **Utils:** Validation and helpers separated by concern
 - **Types:** TypeScript interfaces centralized in shared package
@@ -306,17 +399,36 @@ content: [
 - **TypeScript Strict Mode:** No `any` types, proper interfaces
 - **Component Documentation:** Header comments for all files
 - **Professional Git Commits:** Semantic versioning with detailed messages
-- **Import Consistency:** Standardized alias usage across codebase
+- **Import Consistency:** Standardized alias usage (@shared for shared components)
+
+### Import Guidelines
+```typescript
+// Correct import patterns
+import { Button, Input, FormSelect } from "@shared";           // Form components
+import { useAuthForm, validateRegisterForm } from "@shared";   // Business logic
+import { USER_ROLES } from "@shared";                         // Configuration
+import { Component } from "@/components/feature/Component";    // App-specific components
+```
 
 ## Troubleshooting
 
 ### Build Issues
 ```bash
-# Clear caches and rebuild
-rm -rf apps/web/node_modules/.vite
+# Clear caches and rebuild shared package first
 rm -rf packages/shared/dist
 pnpm -F shared build
+
+# Then clear web app cache
+rm -rf apps/web/node_modules/.vite
 pnpm -F web dev
+```
+
+### Component Import Issues
+```bash
+# Ensure shared package is built and exported correctly
+pnpm -F shared build
+cat packages/shared/src/components/forms/index.ts  # Verify exports
+cat packages/shared/src/index.ts                   # Verify main exports
 ```
 
 ### Development Issues
@@ -329,39 +441,67 @@ rm -rf node_modules pnpm-lock.yaml
 pnpm install
 ```
 
+## Recent Changes (Migration v2.1)
+
+### Component Architecture Migration
+- **Button.tsx, Input.tsx** migrated from apps/web to packages/shared
+- **FormSelect.tsx** created in packages/shared with consistent styling
+- **Import updates** across 12 files from @/components/forms to @shared
+- **Role selector** implemented in RegisterForm with dynamic validation
+
+### Technical Improvements
+- **Visual consistency** achieved across all form components  
+- **TypeScript configuration** optimized for shared package compilation
+- **Dependencies management** with clsx added to shared package
+- **Export structure** centralized with proper type definitions
+
 ## Contributing
 
 ### Development Process
 1. **Create feature branch** from `develop`
-2. **Implement changes** with proper TypeScript types
-3. **Test functionality** across all authentication flows
-4. **Commit with semantic versioning** (feat:, fix:, docs:)
-5. **Create pull request** to `develop` branch
+2. **Build shared package** after component changes: `pnpm -F shared build`
+3. **Implement changes** with proper TypeScript types
+4. **Test functionality** across all authentication flows
+5. **Commit with semantic versioning** (feat:, fix:, docs:)
+6. **Create pull request** to `develop` branch
+
+### Component Development
+```bash
+# When creating/modifying shared components:
+cd packages/shared
+# Make changes to src/components/
+pnpm run build
+cd ../apps/web
+pnpm run dev  # Test changes in web app
+```
 
 ### Code Style
-- **Consistent imports:** Use configured aliases (@, @shared)
+- **Consistent imports:** Use @shared for shared components, @ for app components
 - **Component structure:** Follow established patterns in existing components
 - **Type safety:** Maintain strict TypeScript compliance
+- **Visual consistency:** Use established styling patterns from Input.tsx
 - **Documentation:** Update README for architectural changes
 
 ## Support
 
 **For technical issues:**
-1. Check build status and clear caches
-2. Verify Node.js version compatibility
-3. Review browser console for detailed errors
-4. Create GitHub issue with reproduction steps
+1. **Build shared package first:** `pnpm -F shared build`
+2. Check build status and clear caches
+3. Verify Node.js version compatibility
+4. Review browser console for detailed errors
+5. Create GitHub issue with reproduction steps
 
 **For development questions:**
 - Reference authentication flow implementations
-- Check component examples in established directories
+- Check component examples in packages/shared/src/components/
 - Review RTK Query integration patterns
 - Examine Tailwind configuration for styling
+- Follow established import patterns with @shared namespace
 
 ---
 
-**Last Updated:** September 6, 2025  
-**Architecture Version:** 2.0 (Post-Migration)  
-**Current Branch:** `develop`  
-**Status:** Authentication system complete, ready for dashboard development  
+**Last Updated:** September 9, 2025  
+**Architecture Version:** 2.1 (Post-Component Migration)  
+**Current Branch:** `feature/reusable-form-components`  
+**Status:** Authentication system with role selector complete, components migrated to shared package  
 **Node.js:** v22.19.0 LTS
