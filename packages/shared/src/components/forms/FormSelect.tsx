@@ -2,7 +2,7 @@
  * Select reutilizable para formularios UI Web
  * Basado en Input.tsx, mantiene consistencia visual completa
  * Usado para selección de roles, países, categorías, etc.
- * Armonizado con clases y estilos idénticos a Input component
+ * Armonizado con clases y comportamiento idénticos a Input component
  *
  * @author Frontend Team
  * @since v2.0.0
@@ -30,7 +30,7 @@ interface FormSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElem
 }
 
 // Clases base idénticas a Input.tsx para consistencia visual
-const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-400 text-gray-900 caret-primary-600`;
+const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed caret-primary-600`;
 
 const sizeStyles: Record<SelectSize, string> = {
     sm: "px-3 py-1.5 text-sm",
@@ -57,9 +57,15 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
         options,
         placeholder,
         className = "",
+        value,
         ...props 
     }, ref) => {
         const hasError = Boolean(error);
+        const hasValue = value !== "" && value !== undefined && value !== null;
+        
+        // Color dinámico: gris claro para placeholder, gris oscuro para valor seleccionado
+        // Idéntico comportamiento a Input con placeholder vs texto
+        const textColorClass = hasValue ? "text-gray-900" : "text-gray-400";
 
         return (
             <div className="w-full">
@@ -72,16 +78,18 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                 
                 <select
                     ref={ref}
+                    value={value}
                     className={clsx(
                         baseStyles,
                         sizeStyles[size],
                         hasError ? stateStyles.error : stateStyles.default,
+                        textColorClass,
                         className
                     )}
                     {...props}
                 >
                     {placeholder && (
-                        <option value="" disabled>
+                        <option value="" disabled className="text-gray-400">
                             {placeholder}
                         </option>
                     )}
@@ -90,6 +98,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                             key={option.value}
                             value={option.value}
                             disabled={option.disabled}
+                            className="text-gray-900"
                         >
                             {option.label}
                         </option>

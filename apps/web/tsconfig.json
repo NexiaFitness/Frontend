@@ -1,8 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "outDir": "dist",
+    "rootDir": "src"
   },
-  "include": ["src", "../../packages/shared/src/components/forms/FormSelect.tsx"],
+  "include": ["src"],
   "exclude": ["node_modules", "dist"]
 }
