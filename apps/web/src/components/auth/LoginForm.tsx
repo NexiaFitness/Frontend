@@ -10,11 +10,11 @@
 import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Button, Input } from "@shared";
+import { Button, Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/shared";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
-import { useAuthForm, validateLoginForm } from "@shared";
+import { useAuthForm, validateLoginForm } from "@/components/ui/forms";
 import type { AppDispatch } from "@shared/store";
 import type { LoginCredentials } from "@shared/types/auth";
 

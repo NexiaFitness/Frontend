@@ -9,11 +9,11 @@
 
 import React from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Button, Input } from "@shared";
+import { Button, Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/shared";
 import { useResetPasswordMutation } from "@shared/api/authApi";
-import { useAuthForm } from "@shared";
-import { validateResetPasswordForm } from "@shared";
+import { useAuthForm } from "@/components/ui/forms";
+import { validateResetPasswordForm } from "@/components/ui/forms";
 import type { ResetPasswordData } from "@shared/types/auth";
 
 interface ResetPasswordFormData {

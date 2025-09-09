@@ -8,7 +8,7 @@
  */
 
 import React from "react";
-import { Button } from "@shared";
+import { Button } from "@/components/ui/forms";
 
 const TestUi: React.FC = () => {
     const meshGradientStyle = {
