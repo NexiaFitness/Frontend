@@ -10,7 +10,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button, Input } from "@/components/ui/forms";
-import { ServerErrorBanner } from "@/components/shared";
+import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useForgotPasswordMutation } from "@shared/api/authApi";
 import { useAuthForm } from "@/components/ui/forms";
 import { validateForgotPasswordForm } from "@/components/ui/forms";

@@ -13,7 +13,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button, Input, FormSelect } from "@/components/ui/forms";
-import { ServerErrorBanner } from "@/components/shared";
+import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useRegisterMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure } from "@shared/store/authSlice";
 import { useAuthForm, USER_ROLES } from "@/components/ui/forms";

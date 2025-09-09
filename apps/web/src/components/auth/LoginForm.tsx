@@ -11,7 +11,7 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Button, Input } from "@/components/ui/forms";
-import { ServerErrorBanner } from "@/components/shared";
+import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
 import { useAuthForm, validateLoginForm } from "@/components/ui/forms";
