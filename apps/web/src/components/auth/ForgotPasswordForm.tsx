@@ -9,11 +9,11 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button, Input } from "@/components/forms";
-import { ServerErrorBanner } from "@/components/shared";
+import { Button, Input } from "@/components/ui/forms";
+import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useForgotPasswordMutation } from "@shared/api/authApi";
-import { useAuthForm } from "@shared";
-import { validateForgotPasswordForm } from "@shared";
+import { useAuthForm } from "@shared/hooks/useAuthForm";
+import { validateForgotPasswordForm } from "@shared/utils/validation";
 
 interface ForgotPasswordFormData {
     email: string;

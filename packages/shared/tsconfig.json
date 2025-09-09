@@ -1,7 +1,6 @@
 {
-    "extends": "../../tsconfig.json",
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        /* Generación de tipos para que otros paquetes los usen */
         "composite": true,
         "declaration": true,
         "declarationMap": true,
@@ -9,7 +8,7 @@
         "outDir": "./dist"
     },
     "include": [
-        "src/**/*"
+        "src"
     ],
     "exclude": [
         "node_modules",

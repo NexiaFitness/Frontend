@@ -1,36 +1,11 @@
 {
-    "compilerOptions": {
-        "target": "ESNext",
-        "module": "ESNext",
-        "lib": [
-            "DOM",
-            "ESNext"
-        ],
-        "moduleResolution": "bundler",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "baseUrl": ".",
-        "paths": {
-            "@/*": [
-                "apps/web/src/*"
-            ],
-            "@shared": [
-                "packages/shared/src"
-            ],
-            "@shared/*": [
-                "packages/shared/src/*"
-            ]
+    "files": [],
+    "references": [
+        {
+            "path": "./apps/web"
+        },
+        {
+            "path": "./packages/shared"
         }
-    },
-    "include": [
-        "apps/web",
-        "packages/shared"
-, "tailwind.config.js"    ],
-    "exclude": [
-        "node_modules",
-        "dist",
-        "packages/ui-web",
-        "packages/ui-shared"
     ]
 }

@@ -1,0 +1,29 @@
+{
+    "compilerOptions": {
+        "target": "ESNext",
+        "module": "ESNext",
+        "lib": [
+            "DOM",
+            "ESNext"
+        ],
+        "moduleResolution": "bundler",
+        "jsx": "react-jsx",
+        "strict": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "baseUrl": ".",
+        "paths": {
+            "@/*": [
+                "apps/web/src/*"
+            ],
+            "@shared": [
+                "packages/shared/src"
+            ],
+            "@shared/*": [
+                "packages/shared/src/*"
+            ]
+        }
+    }
+}
