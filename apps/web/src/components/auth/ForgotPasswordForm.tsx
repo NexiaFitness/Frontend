@@ -12,8 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { Button, Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useForgotPasswordMutation } from "@shared/api/authApi";
-import { useAuthForm } from "@/components/ui/forms";
-import { validateForgotPasswordForm } from "@/components/ui/forms";
+import { useAuthForm } from "@shared/hooks/useAuthForm";
+import { validateForgotPasswordForm } from "@shared/utils/validation";
 
 interface ForgotPasswordFormData {
     email: string;

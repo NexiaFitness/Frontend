@@ -1,19 +1,14 @@
 {
-    "extends": "../../tsconfig.json",
+    "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        /* Generación de tipos para que otros paquetes los usen */
         "composite": true,
         "declaration": true,
         "declarationMap": true,
         "emitDeclarationOnly": false,
-        "outDir": "./dist",
-        /* Configuración explícita para imports */
-        "esModuleInterop": true,
-        "allowSyntheticDefaultImports": true,
-        "jsx": "react-jsx"
+        "outDir": "./dist"
     },
     "include": [
-        "src/**/*"
+        "src"
     ],
     "exclude": [
         "node_modules",

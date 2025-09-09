@@ -12,8 +12,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button, Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useResetPasswordMutation } from "@shared/api/authApi";
-import { useAuthForm } from "@/components/ui/forms";
-import { validateResetPasswordForm } from "@/components/ui/forms";
+import { useAuthForm } from "@shared/hooks/useAuthForm";
+import { validateResetPasswordForm } from "@shared/utils/validation";
 import type { ResetPasswordData } from "@shared/types/auth";
 
 interface ResetPasswordFormData {

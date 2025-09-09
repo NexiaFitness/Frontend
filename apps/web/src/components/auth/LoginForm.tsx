@@ -14,7 +14,8 @@ import { Button, Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
-import { useAuthForm, validateLoginForm } from "@/components/ui/forms";
+import { useAuthForm } from "@shared/hooks/useAuthForm";
+import { validateLoginForm } from "@shared/utils/validation";
 import type { AppDispatch } from "@shared/store";
 import type { LoginCredentials } from "@shared/types/auth";
 
