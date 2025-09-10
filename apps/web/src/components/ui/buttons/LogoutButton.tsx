@@ -8,6 +8,7 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from "@/components/ui/buttons";
 import { LogoutConfirmationModal } from '@/components/ui/modals/LogoutConfirmationModal';
 import { useLogout } from '@shared/hooks/useLogout';
@@ -39,6 +40,7 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
     disabled = false,
 }) => {
     const [showModal, setShowModal] = useState(false);
+    const navigate = useNavigate();
 
     const { logout, isLoading, error, user } = useLogout({
         onSuccess: () => {
@@ -48,6 +50,9 @@ export const LogoutButton: React.FC<LogoutButtonProps> = ({
         onError: (errorMessage) => {
             setShowModal(false);
             onLogoutError?.(errorMessage);
+        },
+        onNavigate: (path) => {
+            navigate(path, { replace: true });
         }
     });
 
