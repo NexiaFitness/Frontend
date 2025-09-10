@@ -9,7 +9,8 @@
 import React from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/forms";
+import { Button } from "@/components/ui/buttons";
+import { LogoutButton } from "@/components/ui/buttons/LogoutButton";
 import { meshGradientInverted } from "@/utils/backgrounds";
 import { logout } from "@shared/store/authSlice";
 import { NexiaLogo } from "../auth/NexiaLogo";
@@ -94,26 +95,12 @@ export const DashboardLayout: React.FC = () => {
                     </div>
 
                     <div className="px-4 mb-6">
-                        <Button
+                        <LogoutButton
                             variant="secondary"
-                            onClick={handleLogout}
-                            disabled={isLoading}
-                            className={`
-                                w-full py-3 bg-white text-black border-2 border-sidebar-header 
-                                hover:bg-sidebar-header hover:text-white transition-colors
-                                disabled:opacity-50 disabled:cursor-not-allowed
-                                ${isLoading ? 'animate-pulse' : ''}
-                            `}
-                        >
-                            {isLoading ? (
-                                <div className="flex items-center justify-center">
-                                    <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2"></div>
-                                    Cerrando...
-                                </div>
-                            ) : (
-                                'Cerrar Sesión'
-                            )}
-                        </Button>
+                            confirmationRequired={true}
+                            showUserName={false}
+                        />
+
                     </div>
                 </div>
             </aside>

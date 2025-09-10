@@ -43,7 +43,6 @@ frontend/
 │       │   │   │   └── ResetPassword.tsx
 │       │   │   ├── dashboard/
 │       │   │   │   └── TrainerDashboard.tsx
-│       │   │   └── TestUi.tsx
 │       │   ├── utils/
 │       │   │   └── backgrounds.ts
 │       │   ├── App.css
@@ -157,10 +156,10 @@ pnpm -F web dev
 - Glassmorphism UI design matching Figma specifications
 - Hot reload fully functional
 
-**Component Architecture - MIGRATED TO SHARED:**
-- **Form components centralized** in packages/shared for web/mobile reusability
-- Button, Input, FormSelect components with consistent Tailwind styling
-- Unified import system via @shared namespace
+**Component Architecture - SEPARATION OF CONCERNS:**
+- **UI Components** in apps/web/src/components/ui/ (Tailwind-based, web-specific)
+- **Shared Logic** in packages/shared/ (API, hooks, types, utilities - NO UI components)
+- Import system: `@/components/ui/forms` for UI, `@shared` for business logic
 - TypeScript strict mode with proper exports and type definitions
 - Visual consistency between all form elements
 
@@ -176,13 +175,13 @@ import { ForgotPasswordForm } from "@/components/auth/ForgotPasswordForm";
 import { ResetPasswordForm } from "@/components/auth/ResetPasswordForm";
 ```
 
-### Form Components (Shared Package)
+### Form Components (UI Package)
 ```typescript
-// Available from shared package - centralized for web/mobile
-import { Button, Input, FormSelect } from "@shared";
-import type { ButtonVariant, ButtonSize } from "@shared";
-import type { InputType, InputSize } from "@shared";
-import type { SelectOption, SelectSize } from "@shared";
+// Available from web UI components - Tailwind-based, web-specific
+import { Button, Input, FormSelect } from "@/components/ui/forms";
+import type { ButtonVariant, ButtonSize } from "@/components/ui/forms";
+import type { InputType, InputSize } from "@/components/ui/forms";
+import type { SelectOption, SelectSize } from "@/components/ui/forms";
 ```
 
 ### Shared Components
@@ -191,17 +190,14 @@ import type { SelectOption, SelectSize } from "@shared";
 import { ServerErrorBanner } from "@/components/shared/ServerErrorBanner"; // Error handling
 ```
 
-### Business Logic Hooks
+### Business Logic (Shared Package)
 ```typescript
-// Available from shared package
-import { useAuthForm } from "@shared";
-import { validateLoginForm, validateRegisterForm, validateResetPasswordForm } from "@shared";
-```
-
-### Configuration and Constants
-```typescript
-// Available from shared package
-import { USER_ROLES, API_CONFIG, AUTH_CONFIG, ROUTES } from "@shared";
+// Available from shared package - business logic only
+import { useAuthForm } from "@shared/hooks/useAuthForm";
+import { validateLoginForm, validateRegisterForm, validateResetPasswordForm } from "@shared/utils/validation";
+import { useLoginMutation, useRegisterMutation } from "@shared/api/authApi";
+import { USER_ROLES } from "@shared/config/constants";
+import type { LoginCredentials, RegisterCredentials } from "@shared/types/auth";
 ```
 
 ## Registration System
@@ -444,10 +440,16 @@ pnpm install
 ## Recent Changes (Migration v2.1)
 
 ### Component Architecture Migration
-- **Button.tsx, Input.tsx** migrated from apps/web to packages/shared
-- **FormSelect.tsx** created in packages/shared with consistent styling
-- **Import updates** across 12 files from @/components/forms to @shared
-- **Role selector** implemented in RegisterForm with dynamic validation
+- **Button.tsx**, **Input.tsx** y **FormSelect.tsx** están ubicados en  
+  `apps/web/src/components/ui/forms/`  
+  → Diseñados **exclusivamente para la aplicación web** por su dependencia directa de **Tailwind CSS**.
+- **No se han migrado a `packages/shared`** para mantener compatibilidad futura con React Native u otras plataformas móviles.
+- Todos los formularios web reutilizan estos componentes visuales a través del alias `@/components/ui/forms`.
+- **Role selector** implementado en `RegisterForm.tsx` con validación dinámica y visual consistente.
+- Arquitectura UI separada por entorno:
+  - `apps/web/` contiene todos los componentes con UI (Tailwind, modales, botones, inputs, etc.)
+  - `packages/shared/` contiene solo lógica reutilizable: hooks, APIs, types, utils.
+
 
 ### Technical Improvements
 - **Visual consistency** achieved across all form components  
