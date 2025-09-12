@@ -1,0 +1,51 @@
+# .github/workflows/deploy.yml
+# CI/CD Workflow para Nexia Frontend con Vercel
+# - develop → staging
+# - main → producción
+
+name: Deploy Nexia Frontend
+
+on:
+  push:
+    branches:
+      - develop
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22.19.0'
+          cache: 'pnpm'
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build shared package
+        run: pnpm -F shared build
+
+      - name: Build web app
+        run: pnpm -F web build
+
+      - name: Run tests
+        run: pnpm -F web test -- --ci --watchAll=false
+
+      - name: Deploy to Vercel
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/develop" ]; then
+            echo "🚀 Deploy to STAGING"
+            npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} --confirm --yes --env NODE_ENV=staging
+          elif [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "🚀 Deploy to PRODUCTION"
+            npx vercel deploy --prod --token=${{ secrets.VERCEL_TOKEN }} --scope=${{ secrets.VERCEL_ORG_ID }} --confirm --yes --env NODE_ENV=production
+          fi
