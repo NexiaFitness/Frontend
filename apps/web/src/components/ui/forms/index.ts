@@ -1,14 +1,14 @@
 /**
- * Exports de componentes de formularios reutilizables
- * Centraliza Button, Input, FormSelect para web y móvil
+ * Exportador central de componentes de formularios
+ * Incluye Input y FormSelect para formularios reutilizables
+ * Excluye Button (ahora en carpeta buttons)
  * 
  * @author Frontend Team
- * @since v1.0.0
+ * @since v2.0.0
  */
 
-export { Button } from "./Button";
-export { Input } from "./Input"; 
+export { Input } from "./Input";
 export { FormSelect } from "./FormSelect";
-export type { ButtonVariant, ButtonSize } from "./Button";
+
 export type { InputType, InputSize } from "./Input";
 export type { SelectOption, SelectSize } from "./FormSelect";

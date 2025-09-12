@@ -3,8 +3,12 @@
  * Extraídas del LoginForm existente y centralizadas
  * Usado en todos los formularios: Auth, Client Onboarding, Training Planning, etc.
  * 
- * @author Frontend Team
+ * Mantener todas las reglas de validación aquí garantiza consistencia
+ * entre web y mobile, y facilita cambios futuros (ej. requisitos de seguridad).
+ *
+ * @author Nelson
  * @since v1.0.0
+ * @updated v2.2.0 - Añadido validateChangePasswordForm
  */
 
 // Constantes de validación
@@ -38,7 +42,10 @@ export const validatePassword = (password: string): string | undefined => {
     return undefined;
 };
 
-export const validateConfirmPassword = (password: string, confirmPassword: string): string | undefined => {
+export const validateConfirmPassword = (
+    password: string,
+    confirmPassword: string
+): string | undefined => {
     if (!confirmPassword) {
         return "Confirma tu contraseña";
     }
@@ -48,7 +55,10 @@ export const validateConfirmPassword = (password: string, confirmPassword: strin
     return undefined;
 };
 
-export const validateRequired = (value: string, fieldName: string): string | undefined => {
+export const validateRequired = (
+    value: string,
+    fieldName: string
+): string | undefined => {
     if (!value?.trim()) {
         return `${fieldName} es obligatorio`;
     }
@@ -67,14 +77,17 @@ export const validateRole = (role: string): string | undefined => {
     if (!role) {
         return "Selecciona tu tipo de cuenta";
     }
-    if (role !== 'athlete' && role !== 'trainer') {
+    if (role !== "athlete" && role !== "trainer") {
         return "Tipo de cuenta no válido";
     }
     return undefined;
 };
 
 // Validadores de formularios específicos
-export const validateLoginForm = (formData: { email: string; password: string }): ValidationResult => {
+export const validateLoginForm = (formData: {
+    email: string;
+    password: string;
+}): ValidationResult => {
     const errors: Record<string, string> = {};
 
     const emailError = validateEmail(formData.email);
@@ -105,7 +118,10 @@ export const validateRegisterForm = (formData: {
     const passwordError = validatePassword(formData.password);
     if (passwordError) errors.password = passwordError;
 
-    const confirmPasswordError = validateConfirmPassword(formData.password, formData.confirmPassword);
+    const confirmPasswordError = validateConfirmPassword(
+        formData.password,
+        formData.confirmPassword
+    );
     if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
 
     const nombreError = validateName(formData.nombre);
@@ -154,7 +170,39 @@ export const validateResetPasswordForm = (formData: {
     if (passwordError) errors.newPassword = passwordError;
 
     // Validar confirmación de contraseña
-    const confirmPasswordError = validateConfirmPassword(formData.newPassword, formData.confirmPassword);
+    const confirmPasswordError = validateConfirmPassword(
+        formData.newPassword,
+        formData.confirmPassword
+    );
+    if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
+
+    return {
+        isValid: Object.keys(errors).length === 0,
+        errors,
+    };
+};
+
+export const validateChangePasswordForm = (formData: {
+    currentPassword: string;
+    newPassword: string;
+    confirmPassword: string;
+}): ValidationResult => {
+    const errors: Record<string, string> = {};
+
+    // Validar contraseña actual
+    if (!formData.currentPassword?.trim()) {
+        errors.currentPassword = "La contraseña actual es obligatoria";
+    }
+
+    // Validar nueva contraseña
+    const passwordError = validatePassword(formData.newPassword);
+    if (passwordError) errors.newPassword = passwordError;
+
+    // Validar confirmación de contraseña
+    const confirmPasswordError = validateConfirmPassword(
+        formData.newPassword,
+        formData.confirmPassword
+    );
     if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
 
     return {
