@@ -10,7 +10,7 @@
 import React from "react";
 import clsx from "clsx";
 
-export type ButtonVariant = "primary" | "secondary" | "danger";
+export type ButtonVariant = "primary" | "secondary" | "danger" | "outline";
 export type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -24,8 +24,9 @@ const baseStyles =
 
 const variantStyles: Record<ButtonVariant, string> = {
     primary: "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500",
-    secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-400",
+    secondary: "bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30 focus:ring-white/50",
     danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+     outline: "bg-transparent border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white focus:ring-slate-500",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
