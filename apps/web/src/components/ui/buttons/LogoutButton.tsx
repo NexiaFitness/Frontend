@@ -10,7 +10,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from "./Button";
-import { LogoutConfirmationModal } from '@/components/ui/modals/LogoutConfirmationModal';
+import { LogoutConfirmationModal } from '@/components/auth/modals/LogoutConfirmationModal';
 import { useLogout } from '@shared/hooks/useLogout';
 import type { ButtonVariant, ButtonSize } from './Button';
 

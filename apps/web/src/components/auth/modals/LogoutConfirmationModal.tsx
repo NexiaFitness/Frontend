@@ -1,10 +1,11 @@
 /**
  * Modal de confirmación de logout profesional y limpio
  * Previene logouts accidentales sin sobreexplicar al usuario
- * UX clara, directa y sin microcopy redundante
+ * UX clara, directa y con botones de mismo tamaño para consistencia
  *
- * @author Frontend
+ * @author Nelson
  * @since v2.1.0
+ * @updated v2.3.0 - Botones con ancho uniforme
  */
 
 import React, { useEffect } from 'react';
@@ -71,13 +72,13 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
                     </p>
                 </div>
 
-                {/* Botones */}
+                {/* Botones (mismo ancho) */}
                 <div className="flex gap-3 justify-center">
                     <Button
-                        variant="secondary"
+                        variant="outline"
                         onClick={onCancel}
                         disabled={isLoading}
-                        className="px-6 py-2.5 min-w-[120px]"
+                        className="px-6 py-2.5 min-w-[160px]"
                     >
                         Cancelar
                     </Button>
@@ -86,7 +87,7 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
                         onClick={onConfirm}
                         isLoading={isLoading}
                         disabled={isLoading}
-                        className="px-6 py-2.5 min-w-[120px]"
+                        className="px-6 py-2.5 min-w-[160px]"
                     >
                         {isLoading ? (
                             <div className="flex items-center">
