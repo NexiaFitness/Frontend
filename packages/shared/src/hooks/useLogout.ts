@@ -11,6 +11,7 @@
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
 import type { AppDispatch, RootState } from '../store';
+import type { User } from '../types/auth'; 
 
 interface UseLogoutOptions {
     onSuccess?: () => void;
@@ -22,7 +23,7 @@ interface UseLogoutReturn {
     logout: () => Promise<void>;
     isLoading: boolean;
     error: string | null;
-    user: any;
+    user: User | null; 
 }
 
 export const useLogout = (options: UseLogoutOptions = {}): UseLogoutReturn => {

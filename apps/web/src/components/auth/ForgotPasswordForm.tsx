@@ -1,7 +1,9 @@
 /**
  * Formulario de recuperación de contraseña usando arquitectura reutilizable.
  * Usa useAuthForm hook + validation utilities + ServerErrorBanner.
- * Siguiendo mismos patrones que RegisterForm para consistencia.
+ * Sigue los mismos patrones que RegisterForm para consistencia.
+ * 
+ * Manejo de errores con RTK Query tipado.
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -51,8 +53,8 @@ export const ForgotPasswordForm: React.FC = () => {
         try {
             await forgotPassword({ email: formData.email }).unwrap();
             setIsEmailSent(true);
-        } catch (error: any) {
-            handleServerError(error);
+        } catch (error) {
+            handleServerError(error as Parameters<typeof handleServerError>[0]);
         }
     };
 

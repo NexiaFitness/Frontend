@@ -17,7 +17,7 @@ export const PublicNavbar: React.FC = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // Hook personalizado para navegación contextual
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { visibleNavigationItems, isHomePage } = usePublicNavigation({
         currentPath: location.pathname,
     });
@@ -35,7 +35,6 @@ export const PublicNavbar: React.FC = () => {
 
             <div className="px-4 sm:px-6 lg:px-8 w-full">
                 <div className="flex justify-between items-center h-32">
-                    {/* Logo */}
                     <Link
                         to="/"
                         className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
@@ -46,7 +45,6 @@ export const PublicNavbar: React.FC = () => {
                         </div>
                     </Link>
 
-                    {/* Desktop Navigation */}
                     <div className="hidden md:flex items-center space-x-8">
                         {visibleNavigationItems.map((item) => (
                             <Link
@@ -59,7 +57,6 @@ export const PublicNavbar: React.FC = () => {
                         ))}
                     </div>
 
-                    {/* Mobile menu button */}
                     <div className="md:hidden">
                         <button
                             onClick={toggleMobileMenu}
@@ -85,7 +82,6 @@ export const PublicNavbar: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Mobile Navigation Menu */}
                 {isMobileMenuOpen && (
                     <div className="md:hidden">
                         <div className="px-2 pt-2 pb-3 space-y-1 bg-slate-700 rounded-lg mt-2 mb-2">

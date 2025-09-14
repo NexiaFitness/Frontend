@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useRegisterMutation } from "@shared/api/authApi";
-import { loginSuccess, loginFailure } from "@shared/store/authSlice";
+import { loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { USER_ROLES } from "@shared/config/constants";
 import { validateRegisterForm } from "@shared/utils/validation";
@@ -31,6 +31,7 @@ interface RegisterFormData {
     nombre: string;
     apellidos: string;
     role: UserRole;
+    [key: string]: unknown;  
 }
 
 const initialFormState: RegisterFormData = {
@@ -39,7 +40,7 @@ const initialFormState: RegisterFormData = {
     confirmPassword: "",
     nombre: "",
     apellidos: "",
-    role: "" as UserRole,
+    role: USER_ROLES.TRAINER,  
 };
 
 // Opciones para el selector de roles - Solo registro público
@@ -91,8 +92,8 @@ export const RegisterForm: React.FC = () => {
                     email: formData.email
                 }
             });
-        } catch (error: any) {
-            const errorMessage = handleServerError(error);
+        } catch (error) { 
+            const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
             dispatch(loginFailure(errorMessage));
         }
     };

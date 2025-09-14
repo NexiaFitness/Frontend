@@ -11,14 +11,20 @@ import { useState } from "react";
 import { useDispatch } from "react-redux";
 import { clearError } from "@shared/store/authSlice";
 import type { AppDispatch } from "@shared/store";
-
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';  // ✅ AÑADIDO
 
 interface UseAuthFormProps<T> {
     initialState: T;
     validate: (formData: T) => { isValid: boolean; errors: Record<string, string> };
 }
 
-export function useAuthForm<T extends Record<string, any>>({
+// ✅ AÑADIDO: Tipo específico para errores RTK Query
+type RTKError = FetchBaseQueryError | {
+    status: number;
+    data?: { detail?: string; message?: string };
+};
+
+export function useAuthForm<T extends Record<string, unknown>>({  // ✅ YA CORREGIDO
     initialState,
     validate,
 }: UseAuthFormProps<T>) {
@@ -61,22 +67,30 @@ export function useAuthForm<T extends Record<string, any>>({
     };
 
     // handleServerError (extraído y mejorado de LoginForm)
-    const handleServerError = (error: any): string => {
+    const handleServerError = (error: RTKError): string => { 
         let errorMessage = "Error de conexión. Intenta de nuevo.";
 
-        // Mismos códigos que LoginForm + casos adicionales
-        if (error?.status === 401) {
-            errorMessage = "Correo o contraseña incorrectos";
-        } else if (error?.status === 409) {
-            errorMessage = "Este email ya está registrado";
-        } else if (error?.status === 422) {
-            errorMessage = "Datos inválidos. Verifica la información";
-        } else if (error?.status === 429) {
-            errorMessage = "Demasiados intentos. Espera un momento.";
-        } else if (error?.data?.detail) {
-            errorMessage = error.data.detail;
-        } else if (error?.data?.message) {
-            errorMessage = error.data.message;
+        // Type guard para manejar diferentes tipos de error
+        if ('status' in error) {
+            // Mismos códigos que LoginForm + casos adicionales
+            if (error.status === 401) {
+                errorMessage = "Correo o contraseña incorrectos";
+            } else if (error.status === 409) {
+                errorMessage = "Este email ya está registrado";
+            } else if (error.status === 422) {
+                errorMessage = "Datos inválidos. Verifica la información";
+            } else if (error.status === 429) {
+                errorMessage = "Demasiados intentos. Espera un momento.";
+            } else if ('data' in error && error.data) {
+                if (typeof error.data === 'object') {
+                    const data = error.data as { detail?: string; message?: string };
+                    if (data.detail) {
+                        errorMessage = data.detail;
+                    } else if (data.message) {
+                        errorMessage = data.message;
+                    }
+                }
+            }
         }
 
         setServerError(errorMessage);

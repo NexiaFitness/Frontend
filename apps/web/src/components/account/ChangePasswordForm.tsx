@@ -30,6 +30,7 @@ interface ChangePasswordFormData {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
+    [key: string]: unknown;  // ✅ AÑADIDO: Index signature para Record<string, unknown>
 }
 
 export const ChangePasswordForm: React.FC = () => {
@@ -73,8 +74,8 @@ export const ChangePasswordForm: React.FC = () => {
 
             // Clear success message after 3 seconds
             setTimeout(() => setSuccessMessage(null), 3000);
-        } catch (error: any) {
-            handleServerError(error);
+        } catch (error) {  
+            handleServerError(error as Parameters<typeof handleServerError>[0]);
         }
     };
 

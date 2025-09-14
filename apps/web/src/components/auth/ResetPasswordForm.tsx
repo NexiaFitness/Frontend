@@ -1,7 +1,8 @@
 /**
  * Formulario de reseteo de contraseña usando arquitectura reutilizable.
  * Usa useAuthForm hook + validation utilities + ServerErrorBanner.
- * Siguiendo mismos patrones que RegisterForm para consistencia.
+ * Sigue los mismos patrones que RegisterForm para consistencia.
+ * 
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -68,7 +69,6 @@ export const ResetPasswordForm: React.FC = () => {
         }
     }, [tokenFromUrl, handleServerError, setFormData]);
 
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -83,8 +83,8 @@ export const ResetPasswordForm: React.FC = () => {
 
             await resetPassword(resetData).unwrap();
             setIsPasswordReset(true);
-        } catch (error: any) {
-            handleServerError(error);
+        } catch (error) {
+            handleServerError(error as Parameters<typeof handleServerError>[0]);
         }
     };
 
@@ -185,7 +185,6 @@ export const ResetPasswordForm: React.FC = () => {
                         >
                             Tu enlace ha caducado. Solicita uno nuevo
                         </button>
-
                     </div>
 
                     <div className="text-sm text-gray-600">

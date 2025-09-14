@@ -13,6 +13,9 @@
  * - Trainer y Athlete: pueden editar su perfil y eliminar la cuenta.
  * - Admin: puede editar su perfil, pero no eliminar la cuenta (restricción).
  *
+ * Manejo de errores sin acoplar a @reduxjs/toolkit/query: guard local que
+ * detecta la forma { data?: { detail?: string } } y devuelve mensaje estable.
+ * 
  * @author Frontend Team
  * @since v1.0.0
  * @updated v2.3.0 - Dashboard-optimized design with glassmorphism cards
@@ -30,6 +33,18 @@ import type { AppDispatch } from "@shared/store";
 import type { UpdateAccountPayload } from "@shared/types/account";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { DeleteAccountModal } from "./modals/DeleteAccountModal";
+
+/** 
+ * Extrae un mensaje de error estable desde el shape típico de RTK Query:
+ * { data?: { detail?: string } }. Evita dependencias de tipos externos.
+ */
+const getServerErrorMessage = (err: unknown): string => {
+    if (typeof err === "object" && err !== null && "data" in err) {
+        const maybe = err as { data?: { detail?: string } };
+        return maybe?.data?.detail || "Error al actualizar la cuenta";
+    }
+    return "Error al actualizar la cuenta";
+};
 
 export const ProfileForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -92,11 +107,12 @@ export const ProfileForm: React.FC = () => {
             const updated = await updateAccount(formData).unwrap();
             dispatch(setCurrentUser(updated.user));
             setSuccessMessage("Perfil actualizado correctamente");
-            
+
             // Clear success message after 3 seconds
             setTimeout(() => setSuccessMessage(null), 3000);
-        } catch (err: any) {
-            setServerError(err?.data?.detail || "Error al actualizar la cuenta");
+        } catch (err) {
+            // ✅ Sin any y sin dependencia de tipos RTK en apps/web
+            setServerError(getServerErrorMessage(err));
         }
     };
 
@@ -212,15 +228,15 @@ export const ProfileForm: React.FC = () => {
                                     />
                                 </svg>
                             </div>
-                            
+
                             <h3 className="text-2xl font-bold text-slate-800 mb-4">Zona de Peligro</h3>
                             <p className="text-slate-600 mb-2 max-w-md mx-auto">
-                                Una vez eliminada tu cuenta, perderás acceso permanente a todos tus datos. 
+                                Una vez eliminada tu cuenta, perderás acceso permanente a todos tus datos.
                             </p>
                             <p className="text-sm text-red-600 font-medium mb-8">
                                 Esta acción no se puede deshacer.
                             </p>
-                            
+
                             <Button
                                 type="button"
                                 variant="danger"

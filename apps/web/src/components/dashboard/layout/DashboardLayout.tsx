@@ -3,8 +3,7 @@
  * Proporciona estructura base: fondo, overlays de loading/error, área de contenido.
  * 
  * Reglas:
- * - Usa createAsyncThunk (logout) para gestión profesional del cierre de sesión.
- * - Renderiza overlay de loading y errores de logout automáticamente.
+ * - Renderiza overlay de loading y errores automáticamente.
  * - NO renderiza SideMenu: cada dashboard específico renderiza su propio SideMenu.
  * - Acepta children: cada dashboard (Trainer, Athlete, Admin) define su contenido.
  * 
@@ -14,30 +13,16 @@
  */
 
 import React from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";  
 import { meshGradientInverted } from "@/utils/backgrounds";
-import { logout } from "@shared/store/authSlice";
-import type { AppDispatch, RootState } from "@shared/store";
+import type { RootState } from "@shared/store";  
 
 interface DashboardLayoutProps {
     children?: React.ReactNode;
 }
 
 export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) => {
-    const dispatch = useDispatch<AppDispatch>();
-    const navigate = useNavigate();
     const { isLoading, error } = useSelector((state: RootState) => state.auth);
-
-    const handleLogout = async () => {
-        try {
-            await dispatch(logout()).unwrap();
-            navigate("/auth/login", { replace: true });
-        } catch (logoutError) {
-            console.warn("Logout completed with warnings:", logoutError);
-            navigate("/auth/login", { replace: true });
-        }
-    };
 
     return (
         <div className="min-h-screen" style={{ background: meshGradientInverted }}>

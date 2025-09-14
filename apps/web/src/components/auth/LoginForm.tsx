@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useLoginMutation } from "@shared/api/authApi";
-import { loginSuccess, loginFailure, clearError } from "@shared/store/authSlice";
+import { loginSuccess, loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { validateLoginForm } from "@shared/utils/validation";
 import type { AppDispatch } from "@shared/store";
@@ -81,8 +81,8 @@ export const LoginForm: React.FC = () => {
             const redirectTo = location.state?.from || "/dashboard";
             navigate(redirectTo, { replace: true });
 
-        } catch (error: any) {
-            const errorMessage = handleServerError(error);
+        } catch (error) { 
+            const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
             dispatch(loginFailure(errorMessage));
         }
     };
