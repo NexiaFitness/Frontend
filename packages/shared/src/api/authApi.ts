@@ -48,12 +48,15 @@ export const authApi = baseApi.injectEndpoints({
             invalidatesTags: ["Auth", "User"],
         }),
 
-        // Forgot Password
+        // Forgot Password - CORREGIDO
         forgotPassword: builder.mutation<void, ForgotPasswordData>({
             query: (data) => ({
                 url: "/auth/forgot-password",
                 method: "POST",
                 body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
             }),
         }),
 
