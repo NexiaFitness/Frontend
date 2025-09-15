@@ -1,87 +1,93 @@
 # .github/workflows/deploy.yml
-# CI/CD Workflow para Nexia Frontend con Vercel
-# Deploy automático: develop → staging, main → production
+# CI/CD Pipeline para NEXIA Frontend
+# Deployment automático: develop → staging, main → production
+# 
+# @author Frontend Team
+# @since 2025-09-15
 
-name: Deploy Nexia Frontend
-
-# yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
+name: Deploy NEXIA Frontend
 
 on:
   push:
-    branches:
-      - develop
-      - main
+    branches: [develop, main]
   pull_request:
-    branches:
-      - develop
-      - main
+    branches: [develop, main]
+
+env:
+  NODE_VERSION: '22.19.0'
+  PNPM_VERSION: '10.15.0'
 
 jobs:
   build-and-test:
     name: Build and Test
     runs-on: ubuntu-latest
     
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.19.0'
-          
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: '10.15.0'
-          
-      - name: Get pnpm store directory
-        shell: bash
-        run: |
-          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
-          
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ env.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-            
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-        
-      - name: Build shared package
-        run: pnpm -F shared build
-        
-      - name: Type check web app
-        run: pnpm -F web tsc --noEmit
-        
-      - name: Lint web app
-        run: pnpm -F web lint
-        
-      - name: Build web app
-        run: pnpm -F web build
-        
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-files
-          path: |
-            apps/web/dist/
-            packages/shared/dist/
-
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: build-and-test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main')
+    outputs:
+      build-success: ${{ steps.build-check.outputs.success }}
     
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         
-      - name: Deploy to Vercel (Staging)
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          
+      - name: Setup Node.js with pnpm cache
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+          cache-dependency-path: 'pnpm-lock.yaml'
+            
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Build shared package
+        run: pnpm --filter shared build
+        
+      - name: Type check web application
+        run: pnpm --filter web exec tsc --noEmit
+        
+      - name: Lint web application
+        run: pnpm --filter web lint
+        
+      - name: Build web application
+        run: pnpm --filter web build
+        
+      - name: Verify build artifacts
+        id: build-check
+        run: |
+          if [ -d "apps/web/dist" ] && [ -f "apps/web/dist/index.html" ]; then
+            echo "success=true" >> $GITHUB_OUTPUT
+            echo "Build artifacts verified successfully"
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "Build artifacts missing or incomplete"
+            exit 1
+          fi
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexia-build-artifacts
+          path: |
+            apps/web/dist/
+            packages/shared/dist/
+          retention-days: 7
+
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.event_name == 'push' && needs.build-and-test.outputs.build-success == 'true'
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        
+      - name: Deploy to Vercel Staging
         if: github.ref == 'refs/heads/develop'
         uses: amondnet/vercel-action@v25
         with:
@@ -90,7 +96,7 @@ jobs:
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: ./
           
-      - name: Deploy to Vercel (Production)
+      - name: Deploy to Vercel Production
         if: github.ref == 'refs/heads/main'
         uses: amondnet/vercel-action@v25
         with:
