@@ -70,18 +70,13 @@ export const RegisterForm: React.FC = () => {
 
 const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("=== handleSubmit called ===");
-    
+
     const isValid = validateForm();
-    console.log("validateForm returned:", isValid);
-    console.log("errors after validateForm:", errors);
-    
+
     if (!isValid) {
-        console.log("Validation failed, returning early");
         return;
     }
-    
-    console.log("Validation passed, proceeding with API call");
+
     clearErrors();
 
     try {
