@@ -1,6 +1,6 @@
 /**
  * API de autenticación usando RTK Query
- * CORREGIDO: Formato form-urlencoded para login según backend FastAPI OAuth2
+ * CORREGIDO: Compatibilidad MSW + URLSearchParams en entorno testing
  * Define endpoints: login, register, forgotPassword, resetPassword, getCurrentUser
  * 
  * @author Frontend Team
@@ -17,17 +17,29 @@ import type {
     User,
 } from "../types/auth";
 
+// Helper para detectar entorno de testing
+const isTestEnvironment = typeof process !== 'undefined' && 
+    (process.env.NODE_ENV === 'test' || process.env.VITEST);
+
+// Helper para crear body de login compatible con MSW
+const createLoginBody = (credentials: LoginCredentials) => {
+    const params = new URLSearchParams({
+        username: credentials.username,
+        password: credentials.password,
+    });
+    
+    // MSW en Node.js requiere string serializado, browser acepta URLSearchParams nativo
+    return isTestEnvironment ? params.toString() : params;
+};
+
 export const authApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // Login - FastAPI OAuth2 requiere form-urlencoded
+        // Login - FastAPI OAuth2 con compatibilidad MSW
         login: builder.mutation<AuthResponse, LoginCredentials>({
             query: (credentials) => ({
                 url: "/auth/login",
                 method: "POST",
-                body: new URLSearchParams({
-                    username: credentials.username,
-                    password: credentials.password,
-                }),
+                body: createLoginBody(credentials),
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
@@ -35,7 +47,7 @@ export const authApi = baseApi.injectEndpoints({
             invalidatesTags: ["Auth", "User"],
         }),
 
-        // Registro - JSON format normal
+        // Registro - JSON format normal (sin cambios)
         register: builder.mutation<AuthResponse, RegisterCredentials>({
             query: (credentials) => ({
                 url: "/auth/register",
@@ -48,7 +60,7 @@ export const authApi = baseApi.injectEndpoints({
             invalidatesTags: ["Auth", "User"],
         }),
 
-        // Forgot Password - CORREGIDO
+        // Resto de endpoints sin cambios...
         forgotPassword: builder.mutation<void, ForgotPasswordData>({
             query: (data) => ({
                 url: "/auth/forgot-password",
@@ -60,7 +72,6 @@ export const authApi = baseApi.injectEndpoints({
             }),
         }),
 
-        // Reset Password
         resetPassword: builder.mutation<void, ResetPasswordData>({
             query: (data) => ({
                 url: "/auth/reset-password",
@@ -69,7 +80,6 @@ export const authApi = baseApi.injectEndpoints({
             }),
         }),
 
-        // Obtener usuario actual
         getCurrentUser: builder.query<User, void>({
             query: () => ({
                 url: "/auth/me",

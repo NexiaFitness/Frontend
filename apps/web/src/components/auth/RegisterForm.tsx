@@ -68,35 +68,45 @@ export const RegisterForm: React.FC = () => {
         validate: validateRegisterForm,
     });
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log("=== handleSubmit called ===");
+    
+    const isValid = validateForm();
+    console.log("validateForm returned:", isValid);
+    console.log("errors after validateForm:", errors);
+    
+    if (!isValid) {
+        console.log("Validation failed, returning early");
+        return;
+    }
+    
+    console.log("Validation passed, proceeding with API call");
+    clearErrors();
 
-        if (!validateForm()) return;
-        clearErrors();
+    try {
+        const credentials: RegisterCredentials = {
+            email: formData.email,
+            password: formData.password,
+            nombre: formData.nombre,
+            apellidos: formData.apellidos,
+            role: formData.role,
+        };
 
-        try {
-            const credentials: RegisterCredentials = {
-                email: formData.email,
-                password: formData.password,
-                nombre: formData.nombre,
-                apellidos: formData.apellidos,
-                role: formData.role,
-            };
+        await register(credentials).unwrap();
 
-            await register(credentials).unwrap();
-
-            // Redirigir a login con mensaje de éxito (backend no devuelve token en registro)
-            navigate("/auth/login", {
-                state: {
-                    message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
-                    email: formData.email
-                }
-            });
-        } catch (error) { 
-            const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
-            dispatch(loginFailure(errorMessage));
-        }
-    };
+        // Redirigir a login con mensaje de éxito (backend no devuelve token en registro)
+        navigate("/auth/login", {
+            state: {
+                message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
+                email: formData.email
+            }
+        });
+    } catch (error) {
+        const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
+        dispatch(loginFailure(errorMessage));
+    }
+};
 
     const handleLogin = () => {
         navigate("/auth/login");
