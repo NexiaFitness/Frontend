@@ -1,13 +1,13 @@
 /**
  * Hook personalizado reutilizable para formularios de autenticación
- * Extrae lógica común del LoginForm existente y la centraliza
+ * ARREGLADO: Funciones estables con useCallback para evitar infinite loops
  * Reutilizable en Web + React Native (lógica pura TypeScript)
  * 
  * @author Frontend Team  
  * @since v1.0.0
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { clearError } from "@shared/store/authSlice";
 import type { AppDispatch } from "@shared/store";
@@ -35,8 +35,8 @@ export function useAuthForm<T extends Record<string, unknown>>({
     const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
     const [serverError, setServerError] = useState<string | null>(null);
 
-    // Manejar cambios de inputs
-    const handleInputChange = (field: keyof T) => (
+    // FUNCIONES ESTABLES CON useCallback
+    const handleInputChange = useCallback((field: keyof T) => (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
         setFormData(prev => ({
@@ -44,39 +44,48 @@ export function useAuthForm<T extends Record<string, unknown>>({
             [field]: e.target.value,
         }));
 
-        if (errors[field]) {
-            setErrors(prev => ({
-                ...prev,
-                [field]: undefined,
-            }));
-        }
+        setErrors(prev => ({
+            ...prev,
+            [field]: undefined,
+        }));
 
-        if (serverError) {
-            setServerError(null);
-            dispatch(clearError(undefined));
-        }
-    };
+        setServerError(null);
+        dispatch(clearError(undefined));
+    }, [dispatch]);
 
     // Validar formulario
-    const validateForm = (): boolean => {
+    const validateForm = useCallback((): boolean => {
         const validation = validate(formData);
         setErrors(validation.errors as Partial<Record<keyof T, string>>);
         return validation.isValid;
-    };
+    }, [formData, validate]);
 
-    // Manejar errores de servidor (con prioridad a mensajes backend)
-    const handleServerError = (error: RTKError): string => {
+    // Manejar errores de servidor
+    const handleServerError = useCallback((error: RTKError): string => {
+        console.log("=== handleServerError DEBUG ===");
+        console.log("Error received:", error);
+        console.log("Error type:", typeof error);
+        console.log("Error has status:", "status" in error);
+
         let errorMessage = "Error de conexión. Intenta de nuevo.";
 
         if ("status" in error) {
+            console.log("Error status:", error.status);
+            console.log("Error data:", error.data);
+
             // 1. Si el backend manda mensaje → usarlo
             if ("data" in error && error.data) {
                 const data = error.data as { detail?: string; message?: string };
 
+                console.log("Backend data.detail:", data.detail);
+                console.log("Backend data.message:", data.message);
+
                 if (data.detail) {
                     errorMessage = data.detail;
+                    console.log("Using backend detail message:", data.detail);
                 } else if (data.message) {
                     errorMessage = data.message;
+                    console.log("Using backend message:", data.message);
                 }
             }
 
@@ -94,22 +103,37 @@ export function useAuthForm<T extends Record<string, unknown>>({
             }
         }
 
+        console.log("Using backend provided message:", errorMessage);
+        console.log("Final error message:", errorMessage);
+
         setServerError(errorMessage);
         return errorMessage;
-    };
+    }, []);
 
     // Limpiar errores
-    const clearErrors = (): void => {
+    const clearErrors = useCallback((): void => {
         setServerError(null);
         dispatch(clearError(undefined));
-    };
+    }, [dispatch]);
 
     // Reset del formulario
-    const resetForm = (): void => {
+    const resetForm = useCallback((): void => {
         setFormData(initialState);
         setErrors({});
         setServerError(null);
-    };
+    }, [initialState]);
+
+    // setFormData estable con useCallback
+    const stableSetFormData = useCallback((
+        updater: T | ((prev: T) => T)
+    ) => {
+        setFormData(updater);
+    }, []);
+
+    // setServerError estable con useCallback  
+    const stableSetServerError = useCallback((error: string | null) => {
+        setServerError(error);
+    }, []);
 
     return {
         formData,
@@ -123,7 +147,8 @@ export function useAuthForm<T extends Record<string, unknown>>({
         clearErrors,
         resetForm,
 
-        setFormData,
-        setServerError,
+        // Funciones estables
+        setFormData: stableSetFormData,
+        setServerError: stableSetServerError,
     };
 }

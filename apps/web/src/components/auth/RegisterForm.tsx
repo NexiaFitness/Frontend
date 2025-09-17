@@ -31,7 +31,7 @@ interface RegisterFormData {
     nombre: string;
     apellidos: string;
     role: UserRole;
-    [key: string]: unknown;  
+    [key: string]: unknown;
 }
 
 const initialFormState: RegisterFormData = {
@@ -40,7 +40,7 @@ const initialFormState: RegisterFormData = {
     confirmPassword: "",
     nombre: "",
     apellidos: "",
-    role: USER_ROLES.TRAINER,  
+    role: USER_ROLES.TRAINER,
 };
 
 // Opciones para el selector de roles - Solo registro público
@@ -68,40 +68,40 @@ export const RegisterForm: React.FC = () => {
         validate: validateRegisterForm,
     });
 
-const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
 
-    const isValid = validateForm();
+        const isValid = validateForm();
 
-    if (!isValid) {
-        return;
-    }
+        if (!isValid) {
+            return;
+        }
 
-    clearErrors();
+        clearErrors();
 
-    try {
-        const credentials: RegisterCredentials = {
-            email: formData.email,
-            password: formData.password,
-            nombre: formData.nombre,
-            apellidos: formData.apellidos,
-            role: formData.role,
-        };
+        try {
+            const credentials: RegisterCredentials = {
+                email: formData.email,
+                password: formData.password,
+                nombre: formData.nombre,
+                apellidos: formData.apellidos,
+                role: formData.role,
+            };
 
-        await register(credentials).unwrap();
+            await register(credentials).unwrap();
 
-        // Redirigir a login con mensaje de éxito (backend no devuelve token en registro)
-        navigate("/auth/login", {
-            state: {
-                message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
-                email: formData.email
-            }
-        });
-    } catch (error) {
-        const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
-        dispatch(loginFailure(errorMessage));
-    }
-};
+            // Redirigir a login con mensaje de éxito (backend no devuelve token en registro)
+            navigate("/auth/login", {
+                state: {
+                    message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
+                    email: formData.email
+                }
+            });
+        } catch (error) {
+            const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
+            dispatch(loginFailure(errorMessage));
+        }
+    };
 
     const handleLogin = () => {
         navigate("/auth/login");
@@ -118,7 +118,8 @@ const handleSubmit = async (e: React.FormEvent) => {
 
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
                 <Input
                     type="email"
                     label="Correo electrónico"

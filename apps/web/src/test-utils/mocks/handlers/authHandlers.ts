@@ -1,33 +1,68 @@
 /**
  * Handlers de MSW para endpoints de autenticación
- * Centraliza respuestas de éxito y error para los tests
+ * 
+ * Este archivo centraliza las respuestas simuladas (mocks) para los tests
+ * relacionados con login, registro, forgot-password y reset-password.
+ * 
+ * Los payloads de respuesta se han alineado con los devueltos por el backend real,
+ * para que las pruebas en local reproduzcan fielmente el comportamiento en producción.
  *
  * @since v1.0.0
  */
+
 import { http, HttpResponse } from "msw"
 
 export const authHandlers = [
-    // Login exitoso (por defecto)
-    http.post("https://nexiaapp.com/api/v1/auth/login", async () => {
-        return HttpResponse.json({
-            access_token: "fake-token",
-            user: { id: 1, email: "test@example.com" },
-        })
+    // Login exitoso
+    http.post("*/auth/login", async () => {
+        return HttpResponse.json(
+            {
+                access_token: "fake-token",
+                token_type: "bearer",
+                user: { id: 1, email: "test@example.com" },
+            },
+            { status: 200 }
+        )
     }),
 
     // Registro exitoso
-    http.post("https://nexiaapp.com/api/v1/auth/register", async () => {
+    http.post("*/auth/register", async () => {
         return HttpResponse.json(
-            { message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales." },
+            {
+                message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
+            },
             { status: 201 }
         )
     }),
 
-    // Recuperar contraseña
-    http.post("https://nexiaapp.com/api/v1/auth/forgot-password", async () => {
+    // Recuperar contraseña (forgot password)
+    http.post("*/auth/forgot-password", async () => {
         return HttpResponse.json(
-            { message: "Se ha enviado un correo para restablecer tu contraseña." },
+            {
+                message: "If the email exists, a reset link has been sent.",
+            },
             { status: 200 }
+        )
+    }),
+
+    // Resetear contraseña (reset password) - éxito
+    http.post("*/auth/reset-password", async () => {
+        return HttpResponse.json(
+            {
+                message: "Password reset successful",
+            },
+            { status: 200 }
+        )
+    }),
+
+    // Resetear contraseña (reset password) - token inválido
+    http.post("*/auth/reset-password-invalid", async () => {
+        return HttpResponse.json(
+            {
+                detail: "Invalid or expired token",
+                status_code: 401,
+            },
+            { status: 401 }
         )
     }),
 ]
