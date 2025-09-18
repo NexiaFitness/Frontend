@@ -14,9 +14,8 @@ import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
 import { DeleteAccountModal } from "../DeleteAccountModal"
 
-// Mock del Button component (tipado compatible con hoisting de vi.mock)
-vi.mock("@/components/ui/buttons", () => {
-    const ReactMod = require("react") as typeof import("react")
+vi.mock("@/components/ui/buttons", async () => {
+    const ReactMod = await import("react")
 
     type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
         variant?: string
@@ -41,6 +40,7 @@ vi.mock("@/components/ui/buttons", () => {
 
     return { Button: MockButton }
 })
+
 
 
 // Mock configuration with dynamic loading state
