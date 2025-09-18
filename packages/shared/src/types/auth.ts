@@ -43,7 +43,7 @@ export interface ForgotPasswordData {
 
 export interface ResetPasswordData {
     token: string;
-    password: string;    // Simplificado, mantenemos consistencia
+     new_password: string;    // Simplificado, mantenemos consistencia
 }
 
 // API Response Types - CORREGIDO según respuesta real del backend

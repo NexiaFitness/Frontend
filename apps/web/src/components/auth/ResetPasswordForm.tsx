@@ -74,7 +74,7 @@ export const ResetPasswordForm: React.FC = () => {
         try {
             const resetData: ResetPasswordData = {
                 token: formData.token,
-                password: formData.newPassword,
+                new_password: formData.newPassword,
             };
 
             await resetPassword(resetData).unwrap();
