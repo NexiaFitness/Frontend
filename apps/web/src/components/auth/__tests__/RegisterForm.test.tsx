@@ -8,7 +8,6 @@
  * @since v1.0.0
  */
 
-import React from "react"
 import { screen, waitFor } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
