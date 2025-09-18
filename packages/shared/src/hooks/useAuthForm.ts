@@ -1,42 +1,42 @@
 /**
  * Hook personalizado reutilizable para formularios de autenticación
- * Extrae lógica común del LoginForm existente y la centraliza
+ * ARREGLADO: Funciones estables con useCallback para evitar infinite loops
  * Reutilizable en Web + React Native (lógica pura TypeScript)
  * 
  * @author Frontend Team  
  * @since v1.0.0
  */
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import { clearError } from "@shared/store/authSlice";
 import type { AppDispatch } from "@shared/store";
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';  // ✅ AÑADIDO
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 interface UseAuthFormProps<T> {
     initialState: T;
     validate: (formData: T) => { isValid: boolean; errors: Record<string, string> };
 }
 
-// ✅ AÑADIDO: Tipo específico para errores RTK Query
+// Tipo específico para errores RTK Query
 type RTKError = FetchBaseQueryError | {
     status: number;
     data?: { detail?: string; message?: string };
 };
 
-export function useAuthForm<T extends Record<string, unknown>>({  // ✅ YA CORREGIDO
+export function useAuthForm<T extends Record<string, unknown>>({ 
     initialState,
     validate,
 }: UseAuthFormProps<T>) {
     const dispatch = useDispatch<AppDispatch>();
 
-    // Estado del formulario (extraído de LoginForm)
+    // Estado del formulario
     const [formData, setFormData] = useState<T>(initialState);
     const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
     const [serverError, setServerError] = useState<string | null>(null);
 
-    // handleInputChange (extraído exacto de LoginForm)
-    const handleInputChange = (field: keyof T) => (
+    // FUNCIONES ESTABLES CON useCallback
+    const handleInputChange = useCallback((field: keyof T) => (
         e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
     ) => {
         setFormData(prev => ({
@@ -44,89 +44,111 @@ export function useAuthForm<T extends Record<string, unknown>>({  // ✅ YA CORR
             [field]: e.target.value,
         }));
 
-        // Limpiar errores cuando usuario escribe (mismo patrón LoginForm)
-        if (errors[field]) {
-            setErrors(prev => ({
-                ...prev,
-                [field]: undefined,
-            }));
-        }
+        setErrors(prev => ({
+            ...prev,
+            [field]: undefined,
+        }));
 
-        // Limpiar error de servidor cuando usuario escribe (mismo patrón LoginForm)
-        if (serverError) {
-            setServerError(null);
-            dispatch(clearError(undefined));
-        }
-    };
+        setServerError(null);
+        dispatch(clearError(undefined));
+    }, [dispatch]);
 
-    // Validar formulario usando función externa
-    const validateForm = (): boolean => {
+    // Validar formulario
+    const validateForm = useCallback((): boolean => {
         const validation = validate(formData);
         setErrors(validation.errors as Partial<Record<keyof T, string>>);
         return validation.isValid;
-    };
+    }, [formData, validate]);
 
-    // handleServerError (extraído y mejorado de LoginForm)
-    const handleServerError = (error: RTKError): string => { 
+    // Manejar errores de servidor
+    const handleServerError = useCallback((error: RTKError): string => {
+        console.log("=== handleServerError DEBUG ===");
+        console.log("Error received:", error);
+        console.log("Error type:", typeof error);
+        console.log("Error has status:", "status" in error);
+
         let errorMessage = "Error de conexión. Intenta de nuevo.";
 
-        // Type guard para manejar diferentes tipos de error
-        if ('status' in error) {
-            // Mismos códigos que LoginForm + casos adicionales
-            if (error.status === 401) {
-                errorMessage = "Correo o contraseña incorrectos";
-            } else if (error.status === 409) {
-                errorMessage = "Este email ya está registrado";
-            } else if (error.status === 422) {
-                errorMessage = "Datos inválidos. Verifica la información";
-            } else if (error.status === 429) {
-                errorMessage = "Demasiados intentos. Espera un momento.";
-            } else if ('data' in error && error.data) {
-                if (typeof error.data === 'object') {
-                    const data = error.data as { detail?: string; message?: string };
-                    if (data.detail) {
-                        errorMessage = data.detail;
-                    } else if (data.message) {
-                        errorMessage = data.message;
-                    }
+        if ("status" in error) {
+            console.log("Error status:", error.status);
+            console.log("Error data:", error.data);
+
+            // 1. Si el backend manda mensaje → usarlo
+            if ("data" in error && error.data) {
+                const data = error.data as { detail?: string; message?: string };
+
+                console.log("Backend data.detail:", data.detail);
+                console.log("Backend data.message:", data.message);
+
+                if (data.detail) {
+                    errorMessage = data.detail;
+                    console.log("Using backend detail message:", data.detail);
+                } else if (data.message) {
+                    errorMessage = data.message;
+                    console.log("Using backend message:", data.message);
+                }
+            }
+
+            // 2. Si no había mensaje → fallback por código
+            if (errorMessage === "Error de conexión. Intenta de nuevo.") {
+                if (error.status === 401) {
+                    errorMessage = "Correo o contraseña incorrectos";
+                } else if (error.status === 409) {
+                    errorMessage = "Este email ya está registrado";
+                } else if (error.status === 422) {
+                    errorMessage = "Datos inválidos. Verifica la información";
+                } else if (error.status === 429) {
+                    errorMessage = "Demasiados intentos. Espera un momento.";
                 }
             }
         }
 
+        console.log("Using backend provided message:", errorMessage);
+        console.log("Final error message:", errorMessage);
+
         setServerError(errorMessage);
         return errorMessage;
-    };
+    }, []);
 
-    // Limpiar errores (utilidad adicional)
-    const clearErrors = (): void => {
+    // Limpiar errores
+    const clearErrors = useCallback((): void => {
         setServerError(null);
         dispatch(clearError(undefined));
-    };
+    }, [dispatch]);
 
-    // Reset formulario (utilidad adicional)
-    const resetForm = (): void => {
+    // Reset del formulario
+    const resetForm = useCallback((): void => {
         setFormData(initialState);
         setErrors({});
         setServerError(null);
-    };
+    }, [initialState]);
+
+    // setFormData estable con useCallback
+    const stableSetFormData = useCallback((
+        updater: T | ((prev: T) => T)
+    ) => {
+        setFormData(updater);
+    }, []);
+
+    // setServerError estable con useCallback  
+    const stableSetServerError = useCallback((error: string | null) => {
+        setServerError(error);
+    }, []);
 
     return {
-        // Estado
         formData,
         errors,
         serverError,
 
-        // Funciones principales
         handleInputChange,
         validateForm,
         handleServerError,
 
-        // Utilidades
         clearErrors,
         resetForm,
 
-        // Setters directos (por si se necesitan)
-        setFormData,
-        setServerError,
+        // Funciones estables
+        setFormData: stableSetFormData,
+        setServerError: stableSetServerError,
     };
 }

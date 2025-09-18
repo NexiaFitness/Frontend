@@ -13,7 +13,7 @@
  * @since v1.0.0
  */
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, useId } from "react";
 import clsx from "clsx";
 
 export type InputType = "text" | "email" | "password";
@@ -42,7 +42,6 @@ const stateStyles = {
 };
 
 const labelStyles = "block text-sm font-medium text-gray-600 mb-1";
-
 const errorStyles = "mt-1 text-sm text-red-600 dark:text-red-400";
 const helperStyles = "mt-1 text-sm text-gray-500 dark:text-gray-400";
 
@@ -56,16 +55,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             isRequired = false,
             helperText,
             className = "",
+            id,
             ...props
         },
         ref
     ) => {
+        const autoId = useId();
+        const inputId =
+            id || (label ? `${label.toLowerCase().replace(/\s+/g, "-")}-${autoId}` : autoId);
+
         const hasError = Boolean(error);
 
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={props.id} className={labelStyles}>
+                    <label htmlFor={inputId} className={labelStyles}>
                         {label}
                         {isRequired && <span className="text-white ml-1">*</span>}
                     </label>
@@ -73,6 +77,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
                 <input
                     ref={ref}
+                    id={inputId}
                     type={type}
                     className={clsx(
                         baseStyles,
@@ -83,9 +88,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     {...props}
                 />
 
-                {error && <p className={errorStyles}>{error}</p>}
-
-                {!error && helperText && <p className={helperStyles}>{helperText}</p>}
+                {/* Mostramos error si existe, siempre fuera del input */}
+                {hasError ? (
+                    <p className={errorStyles} data-testid="input-error">
+                        {error}
+                    </p>
+                ) : (
+                    helperText && <p className={helperStyles}>{helperText}</p>
+                )}
             </div>
         );
     }

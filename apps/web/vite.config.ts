@@ -1,4 +1,11 @@
-import { defineConfig } from "vite";
+/**
+ * Vite Configuration - Setup para desarrollo y testing
+ * 
+ * Configuración combinada para Vite + Vitest que incluye aliases,
+ * optimizaciones y setup de testing environment.
+ */
+
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import path from "path";
 
@@ -12,5 +19,11 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: ["react", "react-dom"],
+  },
+  // TypeScript reconocerá la propiedad 'test'
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['./src/test-utils/setup.ts'],
   },
 });

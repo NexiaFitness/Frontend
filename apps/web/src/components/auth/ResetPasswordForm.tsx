@@ -1,8 +1,7 @@
 /**
  * Formulario de reseteo de contraseña usando arquitectura reutilizable.
+ * ARREGLADO: useEffect con dependencias estables del hook corregido
  * Usa useAuthForm hook + validation utilities + ServerErrorBanner.
- * Sigue los mismos patrones que RegisterForm para consistencia.
- * 
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -53,13 +52,10 @@ export const ResetPasswordForm: React.FC = () => {
         validate: validateResetPasswordForm,
     });
 
-    // Validar que hay token al cargar
+    // useEffect AHORA ES SEGURO con funciones estables
     React.useEffect(() => {
         if (!tokenFromUrl) {
-            // 🔹 Log solo para desarrolladores
             console.error("[ResetPasswordForm] Falta token en la URL. No se puede proceder al reseteo.");
-
-            // 🔹 Mensaje claro para el usuario final
             handleServerError({
                 status: 400,
                 data: { detail: "El enlace de recuperación no es válido. Solicita uno nuevo para continuar." }
@@ -67,7 +63,7 @@ export const ResetPasswordForm: React.FC = () => {
         } else {
             setFormData(prev => ({ ...prev, token: tokenFromUrl }));
         }
-    }, [tokenFromUrl, handleServerError, setFormData]);
+    }, [tokenFromUrl, handleServerError, setFormData]); // ✅ Ahora son estables
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();

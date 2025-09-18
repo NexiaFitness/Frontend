@@ -31,7 +31,7 @@ interface RegisterFormData {
     nombre: string;
     apellidos: string;
     role: UserRole;
-    [key: string]: unknown;  
+    [key: string]: unknown;
 }
 
 const initialFormState: RegisterFormData = {
@@ -40,7 +40,7 @@ const initialFormState: RegisterFormData = {
     confirmPassword: "",
     nombre: "",
     apellidos: "",
-    role: USER_ROLES.TRAINER,  
+    role: USER_ROLES.TRAINER,
 };
 
 // Opciones para el selector de roles - Solo registro público
@@ -71,7 +71,12 @@ export const RegisterForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!validateForm()) return;
+        const isValid = validateForm();
+
+        if (!isValid) {
+            return;
+        }
+
         clearErrors();
 
         try {
@@ -92,7 +97,7 @@ export const RegisterForm: React.FC = () => {
                     email: formData.email
                 }
             });
-        } catch (error) { 
+        } catch (error) {
             const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
             dispatch(loginFailure(errorMessage));
         }
@@ -113,7 +118,8 @@ export const RegisterForm: React.FC = () => {
 
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
                 <Input
                     type="email"
                     label="Correo electrónico"

@@ -118,7 +118,8 @@ export const LoginForm: React.FC = () => {
             {/* Banner de error del servidor */}
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+
                 <Input
                     type="email"
                     label="Correo electrónico"

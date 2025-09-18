@@ -4,11 +4,16 @@
  * Usado para selección de roles, países, categorías, etc.
  * Armonizado con clases y comportamiento idénticos a Input component
  *
+ * Ajustes de accesibilidad y legibilidad:
+ * - Asociación automática label → select con id seguro
+ * - Placeholder visible en gris, valor seleccionado en gris oscuro
+ * - Estados de validación y mensajes de error consistentes
+ *
  * @author Frontend Team
  * @since v2.0.0
  */
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, useId } from "react";
 import clsx from "clsx";
 
 export type SelectSize = "sm" | "md" | "lg";
@@ -19,7 +24,8 @@ export interface SelectOption {
     disabled?: boolean;
 }
 
-interface FormSelectProps extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "size"> {
+interface FormSelectProps
+    extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, "size"> {
     size?: SelectSize;
     label?: string;
     error?: string;
@@ -48,36 +54,48 @@ const errorStyles = "mt-1 text-sm text-red-600 dark:text-red-400";
 const helperStyles = "mt-1 text-sm text-gray-500 dark:text-gray-400";
 
 export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
-    ({ 
-        size = "md", 
-        label, 
-        error, 
-        isRequired = false, 
-        helperText, 
-        options,
-        placeholder,
-        className = "",
-        value,
-        ...props 
-    }, ref) => {
+    (
+        {
+            size = "md",
+            label,
+            error,
+            isRequired = false,
+            helperText,
+            options,
+            placeholder,
+            className = "",
+            value,
+            ...props
+        },
+        ref
+    ) => {
         const hasError = Boolean(error);
-        const hasValue = value !== "" && value !== undefined && value !== null;
-        
+        const hasValue =
+            value !== "" && value !== undefined && value !== null;
+
+        // Generar id único y consistente para accesibilidad
+        const autoId = useId();
+        const selectId =
+            props.id ||
+            (label
+                ? `${label.toLowerCase().replace(/\s+/g, "-")}-${autoId}`
+                : autoId);
+
         // Color dinámico: gris claro para placeholder, gris oscuro para valor seleccionado
-        // Idéntico comportamiento a Input con placeholder vs texto
         const textColorClass = hasValue ? "text-gray-900" : "text-gray-400";
 
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={props.id} className={labelStyles}>
+                    <label htmlFor={selectId} className={labelStyles}>
                         {label}
                         {isRequired && <span className="text-white ml-1">*</span>}
                     </label>
                 )}
-                
+
                 <select
                     ref={ref}
+                    id={selectId}
                     value={value}
                     className={clsx(
                         baseStyles,
