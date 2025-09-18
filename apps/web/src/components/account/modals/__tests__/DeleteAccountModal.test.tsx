@@ -14,20 +14,34 @@ import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
 import { DeleteAccountModal } from "../DeleteAccountModal"
 
-// Mock del Button component
-vi.mock("@/components/ui/buttons", () => ({
-    Button: React.forwardRef<HTMLButtonElement, any>(({ children, onClick, variant, className, disabled, isLoading, ...props }, ref) => (
-        <button
-            ref={ref}
-            onClick={onClick}
-            className={`btn-${variant} ${className}`}
-            disabled={disabled || isLoading}
-            {...props}
-        >
-            {isLoading ? "Eliminando..." : children}
-        </button>
-    ))
-}))
+// Mock del Button component (tipado compatible con hoisting de vi.mock)
+vi.mock("@/components/ui/buttons", () => {
+    const ReactMod = require("react") as typeof import("react")
+
+    type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
+        variant?: string
+        isLoading?: boolean
+    }
+
+    const MockButton = ReactMod.forwardRef<HTMLButtonElement, ButtonProps>(
+        ({ children, onClick, variant, className, disabled, isLoading, ...props }, ref) => (
+            <button
+                ref={ref}
+                onClick={onClick}
+                className={`btn-${variant ?? "default"} ${className ?? ""}`}
+                disabled={Boolean(disabled || isLoading)}
+                {...props}
+            >
+                {isLoading ? "Eliminando..." : children}
+            </button>
+        )
+    )
+
+    MockButton.displayName = "MockButton"
+
+    return { Button: MockButton }
+})
+
 
 // Mock configuration with dynamic loading state
 const mockDeleteAccount = vi.fn(() => ({
@@ -97,11 +111,11 @@ describe("DeleteAccountModal", () => {
 
             // Check for name as strong text
             expect(screen.getByText("John Doe")).toBeInTheDocument()
-            
+
             // Check for email within the paragraph context - use more flexible selector
             const descriptionElement = screen.getByText(/¿Estás seguro de que quieres eliminar tu cuenta/)
             expect(descriptionElement.textContent).toContain("john@example.com")
-            
+
             // Verify separator is present
             expect(descriptionElement.textContent).toContain("·")
         })
@@ -180,7 +194,7 @@ describe("DeleteAccountModal", () => {
 
         it("handles deletion error gracefully", async () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => { })
-            
+
             // Mock error for this test
             mockDeleteAccount.mockReturnValueOnce({
                 unwrap: vi.fn().mockRejectedValue(new Error("Network error"))
@@ -217,7 +231,7 @@ describe("DeleteAccountModal", () => {
         it("does not close on Escape when loading", async () => {
             // Set loading state before render
             setMockLoading(true)
-            
+
             const onClose = vi.fn()
             const user = userEvent.setup()
 
@@ -242,7 +256,7 @@ describe("DeleteAccountModal", () => {
         it("shows loading text on delete button when loading", () => {
             // Set loading state before render
             setMockLoading(true)
-            
+
             render(<DeleteAccountModal {...defaultProps} />)
 
             expect(screen.getByText("Eliminando...")).toBeInTheDocument()
@@ -251,7 +265,7 @@ describe("DeleteAccountModal", () => {
         it("disables buttons when loading", () => {
             // Set loading state before render
             setMockLoading(true)
-            
+
             render(<DeleteAccountModal {...defaultProps} />)
 
             const cancelButton = screen.getByRole("button", { name: "Cancelar" })
@@ -264,7 +278,7 @@ describe("DeleteAccountModal", () => {
         it("prevents backdrop click when loading", async () => {
             // Set loading state before render
             setMockLoading(true)
-            
+
             const onClose = vi.fn()
             const user = userEvent.setup()
 

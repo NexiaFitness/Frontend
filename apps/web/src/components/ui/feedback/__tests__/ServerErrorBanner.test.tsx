@@ -8,7 +8,6 @@
  * @since v1.0.0
  */
 
-import React from "react"
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
@@ -204,7 +203,7 @@ describe("ServerErrorBanner", () => {
 
     describe("Edge Cases", () => {
         it("handles undefined error gracefully", () => {
-            const { container } = render(<ServerErrorBanner error={undefined as any} />)
+            const { container } = render(<ServerErrorBanner error={undefined} />)
 
             expect(container.firstChild).toBeNull()
         })

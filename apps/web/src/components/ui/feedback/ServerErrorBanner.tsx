@@ -10,7 +10,7 @@
 import React from "react";
 
 interface ServerErrorBannerProps {
-    error: string | null;
+    error?: string | null; 
     onDismiss?: () => void;
 }
 

@@ -14,6 +14,7 @@ import { screen } from "@testing-library/react"
 import { vi } from "vitest"
 import { render } from "@/test-utils/render"
 import { ProtectedRoute } from "../ProtectedRoute"
+import type { RootState } from "@shared/store"   // ✅ Importamos RootState real
 
 // --- Mocks ---
 const mockNavigate = vi.fn()
@@ -32,16 +33,19 @@ vi.mock("react-router-dom", async () => {
     }
 })
 
-// Mock react-redux
+// Estado simulado de auth
 let mockAuthState: { isAuthenticated: boolean; token: string | null } = {
     isAuthenticated: false,
     token: null,
 }
+
+// Mock react-redux
 vi.mock("react-redux", async () => {
     const actual = await vi.importActual<typeof import("react-redux")>("react-redux")
     return {
         ...actual,
-        useSelector: (fn: any) => fn({ auth: mockAuthState }),
+        useSelector: (fn: (state: RootState) => unknown) =>
+            fn({ auth: mockAuthState } as RootState), // ✅ Tipado profesional
     }
 })
 

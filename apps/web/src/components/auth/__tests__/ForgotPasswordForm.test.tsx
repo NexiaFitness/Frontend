@@ -314,42 +314,38 @@ describe("ForgotPasswordForm", () => {
         })
     })
 
-    describe("Loading States", () => {
-        it("shows loading state during API request", async () => {
-            let resolveRequest: (value: any) => void
-            const requestPromise = new Promise((resolve) => {
-                resolveRequest = resolve
+    it("shows loading state during API request", async () => {
+        let resolveRequest: (value: { message: string }) => void
+        const requestPromise = new Promise<{ message: string }>((resolve) => {
+            resolveRequest = resolve
+        })
+
+        server.use(
+            http.post("https://nexiaapp.com/api/v1/auth/forgot-password", async () => {
+                await requestPromise
+                return HttpResponse.json({ message: "Success" }, { status: 200 })
             })
+        )
 
-            server.use(
-                http.post("https://nexiaapp.com/api/v1/auth/forgot-password", async () => {
-                    await requestPromise
-                    return HttpResponse.json({ message: "Success" }, { status: 200 })
-                })
-            )
+        const user = userEvent.setup()
+        render(<ForgotPasswordForm />)
 
-            const user = userEvent.setup()
-            render(<ForgotPasswordForm />)
+        await user.type(screen.getByLabelText(/correo electrónico/i), "loading@example.com")
+        await user.click(screen.getByRole("button", { name: /enviar enlace/i }))
 
-            await user.type(screen.getByLabelText(/correo electrónico/i), "loading@example.com")
-            await user.click(screen.getByRole("button", { name: /enviar enlace/i }))
+        // Should show loading state  
+        expect(screen.getByText(/cargando.../i)).toBeInTheDocument()
+        expect(screen.getByRole("button", { name: /cargando.../i })).toBeDisabled()
 
-            // Should show loading state  
-            expect(screen.getByText(/cargando.../i))
-                .toBeInTheDocument()
-            expect(screen.getByRole("button", { name: /cargando.../i }))
-                .toBeDisabled()
+        // Should disable form elements during loading
+        expect(screen.getByLabelText(/correo electrónico/i)).toBeDisabled()
 
-            // Should disable form elements during loading
-            expect(screen.getByLabelText(/correo electrónico/i))
-                .toBeDisabled()
+        // Resolve request to cleanup
+        resolveRequest!({ message: "Success" })
 
-            // Resolve request to cleanup
-            resolveRequest!({ message: "Success" })
-
-            await waitFor(() => {
-                expect(screen.getByText(/correo enviado/i)).toBeInTheDocument()
-            })
+        await waitFor(() => {
+            expect(screen.getByText(/correo enviado/i)).toBeInTheDocument()
         })
     })
+
 })
