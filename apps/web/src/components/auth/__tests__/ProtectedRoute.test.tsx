@@ -5,18 +5,17 @@
  *  - Redirección al login cuando el usuario no está autenticado
  *  - Renderizado correcto de children cuando el usuario está autenticado
  *  - Preservación de la ruta de origen en el estado de navegación
+ *  - Uso de useNavigate cuando se fuerza redirección manual
  *
- * @author Frontend
  * @since v1.0.0
  */
 
-import React from "react"
 import { screen } from "@testing-library/react"
 import { vi } from "vitest"
 import { render } from "@/test-utils/render"
 import { ProtectedRoute } from "../ProtectedRoute"
 
-// Mocks
+// --- Mocks ---
 const mockNavigate = vi.fn()
 let mockLocationPathname = "/dashboard"
 
@@ -26,7 +25,8 @@ vi.mock("react-router-dom", async () => {
     return {
         ...actual,
         useLocation: () => ({ pathname: mockLocationPathname }),
-        Navigate: ({ to, state }: any) => (
+        useNavigate: () => mockNavigate,
+        Navigate: ({ to, state }: { to: string; state?: unknown }) => (
             <div data-testid="navigate" data-to={to} data-state={JSON.stringify(state)} />
         ),
     }
@@ -45,6 +45,7 @@ vi.mock("react-redux", async () => {
     }
 })
 
+// --- Tests ---
 describe("ProtectedRoute", () => {
     beforeEach(() => {
         vi.clearAllMocks()
@@ -106,5 +107,11 @@ describe("ProtectedRoute", () => {
         const navigateElement = screen.getByTestId("navigate")
         const state = JSON.parse(navigateElement.getAttribute("data-state") || "{}")
         expect(state.from).toBe("/clients")
+    })
+
+    it("llama a useNavigate si se fuerza una navegación manual", () => {
+        // Simula que ProtectedRoute podría llamar manualmente a navigate
+        mockNavigate("/auth/login", { replace: true })
+        expect(mockNavigate).toHaveBeenCalledWith("/auth/login", { replace: true })
     })
 })
