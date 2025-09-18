@@ -4,20 +4,21 @@
  * Mock centralizado de react-router-dom en entorno de testing.
  * Permite controlar navegación y localización sin un router real.
  *
- * @since v1.0.0
+ * @since v1.0.1
  */
 
 import React from "react"
 import { vi } from "vitest"
+import type { Location } from "react-router-dom"
 
 export const mockNavigate = vi.fn()
 export let mockLocationPathname = "/"
-export let mockLocationState: Record<string, any> = {} // siempre un objeto, nunca null/undefined
+export let mockLocationState: Location["state"] = null // tipado real de React Router
 
 // Helper para configurar la localización mockeada
 export const setMockLocation = (
   pathname: string,
-  state: Record<string, any> = {}
+  state: Location["state"] = null
 ) => {
   mockLocationPathname = pathname
   mockLocationState = state
@@ -32,7 +33,7 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useLocation: () => ({
+    useLocation: (): Location => ({
       pathname: mockLocationPathname,
       state: mockLocationState,
       search: "",
@@ -40,7 +41,7 @@ vi.mock("react-router-dom", async () => {
       key: "default",
     }),
     // Mock de Navigate: devolvemos un <div> en vez del componente real
-    Navigate: ({ to, state }: { to: string; state?: any }) =>
+    Navigate: ({ to, state }: { to: string; state?: Location["state"] }) =>
       React.createElement("div", {
         "data-testid": "navigate",
         "data-to": to,
@@ -54,5 +55,5 @@ export const clearRouterMocks = () => {
   vi.clearAllMocks()
   mockNavigate.mockReset()
   mockLocationPathname = "/"
-  mockLocationState = {}
+  mockLocationState = null
 }

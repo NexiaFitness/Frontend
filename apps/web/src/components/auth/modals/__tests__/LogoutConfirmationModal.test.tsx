@@ -11,14 +11,28 @@ import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
 import { LogoutConfirmationModal } from "../LogoutConfirmationModal"
+import type { ButtonHTMLAttributes, ReactNode } from "react"
 
-// Mock del Button component
-vi.mock("@/components/ui/buttons", () => ({
-    Button: ({ children, onClick, variant, className, disabled, isLoading, ...props }: any) => (
-        <button 
-            onClick={onClick} 
-            className={`btn-${variant} ${className}`}
-            disabled={disabled || isLoading}
+vi.mock("@/components/ui/buttons", () => {
+    type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+        variant?: string
+        isLoading?: boolean
+        children?: ReactNode
+    }
+
+    const MockButton = ({
+        children,
+        onClick,
+        variant,
+        className,
+        disabled,
+        isLoading,
+        ...props
+    }: ButtonProps) => (
+        <button
+            onClick={onClick}
+            className={`btn-${variant ?? "default"} ${className ?? ""}`}
+            disabled={Boolean(disabled || isLoading)}
             {...props}
         >
             {isLoading ? (
@@ -26,10 +40,14 @@ vi.mock("@/components/ui/buttons", () => ({
                     <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
                     Cerrando...
                 </div>
-            ) : children}
+            ) : (
+                children
+            )}
         </button>
     )
-}))
+
+    return { Button: MockButton }
+})
 
 describe("LogoutConfirmationModal", () => {
     const defaultProps = {
@@ -48,13 +66,13 @@ describe("LogoutConfirmationModal", () => {
             const { container } = render(
                 <LogoutConfirmationModal {...defaultProps} isOpen={false} />
             )
-            
+
             expect(container.firstChild).toBeNull()
         })
 
         it("renders modal when isOpen is true", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             expect(screen.getByText("¿Cerrar sesión?")).toBeInTheDocument()
             expect(screen.getByText("¿Seguro que deseas cerrar sesión?")).toBeInTheDocument()
         })
@@ -63,7 +81,7 @@ describe("LogoutConfirmationModal", () => {
     describe("Content Display", () => {
         it("shows default message without username", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             expect(screen.getByText("¿Seguro que deseas cerrar sesión?")).toBeInTheDocument()
             expect(screen.queryByText(/¿Seguro que quieres cerrar sesión,/)).not.toBeInTheDocument()
         })
@@ -72,7 +90,7 @@ describe("LogoutConfirmationModal", () => {
             render(
                 <LogoutConfirmationModal {...defaultProps} userName="John Doe" />
             )
-            
+
             expect(screen.getByText(/¿Seguro que quieres cerrar sesión,/)).toBeInTheDocument()
             expect(screen.getByText("John Doe")).toBeInTheDocument()
         })
@@ -81,7 +99,7 @@ describe("LogoutConfirmationModal", () => {
             render(
                 <LogoutConfirmationModal {...defaultProps} userName="" />
             )
-            
+
             // Should show default message when username is empty
             expect(screen.getByText("¿Seguro que deseas cerrar sesión?")).toBeInTheDocument()
         })
@@ -91,11 +109,11 @@ describe("LogoutConfirmationModal", () => {
         it("calls onCancel when cancel button is clicked", async () => {
             const onCancel = vi.fn()
             const user = userEvent.setup()
-            
+
             render(
                 <LogoutConfirmationModal {...defaultProps} onCancel={onCancel} />
             )
-            
+
             await user.click(screen.getByText("Cancelar"))
             expect(onCancel).toHaveBeenCalledTimes(1)
         })
@@ -103,11 +121,11 @@ describe("LogoutConfirmationModal", () => {
         it("calls onConfirm when confirm button is clicked", async () => {
             const onConfirm = vi.fn()
             const user = userEvent.setup()
-            
+
             render(
                 <LogoutConfirmationModal {...defaultProps} onConfirm={onConfirm} />
             )
-            
+
             await user.click(screen.getByText("Cerrar Sesión"))
             expect(onConfirm).toHaveBeenCalledTimes(1)
         })
@@ -118,7 +136,7 @@ describe("LogoutConfirmationModal", () => {
             render(
                 <LogoutConfirmationModal {...defaultProps} isLoading={true} />
             )
-            
+
             expect(screen.getByText("Cerrando...")).toBeInTheDocument()
             expect(screen.queryByText("Cerrar Sesión")).not.toBeInTheDocument()
         })
@@ -127,10 +145,10 @@ describe("LogoutConfirmationModal", () => {
             render(
                 <LogoutConfirmationModal {...defaultProps} isLoading={true} />
             )
-            
+
             const cancelButton = screen.getByText("Cancelar")
             const confirmButtonContainer = screen.getByText("Cerrando...").closest('button')
-            
+
             expect(cancelButton).toBeDisabled()
             expect(confirmButtonContainer).toBeDisabled()
         })
@@ -139,7 +157,7 @@ describe("LogoutConfirmationModal", () => {
             render(
                 <LogoutConfirmationModal {...defaultProps} isLoading={false} />
             )
-            
+
             expect(screen.getByText("Cerrar Sesión")).toBeInTheDocument()
             expect(screen.queryByText("Cerrando...")).not.toBeInTheDocument()
         })
@@ -148,24 +166,24 @@ describe("LogoutConfirmationModal", () => {
     describe("Modal Structure", () => {
         it("renders warning icon", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             const warningIcon = document.querySelector('svg')
             expect(warningIcon).toBeInTheDocument()
         })
 
         it("renders backdrop", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             const backdrop = document.querySelector('.bg-black\\/60')
             expect(backdrop).toBeInTheDocument()
         })
 
         it("applies correct button styling", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             const cancelButton = screen.getByText("Cancelar")
             const confirmButton = screen.getByText("Cerrar Sesión")
-            
+
             expect(cancelButton).toHaveClass("btn-outline")
             expect(confirmButton).toHaveClass("btn-danger")
         })
@@ -174,29 +192,29 @@ describe("LogoutConfirmationModal", () => {
     describe("Accessibility", () => {
         it("prevents body scroll when open", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             expect(document.body.style.overflow).toBe('hidden')
         })
 
         it("restores body scroll when closed", () => {
             const { unmount } = render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             unmount()
-            
+
             expect(document.body.style.overflow).toBe('unset')
         })
 
         it("handles backdrop click", async () => {
             const onCancel = vi.fn()
             const user = userEvent.setup()
-            
+
             render(
                 <LogoutConfirmationModal {...defaultProps} onCancel={onCancel} />
             )
-            
+
             const backdrop = document.querySelector('.bg-black\\/60')!
             await user.click(backdrop)
-            
+
             expect(onCancel).toHaveBeenCalledTimes(1)
         })
     })
@@ -205,26 +223,26 @@ describe("LogoutConfirmationModal", () => {
         it("handles rapid button clicks", async () => {
             const onConfirm = vi.fn()
             const user = userEvent.setup()
-            
+
             render(
                 <LogoutConfirmationModal {...defaultProps} onConfirm={onConfirm} />
             )
-            
+
             const confirmButton = screen.getByText("Cerrar Sesión")
-            
+
             await user.click(confirmButton)
             await user.click(confirmButton)
             await user.click(confirmButton)
-            
+
             expect(onConfirm).toHaveBeenCalledTimes(3)
         })
 
         it("maintains consistent button sizes", () => {
             render(<LogoutConfirmationModal {...defaultProps} />)
-            
+
             const cancelButton = screen.getByText("Cancelar")
             const confirmButton = screen.getByText("Cerrar Sesión")
-            
+
             expect(cancelButton).toHaveClass("min-w-[160px]")
             expect(confirmButton).toHaveClass("min-w-[160px]")
         })

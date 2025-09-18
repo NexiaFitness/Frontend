@@ -11,7 +11,7 @@
  * @since v1.0.1
  */
 
-import React, { PropsWithChildren } from "react"
+import { PropsWithChildren } from "react"
 import { Provider } from "react-redux"
 import { BrowserRouter } from "react-router-dom"
 import { store } from "@shared/store" // Store real del proyecto
