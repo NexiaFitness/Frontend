@@ -1,12 +1,17 @@
 /**
- * Render Utility - Renderiza componentes con Providers reales
- * Incluye Redux store completo y React Router.
- * Para tests de integración preferimos usar store real en lugar de mocks.
+ * Render Utility — Utilidad para renderizar componentes en tests.
  *
+ * Contexto: envuelve Testing Library con TestProviders (Redux + Router).
+ * Se usa en todos los tests de integración para evitar duplicación.
+ *
+ * Notas de mantenimiento:
+ * - Este archivo no debe exportar componentes React directamente,
+ *   solo helpers y re-exports de testing.
+ * - Mantener API estable: `render`, `screen`, `fireEvent`, `waitFor`.
  * @since v1.0.0
  */
 
-import React, { PropsWithChildren } from "react"
+import React from "react"
 import {
   render as rtlRender,
   RenderOptions,
@@ -15,18 +20,9 @@ import {
   fireEvent,
   waitFor,
 } from "@testing-library/react"
-import { Provider } from "react-redux"
-import { BrowserRouter } from "react-router-dom"
-import { store } from "@shared/store"  // Store real del proyecto
+import { TestProviders } from "./TestProviders"
 
-function TestProviders({ children }: PropsWithChildren) {
-  return (
-    <Provider store={store}>
-      <BrowserRouter>{children}</BrowserRouter>
-    </Provider>
-  )
-}
-
+// Función render personalizada con wrapper de Providers
 export function render(
   ui: React.ReactElement,
   options?: Omit<RenderOptions, "wrapper">
@@ -34,5 +30,5 @@ export function render(
   return rtlRender(ui, { wrapper: TestProviders, ...options })
 }
 
-// Exportar solo lo que realmente se usa en los tests
+// Re-exportar utilidades comunes de Testing Library
 export { screen, fireEvent, waitFor }
