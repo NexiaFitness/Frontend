@@ -18,7 +18,7 @@ import type {
 } from "../types/auth";
 
 // Helper para detectar entorno de testing
-const isTestEnvironment = typeof process !== 'undefined' && 
+const isTestEnvironment = typeof process !== 'undefined' &&
     (process.env.NODE_ENV === 'test' || process.env.VITEST);
 
 // Helper para crear body de login compatible con MSW
@@ -27,7 +27,7 @@ const createLoginBody = (credentials: LoginCredentials) => {
         username: credentials.username,
         password: credentials.password,
     });
-    
+
     // MSW en Node.js requiere string serializado, browser acepta URLSearchParams nativo
     return isTestEnvironment ? params.toString() : params;
 };
@@ -77,6 +77,9 @@ export const authApi = baseApi.injectEndpoints({
                 url: "/auth/reset-password",
                 method: "POST",
                 body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
             }),
         }),
 

@@ -2,6 +2,28 @@
 
 Professional fitness training management platform frontend built with modern React architecture.
 
+## 🚨 Current Project Status (September 19, 2025)
+
+**Branch**: `fix/auth-forgot-password-integration`
+**Development Status**: Authentication flows complete, backend connectivity issues
+**Deployment**: Frontend deployed on Vercel, backend server currently unreachable
+
+### Critical Current Blockers 🔴
+
+- **Backend Server DOWN**: Production server at `nexiaapp.com` currently unreachable since deployment changes
+- **AWS SES Sandbox**: Email testing blocked - need production AWS SES approval
+- **Soft Delete Issues**: Account deactivation preventing full CRUD testing cycles
+- **Development Environment**: Backend coordination needed for local development
+
+### Recent Technical Achievements ✅
+
+- **Password Reset Flow**: Complete implementation with proper Content-Type headers
+- **API Integration**: All auth endpoints working when server is online
+- **Field Mapping**: Fixed `password` → `new_password` for reset flow
+- **Route Aliases**: Added `/reset-password` for email link compatibility
+- **Testing Framework**: Comprehensive test suite with MSW integration
+- **CI/CD Pipeline**: Automated deployments via GitHub Actions
+
 ## Overview
 
 NEXIA is a comprehensive fitness training management platform designed to help trainers, athletes, and administrators manage training programs, client relationships, and performance tracking. The frontend is built with modern web technologies in a monorepo structure optimized for scalability and maintainability.
@@ -14,6 +36,7 @@ NEXIA is a comprehensive fitness training management platform designed to help t
 - **Styling**: Tailwind CSS 3.4+ with custom design system
 - **Routing**: React Router DOM 6.30+
 - **Authentication**: JWT-based with role management (Admin, Trainer, Athlete)
+- **Testing**: Vitest + Testing Library + MSW (Mock Service Worker)
 - **Build Tool**: Vite 7.1.2 with hot reload and TypeScript compilation
 
 ## Quick Start
@@ -42,6 +65,7 @@ pnpm -F web dev
 - **Main Application**: http://localhost:5173
 - **Login Page**: http://localhost:5173/auth/login
 - **Registration**: http://localhost:5173/auth/register
+- **Password Reset**: http://localhost:5173/auth/reset-password
 - **Dashboard**: http://localhost:5173/dashboard
 
 ## Project Architecture
@@ -52,7 +76,6 @@ frontend/
 ├── apps/
 │   └── web/                           # Main React application (Vite + TS)
 │       ├── dist/                      # Build output
-│       ├── node_modules/              # Dependencies
 │       ├── public/
 │       │   ├── assets/
 │       │   │   └── Logo sin fondo blanco.png
@@ -62,6 +85,10 @@ frontend/
 │       │   │   └── react.svg
 │       │   ├── components/
 │       │   │   ├── auth/              # Authentication components
+│       │   │   │   ├── __tests__/     # Component tests
+│       │   │   │   │   ├── LoginForm.test.tsx
+│       │   │   │   │   ├── RegisterForm.test.tsx
+│       │   │   │   │   └── ResetPasswordForm.test.tsx
 │       │   │   │   ├── AuthLayout.tsx
 │       │   │   │   ├── ForgotPasswordForm.tsx
 │       │   │   │   ├── LoginForm.tsx
@@ -83,7 +110,7 @@ frontend/
 │       │   │       │   ├── FormSelect.tsx
 │       │   │       │   ├── Input.tsx
 │       │   │       │   └── index.ts
-│       │   │       ├── layout/         # Layout components (for future use)
+│       │   │       ├── layout/         # Layout components
 │       │   │       └── modals/
 │       │   │           └── LogoutConfirmationModal.tsx
 │       │   ├── pages/                 # Page-level components
@@ -96,6 +123,17 @@ frontend/
 │       │   │       ├── AdminDashboard.tsx      # Future development
 │       │   │       ├── AthleteDashboard.tsx    # Future development
 │       │   │       └── TrainerDashboard.tsx
+│       │   ├── test-utils/            # Testing infrastructure
+│       │   │   ├── fixtures/          # Test data
+│       │   │   ├── mocks/             # Mock implementations
+│       │   │   │   ├── api.ts         # API mocks
+│       │   │   │   ├── router.ts      # Router mocks
+│       │   │   │   ├── store.ts       # Redux mocks
+│       │   │   │   └── index.ts       # Consolidated exports
+│       │   │   ├── utils/             # Test utilities
+│       │   │   │   └── msw.ts         # MSW server setup
+│       │   │   ├── render.tsx         # Custom render function
+│       │   │   └── setup.ts           # Test setup configuration
 │       │   ├── utils/
 │       │   │   └── backgrounds.ts
 │       │   ├── App.tsx
@@ -105,15 +143,13 @@ frontend/
 │       ├── index.html
 │       ├── package.json
 │       ├── postcss.config.js
-│       ├── README.md
 │       ├── tailwind.config.js
 │       ├── tsconfig.json
+│       ├── tsconfig.vitest.json       # Vitest-specific config
 │       └── vite.config.ts
-├── node_modules/                      # Root workspace dependencies
 ├── packages/
 │   └── shared/                        # Business Logic Package (NO UI components)
 │       ├── dist/                      # Compiled TypeScript output
-│       ├── node_modules/              # Package-specific dependencies
 │       ├── src/
 │       │   ├── api/
 │       │   │   ├── authApi.ts         # RTK Query auth endpoints
@@ -121,7 +157,7 @@ frontend/
 │       │   ├── config/
 │       │   │   └── constants.ts       # Global constants and roles
 │       │   ├── hooks/
-│       │   │   ├── useAuthForm.ts     # Form validation hook
+│       │   │   ├── useAuthForm.ts     # Form validation hook (with useCallback optimization)
 │       │   │   └── useLogout.ts       # Professional logout hook
 │       │   ├── store/
 │       │   │   ├── authSlice.ts       # Authentication state management
@@ -134,6 +170,7 @@ frontend/
 │       ├── package.json
 │       └── tsconfig.json
 ├── .gitignore
+├── CLAUDE.md                          # Claude Code development guide
 ├── LICENSE
 ├── package.json                       # Workspace configuration
 ├── pnpm-lock.yaml                     # Dependency lock file
@@ -148,6 +185,7 @@ frontend/
 **Separation of Concerns:**
 - **UI Components** (`apps/web/src/components/ui/`): Tailwind-based, web-specific components
 - **Business Logic** (`packages/shared/src/`): Platform-agnostic logic, hooks, and utilities
+- **Testing Infrastructure** (`apps/web/src/test-utils/`): Comprehensive testing setup with MSW
 - **Clear Boundaries**: UI layer separate from business logic for future mobile development
 
 **Import Conventions:**
@@ -160,6 +198,10 @@ import { Input, FormSelect } from "@/components/ui/forms";
 import { useAuthForm, useLogout } from "@shared/hooks";
 import { useLoginMutation } from "@shared/api/authApi";
 import { USER_ROLES } from "@shared/config/constants";
+
+// Testing utilities
+import { render } from "@/test-utils/render";
+import { mockNavigate, clearAuthMocks } from "@/test-utils/mocks";
 ```
 
 ## Development Workflow
@@ -168,6 +210,12 @@ import { USER_ROLES } from "@shared/config/constants";
 ```bash
 # Start development server
 pnpm -F web dev
+
+# Run tests with watch mode
+pnpm -F web test
+
+# Run tests once
+pnpm -F web test:run
 
 # Build for production
 pnpm -F web build
@@ -179,12 +227,27 @@ pnpm -F web lint
 pnpm -F shared build
 ```
 
+### Testing Commands
+```bash
+# Run all tests
+pnpm -F web test:run
+
+# Run tests in watch mode
+pnpm -F web test
+
+# Run specific test file
+pnpm -F web test RegisterForm.test.tsx
+
+# Run tests with coverage
+pnpm -F web test:coverage
+```
+
 ### Package Management
 ```bash
 # Add dependency to web app
 pnpm -F web add <package>
 
-# Add dependency to shared package  
+# Add dependency to shared package
 pnpm -F shared add <package>
 
 # Install all workspace dependencies
@@ -196,44 +259,82 @@ pnpm install
 2. **UI components stay in apps/web** - they use Tailwind CSS (web-specific)
 3. **Business logic goes in packages/shared** - no UI dependencies allowed
 4. **Use TypeScript strictly** - no `any` types in production code
+5. **Write tests for all new features** - use MSW for API integration tests
 
 ## Current Features
 
 ### Authentication System ✅
-- Complete login/register/forgot password flow
-- Role-based access control (Admin, Trainer, Athlete)
-- JWT token management with automatic refresh
-- Professional logout system with confirmation modal
-- Form validation with real-time error handling
+- **Complete Auth Flow**: Login, register, forgot password, reset password
+- **Role-Based Access**: Admin, Trainer, Athlete with proper route protection
+- **JWT Management**: Automatic token handling with RTK Query
+- **Professional Logout**: Confirmation modal with loading states
+- **Form Validation**: Real-time validation with comprehensive error handling
+- **Password Reset**: Email-based reset with secure token validation
+
+### Testing Framework ✅
+- **Comprehensive Coverage**: Unit and integration tests for all auth flows
+- **MSW Integration**: Mock Service Worker for realistic API testing
+- **Consolidated Mocks**: Clean, maintainable mock structure
+- **Test Utilities**: Custom render functions and fixtures
+- **CI/CD Testing**: Automated test runs on all pull requests
 
 ### Dashboard System ✅
-- TrainerDashboard with role-specific navigation
-- Professional logout component with loading states
-- Protected routes with automatic redirects
-- Responsive design with glassmorphism effects
+- **TrainerDashboard**: Role-specific navigation and features
+- **Professional Logout**: Component with loading states and confirmation
+- **Protected Routes**: Automatic redirects based on authentication status
+- **Responsive Design**: Glassmorphism effects and mobile-first approach
 
 ### Component Library ✅
-- Consistent design system across all UI components
-- Button variants (primary, secondary, danger) with loading states
-- Form inputs with validation states and error messages
-- Modal system with keyboard shortcuts and backdrop handling
-- Professional error handling and user feedback
+- **Design System**: Consistent styling across all UI components
+- **Button Variants**: Primary, secondary, danger with loading states
+- **Form Components**: Input fields with validation states and error messages
+- **Modal System**: Keyboard shortcuts and backdrop handling
+- **Error Handling**: Professional user feedback and recovery flows
 
-## Upcoming Features 🚧
+## Current Development Blockers 🚨
 
-- **AdminDashboard**: User management and system analytics
-- **AthleteDashboard**: Personal training plans and progress tracking
-- **Account Management**: Edit profile and delete account functionality
-- **Client Management**: Full CRUD operations for trainer-client relationships
+### Backend Connectivity Issues
+```bash
+# Current API endpoints (when server is online)
+Base URL: https://nexiaapp.com/api/v1
+Status: ❌ Server unreachable since recent deployment changes
+```
 
-## Backend Integration
+### AWS SES Email Testing
+```bash
+# Email service limitations
+AWS SES Status: Sandbox mode
+Reset emails: Blocked for non-verified addresses
+Action needed: Production SES approval or alternative testing setup
+```
 
-**API Configuration:**
-- Base URL: `https://nexiaapp.com/api/v1`
-- Authentication: JWT Bearer tokens
-- Role System: Admin, Trainer, Athlete
+### Database Soft Delete Issues
+```bash
+# Registration testing blocked
+Issue: Soft delete prevents re-registration with same email
+Workaround needed: Database cleanup or alternative test emails
+Testing impact: Full CRUD cycle verification limited
+```
 
-**Test Credentials:**
+### Coordination Needs
+- **Backend Team**: Server deployment and connectivity resolution
+- **DevOps**: AWS SES production approval or alternative email service
+- **Database**: Soft delete strategy review for development environment
+
+## Deployment Status
+
+### Frontend Deployment ✅
+- **Platform**: Vercel with automatic deployments
+- **CI/CD**: GitHub Actions for build and test automation
+- **Preview Deployments**: Available for all pull requests
+- **Production URL**: [Deployed frontend URL]
+
+### Backend Integration ❌
+- **Production API**: Currently unreachable
+- **Development Setup**: Local backend recommended for development
+- **Test Environment**: MSW mocks enable frontend-only testing
+
+## Test Credentials (When Backend Available)
 ```
 trainer@test.com / YourPass123
 admin@test.com / AdminPass123
@@ -246,6 +347,13 @@ athlete@test.com / AthletePass123
 - Strict mode enabled across all packages
 - Consistent type definitions in `packages/shared/src/types/`
 - Proper interface definitions for all API responses
+- Zero tolerance for `any` types in production code
+
+### Testing Standards
+- **Unit Tests**: All components and hooks tested
+- **Integration Tests**: Complete user flows with MSW
+- **Coverage Requirements**: Maintained at high levels
+- **Test Organization**: Clear separation of concerns with consolidated mocks
 
 ### Styling Standards
 - Tailwind CSS with custom design tokens
@@ -255,9 +363,9 @@ athlete@test.com / AthletePass123
 
 ### Git Workflow
 - Feature branches from `develop`
-- Semantic commit messages (feat:, fix:, docs:)
+- Semantic commit messages (feat:, fix:, docs:, test:)
 - Pull requests required for all changes
-- Code review process before merging
+- Automated testing and code review process
 
 ## Troubleshooting
 
@@ -276,6 +384,13 @@ pnpm -F web build
 - Check import paths use correct aliases (`@/` for web, `@shared` for shared)
 - Verify exports in `packages/shared/src/index.ts`
 
+**Test Issues:**
+```bash
+# Clear test caches
+rm -rf apps/web/node_modules/.vitest
+pnpm -F web test:run
+```
+
 **Development Server Issues:**
 ```bash
 # Clear Vite cache
@@ -283,22 +398,37 @@ rm -rf apps/web/node_modules/.vite
 pnpm -F web dev
 ```
 
+**API Connection Issues:**
+- Check if backend server is running locally
+- Verify API base URL in `packages/shared/src/api/baseApi.ts`
+- Use MSW mocks for offline development: tests will use mock responses
+
 ## Contributing
 
 ### Development Process
 1. Create feature branch from `develop`
 2. Make changes following architecture principles
-3. Build shared package if modified: `pnpm -F shared build`
-4. Test thoroughly across all user roles
-5. Commit with semantic versioning
-6. Create pull request with detailed description
+3. Write comprehensive tests for new features
+4. Build shared package if modified: `pnpm -F shared build`
+5. Run test suite: `pnpm -F web test:run`
+6. Test manually across all user roles
+7. Commit with semantic versioning
+8. Create pull request with detailed description
 
 ### Code Standards
 - Professional file headers with purpose and author
 - Consistent component structure and naming
 - TypeScript interfaces for all props and state
-- Error handling for all user interactions
+- Comprehensive error handling for all user interactions
 - Responsive design for all new components
+- Test coverage for all new functionality
+
+### Testing Guidelines
+- Unit tests for all components and hooks
+- Integration tests for user flows
+- MSW for realistic API testing
+- Mock cleanup in test setup
+- Error case testing for robust applications
 
 ## Browser Support
 - Modern browsers with ES2020+ support
@@ -307,7 +437,8 @@ pnpm -F web dev
 
 ---
 
-**Current Version**: 2.1  
-**Last Updated**: September 9, 2025  
-**Node.js**: v22.19.0 LTS  
-**Branch**: `feature/account-crud`
+**Current Version**: 2.2
+**Last Updated**: September 19, 2025
+**Node.js**: v22.19.0 LTS
+**Branch**: `fix/auth-forgot-password-integration`
+**Status**: Frontend complete, awaiting backend connectivity resolution
