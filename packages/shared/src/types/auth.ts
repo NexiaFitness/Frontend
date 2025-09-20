@@ -1,7 +1,7 @@
 /**
  * Tipos TypeScript para sistema de autenticación
- * Define interfaces para usuarios, credenciales y respuestas API
- * CORREGIDO: Alineado con backend FastAPI de Sosina
+ * Alineados con schemas reales del backend FastAPI verificados.
+ * Campos opcionales según implementación real del backend.
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -12,28 +12,28 @@ import { USER_ROLES } from "@shared/config/constants";
 // User Role Types
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
 
-// User Entity (CORREGIDO para coincidir con respuesta real del backend)
+// User Entity
 export interface User {
     id: number;
     email: string;
-    nombre: string;     // Backend usa español, no first_name
-    apellidos: string;  // Backend usa español, no last_name
+    nombre: string;
+    apellidos: string;
     role: UserRole;
     is_active: boolean;
     created_at: string;
 }
 
-// Authentication Credentials (CORREGIDO según backend real)
+// Authentication Credentials
 export interface LoginCredentials {
-    username: string;    // Backend espera username, no email
+    username: string;
     password: string;
 }
 
 export interface RegisterCredentials {
     email: string;
     password: string;
-    nombre: string;      // Backend usa español
-    apellidos: string;   // Backend usa español
+    nombre: string;
+    apellidos: string;
     role: UserRole;
 }
 
@@ -43,20 +43,31 @@ export interface ForgotPasswordData {
 
 export interface ResetPasswordData {
     token: string;
-     new_password: string;    // Simplificado, mantenemos consistencia
+    new_password: string;
 }
 
-// API Response Types - CORREGIDO según respuesta real del backend
+// API Response Types
 export interface AuthResponse {
     access_token: string;
-    token_type: string;      // Siempre "bearer"
-    expires_in: number;      // Segundos hasta expiración (1800 = 30 min)
+    token_type: string;
+    expires_in: number;
     user: User;
+    refresh_token?: string; // Opcional según backend real
 }
 
 export interface LoginResponse extends AuthResponse {}
 
-export interface RegisterResponse extends AuthResponse {}
+export interface RegisterResponse extends User {}
+
+export interface ForgotPasswordResponse {
+    message: string;
+    reset_token?: string; // Opcional - solo en development
+}
+
+export interface ApiErrorResponse {
+    detail: string;
+    status_code?: number; // Opcional - backend real no lo envía
+}
 
 // Auth State - para Redux slice
 export interface AuthState {

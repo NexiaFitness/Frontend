@@ -1,6 +1,6 @@
 /**
  * Hook personalizado reutilizable para formularios de autenticación
- * ARREGLADO: Funciones estables con useCallback para evitar infinite loops
+ * Funciones estables con useCallback para evitar infinite loops
  * Reutilizable en Web + React Native (lógica pura TypeScript)
  * 
  * @author Frontend Team  
@@ -62,30 +62,17 @@ export function useAuthForm<T extends Record<string, unknown>>({
 
     // Manejar errores de servidor
     const handleServerError = useCallback((error: RTKError): string => {
-        console.log("=== handleServerError DEBUG ===");
-        console.log("Error received:", error);
-        console.log("Error type:", typeof error);
-        console.log("Error has status:", "status" in error);
-
         let errorMessage = "Error de conexión. Intenta de nuevo.";
 
         if ("status" in error) {
-            console.log("Error status:", error.status);
-            console.log("Error data:", error.data);
-
             // 1. Si el backend manda mensaje → usarlo
             if ("data" in error && error.data) {
                 const data = error.data as { detail?: string; message?: string };
 
-                console.log("Backend data.detail:", data.detail);
-                console.log("Backend data.message:", data.message);
-
                 if (data.detail) {
                     errorMessage = data.detail;
-                    console.log("Using backend detail message:", data.detail);
                 } else if (data.message) {
                     errorMessage = data.message;
-                    console.log("Using backend message:", data.message);
                 }
             }
 
@@ -102,9 +89,6 @@ export function useAuthForm<T extends Record<string, unknown>>({
                 }
             }
         }
-
-        console.log("Using backend provided message:", errorMessage);
-        console.log("Final error message:", errorMessage);
 
         setServerError(errorMessage);
         return errorMessage;

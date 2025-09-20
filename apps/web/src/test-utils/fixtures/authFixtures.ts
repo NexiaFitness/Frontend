@@ -1,28 +1,92 @@
 /**
  * Auth Fixtures
  *
- * Datos estáticos reutilizables para tests de autenticación.
- * Se usan en combinación con MSW y Redux store en tests de integración.
- *
- * @since v1.0.0
+ * Static test data alineado con backend real en producción.
+ * Elimina campos opcionales que backend no envía para reflejar realidad.
+ * 
+ * @author Frontend Team
+ * @since v2.0.0
  */
 
-export const validUser = {
-    id: "1",
+import { 
+    User, 
+    LoginCredentials, 
+    RegisterCredentials,
+    ResetPasswordData,
+    AuthResponse,
+    RegisterResponse,
+    ForgotPasswordResponse,
+    ApiErrorResponse
+} from "@shared/types/auth";
+import { USER_ROLES } from "@shared/config/constants";
+
+export const validTrainerUser: User = {
+    id: 1,
     email: "test@example.com",
-    nombre: "Nelson",
-    apellidos: "Valero",
-    role: "trainer",
-}
+    nombre: "Test",
+    apellidos: "User", 
+    role: USER_ROLES.TRAINER,
+    is_active: true,
+    created_at: "2025-01-01T00:00:00",
+};
 
-export const validToken = "fake-jwt-token"
+export const validAthleteUser: User = {
+    id: 2,
+    email: "athlete@test.com",
+    nombre: "Test",
+    apellidos: "Athlete",
+    role: USER_ROLES.ATHLETE,
+    is_active: true,
+    created_at: "2025-01-01T00:00:00",
+};
 
-export const validCredentials = {
-    email: "test@example.com",
-    password: "password123",
-}
+export const validLoginCredentials: LoginCredentials = {
+    username: "test@example.com",
+    password: "testpass123",
+};
 
-export const invalidCredentials = {
-    email: "wrong@example.com",
+export const invalidLoginCredentials: LoginCredentials = {
+    username: "invalid@test.com",
     password: "wrongpass",
-}
+};
+
+export const validResetPasswordData: ResetPasswordData = {
+    token: "valid-reset-token-123",
+    new_password: "newTestPass123",
+};
+
+// Refleja backend real - sin refresh_token en producción
+export const loginSuccessResponse: AuthResponse = {
+    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.token",
+    token_type: "bearer", 
+    expires_in: 1800,
+    user: validTrainerUser,
+};
+
+export const registerSuccessResponse: RegisterResponse = {
+    id: 1,
+    email: "test@example.com",
+    nombre: "Test", 
+    apellidos: "User",
+    role: USER_ROLES.TRAINER,
+    is_active: true,
+    created_at: "2025-01-01T00:00:00",
+};
+
+// Refleja backend real - sin reset_token en producción
+export const forgotPasswordSuccessResponse: ForgotPasswordResponse = {
+    message: "If the email exists, a reset link has been sent.",
+};
+
+// Solo detail según backend real
+export const errorResponses = {
+    invalidLogin: {
+        detail: "Incorrect email or password",
+    },
+    invalidResetToken: {
+        detail: "Invalid token or user",
+    },
+    emailAlreadyExists: {
+        detail: "Email already registered",
+    },
+};

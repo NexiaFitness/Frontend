@@ -1,68 +1,76 @@
 /**
  * Handlers de MSW para endpoints de autenticación
  * 
- * Este archivo centraliza las respuestas simuladas (mocks) para los tests
- * relacionados con login, registro, forgot-password y reset-password.
- * 
- * Los payloads de respuesta se han alineado con los devueltos por el backend real,
- * para que las pruebas en local reproduzcan fielmente el comportamiento en producción.
+ * Alineados con backend FastAPI real usando fixtures corregidas.
  *
+ * @author Frontend Team
  * @since v1.0.0
  */
 
-import { http, HttpResponse } from "msw"
+import { http, HttpResponse } from "msw";
+import {
+    loginSuccessResponse,
+    registerSuccessResponse,
+    forgotPasswordSuccessResponse,
+    errorResponses
+} from "../../fixtures/authFixtures";
 
 export const authHandlers = [
-    // Login exitoso
-    http.post("*/auth/login", async () => {
-        return HttpResponse.json(
-            {
-                access_token: "fake-token",
-                token_type: "bearer",
-                user: { id: 1, email: "test@example.com" },
-            },
-            { status: 200 }
-        )
+    // Login - Handler dinámico con tipo seguro
+    http.post("*/auth/login", async ({ request }) => {
+        try {
+            const body = await request.text();
+            
+            // Simular error para credenciales específicas de test
+            if (body.includes("invalid@test.com") || body.includes("wrongpass")) {
+                return HttpResponse.json(errorResponses.invalidLogin, { status: 400 });
+            }
+            
+            // Por defecto, respuesta exitosa
+            return HttpResponse.json(loginSuccessResponse, { status: 200 });
+        } catch (error) {
+            return HttpResponse.json(errorResponses.invalidLogin, { status: 400 });
+        }
     }),
 
-    // Registro exitoso
-    http.post("*/auth/register", async () => {
-        return HttpResponse.json(
-            {
-                message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
-            },
-            { status: 201 }
-        )
+    // Register - Handler dinámico con tipo seguro
+    http.post("*/auth/register", async ({ request }) => {
+        try {
+            const body = await request.json() as { email?: string };
+            
+            // Simular email ya registrado para emails específicos de test
+            if (body?.email === "existing@test.com") {
+                return HttpResponse.json(errorResponses.emailAlreadyExists, { status: 409 });
+            }
+            
+            // Por defecto, respuesta exitosa
+            return HttpResponse.json(registerSuccessResponse, { status: 201 });
+        } catch (error) {
+            return HttpResponse.json(errorResponses.emailAlreadyExists, { status: 400 });
+        }
     }),
 
-    // Recuperar contraseña (forgot password)
+    // Forgot password
     http.post("*/auth/forgot-password", async () => {
-        return HttpResponse.json(
-            {
-                message: "If the email exists, a reset link has been sent.",
-            },
-            { status: 200 }
-        )
+        return HttpResponse.json(forgotPasswordSuccessResponse, { status: 200 });
     }),
 
-    // Resetear contraseña (reset password) - éxito
-    http.post("*/auth/reset-password", async () => {
-        return HttpResponse.json(
-            {
-                message: "Password reset successful",
-            },
-            { status: 200 }
-        )
+    // Reset password - Handler dinámico con tipo seguro
+    http.post("*/auth/reset-password", async ({ request }) => {
+        try {
+            const body = await request.json() as { token?: string };
+            
+            // Simular token inválido para tokens específicos de test
+            if (body?.token === "invalid-token") {
+                return HttpResponse.json(errorResponses.invalidResetToken, { status: 400 });
+            }
+            
+            // Por defecto, respuesta exitosa
+            return HttpResponse.json({
+                message: "Password has been reset successfully."
+            }, { status: 200 });
+        } catch (error) {
+            return HttpResponse.json(errorResponses.invalidResetToken, { status: 400 });
+        }
     }),
-
-    // Resetear contraseña (reset password) - token inválido
-    http.post("*/auth/reset-password-invalid", async () => {
-        return HttpResponse.json(
-            {
-                detail: "Invalid or expired token",
-                status_code: 401,
-            },
-            { status: 401 }
-        )
-    }),
-]
+];

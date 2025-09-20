@@ -4,31 +4,38 @@
  * Contexto: envuelve Testing Library con TestProviders (Redux + Router).
  * Se usa en todos los tests de integración para evitar duplicación.
  *
- * Notas de mantenimiento:
- * - Este archivo no debe exportar componentes React directamente,
- *   solo helpers y re-exports de testing.
- * - Mantener API estable: `render`, `screen`, `fireEvent`, `waitFor`.
+ * @author Frontend Team
  * @since v1.0.0
  */
 
-import React from "react"
+import React from "react";
 import {
-  render as rtlRender,
-  RenderOptions,
-  RenderResult,
-  screen,
-  fireEvent,
-  waitFor,
-} from "@testing-library/react"
-import { TestProviders } from "./TestProviders"
+    render as rtlRender,
+    RenderOptions,
+    RenderResult,
+    screen,
+    fireEvent,
+    waitFor,
+} from "@testing-library/react";
+import { TestProviders } from "./TestProviders";
+import type { RootState } from "@shared/store";
 
-// Función render personalizada con wrapper de Providers
-export function render(
-  ui: React.ReactElement,
-  options?: Omit<RenderOptions, "wrapper">
-): RenderResult {
-  return rtlRender(ui, { wrapper: TestProviders, ...options })
+interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
+    initialState?: Partial<RootState>;
 }
 
-// Re-exportar utilidades comunes de Testing Library
-export { screen, fireEvent, waitFor }
+export function render(
+    ui: React.ReactElement,
+    options: CustomRenderOptions = {}
+): RenderResult {
+    const { initialState, ...renderOptions } = options;
+    
+    const Wrapper = ({ children }: { children: React.ReactNode }) => (
+        <TestProviders initialState={initialState}>{children}</TestProviders>
+    );
+    
+    return rtlRender(ui, { wrapper: Wrapper, ...renderOptions });
+}
+
+// Re-exportar utilidades comunes
+export { screen, fireEvent, waitFor };
