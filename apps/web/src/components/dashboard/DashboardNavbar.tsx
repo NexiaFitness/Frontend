@@ -22,7 +22,6 @@ interface DashboardNavbarProps {
 }
 
 export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) => {
-    const location = useLocation();
     const { user } = useSelector((state: RootState) => state.auth);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
