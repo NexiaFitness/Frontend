@@ -1,16 +1,17 @@
 /**
  * Layout público de NEXIA
- * 
+ *
  * Envuelve todas las páginas accesibles sin autenticación
  * Incluye la PublicNavbar en la parte superior
  * y un <Outlet /> para renderizar el contenido específico de cada ruta.
  *
- * Ventajas:
- * - Evita duplicar código de Navbar en Login, Register, ForgotPassword, etc.
- * - Mantiene consistencia visual entre Home y las páginas de autenticación.
+ * Ajuste:
+ * - La navbar permanece fija con sticky.
+ * - El main gestiona el scroll sin empujar la navbar.
  *
- * @author Frontend Team
+ * @autor Frontend Team
  * @since v1.0.0
+ * @updated v2.2.0 - Fix scroll en móviles/tablets para no ocultar navbar
  */
 
 import React from "react";
@@ -23,8 +24,8 @@ export const PublicLayout: React.FC = () => {
             {/* Navbar pública */}
             <PublicNavbar />
 
-            {/* Contenido principal de cada página */}
-            <main className="flex-1">
+            {/* Contenido principal, con scroll controlado */}
+            <main className="flex-1 overflow-y-auto">
                 <Outlet />
             </main>
         </div>

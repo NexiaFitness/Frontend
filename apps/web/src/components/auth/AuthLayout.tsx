@@ -1,13 +1,16 @@
 /**
- * AuthLayout: Layout de autenticación con diseño 50/50
+ * AuthLayout: Layout de autenticación con diseño 50/50 y responsive.
  *
- * - Mitad izquierda: logo y claim principal.
- * - Mitad derecha: card flotante con efecto glassmorphism (transparencia + borde).
- * - Fondo: degradado completo definido en meshGradient.
+ * - Desktop (lg≥1024px): vista 50/50 lado a lado (logo + claim a la izquierda, formulario a la derecha).
+ * - Tablet/Mobile (<1024px): columnas (branding arriba, formulario abajo).
  *
- * Decisión de diseño:
- * Se combina opacidad moderada (bg-white/20), borde translúcido (border-white/20),
- * y sombra (shadow-2xl) para lograr un card elegante, visible y profesional.
+ * Decisiones de diseño:
+ * - Desktop: sin márgenes laterales, el formulario ocupa 50% exacto, con borde redondeado solo a la izquierda.
+ * - Tablet/Mobile: con márgenes horizontales y verticales, borde redondeado completo (card encima del fondo).
+ *
+ * @autor Frontend Team
+ * @since v2.0.0
+ * @updated v4.3.0 - Márgenes y rounded diferenciados por breakpoint
  */
 
 import React from "react";
@@ -21,27 +24,36 @@ interface AuthLayoutProps {
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <div
-      className="min-h-screen flex"
+      className="min-h-full flex flex-col lg:flex-row"
       style={{ background: meshGradient }}
     >
       {/* Mitad Izquierda - Logo + Claim */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
-        <div className="text-center max-w-2xl">
-          <NexiaLogo />
-          <div className="mt-6">
-            <p className="text-2xl font-medium text-white leading-relaxed">
-              Revolucionando la creación de programas de entrenamiento para profesionales del fitness
-            </p>
+      <div className="flex-1 flex flex-col items-center justify-center px-8 py-10 text-center">
+        <div className="max-w-2xl">
+          {/* Logo adaptativo */}
+          <div className="mb-6">
+            <NexiaLogo className="w-28 sm:w-36 md:w-44 lg:w-80 xl:w-96 h-auto mx-auto" />
           </div>
+
+          {/* Claim adaptativo */}
+          <p className="text-lg sm:text-xl lg:text-2xl font-medium text-white leading-relaxed">
+            Revolucionando la creación de programas de entrenamiento para profesionales del fitness
+          </p>
         </div>
       </div>
 
-      {/* Mitad Derecha - Card centrado con glassmorphism */}
-      <div className="flex-1 flex items-center justify-center bg-white/20 p-8 backdrop-blur-md border border-white/20 rounded-l-8xl shadow-2xl p-8">
-
-        <div className="w-full max-w-md">
-          {children}
-        </div>
+      {/* Mitad Derecha - Formulario */}
+      <div
+        className="
+          flex-1 flex items-center justify-center
+          bg-white/20 backdrop-blur-md border border-white/20 shadow-2xl
+          px-6 sm:px-8 lg:px-10 py-8 lg:py-12
+          rounded-2xl sm:rounded-3xl
+          mx-4 sm:mx-8 mb-8 sm:mb-12
+          lg:mx-0 lg:mb-0 lg:rounded-none lg:rounded-l-8xl
+        "
+      >
+        <div className="w-full max-w-md">{children}</div>
       </div>
     </div>
   );

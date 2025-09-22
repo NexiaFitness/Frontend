@@ -6,6 +6,13 @@ module.exports = {
     ],
     theme: {
         extend: {
+            screens: {
+                xs: "480px",   // móviles pequeños
+                sm: "640px",   // móviles grandes
+                md: "820px",   // tablets
+                lg: "1200px",  // desktops estándar
+                xl: "1536px",  // pantallas grandes
+            },
             colors: {
                 primary: {
                     50: '#eff6ff',
