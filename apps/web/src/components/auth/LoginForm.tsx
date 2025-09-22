@@ -1,10 +1,19 @@
 /**
- * Formulario de login refactorizado usando arquitectura reutilizable
- * Migrado de estado manual a useAuthForm para consistencia
- * Usa validateLoginForm + useAuthForm + ServerErrorBanner
- * 
+ * LoginForm.tsx — Formulario de login profesional.
+ *
+ * Contexto:
+ * - Usa useAuthForm para validaciones consistentes.
+ * - Conectado a RTK Query (useLoginMutation).
+ * - Feedback de loading: spinner (desde Button) + texto accesible "Iniciando sesión...".
+ *
+ * Notas de mantenimiento:
+ * - Backend espera `username`, la UI usa `email`.
+ * - Ajustar redirecciones en función de location.state.
+ * - Mantener accesibilidad: inputs y enlaces se deshabilitan durante loading.
+ *
  * @author Frontend Team
  * @since v2.0.0
+ * @updated v3.0.0 - Integrado con Button.tsx refactorizado
  */
 
 import React from "react";
@@ -29,17 +38,14 @@ export const LoginForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const location = useLocation();
-    
-    // RTK Query hook
+
     const [login, { isLoading }] = useLoginMutation();
-    
-    // Initial state con email del estado de navegación si existe
+
     const initialFormState: LoginFormData = {
         email: location.state?.email || "",
         password: "",
     };
 
-    // useAuthForm hook para consistencia con otros formularios
     const {
         formData,
         errors,
@@ -53,7 +59,6 @@ export const LoginForm: React.FC = () => {
         validate: validateLoginForm,
     });
 
-    // Mensaje de éxito del registro si viene de register
     const successMessage = location.state?.message;
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -63,36 +68,28 @@ export const LoginForm: React.FC = () => {
         clearErrors();
 
         try {
-            // Preparar credenciales para API - Backend espera username, no email
             const credentials: LoginCredentials = {
-                username: formData.email,  // UI muestra "email" pero backend espera "username"
+                username: formData.email, // UI muestra "email", backend espera "username"
                 password: formData.password,
             };
 
             const response = await login(credentials).unwrap();
-            
-            // Despachar acción de éxito - Backend retorna access_token
-            dispatch(loginSuccess({
-                user: response.user,
-                token: response.access_token,
-            }));
 
-            // Navegar a destino apropiado
+            dispatch(
+                loginSuccess({
+                    user: response.user,
+                    token: response.access_token,
+                })
+            );
+
             const redirectTo = location.state?.from || "/dashboard";
             navigate(redirectTo, { replace: true });
-
-        } catch (error) { 
-            const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
+        } catch (error) {
+            const errorMessage = handleServerError(
+                error as Parameters<typeof handleServerError>[0]
+            );
             dispatch(loginFailure(errorMessage));
         }
-    };
-
-    const handleForgotPassword = () => {
-        navigate("/auth/forgot-password");
-    };
-
-    const handleRegister = () => {
-        navigate("/auth/register");
     };
 
     return (
@@ -101,25 +98,18 @@ export const LoginForm: React.FC = () => {
                 <h1 className="text-5xl font-bold mb-2 text-primary-400">
                     Bienvenido de vuelta
                 </h1>
-                <p className="text-gray-600">
-                    Inicia sesión en tu cuenta de NEXIA
-                </p>
+                <p className="text-gray-600">Inicia sesión en tu cuenta de NEXIA</p>
             </div>
 
-            {/* Mensaje de éxito del registro */}
             {successMessage && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-green-800 text-sm font-medium">
-                        {successMessage}
-                    </p>
+                    <p className="text-green-800 text-sm font-medium">{successMessage}</p>
                 </div>
             )}
 
-            {/* Banner de error del servidor */}
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-
                 <Input
                     type="email"
                     label="Correo electrónico"
@@ -147,15 +137,17 @@ export const LoginForm: React.FC = () => {
                     variant="primary"
                     size="lg"
                     isLoading={isLoading}
+                    disabled={isLoading}
                     className="w-full"
                 >
                     {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
                 </Button>
 
+
                 <div className="flex flex-col space-y-3 text-center text-sm">
                     <button
                         type="button"
-                        onClick={handleForgotPassword}
+                        onClick={() => navigate("/auth/forgot-password")}
                         className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
                         disabled={isLoading}
                     >
@@ -166,7 +158,7 @@ export const LoginForm: React.FC = () => {
                         ¿No tienes cuenta?{" "}
                         <button
                             type="button"
-                            onClick={handleRegister}
+                            onClick={() => navigate("/auth/register")}
                             className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
                             disabled={isLoading}
                         >

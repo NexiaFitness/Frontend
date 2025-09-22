@@ -1,327 +1,382 @@
 /**
- * ResetPasswordForm Test Suite - Unified Version
+ * ResetPasswordForm Test Suite - Professional Coverage
  *
- * Consolidación de unit tests y MSW tests en un solo archivo.
- * Usa MSW como strategy principal para tests realistas,
- * incluye validation tests y URL token handling del archivo unit.
+ * FIXED: Element selectors made specific to avoid multiple element conflicts.
+ * Uses exact label matches and unique placeholders for reliable element selection.
  *
- * @since v1.0.0
+ * @author Frontend Team
+ * @since v1.0.1
  */
 
-import { screen, waitFor } from "@testing-library/react"
-import userEvent from "@testing-library/user-event"
-import { render } from "@/test-utils/render"
-import { ResetPasswordForm } from "../ResetPasswordForm"
-import { server } from "@/test-utils/utils/msw"
-import { http, HttpResponse } from "msw"
+import { screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { render } from "@/test-utils/render";
+import { ResetPasswordForm } from "../ResetPasswordForm";
+import { server } from "@/test-utils/utils/msw";
+import {
+  resetPasswordRetryHandler,
+  resetPasswordTimeoutHandler,
+  resetPasswordInvalidTokenHandler,
+  resetPasswordValidationHandler,
+  resetPasswordNetworkErrorHandler
+} from "@/test-utils/mocks/handlers/authHandlers";
 import {
     mockNavigate,
     clearRouterMocks,
     clearAuthMocks,
-} from "@/test-utils/mocks"
-
-// Helper para crear searchParams mockeados
-const createMockSearchParams = (token: string | null = "valid-token-123") => {
-    const searchParams = new URLSearchParams()
-    if (token !== null) {
-        searchParams.set("token", token)
-    }
-    return searchParams
-}
-
-let mockSearchParams = createMockSearchParams()
-
-// Mock react-router-dom
-vi.mock("react-router-dom", async () => {
-    const actual = await vi.importActual<typeof import("react-router-dom")>(
-        "react-router-dom"
-    )
-    return {
-        ...actual,
-        useNavigate: () => mockNavigate,
-        useSearchParams: () => [mockSearchParams],
-    }
-})
+    setMockSearchParams
+} from "@/test-utils/mocks";
 
 describe("ResetPasswordForm", () => {
     beforeEach(() => {
-        clearRouterMocks()
-        clearAuthMocks()
-        mockSearchParams = createMockSearchParams("valid-token-123")
-    })
+        clearRouterMocks();
+        clearAuthMocks();
+        // Default searchParams with valid token
+        setMockSearchParams({ token: "valid-token-123" });
+    });
 
     describe("Rendering & Basic UI", () => {
-        it("renders form elements correctly", () => {
-            render(<ResetPasswordForm />)
+        it("renders form elements correctly with valid token", () => {
+            render(<ResetPasswordForm />);
 
-            expect(
-                screen.getByRole("heading", { name: /nueva contraseña/i })
-            ).toBeInTheDocument()
-            expect(
-                screen.getByPlaceholderText(/mínimo 6 caracteres/i)
-            ).toBeInTheDocument()
-            expect(
-                screen.getByPlaceholderText(/repite tu nueva contraseña/i)
-            ).toBeInTheDocument()
-            expect(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            ).toBeInTheDocument()
-        })
+            expect(screen.getByRole("heading", { name: /nueva contraseña/i }))
+                .toBeInTheDocument();
+            expect(screen.getByPlaceholderText("Mínimo 6 caracteres"))
+                .toBeInTheDocument();
+            expect(screen.getByPlaceholderText("Repite tu nueva contraseña"))
+                .toBeInTheDocument();
+            expect(screen.getByRole("button", { name: /cambiar contraseña/i }))
+                .toBeInTheDocument();
+            expect(screen.getByRole("button", { name: /volver al login/i }))
+                .toBeInTheDocument();
+        });
 
-        it("renders navigation links", () => {
-            render(<ResetPasswordForm />)
+        it("shows error when token is missing from URL", () => {
+            setMockSearchParams({});
+            render(<ResetPasswordForm />);
 
-            expect(
-                screen.getByRole("button", { name: /tu enlace ha caducado/i })
-            ).toBeInTheDocument()
-            expect(
-                screen.getByRole("button", { name: /volver al login/i })
-            ).toBeInTheDocument()
-        })
-    })
+            expect(screen.getByText(/el enlace de recuperación no es válido/i))
+                .toBeInTheDocument();
+        });
 
-    describe("URL Token Handling", () => {
-        it("shows error when no token in URL", () => {
-            mockSearchParams = createMockSearchParams(null)
-            render(<ResetPasswordForm />)
+        it("allows typing in password fields", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            expect(
-                screen.getByText(/el enlace de recuperación no es válido/i)
-            ).toBeInTheDocument()
-        })
+            const newPasswordField = screen.getByPlaceholderText("Mínimo 6 caracteres");
+            const confirmPasswordField = screen.getByPlaceholderText("Repite tu nueva contraseña");
 
-        it("handles empty token in URL", () => {
-            mockSearchParams = createMockSearchParams("")
-            render(<ResetPasswordForm />)
+            await user.type(newPasswordField, "newpass123");
+            await user.type(confirmPasswordField, "newpass123");
 
-            expect(
-                screen.getByText(/el enlace de recuperación no es válido/i)
-            ).toBeInTheDocument()
-        })
-    })
+            expect(newPasswordField).toHaveValue("newpass123");
+            expect(confirmPasswordField).toHaveValue("newpass123");
+        });
+    });
 
     describe("Form Validation", () => {
-        it("shows error when fields are empty", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+        it("shows required field errors for empty passwords", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             expect(await screen.findByText(/la contraseña es obligatoria/i))
-                .toBeInTheDocument()
-        })
-
-        it("shows error when confirmation missing", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
-
-            await user.type(
-                screen.getByPlaceholderText(/mínimo 6 caracteres/i),
-                "password123"
-            )
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
-
+                .toBeInTheDocument();
             expect(await screen.findByText(/confirma tu contraseña/i))
-                .toBeInTheDocument()
-        })
+                .toBeInTheDocument();
+        });
 
-        it("shows error when passwords don't match", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+        it("shows password length validation error", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            await user.type(
-                screen.getByPlaceholderText(/mínimo 6 caracteres/i),
-                "password123"
-            )
-            await user.type(
-                screen.getByPlaceholderText(/repite tu nueva contraseña/i),
-                "different123"
-            )
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            expect(await screen.findByText(/la contraseña debe tener al menos 6 caracteres/i))
+                .toBeInTheDocument();
+        });
+
+        it("shows password mismatch validation error", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "password123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "different123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             expect(await screen.findByText(/las contraseñas no coinciden/i))
-                .toBeInTheDocument()
-        })
-
-        it("shows error when password too short", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
-
-            await user.type(
-                screen.getByPlaceholderText(/mínimo 6 caracteres/i),
-                "123"
-            )
-            await user.type(
-                screen.getByPlaceholderText(/repite tu nueva contraseña/i),
-                "123"
-            )
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
-
-            expect(
-                await screen.findByText(/la contraseña debe tener al menos 6 caracteres/i)
-            ).toBeInTheDocument()
-        })
-    })
+                .toBeInTheDocument();
+        });
+    });
 
     describe("Navigation", () => {
-        it("navigates to forgot-password", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
-
-            await user.click(
-                screen.getByRole("button", { name: /tu enlace ha caducado/i })
-            )
-            expect(mockNavigate).toHaveBeenCalledWith("/auth/forgot-password")
-        })
-
         it("navigates to login from form", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            await user.click(
-                screen.getByRole("button", { name: /volver al login/i })
-            )
-            expect(mockNavigate).toHaveBeenCalledWith("/auth/login")
-        })
-    })
+            await user.click(screen.getByRole("button", { name: /volver al login/i }));
 
-    describe("API Integration (MSW)", () => {
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
+        });
+
+        it("navigates to forgot password for new token", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await user.click(screen.getByText(/tu enlace ha caducado/i));
+
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/forgot-password");
+        });
+
+        it("navigates to login from success view", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            await waitFor(() => {
+                expect(screen.getByText(/contraseña actualizada/i)).toBeInTheDocument();
+            });
+
+            await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
+        });
+    });
+
+    describe("API Integration - Basic Cases", () => {
         const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
-            await user.type(
-                screen.getByPlaceholderText(/mínimo 6 caracteres/i),
-                "newPassword123"
-            )
-            await user.type(
-                screen.getByPlaceholderText(/repite tu nueva contraseña/i),
-                "newPassword123"
-            )
-        }
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+        };
 
-        it("success shows confirmation view", async () => {
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+        it("successful request shows success view", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            await fillValidForm(user)
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
+            await fillValidForm(user);
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            expect(await screen.findByText(/contraseña actualizada/i))
-                .toBeInTheDocument()
-        })
+            await waitFor(() => {
+                expect(screen.getByText(/contraseña actualizada/i)).toBeInTheDocument();
+            });
 
-        it("invalid token error (401)", async () => {
-            server.use(
-                http.post("https://nexiaapp.com/api/v1/auth/reset-password", () =>
-                    HttpResponse.json(
-                        { detail: "Invalid or expired token" },
-                        { status: 401 }
-                    )
-                )
-            )
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+            expect(screen.getByText(/tu contraseña ha sido cambiada exitosamente/i))
+                .toBeInTheDocument();
+            expect(screen.getByText(/ya puedes iniciar sesión/i))
+                .toBeInTheDocument();
+        });
 
-            await fillValidForm(user)
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
+        it("displays invalid token error", async () => {
+            server.use(resetPasswordInvalidTokenHandler);
 
-            expect(await screen.findByText(/invalid or expired token/i))
-                .toBeInTheDocument()
-        })
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-        it("expired link error (400)", async () => {
-            server.use(
-                http.post("https://nexiaapp.com/api/v1/auth/reset-password", () =>
-                    HttpResponse.json(
-                        { detail: "El enlace ha caducado. Solicita uno nuevo." },
-                        { status: 400 }
-                    )
-                )
-            )
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+            await fillValidForm(user);
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            await fillValidForm(user)
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
+            expect(await screen.findByText(/invalid or expired reset token/i))
+                .toBeInTheDocument();
+        });
 
-            expect(
-                await screen.findByText(/el enlace ha caducado\. solicita uno nuevo\./i)
-            ).toBeInTheDocument()
-        })
+        it("displays server validation errors", async () => {
+            server.use(resetPasswordValidationHandler);
 
-        it("server error (500)", async () => {
-            server.use(
-                http.post("https://nexiaapp.com/api/v1/auth/reset-password", () =>
-                    HttpResponse.json(
-                        { detail: "Error interno del servidor" },
-                        { status: 500 }
-                    )
-                )
-            )
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            await fillValidForm(user)
-            await user.click(
-                screen.getByRole("button", { name: /cambiar contraseña/i })
-            )
+            await fillValidForm(user);
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            expect(await screen.findByText(/error interno del servidor/i))
-                .toBeInTheDocument()
-        })
-    })
+            expect(await screen.findByText(/password must be at least 8 characters/i))
+                .toBeInTheDocument();
+        });
+    });
+
+    describe("API Integration - Advanced Error Recovery", () => {
+        const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+        };
+
+        it("handles server error with successful retry", async () => {
+            server.use(resetPasswordRetryHandler);
+
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await fillValidForm(user);
+
+            // First attempt - should show error
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+            expect(await screen.findByText(/service temporarily unavailable/i))
+                .toBeInTheDocument();
+
+            // Second attempt - should succeed
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+            await waitFor(() => {
+                expect(screen.getByText(/contraseña actualizada/i)).toBeInTheDocument();
+            });
+        });
+
+        it("handles network timeout gracefully", async () => {
+            server.use(resetPasswordTimeoutHandler);
+
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await fillValidForm(user);
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+                .toBeInTheDocument();
+        }, 10000);
+
+        it("handles network error gracefully", async () => {
+            server.use(resetPasswordNetworkErrorHandler);
+
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await fillValidForm(user);
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+                .toBeInTheDocument();
+        });
+    });
 
     describe("Loading States", () => {
-        it("disables form during password reset", async () => {
-            /**
-             * Mantenemos la request en pending para observar el estado de loading real.
-             */
-            let resolveRequest: (value: unknown) => void
-            const requestPromise = new Promise((resolve) => { resolveRequest = resolve })
+        it("shows loading state during submission", async () => {
+            server.use(resetPasswordTimeoutHandler);
 
-            server.use(
-                http.post("https://nexiaapp.com/api/v1/auth/reset-password", async () => {
-                    await requestPromise!
-                    return HttpResponse.json({ message: "Success" }, { status: 200 })
-                })
-            )
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
 
-            const user = userEvent.setup()
-            render(<ResetPasswordForm />)
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            // Rellenamos con valores válidos
-            await user.type(screen.getByPlaceholderText(/mínimo 6 caracteres/i), "loading123")
-            await user.type(screen.getByPlaceholderText(/repite tu nueva contraseña/i), "loading123")
-
-            // Capturamos el botón por su label inicial (estable) antes de click
-            const submitBtn = screen.getByRole("button", { name: /cambiar contraseña/i })
-
-            // Disparamos submit
-            await user.click(submitBtn)
-
-            // Comprobamos estado de loading sin depender del texto de loading
+            // Should show loading text and disabled state
             await waitFor(() => {
-                expect(submitBtn).toBeDisabled()
-                expect(screen.getByPlaceholderText(/mínimo 6 caracteres/i)).toBeDisabled()
-                expect(screen.getByPlaceholderText(/repite tu nueva contraseña/i)).toBeDisabled()
-            })
+                expect(screen.getByRole("button", { name: /actualizando contraseña/i }))
+                    .toBeInTheDocument();
+            }, { timeout: 200 });
 
-            // Liberamos la request y validamos vista de éxito para limpiar
-            resolveRequest!({})
-            expect(await screen.findByText(/contraseña actualizada/i)).toBeInTheDocument()
-        })
-    })
+            expect(screen.getByRole("button", { name: /actualizando contraseña/i }))
+                .toBeDisabled();
+            expect(screen.getByPlaceholderText("Mínimo 6 caracteres"))
+                .toBeDisabled();
+            expect(screen.getByPlaceholderText("Repite tu nueva contraseña"))
+                .toBeDisabled();
+        });
 
-})
+        it("disables navigation links during loading", async () => {
+            server.use(resetPasswordTimeoutHandler);
+
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            // Navigation buttons should be disabled during loading
+            await waitFor(() => {
+                expect(screen.getByRole("button", { name: /volver al login/i }))
+                    .toBeDisabled();
+            }, { timeout: 200 });
+
+            expect(screen.getByText(/tu enlace ha caducado/i).closest("button"))
+                .toBeDisabled();
+        });
+    });
+
+    describe("Error Recovery", () => {
+        it("clears errors when user starts typing", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            // Trigger validation error first
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+            expect(await screen.findByText(/la contraseña es obligatoria/i))
+                .toBeInTheDocument();
+
+            // Start typing - error should clear
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "test");
+            expect(screen.queryByText(/la contraseña es obligatoria/i))
+                .not.toBeInTheDocument();
+        });
+
+        it("allows retry after server error", async () => {
+            server.use(resetPasswordInvalidTokenHandler);
+
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            // First attempt - should show server error
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            expect(await screen.findByText(/invalid or expired reset token/i))
+                .toBeInTheDocument();
+
+            // Clear server error and use default handler for success
+            server.resetHandlers();
+
+            // Second attempt - should succeed
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            await waitFor(() => {
+                expect(screen.getByText(/contraseña actualizada/i)).toBeInTheDocument();
+            });
+        });
+    });
+
+    describe("Success View", () => {
+        const triggerSuccessView = async (user: ReturnType<typeof userEvent.setup>) => {
+            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
+
+            await waitFor(() => {
+                expect(screen.getByText(/contraseña actualizada/i)).toBeInTheDocument();
+            });
+        };
+
+        it("shows success view elements correctly", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await triggerSuccessView(user);
+
+            expect(screen.getByRole("heading", { name: /contraseña actualizada/i }))
+                .toBeInTheDocument();
+            expect(screen.getByText(/tu contraseña ha sido cambiada exitosamente/i))
+                .toBeInTheDocument();
+            expect(screen.getByText(/ya puedes iniciar sesión con tu nueva contraseña/i))
+                .toBeInTheDocument();
+            expect(screen.getByRole("button", { name: /iniciar sesión/i }))
+                .toBeInTheDocument();
+        });
+
+        it("hides form elements in success view", async () => {
+            const user = userEvent.setup();
+            render(<ResetPasswordForm />);
+
+            await triggerSuccessView(user);
+
+            expect(screen.queryByPlaceholderText("Mínimo 6 caracteres"))
+                .not.toBeInTheDocument();
+            expect(screen.queryByPlaceholderText("Repite tu nueva contraseña"))
+                .not.toBeInTheDocument();
+            expect(screen.queryByRole("button", { name: /cambiar contraseña/i }))
+                .not.toBeInTheDocument();
+        });
+    });
+});

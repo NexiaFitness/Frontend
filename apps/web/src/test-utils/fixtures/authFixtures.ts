@@ -83,6 +83,10 @@ export const errorResponses = {
     invalidLogin: {
         detail: "Incorrect email or password",
     },
+    // alias para compatibilidad con handlers y tests antiguos
+    invalidCredentials: {
+        detail: "Incorrect email or password",
+    },
     invalidResetToken: {
         detail: "Invalid token or user",
     },

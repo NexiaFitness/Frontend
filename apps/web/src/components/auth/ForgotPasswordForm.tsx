@@ -108,7 +108,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
                     type="email"
                     label="Correo electrónico"

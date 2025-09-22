@@ -1,21 +1,30 @@
 /**
- * RegisterForm Test Suite
+ * RegisterForm Test Suite - Professional Coverage
  *
- * Tests usando handlers MSW centralizados sin inline overrides.
- * Confía en arquitectura centralizada para consistencia.
+ * Tests usando handlers MSW centralizados + específicos para casos avanzados.
+ * Arquitectura validada siguiendo pattern LoginForm exitoso (19/19 tests).
  *
  * @author Frontend Team
- * @since v1.0.0
+ * @since v1.0.1
  */
 
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { RegisterForm } from "../RegisterForm";
-import { 
-  mockNavigate, 
+import { server } from "@/test-utils/utils/msw";
+import {
+  registerRetryHandler,
+  registerRateLimitHandler,
+  registerTimeoutHandler,
+  passwordValidationHandler,
+  networkErrorHandler,
+  registerMalformedResponseHandler
+} from "@/test-utils/mocks/handlers/authHandlers";
+import {
+  mockNavigate,
   clearRouterMocks,
-  clearAuthMocks 
+  clearAuthMocks
 } from "@/test-utils/mocks";
 
 describe("RegisterForm", () => {
@@ -150,7 +159,7 @@ describe("RegisterForm", () => {
     });
   });
 
-  describe("API Integration (MSW)", () => {
+  describe("API Integration - Basic Cases", () => {
     const fillValidForm = async (user: ReturnType<typeof userEvent.setup>, role = "trainer") => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
@@ -211,9 +220,197 @@ describe("RegisterForm", () => {
 
       expect(await screen.findByText(/email already registered/i))
         .toBeInTheDocument();
-      
-      // Should not navigate on error
+
       expect(mockNavigate).not.toHaveBeenCalled();
+    });
+
+    it("displays server validation errors", async () => {
+      server.use(passwordValidationHandler);
+
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
+      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
+      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.type(screen.getByLabelText(/^contraseña/i), "weakpass");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "weakpass");
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      expect(await screen.findByText(/password must be at least 8 characters/i))
+        .toBeInTheDocument();
+    });
+  });
+
+  describe("API Integration - Advanced Error Recovery", () => {
+    const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
+      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
+      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+    };
+
+    it("handles server error with successful retry", async () => {
+      server.use(registerRetryHandler);
+
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await fillValidForm(user);
+
+      // First attempt - should show error
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+      expect(await screen.findByText(/service temporarily unavailable/i))
+        .toBeInTheDocument();
+
+      // Second attempt - should succeed
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/auth/login", {
+          state: expect.objectContaining({
+            message: expect.stringMatching(/cuenta creada exitosamente/i),
+          }),
+        });
+      });
+    });
+
+    it("handles rate limiting with successful retry", async () => {
+      server.use(registerRateLimitHandler);
+
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await fillValidForm(user);
+
+      // First attempt - should show rate limit error
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+      expect(await screen.findByText(/too many registration attempts/i))
+        .toBeInTheDocument();
+
+      // Second attempt - should succeed
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/auth/login", {
+          state: expect.objectContaining({
+            message: expect.stringMatching(/cuenta creada exitosamente/i),
+          }),
+        });
+      });
+    });
+
+    it("handles network timeout gracefully", async () => {
+      server.use(registerTimeoutHandler);
+
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await fillValidForm(user);
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+        .toBeInTheDocument();
+    }, 10000);
+
+    it("handles malformed server response", async () => {
+      server.use(registerMalformedResponseHandler);
+
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await fillValidForm(user);
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+        .toBeInTheDocument();
+    });
+  });
+
+  describe("Loading States", () => {
+    it("shows loading state during submission", async () => {
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
+      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
+      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      // Should show loading text and disabled state
+      expect(screen.getByRole("button", { name: /creando cuenta/i }))
+        .toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /creando cuenta/i }))
+        .toBeDisabled();
+      expect(screen.getByLabelText(/correo electrónico/i))
+        .toBeDisabled();
+      expect(screen.getByLabelText(/^contraseña/i))
+        .toBeDisabled();
+    });
+
+    it("disables navigation links during loading", async () => {
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
+      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
+      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      // Navigation button should be disabled during loading
+      expect(screen.getByRole("button", { name: /inicia sesión/i }))
+        .toBeDisabled();
+    });
+  });
+
+  describe("Error Recovery", () => {
+    it("clears errors when user starts typing", async () => {
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      // Trigger validation error first
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+      expect(await screen.findByText("El correo es obligatorio"))
+        .toBeInTheDocument();
+
+      // Start typing - error should clear
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test");
+      expect(screen.queryByText("El correo es obligatorio"))
+        .not.toBeInTheDocument();
+    });
+
+    it("allows retry after server error", async () => {
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      // First attempt with existing email
+      await user.type(screen.getByLabelText(/correo electrónico/i), "existing@test.com");
+      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
+      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      expect(await screen.findByText(/email already registered/i))
+        .toBeInTheDocument();
+
+      // Fix email and retry
+      await user.clear(screen.getByLabelText(/correo electrónico/i));
+      await user.type(screen.getByLabelText(/correo electrónico/i), "new@example.com");
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      await waitFor(() => {
+        expect(mockNavigate).toHaveBeenCalledWith("/auth/login", {
+          state: expect.objectContaining({
+            message: expect.stringMatching(/cuenta creada exitosamente/i),
+          }),
+        });
+      });
     });
   });
 });

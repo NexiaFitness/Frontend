@@ -63,7 +63,7 @@ export const ResetPasswordForm: React.FC = () => {
         } else {
             setFormData(prev => ({ ...prev, token: tokenFromUrl }));
         }
-    }, [tokenFromUrl, handleServerError, setFormData]); // ✅ Ahora son estables
+    }, [tokenFromUrl, handleServerError, setFormData]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
