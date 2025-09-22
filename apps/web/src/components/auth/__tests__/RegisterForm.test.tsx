@@ -18,7 +18,6 @@ import {
   registerRateLimitHandler,
   registerTimeoutHandler,
   passwordValidationHandler,
-  networkErrorHandler,
   registerMalformedResponseHandler
 } from "@/test-utils/mocks/handlers/authHandlers";
 import {

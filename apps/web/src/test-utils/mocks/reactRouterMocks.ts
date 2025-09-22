@@ -46,7 +46,7 @@ export const setMockSearchParams = (params: Record<string, string>) => {
 // Interceptar react-router-dom
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
-    
+
     return {
         ...actual,
         useNavigate: () => mockNavigate,
@@ -60,12 +60,21 @@ vi.mock("react-router-dom", async () => {
         useParams: () => mockParams,
         useSearchParams: () => [mockSearchParams, vi.fn()],
         useNavigationType: () => "PUSH",
-        Navigate: ({ to, state, replace }: { to: string; state?: any; replace?: boolean }) => {
+        Navigate: ({
+            to,
+            state,
+            replace,
+        }: {
+            to: string;
+            state?: Location["state"];
+            replace?: boolean;
+        }) => {
+
             // Simular navegación automática en tests
             React.useEffect(() => {
                 mockNavigate(to, { state, replace });
             }, [to, state, replace]);
-            
+
             return React.createElement("div", {
                 "data-testid": "navigate",
                 "data-to": to,

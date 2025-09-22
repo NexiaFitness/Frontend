@@ -6,11 +6,11 @@
  *
  * Decisiones de diseño:
  * - Desktop: sin márgenes laterales, el formulario ocupa 50% exacto, con borde redondeado solo a la izquierda.
- * - Tablet/Mobile: con márgenes horizontales y verticales, borde redondeado completo (card encima del fondo).
+ * - Tablet/Mobile: con márgenes horizontales y verticales, borde redondeado MÁS PEQUEÑO (rounded-lg/xl).
  *
  * @autor Frontend Team
  * @since v2.0.0
- * @updated v4.3.0 - Márgenes y rounded diferenciados por breakpoint
+ * @updated v4.4.0 - Altura navbar corregida (128px) + rounded mobile más pequeños
  */
 
 import React from "react";
@@ -24,7 +24,7 @@ interface AuthLayoutProps {
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <div
-      className="min-h-full flex flex-col lg:flex-row"
+      className="min-h-[calc(100vh-128px)] flex flex-col lg:flex-row"
       style={{ background: meshGradient }}
     >
       {/* Mitad Izquierda - Logo + Claim */}

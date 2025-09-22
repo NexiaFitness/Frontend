@@ -95,19 +95,20 @@ export const authHandlers = [
 
 // ===== HANDLERS ESPECÍFICOS PARA TESTING AVANZADO =====
 
-const createRetryHandler = (
+const createRetryHandler = <T extends object>(
     endpoint: string,
-    successResponse: any,
+    successResponse: T,
     successStatus: number = 200
 ) => {
-    let attempts = 0
+    let attempts = 0;
     return http.post(`*${endpoint}`, async () => {
-        attempts++
+        attempts++;
         return attempts === 1
             ? HttpResponse.json({ detail: "Service temporarily unavailable" }, { status: 503 })
-            : HttpResponse.json(successResponse, { status: successStatus })
-    })
-}
+            : HttpResponse.json(successResponse, { status: successStatus });
+    });
+};
+
 
 export const loginRetryHandler = createRetryHandler("/auth/login", loginSuccessResponse)
 export const registerRetryHandler = createRetryHandler(

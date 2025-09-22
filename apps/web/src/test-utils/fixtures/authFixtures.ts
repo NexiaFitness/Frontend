@@ -11,12 +11,10 @@
 import { 
     User, 
     LoginCredentials, 
-    RegisterCredentials,
     ResetPasswordData,
     AuthResponse,
     RegisterResponse,
     ForgotPasswordResponse,
-    ApiErrorResponse
 } from "@shared/types/auth";
 import { USER_ROLES } from "@shared/config/constants";
 
