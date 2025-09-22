@@ -34,8 +34,6 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) =
         setIsMobileMenuOpen(false);
     };
 
-    const isActive = (path: string) => location.pathname === path;
-
     return (
         <>
             {/* UNIFICADO: Mismo styling que PublicNavbar */}
@@ -107,7 +105,11 @@ interface DashboardSideMenuProps {
     isOpen: boolean;
     onClose: () => void;
     menuItems: Array<{ label: string; path: string }>;
-    user: any;
+    user: {
+        nombre?: string;
+        apellidos?: string;
+        role?: string;
+    } | null;
 }
 
 const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({ 
