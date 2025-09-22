@@ -1,24 +1,9 @@
 /**
  * Formulario de perfil de cuenta optimizado para dashboard context
- * Permite editar datos básicos (nombre, apellidos, email), cambiar contraseña
- * y (para roles Trainer/Athlete) eliminar la cuenta.
- * REDISEÑADO: Cohesivo con dashboard layout y glassmorphism design
- *
- * Integraciones:
- * - RTK Query (accountApi) para actualizar datos del usuario actual.
- * - DeleteAccountModal para confirmación de eliminación de cuenta.
- * - ChangePasswordForm para lógica aislada de cambio de contraseña.
- *
- * Reglas de negocio:
- * - Trainer y Athlete: pueden editar su perfil y eliminar la cuenta.
- * - Admin: puede editar su perfil, pero no eliminar la cuenta (restricción).
- *
- * Manejo de errores sin acoplar a @reduxjs/toolkit/query: guard local que
- * detecta la forma { data?: { detail?: string } } y devuelve mensaje estable.
+ * CONSISTENTE con patrón de auth forms
  * 
  * @author Frontend Team
- * @since v1.0.0
- * @updated v2.3.0 - Dashboard-optimized design with glassmorphism cards
+ * @since v4.2.0 - Simplified, consistent with auth forms pattern
  */
 
 import React, { useEffect, useState } from "react";
@@ -34,10 +19,6 @@ import type { UpdateAccountPayload } from "@shared/types/account";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { DeleteAccountModal } from "./modals/DeleteAccountModal";
 
-/** 
- * Extrae un mensaje de error estable desde el shape típico de RTK Query:
- * { data?: { detail?: string } }. Evita dependencias de tipos externos.
- */
 const getServerErrorMessage = (err: unknown): string => {
     if (typeof err === "object" && err !== null && "data" in err) {
         const maybe = err as { data?: { detail?: string } };
@@ -62,11 +43,8 @@ export const ProfileForm: React.FC = () => {
     const [errors, setErrors] = useState<Partial<UpdateAccountPayload>>({});
     const [serverError, setServerError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-    // Estado modal de eliminación
     const [isDeleteOpen, setDeleteOpen] = useState(false);
 
-    // Cargar valores iniciales desde auth.user
     useEffect(() => {
         if (user) {
             setFormData({
@@ -81,7 +59,6 @@ export const ProfileForm: React.FC = () => {
         (field: keyof UpdateAccountPayload) =>
             (e: React.ChangeEvent<HTMLInputElement>) => {
                 setFormData({ ...formData, [field]: e.target.value });
-                // Clear field error on change
                 if (errors[field]) {
                     setErrors({ ...errors, [field]: undefined });
                 }
@@ -108,17 +85,15 @@ export const ProfileForm: React.FC = () => {
             dispatch(setCurrentUser(updated.user));
             setSuccessMessage("Perfil actualizado correctamente");
 
-            // Clear success message after 3 seconds
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {
-            // ✅ Sin any y sin dependencia de tipos RTK en apps/web
             setServerError(getServerErrorMessage(err));
         }
     };
 
     return (
         <div className="space-y-8">
-            {/* Header */}
+            {/* Header - consistent with auth forms */}
             <div className="text-center mb-12">
                 <h1 className="text-5xl font-bold text-white mb-4">Mi Cuenta</h1>
                 <p className="text-white/80 text-xl">
@@ -127,21 +102,13 @@ export const ProfileForm: React.FC = () => {
             </div>
 
             <div className="max-w-4xl mx-auto space-y-8">
-                {/* Success message */}
+                {/* Success message - consistent with auth styling */}
                 {successMessage && (
-                    <div className="bg-green-50/95 backdrop-blur-sm border border-green-200 rounded-2xl p-6">
-                        <div className="flex items-center">
-                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                                <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                </svg>
-                            </div>
-                            <p className="text-green-800 font-medium">{successMessage}</p>
-                        </div>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <p className="text-green-800 text-sm font-medium">{successMessage}</p>
                     </div>
                 )}
 
-                {/* Server Error */}
                 <ServerErrorBanner
                     error={serverError}
                     onDismiss={() => setServerError(null)}
@@ -156,7 +123,7 @@ export const ProfileForm: React.FC = () => {
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <Input
                                 type="text"
@@ -167,7 +134,6 @@ export const ProfileForm: React.FC = () => {
                                 placeholder="Tu nombre"
                                 isRequired
                                 disabled={isLoading}
-                                size="lg"
                             />
 
                             <Input
@@ -179,7 +145,6 @@ export const ProfileForm: React.FC = () => {
                                 placeholder="Tus apellidos"
                                 isRequired
                                 disabled={isLoading}
-                                size="lg"
                             />
                         </div>
 
@@ -192,14 +157,12 @@ export const ProfileForm: React.FC = () => {
                             placeholder="Introduce tu correo electrónico"
                             isRequired
                             disabled={isLoading}
-                            size="lg"
                         />
 
                         <div className="flex justify-end pt-4">
                             <Button
                                 type="submit"
                                 variant="primary"
-                                size="lg"
                                 isLoading={isLoading}
                                 className="px-8 min-w-[180px]"
                             >
@@ -240,7 +203,6 @@ export const ProfileForm: React.FC = () => {
                             <Button
                                 type="button"
                                 variant="danger"
-                                size="lg"
                                 onClick={() => setDeleteOpen(true)}
                                 className="px-8 min-w-[180px]"
                             >
@@ -251,7 +213,6 @@ export const ProfileForm: React.FC = () => {
                 )}
             </div>
 
-            {/* Modal de eliminación */}
             <DeleteAccountModal
                 isOpen={isDeleteOpen}
                 onClose={() => setDeleteOpen(false)}

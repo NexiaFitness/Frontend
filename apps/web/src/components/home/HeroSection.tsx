@@ -27,7 +27,7 @@ export const HeroSection: React.FC = () => {
         >
             <div className="grid grid-cols-1 lg:grid-cols-2 w-full">
                 {/* Content Left */}
-                <div className="flex items-center px-6 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-0">
+                <div className="flex items-center justify-center px-6 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-0 lg:justify-start">
                     <div className="space-y-8 max-w-xl text-center lg:text-left">
                         <div className="space-y-6">
                             {/* Main Headline */}

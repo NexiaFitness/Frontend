@@ -6,10 +6,11 @@
  * - Renderiza overlay de loading y errores automáticamente.
  * - NO renderiza SideMenu: cada dashboard específico renderiza su propio SideMenu.
  * - Acepta children: cada dashboard (Trainer, Athlete, Admin) define su contenido.
+ * - RESPONSIVE: Centrado en mobile/tablet, offset en desktop para sidebar.
  * 
  * @author Frontend Team
  * @since v1.0.0
- * @updated v3.1.0 - Removed SideMenu: cada dashboard renderiza su propio navigation
+ * @updated v3.2.0 - Added responsive sidebar offset
  */
 
 import React from "react";
@@ -47,8 +48,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </div>
             )}
 
-            {/* Contenido principal - Con offset para sidebar fijo */}
-            <main className="ml-80 p-12 pt-20 min-h-screen">
+            {/* Contenido principal - RESPONSIVE: Centrado mobile/tablet, offset desktop */}
+            <main className="lg:ml-80 p-4 md:p-8 lg:p-12 pt-16 md:pt-18 lg:pt-20 min-h-screen">
                 {children}
             </main>
         </div>

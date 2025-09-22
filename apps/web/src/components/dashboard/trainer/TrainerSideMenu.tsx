@@ -1,25 +1,13 @@
 /**
- * TrainerSideMenu - Navegación lateral específica para entrenadores.
+ * TrainerSideMenu - Navegación lateral específica para entrenadores
  * 
- * Muestra navegación lateral con secciones principales para trainers:
- * - Dashboard (overview de trainer)
- * - Clientes (gestión de clientes)
- * - Planes de entrenamiento (creación y gestión)
- * - Mi cuenta (configuración personal)
- * 
- * Incluye:
- * - Logo NEXIA en cabecera con título "Trainer Dashboard"
- * - Nombre del usuario autenticado con rol "Professional Trainer"
- * - Botón de logout profesional con confirmación
- * 
- * Características técnicas:
- * - Fixed positioning para que permanezca fijo mientras main content scrollea
- * - Routing activo con useNavigate y useLocation
- * - Estado visual activo para la ruta actual
- * - Preparado para reutilización como drawer en móvil
+ * RESPONSIVE BEHAVIOR:
+ * - Desktop (lg+): VISIBLE como sidebar fijo
+ * - Mobile/Tablet (< lg): HIDDEN (DashboardNavbar se usa en su lugar)
  * 
  * @author Frontend Team
- * @since v3.1.0 - Especializado desde SideMenu genérico
+ * @since v3.1.0 - Especializado desde SideMenu genérico  
+ * @updated v4.1.0 - Hidden en mobile, DashboardNavbar toma el control
  */
 
 import React from "react";
@@ -46,7 +34,8 @@ export const TrainerSideMenu: React.FC = () => {
     ];
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-80 flex flex-col z-10">
+        // Only visible on desktop - hidden on mobile/tablet where DashboardNavbar is used
+        <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10">
             {/* Header - Logo y título fijos en top */}
             <div className="p-8 bg-sidebar-header border-b-2 border-white/60 text-center shrink-0">
                 <div className="w-[120px] h-auto mx-auto">

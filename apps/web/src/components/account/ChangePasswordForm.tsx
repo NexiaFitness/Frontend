@@ -1,21 +1,9 @@
 /**
  * Formulario de cambio de contraseña optimizado para dashboard context
- * Permite al usuario actualizar su contraseña desde el dashboard,
- * validando la contraseña actual y estableciendo una nueva.
- * REDISEÑADO: Cohesivo con ProfileForm glassmorphism card design
- *
- * Reglas de negocio:
- * - Todos los roles (Trainer, Athlete, Admin) pueden cambiar contraseña.
- * - No se usa token (a diferencia de ResetPassword), ya que el usuario está logueado.
- *
- * Notas:
- * - Usa RTK Query (accountApi) -> useChangePasswordMutation.
- * - Validación: current_password obligatorio, nueva contraseña >= 6 caracteres, confirmación igual.
- * - Se renderiza dentro de ProfileForm card, sin headers propios.
- *
+ * CONSISTENTE con patrón de auth forms
+ * 
  * @author Frontend Team
- * @since v1.0.0
- * @updated v2.3.0 - Dashboard-optimized design consistency
+ * @since v4.2.0 - Simplified, consistent with auth forms pattern
  */
 
 import React from "react";
@@ -30,7 +18,7 @@ interface ChangePasswordFormData {
     currentPassword: string;
     newPassword: string;
     confirmPassword: string;
-    [key: string]: unknown;  // ✅ AÑADIDO: Index signature para Record<string, unknown>
+    [key: string]: unknown;
 }
 
 export const ChangePasswordForm: React.FC = () => {
@@ -72,7 +60,6 @@ export const ChangePasswordForm: React.FC = () => {
             setSuccessMessage("Contraseña actualizada correctamente");
             resetForm();
 
-            // Clear success message after 3 seconds
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (error) {  
             handleServerError(error as Parameters<typeof handleServerError>[0]);
@@ -81,7 +68,7 @@ export const ChangePasswordForm: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            {/* Header - consistent with ProfileForm sections */}
+            {/* Header - consistent with auth forms */}
             <div className="mb-8">
                 <h2 className="text-3xl font-bold text-slate-800 mb-2">Seguridad</h2>
                 <p className="text-slate-600">
@@ -89,23 +76,16 @@ export const ChangePasswordForm: React.FC = () => {
                 </p>
             </div>
 
-            {/* Success message - consistent with dashboard styling */}
+            {/* Success message - consistent with auth styling */}
             {successMessage && (
-                <div className="bg-green-50/95 backdrop-blur-sm border border-green-200 rounded-xl p-4">
-                    <div className="flex items-center">
-                        <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                            <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                        </div>
-                        <p className="text-green-800 font-medium">{successMessage}</p>
-                    </div>
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <p className="text-green-800 text-sm font-medium">{successMessage}</p>
                 </div>
             )}
 
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
                     type="password"
                     label="Contraseña actual"
@@ -115,7 +95,6 @@ export const ChangePasswordForm: React.FC = () => {
                     placeholder="Introduce tu contraseña actual"
                     isRequired
                     disabled={isLoading}
-                    size="lg"
                 />
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -128,7 +107,6 @@ export const ChangePasswordForm: React.FC = () => {
                         placeholder="Mínimo 6 caracteres"
                         isRequired
                         disabled={isLoading}
-                        size="lg"
                     />
 
                     <Input
@@ -140,7 +118,6 @@ export const ChangePasswordForm: React.FC = () => {
                         placeholder="Repite tu nueva contraseña"
                         isRequired
                         disabled={isLoading}
-                        size="lg"
                     />
                 </div>
 
@@ -148,7 +125,6 @@ export const ChangePasswordForm: React.FC = () => {
                     <Button
                         type="submit"
                         variant="primary"
-                        size="lg"
                         isLoading={isLoading}
                         className="px-8 min-w-[180px]"
                     >

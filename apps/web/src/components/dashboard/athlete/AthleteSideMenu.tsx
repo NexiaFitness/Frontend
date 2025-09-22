@@ -1,6 +1,10 @@
 /**
  * AthleteSideMenu - Navegación lateral específica para atletas/clientes.
  * 
+ * RESPONSIVE BEHAVIOR:
+ * - Desktop (lg+): VISIBLE como sidebar fijo
+ * - Mobile/Tablet (< lg): HIDDEN (DashboardNavbar se usa en su lugar)
+ * 
  * Muestra navegación lateral con secciones principales para athletes:
  * - Dashboard (overview personal del atleta)
  * - Mi Plan (plan de entrenamiento asignado)
@@ -13,14 +17,8 @@
  * - Nombre del usuario autenticado con rol "Athlete"
  * - Botón de logout profesional con confirmación
  * 
- * Características técnicas:
- * - Fixed positioning para que permanezca fijo mientras main content scrollea
- * - Routing activo con useNavigate y useLocation
- * - Estado visual activo para la ruta actual
- * - Preparado para reutilización como drawer en móvil
- * 
  * @author Frontend Team
- * @since v3.1.0 - Especializado para atletas
+ * @since v4.1.0 - Unified responsive behavior
  */
 
 import React from "react";
@@ -48,7 +46,8 @@ export const AthleteSideMenu: React.FC = () => {
     ];
 
     return (
-        <aside className="fixed left-0 top-0 h-screen w-80 flex flex-col z-10">
+        // UNIFICADO: hidden lg:flex - oculto en mobile/tablet, visible solo en desktop
+        <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10">
             {/* Header - Logo y título fijos en top */}
             <div className="p-8 bg-sidebar-header border-b-2 border-white/60 text-center shrink-0">
                 <div className="w-[120px] h-auto mx-auto">

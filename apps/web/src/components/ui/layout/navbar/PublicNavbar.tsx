@@ -5,13 +5,14 @@
  * 
  * @author Frontend Team
  * @since v1.0.0
+ * @updated v2.0.0 - Integrado con NexiaSideMenu fullscreen
  */
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePublicNavigation } from "@shared/hooks/usePublicNavigation";
 import { NexiaLogo } from "@/components/auth/NexiaLogo";
-
+import { NexiaSideMenu } from "./NexiaSideMenu";
 
 export const PublicNavbar: React.FC = () => {
     const location = useLocation();
@@ -31,74 +32,65 @@ export const PublicNavbar: React.FC = () => {
     };
 
     return (
-        <nav className="bg-sidebar-header border-b border-gray-800 sticky top-0 z-50">
-
-            <div className="px-4 sm:px-6 lg:px-8 w-full">
-                <div className="flex justify-between items-center h-32">
-                    <Link
-                        to="/"
-                        className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
-                        onClick={closeMobileMenu}
-                    >
-                        <div className="w-28 h-auto">
-                            <NexiaLogo />
-                        </div>
-                    </Link>
-
-                    <div className="hidden md:flex items-center space-x-8">
-                        {visibleNavigationItems.map((item) => (
-                            <Link
-                                key={item.path}
-                                to={item.path}
-                                className="text-white hover:text-blue-400 transition-colors duration-200 text-base lg:text-lg font-medium"
-                            >
-                                {item.label}
-                            </Link>
-                        ))}
-                    </div>
-
-                    <div className="md:hidden">
-                        <button
-                            onClick={toggleMobileMenu}
-                            className="text-white hover:text-blue-400 focus:outline-none focus:text-blue-400 transition-colors duration-200"
-                            aria-label="Abrir menú"
+        <>
+            <nav className="bg-sidebar-header border-b border-gray-800 sticky top-0 z-50">
+                <div className="px-4 sm:px-6 lg:px-8 w-full">
+                    <div className="flex justify-between items-center h-32">
+                        <Link
+                            to="/"
+                            className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
+                            onClick={closeMobileMenu}
                         >
-                            <svg
-                                className="h-6 w-6"
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                            >
-                                {isMobileMenuOpen ? (
-                                    <path d="M6 18L18 6M6 6l12 12" />
-                                ) : (
-                                    <path d="M4 6h16M4 12h16M4 18h16" />
-                                )}
-                            </svg>
-                        </button>
-                    </div>
-                </div>
+                            <div className="w-28 h-auto">
+                                <NexiaLogo />
+                            </div>
+                        </Link>
 
-                {isMobileMenuOpen && (
-                    <div className="md:hidden">
-                        <div className="px-2 pt-2 pb-3 space-y-1 bg-slate-700 rounded-lg mt-2 mb-2">
+                        <div className="hidden md:flex items-center space-x-8">
                             {visibleNavigationItems.map((item) => (
                                 <Link
                                     key={item.path}
                                     to={item.path}
-                                    onClick={closeMobileMenu}
-                                    className="block px-3 py-2 text-white hover:text-blue-400 hover:bg-slate-600 rounded-md text-base font-medium transition-colors duration-200"
+                                    className="text-white hover:text-blue-400 transition-colors duration-200 text-base lg:text-lg font-medium"
                                 >
                                     {item.label}
                                 </Link>
                             ))}
                         </div>
+
+                        <div className="md:hidden">
+                            <button
+                                onClick={toggleMobileMenu}
+                                className="
+                                    text-white hover:text-blue-400 focus:outline-none focus:text-blue-400 
+                                    transition-colors duration-200 p-3 -mr-3 rounded-lg hover:bg-white/10 
+                                    flex items-center justify-center min-h-[48px] min-w-[48px]
+                                "
+                                aria-label="Abrir menú"
+                            >
+                                <svg
+                                    className="h-8 w-8"
+                                    fill="none"
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    {isMobileMenuOpen ? (
+                                        <path d="M6 18L18 6M6 6l12 12" />
+                                    ) : (
+                                        <path d="M4 6h16M4 12h16M4 18h16" />
+                                    )}
+                                </svg>
+                            </button>
+                        </div>
                     </div>
-                )}
-            </div>
-        </nav>
+                </div>
+            </nav>
+
+            {/* Side Menu - Reemplaza el dropdown anterior */}
+            <NexiaSideMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+        </>
     );
 };
