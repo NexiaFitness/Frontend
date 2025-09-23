@@ -1,16 +1,24 @@
 /**
- * Modal de confirmación para eliminar la cuenta del usuario autenticado.
- * Confirma una acción irreversible y orquesta la llamada a deleteAccount (RTK Query).
- * 
- * RESPONSIVE: Usa BaseModal para comportamiento móvil optimizado
+ * DeleteAccountModal.tsx — Modal de confirmación para eliminar la cuenta del usuario.
+ *
+ * Contexto:
+ * - Usa BaseModal responsive (mobile + desktop).
+ * - Botones con ancho igual en desktop (md:flex-1).
+ * - Spinner gestionado por Button base.
+ *
+ * Notas de mantenimiento:
+ * - Accesibilidad: usa titleId y descriptionId en BaseModal.
+ * - Acción irreversible → mensaje destacado con tipografía unificada.
  *
  * @author Nelson
- * @since v4.2.0 - Refactored with BaseModal responsive
+ * @since v4.2.0
+ * @updated v4.3.5 - Botones responsive con mismo ancho en desktop
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { useDeleteAccountMutation } from "@shared/api/accountApi";
 
 interface DeleteAccountModalProps {
@@ -40,8 +48,9 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         }
     };
 
-    const description = userName 
-        ? `¿Estás seguro de que quieres eliminar tu cuenta (${userName}${userEmail ? ` · ${userEmail}` : ""})?`
+    const description = userName
+        ? `¿Estás seguro de que quieres eliminar tu cuenta (${userName}${userEmail ? ` · ${userEmail}` : ""
+        })?`
         : "¿Estás seguro de que quieres eliminar tu cuenta?";
 
     return (
@@ -57,18 +66,19 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         >
             {/* Warning message */}
             <div className="text-center mb-6 sm:mb-8">
-                <p className="text-sm text-red-600 font-medium">
+                <p className={`${TYPOGRAPHY.errorText} text-red-600 font-medium`}>
                     Esta acción es irreversible.
                 </p>
             </div>
 
-            {/* Action buttons - Mobile: stacked, Desktop: side by side */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {/* Action buttons - Mobile: stacked, Desktop: side by side with equal width */}
+            <div className="flex flex-col md:flex-row gap-3 justify-center">
                 <Button
                     variant="outline"
                     onClick={onClose}
                     disabled={isLoading}
-                    className="px-6 py-2.5 w-full sm:min-w-[160px] sm:w-auto order-2 sm:order-1"
+                    size="md"
+                    className="w-full md:flex-1"
                 >
                     Cancelar
                 </Button>
@@ -77,16 +87,10 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                     onClick={handleDelete}
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="px-6 py-2.5 w-full sm:min-w-[160px] sm:w-auto order-1 sm:order-2"
+                    size="md"
+                    className="w-full md:flex-1"
                 >
-                    {isLoading ? (
-                        <div className="flex items-center justify-center">
-                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                            Eliminando...
-                        </div>
-                    ) : (
-                        "Eliminar cuenta"
-                    )}
+                    Eliminar cuenta
                 </Button>
             </div>
         </BaseModal>

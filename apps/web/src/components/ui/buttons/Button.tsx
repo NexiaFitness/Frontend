@@ -14,7 +14,7 @@
  *
  * @author Frontend Team
  * @since v1.0.0
- * @updated v3.1.0 - Fix disabled state cuando isLoading está activo
+ * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
  */
 
 import React, { forwardRef } from "react";
@@ -42,10 +42,11 @@ const variantStyles: Record<ButtonVariant, string> = {
         "bg-transparent border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white focus:ring-slate-500",
 };
 
+// Mobile-first → escalado en sm/md
 const sizeStyles: Record<ButtonSize, string> = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-5 py-3 text-lg",
+    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
+    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
+    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
 };
 
 export const Button = forwardRef<
@@ -59,12 +60,12 @@ export const Button = forwardRef<
             size = "md",
             isLoading = false,
             className = "",
-            disabled, 
+            disabled,
             ...props
         },
         ref
     ) => {
-        const isDisabled = isLoading || disabled === true; 
+        const isDisabled = isLoading || disabled === true;
 
         return (
             <button

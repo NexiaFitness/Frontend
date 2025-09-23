@@ -10,12 +10,13 @@
  *
  * @autor Frontend Team
  * @since v1.0.0
- * @updated v2.2.0 - TEMPORAL fullscreen para calidad visual
+ * @updated v4.3.0 - Typography system integration
  */
 
 import React from "react";
 import { Link } from "react-router-dom";
 import { meshGradient } from "@/utils/backgrounds";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { ROUTES } from "@shared/config/constants";
 import { Button } from "@/components/ui/buttons/Button";
 
@@ -31,24 +32,24 @@ export const HeroSection: React.FC = () => {
                     <div className="space-y-8 max-w-xl text-center lg:text-left">
                         <div className="space-y-6">
                             {/* Main Headline */}
-                            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-slate-800 leading-tight">
+                            <h1 className={`${TYPOGRAPHY.hero} text-slate-800 leading-tight`}>
                                 Profesionaliza tu{" "}
                                 <span className="block text-blue-400">entrenamiento</span>
                             </h1>
-
+                            
                             {/* Subtitle */}
-                            <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-white/90 leading-relaxed max-w-lg mx-auto lg:mx-0">
+                            <p className={`${TYPOGRAPHY.heroSubtitle} text-white leading-relaxed max-w-lg mx-auto lg:mx-0 [text-shadow:_2px_2px_12px_rgb(0_0_0_/_80%)] lg:[text-shadow:_1px_1px_6px_rgb(0_0_0_/_40%)]`}>
                                 Revoluciona la creación de programas de entrenamiento con la
                                 plataforma científica diseñada por profesionales del fitness.
                             </p>
-
+                            
                             {/* Value Proposition */}
-                            <p className="text-sm sm:text-base md:text-lg text-slate-800 max-w-lg mx-auto lg:mx-0">
+                            <p className={`${TYPOGRAPHY.bodyLarge} text-slate-800 max-w-lg mx-auto lg:mx-0`}>
                                 Ahorra tiempo, mejora resultados y gestiona tus clientes con
                                 herramientas inteligentes basadas en ciencia del deporte.
                             </p>
                         </div>
-
+                        
                         {/* CTA */}
                         <div>
                             <Link to={ROUTES.REGISTER}>
@@ -63,7 +64,7 @@ export const HeroSection: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
+                
                 {/* Visual Right */}
                 <div className="relative h-full min-h-[300px]">
                     <img

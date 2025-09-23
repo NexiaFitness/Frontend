@@ -1,20 +1,14 @@
 /**
  * AuthLayout: Layout de autenticación con diseño 50/50 y responsive.
  *
- * - Desktop (lg≥1024px): vista 50/50 lado a lado (logo + claim a la izquierda, formulario a la derecha).
- * - Tablet/Mobile (<1024px): columnas (branding arriba, formulario abajo).
- *
- * Decisiones de diseño:
- * - Desktop: sin márgenes laterales, el formulario ocupa 50% exacto, con borde redondeado solo a la izquierda.
- * - Tablet/Mobile: con márgenes horizontales y verticales, borde redondeado MÁS PEQUEÑO (rounded-lg/xl).
- *
- * @autor Frontend Team
+ * @author Frontend Team
  * @since v2.0.0
- * @updated v4.4.0 - Altura navbar corregida (128px) + rounded mobile más pequeños
+ * @updated v4.3.0 - Typography system integration + text-shadow consistency
  */
 
 import React from "react";
 import { meshGradient } from "@/utils/backgrounds";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { NexiaLogo } from "./NexiaLogo";
 
 interface AuthLayoutProps {
@@ -36,7 +30,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
           </div>
 
           {/* Claim adaptativo */}
-          <p className="text-lg sm:text-xl lg:text-2xl font-medium text-white leading-relaxed">
+          <p className={`${TYPOGRAPHY.claim} text-white leading-relaxed [text-shadow:_2px_2px_12px_rgb(0_0_0_/_80%)] lg:[text-shadow:_1px_1px_6px_rgb(0_0_0_/_40%)]`}>
             Revolucionando la creación de programas de entrenamiento para profesionales del fitness
           </p>
         </div>

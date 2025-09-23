@@ -158,3 +158,6 @@ packages/shared/src/**/*.js.map
 
 # Backups temporales de desarrollo
 *.backup
+
+# Claude AI local settings
+.claude/

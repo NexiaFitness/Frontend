@@ -1,10 +1,19 @@
 /**
- * Formulario de reseteo de contraseña usando arquitectura reutilizable.
- * ARREGLADO: useEffect con dependencias estables del hook corregido
- * Usa useAuthForm hook + validation utilities + ServerErrorBanner.
- * 
+ * ResetPasswordForm.tsx — Formulario de reseteo de contraseña profesional.
+ *
+ * Contexto:
+ * - Usa useAuthForm para validaciones consistentes.
+ * - Conectado a RTK Query (useResetPasswordMutation).
+ * - Feedback de loading: spinner (desde Button) + texto accesible.
+ *
+ * Notas de mantenimiento:
+ * - Token obtenido desde URL.
+ * - Vista de éxito con feedback consistente.
+ * - No modifica Redux, solo estado local.
+ *
  * @author Frontend Team
  * @since v1.0.0
+ * @updated v4.3.1 - Typography system integration + BUTTON_PRESETS unificado
  */
 
 import React from "react";
@@ -12,6 +21,8 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useResetPasswordMutation } from "@shared/api/authApi";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { validateResetPasswordForm } from "@shared/utils/validation";
@@ -55,13 +66,18 @@ export const ResetPasswordForm: React.FC = () => {
     // useEffect AHORA ES SEGURO con funciones estables
     React.useEffect(() => {
         if (!tokenFromUrl) {
-            console.error("[ResetPasswordForm] Falta token en la URL. No se puede proceder al reseteo.");
+            console.error(
+                "[ResetPasswordForm] Falta token en la URL. No se puede proceder al reseteo."
+            );
             handleServerError({
                 status: 400,
-                data: { detail: "El enlace de recuperación no es válido. Solicita uno nuevo para continuar." }
+                data: {
+                    detail:
+                        "El enlace de recuperación no es válido. Solicita uno nuevo para continuar.",
+                },
             });
         } else {
-            setFormData(prev => ({ ...prev, token: tokenFromUrl }));
+            setFormData((prev) => ({ ...prev, token: tokenFromUrl }));
         }
     }, [tokenFromUrl, handleServerError, setFormData]);
 
@@ -84,29 +100,24 @@ export const ResetPasswordForm: React.FC = () => {
         }
     };
 
-    const handleBackToLogin = () => {
-        navigate("/auth/login");
-    };
-
-    const handleRequestNewToken = () => {
-        navigate("/auth/forgot-password");
-    };
+    const handleBackToLogin = () => navigate("/auth/login");
+    const handleRequestNewToken = () => navigate("/auth/forgot-password");
 
     // Vista de éxito después de resetear contraseña
     if (isPasswordReset) {
         return (
             <div className="space-y-6">
                 <div className="text-center">
-                    <h1 className="text-5xl font-bold mb-2 text-primary-400">
+                    <h1 className={`${TYPOGRAPHY.pageTitle} mb-2 text-primary-400`}>
                         Contraseña actualizada
                     </h1>
-                    <p className="text-gray-600">
+                    <p className={`${TYPOGRAPHY.body} text-gray-600`}>
                         Tu contraseña ha sido cambiada exitosamente
                     </p>
                 </div>
 
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-green-800 text-sm font-medium">
+                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>
                         Ya puedes iniciar sesión con tu nueva contraseña
                     </p>
                 </div>
@@ -114,9 +125,9 @@ export const ResetPasswordForm: React.FC = () => {
                 <Button
                     type="button"
                     variant="primary"
-                    size="lg"
+                    size="md"
                     onClick={handleBackToLogin}
-                    className="w-full"
+                    className={BUTTON_PRESETS.formPrimary}
                 >
                     Iniciar sesión
                 </Button>
@@ -128,17 +139,17 @@ export const ResetPasswordForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className="text-5xl font-bold mb-2 text-primary-400">
+                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2 text-primary-400`}>
                     Nueva contraseña
                 </h1>
-                <p className="text-gray-600">
+                <p className={`${TYPOGRAPHY.body} text-gray-600`}>
                     Introduce tu nueva contraseña para tu cuenta
                 </p>
             </div>
 
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
-            <form onSubmit={handleSubmit} className="space-y-5">
+            <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
                     type="password"
                     label="Nueva contraseña"
@@ -164,35 +175,32 @@ export const ResetPasswordForm: React.FC = () => {
                 <Button
                     type="submit"
                     variant="primary"
-                    size="lg"
+                    size="md"
                     isLoading={isLoading}
-                    className="w-full"
+                    disabled={isLoading}
+                    className={BUTTON_PRESETS.formPrimary}
                 >
                     {isLoading ? "Actualizando contraseña..." : "Cambiar contraseña"}
                 </Button>
 
-                <div className="text-center space-y-2">
-                    <div className="text-sm text-gray-600">
-                        <button
-                            type="button"
-                            onClick={handleRequestNewToken}
-                            className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
-                            disabled={isLoading}
-                        >
-                            Tu enlace ha caducado. Solicita uno nuevo
-                        </button>
-                    </div>
+                <div className="flex flex-col space-y-2 text-center text-sm">
+                    <button
+                        type="button"
+                        onClick={handleRequestNewToken}
+                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
+                        disabled={isLoading}
+                    >
+                        Tu enlace ha caducado. Solicita uno nuevo
+                    </button>
 
-                    <div className="text-sm text-gray-600">
-                        <button
-                            type="button"
-                            onClick={handleBackToLogin}
-                            className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
-                            disabled={isLoading}
-                        >
-                            Volver al login
-                        </button>
-                    </div>
+                    <button
+                        type="button"
+                        onClick={handleBackToLogin}
+                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
+                        disabled={isLoading}
+                    >
+                        Volver al login
+                    </button>
                 </div>
             </form>
         </div>

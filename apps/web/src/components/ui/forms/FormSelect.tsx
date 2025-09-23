@@ -2,7 +2,6 @@
  * Select reutilizable para formularios UI Web
  * Basado en Input.tsx, mantiene consistencia visual completa
  * Usado para selección de roles, países, categorías, etc.
- * Armonizado con clases y comportamiento idénticos a Input component
  *
  * Ajustes de accesibilidad y legibilidad:
  * - Asociación automática label → select con id seguro
@@ -11,6 +10,7 @@
  *
  * @author Frontend Team
  * @since v2.0.0
+ * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
  */
 
 import React, { forwardRef, useId } from "react";
@@ -35,13 +35,13 @@ interface FormSelectProps
     placeholder?: string;
 }
 
-// Clases base idénticas a Input.tsx para consistencia visual
 const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed caret-primary-600`;
 
+// Mobile-first responsive sizes
 const sizeStyles: Record<SelectSize, string> = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base",
-    lg: "px-5 py-3 text-lg",
+    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
+    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
+    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
 };
 
 const stateStyles = {
@@ -69,11 +69,6 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
         },
         ref
     ) => {
-        const hasError = Boolean(error);
-        const hasValue =
-            value !== "" && value !== undefined && value !== null;
-
-        // Generar id único y consistente para accesibilidad
         const autoId = useId();
         const selectId =
             props.id ||
@@ -81,7 +76,8 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                 ? `${label.toLowerCase().replace(/\s+/g, "-")}-${autoId}`
                 : autoId);
 
-        // Color dinámico: gris claro para placeholder, gris oscuro para valor seleccionado
+        const hasError = Boolean(error);
+        const hasValue = value !== "" && value !== undefined && value !== null;
         const textColorClass = hasValue ? "text-gray-900" : "text-gray-400";
 
         return (
@@ -124,7 +120,6 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                 </select>
 
                 {error && <p className={errorStyles}>{error}</p>}
-
                 {!error && helperText && <p className={helperStyles}>{helperText}</p>}
             </div>
         );

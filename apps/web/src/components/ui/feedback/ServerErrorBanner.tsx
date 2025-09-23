@@ -1,13 +1,17 @@
 /**
- * Componente reutilizable para mostrar errores del servidor
- * Usado en todos los formularios de autenticación web
- * Estilo Tailwind CSS consistente
- * 
+ * ServerErrorBanner.tsx — Componente reutilizable para mostrar errores del servidor
+ *
+ * Contexto:
+ * - Usado en todos los formularios de autenticación web.
+ * - Tipografía unificada con sistema global (TYPOGRAPHY).
+ *
  * @author Frontend Team
  * @since v1.0.0
+ * @updated v4.3.5 - Integración con TYPOGRAPHY.errorText
  */
 
 import React from "react";
+import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ServerErrorBannerProps {
     error?: string | null; 
@@ -19,7 +23,7 @@ export const ServerErrorBanner: React.FC<ServerErrorBannerProps> = ({ error, onD
 
     return (
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 relative">
-            <p className="text-red-800 text-sm font-medium">
+            <p className={`${TYPOGRAPHY.errorText} text-red-800 font-medium`}>
                 {error}
             </p>
 

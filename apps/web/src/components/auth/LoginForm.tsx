@@ -13,7 +13,7 @@
  *
  * @author Frontend Team
  * @since v2.0.0
- * @updated v3.0.0 - Integrado con Button.tsx refactorizado
+ * @updated v4.3.1 - Typography system integration + BUTTON_PRESETS unificado
  */
 
 import React from "react";
@@ -22,6 +22,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
@@ -95,15 +97,19 @@ export const LoginForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className="text-5xl font-bold mb-2 text-primary-400">
+                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2 text-primary-400`}>
                     Bienvenido de vuelta
                 </h1>
-                <p className="text-gray-600">Inicia sesión en tu cuenta de NEXIA</p>
+                <p className={`${TYPOGRAPHY.body} text-gray-600`}>
+                    Inicia sesión en tu cuenta de NEXIA
+                </p>
             </div>
 
             {successMessage && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-green-800 text-sm font-medium">{successMessage}</p>
+                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>
+                        {successMessage}
+                    </p>
                 </div>
             )}
 
@@ -135,20 +141,19 @@ export const LoginForm: React.FC = () => {
                 <Button
                     type="submit"
                     variant="primary"
-                    size="lg"
+                    size="md" // unificado con LogoutButton
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="w-full"
+                    className={BUTTON_PRESETS.formPrimary}
                 >
                     {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
                 </Button>
-
 
                 <div className="flex flex-col space-y-3 text-center text-sm">
                     <button
                         type="button"
                         onClick={() => navigate("/auth/forgot-password")}
-                        className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
+                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         ¿Olvidaste tu contraseña?
@@ -159,7 +164,7 @@ export const LoginForm: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => navigate("/auth/register")}
-                            className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
+                            className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
                             disabled={isLoading}
                         >
                             Regístrate aquí

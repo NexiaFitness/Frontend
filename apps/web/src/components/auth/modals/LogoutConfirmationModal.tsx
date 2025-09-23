@@ -1,16 +1,23 @@
 /**
- * Modal de confirmación de logout profesional y limpio
- * Previene logouts accidentales sin sobreexplicar al usuario
- * 
- * RESPONSIVE: Usa BaseModal para comportamiento móvil optimizado
+ * LogoutConfirmationModal.tsx — Modal de confirmación de logout profesional.
+ *
+ * Contexto:
+ * - Usa BaseModal responsive (mobile + desktop).
+ * - Botones con ancho igual en desktop (md:flex-1).
+ * - Spinner gestionado por Button base.
+ *
+ * Notas de mantenimiento:
+ * - Accesibilidad: delegada a BaseModal (title + description).
+ * - Comportamiento: confirma o cancela logout sin fricción.
  *
  * @author Nelson
- * @since v4.2.0 - Refactored with BaseModal responsive
+ * @since v4.2.0
+ * @updated v4.3.6 - Botones responsive unificados + spinner en Button
  */
 
-import React from 'react';
-import { Button } from '@/components/ui/buttons';
-import { BaseModal } from '@/components/ui/modals';
+import React from "react";
+import { Button } from "@/components/ui/buttons";
+import { BaseModal } from "@/components/ui/modals";
 
 interface LogoutConfirmationModalProps {
     isOpen: boolean;
@@ -27,9 +34,9 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
     isLoading = false,
     userName,
 }) => {
-    const description = userName 
+    const description = userName
         ? `¿Seguro que quieres cerrar sesión, ${userName}?`
-        : '¿Seguro que deseas cerrar sesión?';
+        : "¿Seguro que deseas cerrar sesión?";
 
     return (
         <BaseModal
@@ -39,15 +46,16 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
             description={description}
             iconType="warning"
             isLoading={isLoading}
-            autoFocus={false} // No auto-focus for logout (less critical)
+            autoFocus={false} // Logout no es crítico → sin auto-focus
         >
-            {/* Action buttons - Mobile: stacked, Desktop: side by side */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            {/* Action buttons - Mobile: stacked, Desktop: side by side with equal width */}
+            <div className="flex flex-col md:flex-row gap-3 justify-center">
                 <Button
                     variant="outline"
                     onClick={onCancel}
                     disabled={isLoading}
-                    className="px-6 py-2.5 w-full sm:min-w-[160px] sm:w-auto order-2 sm:order-1"
+                    size="md"
+                    className="w-full md:flex-1"
                 >
                     Cancelar
                 </Button>
@@ -56,16 +64,10 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
                     onClick={onConfirm}
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="px-6 py-2.5 w-full sm:min-w-[160px] sm:w-auto order-1 sm:order-2"
+                    size="md"
+                    className="w-full md:flex-1"
                 >
-                    {isLoading ? (
-                        <div className="flex items-center justify-center">
-                            <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                            Cerrando...
-                        </div>
-                    ) : (
-                        'Cerrar Sesión'
-                    )}
+                    Cerrar sesión
                 </Button>
             </div>
         </BaseModal>

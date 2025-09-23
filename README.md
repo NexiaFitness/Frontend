@@ -73,22 +73,51 @@ pnpm -F web dev
 ### Complete Project Structure
 ```
 frontend/
+├── .claude/
+│   └── settings.local.json
+├── .github/
+│   └── workflows/
+│       └── deploy.yml
+├── .vscode/
+│   └── settings.json
+├── docs/
+│   ├── ARCHITECTURE.md
+│   ├── CONTRIBUTING.md
+│   ├── CROSS_PLATFORM_GUIDE.md
+│   ├── DEPLOYMENT.md
+│   ├── ROADMAP.md
+│   └── TESTING_ARCHITECTURE.md
 ├── apps/
-│   └── web/                           # Main React application (Vite + TS)
-│       ├── dist/                      # Build output
+│   └── web/                                          # Main React application
 │       ├── public/
 │       │   ├── assets/
-│       │   │   └── Logo sin fondo blanco.png
-│       │   └── vite.svg
+│       │   │   ├── Logo sin fondo blanco.png
+│       │   │   ├── LOGO.svg
+│       │   │   ├── LOGO_NEXIA.svg
+│       │   │   └── NEXIA-LOGO.png
+│       │   └── favicon.svg
 │       ├── src/
-│       │   ├── assets/
-│       │   │   └── react.svg
 │       │   ├── components/
-│       │   │   ├── auth/              # Authentication components
-│       │   │   │   ├── __tests__/     # Component tests
+│       │   │   ├── account/
+│       │   │   │   ├── modals/
+│       │   │   │   │   ├── __tests__/
+│       │   │   │   │   │   └── DeleteAccountModal.test.tsx
+│       │   │   │   │   ├── DeleteAccountModal.tsx
+│       │   │   │   │   └── index.ts
+│       │   │   │   ├── ChangePasswordForm.tsx
+│       │   │   │   └── ProfileForm.tsx
+│       │   │   ├── auth/
+│       │   │   │   ├── __tests__/
+│       │   │   │   │   ├── ForgotPasswordForm.test.tsx
 │       │   │   │   │   ├── LoginForm.test.tsx
+│       │   │   │   │   ├── ProtectedRoute.test.tsx
 │       │   │   │   │   ├── RegisterForm.test.tsx
 │       │   │   │   │   └── ResetPasswordForm.test.tsx
+│       │   │   │   ├── modals/
+│       │   │   │   │   ├── __tests__/
+│       │   │   │   │   │   └── LogoutConfirmationModal.test.tsx
+│       │   │   │   │   ├── index.ts
+│       │   │   │   │   └── LogoutConfirmationModal.tsx
 │       │   │   │   ├── AuthLayout.tsx
 │       │   │   │   ├── ForgotPasswordForm.tsx
 │       │   │   │   ├── LoginForm.tsx
@@ -96,88 +125,142 @@ frontend/
 │       │   │   │   ├── ProtectedRoute.tsx
 │       │   │   │   ├── RegisterForm.tsx
 │       │   │   │   └── ResetPasswordForm.tsx
+│       │   │   ├── clients/
+│       │   │   │   └── modals/
+│       │   │   │       ├── DeleteClientModal.tsx
+│       │   │   │       └── index.ts
 │       │   │   ├── dashboard/
-│       │   │   │   └── DashboardLayout.tsx
-│       │   │   └── ui/                # UI Component Library (Tailwind-based)
+│       │   │   │   ├── admin/
+│       │   │   │   │   ├── AdminSideMenu.tsx
+│       │   │   │   │   └── index.ts
+│       │   │   │   ├── athlete/
+│       │   │   │   │   ├── AthleteSideMenu.tsx
+│       │   │   │   │   └── index.ts
+│       │   │   │   ├── layout/
+│       │   │   │   │   ├── DashboardLayout.tsx
+│       │   │   │   │   └── index.ts
+│       │   │   │   ├── trainer/
+│       │   │   │   │   ├── index.ts
+│       │   │   │   │   └── TrainerSideMenu.tsx
+│       │   │   │   ├── DashboardHeader.tsx
+│       │   │   │   ├── DashboardNavbar.tsx
+│       │   │   │   └── index.ts
+│       │   │   ├── home/
+│       │   │   │   ├── HeroSection.tsx
+│       │   │   │   └── index.ts
+│       │   │   └── ui/                               # Web-specific UI components
 │       │   │       ├── buttons/
+│       │   │       │   ├── __tests__/
+│       │   │       │   │   ├── Button.test.tsx
+│       │   │       │   │   └── LogoutButton.test.tsx
 │       │   │       │   ├── Button.tsx
-│       │   │       │   ├── LogoutButton.tsx
-│       │   │       │   └── index.ts
+│       │   │       │   ├── index.ts
+│       │   │       │   └── LogoutButton.tsx
 │       │   │       ├── feedback/
-│       │   │       │   ├── ServerErrorBanner.tsx
-│       │   │       │   └── index.ts
+│       │   │       │   ├── __tests__/
+│       │   │       │   │   └── ServerErrorBanner.test.tsx
+│       │   │       │   ├── index.ts
+│       │   │       │   └── ServerErrorBanner.tsx
 │       │   │       ├── forms/
+│       │   │       │   ├── __tests__/
+│       │   │       │   │   ├── FormSelect.test.tsx
+│       │   │       │   │   └── Input.test.tsx
 │       │   │       │   ├── FormSelect.tsx
-│       │   │       │   ├── Input.tsx
-│       │   │       │   └── index.ts
-│       │   │       ├── layout/         # Layout components
+│       │   │       │   ├── index.ts
+│       │   │       │   └── Input.tsx
+│       │   │       ├── layout/
+│       │   │       │   ├── navbar/
+│       │   │       │   │   ├── NexiaSideMenu.tsx
+│       │   │       │   │   └── PublicNavbar.tsx
+│       │   │       │   └── PublicLayout.tsx
 │       │   │       └── modals/
-│       │   │           └── LogoutConfirmationModal.tsx
-│       │   ├── pages/                 # Page-level components
+│       │   │           ├── BaseModal.tsx
+│       │   │           └── index.ts
+│       │   ├── pages/
+│       │   │   ├── account/
+│       │   │   │   └── Account.tsx
 │       │   │   ├── auth/
 │       │   │   │   ├── ForgotPassword.tsx
 │       │   │   │   ├── Login.tsx
 │       │   │   │   ├── Register.tsx
 │       │   │   │   └── ResetPassword.tsx
-│       │   │   └── dashboard/
-│       │   │       ├── AdminDashboard.tsx      # Future development
-│       │   │       ├── AthleteDashboard.tsx    # Future development
-│       │   │       └── TrainerDashboard.tsx
-│       │   ├── test-utils/            # Testing infrastructure
-│       │   │   ├── fixtures/          # Test data
-│       │   │   ├── mocks/             # Mock implementations
-│       │   │   │   ├── api.ts         # API mocks
-│       │   │   │   ├── router.ts      # Router mocks
-│       │   │   │   ├── store.ts       # Redux mocks
-│       │   │   │   └── index.ts       # Consolidated exports
-│       │   │   ├── utils/             # Test utilities
-│       │   │   │   └── msw.ts         # MSW server setup
-│       │   │   ├── render.tsx         # Custom render function
-│       │   │   └── setup.ts           # Test setup configuration
+│       │   │   ├── dashboard/
+│       │   │   │   ├── AdminDashboard.tsx
+│       │   │   │   ├── AthleteDashboard.tsx
+│       │   │   │   └── TrainerDashboard.tsx
+│       │   │   └── Home.tsx
+│       │   ├── test-utils/
+│       │   │   ├── fixtures/
+│       │   │   │   └── authFixtures.ts
+│       │   │   ├── mocks/
+│       │   │   │   ├── handlers/
+│       │   │   │   │   └── authHandlers.ts
+│       │   │   │   ├── authApiMocks.ts
+│       │   │   │   ├── index.ts
+│       │   │   │   ├── reactReduxMocks.ts
+│       │   │   │   └── reactRouterMocks.ts
+│       │   │   ├── utils/
+│       │   │   │   ├── msw.ts
+│       │   │   │   └── store.ts
+│       │   │   ├── render.tsx
+│       │   │   ├── setup.ts
+│       │   │   └── TestProviders.tsx
 │       │   ├── utils/
 │       │   │   └── backgrounds.ts
+│       │   ├── App.css
 │       │   ├── App.tsx
+│       │   ├── index.css
 │       │   ├── main.tsx
 │       │   └── vite-env.d.ts
 │       ├── eslint.config.js
 │       ├── index.html
 │       ├── package.json
 │       ├── postcss.config.js
+│       ├── README.md
 │       ├── tailwind.config.js
 │       ├── tsconfig.json
-│       ├── tsconfig.vitest.json       # Vitest-specific config
-│       └── vite.config.ts
+│       ├── tsconfig.tsbuildinfo
+│       ├── tsconfig.vitest.json
+│       ├── vite.config.ts
+│       └── vitest.config.ts
 ├── packages/
-│   └── shared/                        # Business Logic Package (NO UI components)
-│       ├── dist/                      # Compiled TypeScript output
+│   └── shared/                                       # Shared business logic & API
 │       ├── src/
 │       │   ├── api/
-│       │   │   ├── authApi.ts         # RTK Query auth endpoints
-│       │   │   └── baseApi.ts         # Base API configuration
+│       │   │   ├── accountApi.ts
+│       │   │   ├── authApi.ts
+│       │   │   ├── baseApi.ts
+│       │   │   └── clientsApi.ts
 │       │   ├── config/
-│       │   │   └── constants.ts       # Global constants and roles
+│       │   │   ├── constants.ts
+│       │   │   └── navigationConfig.ts
 │       │   ├── hooks/
-│       │   │   ├── useAuthForm.ts     # Form validation hook (with useCallback optimization)
-│       │   │   └── useLogout.ts       # Professional logout hook
+│       │   │   ├── useAuthForm.ts
+│       │   │   ├── useLogout.ts
+│       │   │   ├── useNavigation.ts
+│       │   │   ├── usePublicNavigation.ts
+│       │   │   └── useUserRole.ts
 │       │   ├── store/
-│       │   │   ├── authSlice.ts       # Authentication state management
-│       │   │   └── index.ts           # Redux store configuration
+│       │   │   ├── authSlice.ts
+│       │   │   ├── clientsSlice.ts
+│       │   │   └── index.ts
 │       │   ├── types/
-│       │   │   └── auth.ts            # TypeScript type definitions
+│       │   │   ├── account.ts
+│       │   │   ├── auth.ts
+│       │   │   └── client.ts
 │       │   ├── utils/
-│       │   │   └── validation.ts      # Pure validation functions
-│       │   └── index.ts               # Package exports
+│       │   │   └── validation.ts
+│       │   └── index.ts
 │       ├── package.json
 │       └── tsconfig.json
 ├── .gitignore
-├── CLAUDE.md                          # Claude Code development guide
-├── LICENSE
-├── package.json                       # Workspace configuration
-├── pnpm-lock.yaml                     # Dependency lock file
-├── pnpm-workspace.yaml                # Workspace definition
-├── README.md                          # This file
-├── tsconfig.base.json                 # Base TypeScript config
-└── tsconfig.json                      # Root TypeScript config
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── README.md
+├── tsconfig.base.json
+├── tsconfig.json
+└── vercel.json
 ```
 
 ### Architecture Principles

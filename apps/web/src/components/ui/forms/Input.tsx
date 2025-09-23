@@ -2,14 +2,15 @@
  * Input reutilizable para formularios UI Web
  * Basado en Tailwind CSS, soporta variantes y estados de validación
  * Integrado con react-hook-form para manejo profesional de formularios
- * 
+ *
  * Features v2.0:
  * - Password visibility toggle con eye icon
  * - Accesibilidad completa (ARIA labels)
  * - Mobile-friendly touch targets
  *
  * @author Frontend Team
- * @since v2.0.0 - Added password visibility toggle
+ * @since v2.0.0
+ * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
  */
 
 import React, { forwardRef, useId, useState } from "react";
@@ -30,17 +31,18 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 
 const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-400 text-gray-900 caret-primary-600`;
 
+// Mobile-first responsive sizes
 const sizeStyles: Record<InputSize, string> = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-base", 
-    lg: "px-5 py-3 text-lg",
+    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
+    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
+    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
 };
 
-// Estilos con padding adicional para password inputs (espacio para el ícono)
+// Para inputs password con icono → padding derecho extra
 const passwordSizeStyles: Record<InputSize, string> = {
-    sm: "px-3 py-1.5 pr-10 text-sm",
-    md: "px-4 py-2 pr-12 text-base",
-    lg: "px-5 py-3 pr-14 text-lg",
+    sm: "px-3 py-2 pr-10 text-sm min-h-[40px] sm:min-h-[44px]",
+    md: "px-3 py-2 pr-12 text-sm sm:px-4 sm:py-2.5 sm:pr-12 sm:text-base sm:min-h-[44px]",
+    lg: "px-4 py-2.5 pr-14 text-base sm:px-5 sm:py-3 sm:pr-14 sm:text-lg sm:min-h-[48px]",
 };
 
 const stateStyles = {
@@ -69,22 +71,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     ) => {
         const autoId = useId();
         const inputId = id || (label ? `${label.toLowerCase().replace(/\s+/g, "-")}-${autoId}` : autoId);
-        
-        // Estado para password visibility toggle
-        const [showPassword, setShowPassword] = useState(false);
-        
-        const hasError = Boolean(error);
-        const isPasswordType = type === "password";
-        
-        // Determinar el tipo actual del input
-        const currentInputType = isPasswordType && showPassword ? "text" : type;
-        
-        // Toggle password visibility
-        const togglePasswordVisibility = () => {
-            setShowPassword(!showPassword);
-        };
 
-        // Determinar estilos de tamaño según si es password o no
+        const [showPassword, setShowPassword] = useState(false);
+        const isPasswordType = type === "password";
+        const currentInputType = isPasswordType && showPassword ? "text" : type;
+
+        const togglePasswordVisibility = () => setShowPassword(!showPassword);
+
         const inputSizeStyles = isPasswordType ? passwordSizeStyles[size] : sizeStyles[size];
 
         return (
@@ -104,13 +97,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         className={clsx(
                             baseStyles,
                             inputSizeStyles,
-                            hasError ? stateStyles.error : stateStyles.default,
+                            error ? stateStyles.error : stateStyles.default,
                             className
                         )}
                         {...props}
                     />
 
-                    {/* Password visibility toggle button */}
                     {isPasswordType && (
                         <button
                             type="button"
@@ -128,8 +120,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     )}
                 </div>
 
-                {/* Mostramos error si existe, siempre fuera del input */}
-                {hasError ? (
+                {error ? (
                     <p className={errorStyles} data-testid="input-error">
                         {error}
                     </p>

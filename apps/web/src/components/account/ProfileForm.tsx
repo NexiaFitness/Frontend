@@ -1,9 +1,18 @@
 /**
- * Formulario de perfil de cuenta optimizado para dashboard context
- * CONSISTENTE con patrón de auth forms
- * 
- * @author Frontend Team
- * @since v4.2.0 - Simplified, consistent with auth forms pattern
+ * ProfileForm.tsx — Formulario de perfil de cuenta para dashboard.
+ *
+ * Contexto:
+ * - Usa useAuthForm pattern y RTK Query (updateAccount).
+ * - Unificado con tipografía y BUTTON_PRESETS como Login/Register/etc.
+ * - Incluye secciones: Información personal, Seguridad y Zona de peligro.
+ *
+ * Notas de mantenimiento:
+ * - Feedback de éxito/error con tipografía consistente.
+ * - Botones centralizados en BUTTON_PRESETS para evitar parches.
+ *
+ * @author Frontend
+ * @since v4.2.0
+ * @updated v4.3.6 - Typography system integration + BUTTON_PRESETS unificado
  */
 
 import React, { useEffect, useState } from "react";
@@ -12,6 +21,8 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useUpdateAccountMutation } from "@shared/api/accountApi";
 import { selectUser, setCurrentUser, logout } from "@shared/store/authSlice";
 import type { AppDispatch } from "@shared/store";
@@ -93,19 +104,21 @@ export const ProfileForm: React.FC = () => {
 
     return (
         <div className="space-y-8">
-            {/* Header - consistent with auth forms */}
+            {/* Header */}
             <div className="text-center mb-12">
-                <h1 className="text-5xl font-bold text-white mb-4">Mi Cuenta</h1>
-                <p className="text-white/80 text-xl">
+                <h1 className={`${TYPOGRAPHY.hero} text-white mb-4`}>Mi Cuenta</h1>
+                <p className={`${TYPOGRAPHY.heroSubtitle} text-white/80`}>
                     Gestiona tu información personal y configuración de seguridad
                 </p>
             </div>
 
             <div className="max-w-4xl mx-auto space-y-8">
-                {/* Success message - consistent with auth styling */}
+                {/* Success message */}
                 {successMessage && (
                     <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                        <p className="text-green-800 text-sm font-medium">{successMessage}</p>
+                        <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>
+                            {successMessage}
+                        </p>
                     </div>
                 )}
 
@@ -117,8 +130,10 @@ export const ProfileForm: React.FC = () => {
                 {/* Profile Information Card */}
                 <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
                     <div className="mb-8">
-                        <h2 className="text-3xl font-bold text-slate-800 mb-2">Información Personal</h2>
-                        <p className="text-slate-600">
+                        <h2 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-2`}>
+                            Información Personal
+                        </h2>
+                        <p className={`${TYPOGRAPHY.body} text-slate-600`}>
                             Actualiza tus datos básicos de perfil
                         </p>
                     </div>
@@ -163,8 +178,10 @@ export const ProfileForm: React.FC = () => {
                             <Button
                                 type="submit"
                                 variant="primary"
+                                size="md"
                                 isLoading={isLoading}
-                                className="px-8 min-w-[180px]"
+                                disabled={isLoading}
+                                className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
                             >
                                 {isLoading ? "Guardando..." : "Guardar"}
                             </Button>
@@ -182,7 +199,12 @@ export const ProfileForm: React.FC = () => {
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
                         <div className="text-center">
                             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <svg className="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg
+                                    className="w-8 h-8 text-red-600"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
                                     <path
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
@@ -192,19 +214,23 @@ export const ProfileForm: React.FC = () => {
                                 </svg>
                             </div>
 
-                            <h3 className="text-2xl font-bold text-slate-800 mb-4">Zona de Peligro</h3>
-                            <p className="text-slate-600 mb-2 max-w-md mx-auto">
-                                Una vez eliminada tu cuenta, perderás acceso permanente a todos tus datos.
+                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-4`}>
+                                Zona de Peligro
+                            </h3>
+                            <p className={`${TYPOGRAPHY.body} text-slate-600 mb-2 max-w-md mx-auto`}>
+                                Una vez eliminada tu cuenta, perderás acceso permanente a todos
+                                tus datos.
                             </p>
-                            <p className="text-sm text-red-600 font-medium mb-8">
+                            <p className={`${TYPOGRAPHY.errorText} text-red-600 font-medium mb-8`}>
                                 Esta acción no se puede deshacer.
                             </p>
 
                             <Button
                                 type="button"
                                 variant="danger"
+                                size="md"
                                 onClick={() => setDeleteOpen(true)}
-                                className="px-8 min-w-[180px]"
+                                className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
                             >
                                 Eliminar
                             </Button>

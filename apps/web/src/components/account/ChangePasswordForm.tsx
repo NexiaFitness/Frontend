@@ -1,15 +1,26 @@
 /**
- * Formulario de cambio de contraseña optimizado para dashboard context
- * CONSISTENTE con patrón de auth forms
- * 
- * @author Frontend Team
- * @since v4.2.0 - Simplified, consistent with auth forms pattern
+ * ChangePasswordForm.tsx — Formulario de cambio de contraseña profesional.
+ *
+ * Contexto:
+ * - Usa useAuthForm para validaciones consistentes.
+ * - Conectado a RTK Query (useChangePasswordMutation).
+ * - Feedback de loading y tipografía unificada con auth forms.
+ *
+ * Notas de mantenimiento:
+ * - Success y error usan tipografía consistente.
+ * - Botón unificado con BUTTON_PRESETS.
+ *
+ * @author Frontend
+ * @since v4.2.0
+ * @updated v4.3.6 - Typography system integration + BUTTON_PRESETS unificado
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useChangePasswordMutation } from "@shared/api/accountApi";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { validateChangePasswordForm } from "@shared/utils/validation";
@@ -42,7 +53,9 @@ export const ChangePasswordForm: React.FC = () => {
         validate: validateChangePasswordForm,
     });
 
-    const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
+    const [successMessage, setSuccessMessage] = React.useState<string | null>(
+        null
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -61,25 +74,29 @@ export const ChangePasswordForm: React.FC = () => {
             resetForm();
 
             setTimeout(() => setSuccessMessage(null), 3000);
-        } catch (error) {  
+        } catch (error) {
             handleServerError(error as Parameters<typeof handleServerError>[0]);
         }
     };
 
     return (
         <div className="space-y-6">
-            {/* Header - consistent with auth forms */}
-            <div className="mb-8">
-                <h2 className="text-3xl font-bold text-slate-800 mb-2">Seguridad</h2>
-                <p className="text-slate-600">
+            {/* Header */}
+            <div className="mb-8 text-center md:text-left">
+                <h2 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-2`}>
+                    Seguridad
+                </h2>
+                <p className={`${TYPOGRAPHY.body} text-slate-600`}>
                     Cambia tu contraseña para mantener tu cuenta segura
                 </p>
             </div>
 
-            {/* Success message - consistent with auth styling */}
+            {/* Success message */}
             {successMessage && (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className="text-green-800 text-sm font-medium">{successMessage}</p>
+                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>
+                        {successMessage}
+                    </p>
                 </div>
             )}
 
@@ -125,8 +142,10 @@ export const ChangePasswordForm: React.FC = () => {
                     <Button
                         type="submit"
                         variant="primary"
+                        size="md"
                         isLoading={isLoading}
-                        className="px-8 min-w-[180px]"
+                        disabled={isLoading}
+                        className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
                     >
                         {isLoading ? "Actualizando..." : "Actualizar"}
                     </Button>

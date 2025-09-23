@@ -1,12 +1,19 @@
 /**
- * Formulario de registro usando arquitectura reutilizable.
- * Usa useAuthForm hook + validation utilities + ServerErrorBanner.
- * Sin duplicación de código respecto a LoginForm.
- * Incluye selector de roles dinámico usando FormSelect.
- * Components migrados a @shared para reutilización web/móvil.
- * 
+ * RegisterForm.tsx — Formulario de registro profesional.
+ *
+ * Contexto:
+ * - Usa useAuthForm hook + validation utilities + ServerErrorBanner.
+ * - Sin duplicación de código respecto a LoginForm.
+ * - Incluye selector de roles dinámico usando FormSelect.
+ * - Components migrados a @shared para reutilización web/móvil.
+ *
+ * Notas:
+ * - El backend no devuelve token en registro → se redirige a login con mensaje de éxito.
+ * - Tipografía unificada con Login/Forgot/Reset.
+ *
  * @author Frontend
  * @since v1.0.0
+ * @updated v4.3.1 - Typography system integration + BUTTON_PRESETS unificado
  */
 
 import React from "react";
@@ -15,6 +22,8 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useRegisterMutation } from "@shared/api/authApi";
 import { loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
@@ -71,12 +80,7 @@ export const RegisterForm: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        const isValid = validateForm();
-
-        if (!isValid) {
-            return;
-        }
-
+        if (!validateForm()) return;
         clearErrors();
 
         try {
@@ -90,15 +94,17 @@ export const RegisterForm: React.FC = () => {
 
             await register(credentials).unwrap();
 
-            // Redirigir a login con mensaje de éxito (backend no devuelve token en registro)
+            // Redirigir a login con mensaje de éxito
             navigate("/auth/login", {
                 state: {
                     message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
-                    email: formData.email
-                }
+                    email: formData.email,
+                },
             });
         } catch (error) {
-            const errorMessage = handleServerError(error as Parameters<typeof handleServerError>[0]);
+            const errorMessage = handleServerError(
+                error as Parameters<typeof handleServerError>[0]
+            );
             dispatch(loginFailure(errorMessage));
         }
     };
@@ -110,8 +116,10 @@ export const RegisterForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className="text-5xl font-bold mb-2 text-primary-400">Únete a NEXIA</h1>
-                <p className="text-gray-600">
+                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2 text-primary-400`}>
+                    Únete a NEXIA
+                </h1>
+                <p className={`${TYPOGRAPHY.body} text-gray-600`}>
                     Crea tu cuenta para empezar a entrenar de forma profesional
                 </p>
             </div>
@@ -119,7 +127,6 @@ export const RegisterForm: React.FC = () => {
             <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-
                 <Input
                     type="email"
                     label="Correo electrónico"
@@ -191,9 +198,10 @@ export const RegisterForm: React.FC = () => {
                 <Button
                     type="submit"
                     variant="primary"
-                    size="lg"
+                    size="md"
                     isLoading={isLoading}
-                    className="w-full"
+                    disabled={isLoading}
+                    className={BUTTON_PRESETS.formPrimary}
                 >
                     {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
@@ -203,7 +211,7 @@ export const RegisterForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleLogin}
-                        className="text-blue-600 hover:text-blue-700 font-medium underline disabled:opacity-50"
+                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         Inicia sesión
