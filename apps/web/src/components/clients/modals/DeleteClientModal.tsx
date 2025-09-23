@@ -1,24 +1,24 @@
 /**
  * DeleteClientModal.tsx — Modal de confirmación para eliminar cliente.
  *
+ * Cambios v4.3.8:
+ * - Botones actualizados a BUTTON_PRESETS.modalEqual (consistencia con otros modales).
+ * - Se mantiene warning con TYPOGRAPHY.errorText.
+ *
  * Contexto:
  * - Usa BaseModal responsive y accesible.
- * - Botones con mismo ancho en desktop (md:flex-1).
- * - Spinner gestionado por Button base.
- *
- * Notas de mantenimiento:
- * - Accesibilidad heredada de BaseModal.
- * - Previene eliminaciones accidentales con confirmación clara.
+ * - Consistencia global en tipografía (heredada de BaseModal) y botones.
  *
  * @author Nelson
  * @since v2.1.0
- * @updated v4.3.6 - Migrado a BaseModal unificado + botones responsive
+ * @updated v4.3.8 - Botones alineados con sistema centralizado
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useDeleteClientMutation } from "@shared/api/clientsApi";
 import type { Client } from "@shared/types/client";
 
@@ -44,7 +44,10 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
             onDeleteSuccess?.();
             onClose();
         } catch (error) {
-            console.error("[DeleteClientModal] Error eliminando cliente:", error);
+            console.error(
+                "[DeleteClientModal] Error eliminando cliente:",
+                error
+            );
         }
     };
 
@@ -91,7 +94,7 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
                     onClick={onClose}
                     disabled={isLoading}
                     size="md"
-                    className="w-full md:flex-1"
+                    className={BUTTON_PRESETS.modalEqual}
                 >
                     Cancelar
                 </Button>
@@ -101,7 +104,7 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
                     isLoading={isLoading}
                     disabled={isLoading}
                     size="md"
-                    className="w-full md:flex-1"
+                    className={BUTTON_PRESETS.modalEqual}
                 >
                     Eliminar cliente
                 </Button>

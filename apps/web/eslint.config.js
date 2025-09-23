@@ -1,3 +1,4 @@
+// apps/web/eslint.config.js
 import js from '@eslint/js';
 import globals from 'globals';
 import react from 'eslint-plugin-react';
@@ -7,7 +8,15 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**/*', 'build/**/*', '*.config.js', '*.config.ts']
+    // Ignorar archivos/carpetas generadas
+    ignores: [
+      'dist/**/*',
+      'build/**/*',
+      'coverage/**/*',
+      '*.config.js',
+      '*.config.ts',
+      'node_modules/**/*',
+    ],
   },
   {
     files: ['**/*.{js,jsx,ts,tsx}'],
@@ -15,61 +24,61 @@ export default tseslint.config(
       js.configs.recommended,
       ...tseslint.configs.recommended,
       react.configs.flat.recommended,
-      react.configs.flat['jsx-runtime']
+      react.configs.flat['jsx-runtime'],
     ],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'module',
       globals: {
         ...globals.browser,
-        ...globals.es2022
+        ...globals.es2022,
       },
       parser: tseslint.parser,
       parserOptions: {
         ecmaFeatures: {
-          jsx: true
+          jsx: true,
         },
-        project: './tsconfig.json'
-      }
+        project: './tsconfig.json',
+      },
     },
     plugins: {
       react,
       'react-hooks': reactHooks,
-      'react-refresh': reactRefresh
+      'react-refresh': reactRefresh,
     },
     rules: {
       // React rules
       'react/react-in-jsx-scope': 'off', // React 17+ JSX transform
-      'react/prop-types': 'off', // Using TypeScript
+      'react/prop-types': 'off', // Usamos TypeScript
       'react/jsx-uses-react': 'off', // React 17+ JSX transform
       'react/jsx-uses-vars': 'error',
-      
+
       // React Hooks rules
       ...reactHooks.configs.recommended.rules,
-      
+
       // React Refresh rules
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true }
+        { allowConstantExport: true },
       ],
-      
+
       // TypeScript rules
       '@typescript-eslint/no-unused-vars': [
         'error',
-        { argsIgnorePattern: '^_' }
+        { argsIgnorePattern: '^_' },
       ],
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-explicit-any': 'warn',
-      
+
       // General rules
       'no-console': ['warn', { allow: ['warn', 'error'] }],
-      'no-debugger': 'error'
+      'no-debugger': 'error',
     },
     settings: {
       react: {
-        version: 'detect'
-      }
-    }
+        version: 'detect',
+      },
+    },
   }
 );

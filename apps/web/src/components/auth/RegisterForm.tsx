@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useRegisterMutation } from "@shared/api/authApi";
 import { loginFailure } from "@shared/store/authSlice";

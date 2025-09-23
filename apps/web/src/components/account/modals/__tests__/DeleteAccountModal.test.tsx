@@ -16,7 +16,6 @@ import { DeleteAccountModal } from "../DeleteAccountModal";
 import { server } from "@/test-utils/utils/msw";
 import {
     deleteAccountErrorHandler,
-    deleteAccountTimeoutHandler,
     deleteAccountNetworkErrorHandler,
     deleteAccountRetryHandler,
 } from "@/test-utils/mocks/handlers/accountHandlers";

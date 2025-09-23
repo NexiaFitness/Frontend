@@ -1,18 +1,24 @@
 /**
  * BaseModal - Modal base responsive y accesible
- * 
- * Centraliza comportamiento común de modales:
- * - Responsive design (mobile/desktop)
- * - Accessibility (ESC, focus, aria-labels)
- * - Scroll locking y backdrop handling
- * 
+ *
+ * Cambios v4.3.8:
+ * - Añadida tipografía centralizada (TYPOGRAPHY.modalTitle / modalDescription).
+ * - Todos los modales hijos heredan estilo tipográfico correcto automáticamente.
+ *
+ * Contexto:
+ * - Responsive design (mobile/desktop).
+ * - Accessibility (ESC, focus, aria-labels).
+ * - Scroll locking y backdrop handling.
+ *
  * @author Frontend Team
  * @since v4.2.0 - Base modal unificado
+ * @updated v4.3.8 - Integración de Typography system
  */
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from "react";
+import { TYPOGRAPHY } from "@/utils/typography";
 
-export type ModalIconType = 'warning' | 'danger' | 'info' | 'success';
+export type ModalIconType = "warning" | "danger" | "info" | "success";
 
 interface BaseModalProps {
     isOpen: boolean;
@@ -37,10 +43,13 @@ interface BaseModalProps {
     isLoading?: boolean;
 }
 
-const iconConfig: Record<ModalIconType, { bgColor: string; iconColor: string; svg: React.ReactNode }> = {
+const iconConfig: Record<
+    ModalIconType,
+    { bgColor: string; iconColor: string; svg: React.ReactNode }
+> = {
     danger: {
-        bgColor: 'bg-red-100',
-        iconColor: 'text-red-600',
+        bgColor: "bg-red-100",
+        iconColor: "text-red-600",
         svg: (
             <path
                 strokeLinecap="round"
@@ -51,8 +60,8 @@ const iconConfig: Record<ModalIconType, { bgColor: string; iconColor: string; sv
         ),
     },
     warning: {
-        bgColor: 'bg-amber-100',
-        iconColor: 'text-amber-600',
+        bgColor: "bg-amber-100",
+        iconColor: "text-amber-600",
         svg: (
             <path
                 strokeLinecap="round"
@@ -63,8 +72,8 @@ const iconConfig: Record<ModalIconType, { bgColor: string; iconColor: string; sv
         ),
     },
     info: {
-        bgColor: 'bg-blue-100',
-        iconColor: 'text-blue-600',
+        bgColor: "bg-blue-100",
+        iconColor: "text-blue-600",
         svg: (
             <path
                 strokeLinecap="round"
@@ -75,8 +84,8 @@ const iconConfig: Record<ModalIconType, { bgColor: string; iconColor: string; sv
         ),
     },
     success: {
-        bgColor: 'bg-green-100',
-        iconColor: 'text-green-600',
+        bgColor: "bg-green-100",
+        iconColor: "text-green-600",
         svg: (
             <path
                 strokeLinecap="round"
@@ -95,8 +104,8 @@ export const BaseModal: React.FC<BaseModalProps> = ({
     description,
     children,
     iconType,
-    titleId = 'modal-title',
-    descriptionId = 'modal-description',
+    titleId = "modal-title",
+    descriptionId = "modal-description",
     closeOnBackdrop = true,
     closeOnEsc = true,
     autoFocus = true,
@@ -107,14 +116,14 @@ export const BaseModal: React.FC<BaseModalProps> = ({
     // Handle ESC key and focus management
     useEffect(() => {
         const handleEscapeKey = (event: KeyboardEvent) => {
-            if (event.key === 'Escape' && isOpen && closeOnEsc && !isLoading) {
+            if (event.key === "Escape" && isOpen && closeOnEsc && !isLoading) {
                 onClose();
             }
         };
 
         if (isOpen) {
-            document.addEventListener('keydown', handleEscapeKey);
-            document.body.style.overflow = 'hidden';
+            document.addEventListener("keydown", handleEscapeKey);
+            document.body.style.overflow = "hidden";
 
             if (autoFocus) {
                 setTimeout(() => {
@@ -124,8 +133,8 @@ export const BaseModal: React.FC<BaseModalProps> = ({
         }
 
         return () => {
-            document.removeEventListener('keydown', handleEscapeKey);
-            document.body.style.overflow = 'unset';
+            document.removeEventListener("keydown", handleEscapeKey);
+            document.body.style.overflow = "unset";
         };
     }, [isOpen, closeOnEsc, isLoading, onClose, autoFocus]);
 
@@ -160,21 +169,34 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                     {/* Icon */}
                     {icon && (
                         <div className="flex justify-center mb-4 sm:mb-6">
-                            <div className={`w-12 h-12 sm:w-16 sm:h-16 ${icon.bgColor} rounded-full flex items-center justify-center`}>
-                                <svg className={`w-6 h-6 sm:w-8 sm:h-8 ${icon.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div
+                                className={`w-12 h-12 sm:w-16 sm:h-16 ${icon.bgColor} rounded-full flex items-center justify-center`}
+                            >
+                                <svg
+                                    className={`w-6 h-6 sm:w-8 sm:h-8 ${icon.iconColor}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
                                     {icon.svg}
                                 </svg>
                             </div>
                         </div>
                     )}
 
-                    {/* Title */}
+                    {/* Title + Description */}
                     <div className="text-center mb-6 sm:mb-8">
-                        <h3 id={titleId} className="text-lg sm:text-xl font-bold text-gray-900 mb-2 sm:mb-3">
+                        <h3
+                            id={titleId}
+                            className={`${TYPOGRAPHY.modalTitle} text-gray-900 mb-2 sm:mb-3`}
+                        >
                             {title}
                         </h3>
                         {description && (
-                            <p id={descriptionId} className="text-sm sm:text-base text-gray-600">
+                            <p
+                                id={descriptionId}
+                                className={`${TYPOGRAPHY.modalDescription} text-gray-600`}
+                            >
                                 {description}
                             </p>
                         )}

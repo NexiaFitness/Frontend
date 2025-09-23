@@ -9,17 +9,16 @@
  * Notas de mantenimiento:
  * - Accesibilidad: delegada a BaseModal (title + description).
  * - Comportamiento: confirma o cancela logout sin fricción.
- * - Consistencia: usa TYPOGRAPHY.modalTitle/modalDescription + BUTTON_PRESETS.modalEqual.
+ * - Consistencia: alineado con otros modales (BaseModal + BUTTON_PRESETS.modalEqual).
  *
  * @author Nelson
  * @since v4.2.0
- * @updated v4.3.7 - Alineado con estándares de typography y buttonStyles
+ * @updated v4.3.8 - Limpieza de importaciones muertas, consistencia con modales
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 
 interface LogoutConfirmationModalProps {
