@@ -66,7 +66,7 @@ describe("LogoutButton", () => {
         it("renders with default text", () => {
             render(<LogoutButton />)
             
-            expect(screen.getByRole("button", { name: "Cerrar Sesión" })).toBeInTheDocument()
+            expect(screen.getByRole("button", { name: "Cerrar sesión" })).toBeInTheDocument()
         })
 
         it("renders with custom children", () => {

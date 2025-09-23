@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Usa BaseModal responsive (mobile + desktop).
- * - Botones con ancho igual en desktop (md:flex-1).
+ * - Botones con ancho fijo estandarizado (BUTTON_PRESETS.modalEqual).
  * - Spinner gestionado por Button base.
  *
  * Notas de mantenimiento:
@@ -12,13 +12,14 @@
  *
  * @author Nelson
  * @since v4.2.0
- * @updated v4.3.5 - Botones responsive con mismo ancho en desktop
+ * @updated v4.3.7 - Botones corregidos a BUTTON_PRESETS.modalEqual (consistencia global)
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useDeleteAccountMutation } from "@shared/api/accountApi";
 
 interface DeleteAccountModalProps {
@@ -49,8 +50,9 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
     };
 
     const description = userName
-        ? `¿Estás seguro de que quieres eliminar tu cuenta (${userName}${userEmail ? ` · ${userEmail}` : ""
-        })?`
+        ? `¿Estás seguro de que quieres eliminar tu cuenta (${userName}${
+              userEmail ? ` · ${userEmail}` : ""
+          })?`
         : "¿Estás seguro de que quieres eliminar tu cuenta?";
 
     return (
@@ -71,14 +73,14 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                 </p>
             </div>
 
-            {/* Action buttons - Mobile: stacked, Desktop: side by side with equal width */}
+            {/* Action buttons - Mobile: stacked, Desktop: fixed equal width */}
             <div className="flex flex-col md:flex-row gap-3 justify-center">
                 <Button
                     variant="outline"
                     onClick={onClose}
                     disabled={isLoading}
                     size="md"
-                    className="w-full md:flex-1"
+                    className={BUTTON_PRESETS.modalEqual}
                 >
                     Cancelar
                 </Button>
@@ -88,7 +90,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                     isLoading={isLoading}
                     disabled={isLoading}
                     size="md"
-                    className="w-full md:flex-1"
+                    className={BUTTON_PRESETS.modalEqual}
                 >
                     Eliminar cuenta
                 </Button>

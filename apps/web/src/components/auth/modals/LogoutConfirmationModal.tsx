@@ -3,21 +3,24 @@
  *
  * Contexto:
  * - Usa BaseModal responsive (mobile + desktop).
- * - Botones con ancho igual en desktop (md:flex-1).
+ * - Botones con ancho igual en desktop (BUTTON_PRESETS.modalEqual).
  * - Spinner gestionado por Button base.
  *
  * Notas de mantenimiento:
  * - Accesibilidad: delegada a BaseModal (title + description).
  * - Comportamiento: confirma o cancela logout sin fricción.
+ * - Consistencia: usa TYPOGRAPHY.modalTitle/modalDescription + BUTTON_PRESETS.modalEqual.
  *
  * @author Nelson
  * @since v4.2.0
- * @updated v4.3.6 - Botones responsive unificados + spinner en Button
+ * @updated v4.3.7 - Alineado con estándares de typography y buttonStyles
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
+import { TYPOGRAPHY } from "@/utils/typography";
+import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 
 interface LogoutConfirmationModalProps {
     isOpen: boolean;
@@ -46,16 +49,17 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
             description={description}
             iconType="warning"
             isLoading={isLoading}
-            autoFocus={false} // Logout no es crítico → sin auto-focus
+            titleId="logout-title"
+            descriptionId="logout-description"
         >
-            {/* Action buttons - Mobile: stacked, Desktop: side by side with equal width */}
+            {/* Action buttons - Mobile: stacked, Desktop: equal width */}
             <div className="flex flex-col md:flex-row gap-3 justify-center">
                 <Button
                     variant="outline"
                     onClick={onCancel}
                     disabled={isLoading}
                     size="md"
-                    className="w-full md:flex-1"
+                    className={BUTTON_PRESETS.modalEqual}
                 >
                     Cancelar
                 </Button>
@@ -65,7 +69,7 @@ export const LogoutConfirmationModal: React.FC<LogoutConfirmationModalProps> = (
                     isLoading={isLoading}
                     disabled={isLoading}
                     size="md"
-                    className="w-full md:flex-1"
+                    className={BUTTON_PRESETS.modalEqual}
                 >
                     Cerrar sesión
                 </Button>

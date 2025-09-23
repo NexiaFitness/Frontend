@@ -22,7 +22,9 @@ describe("Input", () => {
             const input = screen.getByPlaceholderText("Test input")
             expect(input).toBeInTheDocument()
             expect(input).toHaveAttribute("type", "text") // default type
-            expect(input).toHaveClass("px-4", "py-2", "text-base") // default md size
+            // Mobile-first: md size = px-3 py-2 text-sm en mobile
+            expect(input).toHaveClass("px-3", "py-2", "text-sm")
+            expect(input).toHaveClass("sm:px-4", "sm:py-2.5", "sm:text-base")
         })
 
         it("renders with custom placeholder", () => {
@@ -70,21 +72,27 @@ describe("Input", () => {
             render(<Input size="sm" placeholder="Small input" />)
             
             const input = screen.getByPlaceholderText("Small input")
-            expect(input).toHaveClass("px-3", "py-1.5", "text-sm")
+            // sm = px-3 py-2 text-sm en mobile y sm+
+            expect(input).toHaveClass("px-3", "py-2", "text-sm")
+            expect(input).toHaveClass("min-h-[40px]")
         })
 
         it("renders medium size correctly", () => {
             render(<Input size="md" placeholder="Medium input" />)
             
             const input = screen.getByPlaceholderText("Medium input")
-            expect(input).toHaveClass("px-4", "py-2", "text-base")
+            // md = px-3 py-2 text-sm en mobile, px-4 py-2.5 text-base en sm+
+            expect(input).toHaveClass("px-3", "py-2", "text-sm")
+            expect(input).toHaveClass("sm:px-4", "sm:py-2.5", "sm:text-base")
         })
 
         it("renders large size correctly", () => {
             render(<Input size="lg" placeholder="Large input" />)
             
             const input = screen.getByPlaceholderText("Large input")
-            expect(input).toHaveClass("px-5", "py-3", "text-lg")
+            // lg = px-4 py-2.5 text-base en mobile, px-5 py-3 text-lg en sm+
+            expect(input).toHaveClass("px-4", "py-2.5", "text-base")
+            expect(input).toHaveClass("sm:px-5", "sm:py-3", "sm:text-lg")
         })
     })
 
@@ -303,7 +311,9 @@ describe("Input", () => {
             const input = screen.getByPlaceholderText("Complex input")
             
             expect(input).toHaveAttribute("type", "email")
-            expect(input).toHaveClass("px-5", "py-3", "text-lg") // lg size
+            // lg size classes mobile-first
+            expect(input).toHaveClass("px-4", "py-2.5", "text-base")
+            expect(input).toHaveClass("sm:px-5", "sm:py-3", "sm:text-lg")
             expect(input).toHaveClass("border-red-500") // error state
             expect(input).toHaveClass("custom-class")
             expect(input).toBeDisabled()

@@ -46,7 +46,7 @@ describe("LoginForm", () => {
         .toBeInTheDocument();
       expect(screen.getByLabelText(/correo electrónico/i))
         .toBeInTheDocument();
-      expect(screen.getByLabelText(/contraseña/i))
+      expect(screen.getByPlaceholderText("Introduce tu contraseña"))
         .toBeInTheDocument();
       expect(screen.getByRole("button", { name: /iniciar sesión/i }))
         .toBeInTheDocument();
@@ -104,7 +104,7 @@ describe("LoginForm", () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/correo electrónico/i), "invalid-email");
-      await user.type(screen.getByLabelText(/contraseña/i), "password123");
+      await user.type(screen.getByPlaceholderText("Introduce tu contraseña"), "password123");
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
       expect(await screen.findByText("Introduce un correo válido"))
@@ -118,7 +118,7 @@ describe("LoginForm", () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/correo electrónico/i), "valid@email.com");
-      await user.type(screen.getByLabelText(/contraseña/i), "password123");
+      await user.type(screen.getByPlaceholderText("Introduce tu contraseña"), "password123");
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
       expect(await screen.findByText(/email format is invalid/i))
@@ -153,7 +153,7 @@ describe("LoginForm", () => {
         validLoginCredentials.username
       );
       await user.type(
-        screen.getByLabelText(/contraseña/i),
+        screen.getByPlaceholderText("Introduce tu contraseña"),
         validLoginCredentials.password
       );
     };
@@ -164,7 +164,7 @@ describe("LoginForm", () => {
         invalidLoginCredentials.username
       );
       await user.type(
-        screen.getByLabelText(/contraseña/i),
+        screen.getByPlaceholderText("Introduce tu contraseña"),
         invalidLoginCredentials.password
       );
     };
@@ -216,7 +216,7 @@ describe("LoginForm", () => {
         validLoginCredentials.username
       );
       await user.type(
-        screen.getByLabelText(/contraseña/i),
+        screen.getByPlaceholderText("Introduce tu contraseña"),
         validLoginCredentials.password
       );
     };
@@ -290,7 +290,7 @@ describe("LoginForm", () => {
       render(<LoginForm />);
 
       await user.type(screen.getByLabelText(/correo electrónico/i), validLoginCredentials.username);
-      await user.type(screen.getByLabelText(/contraseña/i), validLoginCredentials.password);
+      await user.type(screen.getByPlaceholderText("Introduce tu contraseña"), validLoginCredentials.password);
 
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
@@ -304,7 +304,7 @@ describe("LoginForm", () => {
 
       // Verificar que los inputs también se deshabilitan
       expect(screen.getByLabelText(/correo electrónico/i)).toBeDisabled();
-      expect(screen.getByLabelText(/contraseña/i)).toBeDisabled();
+      expect(screen.getByPlaceholderText("Introduce tu contraseña")).toBeDisabled();
     });
 
     it("disables navigation links during loading", async () => {
@@ -316,7 +316,7 @@ describe("LoginForm", () => {
         validLoginCredentials.username
       );
       await user.type(
-        screen.getByLabelText(/contraseña/i),
+        screen.getByPlaceholderText("Introduce tu contraseña"),
         validLoginCredentials.password
       );
 
@@ -352,7 +352,7 @@ describe("LoginForm", () => {
         invalidLoginCredentials.username
       );
       await user.type(
-        screen.getByLabelText(/contraseña/i),
+        screen.getByPlaceholderText("Introduce tu contraseña"),
         invalidLoginCredentials.password
       );
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
@@ -361,13 +361,13 @@ describe("LoginForm", () => {
         .toBeInTheDocument();
 
       await user.clear(screen.getByLabelText(/correo electrónico/i));
-      await user.clear(screen.getByLabelText(/contraseña/i));
+      await user.clear(screen.getByPlaceholderText("Introduce tu contraseña"));
       await user.type(
         screen.getByLabelText(/correo electrónico/i),
         validLoginCredentials.username
       );
       await user.type(
-        screen.getByLabelText(/contraseña/i),
+        screen.getByPlaceholderText("Introduce tu contraseña"),
         validLoginCredentials.password
       );
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));

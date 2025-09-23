@@ -22,7 +22,9 @@ describe("Button", () => {
             const button = screen.getByRole("button", { name: "Test Button" })
             expect(button).toBeInTheDocument()
             expect(button).toHaveClass("bg-primary-600") // default primary variant
-            expect(button).toHaveClass("px-4", "py-2") // default md size
+            // Mobile-first: md size = px-3 py-2 text-sm en mobile
+            expect(button).toHaveClass("px-3", "py-2", "text-sm")
+            expect(button).toHaveClass("sm:px-4", "sm:py-2.5", "sm:text-base")
         })
 
         it("renders children correctly", () => {
@@ -65,17 +67,23 @@ describe("Button", () => {
     describe("Sizes", () => {
         it("renders small size correctly", () => {
             render(<Button size="sm">Small</Button>)
-            expect(screen.getByRole("button")).toHaveClass("px-3", "py-1.5", "text-sm")
+            // sm = px-3 py-2 text-sm en mobile y sm+
+            expect(screen.getByRole("button")).toHaveClass("px-3", "py-2", "text-sm")
+            expect(screen.getByRole("button")).toHaveClass("min-h-[40px]")
         })
 
         it("renders medium size correctly", () => {
             render(<Button size="md">Medium</Button>)
-            expect(screen.getByRole("button")).toHaveClass("px-4", "py-2", "text-base")
+            // md = px-3 py-2 text-sm en mobile, px-4 py-2.5 text-base en sm+
+            expect(screen.getByRole("button")).toHaveClass("px-3", "py-2", "text-sm")
+            expect(screen.getByRole("button")).toHaveClass("sm:px-4", "sm:py-2.5", "sm:text-base")
         })
 
         it("renders large size correctly", () => {
             render(<Button size="lg">Large</Button>)
-            expect(screen.getByRole("button")).toHaveClass("px-5", "py-3", "text-lg")
+            // lg = px-4 py-2.5 text-base en mobile, px-5 py-3 text-lg en sm+
+            expect(screen.getByRole("button")).toHaveClass("px-4", "py-2.5", "text-base")
+            expect(screen.getByRole("button")).toHaveClass("sm:px-5", "sm:py-3", "sm:text-lg")
         })
     })
 
@@ -178,7 +186,9 @@ describe("Button", () => {
             render(<Button variant="danger" size="lg">Large Danger</Button>)
             const button = screen.getByRole("button")
             expect(button).toHaveClass("bg-red-600")
-            expect(button).toHaveClass("px-5", "py-3", "text-lg")
+            // lg size classes mobile-first
+            expect(button).toHaveClass("px-4", "py-2.5", "text-base")
+            expect(button).toHaveClass("sm:px-5", "sm:py-3", "sm:text-lg")
         })
     })
 })

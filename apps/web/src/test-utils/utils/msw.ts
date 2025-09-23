@@ -10,9 +10,10 @@
 
 import { setupServer } from "msw/node";
 import { authHandlers } from "../mocks/handlers/authHandlers";
+import { accountHandlers } from "../mocks/handlers/accountHandlers"; // ADD THIS LINE
 
 // Servidor MSW con handlers centralizados
-export const server = setupServer(...authHandlers);
+export const server = setupServer(...authHandlers, ...accountHandlers); // UPDATE THIS LINE
 
 // Setup global para tests
 export const setupMSW = () => {

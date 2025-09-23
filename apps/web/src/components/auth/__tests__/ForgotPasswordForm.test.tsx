@@ -89,7 +89,7 @@ describe("ForgotPasswordForm", () => {
 
             await user.click(screen.getByRole("button", { name: /volver al login/i }));
 
-            expect(mockNavigate).toHaveBeenCalledWith("/login");
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
         });
 
         it("navigates to login from success view", async () => {
@@ -104,7 +104,7 @@ describe("ForgotPasswordForm", () => {
             });
 
             await user.click(screen.getByRole("button", { name: /volver al login/i }));
-            expect(mockNavigate).toHaveBeenCalledWith("/login");
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
         });
     });
 
