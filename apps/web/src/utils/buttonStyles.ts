@@ -34,8 +34,9 @@ export const BUTTON_PRESETS = {
         "w-full sm:w-auto text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3 bg-red-600 text-white hover:bg-red-700",
 
     // Botones en modales con mismo ancho fijo (ej. DeleteAccountModal)
-    modalEqual:
-        "w-full sm:w-[160px] text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3",
+        modalEqual:
+        "w-full sm:w-[160px] text-base px-4 py-2.5",
+
 } as const;
 
 export type ButtonPreset = keyof typeof BUTTON_PRESETS;
