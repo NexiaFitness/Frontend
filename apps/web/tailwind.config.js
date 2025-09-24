@@ -41,6 +41,10 @@ module.exports = {
                 '9xl': '4.5rem',
                 '10xl': '5rem',
             },
+            spacing: {
+                'navbar-mobile': '5rem', 
+                'navbar-desktop': '7rem',
+            },
         },
     },
     plugins: [require("@tailwindcss/forms")],

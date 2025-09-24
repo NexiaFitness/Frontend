@@ -1,49 +1,45 @@
 /**
- * Navbar pública para usuarios no autenticados
- * Navegación contextual inteligente basada en ruta actual
- * Diseño minimalista con logo y links limpios
- * 
- * @author Frontend Team
+ * PublicNavbar - Navbar pública para usuarios no autenticados
+ * Navegación contextual basada en ruta actual
+ *
+ * RESPONSIVE BEHAVIOR:
+ * - Desktop: visible fija arriba
+ * - Mobile/Tablet: integra NexiaSideMenu
+ *
+ * @author
+ * Frontend Team
  * @since v1.0.0
- * @updated v2.0.0 - Integrado con NexiaSideMenu fullscreen
+ * @updated v2.2.0 - Uso de NexiaLogoCompact + alturas centralizadas
  */
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePublicNavigation } from "@shared/hooks/usePublicNavigation";
-import { NexiaLogo } from "@/components/auth/NexiaLogo";
+import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
 import { NexiaSideMenu } from "./NexiaSideMenu";
 
 export const PublicNavbar: React.FC = () => {
     const location = useLocation();
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { visibleNavigationItems, isHomePage } = usePublicNavigation({
+    const { visibleNavigationItems } = usePublicNavigation({
         currentPath: location.pathname,
     });
 
-    const toggleMobileMenu = () => {
-        setIsMobileMenuOpen(!isMobileMenuOpen);
-    };
-
-    const closeMobileMenu = () => {
-        setIsMobileMenuOpen(false);
-    };
+    const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
+    const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
     return (
         <>
             <nav className="bg-sidebar-header border-b border-gray-800 sticky top-0 z-50">
                 <div className="px-4 sm:px-6 lg:px-8 w-full">
-                    <div className="flex justify-between items-center h-32">
+                    <div className="flex justify-between items-center h-navbar-mobile lg:h-navbar-desktop">
                         <Link
                             to="/"
                             className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
                             onClick={closeMobileMenu}
                         >
-                            <div className="w-28 h-auto">
-                                <NexiaLogo />
-                            </div>
+                            <NexiaLogoCompact className="w-20 sm:w-24 md:w-28" />
                         </Link>
 
                         <div className="hidden md:flex items-center space-x-8">
@@ -62,10 +58,10 @@ export const PublicNavbar: React.FC = () => {
                             <button
                                 onClick={toggleMobileMenu}
                                 className="
-                                    text-white hover:text-blue-400 focus:outline-none focus:text-blue-400 
-                                    transition-colors duration-200 p-3 -mr-3 rounded-lg hover:bg-white/10 
-                                    flex items-center justify-center min-h-[48px] min-w-[48px]
-                                "
+                  text-white hover:text-blue-400 focus:outline-none focus:text-blue-400 
+                  transition-colors duration-200 p-3 -mr-3 rounded-lg hover:bg-white/10 
+                  flex items-center justify-center min-h-[48px] min-w-[48px]
+                "
                                 aria-label="Abrir menú"
                             >
                                 <svg
@@ -89,7 +85,7 @@ export const PublicNavbar: React.FC = () => {
                 </div>
             </nav>
 
-            {/* Side Menu - Reemplaza el dropdown anterior */}
+            {/* Side Menu */}
             <NexiaSideMenu isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
         </>
     );
