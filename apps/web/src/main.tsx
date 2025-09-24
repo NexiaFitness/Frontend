@@ -1,6 +1,8 @@
 /**
  * Entry point de la app web de NEXIA
  * Ahora incluye BrowserRouter para habilitar rutas
+ * 
+ * @updated v4.3.3 - Added React Router v7 future flags to eliminate warnings
  */
 
 import React from "react";
@@ -11,12 +13,15 @@ import { store } from "@shared/store";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 
-
-
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <Provider store={store}>
-      <BrowserRouter>
+      <BrowserRouter 
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <App />
       </BrowserRouter>
     </Provider>

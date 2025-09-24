@@ -20,13 +20,14 @@
  * 
  * @author Frontend Team
  * @since v4.3.0
+ * @updated v4.3.8 - Añadido dashboardHero para headers principales de dashboard
  */
 
 // Main Headers - Jerarquía visual clara
 export const TYPOGRAPHY = {
     // Landing y marketing
     hero: "text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold",
-    heroSubtitle: "text-base sm:text-lg md:text-xl lg:text-2xl font-medium", // ✅ UPDATED
+    heroSubtitle: "text-base sm:text-lg md:text-xl lg:text-2xl font-medium",
     claim: "text-base sm:text-lg md:text-xl lg:text-2xl font-medium",
 
     // Page headers
@@ -44,6 +45,10 @@ export const TYPOGRAPHY = {
     // Dashboard específicos
     metric: "text-2xl sm:text-3xl lg:text-4xl font-bold",
     metricLabel: "text-sm sm:text-base font-medium",
+
+    // NUEVO: Dashboard hero (encabezado principal en dashboards)
+    dashboardHero: "text-2xl md:text-3xl lg:text-5xl font-bold",
+    dashboardSubtitleAlt: "text-sm md:text-lg lg:text-xl",
 
     // Navigation
     navLink: "text-base font-medium",
@@ -63,7 +68,6 @@ export const TYPOGRAPHY = {
     buttonText: "text-sm sm:text-base",
     buttonTextLarge: "text-base sm:text-lg",
     linkText: "text-sm sm:text-base font-medium",
-
 } as const;
 
 // Helper function para combinar con otras clases
@@ -82,6 +86,10 @@ export const TYPOGRAPHY_COMBINATIONS = {
     dashboardTitle: `${TYPOGRAPHY.pageTitle} text-white mb-4`,
     dashboardSubtitle: `${TYPOGRAPHY.subtitle} text-white/80`,
 
+    // NUEVO: Hero específico de dashboard
+    dashboardHeroTitle: `${TYPOGRAPHY.dashboardHero} text-white mb-3 lg:mb-4`,
+    dashboardHeroSubtitle: `${TYPOGRAPHY.dashboardSubtitleAlt} text-white/80`,
+
     // Card content
     cardHeader: `${TYPOGRAPHY.cardTitle} mb-2`,
     cardBody: `${TYPOGRAPHY.body}`,
@@ -89,5 +97,4 @@ export const TYPOGRAPHY_COMBINATIONS = {
     // Error/Success messages
     errorMessage: `${TYPOGRAPHY.errorText} text-red-600`,
     successMessage: `${TYPOGRAPHY.successText} text-green-800`,
-
 } as const;

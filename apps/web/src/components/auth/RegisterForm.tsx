@@ -11,9 +11,8 @@
  * - El backend no devuelve token en registro → se redirige a login con mensaje de éxito.
  * - Tipografía unificada con Login/Forgot/Reset.
  *
- * @author Frontend
  * @since v1.0.0
- * @updated v4.3.1 - Typography system integration + BUTTON_PRESETS unificado
+ * @updated v4.3.2 - role inicial vacío con validación explícita
  */
 
 import React from "react";
@@ -39,7 +38,7 @@ interface RegisterFormData {
     confirmPassword: string;
     nombre: string;
     apellidos: string;
-    role: UserRole;
+    role: UserRole | ""; // Puede empezar vacío hasta que el usuario seleccione
     [key: string]: unknown;
 }
 
@@ -49,7 +48,7 @@ const initialFormState: RegisterFormData = {
     confirmPassword: "",
     nombre: "",
     apellidos: "",
-    role: USER_ROLES.TRAINER,
+    role: "",
 };
 
 // Opciones para el selector de roles - Solo registro público
@@ -84,12 +83,18 @@ export const RegisterForm: React.FC = () => {
         clearErrors();
 
         try {
+            // Validación explícita de role
+            if (!formData.role) {
+                dispatch(loginFailure("Debes seleccionar un tipo de cuenta"));
+                return;
+            }
+
             const credentials: RegisterCredentials = {
                 email: formData.email,
                 password: formData.password,
                 nombre: formData.nombre,
                 apellidos: formData.apellidos,
-                role: formData.role,
+                role: formData.role as UserRole,
             };
 
             await register(credentials).unwrap();

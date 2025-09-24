@@ -6,6 +6,7 @@
  *
  * @author Frontend Team
  * @since v1.0.1
+ * @updated v4.3.2 - Fixed role selection behavior (starts empty, requires explicit selection)
  */
 
 import { screen, waitFor } from "@testing-library/react";
@@ -18,6 +19,7 @@ import {
   registerRateLimitHandler,
   registerTimeoutHandler,
   passwordValidationHandler,
+  networkErrorHandler,
   registerMalformedResponseHandler
 } from "@/test-utils/mocks/handlers/authHandlers";
 import {
@@ -54,16 +56,16 @@ describe("RegisterForm", () => {
         .toBeInTheDocument();
     });
 
-    it("has default role selected as trainer", () => {
+    it("has no default role selected (starts empty)", () => {
       render(<RegisterForm />);
       
       const roleSelect = screen.getByLabelText(/tipo de cuenta/i);
-      expect(roleSelect).toHaveValue("trainer");
+      expect(roleSelect).toHaveValue("");
     });
   });
 
   describe("Form Validation", () => {
-    it("shows all required field errors for empty form", async () => {
+    it("shows all required field errors for empty form including role", async () => {
       const user = userEvent.setup();
       render(<RegisterForm />);
 
@@ -79,6 +81,10 @@ describe("RegisterForm", () => {
         .toBeInTheDocument();
       expect(await screen.findByText("Confirma tu contraseña"))
         .toBeInTheDocument();
+      // Should also show role selection error (look for error message, not placeholder)
+      expect(await screen.findByText((content, element) => {
+        return content === "Selecciona tu tipo de cuenta" && element?.tagName === 'P';
+      })).toBeInTheDocument();
     });
 
     it("shows email format validation error", async () => {
@@ -88,6 +94,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "invalid-email");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
@@ -103,6 +110,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "different123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
@@ -118,12 +126,30 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
       expect(await screen.findByText(/contraseña debe tener al menos/i))
         .toBeInTheDocument();
+    });
+
+    it("shows role selection error when no role selected", async () => {
+      const user = userEvent.setup();
+      render(<RegisterForm />);
+
+      // Fill all fields except role
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
+      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
+      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+
+      expect(await screen.findByText((content, element) => {
+        return content === "Selecciona tu tipo de cuenta" && element?.tagName === 'P';
+      })).toBeInTheDocument();
     });
   });
 
@@ -172,6 +198,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "existing@test.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
     };
@@ -232,6 +259,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "weakpass");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "weakpass");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
@@ -246,6 +274,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
     };
@@ -333,6 +362,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
 
@@ -356,6 +386,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
 
@@ -391,6 +422,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "existing@test.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
+      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));

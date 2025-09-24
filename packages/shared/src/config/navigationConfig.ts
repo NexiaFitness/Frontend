@@ -29,19 +29,19 @@ export interface NavigationConfig {
 const publicNavigation: NavigationItem[] = [
     {
         path: ROUTES.HOME,
-        label: 'INICIO',
+        label: 'Inicio',
         icon: 'Home',
         description: 'Página principal'
     },
     {
         path: ROUTES.LOGIN,
-        label: 'INICIAR SESIÓN',
+        label: 'Iniciar Sesión',
         icon: 'LogIn',
         description: 'Acceder a tu cuenta'
     },
     {
         path: ROUTES.REGISTER,
-        label: 'REGISTRARSE',
+        label: 'Registrarse',
         icon: 'UserPlus',
         description: 'Crear cuenta nueva'
     }

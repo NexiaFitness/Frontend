@@ -5,6 +5,7 @@
  * 
  * @author Frontend Team  
  * @since v1.0.0
+ * @updated v4.3.3 - Cross-platform types: Removed HTMLInputElement dependencies
  */
 
 import { useState, useCallback } from "react";
@@ -18,10 +19,35 @@ interface UseAuthFormProps<T> {
     validate: (formData: T) => { isValid: boolean; errors: Record<string, string> };
 }
 
+// Cross-platform event type - works for both web and React Native
+type CrossPlatformChangeEvent = {
+    target: {
+        value: string;
+    };
+} | {
+    nativeEvent: {
+        text: string;
+    };
+} | string; // For direct value updates
+
 // Tipo específico para errores RTK Query
 type RTKError = FetchBaseQueryError | {
     status: number;
     data?: { detail?: string; message?: string };
+};
+
+// Helper function to extract value from different event types
+const extractValue = (e: CrossPlatformChangeEvent): string => {
+    if (typeof e === 'string') {
+        return e;
+    }
+    if ('target' in e && e.target) {
+        return e.target.value;
+    }
+    if ('nativeEvent' in e && e.nativeEvent) {
+        return e.nativeEvent.text;
+    }
+    return '';
 };
 
 export function useAuthForm<T extends Record<string, unknown>>({ 
@@ -35,13 +61,15 @@ export function useAuthForm<T extends Record<string, unknown>>({
     const [errors, setErrors] = useState<Partial<Record<keyof T, string>>>({});
     const [serverError, setServerError] = useState<string | null>(null);
 
-    // FUNCIONES ESTABLES CON useCallback
+    // FUNCIONES ESTABLES CON useCallback - CROSS-PLATFORM COMPATIBLE
     const handleInputChange = useCallback((field: keyof T) => (
-        e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+        e: CrossPlatformChangeEvent
     ) => {
+        const value = extractValue(e);
+        
         setFormData(prev => ({
             ...prev,
-            [field]: e.target.value,
+            [field]: value,
         }));
 
         setErrors(prev => ({
