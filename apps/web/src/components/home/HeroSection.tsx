@@ -1,16 +1,16 @@
 /**
- * HeroSection para homepage de NEXIA - VERSIÓN FULLSCREEN TEMPORAL
+ * HeroSection para homepage de NEXIA - VERSIÓN FULLSCREEN ESTABLE
  * 
- * Ocupa toda la altura disponible (como auth pages) para calidad visual inmediata
- * TEMPORAL hasta agregar más secciones (features, testimonials, etc.)
+ * Corregido layout para evitar superposición con secciones siguientes
+ * MANTIENE diseño visual exacto, solo arregla arquitectura de layout
  *
  * - Desktop (≥1024px): layout split-screen 50/50 → texto + imagen
  * - Mobile/Tablet (<1024px): columnas (texto arriba, imagen abajo)
- * - Altura: calc(100vh - 128px) → sin scroll, centrado verticalmente
+ * - Altura: min-h-[calc(100vh-128px)] → centrado verticalmente SIN desbordamiento
  *
  * @autor Frontend Team
  * @since v1.0.0
- * @updated v4.3.0 - Typography system integration
+ * @updated v4.4.0 - Layout architecture fix, diseño visual preservado
  */
 
 import React from "react";
@@ -23,10 +23,10 @@ import { Button } from "@/components/ui/buttons/Button";
 export const HeroSection: React.FC = () => {
     return (
         <section
-            className="h-[calc(100vh-128px)] flex items-stretch"
+            className="min-h-[calc(100vh-128px)] overflow-hidden"
             style={{ background: meshGradient }}
         >
-            <div className="grid grid-cols-1 lg:grid-cols-2 w-full">
+            <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full min-h-[calc(100vh-128px)]">
                 {/* Content Left */}
                 <div className="flex items-center justify-center px-6 sm:px-10 lg:px-20 py-12 sm:py-16 lg:py-0 lg:justify-start">
                     <div className="space-y-8 max-w-xl text-center lg:text-left">
@@ -66,7 +66,7 @@ export const HeroSection: React.FC = () => {
                 </div>
                 
                 {/* Visual Right */}
-                <div className="relative h-full min-h-[300px]">
+                <div className="relative h-full min-h-[300px] lg:min-h-[calc(100vh-128px)]">
                     <img
                         src="https://res.cloudinary.com/dcpirdjji/image/upload/v1757630415/Imagen_home_ndpgld.webp"
                         alt="Atleta profesional en entrenamiento"

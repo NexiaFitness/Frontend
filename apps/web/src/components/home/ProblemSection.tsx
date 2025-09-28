@@ -1,17 +1,18 @@
 /**
- * ProblemSection - Layout híbrido con overlays sutiles y click en imágenes
+ * ProblemSection - Layout híbrido con imágenes enteras y táctil mejorado
  * 
  * Desktop (lg+): Split screen con hover, click en imagen para cambiar
- * Mobile/Tablet (<lg): Carousel con overlays más sutiles, click en imagen
+ * Mobile/Tablet (<lg): Carousel con click/táctil en TODA la imagen
  *
- * Correcciones:
- * - Overlays más sutiles (especialmente azul)
- * - Click en imagen para cambiar slide/sección
- * - Mejor legibilidad en mobile/tablet
+ * Cambios v2.5.0:
+ * - Messaging empático sin atacar competencia
+ * - Iconos X/✓ alineados a primera línea
+ * - Transiciones suaves y armónicas en mobile/tablet
+ * - Funcionalidad de click preservada completamente
  *
  * @author Frontend Team
  * @since v2.0.0
- * @updated v2.2.2 - Overlays sutiles + click en imágenes
+ * @updated v2.5.0 - Messaging final + UX polish
  */
 
 import React, { useState, useEffect } from "react";
@@ -19,7 +20,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons/Button";
 
 export const ProblemSection: React.FC = () => {
-    const [activeSection, setActiveSection] = useState(0); // 0 = Problema, 1 = Solución
+    const [activeSection, setActiveSection] = useState(0); // 0 = Situación Actual, 1 = Con NEXIA
     const [hoveredSection, setHoveredSection] = useState<number | null>(null);
 
     // Auto-cambio cada 6 segundos (desktop: solo si NO hay hover, mobile: siempre)
@@ -43,29 +44,29 @@ export const ProblemSection: React.FC = () => {
 
     const sections = [
         {
-            id: 'problema',
+            id: 'situacion-actual',
             image: 'https://res.cloudinary.com/dcpirdjji/image/upload/v1758976238/entrenador-saturadp_pluqzo.webp',
-            title: 'El Problema Actual',
-            subtitle: 'La gestión tradicional no es suficiente para avanzar',
+            title: 'Tu Situación Actual',
+            subtitle: 'Múltiples herramientas para cada tarea',
             problems: [
-                'Calendarios que no se ajustan a tus necesidades reales',
-                'Herramientas que gestionan lo básico, pero no el entrenamiento completo',
-                'Métodos tradicionales frente a una programación basada en ciencia'
+                'App para calendarios, otra para pagos, hoja de cálculo para programas',
+                'Tiempo perdido cambiando entre diferentes plataformas',
+                'Información dispersa dificulta el seguimiento integral'
             ],
-            buttonText: 'Ver Limitaciones Actuales',
+            buttonText: 'Ver Cómo Simplificamos',
             theme: 'red'
         },
         {
-            id: 'solucion',
+            id: 'con-nexia',
             image: 'https://res.cloudinary.com/dcpirdjji/image/upload/v1758976233/entrenando_ope6ew.png',
-            title: 'La Solución NEXIA',
-            subtitle: 'Profesionalización basada en ciencia',
+            title: 'Tu Flujo de Trabajo con NEXIA',
+            subtitle: 'Todo integrado en una sola plataforma',
             problems: [
-                'Programas basados en miles de estudios científicos',
-                'IA diseñada para optimizar tu entrenamiento',
-                'Todo en uno: entrenamiento, gestión y ciencia'
+                'Programación basada en metodología deportiva',
+                'Gestión de clientes y seguimiento en tiempo real',
+                'Calendario, pagos y análisis de progreso unificados'
             ],
-            buttonText: 'Descubrir NEXIA',
+            buttonText: 'Conocer NEXIA',
             theme: 'blue'
         }
     ];
@@ -76,34 +77,38 @@ export const ProblemSection: React.FC = () => {
             <div className="py-16 sm:py-20">
                 <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
                     <h2 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-6`}>
-                        El Problema con las Soluciones Actuales
+                        NEXIA para Entrenadores
                     </h2>
                     <h3 className={`${TYPOGRAPHY.sectionTitle} text-blue-400 mb-8`}>
-                        La Gestión <span className="text-slate-800">No Es Suficiente</span>
+                        Programación y <span className="text-slate-800">Gestión Integradas</span>
                     </h3>
                     <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-4xl mx-auto leading-relaxed`}>
-                        Los profesionales del fitness merecen más que herramientas básicas. 
-                        Con NEXIA, obtienes una plataforma completa que entiende la ciencia detrás del entrenamiento efectivo.
+                        Una plataforma que combina la creación de programas de entrenamiento con la gestión de tu negocio. 
+                        Incluye seguimiento de progreso de atletas, análisis de rendimiento, y todas las herramientas administrativas. 
+                        Todo en un lugar, basado en metodología deportiva.
                     </p>
                 </div>
             </div>
 
-            {/* DESKTOP: Split Screen Original (lg+) */}
+            {/* DESKTOP: Split Screen con IMG elements (lg+) */}
             <div className="hidden lg:block relative h-[calc(100vh-128px)] w-full overflow-hidden">
                 <div className="h-full flex">
-                    {/* Problema - Lado Izquierdo */}
+                    {/* Situación Actual - Lado Izquierdo */}
                     <div 
-                        className={`relative transition-all duration-700 ease-in-out cursor-pointer ${
+                        className={`relative transition-all duration-700 ease-in-out cursor-pointer overflow-hidden ${
                             expandedSection === 0 ? 'w-3/4' : 'w-1/4'
                         }`}
                         onMouseEnter={() => setHoveredSection(0)}
                         onMouseLeave={() => setHoveredSection(null)}
                         onClick={() => setActiveSection(0)}
                     >
-                        <div 
-                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                            style={{ backgroundImage: `url('${sections[0].image}')` }}
+                        {/* Imagen como elemento */}
+                        <img
+                            src={sections[0].image}
+                            alt="Entrenador trabajando con múltiples herramientas"
+                            className="absolute inset-0 w-full h-full object-cover"
                         />
+                        
                         {/* Overlay más sutil para rojo */}
                         <div className="absolute inset-0 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-transparent" />
                         
@@ -121,8 +126,8 @@ export const ProblemSection: React.FC = () => {
                                 
                                 <div className="mb-8 space-y-4">
                                     {sections[0].problems.map((problem, index) => (
-                                        <div key={index} className="flex items-center space-x-3">
-                                            <span className="text-red-400 text-xl">×</span>
+                                        <div key={index} className="flex items-start space-x-3">
+                                            <span className="text-red-400 text-xl leading-none">×</span>
                                             <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed`}>
                                                 {problem}
                                             </p>
@@ -130,30 +135,29 @@ export const ProblemSection: React.FC = () => {
                                     ))}
                                 </div>
                                 
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    className="border-2 border-red-400 text-white hover:bg-red-400 hover:text-white uppercase tracking-wide"
-                                >
+                                <button className="border-2 border-red-400 text-white hover:bg-red-400 hover:text-white px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide">
                                     {sections[0].buttonText}
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>
 
-                    {/* Solución - Lado Derecho */}
+                    {/* Con NEXIA - Lado Derecho */}
                     <div 
-                        className={`relative transition-all duration-700 ease-in-out cursor-pointer ${
+                        className={`relative transition-all duration-700 ease-in-out cursor-pointer overflow-hidden ${
                             expandedSection === 1 ? 'w-3/4' : 'w-1/4'
                         }`}
                         onMouseEnter={() => setHoveredSection(1)}
                         onMouseLeave={() => setHoveredSection(null)}
                         onClick={() => setActiveSection(1)}
                     >
-                        <div 
-                            className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-                            style={{ backgroundImage: `url('${sections[1].image}')` }}
+                        {/* Imagen como elemento */}
+                        <img
+                            src={sections[1].image}
+                            alt="Entrenador usando plataforma integrada NEXIA"
+                            className="absolute inset-0 w-full h-full object-cover"
                         />
+                        
                         {/* Overlay MUCHO más sutil para azul */}
                         <div className="absolute inset-0 bg-gradient-to-l from-blue-900/50 via-blue-900/30 to-transparent" />
                         
@@ -171,22 +175,18 @@ export const ProblemSection: React.FC = () => {
                                 
                                 <div className="mb-8 space-y-4">
                                     {sections[1].problems.map((solution, index) => (
-                                        <div key={index} className="flex items-center space-x-3 justify-end">
+                                        <div key={index} className="flex items-start space-x-3 justify-end">
                                             <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed text-right`}>
                                                 {solution}
                                             </p>
-                                            <span className="text-blue-400 text-xl">✓</span>
+                                            <span className="text-blue-400 text-xl leading-none">✓</span>
                                         </div>
                                     ))}
                                 </div>
                                 
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    className="border-2 border-blue-400 text-white hover:bg-blue-400 hover:text-white uppercase tracking-wide"
-                                >
+                                <button className="border-2 border-blue-400 text-white hover:bg-blue-400 hover:text-white px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide">
                                     {sections[1].buttonText}
-                                </Button>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -200,72 +200,82 @@ export const ProblemSection: React.FC = () => {
                 </div>
             </div>
 
-            {/* MOBILE/TABLET: Carousel (hasta lg) */}
+            {/* MOBILE/TABLET: Carousel con transiciones suaves y armónicas (hasta lg) */}
             <div className="block lg:hidden relative h-screen w-full overflow-hidden">
-                {/* Imagen clickeable */}
+                {/* Contenedor clickeable COMPLETO */}
                 <div 
-                    className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-all duration-1000 cursor-pointer"
-                    style={{ backgroundImage: `url('${sections[activeSection].image}')` }}
+                    className="absolute inset-0 cursor-pointer"
                     onClick={() => setActiveSection(prev => prev === 0 ? 1 : 0)}
-                />
-                
-                {/* Overlay MUY sutil en mobile */}
-                <div className={`absolute inset-0 transition-all duration-1000 ${
-                    sections[activeSection].theme === 'red' 
-                        ? 'bg-gradient-to-b from-slate-900/50 via-slate-900/30 to-slate-900/40'
-                        : 'bg-gradient-to-b from-blue-900/40 via-blue-900/20 to-blue-900/30'
-                }`} />
-                
-                <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-8">
-                    <div className="text-center max-w-lg transition-all duration-500">
-                        <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-6 border-b-4 pb-4 ${
-                            sections[activeSection].theme === 'red' ? 'border-red-400' : 'border-blue-400'
-                        }`}>
-                            {sections[activeSection].title}
-                        </h4>
-                        
-                        <p className={`${TYPOGRAPHY.subtitle} mb-8 italic font-light leading-relaxed ${
-                            sections[activeSection].theme === 'red' ? 'text-red-200' : 'text-blue-200'
-                        }`}>
-                            {sections[activeSection].subtitle}
-                        </p>
-                        
-                        <div className="mb-8 space-y-4">
-                            {sections[activeSection].problems.map((item, index) => (
-                                <div key={index} className="flex items-center justify-center space-x-3">
-                                    <span className={`text-xl ${
-                                        sections[activeSection].theme === 'red' ? 'text-red-400' : 'text-blue-400'
-                                    }`}>
-                                        {sections[activeSection].theme === 'red' ? '×' : '✓'}
-                                    </span>
-                                    <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed`}>
-                                        {item}
-                                    </p>
-                                </div>
-                            ))}
+                >
+                    {/* Imagen como elemento - transiciones más suaves */}
+                    <img
+                        src={sections[activeSection].image}
+                        alt={sections[activeSection].theme === 'red' 
+                            ? "Entrenador trabajando con múltiples herramientas" 
+                            : "Entrenador usando plataforma integrada NEXIA"
+                        }
+                        className="absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-in-out"
+                    />
+                    
+                    {/* Overlay MUY sutil en mobile - transición más suave */}
+                    <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                        sections[activeSection].theme === 'red' 
+                            ? 'bg-gradient-to-b from-slate-900/50 via-slate-900/30 to-slate-900/40'
+                            : 'bg-gradient-to-b from-blue-900/40 via-blue-900/20 to-blue-900/30'
+                    }`} />
+                    
+                    <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-8">
+                        <div className="text-center max-w-lg transition-all duration-500 ease-in-out">
+                            <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-6 border-b-4 pb-4 ${
+                                sections[activeSection].theme === 'red' ? 'border-red-400' : 'border-blue-400'
+                            }`}>
+                                {sections[activeSection].title}
+                            </h4>
+                            
+                            <p className={`${TYPOGRAPHY.subtitle} mb-8 italic font-light leading-relaxed ${
+                                sections[activeSection].theme === 'red' ? 'text-red-200' : 'text-blue-200'
+                            }`}>
+                                {sections[activeSection].subtitle}
+                            </p>
+                            
+                            <div className="mb-8 space-y-4">
+                                {sections[activeSection].problems.map((item, index) => (
+                                    <div key={index} className="flex items-start space-x-3">
+                                        <span className={`text-xl leading-none ${
+                                            sections[activeSection].theme === 'red' ? 'text-red-400' : 'text-blue-400'
+                                        }`}>
+                                            {sections[activeSection].theme === 'red' ? '×' : '✓'}
+                                        </span>
+                                        <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed text-left`}>
+                                            {item}
+                                        </p>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <button
+                                className={`border-2 text-white hover:text-white px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide ${
+                                    sections[activeSection].theme === 'red' 
+                                        ? 'border-red-400 hover:bg-red-400'
+                                        : 'border-blue-400 hover:bg-blue-400'
+                                }`}
+                            >
+                                {sections[activeSection].buttonText}
+                            </button>
                         </div>
-                        
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className={`border-2 text-white hover:text-white uppercase tracking-wide ${
-                                sections[activeSection].theme === 'red' 
-                                    ? 'border-red-400 hover:bg-red-400'
-                                    : 'border-blue-400 hover:bg-blue-400'
-                            }`}
-                        >
-                            {sections[activeSection].buttonText}
-                        </Button>
                     </div>
                 </div>
 
-                {/* Indicadores clickeables mobile */}
-                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                {/* Indicadores clickeables mobile - FUERA del área de imagen */}
+                <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex space-x-2 z-20">
                     {sections.map((section, index) => (
                         <button
                             key={index}
-                            onClick={() => setActiveSection(index)}
-                            className={`h-2 transition-all duration-300 ${
+                            onClick={(e) => {
+                                e.stopPropagation(); // Evitar doble click
+                                setActiveSection(index);
+                            }}
+                            className={`h-2 transition-all duration-300 ease-in-out ${
                                 index === activeSection 
                                     ? `w-16 ${section.theme === 'red' ? 'bg-red-400' : 'bg-blue-400'}` 
                                     : 'w-8 bg-white/30'

@@ -82,7 +82,7 @@ export const AISection: React.FC = () => {
             </div>
 
             {/* Bottom Stats Bar - con padding restaurado solo aquí */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="mt-12 lg:mt-16 pb-12 sm:pb-16 lg:pb-20 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
                     <div>
                         <div className={`${TYPOGRAPHY.metric} text-slate-800 mb-2`}>Consultor-IA</div>
@@ -99,13 +99,13 @@ export const AISection: React.FC = () => {
                     <div>
                         <div className={`${TYPOGRAPHY.metric} text-slate-800 mb-2`}>Especializado</div>
                         <div className={`${TYPOGRAPHY.metricLabel} text-slate-600`}>
-                            Solo para entrenadores
+                            Para profesionales del deporte
                         </div>
                     </div>
                     <div>
-                        <div className={`${TYPOGRAPHY.metric} text-slate-800 mb-2`}>Único</div>
+                        <div className={`${TYPOGRAPHY.metric} text-slate-800 mb-2`}>Integrado</div>
                         <div className={`${TYPOGRAPHY.metricLabel} text-slate-600`}>
-                            Ninguna competencia igual
+                            Entrenamiento + gestión unificados
                         </div>
                     </div>
                 </div>

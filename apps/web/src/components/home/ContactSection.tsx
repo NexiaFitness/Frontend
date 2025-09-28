@@ -34,7 +34,7 @@ const initialFormState: ContactFormData = {
 // Validación del formulario
 const validateContactForm = (formData: Record<string, unknown>) => {
     const errors: Record<string, string> = {};
-    
+
     const data = formData as ContactFormData;
 
     // Validar nombre
@@ -83,7 +83,7 @@ export const ContactSection: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!validateForm()) {
             return;
         }
@@ -92,7 +92,7 @@ export const ContactSection: React.FC = () => {
             // Por ahora simulamos éxito
             setServerError(null);
             alert("Mensaje enviado correctamente. Te contactaremos pronto.");
-            
+
             // Reset form después de éxito
             // resetForm();
         } catch {
@@ -124,10 +124,10 @@ export const ContactSection: React.FC = () => {
                                 <br />
                                 <span className="text-blue-400">tu proyecto</span>
                             </h3>
-                            
+
                             <p className={`${TYPOGRAPHY.heroSubtitle} text-white leading-relaxed`}>
-                                ¿Tienes preguntas sobre NEXIA? ¿Quieres acceso anticipado? 
-                                ¿Necesitas una demo personalizada? Contacta directamente con 
+                                ¿Tienes preguntas sobre NEXIA? ¿Quieres acceso anticipado?
+                                ¿Necesitas una demo personalizada? Contacta directamente con
                                 nuestro equipo y te ayudaremos.
                             </p>
 
@@ -147,7 +147,7 @@ export const ContactSection: React.FC = () => {
                                 <div className="flex items-center space-x-4">
                                     <div className="w-3 h-3 bg-blue-400 rounded-full flex-shrink-0"></div>
                                     <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
-                                        Acceso anticipado Q1 2025
+                                        Registro para acceso beta
                                     </span>
                                 </div>
                             </div>
@@ -227,8 +227,8 @@ export const ContactSection: React.FC = () => {
                             {/* Política de privacidad */}
                             <div className="bg-slate-50 rounded-lg p-4">
                                 <p className="text-xs text-slate-600 leading-relaxed">
-                                    Al enviar este formulario, aceptas que NEXIA procese tus datos 
-                                    para responder a tu consulta. No compartimos tu información 
+                                    Al enviar este formulario, aceptas que NEXIA procese tus datos
+                                    para responder a tu consulta. No compartimos tu información
                                     con terceros.
                                 </p>
                             </div>
