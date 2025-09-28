@@ -46,11 +46,11 @@ export const ProblemSection: React.FC = () => {
             id: 'problema',
             image: 'https://res.cloudinary.com/dcpirdjji/image/upload/v1758976238/entrenador-saturadp_pluqzo.webp',
             title: 'El Problema Actual',
-            subtitle: 'Herramientas que NO entienden tu profesión',
+            subtitle: 'La gestión tradicional no es suficiente para avanzar',
             problems: [
-                'Calendarios glorificados sin base científica',
-                'Gestión de pagos pero no de programación',
-                'Intuición vs metodología basada en evidencia'
+                'Calendarios que no se ajustan a tus necesidades reales',
+                'Herramientas que gestionan lo básico, pero no el entrenamiento completo',
+                'Métodos tradicionales frente a una programación basada en ciencia'
             ],
             buttonText: 'Ver Limitaciones Actuales',
             theme: 'red'
@@ -61,9 +61,9 @@ export const ProblemSection: React.FC = () => {
             title: 'La Solución NEXIA',
             subtitle: 'Profesionalización basada en ciencia',
             problems: [
-                'Programación con 2,500+ estudios peer-reviewed',
-                'IA especializada en ciencias del deporte',
-                'Gestión + metodología científica integradas'
+                'Programas basados en miles de estudios científicos',
+                'IA diseñada para optimizar tu entrenamiento',
+                'Todo en uno: entrenamiento, gestión y ciencia'
             ],
             buttonText: 'Descubrir NEXIA',
             theme: 'blue'
@@ -82,15 +82,14 @@ export const ProblemSection: React.FC = () => {
                         La Gestión <span className="text-slate-800">No Es Suficiente</span>
                     </h3>
                     <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-4xl mx-auto leading-relaxed`}>
-                        Los profesionales del fitness merecen más que calendarios glorificados. 
-                        Necesitas herramientas que entiendan la ciencia detrás del entrenamiento efectivo, 
-                        no solo el negocio que lo rodea.
+                        Los profesionales del fitness merecen más que herramientas básicas. 
+                        Con NEXIA, obtienes una plataforma completa que entiende la ciencia detrás del entrenamiento efectivo.
                     </p>
                 </div>
             </div>
 
             {/* DESKTOP: Split Screen Original (lg+) */}
-            <div className="hidden lg:block relative h-screen w-full overflow-hidden">
+            <div className="hidden lg:block relative h-[calc(100vh-128px)] w-full overflow-hidden">
                 <div className="h-full flex">
                     {/* Problema - Lado Izquierdo */}
                     <div 
