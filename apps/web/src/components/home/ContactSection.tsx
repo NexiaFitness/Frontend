@@ -14,7 +14,6 @@
 
 import React from "react";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { Input } from "@/components/ui/forms/Input";
 import { Button } from "@/components/ui/buttons/Button";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 
@@ -90,16 +89,13 @@ export const ContactSection: React.FC = () => {
         }
 
         try {
-            // Simular envío (en producción sería un API call)
-            console.log("Contact form data:", typedFormData);
-            
             // Por ahora simulamos éxito
             setServerError(null);
             alert("Mensaje enviado correctamente. Te contactaremos pronto.");
             
             // Reset form después de éxito
             // resetForm();
-        } catch (error) {
+        } catch {
             setServerError("Error al enviar el mensaje. Intenta de nuevo.");
         }
     };
