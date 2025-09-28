@@ -9,6 +9,8 @@
  * - Iconos X/✓ alineados a primera línea
  * - Transiciones suaves y armónicas en mobile/tablet
  * - Funcionalidad de click preservada completamente
+ * 
+ * Buttons no reutilizables, cambiar cuando se normalice el home
  *
  * @author Frontend Team
  * @since v2.0.0
@@ -17,7 +19,6 @@
 
 import React, { useState, useEffect } from "react";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { Button } from "@/components/ui/buttons/Button";
 
 export const ProblemSection: React.FC = () => {
     const [activeSection, setActiveSection] = useState(0); // 0 = Situación Actual, 1 = Con NEXIA
