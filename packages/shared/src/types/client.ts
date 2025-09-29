@@ -9,19 +9,19 @@
 
 // Client Experience Levels
 export const CLIENT_EXPERIENCE_LEVELS = {
-  BEGINNER: 'beginner',
-  INTERMEDIATE: 'intermediate',
-  ADVANCED: 'advanced'
+    BEGINNER: 'beginner',
+    INTERMEDIATE: 'intermediate',
+    ADVANCED: 'advanced'
 } as const;
 
 export type ClientExperienceLevel = (typeof CLIENT_EXPERIENCE_LEVELS)[keyof typeof CLIENT_EXPERIENCE_LEVELS];
 
 // Client Goals
 export const CLIENT_GOALS = {
-  WEIGHT_LOSS: 'weight_loss',
-  MUSCLE_GAIN: 'muscle_gain', 
-  PERFORMANCE: 'performance',
-  HEALTH: 'health'
+    WEIGHT_LOSS: 'weight_loss',
+    MUSCLE_GAIN: 'muscle_gain',
+    PERFORMANCE: 'performance',
+    HEALTH: 'health'
 } as const;
 
 export type ClientGoal = (typeof CLIENT_GOALS)[keyof typeof CLIENT_GOALS];
