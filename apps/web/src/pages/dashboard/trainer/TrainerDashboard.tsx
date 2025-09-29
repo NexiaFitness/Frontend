@@ -86,7 +86,9 @@ export const TrainerDashboard: React.FC = () => {
                             </div>
                             <Button 
                                 onClick={() => navigate('/dashboard/complete-profile')}
-                                className="bg-yellow-900 hover:bg-yellow-800 text-white px-6 py-2.5 rounded-lg font-semibold whitespace-nowrap shadow-md transition-all hover:shadow-lg"
+                                variant="outline"
+                                size="md"
+                                className="whitespace-nowrap"
                             >
                                 Completar ahora
                             </Button>

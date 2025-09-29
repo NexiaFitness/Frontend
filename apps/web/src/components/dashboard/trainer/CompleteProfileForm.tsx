@@ -22,6 +22,7 @@ import { Input } from "@/components/ui/forms/Input";
 import { FormSelect } from "@/components/ui/forms/FormSelect";
 import { Button } from "@/components/ui/buttons/Button";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { useTrainerProfile } from "@shared/hooks/useTrainerProfile";
 import { useUpdateTrainerMutation, useGetTrainerQuery } from "@shared/api/trainerApi";
 import { 
@@ -137,10 +138,10 @@ export const CompleteProfileForm: React.FC = () => {
             {/* Sección 1: Información Profesional */}
             <div>
                 <div className="mb-6">
-                    <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">
+                    <h3 className={`${TYPOGRAPHY.formSectionTitle} text-slate-800 mb-2`}>
                         Información profesional
                     </h3>
-                    <p className="text-slate-600 text-sm lg:text-base">
+                    <p className={`${TYPOGRAPHY.formSectionSubtitle} text-slate-600`}>
                         Cuéntanos sobre tu experiencia y modalidad de trabajo
                     </p>
                 </div>
@@ -154,6 +155,7 @@ export const CompleteProfileForm: React.FC = () => {
                         options={occupationOptions}
                         error={errors.occupation}
                         required
+                        disabled={isSubmitting}
                     />
 
                     <FormSelect
@@ -164,6 +166,7 @@ export const CompleteProfileForm: React.FC = () => {
                         options={modalityOptions}
                         error={errors.training_modality}
                         required
+                        disabled={isSubmitting}
                         helperText="¿Trabajas presencial, online o ambas?"
                     />
 
@@ -174,6 +177,7 @@ export const CompleteProfileForm: React.FC = () => {
                         onChange={handleInputChange('specialty')}
                         options={specialtyOptions}
                         error={errors.specialty}
+                        disabled={isSubmitting}
                         helperText="Opcional - Ayuda a tus clientes a encontrarte"
                     />
                 </div>
@@ -185,10 +189,10 @@ export const CompleteProfileForm: React.FC = () => {
             {/* Sección 2: Ubicación */}
             <div>
                 <div className="mb-6">
-                    <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">
+                    <h3 className={`${TYPOGRAPHY.formSectionTitle} text-slate-800 mb-2`}>
                         Ubicación
                     </h3>
-                    <p className="text-slate-600 text-sm lg:text-base">
+                    <p className={`${TYPOGRAPHY.formSectionSubtitle} text-slate-600`}>
                         ¿Dónde ofreces tus servicios?
                     </p>
                 </div>
@@ -202,7 +206,8 @@ export const CompleteProfileForm: React.FC = () => {
                         onChange={handleInputChange('location_country')}
                         error={errors.location_country}
                         placeholder="España"
-                        required
+                        isRequired
+                        disabled={isSubmitting}
                     />
 
                     <Input
@@ -213,7 +218,8 @@ export const CompleteProfileForm: React.FC = () => {
                         onChange={handleInputChange('location_city')}
                         error={errors.location_city}
                         placeholder="Madrid"
-                        required
+                        isRequired
+                        disabled={isSubmitting}
                     />
                 </div>
             </div>
@@ -224,10 +230,10 @@ export const CompleteProfileForm: React.FC = () => {
             {/* Sección 3: Contacto */}
             <div>
                 <div className="mb-6">
-                    <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">
+                    <h3 className={`${TYPOGRAPHY.formSectionTitle} text-slate-800 mb-2`}>
                         Contacto
                     </h3>
-                    <p className="text-slate-600 text-sm lg:text-base">
+                    <p className={`${TYPOGRAPHY.formSectionSubtitle} text-slate-600`}>
                         Para que tus clientes puedan comunicarse contigo
                     </p>
                 </div>
@@ -240,7 +246,8 @@ export const CompleteProfileForm: React.FC = () => {
                     onChange={handleInputChange('telefono')}
                     error={errors.telefono}
                     placeholder="+34 600 123 456"
-                    required
+                    isRequired
+                    disabled={isSubmitting}
                     helperText="Formato internacional recomendado"
                 />
             </div>
@@ -251,20 +258,11 @@ export const CompleteProfileForm: React.FC = () => {
                     type="submit"
                     variant="primary"
                     size="lg"
+                    isLoading={isSubmitting}
                     disabled={isSubmitting}
-                    className="w-full text-base lg:text-lg font-semibold py-4"
+                    className="w-full"
                 >
-                    {isSubmitting ? (
-                        <span className="flex items-center justify-center">
-                            <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
-                            Guardando...
-                        </span>
-                    ) : (
-                        'Completar perfil y acceder al dashboard'
-                    )}
+                    {isSubmitting ? 'Guardando...' : 'Completar perfil y acceder al dashboard'}
                 </Button>
 
                 <p className="text-sm text-slate-500 text-center">

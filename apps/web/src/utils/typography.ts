@@ -21,6 +21,7 @@
  * @author Frontend Team
  * @since v4.3.0
  * @updated v4.3.8 - Añadido dashboardHero para headers principales de dashboard
+ * @updated v4.3.9 - Añadido formSectionTitle/Subtitle para formularios complejos
  */
 
 // Main Headers - Jerarquía visual clara
@@ -63,6 +64,8 @@ export const TYPOGRAPHY = {
     errorText: "text-sm",
     successText: "text-sm font-medium",
     helperText: "text-sm",
+    formSectionTitle: "text-xl lg:text-2xl font-bold",
+    formSectionSubtitle: "text-sm lg:text-base",
 
     // Interactive elements
     buttonText: "text-sm sm:text-base",
