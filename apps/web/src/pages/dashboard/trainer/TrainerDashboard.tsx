@@ -6,18 +6,38 @@
  * Desktop: 3 columnas - CON SIDEBAR
  * 
  * + Navbar mobile cuando sidebar desaparece
+ * + Banner de complete profile si perfil incompleto
  */
 
 import React from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
+import { useGetTrainerQuery } from "@shared/api/trainerApi";
 import type { RootState } from "@shared/store";
 
 export const TrainerDashboard: React.FC = () => {
+    const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
+
+    // Obtener datos del trainer para verificar completitud del perfil
+    const { data: trainerData } = useGetTrainerQuery(
+        user?.id || 0,
+        { skip: !user?.id }
+    );
+
+    const trainer = trainerData?.trainer;
+
+    // Verificar si el perfil está completo
+    const isProfileComplete = trainer && 
+        trainer.occupation && 
+        trainer.training_modality && 
+        trainer.location_country && 
+        trainer.location_city && 
+        trainer.telefono;
 
     // Menu items para mobile navbar
     const menuItems = [
@@ -46,6 +66,33 @@ export const TrainerDashboard: React.FC = () => {
                         Gestiona tus clientes y entrenamientos desde tu panel profesional
                     </p>
                 </div>
+
+                {/* Banner de Complete Profile - Aparece si perfil incompleto */}
+                {!isProfileComplete && (
+                    <div className="px-4 lg:px-8 mb-8">
+                        <div className="bg-yellow-500/90 backdrop-blur-sm rounded-xl p-4 lg:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg border-2 border-yellow-600/30">
+                            <div className="flex items-start space-x-3">
+                                <svg className="w-6 h-6 text-yellow-900 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>
+                                </svg>
+                                <div>
+                                    <h3 className="font-semibold text-yellow-900 text-base lg:text-lg">
+                                        Completa tu perfil profesional
+                                    </h3>
+                                    <p className="text-yellow-800 text-sm lg:text-base mt-1">
+                                        Necesitamos algunos datos más para que puedas gestionar clientes y entrenamientos
+                                    </p>
+                                </div>
+                            </div>
+                            <Button 
+                                onClick={() => navigate('/dashboard/complete-profile')}
+                                className="bg-yellow-900 hover:bg-yellow-800 text-white px-6 py-2.5 rounded-lg font-semibold whitespace-nowrap shadow-md transition-all hover:shadow-lg"
+                            >
+                                Completar ahora
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
                 {/* Cards RESPONSIVE */}
                 <div className="px-4 lg:px-8 mb-12 lg:mb-20">

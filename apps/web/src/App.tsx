@@ -7,9 +7,6 @@
  * - Protección de rutas privadas con redirect automático
  * - Ruta privada /dashboard/account → ProfileForm dentro de DashboardLayout
  * 
- * Mantiene una experiencia consistente para usuarios no autenticados
- * gracias al PublicLayout con PublicNavbar.
- * 
  * @author Frontend Team
  * @since v1.0.0
  * @updated v3.2.0 - Role-based dashboard routing implementado
@@ -26,10 +23,13 @@ import Register from "./pages/auth/Register";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import ResetPassword from "./pages/auth/ResetPassword";
 
-// Dashboards por rol (pages instead of components)
-import { TrainerDashboard } from "./pages/dashboard/TrainerDashboard";
-import { AdminDashboard } from "./pages/dashboard/AdminDashboard";
-import { AthleteDashboard } from "./pages/dashboard/AthleteDashboard";
+// Dashboards por rol
+import { TrainerDashboard } from "./pages/dashboard/trainer/TrainerDashboard";
+import { AdminDashboard } from "./pages/dashboard/admin/AdminDashboard";
+import { AthleteDashboard } from "./pages/dashboard/athlete/AthleteDashboard";
+
+// Páginas trainer-specific
+import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
 
 // Páginas adicionales
 import Account from "./pages/account/Account";
@@ -45,12 +45,10 @@ import type { RootState } from "@shared/store";
 
 /**
  * DashboardRouter - Router inteligente basado en roles
- * Detecta automáticamente el rol del usuario y renderiza el dashboard apropiado
  */
 const DashboardRouter: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
-  // Role-based dashboard rendering
   switch (user?.role) {
     case 'admin':
       return <AdminDashboard />;
@@ -69,7 +67,7 @@ function App() {
 
   return (
     <Routes>
-      {/* Grupo de rutas públicas envueltas en PublicLayout */}
+      {/* Rutas públicas */}
       <Route element={<PublicLayout />}>
         <Route
           path="/"
@@ -84,17 +82,27 @@ function App() {
         <Route path="/reset-password" element={<ResetPassword />} />
       </Route>
 
-      {/* Dashboard principal - Smart routing basado en rol del usuario */}
+      {/* Dashboard principal */}
       <Route 
         path="/dashboard" 
         element={
           <ProtectedRoute>
             <DashboardRouter />
           </ProtectedRoute>
-        } 
+        }
       />
 
-      {/* Ruta de cuenta - Accesible para todos los roles autenticados */}
+      {/* Complete Profile - Solo trainers */}
+      <Route
+        path="/dashboard/complete-profile"
+        element={
+          <ProtectedRoute >
+            <CompleteProfile />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Account - Todos los roles */}
       <Route
         path="/dashboard/account"
         element={
@@ -104,7 +112,7 @@ function App() {
         }
       />
 
-      {/* Catch-all: redirect a home */}
+      {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
