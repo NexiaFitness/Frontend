@@ -16,20 +16,20 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
-import { useGetTrainerQuery } from "@shared/api/trainerApi";
+import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
 import type { RootState } from "@shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    // Obtener datos del trainer para verificar completitud del perfil
-    const { data: trainerData } = useGetTrainerQuery(
-        user?.id || 0,
-        { skip: !user?.id }
+    // Obtener perfil del trainer actual desde JWT (no requiere ID)
+    const { data: trainerData } = useGetCurrentTrainerProfileQuery(
+        undefined,
+        { skip: !user }
     );
 
-    const trainer = trainerData?.trainer;
+    const trainer = trainerData;
 
     // Verificar si el perfil está completo
     const isProfileComplete = trainer && 

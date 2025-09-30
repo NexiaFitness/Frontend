@@ -1,30 +1,23 @@
 /**
- * CompleteProfileForm - Formulario de datos profesionales del trainer
- * Usa hook useTrainerProfile para lógica de negocio
- * Integrado con trainerApi para actualización
+ * CompleteProfileForm - UI del formulario de perfil profesional
+ * Solo renderiza - toda la lógica está en useTrainerProfile
  * 
- * Campos implementados:
- * - Occupation, Training Modality, Specialty (opcional)
- * - Location (Country + City)
- * - Phone
- * 
- * Billing: Implementado posteriormente en modal al crear cliente
+ * Arquitectura limpia: UI solo presenta y delega
  * 
  * @author Frontend Team
  * @since v2.2.0
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 import { Input } from "@/components/ui/forms/Input";
 import { FormSelect } from "@/components/ui/forms/FormSelect";
 import { Button } from "@/components/ui/buttons/Button";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useTrainerProfile } from "@shared/hooks/useTrainerProfile";
-import { useUpdateTrainerMutation, useGetTrainerQuery } from "@shared/api/trainerApi";
+import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
 import { 
     TRAINING_MODALITY_LABELS, 
     OCCUPATION_TYPE_LABELS,
@@ -35,64 +28,43 @@ import {
 } from "@shared/types/trainer";
 import type { RootState } from "@shared/store";
 
-// Tipo para errores RTK Query (igual que en useTrainerProfile)
-type RTKError = FetchBaseQueryError | {
-    status: number;
-    data?: { detail?: string; message?: string };
-};
-
 export const CompleteProfileForm: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     
-    // Obtener trainer actual
-    const { data: trainerData, isLoading: isLoadingTrainer } = useGetTrainerQuery(
-        user?.id || 0,
-        { skip: !user?.id }
+    // Obtener perfil del trainer actual
+    const { data: trainerData, isLoading: isLoadingTrainer } = useGetCurrentTrainerProfileQuery(
+        undefined,
+        { skip: !user }
     );
     
-    const [updateTrainer] = useUpdateTrainerMutation();
-    
+    // Hook con TODA la lógica de negocio
     const {
         formData,
         errors,
         serverError,
         handleInputChange,
-        validateForm,
-        prepareUpdateData,
-        handleServerError,
+        handleSubmit,
+        isSubmitting,
     } = useTrainerProfile({
-        trainer: trainerData?.trainer || null,
+        trainer: trainerData || null,
         isLoading: isLoadingTrainer,
     });
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!validateForm()) {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        try {
-            const updateData = prepareUpdateData();
-            await updateTrainer({
-                id: user?.id || 0,
-                data: updateData,
-            }).unwrap();
-
-            // Success - redirect al dashboard
-            navigate('/dashboard', { replace: true });
-        } catch (error) {
-            handleServerError(error as RTKError);
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
+const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    console.log('=== SUBMIT STARTED ===');
+    const result = await handleSubmit();
+    console.log('=== RESULT ===', result);
+    
+    if (result.success) {
+        console.log('=== NAVIGATING ===');
+        navigate('/dashboard', { replace: true });
+    } else {
+        console.log('=== ERROR ===', result.error);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+};
 
     // Options para selects
     const occupationOptions = [
@@ -129,7 +101,7 @@ export const CompleteProfileForm: React.FC = () => {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={onSubmit} className="space-y-8">
             {/* Server Error Banner */}
             {serverError && (
                 <ServerErrorBanner error={serverError} />

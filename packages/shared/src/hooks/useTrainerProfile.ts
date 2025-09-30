@@ -1,33 +1,29 @@
 /**
  * Hook de negocio para gestión de perfil de trainer
- * Lógica pura reutilizable entre web y React Native
- * Maneja validaciones, estado del formulario y actualización de perfil
+ * Encapsula TODA la lógica: validación, estado, actualización
+ * Caso de uso completo - UI solo renderiza
  * 
- * Workflow:
- * 1. Cargar datos actuales del trainer
- * 2. Validar campos obligatorios para Complete Profile
- * 3. Actualizar perfil con nuevos datos profesionales
- * 4. Verificar completitud del perfil
+ * Arquitectura DDD/Hexagonal:
+ * - Application Layer: Este hook (caso de uso)
+ * - Infrastructure: trainerApi (comunicación con backend)
+ * - UI Layer: Componentes solo renderizan
  * 
  * @author Frontend Team
  * @since v2.2.0
  */
 
-import { useState, useCallback, useMemo } from "react";
-import { useDispatch } from "react-redux";
-import type { AppDispatch } from "../store";
+import { useState, useCallback, useMemo, useEffect } from "react";
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
+import { useUpdateTrainerProfileMutation } from "../api/trainerApi";
 import type {
     Trainer,
     UpdateTrainerData,
     TrainerProfileFormData,
     TrainerProfileFormErrors,
     TrainerProfileStatus,
-    checkTrainerProfileCompleteness,
 } from "../types/trainer";
 import { 
     TRAINING_MODALITY,
-    OCCUPATION_TYPES,
 } from "../types/trainer";
 
 interface UseTrainerProfileProps {
@@ -35,13 +31,11 @@ interface UseTrainerProfileProps {
     isLoading?: boolean;
 }
 
-// Tipo para errores RTK Query
 type RTKError = FetchBaseQueryError | {
     status: number;
     data?: { detail?: string; message?: string };
 };
 
-// Cross-platform event type (igual que useAuthForm)
 type CrossPlatformChangeEvent = {
     target: { value: string };
 } | {
@@ -56,30 +50,29 @@ const extractValue = (e: CrossPlatformChangeEvent): string => {
 };
 
 export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProfileProps) {
-    const dispatch = useDispatch<AppDispatch>();
+    const [updateTrainerProfile, { isLoading: isUpdating }] = useUpdateTrainerProfileMutation();
 
-    // Estado del formulario - inicializado con datos del trainer o vacío
-    const initialFormData: TrainerProfileFormData = useMemo(() => ({
-        nombre: trainer?.nombre || '',
-        apellidos: trainer?.apellidos || '',
-        mail: trainer?.mail || '',
-        telefono: trainer?.telefono || '',
-        occupation: trainer?.occupation || '',
-        training_modality: (trainer?.training_modality as any) || TRAINING_MODALITY.IN_PERSON,
-        location_country: trainer?.location_country || '',
-        location_city: trainer?.location_city || '',
-        billing_id: trainer?.billing_id || '',
-        billing_address: trainer?.billing_address || '',
-        billing_postal_code: trainer?.billing_postal_code || '',
-        specialty: trainer?.specialty as any,
-    }), [trainer]);
+    // Estado inicial simple y predecible
+    const [formData, setFormData] = useState<TrainerProfileFormData>({
+        nombre: '',
+        apellidos: '',
+        mail: '',
+        telefono: '',
+        occupation: '',
+        training_modality: TRAINING_MODALITY.IN_PERSON,
+        location_country: '',
+        location_city: '',
+        billing_id: '',
+        billing_address: '',
+        billing_postal_code: '',
+        specialty: undefined,
+    });
 
-    const [formData, setFormData] = useState<TrainerProfileFormData>(initialFormData);
     const [errors, setErrors] = useState<TrainerProfileFormErrors>({});
     const [serverError, setServerError] = useState<string | null>(null);
 
-    // Sincronizar formData cuando cambia el trainer
-    useMemo(() => {
+    // ÚNICA fuente de sincronización - ejecuta cuando llegan datos del backend
+    useEffect(() => {
         if (trainer) {
             setFormData({
                 nombre: trainer.nombre || '',
@@ -98,7 +91,6 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
         }
     }, [trainer]);
 
-    // Manejo de cambios de input (estable con useCallback)
     const handleInputChange = useCallback((field: keyof TrainerProfileFormData) => (
         e: CrossPlatformChangeEvent
     ) => {
@@ -109,7 +101,6 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
             [field]: value,
         }));
 
-        // Limpiar error del campo
         setErrors(prev => ({
             ...prev,
             [field]: undefined,
@@ -118,11 +109,14 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
         setServerError(null);
     }, []);
 
-    // Validación del formulario
     const validateForm = useCallback((): boolean => {
+        // Guardia: prevenir validación si no hay datos del trainer
+        if (!trainer) {
+            return false;
+        }
+
         const newErrors: TrainerProfileFormErrors = {};
 
-        // Validar campos obligatorios para Complete Profile
         if (!formData.nombre.trim()) {
             newErrors.nombre = "El nombre es obligatorio";
         }
@@ -159,27 +153,13 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
             newErrors.location_city = "La ciudad es obligatoria";
         }
 
-        if (!formData.billing_id.trim()) {
-            newErrors.billing_id = "El ID de facturación es obligatorio";
-        }
-
-        if (!formData.billing_address.trim()) {
-            newErrors.billing_address = "La dirección de facturación es obligatoria";
-        }
-
-        if (!formData.billing_postal_code.trim()) {
-            newErrors.billing_postal_code = "El código postal es obligatorio";
-        }
-
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
-    }, [formData]);
+    }, [formData, trainer]);
 
-    // Preparar datos para actualización (solo campos modificados)
     const prepareUpdateData = useCallback((): UpdateTrainerData => {
         const updateData: UpdateTrainerData = {};
 
-        // Solo incluir campos que han cambiado
         if (trainer) {
             if (formData.nombre !== trainer.nombre) updateData.nombre = formData.nombre;
             if (formData.apellidos !== trainer.apellidos) updateData.apellidos = formData.apellidos;
@@ -189,12 +169,8 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
             if (formData.training_modality !== trainer.training_modality) updateData.training_modality = formData.training_modality;
             if (formData.location_country !== trainer.location_country) updateData.location_country = formData.location_country;
             if (formData.location_city !== trainer.location_city) updateData.location_city = formData.location_city;
-            if (formData.billing_id !== trainer.billing_id) updateData.billing_id = formData.billing_id;
-            if (formData.billing_address !== trainer.billing_address) updateData.billing_address = formData.billing_address;
-            if (formData.billing_postal_code !== trainer.billing_postal_code) updateData.billing_postal_code = formData.billing_postal_code;
             if (formData.specialty !== trainer.specialty) updateData.specialty = formData.specialty;
         } else {
-            // Si no hay trainer previo, enviar todos los campos
             return {
                 nombre: formData.nombre,
                 apellidos: formData.apellidos,
@@ -204,9 +180,6 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
                 training_modality: formData.training_modality,
                 location_country: formData.location_country,
                 location_city: formData.location_city,
-                billing_id: formData.billing_id,
-                billing_address: formData.billing_address,
-                billing_postal_code: formData.billing_postal_code,
                 specialty: formData.specialty,
             };
         }
@@ -214,7 +187,6 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
         return updateData;
     }, [formData, trainer]);
 
-    // Manejo de errores de servidor
     const handleServerError = useCallback((error: RTKError): string => {
         let errorMessage = "Error de conexión. Intenta de nuevo.";
 
@@ -237,17 +209,34 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
         return errorMessage;
     }, []);
 
-    // Verificar completitud del perfil
+    const handleSubmit = useCallback(async (): Promise<{ success: boolean; error?: string }> => {
+        // Guardia: prevenir submit si no hay datos del trainer
+        if (!trainer) {
+            return { success: false, error: "Cargando datos del perfil..." };
+        }
+
+        if (!validateForm()) {
+            return { success: false, error: "Formulario inválido" };
+        }
+
+        try {
+            const updateData = prepareUpdateData();
+            await updateTrainerProfile(updateData).unwrap();
+            
+            return { success: true };
+        } catch (error) {
+            const errorMsg = handleServerError(error as RTKError);
+            return { success: false, error: errorMsg };
+        }
+    }, [validateForm, prepareUpdateData, updateTrainerProfile, handleServerError, trainer]);
+
     const profileStatus: TrainerProfileStatus | null = useMemo(() => {
         if (!trainer) return null;
         
-        // Importar la función desde types (en uso real)
-        // Por ahora implementación inline
         const requiredFields: (keyof Trainer)[] = [
             'nombre', 'apellidos', 'mail', 'telefono',
             'occupation', 'training_modality',
             'location_country', 'location_city',
-            'billing_id', 'billing_address', 'billing_postal_code'
         ];
         
         const missingFields = requiredFields.filter(field => {
@@ -266,39 +255,42 @@ export function useTrainerProfile({ trainer, isLoading = false }: UseTrainerProf
         };
     }, [trainer]);
 
-    // Limpiar errores
     const clearErrors = useCallback(() => {
         setErrors({});
         setServerError(null);
     }, []);
 
-    // Reset del formulario
     const resetForm = useCallback(() => {
-        setFormData(initialFormData);
+        if (trainer) {
+            setFormData({
+                nombre: trainer.nombre || '',
+                apellidos: trainer.apellidos || '',
+                mail: trainer.mail || '',
+                telefono: trainer.telefono || '',
+                occupation: trainer.occupation || '',
+                training_modality: (trainer.training_modality as any) || TRAINING_MODALITY.IN_PERSON,
+                location_country: trainer.location_country || '',
+                location_city: trainer.location_city || '',
+                billing_id: trainer.billing_id || '',
+                billing_address: trainer.billing_address || '',
+                billing_postal_code: trainer.billing_postal_code || '',
+                specialty: trainer.specialty as any,
+            });
+        }
         setErrors({});
         setServerError(null);
-    }, [initialFormData]);
+    }, [trainer]);
 
     return {
-        // Estado del formulario
         formData,
         errors,
         serverError,
-        
-        // Estado del perfil
         profileStatus,
-        isLoading,
-        
-        // Handlers
+        isLoading: isLoading || isUpdating,
+        isSubmitting: isUpdating,
         handleInputChange,
-        validateForm,
-        prepareUpdateData,
-        handleServerError,
+        handleSubmit,
         clearErrors,
         resetForm,
-        
-        // Setters estables
-        setFormData,
-        setServerError,
     };
 }
