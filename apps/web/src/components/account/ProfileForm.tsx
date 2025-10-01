@@ -93,7 +93,7 @@ export const ProfileForm: React.FC = () => {
 
         try {
             const updated = await updateAccount(formData).unwrap();
-            dispatch(setCurrentUser(updated.user));
+            dispatch(setCurrentUser(updated));
             setSuccessMessage("Perfil actualizado correctamente");
             setTimeout(() => setSuccessMessage(null), 3000);
         } catch (err) {

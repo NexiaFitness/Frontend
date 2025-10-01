@@ -10,9 +10,7 @@
 import { baseApi } from "./baseApi";
 import type {
     Client,
-    ClientResponse,
     ClientsListResponse,
-    DeleteClientResponse,
     CreateClientData,
     UpdateClientData,
     ClientFilters,
@@ -47,8 +45,8 @@ export const clientsApi = baseApi.injectEndpoints({
                     : [{ type: "Client", id: "LIST" }],
         }),
 
-        // Obtener cliente específico por ID
-        getClient: builder.query<ClientResponse, number>({
+        // Obtener cliente específico por ID - devuelve Client directo
+        getClient: builder.query<Client, number>({
             query: (id) => ({
                 url: `/clients/${id}`,
                 method: "GET",
@@ -56,8 +54,8 @@ export const clientsApi = baseApi.injectEndpoints({
             providesTags: (result, error, id) => [{ type: "Client", id }],
         }),
 
-        // Crear nuevo cliente
-        createClient: builder.mutation<ClientResponse, CreateClientData>({
+        // Crear nuevo cliente - devuelve Client directo
+        createClient: builder.mutation<Client, CreateClientData>({
             query: (clientData) => ({
                 url: "/clients/",
                 method: "POST",
@@ -69,8 +67,8 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: [{ type: "Client", id: "LIST" }],
         }),
 
-        // Actualizar cliente existente
-        updateClient: builder.mutation<ClientResponse, { id: number; data: UpdateClientData }>({
+        // Actualizar cliente existente - devuelve Client directo
+        updateClient: builder.mutation<Client, { id: number; data: UpdateClientData }>({
             query: ({ id, data }) => ({
                 url: `/clients/${id}`,
                 method: "PUT",
@@ -85,8 +83,8 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
-        // Eliminar cliente
-        deleteClient: builder.mutation<DeleteClientResponse, number>({
+        // Eliminar cliente - devuelve mensaje de confirmación
+        deleteClient: builder.mutation<{ message: string }, number>({
             query: (id) => ({
                 url: `/clients/${id}`,
                 method: "DELETE",

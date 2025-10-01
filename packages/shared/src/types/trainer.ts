@@ -9,8 +9,14 @@
  * - billing_id, billing_address, billing_postal_code (obligatorios)
  * - specialty (opcional)
  * 
+ * Arquitectura de respuestas:
+ * - GET/PATCH /trainers/profile devuelven Trainer directo (no wrapper)
+ * - GET /trainers (lista) devuelve array directo o {items, total...} con paginación
+ * - DELETE /trainers devuelve {message} (wrapper de confirmación)
+ * 
  * @author Frontend Team
  * @since v2.2.0
+ * @updated v2.3.0 - Eliminado TrainerResponse, alineado con backend
  */
 
 // Training Modality Types
@@ -22,7 +28,7 @@ export const TRAINING_MODALITY = {
 
 export type TrainingModality = (typeof TRAINING_MODALITY)[keyof typeof TRAINING_MODALITY];
 
-// Occupation Types (común en la industria fitness)
+// Occupation Types
 export const OCCUPATION_TYPES = {
   PERSONAL_TRAINER: 'personal_trainer',
   FITNESS_COACH: 'fitness_coach',
@@ -36,7 +42,7 @@ export const OCCUPATION_TYPES = {
 
 export type OccupationType = (typeof OCCUPATION_TYPES)[keyof typeof OCCUPATION_TYPES];
 
-// Specialty Types (opcional)
+// Specialty Types
 export const SPECIALTY_TYPES = {
   STRENGTH_TRAINING: 'strength_training',
   WEIGHT_LOSS: 'weight_loss',
@@ -58,7 +64,7 @@ export const SPECIALTY_TYPES = {
 
 export type SpecialtyType = (typeof SPECIALTY_TYPES)[keyof typeof SPECIALTY_TYPES];
 
-// Trainer Entity (siguiendo schema backend verificado)
+// Trainer Entity
 export interface Trainer {
     id: number;
     user_id: number | null;
@@ -67,21 +73,19 @@ export interface Trainer {
     mail: string;
     telefono: string | null;
     
-    // Professional profile fields (MVP)
+    // Professional profile fields
     occupation: string | null;
-    training_modality: string | null;  // in_person | online | hybrid
+    training_modality: string | null;
     location_country: string | null;
     location_city: string | null;
     billing_id: string | null;
     billing_address: string | null;
     billing_postal_code: string | null;
-    
-    // Optional
     specialty: string | null;
     
     // Audit fields
-    created_at: string;  // ISO string
-    updated_at: string;  // ISO string
+    created_at: string;
+    updated_at: string;
     is_active: boolean;
 }
 
@@ -105,8 +109,6 @@ export interface UpdateTrainerData {
     apellidos?: string;
     mail?: string;
     telefono?: string;
-    
-    // Professional profile updates
     occupation?: string;
     training_modality?: string;
     location_country?: string;
@@ -118,11 +120,7 @@ export interface UpdateTrainerData {
 }
 
 // API Response Types
-export interface TrainerResponse {
-    trainer: Trainer;
-    message?: string;
-}
-
+// TrainersListResponse mantiene wrapper porque incluye metadata
 export interface TrainersListResponse {
     trainers: Trainer[];
     total: number;
@@ -130,12 +128,13 @@ export interface TrainersListResponse {
     per_page?: number;
 }
 
+// DeleteTrainerResponse mantiene wrapper porque backend devuelve mensaje + ID
 export interface DeleteTrainerResponse {
     message: string;
     deleted_trainer_id: number;
 }
 
-// Trainer State - para Redux slice (si se implementa)
+// Trainer State - para Redux slice
 export interface TrainerState {
     currentTrainer: Trainer | null;
     trainers: Trainer[];
@@ -146,13 +145,10 @@ export interface TrainerState {
 
 // Form Validation Types
 export interface TrainerProfileFormData {
-    // Basic info (already exists from registration)
     nombre: string;
     apellidos: string;
     mail: string;
     telefono: string;
-    
-    // Professional info (Complete Profile wizard)
     occupation: string;
     training_modality: TrainingModality;
     location_country: string;
@@ -178,7 +174,7 @@ export interface TrainerProfileFormErrors {
     specialty?: string;
 }
 
-// Utility function para verificar completitud del perfil
+// Utility function
 export const checkTrainerProfileCompleteness = (trainer: Trainer): TrainerProfileStatus => {
     const requiredFields: (keyof Trainer)[] = [
         'nombre',
@@ -210,7 +206,7 @@ export const checkTrainerProfileCompleteness = (trainer: Trainer): TrainerProfil
     };
 };
 
-// Helper para labels UI de enums
+// Helper labels
 export const TRAINING_MODALITY_LABELS: Record<TrainingModality, string> = {
     [TRAINING_MODALITY.IN_PERSON]: 'Presencial',
     [TRAINING_MODALITY.ONLINE]: 'Online',

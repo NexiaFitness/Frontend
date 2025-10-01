@@ -3,8 +3,14 @@
  * Define interfaces para clientes, operaciones CRUD y respuestas API
  * Alineado con backend FastAPI y sistema RBAC (trainers own clients only)
  * 
+ * Arquitectura de respuestas:
+ * - GET/POST/PUT /clients devuelven Client directo (no wrapper)
+ * - GET /clients (lista) devuelve {clients, total, page...} (wrapper con paginación)
+ * - DELETE /clients devuelve {message, deleted_client_id} (wrapper de confirmación)
+ * 
  * @author Frontend Team
  * @since v2.1.0
+ * @updated v2.3.0 - Eliminado ClientResponse, alineado con backend
  */
 
 // Client Experience Levels
@@ -33,16 +39,16 @@ export interface Client {
     apellidos: string;
     email: string;
     edad: number;
-    peso: number;                    // en kg
-    altura: number;                  // en cm
-    bmi: number;                     // calculado automáticamente por backend
+    peso: number;
+    altura: number;
+    bmi: number;
     objetivo: ClientGoal;
     nivel_experiencia: ClientExperienceLevel;
-    trainer_id: number;              // ID del trainer propietario
-    fecha_registro: string;          // ISO string
+    trainer_id: number;
+    fecha_registro: string;
     activo: boolean;
-    created_at: string;              // ISO string
-    updated_at: string;              // ISO string
+    created_at: string;
+    updated_at: string;
 }
 
 // Client Request Types
@@ -55,7 +61,6 @@ export interface CreateClientData {
     altura: number;
     objetivo: ClientGoal;
     nivel_experiencia: ClientExperienceLevel;
-    // trainer_id se obtiene del token JWT automáticamente
 }
 
 export interface UpdateClientData {
@@ -74,15 +79,11 @@ export interface ClientFilters {
     objetivo?: ClientGoal;
     nivel_experiencia?: ClientExperienceLevel;
     activo?: boolean;
-    search?: string;                 // búsqueda por nombre/email
+    search?: string;
 }
 
 // API Response Types
-export interface ClientResponse {
-    client: Client;
-    message?: string;
-}
-
+// ClientsListResponse mantiene wrapper porque incluye metadata de paginación
 export interface ClientsListResponse {
     clients: Client[];
     total: number;
@@ -91,6 +92,7 @@ export interface ClientsListResponse {
     total_pages: number;
 }
 
+// DeleteClientResponse mantiene wrapper porque backend devuelve mensaje + ID
 export interface DeleteClientResponse {
     message: string;
     deleted_client_id: number;
@@ -128,7 +130,6 @@ export interface ClientActions {
 
 // Form Validation Types
 export interface ClientFormData extends CreateClientData {
-    // Campos adicionales para el formulario
     confirmEmail?: string;
 }
 

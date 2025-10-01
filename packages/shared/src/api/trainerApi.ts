@@ -10,12 +10,12 @@
  * 
  * @author Frontend Team
  * @since v2.2.0
+ * @updated v2.3.0 - Eliminado TrainerResponse, usando Trainer directo (alineado backend)
  */
 
 import { baseApi } from "./baseApi";
 import type {
     Trainer,
-    TrainerResponse,
     UpdateTrainerData,
 } from "../types/trainer";
 
@@ -24,27 +24,27 @@ export const trainerApi = baseApi.injectEndpoints({
         // Obtener perfil del trainer actual desde JWT (no requiere ID)
         getCurrentTrainerProfile: builder.query<Trainer, void>({
             query: () => ({
-                url: '/trainers/profile',
-                method: 'GET',
+                url: "/trainers/profile",
+                method: "GET",
             }),
-            providesTags: ['Trainer'],
+            providesTags: ["Trainer"],
         }),
 
         // Actualizar perfil del trainer actual (Complete Profile workflow)
-        updateTrainerProfile: builder.mutation<TrainerResponse, UpdateTrainerData>({
+        updateTrainerProfile: builder.mutation<Trainer, UpdateTrainerData>({
             query: (data) => ({
-                url: '/trainers/profile',
-                method: 'PATCH',
+                url: "/trainers/profile",
+                method: "PATCH",
                 body: data,
                 headers: {
                     "Content-Type": "application/json",
                 },
             }),
-            invalidatesTags: ['Trainer', 'User'],
+            invalidatesTags: ["Trainer", "User"],
         }),
 
         // Obtener trainer específico por ID (admin only)
-        getTrainer: builder.query<TrainerResponse, number>({
+        getTrainer: builder.query<Trainer, number>({
             query: (id) => ({
                 url: `/trainers/${id}`,
                 method: "GET",

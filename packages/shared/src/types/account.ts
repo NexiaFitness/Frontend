@@ -5,18 +5,18 @@
  * (web y mobile). Mantengo estos tipos desacoplados de UI para que sean 100% reutilizables.
  *
  * Notas de implementación:
- * - El backend (FastAPI) expone /auth/me para update/delete y /auth/change-password.
- * - El tipo User ya existe en @shared/types/auth y se reutiliza aquí.
+ * - Backend expone /auth/me (PUT) que devuelve User directo (no wrapper)
+ * - Backend expone /auth/change-password (POST) que devuelve {message}
+ * - Backend expone /auth/me (DELETE) que devuelve {message}
  *
- * Mantenimiento futuro:
- * - Si el backend añade campos nuevos (p.ej. avatar), ampliar UpdateAccountPayload.
- * - Si la respuesta de update incluye más metadatos, ampliar AccountResponse.
+ * Arquitectura de respuestas:
+ * - Objetos directos para CRUD estándar (User)
+ * - Wrappers solo para confirmaciones ({message})
  *
  * @author Nelson
  * @since v1.0.0
+ * @updated v2.3.0 - Alineado con patrón de respuestas del backend
  */
-
-import type { User } from "../types/auth";
 
 export interface UpdateAccountPayload {
     nombre?: string;
@@ -29,11 +29,7 @@ export interface ChangePasswordPayload {
     new_password: string;
 }
 
-export interface AccountResponse {
-    user: User;
-    message: string;
-}
-
+// DeleteAccountResponse mantiene wrapper porque backend devuelve {message}
 export interface DeleteAccountResponse {
     message: string;
 }
