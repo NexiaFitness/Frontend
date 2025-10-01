@@ -23,7 +23,7 @@ import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useRegisterMutation } from "@shared/api/authApi";
+import { useRegisterMutation, useVerifyEmailMutation } from "@shared/api/authApi";
 import { loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { USER_ROLES } from "@shared/config/constants";
@@ -61,7 +61,11 @@ export const RegisterForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    const [register, { isLoading }] = useRegisterMutation();
+    const [register, { isLoading: isRegistering }] = useRegisterMutation();
+    const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation();
+
+    // Track entire operation as loading (register + auto-verification)
+    const isLoading = isRegistering || isVerifying;
 
     const {
         formData,
@@ -97,7 +101,16 @@ export const RegisterForm: React.FC = () => {
                 role: formData.role as UserRole,
             };
 
-            await register(credentials).unwrap();
+            const response = await register(credentials).unwrap();
+
+            // Auto-verificar si el backend devuelve token (development)
+            if (response.verification_token) {
+                try {
+                    await verifyEmail({ token: response.verification_token }).unwrap();
+                } catch (verifyError) {
+                    console.warn('Auto-verification failed:', verifyError);
+                }
+            }
 
             // Redirigir a login con mensaje de éxito
             navigate("/auth/login", {

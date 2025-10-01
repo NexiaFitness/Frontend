@@ -62,13 +62,8 @@ export const loginSuccessResponse: AuthResponse = {
 };
 
 export const registerSuccessResponse: RegisterResponse = {
-    id: 1,
-    email: "test@example.com",
-    nombre: "Test", 
-    apellidos: "User",
-    role: USER_ROLES.TRAINER,
-    is_active: true,
-    created_at: "2025-01-01T00:00:00",
+    message: "Registration successful! Please check your email to verify your account.",
+    verification_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.verification.token",
 };
 
 // Refleja backend real - sin reset_token en producción

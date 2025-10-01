@@ -211,8 +211,8 @@ pnpm -F web build            # Production build
 pnpm -F web preview          # Preview build
 
 # Testing
-pnpm -F web test             # Watch mode
-pnpm -F web test:run         # Single run
+pnpm -F web test             # Single run
+pnpm -F web test:watch       # Watch mode
 pnpm -F web test:coverage    # With coverage
 
 # Linting

@@ -56,6 +56,8 @@ export const authHandlers = [
 
     // Register - Handler dinámico con tipo seguro
     http.post("*/auth/register", async ({ request }) => {
+        await new Promise((res) => setTimeout(res, 50)) // Minimal delay for React state updates
+
         try {
             const body = (await request.json()) as { email?: string }
 
@@ -67,6 +69,16 @@ export const authHandlers = [
         } catch {
             return HttpResponse.json(errorResponses.emailAlreadyExists, { status: 400 })
         }
+    }),
+
+    // Email verification
+    http.post("*/auth/verify-email", async () => {
+        await new Promise((res) => setTimeout(res, 50)) // Minimal delay for React state updates
+
+        return HttpResponse.json(
+            { message: "Email verified successfully.", email: "test@example.com" },
+            { status: 200 }
+        );
     }),
 
     // Forgot password

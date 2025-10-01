@@ -1,7 +1,7 @@
 /**
  * API de autenticación usando RTK Query
  * CORREGIDO: Compatibilidad MSW + URLSearchParams en entorno testing
- * Define endpoints: login, register, forgotPassword, resetPassword, getCurrentUser
+ * Define endpoints: login, register, forgotPassword, resetPassword, getCurrentUser, verifyEmail
  * 
  * @author Frontend Team
  * @since v1.0.0
@@ -12,6 +12,9 @@ import type {
     AuthResponse,
     LoginCredentials,
     RegisterCredentials,
+    RegisterResponse,
+    VerifyEmailData,
+    VerifyEmailResponse,
     ForgotPasswordData,
     ResetPasswordData,
     User,
@@ -47,12 +50,25 @@ export const authApi = baseApi.injectEndpoints({
             invalidatesTags: ["Auth", "User"],
         }),
 
-        // Registro - JSON format normal (sin cambios)
-        register: builder.mutation<AuthResponse, RegisterCredentials>({
+        // Registro - JSON format con RegisterResponse
+        register: builder.mutation<RegisterResponse, RegisterCredentials>({
             query: (credentials) => ({
                 url: "/auth/register",
                 method: "POST",
                 body: credentials,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: ["Auth", "User"],
+        }),
+
+        // Email verification
+        verifyEmail: builder.mutation<VerifyEmailResponse, VerifyEmailData>({
+            query: (data) => ({
+                url: "/auth/verify-email",
+                method: "POST",
+                body: data,
                 headers: {
                     "Content-Type": "application/json",
                 },
@@ -98,6 +114,7 @@ export const authApi = baseApi.injectEndpoints({
 export const {
     useLoginMutation,
     useRegisterMutation,
+    useVerifyEmailMutation,
     useForgotPasswordMutation,
     useResetPasswordMutation,
     useGetCurrentUserQuery,

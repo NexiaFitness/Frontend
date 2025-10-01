@@ -368,8 +368,10 @@ describe("RegisterForm", () => {
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
       // Should show loading text and disabled state
-      expect(screen.getByRole("button", { name: /creando cuenta/i }))
-        .toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /creando cuenta/i }))
+          .toBeInTheDocument();
+      });
       expect(screen.getByRole("button", { name: /creando cuenta/i }))
         .toBeDisabled();
       expect(screen.getByLabelText(/correo electrónico/i))
@@ -391,9 +393,11 @@ describe("RegisterForm", () => {
 
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // Navigation button should be disabled during loading
-      expect(screen.getByRole("button", { name: /inicia sesión/i }))
-        .toBeDisabled();
+      // Wait for loading state
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /inicia sesión/i }))
+          .toBeDisabled();
+      });
     });
   });
 

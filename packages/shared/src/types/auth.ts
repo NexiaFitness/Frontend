@@ -46,6 +46,20 @@ export interface ResetPasswordData {
     new_password: string;
 }
 
+export interface RegisterResponse {
+    message: string;
+    verification_token?: string; // Solo presente en development
+}
+
+export interface VerifyEmailData {
+    token: string;
+}
+
+export interface VerifyEmailResponse {
+    message: string;
+    email: string;
+}
+
 // API Response Types
 export interface AuthResponse {
     access_token: string;
@@ -57,7 +71,6 @@ export interface AuthResponse {
 
 export interface LoginResponse extends AuthResponse {}
 
-export interface RegisterResponse extends User {}
 
 export interface ForgotPasswordResponse {
     message: string;
