@@ -30,11 +30,21 @@ pnpm -F web dev
 ## Project Structure
 ```
 frontend/
-├── docs/                                        # Documentation
+├── .gitignore
+├── LICENSE
+├── package.json
+├── pnpm-lock.yaml
+├── pnpm-workspace.yaml
+├── README.md
+├── tsconfig.base.json
+├── tsconfig.json
+├── vercel.json
+├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── CONTRIBUTING.md
 │   ├── CROSS_PLATFORM_GUIDE.md
 │   ├── DEPLOYMENT.md
+│   ├── PROJECT_STATUS.md
 │   ├── ROADMAP.md
 │   └── TESTING_ARCHITECTURE.md
 ├── apps/web/                                    # Main React app
@@ -49,7 +59,8 @@ frontend/
 │   │   ├── components/
 │   │   │   ├── account/                         # Account management
 │   │   │   │   ├── modals/
-│   │   │   │   │   ├── __tests__/DeleteAccountModal.test.tsx
+│   │   │   │   │   ├── __tests__/
+│   │   │   │   │   │   └── DeleteAccountModal.test.tsx
 │   │   │   │   │   ├── DeleteAccountModal.tsx
 │   │   │   │   │   └── index.ts
 │   │   │   │   ├── ChangePasswordForm.tsx
@@ -62,9 +73,10 @@ frontend/
 │   │   │   │   │   ├── RegisterForm.test.tsx
 │   │   │   │   │   └── ResetPasswordForm.test.tsx
 │   │   │   │   ├── modals/
-│   │   │   │   │   ├── __tests__/LogoutConfirmationModal.test.tsx
-│   │   │   │   │   ├── LogoutConfirmationModal.tsx
-│   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── __tests__/
+│   │   │   │   │   │   └── LogoutConfirmationModal.test.tsx
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── LogoutConfirmationModal.tsx
 │   │   │   │   ├── AuthLayout.tsx
 │   │   │   │   ├── ForgotPasswordForm.tsx
 │   │   │   │   ├── LoginForm.tsx
@@ -72,20 +84,13 @@ frontend/
 │   │   │   │   ├── ProtectedRoute.tsx
 │   │   │   │   ├── RegisterForm.tsx              # With email auto-verification
 │   │   │   │   └── ResetPasswordForm.tsx
-│   │   │   ├── clients/                         # Client management
-│   │   │   │   ├── modals/
-│   │   │   │   │   ├── __tests__/DeleteClientModal.test.tsx
-│   │   │   │   │   ├── BmiModal.tsx
-│   │   │   │   │   ├── DeleteClientModal.tsx
-│   │   │   │   │   └── index.ts
-│   │   │   │   └── steps/                       # Multi-step onboarding
-│   │   │   │       ├── Experience.tsx
-│   │   │   │       ├── HealthInfo.tsx
-│   │   │   │       ├── PersonalInfo.tsx
-│   │   │   │       ├── PhysicalMetrics.tsx
-│   │   │   │       ├── Review.tsx
-│   │   │   │       └── TrainingGoals.tsx
-│   │   │   ├── dashboard/                       # Role-based dashboards
+│   │   │   ├── clients/
+│   │   │   │   └── modals/
+│   │   │   │       ├── __tests__/
+│   │   │   │       │   └── DeleteClientModal.test.tsx
+│   │   │   │       ├── DeleteClientModal.tsx
+│   │   │   │       └── index.ts
+│   │   │   ├── dashboard/
 │   │   │   │   ├── admin/
 │   │   │   │   │   ├── AdminSideMenu.tsx
 │   │   │   │   │   └── index.ts
@@ -95,22 +100,23 @@ frontend/
 │   │   │   │   ├── layout/
 │   │   │   │   │   ├── DashboardLayout.tsx
 │   │   │   │   │   └── index.ts
+│   │   │   │   ├── shared/
 │   │   │   │   ├── trainer/
-│   │   │   │   │   ├── CompleteProfileForm.tsx  # Trainer onboarding
-│   │   │   │   │   ├── TrainerSideMenu.tsx
-│   │   │   │   │   └── index.ts
+│   │   │   │   │   ├── CompleteProfileForm.tsx
+│   │   │   │   │   ├── index.ts
+│   │   │   │   │   └── TrainerSideMenu.tsx
 │   │   │   │   ├── DashboardHeader.tsx
 │   │   │   │   ├── DashboardNavbar.tsx
 │   │   │   │   └── index.ts
-│   │   │   ├── home/                            # Landing page sections
+│   │   │   ├── home/
 │   │   │   │   ├── AISection.tsx
 │   │   │   │   ├── ContactSection.tsx
 │   │   │   │   ├── FAQSection.tsx
 │   │   │   │   ├── FeaturesSection.tsx
 │   │   │   │   ├── HeroSection.tsx
-│   │   │   │   ├── ProblemSection.tsx
-│   │   │   │   └── index.ts
-│   │   │   └── ui/                              # Tailwind design system
+│   │   │   │   ├── index.ts
+│   │   │   │   └── ProblemSection.tsx
+│   │   │   └── ui/                              # Tailwind components
 │   │   │       ├── branding/
 │   │   │       │   └── NexiaLogoCompact.tsx
 │   │   │       ├── buttons/
@@ -118,26 +124,28 @@ frontend/
 │   │   │       │   │   ├── Button.test.tsx
 │   │   │       │   │   └── LogoutButton.test.tsx
 │   │   │       │   ├── Button.tsx
-│   │   │       │   ├── LogoutButton.tsx
-│   │   │       │   └── index.ts
+│   │   │       │   ├── index.ts
+│   │   │       │   └── LogoutButton.tsx
 │   │   │       ├── feedback/
-│   │   │       │   ├── __tests__/ServerErrorBanner.test.tsx
-│   │   │       │   ├── ServerErrorBanner.tsx
-│   │   │       │   └── index.ts
+│   │   │       │   ├── __tests__/
+│   │   │       │   │   └── ServerErrorBanner.test.tsx
+│   │   │       │   ├── index.ts
+│   │   │       │   └── ServerErrorBanner.tsx
 │   │   │       ├── forms/
 │   │   │       │   ├── __tests__/
 │   │   │       │   │   ├── FormSelect.test.tsx
 │   │   │       │   │   └── Input.test.tsx
 │   │   │       │   ├── FormSelect.tsx
-│   │   │       │   ├── Input.tsx
-│   │   │       │   └── index.ts
+│   │   │       │   ├── index.ts
+│   │   │       │   └── Input.tsx
 │   │   │       ├── layout/
 │   │   │       │   ├── navbar/
 │   │   │       │   │   ├── NexiaSideMenu.tsx
 │   │   │       │   │   └── PublicNavbar.tsx
 │   │   │       │   └── PublicLayout.tsx
 │   │   │       └── modals/
-│   │   │           ├── __tests__/BaseModal.test.tsx
+│   │   │           ├── __tests__/
+│   │   │           │   └── BaseModal.test.tsx
 │   │   │           ├── BaseModal.tsx
 │   │   │           └── index.ts
 │   │   ├── pages/
@@ -154,23 +162,21 @@ frontend/
 │   │   │   │   ├── athlete/
 │   │   │   │   │   └── AthleteDashboard.tsx
 │   │   │   │   └── trainer/
-│   │   │   │       ├── clients/
-│   │   │   │       │   └── ClientOnboarding.tsx
 │   │   │   │       ├── CompleteProfile.tsx
 │   │   │   │       └── TrainerDashboard.tsx
 │   │   │   └── Home.tsx
-│   │   ├── test-utils/                          # Testing infrastructure
+│   │   ├── test-utils/
 │   │   │   ├── fixtures/
 │   │   │   │   ├── authFixtures.ts
 │   │   │   │   └── clientFixture.ts
 │   │   │   ├── mocks/
 │   │   │   │   ├── handlers/
-│   │   │   │   │   ├── accountHandlers.ts
-│   │   │   │   │   └── authHandlers.ts
+│   │   │   │   │   ├── authHandlers.ts
+│   │   │   │   │   └── clientHandlers.ts
 │   │   │   │   ├── authApiMocks.ts
+│   │   │   │   ├── index.ts
 │   │   │   │   ├── reactReduxMocks.ts
-│   │   │   │   ├── reactRouterMocks.ts
-│   │   │   │   └── index.ts
+│   │   │   │   └── reactRouterMocks.ts
 │   │   │   ├── utils/
 │   │   │   │   ├── msw.ts
 │   │   │   │   └── store.ts
@@ -186,70 +192,77 @@ frontend/
 │   │   ├── index.css
 │   │   ├── main.tsx
 │   │   └── vite-env.d.ts
+│   ├── coverage/                                # Test coverage reports
+│   │   ├── base.css
+│   │   ├── block-navigation.js
+│   │   ├── dist/
+│   │   ├── favicon.png
+│   │   ├── index.html
+│   │   ├── lcov-report/
+│   │   ├── lcov.info
+│   │   ├── prettify.css
+│   │   ├── prettify.js
+│   │   ├── sort-arrow-sprite.png
+│   │   └── sorter.js
+│   ├── dist/                                    # Production build
+│   │   ├── assets/
+│   │   ├── favicon.svg
+│   │   └── index.html
 │   ├── eslint.config.js
 │   ├── index.html
 │   ├── package.json
 │   ├── postcss.config.js
+│   ├── README.md
 │   ├── tailwind.config.js
 │   ├── tsconfig.json
+│   ├── tsconfig.tsbuildinfo
 │   ├── tsconfig.vitest.json
 │   ├── vite.config.ts
 │   └── vitest.config.ts
-├── packages/shared/                              # Cross-platform business logic
-│   ├── src/
-│   │   ├── api/                                 # RTK Query endpoints
-│   │   │   ├── accountApi.ts                     # Account management (PUT /auth/me, etc.)
-│   │   │   ├── authApi.ts                        # Auth flows + email verification
-│   │   │   ├── baseApi.ts                        # RTK Query base configuration
-│   │   │   ├── clientsApi.ts                     # Client CRUD operations
-│   │   │   └── trainerApi.ts                     # Trainer profile endpoints
-│   │   ├── config/
-│   │   │   ├── constants.ts                      # User roles, API config
-│   │   │   └── navigationConfig.ts               # Role-based navigation
-│   │   ├── hooks/
-│   │   │   ├── clients/
-│   │   │   │   └── useClientOnboarding.ts        # Multi-step client onboarding
-│   │   │   ├── useAuthForm.ts                    # Form state + validation
-│   │   │   ├── useLogout.ts                      # Logout with token cleanup
-│   │   │   ├── useNavigation.ts                  # Dashboard navigation
-│   │   │   ├── usePublicNavigation.ts            # Public site navigation
-│   │   │   ├── useTrainerProfile.ts              # Trainer profile management
-│   │   │   └── useUserRole.ts                    # Role detection
-│   │   ├── store/                               # Redux state management
-│   │   │   ├── authSlice.ts                      # Auth state + JWT
-│   │   │   ├── clientsSlice.ts                   # Client state
-│   │   │   └── index.ts                          # Store configuration
-│   │   ├── types/
-│   │   │   ├── account.ts                        # Account management types
-│   │   │   ├── auth.ts                           # Auth + User types
-│   │   │   ├── client.ts                         # Client entity types
-│   │   │   ├── clientOnboarding.ts               # Onboarding flow types
-│   │   │   └── trainer.ts                        # Trainer entity types
-│   │   ├── utils/
-│   │   │   ├── calculations/
-│   │   │   │   ├── clients/
-│   │   │   │   │   ├── calculations.ts           # BMI, health metrics
-│   │   │   │   │   └── index.ts
-│   │   │   │   └── index.ts
-│   │   │   └── validations/
-│   │   │       ├── auth/
-│   │   │       │   └── validation.ts             # Auth form validation
-│   │   │       ├── clients/
-│   │   │       │   └── clientValidation.ts       # Client data validation
-│   │   │       └── index.ts
-│   │   └── index.ts                             # Public exports
-│   ├── package.json
-│   └── tsconfig.json
-├── .claude/settings.local.json
-├── .github/workflows/deploy.yml
-├── .gitignore
-├── .vscode/settings.json
-├── package.json
-├── pnpm-lock.yaml
-├── pnpm-workspace.yaml
-├── tsconfig.base.json
-├── tsconfig.json
-└── vercel.json
+└── packages/shared/                              # Business logic
+    ├── dist/                                    # Compiled shared package
+    │   ├── src/
+    │   │   ├── api/
+    │   │   ├── config/
+    │   │   ├── hooks/
+    │   │   ├── index.d.ts
+    │   │   ├── index.d.ts.map
+    │   │   ├── index.js
+    │   │   ├── store/
+    │   │   ├── types/
+    │   │   └── utils/
+    │   └── tsconfig.tsbuildinfo
+    ├── src/
+    │   ├── api/
+    │   │   ├── accountApi.ts
+    │   │   ├── authApi.ts
+    │   │   ├── baseApi.ts
+    │   │   ├── clientsApi.ts
+    │   │   └── trainerApi.ts
+    │   ├── config/
+    │   │   ├── constants.ts
+    │   │   └── navigationConfig.ts
+    │   ├── hooks/
+    │   │   ├── useAuthForm.ts
+    │   │   ├── useLogout.ts
+    │   │   ├── useNavigation.ts
+    │   │   ├── usePublicNavigation.ts
+    │   │   ├── useTrainerProfile.ts
+    │   │   └── useUserRole.ts
+    │   ├── store/
+    │   │   ├── authSlice.ts
+    │   │   ├── clientsSlice.ts
+    │   │   └── index.ts
+    │   ├── types/
+    │   │   ├── account.ts
+    │   │   ├── auth.ts
+    │   │   ├── client.ts
+    │   │   └── trainer.ts
+    │   ├── utils/
+    │   │   └── validation.ts
+    │   └── index.ts
+    ├── package.json
+    └── tsconfig.json
 ```
 
 ## Development Commands

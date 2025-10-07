@@ -7,28 +7,24 @@
  * @since v2.2.0
  */
 
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileForm } from "@/components/dashboard/trainer";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
-import type { RootState } from "@shared/store";
+import { useCompleteProfile } from "shared";
 
 export const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useSelector((state: RootState) => state.auth);
-
-    // Obtener perfil del trainer actual desde JWT (no requiere ID)
-    const { data: trainerData } = useGetCurrentTrainerProfileQuery(
-        undefined,
-        { skip: !user }
-    );
-
-    const trainer = trainerData;
+    
+    // Hook compartido para lógica de Complete Profile
+    const { 
+        isLoadingTrainer
+    } = useCompleteProfile({ 
+        onRedirect: (path: string) => navigate(path, { replace: true }) 
+    });
 
     const menuItems = [
         { label: "Dashboard", path: "/dashboard" },
@@ -37,19 +33,14 @@ export const CompleteProfile: React.FC = () => {
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
-    // Redirect si ya está completo (prevenir acceso directo)
-    useEffect(() => {
-        if (trainer) {
-            const hasOccupation = trainer.occupation;
-            const hasModality = trainer.training_modality;
-            const hasLocation = trainer.location_country && trainer.location_city;
-            const hasPhone = trainer.telefono;
-
-            if (hasOccupation && hasModality && hasLocation && hasPhone) {
-                navigate('/dashboard', { replace: true });
-            }
-        }
-    }, [trainer, navigate]);
+    // Loading state
+    if (isLoadingTrainer) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-white">Cargando perfil...</div>
+            </div>
+        );
+    }
 
     return (
         <>
