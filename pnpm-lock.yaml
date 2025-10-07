@@ -45,6 +45,9 @@ importers:
       react-router-dom:
         specifier: ^6.30.1
         version: 6.30.1(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
+      shared:
+        specifier: workspace:*
+        version: link:../../packages/shared
     devDependencies:
       '@eslint/js':
         specifier: ^9.33.0

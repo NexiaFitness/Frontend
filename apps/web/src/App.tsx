@@ -39,6 +39,7 @@ import { PublicLayout } from "./components/ui/layout/PublicLayout";
 
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Tipado de store
 import type { RootState } from "@shared/store";
@@ -96,8 +97,10 @@ function App() {
       <Route
         path="/dashboard/complete-profile"
         element={
-          <ProtectedRoute >
-            <CompleteProfile />
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={['TRAINER']} redirectTo="/dashboard">
+              <CompleteProfile />
+            </RoleProtectedRoute>
           </ProtectedRoute>
         }
       />

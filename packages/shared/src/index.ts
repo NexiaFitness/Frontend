@@ -61,6 +61,14 @@ export * from "./config/constants";
 // Hooks
 export * from "./hooks/useAuthForm";
 export * from "./hooks/useLogout";
+export * from "./hooks/useRoleGuard";
+export * from "./hooks/useRoleNavigation";
+export * from "./hooks/useCompleteProfile";
+export * from "./hooks/useSmartRouting";
+export * from "./hooks/useTrainerProfile";
 
 // Utils
 export * from "./utils/validation";
+
+// Components
+export * from "./components/SmartNavigation";
