@@ -68,7 +68,6 @@ export * from "./hooks/useSmartRouting";
 export * from "./hooks/useTrainerProfile";
 
 // Utils
-export * from "./utils/validation";
 
 // Components
 export * from "./components/SmartNavigation";
