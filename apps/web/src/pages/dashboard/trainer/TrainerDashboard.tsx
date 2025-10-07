@@ -33,11 +33,11 @@ export const TrainerDashboard: React.FC = () => {
     const trainer = trainerData;
 
     // Verificar si el perfil está completo
-    const isProfileComplete = trainer && 
-        trainer.occupation && 
-        trainer.training_modality && 
-        trainer.location_country && 
-        trainer.location_city && 
+    const isProfileComplete = trainer &&
+        trainer.occupation &&
+        trainer.training_modality &&
+        trainer.location_country &&
+        trainer.location_city &&
         trainer.telefono;
 
     // Menu items para mobile navbar
@@ -74,7 +74,7 @@ export const TrainerDashboard: React.FC = () => {
                         <div className="bg-yellow-500/90 backdrop-blur-sm rounded-xl p-4 lg:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg border-2 border-yellow-600/30">
                             <div className="flex items-start space-x-3">
                                 <svg className="w-6 h-6 text-yellow-900 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"/>
+                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
                                 </svg>
                                 <div>
                                     <h3 className="font-semibold text-yellow-900 text-base lg:text-lg">
@@ -85,7 +85,7 @@ export const TrainerDashboard: React.FC = () => {
                                     </p>
                                 </div>
                             </div>
-                            <Button 
+                            <Button
                                 onClick={() => navigate('/dashboard/complete-profile')}
                                 variant="outline"
                                 size="md"
@@ -107,7 +107,7 @@ export const TrainerDashboard: React.FC = () => {
                             </p>
                             <p className="text-slate-600 text-sm lg:text-base">High commitment level</p>
                         </div>
-                        
+
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                             <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">8</h3>
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
@@ -115,7 +115,7 @@ export const TrainerDashboard: React.FC = () => {
                             </p>
                             <p className="text-slate-600 text-sm lg:text-base">Scheduled</p>
                         </div>
-                        
+
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 md:col-span-2 lg:col-span-1">
                             <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">24</h3>
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
@@ -133,9 +133,11 @@ export const TrainerDashboard: React.FC = () => {
                             variant="primary"
                             size="lg"
                             className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
+                            onClick={() => navigate("/dashboard/clients/onboarding")}
                         >
                             Add New Client
                         </Button>
+
                         <Button
                             variant="secondary"
                             size="lg"
@@ -175,7 +177,7 @@ export const TrainerDashboard: React.FC = () => {
                                     </svg>
                                 </div>
                             </div>
-                            
+
                             <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                                 <div>
                                     <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">4</div>

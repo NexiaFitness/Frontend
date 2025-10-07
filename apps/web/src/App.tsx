@@ -30,6 +30,7 @@ import { AthleteDashboard } from "./pages/dashboard/athlete/AthleteDashboard";
 
 // Páginas trainer-specific
 import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
+import { ClientOnboarding } from "./pages/dashboard/trainer/clients/ClientOnboarding";
 
 // Páginas adicionales
 import Account from "./pages/account/Account";
@@ -83,11 +84,20 @@ function App() {
       </Route>
 
       {/* Dashboard principal */}
-      <Route 
-        path="/dashboard" 
+      <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <DashboardRouter />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/dashboard/clients/onboarding"
+        element={
+          <ProtectedRoute>
+            <ClientOnboarding />
           </ProtectedRoute>
         }
       />

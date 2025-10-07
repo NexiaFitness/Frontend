@@ -1,36 +1,41 @@
 /**
- * Tipos TypeScript para sistema de gestión de clientes
- * Define interfaces para clientes, operaciones CRUD y respuestas API
- * Alineado con backend FastAPI y sistema RBAC (trainers own clients only)
- * 
+ * client.ts — Tipos TypeScript para sistema de gestión de clientes
+ *
+ * Contexto:
+ * - Define entidades, request/response types y estado de Redux.
+ * - Alineado con backend FastAPI (RBAC: trainers solo gestionan sus clientes).
+ * - Compatible con formularios extendidos de Client Onboarding.
+ *
  * Arquitectura de respuestas:
- * - GET/POST/PUT /clients devuelven Client directo (no wrapper)
- * - GET /clients (lista) devuelve {clients, total, page...} (wrapper con paginación)
- * - DELETE /clients devuelve {message, deleted_client_id} (wrapper de confirmación)
- * 
- * @author Frontend Team
+ * - GET/POST/PUT /clients devuelven Client directo (no wrapper).
+ * - GET /clients (lista) devuelve {clients, total, page...} (wrapper con paginación).
+ * - DELETE /clients devuelve {message, deleted_client_id} (wrapper de confirmación).
+ *
+ * @author Frontend
  * @since v2.1.0
- * @updated v2.3.0 - Eliminado ClientResponse, alineado con backend
+ * @updated v2.4.0 - Añadidos campos opcionales (telefono, sexo, observaciones, lesiones_relevantes, frecuencia_semanal)
  */
 
 // Client Experience Levels
 export const CLIENT_EXPERIENCE_LEVELS = {
-    BEGINNER: 'beginner',
-    INTERMEDIATE: 'intermediate',
-    ADVANCED: 'advanced'
+    BEGINNER: "beginner",
+    INTERMEDIATE: "intermediate",
+    ADVANCED: "advanced",
 } as const;
 
-export type ClientExperienceLevel = (typeof CLIENT_EXPERIENCE_LEVELS)[keyof typeof CLIENT_EXPERIENCE_LEVELS];
+export type ClientExperienceLevel =
+    (typeof CLIENT_EXPERIENCE_LEVELS)[keyof typeof CLIENT_EXPERIENCE_LEVELS];
 
 // Client Goals
 export const CLIENT_GOALS = {
-    WEIGHT_LOSS: 'weight_loss',
-    MUSCLE_GAIN: 'muscle_gain',
-    PERFORMANCE: 'performance',
-    HEALTH: 'health'
+    WEIGHT_LOSS: "weight_loss",
+    MUSCLE_GAIN: "muscle_gain",
+    PERFORMANCE: "performance",
+    HEALTH: "health",
 } as const;
 
-export type ClientGoal = (typeof CLIENT_GOALS)[keyof typeof CLIENT_GOALS];
+export type ClientGoal =
+    (typeof CLIENT_GOALS)[keyof typeof CLIENT_GOALS];
 
 // Client Entity (siguiendo patrón backend FastAPI con campos español)
 export interface Client {
@@ -38,12 +43,19 @@ export interface Client {
     nombre: string;
     apellidos: string;
     email: string;
-    edad: number;
-    peso: number;
-    altura: number;
-    bmi: number;
-    objetivo: ClientGoal;
-    nivel_experiencia: ClientExperienceLevel;
+    edad?: number;
+    peso?: number;
+    altura?: number;
+    bmi?: number;
+    objetivo?: ClientGoal;
+    nivel_experiencia?: ClientExperienceLevel;
+
+    telefono?: string;
+    sexo?: string;
+    observaciones?: string;
+    lesiones_relevantes?: string;
+    frecuencia_semanal?: string;
+
     trainer_id: number;
     fecha_registro: string;
     activo: boolean;
@@ -56,11 +68,18 @@ export interface CreateClientData {
     nombre: string;
     apellidos: string;
     email: string;
-    edad: number;
-    peso: number;
-    altura: number;
-    objetivo: ClientGoal;
-    nivel_experiencia: ClientExperienceLevel;
+
+    edad?: number;
+    peso?: number;
+    altura?: number;
+    objetivo?: ClientGoal;
+    nivel_experiencia?: ClientExperienceLevel;
+
+    telefono?: string;
+    sexo?: string;
+    observaciones?: string;
+    lesiones_relevantes?: string;
+    frecuencia_semanal?: string;
 }
 
 export interface UpdateClientData {
@@ -73,6 +92,12 @@ export interface UpdateClientData {
     objetivo?: ClientGoal;
     nivel_experiencia?: ClientExperienceLevel;
     activo?: boolean;
+
+    telefono?: string;
+    sexo?: string;
+    observaciones?: string;
+    lesiones_relevantes?: string;
+    frecuencia_semanal?: string;
 }
 
 export interface ClientFilters {
@@ -83,7 +108,6 @@ export interface ClientFilters {
 }
 
 // API Response Types
-// ClientsListResponse mantiene wrapper porque incluye metadata de paginación
 export interface ClientsListResponse {
     clients: Client[];
     total: number;
@@ -92,7 +116,6 @@ export interface ClientsListResponse {
     total_pages: number;
 }
 
-// DeleteClientResponse mantiene wrapper porque backend devuelve mensaje + ID
 export interface DeleteClientResponse {
     message: string;
     deleted_client_id: number;
@@ -143,6 +166,12 @@ export interface ClientFormErrors {
     altura?: string;
     objetivo?: string;
     nivel_experiencia?: string;
+
+    telefono?: string;
+    sexo?: string;
+    observaciones?: string;
+    lesiones_relevantes?: string;
+    frecuencia_semanal?: string;
 }
 
 // Utility Types para componentes
@@ -151,9 +180,9 @@ export interface ClientCardData {
     nombre: string;
     apellidos: string;
     email: string;
-    objetivo: ClientGoal;
-    nivel_experiencia: ClientExperienceLevel;
-    bmi: number;
+    objetivo?: ClientGoal;
+    nivel_experiencia?: ClientExperienceLevel;
+    bmi?: number;
     activo: boolean;
     fecha_registro: string;
 }

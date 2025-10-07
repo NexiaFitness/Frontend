@@ -22,6 +22,7 @@
  * @since v4.3.0
  * @updated v4.3.8 - Añadido dashboardHero para headers principales de dashboard
  * @updated v4.3.9 - Añadido formSectionTitle/Subtitle para formularios complejos
+ * @updated v4.4.0 - Añadidos formLabel, formError, formHelper para consistencia en formularios
  */
 
 // Main Headers - Jerarquía visual clara
@@ -67,6 +68,11 @@ export const TYPOGRAPHY = {
     formSectionTitle: "text-xl lg:text-2xl font-bold",
     formSectionSubtitle: "text-sm lg:text-base",
 
+    // NUEVO: Formularios consistentes
+    formLabel: "block text-sm font-medium text-gray-600 mb-1",
+    formError: "text-sm text-red-600",
+    formHelper: "text-sm text-gray-500",
+
     // Interactive elements
     buttonText: "text-sm sm:text-base",
     buttonTextLarge: "text-base sm:text-lg",
@@ -93,7 +99,7 @@ export const TYPOGRAPHY_COMBINATIONS = {
     dashboardHeroTitle: `${TYPOGRAPHY.dashboardHero} text-white mb-3 lg:mb-4`,
     dashboardHeroSubtitle: `${TYPOGRAPHY.dashboardSubtitleAlt} text-white/80`,
 
-    // Card content
+    // Card contentNo
     cardHeader: `${TYPOGRAPHY.cardTitle} mb-2`,
     cardBody: `${TYPOGRAPHY.body}`,
 

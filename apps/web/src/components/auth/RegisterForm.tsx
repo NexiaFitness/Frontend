@@ -27,7 +27,7 @@ import { useRegisterMutation, useVerifyEmailMutation } from "@shared/api/authApi
 import { loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { USER_ROLES } from "@shared/config/constants";
-import { validateRegisterForm } from "@shared/utils/validation";
+import { validateRegisterForm } from "@shared/utils/validations";
 import type { AppDispatch } from "@shared/store";
 import type { RegisterCredentials, UserRole } from "@shared/types/auth";
 import type { SelectOption } from "@/components/ui/forms";

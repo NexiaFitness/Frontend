@@ -24,7 +24,7 @@ import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useForgotPasswordMutation } from "@shared/api/authApi";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateForgotPasswordForm } from "@shared/utils/validation";
+import { validateForgotPasswordForm } from "@shared/utils/validations";
 
 interface ForgotPasswordFormData {
     email: string;

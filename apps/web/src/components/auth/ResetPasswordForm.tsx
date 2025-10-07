@@ -25,7 +25,7 @@ import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useResetPasswordMutation } from "@shared/api/authApi";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateResetPasswordForm } from "@shared/utils/validation";
+import { validateResetPasswordForm } from "@shared/utils/validations";
 import type { ResetPasswordData } from "@shared/types/auth";
 
 interface ResetPasswordFormData {

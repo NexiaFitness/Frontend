@@ -27,7 +27,7 @@ import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useLoginMutation } from "@shared/api/authApi";
 import { loginSuccess, loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateLoginForm } from "@shared/utils/validation";
+import { validateLoginForm } from "@shared/utils/validations";
 import type { AppDispatch } from "@shared/store";
 import type { LoginCredentials } from "@shared/types/auth";
 

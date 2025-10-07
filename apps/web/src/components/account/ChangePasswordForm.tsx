@@ -23,7 +23,7 @@ import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useChangePasswordMutation } from "@shared/api/accountApi";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateChangePasswordForm } from "@shared/utils/validation";
+import { validateChangePasswordForm } from "@shared/utils/validations";
 
 interface ChangePasswordFormData {
     currentPassword: string;
