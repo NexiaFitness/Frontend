@@ -42,7 +42,10 @@ export const authApi = baseApi.injectEndpoints({
             query: (credentials) => ({
                 url: "/auth/login",
                 method: "POST",
-                body: createLoginBody(credentials),
+                body: new URLSearchParams({
+                    username: credentials.username,
+                    password: credentials.password,
+                }),
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
