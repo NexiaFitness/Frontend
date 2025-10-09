@@ -8,6 +8,8 @@
  * - Botón "Eliminar cliente" dispara mutación y onDeleteSuccess.
  * - Mensaje de advertencia consistente con TYPOGRAPHY.errorText.
  *
+ * Usa MSW para interceptar requests de eliminación de clientes.
+ *
  * @since v4.3.9
  */
 
@@ -16,11 +18,14 @@ import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { DeleteClientModal } from "../DeleteClientModal";
 import { createMockClient } from "@/test-utils/fixtures/clientFixture";
+// Mock inline para este test específico (MSW no intercepta DELETE /clients/{id})
+const mockDeleteClient = vi.fn(() => ({
+    unwrap: () => Promise.resolve({ message: "Client deleted successfully" })
+}));
 
-// Mock de la mutation hook
 vi.mock("@shared/api/clientsApi", () => ({
     useDeleteClientMutation: () => [
-        vi.fn(() => ({ unwrap: () => Promise.resolve() })),
+        mockDeleteClient,
         { isLoading: false },
     ],
 }));
@@ -28,6 +33,7 @@ vi.mock("@shared/api/clientsApi", () => ({
 const mockClient = createMockClient();
 
 describe("DeleteClientModal", () => {
+
     const defaultProps = {
         isOpen: true,
         onClose: vi.fn(),
@@ -37,6 +43,7 @@ describe("DeleteClientModal", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        mockDeleteClient.mockClear();
     });
 
     it("no renderiza nada si isOpen=false", () => {
@@ -64,7 +71,7 @@ describe("DeleteClientModal", () => {
         expect(screen.getByText(mockClient.email)).toBeInTheDocument();
         expect(screen.getByText("Objetivo:")).toBeInTheDocument();
         expect(
-            screen.getByText(mockClient.objetivo.replace("_", " "))
+            screen.getByText(mockClient.objetivo?.replace("_", " ") || "No especificado")
         ).toBeInTheDocument();
     });
 
@@ -79,6 +86,7 @@ describe("DeleteClientModal", () => {
         const user = userEvent.setup();
         render(<DeleteClientModal {...defaultProps} />);
         await user.click(screen.getByRole("button", { name: "Eliminar cliente" }));
+        expect(mockDeleteClient).toHaveBeenCalledTimes(1);
         expect(defaultProps.onDeleteSuccess).toHaveBeenCalledTimes(1);
         expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
     });

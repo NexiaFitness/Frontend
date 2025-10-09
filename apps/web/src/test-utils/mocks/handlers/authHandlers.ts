@@ -252,3 +252,26 @@ export const resetPasswordValidationHandler = http.post("*/auth/reset-password",
 export const resetPasswordNetworkErrorHandler = http.post("*/auth/reset-password", async () => {
     return HttpResponse.error()
 })
+
+// ===== LOGOUT HANDLERS =====
+
+export const logoutHandler = http.post("*/auth/logout", async () => {
+    await new Promise((res) => setTimeout(res, 100)) // Simular delay de logout
+    return HttpResponse.json({ message: "Logged out successfully" }, { status: 200 })
+})
+
+export const logoutErrorHandler = http.post("*/auth/logout", async () => {
+    return HttpResponse.json({ detail: "Logout failed" }, { status: 500 })
+})
+
+export const logoutTimeoutHandler = http.post("*/auth/logout", async () => {
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    return new Response(null, { status: 408 })
+})
+
+// ===== LOGOUT HANDLERS PARA REDUX THUNK =====
+
+export const logoutThunkHandler = http.post("*/auth/logout", async () => {
+    await new Promise((res) => setTimeout(res, 100))
+    return HttpResponse.json({ success: true }, { status: 200 })
+})

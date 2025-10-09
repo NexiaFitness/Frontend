@@ -50,7 +50,7 @@ export const authApi = baseApi.injectEndpoints({
             invalidatesTags: ["Auth", "User"],
         }),
 
-        // Registro - JSON format con RegisterResponse
+        // Registro con autologin - devuelve tokens automáticamente
         register: builder.mutation<RegisterResponse, RegisterCredentials>({
             query: (credentials) => ({
                 url: "/auth/register",

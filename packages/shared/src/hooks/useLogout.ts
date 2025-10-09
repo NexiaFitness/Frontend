@@ -39,7 +39,7 @@ export const useLogout = (options: UseLogoutOptions = {}): UseLogoutReturn => {
     const handleLogout = async (): Promise<void> => {
         try {
             // Ejecutar async thunk de logout profesional
-            await dispatch(logout()).unwrap();
+            await dispatch(logout());
 
             // Callback de éxito si se proporciona
             onSuccess?.();

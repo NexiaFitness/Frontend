@@ -46,7 +46,8 @@ export interface ResetPasswordData {
     new_password: string;
 }
 
-export interface RegisterResponse {
+// Registro con autologin - devuelve tokens directamente
+export interface RegisterResponse extends AuthResponse {
     message: string;
     verification_token?: string; // Solo presente en development
 }

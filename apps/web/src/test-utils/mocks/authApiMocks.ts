@@ -4,7 +4,7 @@
  * Mocks de RTK Query para autenticación con firmas completas.
  * Usar solo en tests unitarios. En integración se recomienda MSW.
  *
- * Para activar el mock global de @shared/api/authApi en un test:
+ * Para activar el mock global de shared/api/authApi en un test:
  *   import { mockAuthApiModule } from "@/test-utils/mocks/authApiMocks";
  *   mockAuthApiModule();
  *
@@ -120,10 +120,10 @@ export const clearAuthMocks = () => {
 
 /**
  * Activar mock globalmente en un test unitario.
- * Esto intercepta el import de @shared/api/authApi.
+ * Esto intercepta el import de shared/api/authApi.
  */
 export const mockAuthApiModule = () => {
-    vi.mock("@shared/api/authApi", async () => {
+    vi.mock("shared/api/authApi", async () => {
         return {
             useLoginMutation,
             useRegisterMutation,

@@ -1,12 +1,20 @@
 /**
- * TrainerDashboard - RESPONSIVE GRID SYSTEM
+ * TrainerDashboard.tsx — Panel principal del entrenador.
  * 
- * Mobile: 1 columna (cards apiladas) - CENTRADO
- * Tablet: 2 columnas - CENTRADO  
- * Desktop: 3 columnas - CON SIDEBAR
+ * Contexto:
+ * Vista principal dentro del área privada de un usuario con rol "Trainer".
+ * Renderiza la interfaz del dashboard con estructura responsive (1-3 columnas),
+ * integra el menú lateral, la barra de navegación superior y los componentes
+ * informativos como el banner de perfil incompleto (desacoplado en componente aparte).
  * 
- * + Navbar mobile cuando sidebar desaparece
- * + Banner de complete profile si perfil incompleto
+ * Notas de mantenimiento:
+ * - El banner "CompleteProfileBanner" se renderiza condicionalmente si el perfil 
+ *   no está completo. Se encuentra desacoplado en /components/dashboard/shared/.
+ * - No contiene lógica de negocio; toda la información proviene de Redux y RTK Query.
+ * - Mantener el uso de TIPOGRAFÍA y componentes UI consistentes con el sistema global.
+ * 
+ * @author Frontend Team
+ * @since v2.4.1
  */
 
 import React from "react";
@@ -15,6 +23,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { CompleteProfileBanner } from "@/components/dashboard/shared/CompleteProfileBanner";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons";
 import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
@@ -24,23 +33,22 @@ export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    // Obtener perfil del trainer actual desde JWT (no requiere ID)
-    const { data: trainerData } = useGetCurrentTrainerProfileQuery(
-        undefined,
-        { skip: !user }
-    );
+    // Obtener perfil actual (JWT)
+    const { data: trainerData } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !user,
+    });
 
     const trainer = trainerData;
 
-    // Verificar si el perfil está completo
-    const isProfileComplete = trainer &&
-        trainer.occupation &&
-        trainer.training_modality &&
-        trainer.location_country &&
-        trainer.location_city &&
-        trainer.telefono;
+    // Determinar si el perfil está completo
+    const isProfileComplete =
+        !!trainer?.occupation &&
+        !!trainer?.training_modality &&
+        !!trainer?.location_country &&
+        !!trainer?.location_city &&
+        !!trainer?.telefono;
 
-    // Menu items para mobile navbar
+    // Items del menú superior
     const menuItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
@@ -50,17 +58,18 @@ export const TrainerDashboard: React.FC = () => {
 
     return (
         <>
-            {/* Mobile/Tablet Navbar - visible cuando sidebar desaparece */}
+            {/* Navbar móvil / tablet */}
             <DashboardNavbar menuItems={menuItems} />
 
-            {/* Desktop Sidebar - oculto en mobile/tablet */}
+            {/* Sidebar escritorio */}
             <TrainerSideMenu />
 
-            {/* LAYOUT SIN WRAPPER - DashboardLayout maneja el responsive offset */}
             <DashboardLayout>
-                {/* Encabezado responsive */}
+                {/* Encabezado */}
                 <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-3 lg:mb-4`}>
+                    <h2
+                        className={`${TYPOGRAPHY.dashboardHero} text-white mb-3 lg:mb-4`}
+                    >
                         Bienvenido de vuelta, {user?.nombre}
                     </h2>
                     <p className="text-white/80 text-sm md:text-lg lg:text-xl">
@@ -68,48 +77,28 @@ export const TrainerDashboard: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Banner de Complete Profile - Aparece si perfil incompleto */}
-                {!isProfileComplete && (
-                    <div className="px-4 lg:px-8 mb-8">
-                        <div className="bg-yellow-500/90 backdrop-blur-sm rounded-xl p-4 lg:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg border-2 border-yellow-600/30">
-                            <div className="flex items-start space-x-3">
-                                <svg className="w-6 h-6 text-yellow-900 shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" />
-                                </svg>
-                                <div>
-                                    <h3 className="font-semibold text-yellow-900 text-base lg:text-lg">
-                                        Completa tu perfil profesional
-                                    </h3>
-                                    <p className="text-yellow-800 text-sm lg:text-base mt-1">
-                                        Necesitamos algunos datos más para que puedas gestionar clientes y entrenamientos
-                                    </p>
-                                </div>
-                            </div>
-                            <Button
-                                onClick={() => navigate('/dashboard/complete-profile')}
-                                variant="outline"
-                                size="md"
-                                className="whitespace-nowrap"
-                            >
-                                Completar ahora
-                            </Button>
-                        </div>
-                    </div>
-                )}
+                {/* Banner condicional (perfil incompleto) */}
+                <CompleteProfileBanner isProfileComplete={!!isProfileComplete} />
 
-                {/* Cards RESPONSIVE */}
+                {/* Cards de métricas */}
                 <div className="px-4 lg:px-8 mb-12 lg:mb-20">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">16</h3>
+                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
+                                16
+                            </h3>
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
                                 Active Clients
                             </p>
-                            <p className="text-slate-600 text-sm lg:text-base">High commitment level</p>
+                            <p className="text-slate-600 text-sm lg:text-base">
+                                High commitment level
+                            </p>
                         </div>
 
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">8</h3>
+                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
+                                8
+                            </h3>
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
                                 Sessions Today
                             </p>
@@ -117,7 +106,9 @@ export const TrainerDashboard: React.FC = () => {
                         </div>
 
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 md:col-span-2 lg:col-span-1">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">24</h3>
+                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
+                                24
+                            </h3>
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
                                 Plans Created
                             </p>
@@ -126,7 +117,7 @@ export const TrainerDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Botones responsive */}
+                {/* Botones principales */}
                 <div className="px-4 lg:px-8 mb-12 lg:mb-16">
                     <div className="flex flex-col md:flex-row gap-4 lg:gap-6 justify-center max-w-2xl mx-auto">
                         <Button
@@ -148,7 +139,7 @@ export const TrainerDashboard: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Recent Clients responsive */}
+                {/* Bloque de clientes recientes */}
                 <div className="px-4 lg:px-8">
                     <div className="max-w-4xl mx-auto">
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group">
@@ -180,16 +171,28 @@ export const TrainerDashboard: React.FC = () => {
 
                             <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                                 <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">4</div>
-                                    <div className="text-xs lg:text-sm text-slate-600">Active Today</div>
+                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
+                                        4
+                                    </div>
+                                    <div className="text-xs lg:text-sm text-slate-600">
+                                        Active Today
+                                    </div>
                                 </div>
                                 <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">12</div>
-                                    <div className="text-xs lg:text-sm text-slate-600">This Week</div>
+                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
+                                        12
+                                    </div>
+                                    <div className="text-xs lg:text-sm text-slate-600">
+                                        This Week
+                                    </div>
                                 </div>
                                 <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">45</div>
-                                    <div className="text-xs lg:text-sm text-slate-600">Total Clients</div>
+                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
+                                        45
+                                    </div>
+                                    <div className="text-xs lg:text-sm text-slate-600">
+                                        Total Clients
+                                    </div>
                                 </div>
                             </div>
                         </div>

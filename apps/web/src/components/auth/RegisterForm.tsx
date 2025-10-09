@@ -1,18 +1,19 @@
 /**
- * RegisterForm.tsx — Formulario de registro profesional.
+ * RegisterForm.tsx — Formulario de registro con autologin automático.
  *
  * Contexto:
- * - Usa useAuthForm hook + validation utilities + ServerErrorBanner.
- * - Sin duplicación de código respecto a LoginForm.
- * - Incluye selector de roles dinámico usando FormSelect.
- * - Components migrados a @shared para reutilización web/móvil.
+ * - Usa useAuth hook centralizado para registro con autologin.
+ * - Redirección automática según rol tras registro exitoso.
+ * - Compatible con React Web y React Native.
+ * - Arquitectura limpia: navegación delegada al componente padre.
  *
- * Notas:
- * - El backend no devuelve token en registro → se redirige a login con mensaje de éxito.
- * - Tipografía unificada con Login/Forgot/Reset.
+ * Flujo:
+ * 1. Usuario completa formulario → useAuth.register()
+ * 2. Backend devuelve tokens → autologin automático
+ * 3. Redirección automática según rol (trainer/athlete/admin)
  *
  * @since v1.0.0
- * @updated v4.3.2 - role inicial vacío con validación explícita
+ * @updated v2.0.0 - Integración con useAuth y autologin
  */
 
 import React from "react";
@@ -23,7 +24,7 @@ import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useRegisterMutation, useVerifyEmailMutation } from "@shared/api/authApi";
+import { useAuth } from "@shared/hooks/useAuth";
 import { loginFailure } from "@shared/store/authSlice";
 import { useAuthForm } from "@shared/hooks/useAuthForm";
 import { USER_ROLES } from "@shared/config/constants";
@@ -61,11 +62,8 @@ export const RegisterForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    const [register, { isLoading: isRegistering }] = useRegisterMutation();
-    const [verifyEmail, { isLoading: isVerifying }] = useVerifyEmailMutation();
-
-    // Track entire operation as loading (register + auto-verification)
-    const isLoading = isRegistering || isVerifying;
+    // Hook centralizado de autenticación con autologin
+    const { register, isLoading, error } = useAuth();
 
     const {
         formData,
@@ -79,6 +77,9 @@ export const RegisterForm: React.FC = () => {
         initialState: initialFormState,
         validate: validateRegisterForm,
     });
+
+    // Usar error del hook useAuth si está disponible, sino usar serverError del form
+    const displayError = error || serverError;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -101,29 +102,32 @@ export const RegisterForm: React.FC = () => {
                 role: formData.role as UserRole,
             };
 
-            const response = await register(credentials).unwrap();
+            // Usar hook centralizado con autologin automático
+            await register(credentials);
 
-            // Auto-verificar si el backend devuelve token (development)
-            if (response.verification_token) {
-                try {
-                    await verifyEmail({ token: response.verification_token }).unwrap();
-                } catch (verifyError) {
-                    console.warn('Auto-verification failed:', verifyError);
-                }
-            }
+            // Redirección automática según rol (manejada por useAuth)
+            const redirectPath = getRedirectPath(formData.role as UserRole);
+            navigate(redirectPath, { replace: true });
 
-            // Redirigir a login con mensaje de éxito
-            navigate("/auth/login", {
-                state: {
-                    message: "Cuenta creada exitosamente. Inicia sesión con tus credenciales.",
-                    email: formData.email,
-                },
-            });
         } catch (error) {
             const errorMessage = handleServerError(
                 error as Parameters<typeof handleServerError>[0]
             );
             dispatch(loginFailure(errorMessage));
+        }
+    };
+
+    // Función helper para obtener ruta de redirección según rol
+    const getRedirectPath = (role: UserRole): string => {
+        switch (role) {
+            case USER_ROLES.TRAINER:
+                return "/dashboard/trainer";
+            case USER_ROLES.ATHLETE:
+                return "/dashboard/athlete";
+            case USER_ROLES.ADMIN:
+                return "/dashboard/admin";
+            default:
+                return "/dashboard";
         }
     };
 
@@ -142,7 +146,7 @@ export const RegisterForm: React.FC = () => {
                 </p>
             </div>
 
-            <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
+            <ServerErrorBanner error={displayError} onDismiss={clearErrors} />
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input

@@ -59,6 +59,21 @@ export const authSlice: Slice<AuthState> = createSlice({
             localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
         },
 
+        // Acción cuando registro es exitoso (autologin)
+        registerSuccess: (
+            state: AuthState,
+            action: PayloadAction<{ user: User; token: string }>
+        ) => {
+            state.user = action.payload.user;
+            state.token = action.payload.token;
+            state.isAuthenticated = true;
+            state.isLoading = false;
+            state.error = null;
+
+            // Guardar token en localStorage
+            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
+        },
+
         // Acción cuando login falla
         loginFailure: (state: AuthState, action: PayloadAction<string>) => {
             state.user = null;

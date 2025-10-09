@@ -64,6 +64,11 @@ export const loginSuccessResponse: AuthResponse = {
 export const registerSuccessResponse: RegisterResponse = {
     message: "Registration successful! Please check your email to verify your account.",
     verification_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.verification.token",
+    // Autologin fields
+    access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.fake.access.token",
+    token_type: "bearer",
+    expires_in: 1800,
+    user: validTrainerUser,
 };
 
 // Refleja backend real - sin reset_token en producción

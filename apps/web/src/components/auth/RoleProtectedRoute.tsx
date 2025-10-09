@@ -11,7 +11,7 @@
 
 import React from "react";
 import { Navigate } from "react-router-dom";
-import { useRoleGuard } from "shared";
+import { useRoleGuard } from "@shared/hooks/useRoleGuard";
 
 interface RoleProtectedRouteProps {
     children: React.ReactNode;

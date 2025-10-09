@@ -2,7 +2,7 @@
  * LogoutButton Component Test Suite
  *
  * Tests completos para el componente LogoutButton con modal de confirmación.
- * Usa mocks simples sin complicaciones innecesarias.
+ * Usa MSW para interceptar requests de logout en lugar de mocks inline.
  *
  * @since v2.0.0
  */
@@ -11,28 +11,14 @@ import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
 import { LogoutButton } from "../LogoutButton"
+import { setupServer } from "msw/node"
+import { logoutHandler, logoutThunkHandler } from "@/test-utils/mocks/handlers/authHandlers"
 
-// Mock del hook useLogout
-const mockLogout = vi.fn()
+// MSW Server para interceptar requests
+const server = setupServer(logoutHandler, logoutThunkHandler)
+
+// Mock de navegación
 const mockNavigate = vi.fn()
-
-vi.mock("@shared/hooks/useLogout", () => ({
-    useLogout: vi.fn(() => ({
-        logout: mockLogout,
-        isLoading: false,
-        error: null,
-        user: {
-            id: 1,
-            email: "test@test.com",
-            nombre: "John",
-            apellidos: "Doe",
-            role: "trainer",
-            is_active: true,
-            created_at: "2023-01-01",
-            updated_at: "2023-01-01"
-        }
-    }))
-}))
 
 vi.mock("react-router-dom", async () => {
     const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom")
@@ -61,6 +47,11 @@ describe("LogoutButton", () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
+
+    // Setup MSW
+    beforeAll(() => server.listen())
+    afterEach(() => server.resetHandlers())
+    afterAll(() => server.close())
 
     describe("Rendering", () => {
         it("renders with default text", () => {
@@ -93,7 +84,8 @@ describe("LogoutButton", () => {
             await user.click(screen.getByRole("button"))
             await user.click(screen.getByTestId("modal-confirm"))
 
-            expect(mockLogout).toHaveBeenCalledTimes(1)
+            // Verificar que se navega al login (logout exitoso)
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/login", { replace: true })
         })
 
         it("closes modal when cancelled", async () => {
@@ -115,7 +107,8 @@ describe("LogoutButton", () => {
             await user.click(screen.getByRole("button"))
 
             expect(screen.queryByTestId("logout-modal")).not.toBeInTheDocument()
-            expect(mockLogout).toHaveBeenCalledTimes(1)
+            // Verificar que se navega al login (logout exitoso)
+            expect(mockNavigate).toHaveBeenCalledWith("/auth/login", { replace: true })
         })
     })
 })
