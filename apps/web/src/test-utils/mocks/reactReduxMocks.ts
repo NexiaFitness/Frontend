@@ -10,9 +10,9 @@
  */
 
 import { vi } from "vitest";
-import type { RootState, AppDispatch } from "@shared/store";
-import type { AuthState } from "@shared/types/auth";
-import type { ClientState } from "@shared/types/client";
+import type { RootState, AppDispatch } from "@nexia/shared/store";
+import type { AuthState } from "@nexia/shared/types/auth";
+import type { ClientState } from "@nexia/shared/types/client";
 
 export const mockDispatch = vi.fn();
 

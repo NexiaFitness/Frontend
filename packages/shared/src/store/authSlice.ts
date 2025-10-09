@@ -9,8 +9,8 @@
  */
 
 import { createSlice, PayloadAction, Slice, createAsyncThunk } from "@reduxjs/toolkit";
-import { AuthState, User } from "@shared/types/auth";
-import { AUTH_CONFIG } from "@shared/config/constants";
+import { AuthState, User } from "@nexia/shared/types/auth";
+import { AUTH_CONFIG } from "@nexia/shared/config/constants";
 
 // Estado inicial tipado
 const initialState: AuthState = {

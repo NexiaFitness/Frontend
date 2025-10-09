@@ -16,7 +16,7 @@ import { PropsWithChildren } from "react";
 import { Provider } from "react-redux";
 import { BrowserRouter } from "react-router-dom";
 import { createTestStore } from "./utils/store";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 interface TestProvidersProps extends PropsWithChildren {
     initialState?: Partial<RootState>;

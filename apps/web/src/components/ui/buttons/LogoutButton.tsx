@@ -19,7 +19,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "./Button";
 import { LogoutConfirmationModal } from "@/components/auth/modals/LogoutConfirmationModal";
-import { useLogout } from "@shared/hooks/useLogout";
+import { useLogout } from "@nexia/shared/hooks/useLogout";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { TYPOGRAPHY } from "@/utils/typography";
 import type { ButtonVariant, ButtonSize } from "./Button";

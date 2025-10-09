@@ -23,10 +23,10 @@ import { Button } from "@/components/ui/buttons";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useUpdateAccountMutation } from "@shared/api/accountApi";
-import { selectUser, setCurrentUser, logout } from "@shared/store/authSlice";
-import type { AppDispatch } from "@shared/store";
-import type { UpdateAccountPayload } from "@shared/types/account";
+import { useUpdateAccountMutation } from "@nexia/shared/api/accountApi";
+import { selectUser, setCurrentUser, logout } from "@nexia/shared/store/authSlice";
+import type { AppDispatch } from "@nexia/shared/store";
+import type { UpdateAccountPayload } from "@nexia/shared/types/account";
 import { ChangePasswordForm } from "./ChangePasswordForm";
 import { DeleteAccountModal } from "./modals/DeleteAccountModal";
 

@@ -7,8 +7,8 @@
  * - Parte del patrón global de utils: cada dominio tiene su propio index + uno raíz.
  *
  * Ejemplos:
- *   import { calculateBMI } from "@shared/utils/calculations/clients";
- *   import { calculateBMI } from "@shared/utils/calculations"; // vía root index
+ *   import { calculateBMI } from "@nexia/shared/utils/calculations/clients";
+ *   import { calculateBMI } from "@nexia/shared/utils/calculations"; // vía root index
  *
  * @author Frontend
  * @since v2.2.0

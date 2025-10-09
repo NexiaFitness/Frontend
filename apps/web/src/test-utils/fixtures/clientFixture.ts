@@ -10,7 +10,7 @@
  * @since v4.3.9
  */
 
-import type { Client } from "@shared/types/client";
+import type { Client } from "@nexia/shared/types/client";
 
 export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
   id: 1,

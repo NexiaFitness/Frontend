@@ -6,7 +6,7 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
-      "@shared/*": ["../../packages/shared/src/*"]
+      "@nexia/shared/*": ["../../packages/shared/src/*"]
     }
   },
   "include": [

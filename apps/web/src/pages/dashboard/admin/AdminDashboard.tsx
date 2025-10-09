@@ -16,7 +16,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { AdminSideMenu } from "@/components/dashboard/admin/AdminSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 export const AdminDashboard: React.FC = () => {
     const { user } = useSelector((state: RootState) => state.auth);

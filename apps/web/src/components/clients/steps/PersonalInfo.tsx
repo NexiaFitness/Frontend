@@ -12,7 +12,7 @@
  */
 
 import React from "react";
-import type { PersonalInfoStepProps } from "@shared/types/clientOnboarding";
+import type { PersonalInfoStepProps } from "@nexia/shared/types/clientOnboarding";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({

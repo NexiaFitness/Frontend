@@ -24,12 +24,12 @@ import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useLoginMutation } from "@shared/api/authApi";
-import { loginSuccess, loginFailure } from "@shared/store/authSlice";
-import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateLoginForm } from "@shared/utils/validations";
-import type { AppDispatch } from "@shared/store";
-import type { LoginCredentials } from "@shared/types/auth";
+import { useLoginMutation } from "@nexia/shared/api/authApi";
+import { loginSuccess, loginFailure } from "@nexia/shared/store/authSlice";
+import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
+import { validateLoginForm } from "@nexia/shared/utils/validations";
+import type { AppDispatch } from "@nexia/shared/store";
+import type { LoginCredentials } from "@nexia/shared/types/auth";
 
 interface LoginFormData {
     email: string;

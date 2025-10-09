@@ -13,7 +13,7 @@
  */
 
 import React from "react";
-import type { ReviewStepProps } from "@shared/types/clientOnboarding";
+import type { ReviewStepProps } from "@nexia/shared/types/clientOnboarding";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const Review: React.FC<ReviewStepProps> = ({ formData }) => {

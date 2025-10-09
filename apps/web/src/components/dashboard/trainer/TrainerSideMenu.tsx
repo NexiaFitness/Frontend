@@ -21,7 +21,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { LogoutButton } from "@/components/ui/buttons";
 import { NexiaLogo } from "../../auth/NexiaLogo";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 export const TrainerSideMenu: React.FC = () => {
     const navigate = useNavigate();

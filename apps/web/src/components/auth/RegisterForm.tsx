@@ -24,13 +24,13 @@ import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useAuth } from "@shared/hooks/useAuth";
-import { loginFailure } from "@shared/store/authSlice";
-import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { USER_ROLES } from "@shared/config/constants";
-import { validateRegisterForm } from "@shared/utils/validations";
-import type { AppDispatch } from "@shared/store";
-import type { RegisterCredentials, UserRole } from "@shared/types/auth";
+import { useAuth } from "@nexia/shared/hooks/useAuth";
+import { loginFailure } from "@nexia/shared/store/authSlice";
+import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
+import { USER_ROLES } from "@nexia/shared/config/constants";
+import { validateRegisterForm } from "@nexia/shared/utils/validations";
+import type { AppDispatch } from "@nexia/shared/store";
+import type { RegisterCredentials, UserRole } from "@nexia/shared/types/auth";
 import type { SelectOption } from "@/components/ui/forms";
 
 interface RegisterFormData {

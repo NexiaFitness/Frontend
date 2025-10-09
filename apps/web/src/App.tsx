@@ -43,7 +43,7 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Tipado de store
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 /**
  * DashboardRouter - Router inteligente basado en roles

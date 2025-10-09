@@ -22,9 +22,9 @@ import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useForgotPasswordMutation } from "@shared/api/authApi";
-import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateForgotPasswordForm } from "@shared/utils/validations";
+import { useForgotPasswordMutation } from "@nexia/shared/api/authApi";
+import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
+import { validateForgotPasswordForm } from "@nexia/shared/utils/validations";
 
 interface ForgotPasswordFormData {
     email: string;

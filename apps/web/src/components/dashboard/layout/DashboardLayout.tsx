@@ -16,7 +16,7 @@
 import React from "react";
 import { useSelector } from "react-redux";  
 import { meshGradientInverted } from "@/utils/backgrounds";
-import type { RootState } from "@shared/store";  
+import type { RootState } from "@nexia/shared/store";  
 
 interface DashboardLayoutProps {
     children?: React.ReactNode;

@@ -15,9 +15,9 @@
  */
 
 import { useState, useCallback } from "react";
-import { useCreateClientMutation } from "@shared/api/clientsApi";
-import type { ClientFormData, ClientFormErrors } from "@shared/types/client";
-import { validateClientForm } from "@shared/utils/validations";
+import { useCreateClientMutation } from "@nexia/shared/api/clientsApi";
+import type { ClientFormData, ClientFormErrors } from "@nexia/shared/types/client";
+import { validateClientForm } from "@nexia/shared/utils/validations";
 
 // Número fijo de pasos (extended: PersonalInfo, PhysicalMetrics, TrainingGoals, Experience, HealthInfo, Review)
 const TOTAL_STEPS = 6;

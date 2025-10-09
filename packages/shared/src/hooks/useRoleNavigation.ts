@@ -10,7 +10,7 @@
  */
 
 import { useRoleGuard } from "./useRoleGuard";
-import { USER_ROLES } from "@shared/utils/roles";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
 
 export const useRoleNavigation = () => {
     const { user, role, isAuthenticated } = useRoleGuard("dashboard");

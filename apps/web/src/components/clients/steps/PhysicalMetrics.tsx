@@ -13,8 +13,8 @@
  */
 
 import React, { useMemo } from "react";
-import type { PhysicalMetricsStepProps } from "@shared/types/clientOnboarding";
-import { calculateBMI } from "@shared/utils/calculations/clients";
+import type { PhysicalMetricsStepProps } from "@nexia/shared/types/clientOnboarding";
+import { calculateBMI } from "@nexia/shared/utils/calculations/clients";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({

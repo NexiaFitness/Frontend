@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useDeleteAccountMutation } from "@shared/api/accountApi";
+import { useDeleteAccountMutation } from "@nexia/shared/api/accountApi";
 
 interface DeleteAccountModalProps {
     isOpen: boolean;

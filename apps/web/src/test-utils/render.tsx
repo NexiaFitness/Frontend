@@ -18,7 +18,7 @@ import {
     waitFor,
 } from "@testing-library/react";
 import { TestProviders } from "./TestProviders";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
     initialState?: Partial<RootState>;

@@ -13,8 +13,8 @@
  */
 
 import React from "react";
-import type { ExperienceStepProps } from "@shared/types/clientOnboarding";
-import { CLIENT_EXPERIENCE_LEVELS } from "@shared/types/client";
+import type { ExperienceStepProps } from "@nexia/shared/types/clientOnboarding";
+import { CLIENT_EXPERIENCE_LEVELS } from "@nexia/shared/types/client";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const Experience: React.FC<ExperienceStepProps> = ({

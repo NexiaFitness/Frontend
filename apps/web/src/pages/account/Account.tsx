@@ -23,7 +23,7 @@ import { AdminSideMenu } from "@/components/dashboard/admin";
 import { AthleteSideMenu } from "@/components/dashboard/athlete";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 export const Account: React.FC = () => {
     const { user } = useSelector((state: RootState) => state.auth);

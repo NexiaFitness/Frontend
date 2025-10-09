@@ -18,10 +18,10 @@
             "@/*": [
                 "apps/web/src/*"
             ],
-            "@shared": [
+            "@nexia/shared": [
                 "packages/shared/src"
             ],
-            "@shared/*": [
+            "@nexia/shared/*": [
                 "packages/shared/src/*"
             ]
         }

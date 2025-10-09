@@ -16,7 +16,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { AthleteSideMenu } from "@/components/dashboard/athlete/AthleteSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 export const AthleteDashboard: React.FC = () => {
     const { user } = useSelector((state: RootState) => state.auth);

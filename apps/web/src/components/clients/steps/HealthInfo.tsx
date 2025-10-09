@@ -12,7 +12,7 @@
  */
 
 import React from "react";
-import type { HealthInfoStepProps } from "@shared/types/clientOnboarding";
+import type { HealthInfoStepProps } from "@nexia/shared/types/clientOnboarding";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const HealthInfo: React.FC<HealthInfoStepProps> = ({

@@ -10,7 +10,7 @@
 
 import { configureStore } from "@reduxjs/toolkit";
 import { setupListeners } from "@reduxjs/toolkit/query";
-import { baseApi } from "@shared/api/baseApi";
+import { baseApi } from "@nexia/shared/api/baseApi";
 import authReducer from "./authSlice";
 import clientsReducer from "./clientsSlice";
 

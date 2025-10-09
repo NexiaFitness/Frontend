@@ -11,8 +11,8 @@
 
 import { useEffect } from "react";
 import { useRoleGuard } from "./useRoleGuard";
-import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
-import { USER_ROLES } from "@shared/utils/roles";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
 
 interface UseCompleteProfileProps {
     onRedirect?: (path: string) => void;

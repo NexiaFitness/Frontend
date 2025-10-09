@@ -15,7 +15,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
 import { LogoutButton } from "@/components/ui/buttons";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 interface DashboardNavbarProps {
     menuItems: Array<{ label: string; path: string }>;

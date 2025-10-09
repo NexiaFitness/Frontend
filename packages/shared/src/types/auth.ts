@@ -7,7 +7,7 @@
  * @since v1.0.0
  */
 
-import { USER_ROLES } from "@shared/config/constants";
+import { USER_ROLES } from "@nexia/shared/config/constants";
 
 // User Role Types
 export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];

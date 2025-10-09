@@ -26,8 +26,8 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileBanner } from "@/components/dashboard/shared/CompleteProfileBanner";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons";
-import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
-import type { RootState } from "@shared/store";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import type { RootState } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();

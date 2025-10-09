@@ -14,7 +14,7 @@
 
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { usePublicNavigation } from "@shared/hooks/usePublicNavigation";
+import { usePublicNavigation } from "@nexia/shared/hooks/usePublicNavigation";
 import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
 import { NexiaSideMenu } from "./NexiaSideMenu";
 

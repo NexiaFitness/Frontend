@@ -10,8 +10,8 @@
 
 import { useState, useCallback } from "react";
 import { useDispatch } from "react-redux";
-import { clearError } from "@shared/store/authSlice";
-import type { AppDispatch } from "@shared/store";
+import { clearError } from "@nexia/shared/store/authSlice";
+import type { AppDispatch } from "@nexia/shared/store";
 import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 interface UseAuthFormProps<T> {

@@ -16,7 +16,7 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import type { RootState } from "@shared/store";
+import type { RootState } from "@nexia/shared/store";
 
 interface ProtectedRouteProps {
     children: React.ReactNode;

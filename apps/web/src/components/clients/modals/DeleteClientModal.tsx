@@ -19,8 +19,8 @@ import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useDeleteClientMutation } from "@shared/api/clientsApi";
-import type { Client } from "@shared/types/client";
+import { useDeleteClientMutation } from "@nexia/shared/api/clientsApi";
+import type { Client } from "@nexia/shared/types/client";
 
 interface DeleteClientModalProps {
     isOpen: boolean;

@@ -10,8 +10,8 @@
  */
 
 import { useSelector } from "react-redux";
-import type { RootState } from "@shared/store";
-import { canAccess, USER_ROLES } from "@shared/utils/roles";
+import type { RootState } from "@nexia/shared/store";
+import { canAccess, USER_ROLES } from "@nexia/shared/utils/roles";
 
 export const useRoleGuard = (feature: string) => {
     const user = useSelector((state: RootState) => state.auth.user);

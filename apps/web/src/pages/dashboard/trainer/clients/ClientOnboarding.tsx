@@ -22,8 +22,8 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
 import { TYPOGRAPHY } from "@/utils/typography";
 
-import { useClientOnboarding } from "@shared/hooks/clients/useClientOnboarding";
-import type { ClientFormData } from "@shared/types/client";
+import { useClientOnboarding } from "@nexia/shared/hooks/clients/useClientOnboarding";
+import type { ClientFormData } from "@nexia/shared/types/client";
 
 // Steps
 import { PersonalInfo } from "@/components/clients/steps/PersonalInfo";

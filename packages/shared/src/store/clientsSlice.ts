@@ -9,7 +9,7 @@
  */
 
 import { createSlice, PayloadAction, Slice, createAsyncThunk } from "@reduxjs/toolkit";
-import { ClientState, Client, ClientFilters } from "@shared/types/client";
+import { ClientState, Client, ClientFilters } from "@nexia/shared/types/client";
 
 // Estado inicial tipado
 const initialState: ClientState = {

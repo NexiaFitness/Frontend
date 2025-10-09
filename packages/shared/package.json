@@ -1,5 +1,5 @@
 {
-  "name": "@shared",
+  "name": "@nexia/shared",
   "version": "1.0.0",
   "description": "Módulo compartido con slices, tipos y lógica de estado global para Nexia",
   "main": "dist/src/index.js",

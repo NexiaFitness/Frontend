@@ -10,8 +10,8 @@
  */
 
 import React, { useEffect } from "react";
-import { useRoleNavigation } from "@shared/hooks/useRoleNavigation";
-import { useCompleteProfile } from "@shared/hooks/useCompleteProfile";
+import { useRoleNavigation } from "@nexia/shared/hooks/useRoleNavigation";
+import { useCompleteProfile } from "@nexia/shared/hooks/useCompleteProfile";
 
 interface SmartNavigationProps {
     children: React.ReactNode;

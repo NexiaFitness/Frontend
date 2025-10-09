@@ -14,7 +14,7 @@ import { screen } from "@testing-library/react"
 import { vi } from "vitest"
 import { render } from "@/test-utils/render"
 import { ProtectedRoute } from "../ProtectedRoute"
-import type { RootState } from "@shared/store"   // ✅ Importamos RootState real
+import type { RootState } from "@nexia/shared/store"   // ✅ Importamos RootState real
 
 // --- Mocks ---
 const mockNavigate = vi.fn()

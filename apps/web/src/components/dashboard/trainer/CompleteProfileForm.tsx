@@ -20,8 +20,8 @@ import { FormSelect } from "@/components/ui/forms/FormSelect";
 import { Button } from "@/components/ui/buttons/Button";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { useTrainerProfile } from "@shared/hooks/useTrainerProfile";
-import { useGetCurrentTrainerProfileQuery } from "@shared/api/trainerApi";
+import { useTrainerProfile } from "@nexia/shared/hooks/useTrainerProfile";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
     TRAINING_MODALITY_LABELS,
     OCCUPATION_TYPE_LABELS,
@@ -29,8 +29,8 @@ import {
     TRAINING_MODALITY,
     OCCUPATION_TYPES,
     SPECIALTY_TYPES,
-} from "@shared/types/trainer";
-import type { RootState } from "@shared/store";
+} from "@nexia/shared/types/trainer";
+import type { RootState } from "@nexia/shared/store";
 
 export const CompleteProfileForm: React.FC = () => {
     const navigate = useNavigate();

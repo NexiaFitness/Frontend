@@ -17,7 +17,7 @@
  * @since v2.2.0
  */
 
-import type { ClientFormData, ClientFormErrors } from "@shared/types/client";
+import type { ClientFormData, ClientFormErrors } from "@nexia/shared/types/client";
 
 export interface ValidationStepResult {
     isValid: boolean;

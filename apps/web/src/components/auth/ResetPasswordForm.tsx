@@ -23,10 +23,10 @@ import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useResetPasswordMutation } from "@shared/api/authApi";
-import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateResetPasswordForm } from "@shared/utils/validations";
-import type { ResetPasswordData } from "@shared/types/auth";
+import { useResetPasswordMutation } from "@nexia/shared/api/authApi";
+import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
+import { validateResetPasswordForm } from "@nexia/shared/utils/validations";
+import type { ResetPasswordData } from "@nexia/shared/types/auth";
 
 interface ResetPasswordFormData {
     token: string;

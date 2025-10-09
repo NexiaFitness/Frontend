@@ -8,7 +8,7 @@
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
-import { API_CONFIG, AUTH_CONFIG } from "@shared/config/constants";
+import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
 
 // BaseQuery personalizado que respeta headers personalizados
 const baseQuery = fetchBaseQuery({

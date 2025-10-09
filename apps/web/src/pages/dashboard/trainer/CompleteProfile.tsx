@@ -14,7 +14,7 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileForm } from "@/components/dashboard/trainer";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { useCompleteProfile } from "@shared/hooks/useCompleteProfile";
+import { useCompleteProfile } from "@nexia/shared/hooks/useCompleteProfile";
 
 export const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();

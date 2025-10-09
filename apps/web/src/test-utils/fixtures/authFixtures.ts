@@ -15,8 +15,8 @@ import {
     AuthResponse,
     RegisterResponse,
     ForgotPasswordResponse,
-} from "@shared/types/auth";
-import { USER_ROLES } from "@shared/config/constants";
+} from "@nexia/shared/types/auth";
+import { USER_ROLES } from "@nexia/shared/config/constants";
 
 export const validTrainerUser: User = {
     id: 1,

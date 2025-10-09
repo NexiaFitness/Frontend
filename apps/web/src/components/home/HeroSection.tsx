@@ -17,7 +17,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { meshGradient } from "@/utils/backgrounds";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { ROUTES } from "@shared/config/constants";
+import { ROUTES } from "@nexia/shared/config/constants";
 import { Button } from "@/components/ui/buttons/Button";
 
 export const HeroSection: React.FC = () => {

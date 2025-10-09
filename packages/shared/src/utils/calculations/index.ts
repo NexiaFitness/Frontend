@@ -7,7 +7,7 @@
  *   especificar el subdirectorio.
  *
  * Ejemplo de uso:
- *   import { calculateBMI, classifyBMI } from "@shared/utils/calculations";
+ *   import { calculateBMI, classifyBMI } from "@nexia/shared/utils/calculations";
  *
  * Añadir aquí nuevos dominios a medida que se creen:
  *   export * from "./plans";

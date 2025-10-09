@@ -9,10 +9,10 @@
  */
 
 import { configureStore } from "@reduxjs/toolkit";
-import { baseApi } from "@shared/api/baseApi";
-import authReducer from "@shared/store/authSlice";
-import clientsReducer from "@shared/store/clientsSlice";
-import type { RootState, AppDispatch } from "@shared/store";
+import { baseApi } from "@nexia/shared/api/baseApi";
+import authReducer from "@nexia/shared/store/authSlice";
+import clientsReducer from "@nexia/shared/store/clientsSlice";
+import type { RootState, AppDispatch } from "@nexia/shared/store";
 
 export const createTestStore = (preloadedState?: Partial<RootState>) =>
     configureStore({

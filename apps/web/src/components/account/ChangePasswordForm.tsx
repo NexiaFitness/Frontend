@@ -21,9 +21,9 @@ import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useChangePasswordMutation } from "@shared/api/accountApi";
-import { useAuthForm } from "@shared/hooks/useAuthForm";
-import { validateChangePasswordForm } from "@shared/utils/validations";
+import { useChangePasswordMutation } from "@nexia/shared/api/accountApi";
+import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
+import { validateChangePasswordForm } from "@nexia/shared/utils/validations";
 
 interface ChangePasswordFormData {
     currentPassword: string;
