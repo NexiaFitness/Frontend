@@ -3,6 +3,7 @@ export * from "./api/authApi";
 export * from "./api/baseApi";
 export * from "./api/clientsApi";
 export * from "./api/accountApi";
+export * from "./api/trainerApi";
 
 // Store
 export * from "./store/authSlice";
@@ -67,6 +68,9 @@ export * from "./hooks/useRoleNavigation";
 export * from "./hooks/useCompleteProfile";
 export * from "./hooks/useSmartRouting";
 export * from "./hooks/useTrainerProfile";
+export * from "./hooks/clients/useClientOnboarding";
+export * from "./hooks/usePublicNavigation";
+
 
 // Services
 export * from "./services/authService";

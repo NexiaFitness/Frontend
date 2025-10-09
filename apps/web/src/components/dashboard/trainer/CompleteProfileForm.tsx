@@ -20,8 +20,7 @@ import { FormSelect } from "@/components/ui/forms/FormSelect";
 import { Button } from "@/components/ui/buttons/Button";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { useTrainerProfile } from "@nexia/shared/hooks/useTrainerProfile";
-import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { useTrainerProfile, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
 import {
     TRAINING_MODALITY_LABELS,
     OCCUPATION_TYPE_LABELS,

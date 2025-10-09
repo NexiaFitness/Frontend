@@ -10,6 +10,7 @@
  * @author Frontend Team
  * @since v1.0.0
  * @updated v3.2.0 - Role-based dashboard routing implementado
+ * @updated v2.5.0 - ClientOnboarding wizard agregado
  */
 
 import React from "react";
@@ -30,7 +31,7 @@ import { AthleteDashboard } from "./pages/dashboard/athlete/AthleteDashboard";
 
 // Páginas trainer-specific
 import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
-import { ClientOnboarding } from "./pages/dashboard/trainer/clients/ClientOnboarding";
+import { ClientOnboarding } from "./pages/clients/ClientOnboarding"; // ✅ CORREGIDO
 
 // Páginas adicionales
 import Account from "./pages/account/Account";
@@ -44,6 +45,7 @@ import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Tipado de store
 import type { RootState } from "@nexia/shared/store";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
 
 /**
  * DashboardRouter - Router inteligente basado en roles
@@ -94,11 +96,14 @@ function App() {
         }
       />
 
+      {/* Client Onboarding - Solo trainers */}
       <Route
         path="/dashboard/clients/onboarding"
         element={
           <ProtectedRoute>
-            <ClientOnboarding />
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ClientOnboarding />
+            </RoleProtectedRoute>
           </ProtectedRoute>
         }
       />
@@ -108,7 +113,7 @@ function App() {
         path="/dashboard/complete-profile"
         element={
           <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={['TRAINER']} redirectTo="/dashboard">
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
               <CompleteProfile />
             </RoleProtectedRoute>
           </ProtectedRoute>

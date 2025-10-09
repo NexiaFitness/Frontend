@@ -5,6 +5,7 @@
  * - Define entidades, request/response types y estado de Redux.
  * - Alineado con backend FastAPI (RBAC: trainers solo gestionan sus clientes).
  * - Compatible con formularios extendidos de Client Onboarding.
+ * - Incluye campos antropométricos avanzados (skinfolds, girths, diameters).
  *
  * Arquitectura de respuestas:
  * - GET/POST/PUT /clients devuelven Client directo (no wrapper).
@@ -13,7 +14,8 @@
  *
  * @author Frontend
  * @since v2.1.0
- * @updated v2.4.0 - Añadidos campos opcionales (telefono, sexo, observaciones, lesiones_relevantes, frecuencia_semanal)
+ * @updated v2.4.0 - Campos opcionales (telefono, sexo, observaciones, lesiones_relevantes, frecuencia_semanal)
+ * @updated v2.5.0 - Campos antropométricos completos (skinfolds, girths, diameters, notes, objective, session_duration)
  */
 
 // Client Experience Levels
@@ -37,25 +39,70 @@ export const CLIENT_GOALS = {
 export type ClientGoal =
     (typeof CLIENT_GOALS)[keyof typeof CLIENT_GOALS];
 
+// Session Duration (nuevo enum del backend)
+export const SESSION_DURATION = {
+    SHORT: "short",      // 30-45 min
+    MEDIUM: "medium",    // 60 min
+    LONG: "long",        // 90+ min
+} as const;
+
+export type SessionDuration =
+    (typeof SESSION_DURATION)[keyof typeof SESSION_DURATION];
+
 // Client Entity (siguiendo patrón backend FastAPI con campos español)
 export interface Client {
     id: number;
     nombre: string;
     apellidos: string;
     email: string;
+    
+    // Datos básicos opcionales
     edad?: number;
-    peso?: number;
-    altura?: number;
-    bmi?: number;
+    peso?: number;  // kg
+    altura?: number;  // cm (IMPORTANTE: backend ahora espera centímetros, no metros)
+    bmi?: number;  // calculado automáticamente por backend
+    
+    // Objetivo y experiencia
     objetivo?: ClientGoal;
     nivel_experiencia?: ClientExperienceLevel;
+    session_duration?: SessionDuration;
 
+    // Contacto y observaciones
     telefono?: string;
     sexo?: string;
     observaciones?: string;
     lesiones_relevantes?: string;
     frecuencia_semanal?: string;
 
+    // ========================================
+    // CAMPOS ANTROPOMÉTRICOS AVANZADOS (v2.5.0)
+    // ========================================
+    
+    // Skinfolds (pliegues cutáneos, mm) - Rango: 0-50mm
+    triceps?: number;
+    subscapular?: number;
+    biceps?: number;
+    iliac_crest?: number;
+    supraspinal?: number;
+    abdominal?: number;
+    thigh?: number;
+    calf?: number;
+
+    // Girths (perímetros, cm) - Rango: 10-200cm
+    arm_girth?: number;
+    waist_girth?: number;
+    hip_girth?: number;
+
+    // Diameters (diámetros óseos, cm)
+    wrist_diameter?: number;  // Rango: 3-15cm
+    knee_diameter?: number;   // Rango: 5-20cm
+
+    // Notas adicionales
+    notes_1?: string;
+    notes_2?: string;
+    notes_3?: string;
+
+    // Metadata
     trainer_id: number;
     fecha_registro: string;
     activo: boolean;
@@ -69,17 +116,44 @@ export interface CreateClientData {
     apellidos: string;
     email: string;
 
+    // Datos básicos opcionales
     edad?: number;
     peso?: number;
-    altura?: number;
+    altura?: number;  // cm (backend espera centímetros)
     objetivo?: ClientGoal;
     nivel_experiencia?: ClientExperienceLevel;
+    session_duration?: SessionDuration;
 
+    // Contacto y observaciones
     telefono?: string;
     sexo?: string;
     observaciones?: string;
     lesiones_relevantes?: string;
     frecuencia_semanal?: string;
+
+    // Skinfolds (pliegues cutáneos, mm)
+    triceps?: number;
+    subscapular?: number;
+    biceps?: number;
+    iliac_crest?: number;
+    supraspinal?: number;
+    abdominal?: number;
+    thigh?: number;
+    calf?: number;
+
+    // Girths (perímetros, cm)
+    arm_girth?: number;
+    waist_girth?: number;
+    hip_girth?: number;
+
+    // Diameters (diámetros óseos, cm)
+    wrist_diameter?: number;
+    knee_diameter?: number;
+
+    // Notas adicionales
+    notes_1?: string;
+    notes_2?: string;
+    notes_3?: string;
 }
 
 export interface UpdateClientData {
@@ -88,9 +162,10 @@ export interface UpdateClientData {
     email?: string;
     edad?: number;
     peso?: number;
-    altura?: number;
+    altura?: number;  // cm
     objetivo?: ClientGoal;
     nivel_experiencia?: ClientExperienceLevel;
+    session_duration?: SessionDuration;
     activo?: boolean;
 
     telefono?: string;
@@ -98,6 +173,25 @@ export interface UpdateClientData {
     observaciones?: string;
     lesiones_relevantes?: string;
     frecuencia_semanal?: string;
+
+    // Antropométricos
+    triceps?: number;
+    subscapular?: number;
+    biceps?: number;
+    iliac_crest?: number;
+    supraspinal?: number;
+    abdominal?: number;
+    thigh?: number;
+    calf?: number;
+    arm_girth?: number;
+    waist_girth?: number;
+    hip_girth?: number;
+    wrist_diameter?: number;
+    knee_diameter?: number;
+
+    notes_1?: string;
+    notes_2?: string;
+    notes_3?: string;
 }
 
 export interface ClientFilters {
@@ -166,12 +260,32 @@ export interface ClientFormErrors {
     altura?: string;
     objetivo?: string;
     nivel_experiencia?: string;
+    session_duration?: string;
 
     telefono?: string;
     sexo?: string;
     observaciones?: string;
     lesiones_relevantes?: string;
     frecuencia_semanal?: string;
+
+    // Errores antropométricos
+    triceps?: string;
+    subscapular?: string;
+    biceps?: string;
+    iliac_crest?: string;
+    supraspinal?: string;
+    abdominal?: string;
+    thigh?: string;
+    calf?: string;
+    arm_girth?: string;
+    waist_girth?: string;
+    hip_girth?: string;
+    wrist_diameter?: string;
+    knee_diameter?: string;
+
+    notes_1?: string;
+    notes_2?: string;
+    notes_3?: string;
 }
 
 // Utility Types para componentes

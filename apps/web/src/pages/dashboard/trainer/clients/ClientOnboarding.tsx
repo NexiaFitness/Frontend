@@ -22,7 +22,7 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
 import { TYPOGRAPHY } from "@/utils/typography";
 
-import { useClientOnboarding } from "@nexia/shared/hooks/clients/useClientOnboarding";
+import { useClientOnboarding } from "@nexia/shared";
 import type { ClientFormData } from "@nexia/shared/types/client";
 
 // Steps
