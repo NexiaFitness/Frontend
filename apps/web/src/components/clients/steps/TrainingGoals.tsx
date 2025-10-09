@@ -14,7 +14,7 @@
 
 import React from "react";
 import type { TrainingGoalsStepProps } from "@nexia/shared/types/clientOnboarding";
-import { CLIENT_GOALS } from "@nexia/shared/types/client";
+import { CLIENT_GOALS } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({

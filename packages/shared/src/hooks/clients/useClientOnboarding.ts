@@ -12,6 +12,7 @@
  *
  * @author Frontend Team
  * @since v2.2.0
+ * @updated v2.5.0 - TOTAL_STEPS = 7 (agregado AnthropometricMetrics entre PhysicalMetrics y TrainingGoals)
  */
 
 import { useState, useCallback } from "react";
@@ -19,8 +20,17 @@ import { useCreateClientMutation } from "@nexia/shared/api/clientsApi";
 import type { ClientFormData, ClientFormErrors } from "@nexia/shared/types/client";
 import { validateClientForm } from "@nexia/shared/utils/validations";
 
-// Número fijo de pasos (extended: PersonalInfo, PhysicalMetrics, TrainingGoals, Experience, HealthInfo, Review)
-const TOTAL_STEPS = 6;
+/**
+ * Número fijo de pasos del wizard:
+ * 0: PersonalInfo
+ * 1: PhysicalMetrics
+ * 2: AnthropometricMetrics (NUEVO v2.5.0)
+ * 3: TrainingGoals
+ * 4: Experience
+ * 5: HealthInfo
+ * 6: Review
+ */
+const TOTAL_STEPS = 7;
 
 export function useClientOnboarding(initialData: ClientFormData) {
     // Estado local
@@ -45,7 +55,7 @@ export function useClientOnboarding(initialData: ClientFormData) {
 
     /**
      * validateStep — Valida solo el paso actual
-     * Usa reglas en shared/utils/validation.ts
+     * Usa reglas en shared/utils/validations/clients/clientValidation.ts
      */
     const validateStep = useCallback((): boolean => {
         const { isValid, stepErrors } = validateClientForm(formData, currentStep);
@@ -74,6 +84,9 @@ export function useClientOnboarding(initialData: ClientFormData) {
 
     /**
      * submitForm — Valida todo el formulario y crea cliente en backend
+     * 
+     * NOTA: El backend espera altura en centímetros.
+     * Si el frontend captura en metros, convertir aquí antes de enviar.
      */
     const submitForm = useCallback(async () => {
         const { isValid, stepErrors } = validateClientForm(formData);
@@ -83,6 +96,13 @@ export function useClientOnboarding(initialData: ClientFormData) {
         }
 
         try {
+            // IMPORTANTE: Backend espera altura en cm
+            // Si formData.altura está en metros, descomentar conversión:
+            // const payload = {
+            //     ...formData,
+            //     altura: formData.altura ? formData.altura * 100 : undefined
+            // };
+            
             await createClient(formData).unwrap();
             return { success: true };
         } catch (err) {

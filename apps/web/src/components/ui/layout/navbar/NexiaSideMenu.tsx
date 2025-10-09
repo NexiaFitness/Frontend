@@ -8,7 +8,7 @@
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import { usePublicNavigation } from "@nexia/shared/hooks/usePublicNavigation";
+import { usePublicNavigation } from "@nexia/shared";
 
 interface NexiaSideMenuProps {
     isOpen: boolean;

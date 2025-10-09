@@ -15,7 +15,7 @@
 import React from "react";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons/Button";
-import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
+import { useAuthForm } from "@nexia/shared";
 
 // Tipos para el formulario de contacto
 interface ContactFormData extends Record<string, unknown> {

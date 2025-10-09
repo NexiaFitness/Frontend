@@ -14,6 +14,7 @@
  * @author Frontend
  * @since v2.4.0
  * @updated v2.4.1 - Renombrado data→formData, onChange→updateField (alineación con hook)
+ * @updated v2.5.0 - Agregado AnthropometricMetricsStepProps (Step 2)
  */
 
 import type { ClientFormData, ClientFormErrors } from "./client";
@@ -35,14 +36,20 @@ export interface BaseStepProps {
 }
 
 /**
- * Step 1: Información personal
+ * Step 0: Información personal
  */
 export interface PersonalInfoStepProps extends BaseStepProps {}
 
 /**
- * Step 2: Métricas físicas (peso, altura, BMI…)
+ * Step 1: Métricas físicas básicas (edad, peso, altura, BMI)
  */
 export interface PhysicalMetricsStepProps extends BaseStepProps {}
+
+/**
+ * Step 2: Métricas antropométricas avanzadas (skinfolds, girths, diameters, notes)
+ * @since v2.5.0
+ */
+export interface AnthropometricMetricsStepProps extends BaseStepProps {}
 
 /**
  * Step 3: Objetivos de entrenamiento
@@ -55,7 +62,7 @@ export interface TrainingGoalsStepProps extends BaseStepProps {}
 export interface ExperienceStepProps extends BaseStepProps {}
 
 /**
- * Step 5: Información de salud (lesiones, observaciones…)
+ * Step 5: Información de salud (lesiones, observaciones)
  */
 export interface HealthInfoStepProps extends BaseStepProps {}
 
