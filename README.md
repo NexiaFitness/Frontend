@@ -3,8 +3,8 @@
 Professional fitness training management platform with React + TypeScript monorepo architecture.
 
 ## Status
-- **Branch**: `feature/ui-refactor-cross-platform`
-- **Frontend**: ✅ Complete with responsive design + email verification
+- **Branch**: `feature/client-onboarding`
+- **Frontend**: ✅ Complete with responsive design + client onboarding
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
 - **Testing**: ✅ Comprehensive MSW integration (224/224 passing)
 
@@ -85,11 +85,18 @@ frontend/
 │   │   │   │   ├── RegisterForm.tsx              # With email auto-verification
 │   │   │   │   └── ResetPasswordForm.tsx
 │   │   │   ├── clients/
-│   │   │   │   └── modals/
-│   │   │   │       ├── __tests__/
-│   │   │   │       │   └── DeleteClientModal.test.tsx
-│   │   │   │       ├── DeleteClientModal.tsx
-│   │   │   │       └── index.ts
+│   │   │   │   ├── modals/
+│   │   │   │   │   ├── __tests__/
+│   │   │   │   │   │   └── DeleteClientModal.test.tsx
+│   │   │   │   │   ├── DeleteClientModal.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   └── steps/
+│   │   │   │       ├── Experience.tsx
+│   │   │   │       ├── HealthInfo.tsx
+│   │   │   │       ├── PersonalInfo.tsx
+│   │   │   │       ├── PhysicalMetrics.tsx
+│   │   │   │       ├── Review.tsx
+│   │   │   │       └── TrainingGoals.tsx
 │   │   │   ├── dashboard/
 │   │   │   │   ├── admin/
 │   │   │   │   │   ├── AdminSideMenu.tsx
@@ -164,6 +171,8 @@ frontend/
 │   │   │   │   └── trainer/
 │   │   │   │       ├── CompleteProfile.tsx
 │   │   │   │       └── TrainerDashboard.tsx
+│   │   │   ├── clients/
+│   │   │   │   └── ClientOnboarding.tsx              # Multi-step client wizard
 │   │   │   └── Home.tsx
 │   │   ├── test-utils/
 │   │   │   ├── fixtures/
@@ -243,6 +252,8 @@ frontend/
     │   │   ├── constants.ts
     │   │   └── navigationConfig.ts
     │   ├── hooks/
+    │   │   ├── clients/
+    │   │   │   └── useClientOnboarding.ts
     │   │   ├── useAuthForm.ts
     │   │   ├── useLogout.ts
     │   │   ├── useNavigation.ts
@@ -257,6 +268,7 @@ frontend/
     │   │   ├── account.ts
     │   │   ├── auth.ts
     │   │   ├── client.ts
+    │   │   ├── clientOnboarding.ts
     │   │   └── trainer.ts
     │   ├── utils/
     │   │   └── validation.ts
@@ -305,9 +317,9 @@ import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 
 // Shared Business Logic (cross-platform)
-import { useAuthForm } from "@shared/hooks";
-import { useLoginMutation } from "@shared/api/authApi";
-import { USER_ROLES } from "@shared/config/constants";
+import { useAuthForm } from "@nexia/shared/hooks";
+import { useLoginMutation } from "@nexia/shared/api/authApi";
+import { USER_ROLES } from "@nexia/shared/config/constants";
 ```
 
 ## Key Features
@@ -316,6 +328,7 @@ import { USER_ROLES } from "@shared/config/constants";
 - ✅ Role-based dashboards (Admin/Trainer/Athlete)
 - ✅ Trainer profile completion workflow
 - ✅ Multi-step client onboarding with BMI calculations
+- ✅ Client management with CRUD operations
 - ✅ Responsive UI design system
 - ✅ Comprehensive test coverage (224/224 passing)
 - ✅ Professional deployment pipeline
@@ -341,4 +354,4 @@ pnpm -F web test
 ```
 
 ---
-**Version**: v2.4.0 | **Node**: v22.19.0 | **Branch**: feature/ui-refactor-cross-platform
+**Version**: v2.5.0 | **Node**: v22.19.0 | **Branch**: feature/client-onboarding
