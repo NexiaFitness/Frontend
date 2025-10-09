@@ -24,12 +24,12 @@ importers:
 
   apps/web:
     dependencies:
+      '@nexia/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@reduxjs/toolkit':
         specifier: ^2.9.0
         version: 2.9.0(react-redux@9.2.0(@types/react@19.2.2)(react@19.2.0)(redux@5.0.1))(react@19.2.0)
-      '@shared':
-        specifier: workspace:*
-        version: link:../../packages/shared
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
