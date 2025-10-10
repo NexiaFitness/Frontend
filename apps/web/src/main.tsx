@@ -13,6 +13,12 @@ import { store } from "@nexia/shared";
 import { BrowserRouter } from "react-router-dom";
 import "./index.css";
 
+// Inicializar storage ANTES de crear el store
+import { initStorage } from '@nexia/shared/storage/IStorage';
+import { webStorage } from './storage/webStorage';
+
+initStorage(webStorage);
+
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>
     <Provider store={store}>

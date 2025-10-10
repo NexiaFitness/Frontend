@@ -17,6 +17,7 @@
  * @author Frontend Team
  * @since v2.4.1
  * @updated v2.5.2 - Agregado EmailVerificationBanner
+ * @updated v4.1.0 - Banners reciben datos completos para detectar hydration
  */
 
 import React from "react";
@@ -28,27 +29,12 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileBanner, EmailVerificationBanner } from "@/components/dashboard/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons";
-import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    // Obtener perfil actual (JWT)
-    const { data: trainerData } = useGetCurrentTrainerProfileQuery(undefined, {
-        skip: !user,
-    });
-
-    const trainer = trainerData;
-
-    // Determinar si el perfil está completo
-    const isProfileComplete =
-        !!trainer?.occupation &&
-        !!trainer?.training_modality &&
-        !!trainer?.location_country &&
-        !!trainer?.location_city &&
-        !!trainer?.telefono;
 
     // Items del menú superior
     const menuItems = [
@@ -80,10 +66,10 @@ export const TrainerDashboard: React.FC = () => {
                 </div>
 
                 {/* Banner de verificación de email (prioridad ALTA) */}
-                <EmailVerificationBanner isEmailVerified={!!user?.is_verified} />
+                <EmailVerificationBanner user={user} />
 
                 {/* Banner de perfil incompleto */}
-                <CompleteProfileBanner isProfileComplete={!!isProfileComplete} />
+                <CompleteProfileBanner user={user} />
 
                 {/* Cards de métricas */}
                 <div className="px-4 lg:px-8 mb-12 lg:mb-20">

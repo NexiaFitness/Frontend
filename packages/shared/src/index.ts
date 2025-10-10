@@ -75,6 +75,10 @@ export * from "./hooks/usePublicNavigation";
 // Services
 export * from "./services/authService";
 
+// Storage
+export { initStorage, storage } from './storage/IStorage';
+export type { IStorage } from './storage/IStorage';
+
 // Utils
 
 // Components

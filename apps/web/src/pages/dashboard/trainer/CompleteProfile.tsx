@@ -19,6 +19,7 @@ import { useCompleteProfile } from "@nexia/shared";
 export const CompleteProfile: React.FC = () => {
     const navigate = useNavigate();
     
+    
     // Hook compartido para lógica de Complete Profile
     const { 
         isLoadingTrainer

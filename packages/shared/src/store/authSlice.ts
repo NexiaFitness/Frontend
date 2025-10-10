@@ -11,23 +11,63 @@
 import { createSlice, PayloadAction, Slice, createAsyncThunk } from "@reduxjs/toolkit";
 import { AuthState, User } from "@nexia/shared/types/auth";
 import { AUTH_CONFIG } from "@nexia/shared/config/constants";
+import { storage } from '@nexia/shared/storage/IStorage';
 
-// Estado inicial tipado
+/**
+ * Carga estado inicial desde storage de forma async.
+ * NOTA: Como esto se ejecuta síncronamente al importar el módulo,
+ * usamos valores por defecto y luego hidratamos via middleware.
+ */
 const initialState: AuthState = {
     user: null,
-    token: localStorage.getItem(AUTH_CONFIG.TOKEN_KEY),
+    token: null,
     isAuthenticated: false,
-    isLoading: false,
+    isLoading: true, // True hasta que hidratación complete
     error: null,
 };
+
+/**
+ * Async thunk para hidratar estado desde storage al iniciar app.
+ */
+export const hydrateAuth = createAsyncThunk(
+    'auth/hydrate',
+    async (_, { rejectWithValue }) => {
+        try {
+            const token = await storage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            const userStr = await storage.getItem(AUTH_CONFIG.USER_KEY);
+            
+            
+            let user: User | null = null;
+            if (userStr) {
+                try {
+                    user = JSON.parse(userStr);
+                } catch (parseError) {
+                    if (process.env.NODE_ENV !== 'production') {
+                        console.error("❌ [hydrateAuth] Parse error:", parseError);
+                    }
+                    await storage.removeItem(AUTH_CONFIG.USER_KEY);
+                }
+            }
+            
+            
+            return { user, token };
+        } catch (error) {
+            if (process.env.NODE_ENV !== 'production') {
+                console.error("❌ [hydrateAuth] Hydration failed:", error);
+            }
+            return rejectWithValue('Hydration failed');
+        }
+    }
+);
 
 // Async thunk para logout profesional
 export const logout = createAsyncThunk(
     'auth/logout',
     async (_, { rejectWithValue }) => {
         try {
-            // Limpieza inmediata de localStorage
-            localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            // Limpieza async de storage
+            await storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            await storage.removeItem(AUTH_CONFIG.USER_KEY);
             
             // Simular delay para UX profesional (opcional)
             await new Promise(resolve => setTimeout(resolve, 100));
@@ -55,8 +95,9 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
 
-            // Guardar token en localStorage
-            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
+            // Persistencia async
+            storage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
+            storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(action.payload.user));
         },
 
         // Acción cuando registro es exitoso (autologin)
@@ -70,8 +111,9 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
 
-            // Guardar token en localStorage
-            localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
+            // Persistencia async
+            storage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
+            storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(action.payload.user));
         },
 
         // Acción cuando login falla
@@ -82,12 +124,10 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = action.payload;
 
-            // Limpiar localStorage
-            localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            // Limpiar storage async
+            storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            storage.removeItem(AUTH_CONFIG.USER_KEY);
         },
-
-        // Acción cuando logout - removido, ahora manejado por createAsyncThunk
-        // logout: ya no es un reducer, sino un async thunk
 
         // Acción para limpiar errores
         clearError: (state: AuthState) => {
@@ -109,6 +149,23 @@ export const authSlice: Slice<AuthState> = createSlice({
     },
     extraReducers: (builder) => {
         builder
+            // Hydration handlers
+                .addCase(hydrateAuth.pending, (state) => {
+                    state.isLoading = true;
+                })
+            .addCase(hydrateAuth.fulfilled, (state, action) => {
+                state.user = action.payload.user;
+                state.token = action.payload.token;
+                state.isAuthenticated = !!(action.payload.token && action.payload.user);
+                state.isLoading = false;
+            })
+            .addCase(hydrateAuth.rejected, (state, action) => {
+                if (process.env.NODE_ENV !== 'production') {
+                    console.error("❌ [hydrateAuth.rejected] Hydration rejected:", action.payload);
+                }
+                state.isLoading = false;
+                state.error = 'Failed to restore session';
+            })
             // Logout async thunk handlers
             .addCase(logout.pending, (state) => {
                 state.isLoading = true;
@@ -136,13 +193,12 @@ export const authSlice: Slice<AuthState> = createSlice({
 // Exportar acciones sincrónicas del slice
 export const {
     loginSuccess,
+    registerSuccess,
     loginFailure,
     clearError,
     setLoading,
     setCurrentUser,
 } = authSlice.actions;
-
-// logout se exporta por separado como async thunk (ya exportado arriba)
 
 // Selectores tipados
 export const selectAuth = (state: { auth: AuthState }) => state.auth;

@@ -7,31 +7,42 @@
  * @author Frontend
  * @since v2.5.2
  * @updated v4.0.0 - Full width + diseño compacto + botón outline
+ * @updated v4.1.0 - Recibe user completo para detectar cambios durante hydration
  */
 
-import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { useResendVerificationMutation } from "@nexia/shared/api/authApi";
-import type { RootState } from "@nexia/shared/store";
+import type { User } from "@nexia/shared/types/auth";
 
 interface Props {
-    isEmailVerified: boolean;
+    user: User | null;
 }
 
-export const EmailVerificationBanner: React.FC<Props> = ({ isEmailVerified }) => {
-    const { user } = useSelector((state: RootState) => state.auth);
-    const [resendVerification, { isLoading, isSuccess, isError }] = useResendVerificationMutation();
+export const EmailVerificationBanner: React.FC<Props> = ({ user }) => {
+    const [resendVerification, { isLoading, isSuccess }] = useResendVerificationMutation();
+    
+    // Log estratégico del banner
+    // eslint-disable-next-line no-console
+    console.info("[EmailVerificationBanner]", {
+        user: user?.email || 'no user',
+        isVerified: user?.is_verified ?? 'no user',
+        willRender: user && !user.is_verified
+    });
+    
+    // Limpiar cualquier dismiss previo (banner no dismissable)
+    React.useEffect(() => {
+        if (user?.email) {
+            const dismissKey = `email-verification-dismissed-${user.email}`;
+            sessionStorage.removeItem(dismissKey);
+        }
+    }, [user?.email]);
+    
+    // Si user es null (loading), no mostrar banner
+    if (!user) return null;
 
-    const [isDismissed, setIsDismissed] = useState(false);
-    const DISMISS_KEY = `email-verification-dismissed-${user?.email}`;
-
-    useEffect(() => {
-        const dismissed = sessionStorage.getItem(DISMISS_KEY);
-        if (dismissed === "true") setIsDismissed(true);
-    }, [DISMISS_KEY]);
-
-    if (isEmailVerified || isDismissed) return null;
+    // Si email verificado, no mostrar banner
+    if (user.is_verified) return null;
 
     const handleResend = async () => {
         if (!user?.email) return;
@@ -42,10 +53,6 @@ export const EmailVerificationBanner: React.FC<Props> = ({ isEmailVerified }) =>
         }
     };
 
-    const handleDismiss = () => {
-        sessionStorage.setItem(DISMISS_KEY, "true");
-        setIsDismissed(true);
-    };
 
     return (
         <div className="w-full mb-4">
@@ -85,23 +92,6 @@ export const EmailVerificationBanner: React.FC<Props> = ({ isEmailVerified }) =>
                             : "Reenviar verificación"}
                     </Button>
 
-                    <button
-                        onClick={handleDismiss}
-                        className="text-white/80 hover:text-white transition-colors p-1"
-                        aria-label="Cerrar"
-                    >
-                        <svg
-                            className="w-4 h-4"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                    </button>
                 </div>
             </div>
         </div>

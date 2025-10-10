@@ -6,24 +6,52 @@
  * 
  * @since v2.4.1
  * @updated v4.0.0 - Full width + diseño compacto + botón outline
+ * @updated v4.1.0 - Recibe user completo para detectar cambios durante hydration
  */
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons/Button";
+import { useCompleteProfile } from "@nexia/shared";
+import type { User } from "@nexia/shared/types/auth";
 
 interface Props {
-    isProfileComplete: boolean;
+    user: User | null;
     redirectTo?: string;
 }
 
 export const CompleteProfileBanner: React.FC<Props> = ({
-    isProfileComplete,
+    user,
     redirectTo = "/dashboard/trainer/complete-profile",
 }) => {
     const navigate = useNavigate();
+    
+    // Usar hook para detectar si el perfil está completo
+    const { isProfileComplete } = useCompleteProfile();
 
-    if (isProfileComplete) return null;
+    // Log estratégico del banner
+    // eslint-disable-next-line no-console
+    console.info("[CompleteProfileBanner]", {
+        user: user?.email || 'no user',
+        role: user?.role || 'no role',
+        isProfileComplete,
+        willRender: user && user.role === 'trainer' && !isProfileComplete
+    });
+
+    // Si user es null (loading), no mostrar banner
+    if (!user) {
+        return null;
+    }
+
+    // Solo mostrar para trainers
+    if (user.role !== 'trainer') {
+        return null;
+    }
+
+    // Si el perfil está completo, no mostrar banner
+    if (isProfileComplete) {
+        return null;
+    }
 
     return (
         <div className="w-full mb-4">
@@ -51,8 +79,11 @@ export const CompleteProfileBanner: React.FC<Props> = ({
                 </div>
 
                 <div className="flex items-center mt-3 md:mt-0">
-                    <Button
-                        onClick={() => navigate(redirectTo)}
+                        <Button
+                            onClick={() => {
+                                // Usar navigate con replace para evitar problemas de historial
+                                navigate(redirectTo, { replace: true });
+                            }}
                         variant="outline"
                         size="sm"
                     >

@@ -13,9 +13,9 @@
  * @updated v2.5.0 - ClientOnboarding wizard agregado
  */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 
 // Páginas públicas
 import Home from "./pages/Home";
@@ -44,8 +44,9 @@ import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Tipado de store
-import type { RootState } from "@nexia/shared/store";
+import type { RootState, AppDispatch } from "@nexia/shared/store";
 import { USER_ROLES } from "@nexia/shared/utils/roles";
+import { hydrateAuth } from "@nexia/shared/store/authSlice";
 
 /**
  * DashboardRouter - Router inteligente basado en roles
@@ -67,7 +68,26 @@ const DashboardRouter: React.FC = () => {
 };
 
 function App() {
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch<AppDispatch>();
+  const { isAuthenticated, isLoading, user } = useSelector((state: RootState) => state.auth);
+
+  // Hidratar auth state al montar app
+  useEffect(() => {
+    dispatch(hydrateAuth());
+  }, [dispatch]);
+
+  // Log estratégico de auth state
+  useEffect(() => {
+    if (!isLoading) {  // Solo loguear después de hydration
+      // eslint-disable-next-line no-console
+      console.info("[App] Auth state:", {
+        isAuthenticated,
+        user: user?.email || 'none',
+        role: user?.role || 'none',
+        verified: user?.is_verified ?? false
+      });
+    }
+  }, [isAuthenticated, isLoading, user]);
 
   return (
     <Routes>
@@ -110,7 +130,7 @@ function App() {
 
       {/* Complete Profile - Solo trainers */}
       <Route
-        path="/dashboard/complete-profile"
+        path="/dashboard/trainer/complete-profile"
         element={
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
