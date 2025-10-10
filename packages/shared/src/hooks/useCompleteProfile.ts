@@ -10,16 +10,21 @@
  */
 
 import { useEffect } from "react";
-import { useRoleGuard } from "./useRoleGuard";
+import { useSelector } from "react-redux";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { USER_ROLES } from "@nexia/shared/utils/roles";
+import type { RootState } from "@nexia/shared/store";
 
 interface UseCompleteProfileProps {
     onRedirect?: (path: string) => void;
 }
 
 export const useCompleteProfile = ({ onRedirect }: UseCompleteProfileProps = {}) => {
-    const { user, isTrainer, isAuthenticated } = useRoleGuard("complete-profile");
+    // Usar selectors directos para evitar bucle infinito
+    const user = useSelector((state: RootState) => state.auth.user);
+    const isLoading = useSelector((state: RootState) => state.auth.isLoading);
+    const isAuthenticated = Boolean(user) || isLoading;
+    const isTrainer = user?.role === USER_ROLES.TRAINER;
     
     // Obtener perfil del trainer actual desde JWT
     const { 
@@ -34,12 +39,13 @@ export const useCompleteProfile = ({ onRedirect }: UseCompleteProfileProps = {})
     const trainer = trainerData;
 
     // Verificar si el perfil está completo
-    const isProfileComplete = trainer &&
+    const isProfileComplete = Boolean(trainer &&
         trainer.occupation &&
         trainer.training_modality &&
         trainer.location_country &&
         trainer.location_city &&
-        trainer.telefono;
+        trainer.telefono);
+
 
     // Redirect si no es trainer
     useEffect(() => {
@@ -54,6 +60,23 @@ export const useCompleteProfile = ({ onRedirect }: UseCompleteProfileProps = {})
             onRedirect('/dashboard');
         }
     }, [trainer, isProfileComplete, onRedirect]);
+
+    // Log estratégico del perfil del trainer
+    useEffect(() => {
+        if (isTrainer && !isLoadingTrainer) {
+            console.info("[useCompleteProfile] Trainer profile:", {
+                hasTrainer: !!trainer,
+                isComplete: isProfileComplete,
+                missingFields: trainer ? {
+                    occupation: !trainer.occupation,
+                    training_modality: !trainer.training_modality,
+                    location_country: !trainer.location_country,
+                    location_city: !trainer.location_city,
+                    telefono: !trainer.telefono
+                } : 'no trainer data'
+            });
+        }
+    }, [trainer, isTrainer, isLoadingTrainer, isProfileComplete]);
 
     return {
         user,

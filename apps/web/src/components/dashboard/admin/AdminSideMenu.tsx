@@ -6,13 +6,14 @@
  * - Mobile/Tablet (< lg): HIDDEN (DashboardNavbar se usa en su lugar)
  * 
  * SCROLL ARCHITECTURE:
- * - Header: Fixed top
- * - Content container: Single scrolleable area (nav + footer together)
- * - Scrollbar: Hidden but functional
+ * - Header: Fixed top (shrink-0)
+ * - Nav: Scrolleable (flex-1 + overflow-y-auto)
+ * - Footer: ALWAYS visible at bottom (shrink-0, no scroll)
  * 
  * @author Frontend Team
  * @since v4.1.0 - Unified responsive behavior
  * @updated v4.2.0 - Scroll profesional: header fijo + contenedor único scrolleable
+ * @updated v4.2.2 - Footer always visible at bottom (no scroll)
  */
 
 import React from "react";
@@ -39,7 +40,7 @@ export const AdminSideMenu: React.FC = () => {
     ];
 
     return (
-        <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10">
+        <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10 bg-sidebar-nav">
             {/* Header - Logo y título fijos en top */}
             <div className="p-8 bg-sidebar-header border-b-2 border-white/60 text-center shrink-0">
                 <div className="w-[120px] h-auto mx-auto">
@@ -48,10 +49,10 @@ export const AdminSideMenu: React.FC = () => {
                 <p className="text-slate-300 text-sm mt-2">Admin Panel</p>
             </div>
 
-            {/* Contenedor scrolleable: Nav + Footer juntos - Scrollbar oculto pero funcional */}
-            <div className="flex-1 overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {/* Navegación */}
-                <nav className="p-8 px-8 bg-sidebar-nav border-b-2 border-white/60 space-y-4">
+            {/* Content Wrapper - Flexbox para separar nav (scrolleable) de footer (fijo) */}
+            <div className="flex-1 flex flex-col min-h-0">
+                {/* Navegación - SOLO ESTA PARTE SCROLLEA */}
+                <nav className="flex-1 overflow-y-auto p-8 px-8 border-b-2 border-white/60 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {menuItems.map((item) => (
                         <div
                             key={item.path}
@@ -68,8 +69,8 @@ export const AdminSideMenu: React.FC = () => {
                     ))}
                 </nav>
 
-                {/* User info + logout - Parte del flujo scrolleable */}
-                <div className="p-6 bg-sidebar-nav pt-8 pb-8">
+                {/* Footer - SIEMPRE VISIBLE AL BOTTOM */}
+                <div className="p-6 pt-8 pb-8 shrink-0">
                     <div className="text-center mb-6">
                         <p className="text-white font-medium">
                             {user?.nombre} {user?.apellidos}

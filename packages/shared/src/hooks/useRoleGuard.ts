@@ -15,8 +15,10 @@ import { canAccess, USER_ROLES } from "@nexia/shared/utils/roles";
 
 export const useRoleGuard = (feature: string) => {
     const user = useSelector((state: RootState) => state.auth.user);
+    const isLoading = useSelector((state: RootState) => state.auth.isLoading);
 
-    const isAuthenticated = Boolean(user);
+    // Durante la hidratación, no considerar como no autenticado
+    const isAuthenticated = Boolean(user) || isLoading;
     const role = user?.role;
 
     const hasAccess = canAccess(role, feature);

@@ -10,13 +10,13 @@
  * 
  * @author Frontend Team
  * @since v1.0.0
- * @updated v3.2.0 - Added responsive sidebar offset
+ * @updated v4.0.0 - Limpieza de padding lateral global (para banners full width)
  */
 
 import React from "react";
-import { useSelector } from "react-redux";  
+import { useSelector } from "react-redux";
 import { meshGradientInverted } from "@/utils/backgrounds";
-import type { RootState } from "@nexia/shared/store";  
+import type { RootState } from "@nexia/shared/store";
 
 interface DashboardLayoutProps {
     children?: React.ReactNode;
@@ -48,8 +48,8 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 </div>
             )}
 
-            {/* Contenido principal - RESPONSIVE: Centrado mobile/tablet, offset desktop */}
-            <main className="lg:ml-80 p-4 md:p-8 lg:p-12 pt-16 md:pt-18 lg:pt-20 min-h-screen">
+            {/* Contenido principal - offset sidebar, sin padding lateral */}
+            <main className="lg:ml-80 pt-16 md:pt-18 lg:pt-20 min-h-screen">
                 {children}
             </main>
         </div>

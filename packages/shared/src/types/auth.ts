@@ -5,6 +5,7 @@
  * 
  * @author Frontend Team
  * @since v1.0.0
+ * @updated v2.5.2 - Agregado is_verified para email verification
  */
 
 import { USER_ROLES } from "@nexia/shared/config/constants";
@@ -20,6 +21,7 @@ export interface User {
     apellidos: string;
     role: UserRole;
     is_active: boolean;
+    is_verified: boolean; // ✅ NUEVO - Email verification status
     created_at: string;
 }
 
@@ -61,6 +63,16 @@ export interface VerifyEmailResponse {
     email: string;
 }
 
+// - Response para resend verification
+export interface ResendVerificationData {
+    email: string;
+}
+
+export interface ResendVerificationResponse {
+    message: string;
+    verification_token?: string; // Solo en development
+}
+
 // API Response Types
 export interface AuthResponse {
     access_token: string;
@@ -71,7 +83,6 @@ export interface AuthResponse {
 }
 
 export interface LoginResponse extends AuthResponse {}
-
 
 export interface ForgotPasswordResponse {
     message: string;

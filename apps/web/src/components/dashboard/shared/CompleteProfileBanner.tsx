@@ -1,35 +1,64 @@
 /**
  * CompleteProfileBanner - Aviso para perfiles incompletos.
  * 
- * Extraído desde TrainerDashboard para reutilización en cualquier dashboard.
- * Mantiene el diseño responsive y los estilos originales.
+ * Versión compacta y de ancho completo, con estilo coherente con el banner de email.
+ * Tipografía más pequeña, botón outline a la derecha.
  * 
  * @since v2.4.1
+ * @updated v4.0.0 - Full width + diseño compacto + botón outline
+ * @updated v4.1.0 - Recibe user completo para detectar cambios durante hydration
  */
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons/Button";
+import { useCompleteProfile } from "@nexia/shared";
+import type { User } from "@nexia/shared/types/auth";
 
 interface Props {
-    isProfileComplete: boolean;
+    user: User | null;
     redirectTo?: string;
 }
 
 export const CompleteProfileBanner: React.FC<Props> = ({
-    isProfileComplete,
+    user,
     redirectTo = "/dashboard/trainer/complete-profile",
 }) => {
     const navigate = useNavigate();
+    
+    // Usar hook para detectar si el perfil está completo
+    const { isProfileComplete } = useCompleteProfile();
 
-    if (isProfileComplete) return null;
+    // Log estratégico del banner
+    // eslint-disable-next-line no-console
+    console.info("[CompleteProfileBanner]", {
+        user: user?.email || 'no user',
+        role: user?.role || 'no role',
+        isProfileComplete,
+        willRender: user && user.role === 'trainer' && !isProfileComplete
+    });
+
+    // Si user es null (loading), no mostrar banner
+    if (!user) {
+        return null;
+    }
+
+    // Solo mostrar para trainers
+    if (user.role !== 'trainer') {
+        return null;
+    }
+
+    // Si el perfil está completo, no mostrar banner
+    if (isProfileComplete) {
+        return null;
+    }
 
     return (
-        <div className="px-4 lg:px-8 mb-8">
-            <div className="bg-yellow-500/90 backdrop-blur-sm rounded-xl p-4 lg:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4 shadow-lg border-2 border-yellow-600/30">
-                <div className="flex items-start space-x-3">
+        <div className="w-full mb-4">
+            <div className="bg-yellow-400/90 text-yellow-900 flex flex-col md:flex-row md:items-center md:justify-between border-b-2 border-yellow-600/40 p-3 md:p-4 lg:p-5 shadow-md">
+                <div className="flex items-start space-x-3 flex-1">
                     <svg
-                        className="w-6 h-6 text-yellow-900 shrink-0 mt-0.5"
+                        className="w-5 h-5 text-yellow-900 mt-0.5 shrink-0"
                         fill="currentColor"
                         viewBox="0 0 20 20"
                     >
@@ -39,23 +68,28 @@ export const CompleteProfileBanner: React.FC<Props> = ({
                             clipRule="evenodd"
                         />
                     </svg>
-                    <div>
-                        <h3 className="font-semibold text-yellow-900 text-base lg:text-lg">
+                    <div className="flex-1 text-sm leading-snug">
+                        <p className="font-medium">
                             Completa tu perfil profesional
-                        </h3>
-                        <p className="text-yellow-800 text-sm lg:text-base mt-1">
-                            Necesitamos algunos datos más para que puedas gestionar clientes y entrenamientos
+                        </p>
+                        <p className="opacity-90 mt-0.5">
+                            Necesitamos algunos datos más para que puedas gestionar clientes y entrenamientos.
                         </p>
                     </div>
                 </div>
-                <Button
-                    onClick={() => navigate(redirectTo)}
-                    variant="outline"
-                    size="md"
-                    className="whitespace-nowrap"
-                >
-                    Completar ahora
-                </Button>
+
+                <div className="flex items-center mt-3 md:mt-0">
+                        <Button
+                            onClick={() => {
+                                // Usar navigate con replace para evitar problemas de historial
+                                navigate(redirectTo, { replace: true });
+                            }}
+                        variant="outline"
+                        size="sm"
+                    >
+                        Completar ahora
+                    </Button>
+                </div>
             </div>
         </div>
     );

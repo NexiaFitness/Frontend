@@ -1,10 +1,11 @@
 /**
  * API de autenticación usando RTK Query
  * CORREGIDO: Compatibilidad MSW + URLSearchParams en entorno testing
- * Define endpoints: login, register, forgotPassword, resetPassword, getCurrentUser, verifyEmail
+ * Define endpoints: login, register, forgotPassword, resetPassword, getCurrentUser, verifyEmail, resendVerification
  * 
  * @author Frontend Team
  * @since v1.0.0
+ * @updated v2.5.2 - Agregado resendVerification endpoint
  */
 
 import { baseApi } from "./baseApi";
@@ -15,6 +16,8 @@ import type {
     RegisterResponse,
     VerifyEmailData,
     VerifyEmailResponse,
+    ResendVerificationData,
+    ResendVerificationResponse,
     ForgotPasswordData,
     ResetPasswordData,
     User,
@@ -79,6 +82,18 @@ export const authApi = baseApi.injectEndpoints({
             invalidatesTags: ["Auth", "User"],
         }),
 
+        // ✅ NUEVO - Resend verification email
+        resendVerification: builder.mutation<ResendVerificationResponse, ResendVerificationData>({
+            query: (data) => ({
+                url: "/auth/resend-verification",
+                method: "POST",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+        }),
+
         // Resto de endpoints sin cambios...
         forgotPassword: builder.mutation<void, ForgotPasswordData>({
             query: (data) => ({
@@ -118,6 +133,7 @@ export const {
     useLoginMutation,
     useRegisterMutation,
     useVerifyEmailMutation,
+    useResendVerificationMutation,
     useForgotPasswordMutation,
     useResetPasswordMutation,
     useGetCurrentUserQuery,
