@@ -18,23 +18,31 @@
  * @since v2.4.1
  * @updated v2.5.2 - Agregado EmailVerificationBanner
  * @updated v4.1.0 - Banners reciben datos completos para detectar hydration
+ * @updated v4.4.0 - Agregado CompleteProfileModal con bloqueo de creación de clientes
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileBanner, EmailVerificationBanner } from "@/components/dashboard/shared";
+import { CompleteProfileModal } from "@/components/dashboard/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons";
+import { useCompleteProfileModal } from "@nexia/shared";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
+    // Estado del modal de Complete Profile
+    const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
+
+    // Hook para verificar si perfil está completo
+    const { shouldBlock } = useCompleteProfileModal();
 
     // Items del menú superior
     const menuItems = [
@@ -43,6 +51,15 @@ export const TrainerDashboard: React.FC = () => {
         { label: "Planes de entrenamiento", path: "/dashboard/plans" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
+
+    // Handler para crear cliente con bloqueo condicional
+    const handleAddClient = () => {
+        if (shouldBlock) {
+            setShowCompleteProfileModal(true);
+            return;
+        }
+        navigate("/dashboard/clients/onboarding");
+    };
 
     return (
         <>
@@ -115,7 +132,7 @@ export const TrainerDashboard: React.FC = () => {
                             variant="primary"
                             size="lg"
                             className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={() => navigate("/dashboard/clients/onboarding")}
+                            onClick={handleAddClient}
                         >
                             Add New Client
                         </Button>
@@ -190,6 +207,12 @@ export const TrainerDashboard: React.FC = () => {
                     </div>
                 </div>
             </DashboardLayout>
+
+            {/* Modal de Complete Profile */}
+            <CompleteProfileModal
+                isOpen={showCompleteProfileModal}
+                onClose={() => setShowCompleteProfileModal(false)}
+            />
         </>
     );
 };

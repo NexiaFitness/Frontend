@@ -71,6 +71,10 @@ export * from "./hooks/useTrainerProfile";
 export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/usePublicNavigation";
 
+// Hooks - Modals
+export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';
+export { useEmailVerificationModal } from './hooks/modals/useEmailVerificationModal';
+export { useBillingInfoModal } from './hooks/modals/useBillingInfoModal';
 
 // Services
 export * from "./services/authService";

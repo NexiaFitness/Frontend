@@ -21,45 +21,45 @@
 
 // Training Modality Types
 export const TRAINING_MODALITY = {
-  IN_PERSON: 'in_person',
-  ONLINE: 'online',
-  HYBRID: 'hybrid'
+    IN_PERSON: 'in_person',
+    ONLINE: 'online',
+    HYBRID: 'hybrid'
 } as const;
 
 export type TrainingModality = (typeof TRAINING_MODALITY)[keyof typeof TRAINING_MODALITY];
 
 // Occupation Types
 export const OCCUPATION_TYPES = {
-  PERSONAL_TRAINER: 'personal_trainer',
-  FITNESS_COACH: 'fitness_coach',
-  STRENGTH_COACH: 'strength_coach',
-  SPORTS_TRAINER: 'sports_trainer',
-  WELLNESS_COACH: 'wellness_coach',
-  NUTRITIONIST: 'nutritionist',
-  PHYSIOTHERAPIST: 'physiotherapist',
-  OTHER: 'other'
+    PERSONAL_TRAINER: 'personal_trainer',
+    FITNESS_COACH: 'fitness_coach',
+    STRENGTH_COACH: 'strength_coach',
+    SPORTS_TRAINER: 'sports_trainer',
+    WELLNESS_COACH: 'wellness_coach',
+    NUTRITIONIST: 'nutritionist',
+    PHYSIOTHERAPIST: 'physiotherapist',
+    OTHER: 'other'
 } as const;
 
 export type OccupationType = (typeof OCCUPATION_TYPES)[keyof typeof OCCUPATION_TYPES];
 
 // Specialty Types
 export const SPECIALTY_TYPES = {
-  STRENGTH_TRAINING: 'strength_training',
-  WEIGHT_LOSS: 'weight_loss',
-  MUSCLE_GAIN: 'muscle_gain',
-  ATHLETIC_PERFORMANCE: 'athletic_performance',
-  FUNCTIONAL_TRAINING: 'functional_training',
-  REHABILITATION: 'rehabilitation',
-  SENIOR_FITNESS: 'senior_fitness',
-  YOUTH_TRAINING: 'youth_training',
-  BODYBUILDING: 'bodybuilding',
-  CROSSFIT: 'crossfit',
-  POWERLIFTING: 'powerlifting',
-  OLYMPIC_LIFTING: 'olympic_lifting',
-  CALISTHENICS: 'calisthenics',
-  MOBILITY: 'mobility',
-  NUTRITION: 'nutrition',
-  OTHER: 'other'
+    STRENGTH_TRAINING: 'strength_training',
+    WEIGHT_LOSS: 'weight_loss',
+    MUSCLE_GAIN: 'muscle_gain',
+    ATHLETIC_PERFORMANCE: 'athletic_performance',
+    FUNCTIONAL_TRAINING: 'functional_training',
+    REHABILITATION: 'rehabilitation',
+    SENIOR_FITNESS: 'senior_fitness',
+    YOUTH_TRAINING: 'youth_training',
+    BODYBUILDING: 'bodybuilding',
+    CROSSFIT: 'crossfit',
+    POWERLIFTING: 'powerlifting',
+    OLYMPIC_LIFTING: 'olympic_lifting',
+    CALISTHENICS: 'calisthenics',
+    MOBILITY: 'mobility',
+    NUTRITION: 'nutrition',
+    OTHER: 'other'
 } as const;
 
 export type SpecialtyType = (typeof SPECIALTY_TYPES)[keyof typeof SPECIALTY_TYPES];
@@ -72,7 +72,7 @@ export interface Trainer {
     apellidos: string;
     mail: string;
     telefono: string | null;
-    
+
     // Professional profile fields
     occupation: string | null;
     training_modality: string | null;
@@ -82,7 +82,7 @@ export interface Trainer {
     billing_address: string | null;
     billing_postal_code: string | null;
     specialty: string | null;
-    
+
     // Audit fields
     created_at: string;
     updated_at: string;
@@ -178,7 +178,7 @@ export interface TrainerProfileFormErrors {
 export const checkTrainerProfileCompleteness = (trainer: Trainer): TrainerProfileStatus => {
     const requiredFields: (keyof Trainer)[] = [
         'nombre',
-        'apellidos', 
+        'apellidos',
         'mail',
         'telefono',
         'occupation',
@@ -189,16 +189,16 @@ export const checkTrainerProfileCompleteness = (trainer: Trainer): TrainerProfil
         'billing_address',
         'billing_postal_code'
     ];
-    
+
     const missingFields = requiredFields.filter(field => {
         const value = trainer[field];
         return value === null || value === undefined || value === '';
     });
-    
+
     const totalFields = requiredFields.length;
     const completedFields = totalFields - missingFields.length;
     const completionPercentage = Math.round((completedFields / totalFields) * 100);
-    
+
     return {
         is_complete: missingFields.length === 0,
         missing_fields: missingFields,
