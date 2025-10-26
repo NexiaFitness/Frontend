@@ -9,6 +9,7 @@
 
 import { store } from "../store";
 import { loginSuccess, loginFailure, logout } from "../store/authSlice";
+import { API_CONFIG } from "../config/constants";
 import type { 
     LoginCredentials, 
     RegisterCredentials, 
@@ -52,7 +53,7 @@ export class AuthService {
      */
     async login(credentials: LoginCredentials): Promise<AuthResponse> {
         try {
-            const response = await fetch('https://nexiaapp.com/api/v1/auth/login', {
+            const response = await fetch(`${API_CONFIG.BASE_URL}/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -84,7 +85,7 @@ export class AuthService {
      */
     async register(userData: RegisterCredentials): Promise<AuthResponse> {
         try {
-            const response = await fetch('https://nexiaapp.com/api/v1/auth/register', {
+            const response = await fetch(`${API_CONFIG.BASE_URL}/auth/register`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

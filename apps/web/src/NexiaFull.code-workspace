@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"path": "../../.."
+		},
+		{
+			"path": "../../../../backend"
+		}
+	],
+	"settings": {
+		"markdown-preview-enhanced.previewTheme": "github-dark.css"
+	}
+}

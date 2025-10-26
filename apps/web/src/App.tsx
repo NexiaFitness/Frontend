@@ -5,12 +5,13 @@
  * - Layout público para homepage y páginas de autenticación
  * - Smart dashboard routing basado en rol del usuario autenticado
  * - Protección de rutas privadas con redirect automático
- * - Ruta privada /dashboard/account → ProfileForm dentro de DashboardLayout
+ * - Client Management: List (implementado), Detail y Edit (pendientes)
  * 
  * @author Frontend Team
  * @since v1.0.0
  * @updated v3.2.0 - Role-based dashboard routing implementado
  * @updated v2.5.0 - ClientOnboarding wizard agregado
+ * @updated v2.6.0 - Client Management Dashboard (List implementado, Detail/Edit pendientes)
  */
 
 import React, { useEffect } from "react";
@@ -31,7 +32,14 @@ import { AthleteDashboard } from "./pages/dashboard/athlete/AthleteDashboard";
 
 // Páginas trainer-specific
 import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
-import { ClientOnboarding } from "./pages/clients/ClientOnboarding"; // ✅ CORREGIDO
+
+// Client Management (trainers only)
+import { ClientOnboarding } from "./pages/clients/ClientOnboarding";
+import { ClientList } from "./pages/clients/ClientList";
+// TODO FASE 3: Descomentar cuando ClientDetail esté implementado
+// import { ClientDetail } from "./pages/clients/ClientDetail";
+// TODO FASE 4: Descomentar cuando ClientEdit esté implementado
+// import { ClientEdit } from "./pages/clients/ClientEdit";
 
 // Páginas adicionales
 import Account from "./pages/account/Account";
@@ -116,13 +124,55 @@ function App() {
         }
       />
 
-      {/* Client Onboarding - Solo trainers */}
+      {/* ============================================ */}
+      {/* CLIENT MANAGEMENT - Trainers only */}
+      {/* ============================================ */}
+      
+      {/* TODO FASE 4: Client Edit - Descomentar cuando esté implementado
+      <Route
+        path="/dashboard/clients/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ClientEdit />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+      */}
+
+      {/* TODO FASE 3: Client Detail - Descomentar cuando esté implementado
+      <Route
+        path="/dashboard/clients/:id"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ClientDetail />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+      */}
+
+      {/* Client Onboarding (wizard de alta) */}
       <Route
         path="/dashboard/clients/onboarding"
         element={
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
               <ClientOnboarding />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Client List (lista principal) - ✅ FASE 2 IMPLEMENTADA */}
+      <Route
+        path="/dashboard/clients"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ClientList />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }

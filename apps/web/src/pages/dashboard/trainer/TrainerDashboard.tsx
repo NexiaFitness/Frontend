@@ -13,12 +13,14 @@
  * - El banner "EmailVerificationBanner" se renderiza si el email no está verificado.
  * - No contiene lógica de negocio; toda la información proviene de Redux y RTK Query.
  * - Mantener el uso de TIPOGRAFÍA y componentes UI consistentes con el sistema global.
+ * - Botón "Add New Client" ahora redirige a lista de clientes (/dashboard/clients).
  * 
  * @author Frontend Team
  * @since v2.4.1
  * @updated v2.5.2 - Agregado EmailVerificationBanner
  * @updated v4.1.0 - Banners reciben datos completos para detectar hydration
  * @updated v4.4.0 - Agregado CompleteProfileModal con bloqueo de creación de clientes
+ * @updated v2.6.0 - Botón "Add New Client" redirige a /dashboard/clients (Client Management)
  */
 
 import React, { useState } from "react";
@@ -52,13 +54,13 @@ export const TrainerDashboard: React.FC = () => {
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
-    // Handler para crear cliente con bloqueo condicional
-    const handleAddClient = () => {
+    // Handler para gestionar clientes con bloqueo condicional
+    const handleManageClients = () => {
         if (shouldBlock) {
             setShowCompleteProfileModal(true);
             return;
         }
-        navigate("/dashboard/clients/onboarding");
+        navigate("/dashboard/clients");
     };
 
     return (
@@ -132,9 +134,9 @@ export const TrainerDashboard: React.FC = () => {
                             variant="primary"
                             size="lg"
                             className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={handleAddClient}
+                            onClick={handleManageClients}
                         >
-                            Add New Client
+                            Gestionar Clientes
                         </Button>
 
                         <Button
@@ -150,7 +152,10 @@ export const TrainerDashboard: React.FC = () => {
                 {/* Bloque de clientes recientes */}
                 <div className="px-4 lg:px-8">
                     <div className="max-w-4xl mx-auto">
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group">
+                        <div 
+                            className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group"
+                            onClick={handleManageClients}
+                        >
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                                 <div>
                                     <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">
