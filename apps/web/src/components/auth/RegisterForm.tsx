@@ -105,14 +105,9 @@ export const RegisterForm: React.FC = () => {
             // Usar hook centralizado con autologin automático
             await register(credentials);
 
-            // Redirección a verificación de email
-            navigate("/auth/verify-email", {
-                state: {
-                    message:
-                        "Te hemos enviado un correo de verificación. Por favor, revisa tu bandeja de entrada antes de continuar.",
-                },
-                replace: true,
-            });
+            // Redirección directa al dashboard según rol
+            const redirectPath = getRedirectPath(formData.role as UserRole);
+            navigate(redirectPath, { replace: true });
 
         } catch (error) {
             const errorMessage = handleServerError(

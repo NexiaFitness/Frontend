@@ -75,6 +75,7 @@ export * from "./hooks/usePublicNavigation";
 export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';
 export { useEmailVerificationModal } from './hooks/modals/useEmailVerificationModal';
 export { useBillingInfoModal } from './hooks/modals/useBillingInfoModal';
+export { useEmailVerificationGuard } from './hooks/modals/useEmailVerificationGuard';
 
 // Services
 export * from "./services/authService";

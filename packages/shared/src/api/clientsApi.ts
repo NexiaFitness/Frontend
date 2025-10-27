@@ -23,16 +23,23 @@ export const clientsApi = baseApi.injectEndpoints({
             query: ({ filters = {}, page = 1, per_page = 10 }) => {
                 const params = new URLSearchParams();
                 params.append('page', page.toString());
-                params.append('per_page', per_page.toString());
+                params.append('page_size', per_page.toString()); // ← CAMBIO 1: per_page → page_size
                 
-                // Agregar filtros si existen
+                // Agregar filtros existentes
                 if (filters.objetivo) params.append('objetivo', filters.objetivo);
                 if (filters.nivel_experiencia) params.append('nivel_experiencia', filters.nivel_experiencia);
                 if (filters.activo !== undefined) params.append('activo', filters.activo.toString());
                 if (filters.search) params.append('search', filters.search);
 
+                // ← CAMBIO 3: Agregar filtros avanzados
+                if (filters.age_min !== undefined) params.append('age_min', filters.age_min.toString());
+                if (filters.age_max !== undefined) params.append('age_max', filters.age_max.toString());
+                if (filters.gender) params.append('gender', filters.gender);
+                if (filters.sort_by) params.append('sort_by', filters.sort_by);
+                if (filters.sort_order) params.append('sort_order', filters.sort_order);
+
                 return {
-                    url: `/clients/?${params.toString()}`,
+                    url: `/clients/search?${params.toString()}`, // ← CAMBIO 2: /clients/ → /clients/search
                     method: "GET",
                 };
             },

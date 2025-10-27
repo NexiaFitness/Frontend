@@ -195,10 +195,22 @@ export interface UpdateClientData {
 }
 
 export interface ClientFilters {
+    // Filtros existentes (mantener compatibilidad)
     objetivo?: ClientGoal;
     nivel_experiencia?: ClientExperienceLevel;
     activo?: boolean;
     search?: string;
+    
+    // Filtros avanzados de edad
+    age_min?: number;
+    age_max?: number;
+    
+    // Filtro de género
+    gender?: "Masculino" | "Femenino";
+    
+    // Ordenamiento
+    sort_by?: "apellidos" | "nombre" | "edad" | "fecha_alta";
+    sort_order?: "asc" | "desc";
 }
 
 // API Response Types
