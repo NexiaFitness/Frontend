@@ -3,12 +3,11 @@
  *
  * Contexto:
  * - Muestra resumen de métricas clave: total, activos, inactivos.
- * - Usa endpoint /clients/stats (si backend lo tiene).
- * - Fallback: calcula stats desde lista de clientes actual.
+ * - Usa hook useClientStats que abstrae transformación de datos.
  * - Responsive: 1 columna móvil, 3 columnas desktop.
  *
  * Notas de mantenimiento:
- * - Si backend no tiene /clients/stats, usar data de getClients.
+ * - Hook useClientStats mapea nombres de backend a getters semánticos.
  * - Loading skeleton mientras carga.
  * - Error handling silencioso (stats no críticas).
  *
@@ -17,10 +16,16 @@
  */
 
 import React from "react";
-import { useGetClientStatsQuery } from "@nexia/shared/api/clientsApi";
+import { useClientStats } from "@nexia/shared/hooks/clients/useClientStats";
 
 export const ClientStats: React.FC = () => {
-    const { data: stats, isLoading } = useGetClientStatsQuery();
+    const {
+        getTotalClients,
+        getActiveClients,
+        getInactiveClients,
+        isLoading,
+        error
+    } = useClientStats();
 
     // Loading skeleton
     if (isLoading) {
@@ -41,10 +46,15 @@ export const ClientStats: React.FC = () => {
         );
     }
 
-    // Si no hay stats, no renderizar nada (error silencioso)
-    if (!stats) {
+    // Error handling silencioso
+    if (error) {
         return null;
     }
+
+    // Obtener valores usando getters
+    const totalClients = getTotalClients();
+    const activeClients = getActiveClients();
+    const inactiveClients = getInactiveClients();
 
     return (
         <div className="px-4 lg:px-8 mb-6">
@@ -53,8 +63,12 @@ export const ClientStats: React.FC = () => {
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-3xl font-bold text-slate-800">{stats.total}</p>
-                            <p className="text-sm font-medium text-slate-600 mt-1">Total Clientes</p>
+                            <p className="text-3xl font-bold text-slate-800">
+                                {totalClients}
+                            </p>
+                            <p className="text-sm font-medium text-slate-600 mt-1">
+                                Total Clientes
+                            </p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                             <svg
@@ -78,10 +92,16 @@ export const ClientStats: React.FC = () => {
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-3xl font-bold text-green-600">{stats.active}</p>
-                            <p className="text-sm font-medium text-slate-600 mt-1">Activos</p>
+                            <p className="text-3xl font-bold text-green-600">
+                                {activeClients}
+                            </p>
+                            <p className="text-sm font-medium text-slate-600 mt-1">
+                                Activos
+                            </p>
                             <p className="text-xs text-slate-500 mt-1">
-                                {stats.total > 0 ? Math.round((stats.active / stats.total) * 100) : 0}% del total
+                                {totalClients > 0 
+                                    ? Math.round((activeClients / totalClients) * 100) 
+                                    : 0}% del total
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -106,10 +126,16 @@ export const ClientStats: React.FC = () => {
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-3xl font-bold text-slate-600">{stats.inactive}</p>
-                            <p className="text-sm font-medium text-slate-600 mt-1">Inactivos</p>
+                            <p className="text-3xl font-bold text-slate-600">
+                                {inactiveClients}
+                            </p>
+                            <p className="text-sm font-medium text-slate-600 mt-1">
+                                Inactivos
+                            </p>
                             <p className="text-xs text-slate-500 mt-1">
-                                {stats.total > 0 ? Math.round((stats.inactive / stats.total) * 100) : 0}% del total
+                                {totalClients > 0 
+                                    ? Math.round((inactiveClients / totalClients) * 100) 
+                                    : 0}% del total
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
