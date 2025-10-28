@@ -21,6 +21,7 @@
  * @updated v4.1.0 - Banners reciben datos completos para detectar hydration
  * @updated v4.4.0 - Agregado CompleteProfileModal con bloqueo de creación de clientes
  * @updated v2.6.0 - Botón "Add New Client" redirige a /dashboard/clients (Client Management)
+ * @updated v2.6.1 - Integración de estadísticas reales desde API usando useClientStats
  */
 
 import React, { useState } from "react";
@@ -33,12 +34,22 @@ import { CompleteProfileBanner, EmailVerificationBanner } from "@/components/das
 import { CompleteProfileModal } from "@/components/dashboard/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons";
-import { useCompleteProfileModal } from "@nexia/shared";
+import { useCompleteProfileModal, useClientStats } from "@nexia/shared";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
+
+    // Hook de estadísticas de clientes
+    const {
+        getTotalClients,
+        getActiveClients,
+        getInactiveClients,
+        getActivePercentage,
+        isLoading,
+        isError,
+    } = useClientStats();
 
     // Estado del modal de Complete Profile
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
@@ -61,6 +72,20 @@ export const TrainerDashboard: React.FC = () => {
             return;
         }
         navigate("/dashboard/clients");
+    };
+
+    // Loading state para las cards
+    const renderMetricValue = (value: number | string) => {
+        if (isLoading) {
+            return (
+                <div className="h-10 bg-slate-200 rounded animate-pulse" />
+            );
+        }
+        return (
+            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
+                {value}
+            </h3>
+        );
     };
 
     return (
@@ -93,38 +118,48 @@ export const TrainerDashboard: React.FC = () => {
                 {/* Cards de métricas */}
                 <div className="px-4 lg:px-8 mb-12 lg:mb-20">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
+                        {/* Active Clients */}
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
-                                16
-                            </h3>
+                            {renderMetricValue(getActiveClients())}
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
-                                Active Clients
+                                Clientes Activos
                             </p>
                             <p className="text-slate-600 text-sm lg:text-base">
-                                High commitment level
+                                {getActivePercentage()} del total
                             </p>
                         </div>
 
+                        {/* Inactive Clients */}
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
-                                8
-                            </h3>
+                            {renderMetricValue(getInactiveClients())}
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
-                                Sessions Today
+                                Clientes Inactivos
                             </p>
-                            <p className="text-slate-600 text-sm lg:text-base">Scheduled</p>
+                            <p className="text-slate-600 text-sm lg:text-base">
+                                Requieren seguimiento
+                            </p>
                         </div>
 
+                        {/* Total Clients */}
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 md:col-span-2 lg:col-span-1">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
-                                24
-                            </h3>
+                            {renderMetricValue(getTotalClients())}
                             <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
-                                Plans Created
+                                Total de Clientes
                             </p>
-                            <p className="text-slate-600 text-sm lg:text-base">This month</p>
+                            <p className="text-slate-600 text-sm lg:text-base">
+                                En tu cartera
+                            </p>
                         </div>
                     </div>
+
+                    {/* Error state */}
+                    {isError && (
+                        <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-center">
+                            <p className="text-red-600 text-sm">
+                                No se pudieron cargar las estadísticas. Intenta recargar la página.
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Botones principales */}
@@ -159,10 +194,10 @@ export const TrainerDashboard: React.FC = () => {
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                                 <div>
                                     <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">
-                                        Recent Clients
+                                        Gestión de Clientes
                                     </h3>
                                     <p className="text-slate-600 text-sm lg:text-base">
-                                        View and manage your training partners
+                                        Visualiza y administra tus clientes
                                     </p>
                                 </div>
                                 <div className="text-primary-600 group-hover:text-primary-700 self-end md:self-center">
@@ -184,27 +219,39 @@ export const TrainerDashboard: React.FC = () => {
 
                             <div className="mt-6 grid grid-cols-3 gap-4 text-center">
                                 <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
-                                        4
-                                    </div>
+                                    {isLoading ? (
+                                        <div className="h-8 bg-slate-200 rounded animate-pulse mb-2" />
+                                    ) : (
+                                        <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
+                                            {getActiveClients()}
+                                        </div>
+                                    )}
                                     <div className="text-xs lg:text-sm text-slate-600">
-                                        Active Today
+                                        Activos
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
-                                        12
-                                    </div>
+                                    {isLoading ? (
+                                        <div className="h-8 bg-slate-200 rounded animate-pulse mb-2" />
+                                    ) : (
+                                        <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
+                                            {getInactiveClients()}
+                                        </div>
+                                    )}
                                     <div className="text-xs lg:text-sm text-slate-600">
-                                        This Week
+                                        Inactivos
                                     </div>
                                 </div>
                                 <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
-                                        45
-                                    </div>
+                                    {isLoading ? (
+                                        <div className="h-8 bg-slate-200 rounded animate-pulse mb-2" />
+                                    ) : (
+                                        <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
+                                            {getTotalClients()}
+                                        </div>
+                                    )}
                                     <div className="text-xs lg:text-sm text-slate-600">
-                                        Total Clients
+                                        Total
                                     </div>
                                 </div>
                             </div>

@@ -5,6 +5,7 @@
  * 
  * @author Frontend Team
  * @since v2.1.0
+ * @updated v2.6.0 - Corregido schema de getClientStats según backend real
  */
 
 import { baseApi } from "./baseApi";
@@ -15,6 +16,7 @@ import type {
     UpdateClientData,
     ClientFilters,
 } from "../types/client";
+import type { ClientStatsResponse } from "../types/clientStats";
 
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -23,7 +25,7 @@ export const clientsApi = baseApi.injectEndpoints({
             query: ({ filters = {}, page = 1, per_page = 10 }) => {
                 const params = new URLSearchParams();
                 params.append('page', page.toString());
-                params.append('page_size', per_page.toString()); // ← CAMBIO 1: per_page → page_size
+                params.append('page_size', per_page.toString());
                 
                 // Agregar filtros existentes
                 if (filters.objetivo) params.append('objetivo', filters.objetivo);
@@ -31,7 +33,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 if (filters.activo !== undefined) params.append('activo', filters.activo.toString());
                 if (filters.search) params.append('search', filters.search);
 
-                // ← CAMBIO 3: Agregar filtros avanzados
+                // Filtros avanzados
                 if (filters.age_min !== undefined) params.append('age_min', filters.age_min.toString());
                 if (filters.age_max !== undefined) params.append('age_max', filters.age_max.toString());
                 if (filters.gender) params.append('gender', filters.gender);
@@ -39,7 +41,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 if (filters.sort_order) params.append('sort_order', filters.sort_order);
 
                 return {
-                    url: `/clients/search?${params.toString()}`, // ← CAMBIO 2: /clients/ → /clients/search
+                    url: `/clients/search?${params.toString()}`,
                     method: "GET",
                 };
             },
@@ -52,7 +54,7 @@ export const clientsApi = baseApi.injectEndpoints({
                     : [{ type: "Client", id: "LIST" }],
         }),
 
-        // Obtener cliente específico por ID - devuelve Client directo
+        // Obtener cliente específico por ID
         getClient: builder.query<Client, number>({
             query: (id) => ({
                 url: `/clients/${id}`,
@@ -61,7 +63,7 @@ export const clientsApi = baseApi.injectEndpoints({
             providesTags: (result, error, id) => [{ type: "Client", id }],
         }),
 
-        // Crear nuevo cliente - devuelve Client directo
+        // Crear nuevo cliente
         createClient: builder.mutation<Client, CreateClientData>({
             query: (clientData) => ({
                 url: "/clients/",
@@ -71,10 +73,13 @@ export const clientsApi = baseApi.injectEndpoints({
                     "Content-Type": "application/json",
                 },
             }),
-            invalidatesTags: [{ type: "Client", id: "LIST" }],
+            invalidatesTags: [
+                { type: "Client", id: "LIST" },
+                { type: "Client", id: "STATS" }, // ← Invalidar stats al crear
+            ],
         }),
 
-        // Actualizar cliente existente - devuelve Client directo
+        // Actualizar cliente existente
         updateClient: builder.mutation<Client, { id: number; data: UpdateClientData }>({
             query: ({ id, data }) => ({
                 url: `/clients/${id}`,
@@ -87,10 +92,11 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: (result, error, { id }) => [
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
+                { type: "Client", id: "STATS" }, // ← Invalidar stats al actualizar
             ],
         }),
 
-        // Eliminar cliente - devuelve mensaje de confirmación
+        // Eliminar cliente
         deleteClient: builder.mutation<{ message: string }, number>({
             query: (id) => ({
                 url: `/clients/${id}`,
@@ -99,11 +105,12 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: (result, error, id) => [
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
+                { type: "Client", id: "STATS" }, // ← Invalidar stats al eliminar
             ],
         }),
 
-        // Obtener estadísticas de clientes (para dashboard)
-        getClientStats: builder.query<{ total: number; active: number; inactive: number }, void>({
+        // Obtener estadísticas de clientes (schema corregido según backend real)
+        getClientStats: builder.query<ClientStatsResponse, void>({
             query: () => ({
                 url: "/clients/stats",
                 method: "GET",

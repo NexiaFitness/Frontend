@@ -25,5 +25,5 @@ const getEnv = (key: string, fallback: string): string => {
 
 export const API_BASE_URL = getEnv(
   'VITE_API_BASE_URL',
-  'https://nexiaapp.com/api/v1'
+  'http://127.0.0.1:8000/api/v1'  // Cambiado a local por defecto
 );

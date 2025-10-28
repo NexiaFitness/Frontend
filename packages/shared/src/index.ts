@@ -54,6 +54,9 @@ export {
 // Tipos
 export * from "./types/auth";
 export * from "./types/client";
+export * from "./types/clientOnboarding";
+export * from "./types/clientStats";
+export * from "./types/trainer";
 export * from "./types/account";
 
 // Config
@@ -70,6 +73,7 @@ export * from "./hooks/useSmartRouting";
 export * from "./hooks/useTrainerProfile";
 export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/usePublicNavigation";
+export * from "./hooks/clients/useClientStats";
 
 // Hooks - Modals
 export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';
