@@ -64,6 +64,24 @@ export const Experience: React.FC<ExperienceStepProps> = ({
                     <p className="text-red-600 text-sm">{errors.frecuencia_semanal}</p>
                 )}
             </div>
+
+            {/* Duración típica de sesión */}
+            <div>
+                <label className={TYPOGRAPHY.inputLabel}>Duración típica de sesión (opcional)</label>
+                <select
+                    value={formData.session_duration || ""}
+                    onChange={(e) => updateField("session_duration", e.target.value)}
+                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                >
+                    <option value="">Selecciona una opción</option>
+                    <option value="short_lt_1h">30-45 minutos</option>
+                    <option value="medium_1h_to_1h30">60 minutos</option>
+                    <option value="long_gt_1h30">90+ minutos</option>
+                </select>
+                {errors.session_duration && (
+                    <p className="text-red-600 text-sm">{errors.session_duration}</p>
+                )}
+            </div>
         </div>
     );
 };

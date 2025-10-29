@@ -20,6 +20,32 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
     // Helper para mostrar valores opcionales
     const display = (value: string | number | undefined | null) => value || "—";
 
+    // Helper para formatear fechas
+    const formatDate = (dateStr: string | undefined | null) => {
+        if (!dateStr) return "—";
+        try {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString("es-ES", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+            });
+        } catch {
+            return dateStr;
+        }
+    };
+
+    // Helper para formatear session_duration
+    const formatSessionDuration = (duration: string | undefined | null) => {
+        if (!duration) return "—";
+        const durationMap: Record<string, string> = {
+            short_lt_1h: "30-45 minutos",
+            medium_1h_to_1h30: "60 minutos",
+            long_gt_1h30: "90+ minutos",
+        };
+        return durationMap[duration] || duration;
+    };
+
     return (
         <div className="space-y-6">
             <h2 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-6`}>
@@ -44,6 +70,18 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
                     <p>
                         <span className="font-medium">Sexo:</span> {display(formData.sexo)}
                     </p>
+                    {formData.id_passport && (
+                        <p>
+                            <span className="font-medium">DNI/Pasaporte:</span>{" "}
+                            {formData.id_passport}
+                        </p>
+                    )}
+                    {formData.birthdate && (
+                        <p>
+                            <span className="font-medium">Fecha de nacimiento:</span>{" "}
+                            {formatDate(formData.birthdate)}
+                        </p>
+                    )}
                 </div>
             </div>
 
@@ -72,6 +110,20 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
                         <span className="font-medium">Objetivo principal:</span>{" "}
                         {display(formData.objetivo_entrenamiento)}
                     </p>
+                    {formData.fecha_definicion_objetivo && (
+                        <p>
+                            <span className="font-medium">Fecha de definición:</span>{" "}
+                            {formatDate(formData.fecha_definicion_objetivo)}
+                        </p>
+                    )}
+                    {formData.descripcion_objetivos && (
+                        <div>
+                            <span className="font-medium">Descripción detallada:</span>
+                            <p className="mt-1 text-slate-600 whitespace-pre-wrap">
+                                {formData.descripcion_objetivos}
+                            </p>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -87,6 +139,12 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
                         <span className="font-medium">Frecuencia semanal:</span>{" "}
                         {display(formData.frecuencia_semanal)}
                     </p>
+                    {formData.session_duration && (
+                        <p>
+                            <span className="font-medium">Duración típica de sesión:</span>{" "}
+                            {formatSessionDuration(formData.session_duration)}
+                        </p>
+                    )}
                 </div>
             </div>
 

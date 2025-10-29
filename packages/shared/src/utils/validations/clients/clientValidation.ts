@@ -81,6 +81,29 @@ export const validateClientForm = (
         }
     }
 
+    // Birthdate (opcional, validar formato ISO date si existe)
+    if (data.birthdate) {
+        const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+        if (!dateRegex.test(data.birthdate)) {
+            errors.birthdate = "Formato de fecha inválido (debe ser YYYY-MM-DD)";
+        } else {
+            const birthDate = new Date(data.birthdate);
+            const today = new Date();
+            if (birthDate > today) {
+                errors.birthdate = "La fecha de nacimiento no puede ser futura";
+            }
+            // Validar que no sea más de 150 años atrás (límite razonable)
+            const maxAge = new Date();
+            maxAge.setFullYear(maxAge.getFullYear() - 150);
+            if (birthDate < maxAge) {
+                errors.birthdate = "La fecha de nacimiento no es válida";
+            }
+        }
+    }
+
+    // id_passport: sin validación específica (string libre, opcional)
+    // No se valida, solo se acepta el valor tal cual
+
     /**
      * ========================================
      * VALIDACIONES ANTROPOMÉTRICAS (v2.5.0)
@@ -159,6 +182,19 @@ export const validateClientForm = (
                 if (data.confirmEmail && data.mail !== data.confirmEmail) {
                     stepErrors.confirmEmail = "Los correos no coinciden";
                 }
+                // Validar birthdate si existe
+                if (data.birthdate) {
+                    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                    if (!dateRegex.test(data.birthdate)) {
+                        stepErrors.birthdate = "Formato de fecha inválido";
+                    } else {
+                        const birthDate = new Date(data.birthdate);
+                        const today = new Date();
+                        if (birthDate > today) {
+                            stepErrors.birthdate = "La fecha de nacimiento no puede ser futura";
+                        }
+                    }
+                }
                 break;
 
             case 1: // PhysicalMetrics
@@ -187,11 +223,36 @@ export const validateClientForm = (
                 if (!data.objetivo_entrenamiento) {
                     stepErrors.objetivo_entrenamiento = "Selecciona un objetivo de entrenamiento";
                 }
+                // Validar fecha_definicion_objetivo si existe
+                if (data.fecha_definicion_objetivo) {
+                    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+                    if (!dateRegex.test(data.fecha_definicion_objetivo)) {
+                        stepErrors.fecha_definicion_objetivo = "Formato de fecha inválido";
+                    } else {
+                        const fechaObj = new Date(data.fecha_definicion_objetivo);
+                        const today = new Date();
+                        today.setHours(23, 59, 59, 999); // Permitir hasta el final del día actual
+                        if (fechaObj > today) {
+                            stepErrors.fecha_definicion_objetivo = "La fecha no puede ser futura";
+                        }
+                    }
+                }
+                // Validar descripcion_objetivos (max 1000 caracteres)
+                if (data.descripcion_objetivos && data.descripcion_objetivos.length > 1000) {
+                    stepErrors.descripcion_objetivos = "La descripción no puede superar 1000 caracteres";
+                }
                 break;
 
             case 4: // Experience
                 if (!data.experiencia) {
                     stepErrors.experiencia = "Selecciona el nivel de experiencia";
+                }
+                // Validar session_duration contra valores permitidos
+                if (data.session_duration) {
+                    const validDurations = ['short_lt_1h', 'medium_1h_to_1h30', 'long_gt_1h30'];
+                    if (!validDurations.includes(data.session_duration)) {
+                        stepErrors.session_duration = "Selecciona una duración válida";
+                    }
                 }
                 break;
 

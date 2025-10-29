@@ -96,7 +96,7 @@ export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
                 <label className={TYPOGRAPHY.inputLabel}>Sexo</label>
                 <select
                     value={formData.sexo || ""}
-                    onChange={(e) => updateField("sexo", e.target.value)}
+                    onChange={(e) => updateField("sexo", e.target.value as typeof formData.sexo)}
                     className="w-full border rounded-lg p-2 bg-white text-slate-800"
                 >
                     <option value="">Selecciona una opción</option>
@@ -105,6 +105,39 @@ export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
                     <option value="otro">Otro</option>
                 </select>
                 {errors.sexo && <p className="text-red-600 text-sm">{errors.sexo}</p>}
+            </div>
+
+            {/* DNI/Pasaporte */}
+            <div>
+                <label className={TYPOGRAPHY.inputLabel}>DNI/Pasaporte (opcional)</label>
+                <input
+                    type="text"
+                    value={formData.id_passport || ""}
+                    onChange={(e) => updateField("id_passport", e.target.value)}
+                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                    placeholder="12345678X"
+                />
+                {errors.id_passport && (
+                    <p className="text-red-600 text-sm">{errors.id_passport}</p>
+                )}
+            </div>
+
+            {/* Fecha de nacimiento */}
+            <div>
+                <label className={TYPOGRAPHY.inputLabel}>Fecha de nacimiento (opcional)</label>
+                <input
+                    type="date"
+                    value={formData.birthdate || ""}
+                    onChange={(e) => updateField("birthdate", e.target.value)}
+                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                    max={new Date().toISOString().split('T')[0]}
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                    Alternativa a edad. Si proporcionas esta fecha, puedes omitir el campo de edad.
+                </p>
+                {errors.birthdate && (
+                    <p className="text-red-600 text-sm">{errors.birthdate}</p>
+                )}
             </div>
         </div>
     );

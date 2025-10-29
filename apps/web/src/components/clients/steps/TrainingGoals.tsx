@@ -43,6 +43,42 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
                     <p className="text-red-600 text-sm">{errors.objetivo_entrenamiento}</p>
                 )}
             </div>
+
+            {/* Fecha de definición del objetivo */}
+            <div>
+                <label className={TYPOGRAPHY.inputLabel}>Fecha de definición del objetivo (opcional)</label>
+                <input
+                    type="date"
+                    value={formData.fecha_definicion_objetivo || ""}
+                    onChange={(e) => updateField("fecha_definicion_objetivo", e.target.value)}
+                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                    max={new Date().toISOString().split('T')[0]}
+                />
+                {errors.fecha_definicion_objetivo && (
+                    <p className="text-red-600 text-sm">{errors.fecha_definicion_objetivo}</p>
+                )}
+            </div>
+
+            {/* Descripción detallada de objetivos */}
+            <div>
+                <label className={TYPOGRAPHY.inputLabel}>Descripción detallada de objetivos (opcional)</label>
+                <textarea
+                    value={formData.descripcion_objetivos || ""}
+                    onChange={(e) => updateField("descripcion_objetivos", e.target.value)}
+                    className="w-full border rounded-lg p-3 bg-white text-slate-800 min-h-[100px]"
+                    placeholder="Describe con más detalle tus objetivos..."
+                    rows={4}
+                    maxLength={1000}
+                />
+                {formData.descripcion_objetivos && (
+                    <p className="text-xs text-slate-500 mt-1">
+                        {formData.descripcion_objetivos.length}/1000 caracteres
+                    </p>
+                )}
+                {errors.descripcion_objetivos && (
+                    <p className="text-red-600 text-sm">{errors.descripcion_objetivos}</p>
+                )}
+            </div>
         </div>
     );
 };
