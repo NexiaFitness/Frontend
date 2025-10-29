@@ -92,7 +92,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                     <h3 className="text-lg font-bold text-slate-800 truncate">
                         {client.nombre} {client.apellidos}
                     </h3>
-                    <p className="text-sm text-slate-600 truncate">{client.email}</p>
+                    <p className="text-sm text-slate-600 truncate">{client.mail}</p>
                 </div>
                 <div
                     className={`flex-shrink-0 ml-2 w-3 h-3 rounded-full ${client.activo ? "bg-green-500" : "bg-slate-300"
@@ -103,22 +103,22 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
 
             {/* Badges de objetivo y experiencia */}
             <div className="flex flex-wrap gap-2 mb-4">
-                {client.objetivo && (
+                {client.objetivo_entrenamiento && (
                     <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getObjetivoBadgeColor(
-                            client.objetivo
+                            client.objetivo_entrenamiento
                         )}`}
                     >
-                        {getObjetivoLabel(client.objetivo)}
+                        {getObjetivoLabel(client.objetivo_entrenamiento)}
                     </span>
                 )}
-                {client.nivel_experiencia && (
+                {client.experiencia && (
                     <span
                         className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${getExperienciaBadgeColor(
-                            client.nivel_experiencia
+                            client.experiencia
                         )}`}
                     >
-                        {getExperienciaLabel(client.nivel_experiencia)}
+                        {getExperienciaLabel(client.experiencia)}
                     </span>
                 )}
             </div>
@@ -137,10 +137,10 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
                         <p className="text-sm font-semibold text-slate-800">{client.peso} kg</p>
                     </div>
                 )}
-                {client.bmi && (
+                {client.imc && (
                     <div>
-                        <p className="text-xs text-slate-500">BMI</p>
-                        <p className="text-sm font-semibold text-slate-800">{client.bmi.toFixed(1)}</p>
+                        <p className="text-xs text-slate-500">IMC</p>
+                        <p className="text-sm font-semibold text-slate-800">{client.imc.toFixed(1)}</p>
                     </div>
                 )}
             </div>
@@ -148,7 +148,7 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
             {/* Footer con fecha de registro */}
             <div className="pt-4 border-t border-slate-200">
                 <p className="text-xs text-slate-500">
-                    Cliente desde {formatDate(client.fecha_registro)}
+                    Cliente desde {formatDate(client.fecha_alta)}
                 </p>
             </div>
         </div>

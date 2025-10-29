@@ -7,7 +7,7 @@
  * - Compatible con Web y React Native (sin dependencias DOM).
  *
  * Reglas principales:
- * - PersonalInfo: nombre, apellidos, email obligatorios.
+ * - PersonalInfo: nombre, apellidos, mail obligatorios.
  * - PhysicalMetrics: edad, peso, altura requeridos, IMC calculado en backend.
  * - AnthropometricMetrics: skinfolds (0-50mm), girths (10-200cm), diameters (wrist 3-15cm, knee 5-20cm).
  * - TrainingGoals: objetivo requerido.
@@ -53,11 +53,11 @@ export const validateClientForm = (
         errors.apellidos = "Los apellidos son obligatorios";
     }
 
-    // Email (obligatorio + formato)
-    if (!data.email?.trim()) {
-        errors.email = "El correo es obligatorio";
-    } else if (!/\S+@\S+\.\S+/.test(data.email)) {
-        errors.email = "Introduce un correo válido";
+    // Mail (obligatorio + formato)
+    if (!data.mail?.trim()) {
+        errors.mail = "El correo es obligatorio";
+    } else if (!/\S+@\S+\.\S+/.test(data.mail)) {
+        errors.mail = "Introduce un correo válido";
     }
 
     // Edad (13-100 años)
@@ -89,8 +89,8 @@ export const validateClientForm = (
     
     // Skinfolds (pliegues cutáneos, rango 0-50mm)
     const skinfoldFields = [
-        'triceps', 'subscapular', 'biceps', 'iliac_crest',
-        'supraspinal', 'abdominal', 'thigh', 'calf'
+        'skinfold_triceps', 'skinfold_subscapular', 'skinfold_biceps', 'skinfold_iliac_crest',
+        'skinfold_supraspinal', 'skinfold_abdominal', 'skinfold_thigh', 'skinfold_calf'
     ] as const;
 
     skinfoldFields.forEach(field => {
@@ -103,7 +103,7 @@ export const validateClientForm = (
     });
 
     // Girths (perímetros, rango 10-200cm)
-    const girthFields = ['arm_girth', 'waist_girth', 'hip_girth'] as const;
+    const girthFields = ['girth_relaxed_arm', 'girth_waist_minimum', 'girth_hips_maximum'] as const;
 
     girthFields.forEach(field => {
         const value = data[field];
@@ -115,16 +115,16 @@ export const validateClientForm = (
     });
 
     // Wrist diameter (3-15cm)
-    if (data.wrist_diameter !== undefined && data.wrist_diameter !== null) {
-        if (data.wrist_diameter < 3 || data.wrist_diameter > 15) {
-            errors.wrist_diameter = "El diámetro de muñeca debe estar entre 3 y 15 cm";
+    if (data.diameter_bi_styloid_wrist !== undefined && data.diameter_bi_styloid_wrist !== null) {
+        if (data.diameter_bi_styloid_wrist < 3 || data.diameter_bi_styloid_wrist > 15) {
+            errors.diameter_bi_styloid_wrist = "El diámetro de muñeca debe estar entre 3 y 15 cm";
         }
     }
 
     // Knee diameter (5-20cm)
-    if (data.knee_diameter !== undefined && data.knee_diameter !== null) {
-        if (data.knee_diameter < 5 || data.knee_diameter > 20) {
-            errors.knee_diameter = "El diámetro de rodilla debe estar entre 5 y 20 cm";
+    if (data.diameter_femur_bicondylar !== undefined && data.diameter_femur_bicondylar !== null) {
+        if (data.diameter_femur_bicondylar < 5 || data.diameter_femur_bicondylar > 20) {
+            errors.diameter_femur_bicondylar = "El diámetro de rodilla debe estar entre 5 y 20 cm";
         }
     }
 
@@ -151,12 +151,12 @@ export const validateClientForm = (
             case 0: // PersonalInfo
                 if (!data.nombre?.trim()) stepErrors.nombre = "El nombre es obligatorio";
                 if (!data.apellidos?.trim()) stepErrors.apellidos = "Los apellidos son obligatorios";
-                if (!data.email?.trim()) {
-                    stepErrors.email = "El correo es obligatorio";
-                } else if (!/\S+@\S+\.\S+/.test(data.email)) {
-                    stepErrors.email = "Introduce un correo válido";
+                if (!data.mail?.trim()) {
+                    stepErrors.mail = "El correo es obligatorio";
+                } else if (!/\S+@\S+\.\S+/.test(data.mail)) {
+                    stepErrors.mail = "Introduce un correo válido";
                 }
-                if (data.confirmEmail && data.email !== data.confirmEmail) {
+                if (data.confirmEmail && data.mail !== data.confirmEmail) {
                     stepErrors.confirmEmail = "Los correos no coinciden";
                 }
                 break;
@@ -184,14 +184,14 @@ export const validateClientForm = (
                 break;
 
             case 3: // TrainingGoals
-                if (!data.objetivo) {
-                    stepErrors.objetivo = "Selecciona un objetivo de entrenamiento";
+                if (!data.objetivo_entrenamiento) {
+                    stepErrors.objetivo_entrenamiento = "Selecciona un objetivo de entrenamiento";
                 }
                 break;
 
             case 4: // Experience
-                if (!data.nivel_experiencia) {
-                    stepErrors.nivel_experiencia = "Selecciona el nivel de experiencia";
+                if (!data.experiencia) {
+                    stepErrors.experiencia = "Selecciona el nivel de experiencia";
                 }
                 break;
 
