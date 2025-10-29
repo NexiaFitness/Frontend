@@ -5,7 +5,7 @@
  * - Step 3 del wizard de alta de clientes.
  * - Captura: objetivo principal de entrenamiento.
  * - Opciones: weight_loss, muscle_gain, performance, health.
- * - Campo obligatorio: objetivo.
+ * - Campo obligatorio: objetivo_entrenamiento.
  *
  * @author Frontend
  * @since v2.4.0
@@ -27,9 +27,9 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
             <div>
                 <label className={TYPOGRAPHY.inputLabel}>Objetivo principal *</label>
                 <select
-                    value={formData.objetivo || ""}
+                    value={formData.objetivo_entrenamiento || ""}
                     onChange={(e) =>
-                        updateField("objetivo", e.target.value as typeof formData.objetivo)
+                        updateField("objetivo_entrenamiento", e.target.value as typeof formData.objetivo_entrenamiento)
                     }
                     className="w-full border rounded-lg p-2 bg-white text-slate-800"
                 >
@@ -39,8 +39,8 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
                     <option value={CLIENT_GOALS.PERFORMANCE}>Rendimiento deportivo</option>
                     <option value={CLIENT_GOALS.HEALTH}>Salud general</option>
                 </select>
-                {errors.objetivo && (
-                    <p className="text-red-600 text-sm">{errors.objetivo}</p>
+                {errors.objetivo_entrenamiento && (
+                    <p className="text-red-600 text-sm">{errors.objetivo_entrenamiento}</p>
                 )}
             </div>
         </div>

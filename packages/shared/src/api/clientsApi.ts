@@ -28,8 +28,8 @@ export const clientsApi = baseApi.injectEndpoints({
                 params.append('page_size', per_page.toString());
                 
                 // Agregar filtros existentes
-                if (filters.objetivo) params.append('objetivo', filters.objetivo);
-                if (filters.nivel_experiencia) params.append('nivel_experiencia', filters.nivel_experiencia);
+                if (filters.objetivo_entrenamiento) params.append('objetivo_entrenamiento', filters.objetivo_entrenamiento);
+                if (filters.experiencia) params.append('experiencia', filters.experiencia);
                 if (filters.activo !== undefined) params.append('activo', filters.activo.toString());
                 if (filters.search) params.append('search', filters.search);
 

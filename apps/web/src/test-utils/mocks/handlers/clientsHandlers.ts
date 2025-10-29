@@ -41,9 +41,9 @@ export const getClientsHandler = http.get("*/clients", async () => {
         clients: [
             {
                 id: 1,
-                email: "client@test.com",
+                mail: "client@test.com",
                 nombre: "Test Client",
-                objetivo: "muscle_gain",
+                objetivo_entrenamiento: "muscle_gain",
                 is_active: true,
                 created_at: "2023-01-01",
                 updated_at: "2023-01-01"

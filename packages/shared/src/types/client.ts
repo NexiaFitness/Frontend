@@ -195,8 +195,8 @@ export type UpdateClientData = Partial<CreateClientData>;
 // ========================================
 
 export interface ClientFilters {
-    objetivo?: TrainingGoal;
-    nivel_experiencia?: Experience;  // Mantener nombre frontend para no romper componentes
+    objetivo_entrenamiento?: TrainingGoal;
+    experiencia?: Experience;
     activo?: boolean;
     search?: string;
     age_min?: number;

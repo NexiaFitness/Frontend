@@ -65,13 +65,13 @@ describe("DeleteClientModal", () => {
         ).toBeInTheDocument();
     });
 
-    it("muestra los datos del cliente (email y objetivo)", () => {
+    it("muestra los datos del cliente (mail y objetivo)", () => {
         render(<DeleteClientModal {...defaultProps} />);
         expect(screen.getByText("Email:")).toBeInTheDocument();
-        expect(screen.getByText(mockClient.email)).toBeInTheDocument();
+        expect(screen.getByText(mockClient.mail)).toBeInTheDocument();
         expect(screen.getByText("Objetivo:")).toBeInTheDocument();
         expect(
-            screen.getByText(mockClient.objetivo?.replace("_", " ") || "No especificado")
+            screen.getByText(mockClient.objetivo_entrenamiento?.replace("_", " ") || "No especificado")
         ).toBeInTheDocument();
     });
 

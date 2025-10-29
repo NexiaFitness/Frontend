@@ -77,12 +77,12 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
             <div className="bg-gray-50 rounded-lg p-4 mb-6 text-sm text-gray-600">
                 <div className="flex justify-between">
                     <span>Email:</span>
-                    <span className="font-medium">{client.email}</span>
+                    <span className="font-medium">{client.mail}</span>
                 </div>
                 <div className="flex justify-between mt-1">
                     <span>Objetivo:</span>
                     <span className="font-medium capitalize">
-                        {client.objetivo?.replace("_", " ") || "No especificado"}
+                        {client.objetivo_entrenamiento?.replace("_", " ") || "No especificado"}
                     </span>
                 </div>
             </div>

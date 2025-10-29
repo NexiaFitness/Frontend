@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Barra de filtros con búsqueda debounced (500ms).
- * - Filtros: objetivo, nivel_experiencia, activo.
+ * - Filtros: objetivo_entrenamiento, experiencia, activo.
  * - Botón reset para limpiar todos los filtros.
  * - Responsive: columna en mobile, fila en desktop.
  *
@@ -55,12 +55,12 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
     // Handlers
     const handleObjetivoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value || undefined;
-        onFiltersChange({ ...filters, objetivo: value as ClientFiltersType["objetivo"] });
+        onFiltersChange({ ...filters, objetivo_entrenamiento: value as ClientFiltersType["objetivo_entrenamiento"] });
     };
 
     const handleExperienciaChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value || undefined;
-        onFiltersChange({ ...filters, nivel_experiencia: value as ClientFiltersType["nivel_experiencia"] });
+        onFiltersChange({ ...filters, experiencia: value as ClientFiltersType["experiencia"] });
     };
 
     const handleActivoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -73,15 +73,15 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
         setSearchInput("");
         onFiltersChange({
             search: "",
-            objetivo: undefined,
-            nivel_experiencia: undefined,
+            objetivo_entrenamiento: undefined,
+            experiencia: undefined,
             activo: undefined,
         });
     };
 
     // Check si hay filtros activos
     const hasActiveFilters =
-        filters.search || filters.objetivo || filters.nivel_experiencia || filters.activo !== undefined;
+        filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined;
 
     return (
         <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4 lg:p-6">
@@ -95,7 +95,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         <input
                             type="text"
                             id="search"
-                            placeholder="Nombre, apellidos o email..."
+                            placeholder="Nombre, apellidos o mail..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
                             className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
@@ -118,12 +118,12 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
 
                 {/* Filtro Objetivo */}
                 <div className="w-full lg:w-48">
-                    <label htmlFor="objetivo" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="objetivo_entrenamiento" className="block text-sm font-medium text-slate-700 mb-2">
                         Objetivo
                     </label>
                     <select
-                        id="objetivo"
-                        value={filters.objetivo || ""}
+                        id="objetivo_entrenamiento"
+                        value={filters.objetivo_entrenamiento || ""}
                         onChange={handleObjetivoChange}
                         className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
                     >
@@ -142,7 +142,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                     </label>
                     <select
                         id="experiencia"
-                        value={filters.nivel_experiencia || ""}
+                        value={filters.experiencia || ""}
                         onChange={handleExperienciaChange}
                         className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
                     >

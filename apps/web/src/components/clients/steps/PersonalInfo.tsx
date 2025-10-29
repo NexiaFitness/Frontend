@@ -3,8 +3,8 @@
  *
  * Contexto:
  * - Step 1 del wizard de alta de clientes.
- * - Captura: nombre, apellidos, email, confirmEmail, teléfono, sexo.
- * - Campos obligatorios: nombre, apellidos, email, confirmEmail.
+ * - Captura: nombre, apellidos, mail, confirmEmail, teléfono, sexo.
+ * - Campos obligatorios: nombre, apellidos, mail, confirmEmail.
  *
  * @author Frontend
  * @since v2.4.0
@@ -55,12 +55,12 @@ export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
                 <label className={TYPOGRAPHY.inputLabel}>Correo electrónico *</label>
                 <input
                     type="email"
-                    value={formData.email}
-                    onChange={(e) => updateField("email", e.target.value)}
+                    value={formData.mail}
+                    onChange={(e) => updateField("mail", e.target.value)}
                     className="w-full border rounded-lg p-2 bg-white text-slate-800"
                     placeholder="ejemplo@correo.com"
                 />
-                {errors.email && <p className="text-red-600 text-sm">{errors.email}</p>}
+                {errors.mail && <p className="text-red-600 text-sm">{errors.mail}</p>}
             </div>
 
             {/* Confirm Email */}

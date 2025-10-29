@@ -10,7 +10,7 @@
  * Features:
  * - Paginación funcional con query params
  * - Búsqueda debounced (500ms)
- * - Filtros: objetivo, experiencia, activo
+ * - Filtros: objetivo_entrenamiento, experiencia, activo
  * - Estados: loading, error, empty
  * - Botón "Add New Client" → onboarding wizard
  * - Stats overview (total, activos, inactivos)
@@ -53,8 +53,8 @@ export const ClientList: React.FC = () => {
     // State de filtros (inicializado desde URL) - FIX: Type casting para TypeScript strict
     const [filters, setFilters] = useState<ClientFiltersType>({
         search: searchParams.get("search") || "",
-        objetivo: (searchParams.get("objetivo") as ClientFiltersType["objetivo"]) || undefined,
-        nivel_experiencia: (searchParams.get("nivel_experiencia") as ClientFiltersType["nivel_experiencia"]) || undefined,
+        objetivo_entrenamiento: (searchParams.get("objetivo_entrenamiento") as ClientFiltersType["objetivo_entrenamiento"]) || undefined,
+        experiencia: (searchParams.get("experiencia") as ClientFiltersType["experiencia"]) || undefined,
         activo: searchParams.get("activo") === "true" ? true : searchParams.get("activo") === "false" ? false : undefined,
     });
 
@@ -73,8 +73,8 @@ export const ClientList: React.FC = () => {
     useEffect(() => {
         const params = new URLSearchParams();
         if (filters.search) params.set("search", filters.search);
-        if (filters.objetivo) params.set("objetivo", filters.objetivo);
-        if (filters.nivel_experiencia) params.set("nivel_experiencia", filters.nivel_experiencia);
+        if (filters.objetivo_entrenamiento) params.set("objetivo_entrenamiento", filters.objetivo_entrenamiento);
+        if (filters.experiencia) params.set("experiencia", filters.experiencia);
         if (filters.activo !== undefined) params.set("activo", filters.activo.toString());
         if (page > 1) params.set("page", page.toString());
         setSearchParams(params);
@@ -185,12 +185,12 @@ export const ClientList: React.FC = () => {
                                     </svg>
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-800 mb-2">
-                                    {filters.search || filters.objetivo || filters.nivel_experiencia || filters.activo !== undefined
-                                        ? "No se encontraron clientes"
-                                        : "Aún no tienes clientes"}
+                                {filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined
+                                    ? "No se encontraron clientes"
+                                    : "Aún no tienes clientes"}
                                 </h3>
                                 <p className="text-slate-600 mb-6">
-                                    {filters.search || filters.objetivo || filters.nivel_experiencia || filters.activo !== undefined
+                                    {filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined
                                         ? "Intenta ajustar los filtros de búsqueda"
                                         : "Comienza agregando tu primer cliente para empezar a gestionar entrenamientos"}
                                 </p>

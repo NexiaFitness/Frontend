@@ -35,7 +35,7 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
                         {formData.nombre} {formData.apellidos}
                     </p>
                     <p>
-                        <span className="font-medium">Email:</span> {formData.email}
+                        <span className="font-medium">Email:</span> {formData.mail}
                     </p>
                     <p>
                         <span className="font-medium">Teléfono:</span>{" "}
@@ -70,7 +70,7 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
                 <div className="space-y-2 text-slate-700">
                     <p>
                         <span className="font-medium">Objetivo principal:</span>{" "}
-                        {display(formData.objetivo)}
+                        {display(formData.objetivo_entrenamiento)}
                     </p>
                 </div>
             </div>
@@ -81,7 +81,7 @@ export const Review: React.FC<ReviewStepProps> = ({ formData }) => {
                 <div className="space-y-2 text-slate-700">
                     <p>
                         <span className="font-medium">Nivel de experiencia:</span>{" "}
-                        {display(formData.nivel_experiencia)}
+                        {display(formData.experiencia)}
                     </p>
                     <p>
                         <span className="font-medium">Frecuencia semanal:</span>{" "}

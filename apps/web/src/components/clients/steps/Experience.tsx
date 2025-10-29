@@ -4,7 +4,7 @@
  * Contexto:
  * - Step 4 del wizard de alta de clientes.
  * - Captura: nivel de experiencia y frecuencia semanal de entrenamiento.
- * - Campo obligatorio: nivel_experiencia.
+ * - Campo obligatorio: experiencia.
  * - Campo opcional: frecuencia_semanal.
  *
  * @author Frontend
@@ -28,11 +28,11 @@ export const Experience: React.FC<ExperienceStepProps> = ({
             <div>
                 <label className={TYPOGRAPHY.inputLabel}>Nivel de experiencia *</label>
                 <select
-                    value={formData.nivel_experiencia || ""}
+                    value={formData.experiencia || ""}
                     onChange={(e) =>
                         updateField(
-                            "nivel_experiencia",
-                            e.target.value as typeof formData.nivel_experiencia
+                            "experiencia",
+                            e.target.value as typeof formData.experiencia
                         )
                     }
                     className="w-full border rounded-lg p-2 bg-white text-slate-800"
@@ -42,8 +42,8 @@ export const Experience: React.FC<ExperienceStepProps> = ({
                     <option value={CLIENT_EXPERIENCE_LEVELS.INTERMEDIATE}>Intermedio</option>
                     <option value={CLIENT_EXPERIENCE_LEVELS.ADVANCED}>Avanzado</option>
                 </select>
-                {errors.nivel_experiencia && (
-                    <p className="text-red-600 text-sm">{errors.nivel_experiencia}</p>
+                {errors.experiencia && (
+                    <p className="text-red-600 text-sm">{errors.experiencia}</p>
                 )}
             </div>
 

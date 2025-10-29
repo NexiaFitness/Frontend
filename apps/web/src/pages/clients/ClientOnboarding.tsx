@@ -49,7 +49,7 @@ import { Review } from "@/components/clients/steps/Review";
 const initialFormData: ClientFormData = {
     nombre: "",
     apellidos: "",
-    email: "",
+    mail: "",
 };
 
 // Metadata de steps
