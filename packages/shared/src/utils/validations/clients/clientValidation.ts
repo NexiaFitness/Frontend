@@ -126,7 +126,14 @@ export const validateClientForm = (
     });
 
     // Girths (perímetros, rango 10-200cm)
-    const girthFields = ['girth_relaxed_arm', 'girth_waist_minimum', 'girth_hips_maximum'] as const;
+    const girthFields = [
+        'girth_relaxed_arm', 
+        'girth_flexed_contracted_arm',
+        'girth_waist_minimum', 
+        'girth_hips_maximum',
+        'girth_medial_thigh',
+        'girth_maximum_calf'
+    ] as const;
 
     girthFields.forEach(field => {
         const value = data[field];
@@ -141,6 +148,13 @@ export const validateClientForm = (
     if (data.diameter_bi_styloid_wrist !== undefined && data.diameter_bi_styloid_wrist !== null) {
         if (data.diameter_bi_styloid_wrist < 3 || data.diameter_bi_styloid_wrist > 15) {
             errors.diameter_bi_styloid_wrist = "El diámetro de muñeca debe estar entre 3 y 15 cm";
+        }
+    }
+
+    // Humerus diameter (3-20cm)
+    if (data.diameter_humerus_biepicondylar !== undefined && data.diameter_humerus_biepicondylar !== null) {
+        if (data.diameter_humerus_biepicondylar < 3 || data.diameter_humerus_biepicondylar > 20) {
+            errors.diameter_humerus_biepicondylar = "El diámetro de húmero debe estar entre 3 y 20 cm";
         }
     }
 

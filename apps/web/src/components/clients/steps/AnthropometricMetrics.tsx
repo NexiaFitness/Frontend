@@ -193,7 +193,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                     Perímetros (cm)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Arm Girth */}
+                    {/* Arm Girth Relaxed */}
                     <div>
                         <label className={TYPOGRAPHY.inputLabel}>Perímetro de brazo (relajado)</label>
                         <input
@@ -208,6 +208,24 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                         />
                         {errors.girth_relaxed_arm && (
                             <p className="text-red-600 text-sm">{errors.girth_relaxed_arm}</p>
+                        )}
+                    </div>
+
+                    {/* Arm Girth Flexed */}
+                    <div>
+                        <label className={TYPOGRAPHY.inputLabel}>Perímetro de brazo (flexionado/contraído)</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="10"
+                            max="200"
+                            value={formData.girth_flexed_contracted_arm ?? ""}
+                            onChange={(e) => updateField("girth_flexed_contracted_arm", Number(e.target.value))}
+                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            placeholder="10-200 cm"
+                        />
+                        {errors.girth_flexed_contracted_arm && (
+                            <p className="text-red-600 text-sm">{errors.girth_flexed_contracted_arm}</p>
                         )}
                     </div>
 
@@ -246,6 +264,42 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             <p className="text-red-600 text-sm">{errors.girth_hips_maximum}</p>
                         )}
                     </div>
+
+                    {/* Medial Thigh Girth */}
+                    <div>
+                        <label className={TYPOGRAPHY.inputLabel}>Perímetro medial de muslo</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="10"
+                            max="200"
+                            value={formData.girth_medial_thigh ?? ""}
+                            onChange={(e) => updateField("girth_medial_thigh", Number(e.target.value))}
+                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            placeholder="10-200 cm"
+                        />
+                        {errors.girth_medial_thigh && (
+                            <p className="text-red-600 text-sm">{errors.girth_medial_thigh}</p>
+                        )}
+                    </div>
+
+                    {/* Maximum Calf Girth */}
+                    <div>
+                        <label className={TYPOGRAPHY.inputLabel}>Perímetro máximo de pantorrilla</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="10"
+                            max="200"
+                            value={formData.girth_maximum_calf ?? ""}
+                            onChange={(e) => updateField("girth_maximum_calf", Number(e.target.value))}
+                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            placeholder="10-200 cm"
+                        />
+                        {errors.girth_maximum_calf && (
+                            <p className="text-red-600 text-sm">{errors.girth_maximum_calf}</p>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -272,6 +326,24 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                         />
                         {errors.diameter_bi_styloid_wrist && (
                             <p className="text-red-600 text-sm">{errors.diameter_bi_styloid_wrist}</p>
+                        )}
+                    </div>
+
+                    {/* Humerus Diameter */}
+                    <div>
+                        <label className={TYPOGRAPHY.inputLabel}>Diámetro biepicondilar de húmero</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="3"
+                            max="20"
+                            value={formData.diameter_humerus_biepicondylar ?? ""}
+                            onChange={(e) => updateField("diameter_humerus_biepicondylar", Number(e.target.value))}
+                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            placeholder="3-20 cm"
+                        />
+                        {errors.diameter_humerus_biepicondylar && (
+                            <p className="text-red-600 text-sm">{errors.diameter_humerus_biepicondylar}</p>
                         )}
                     </div>
 
