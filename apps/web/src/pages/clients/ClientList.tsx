@@ -27,7 +27,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
-import type { ClientFilters as ClientFiltersType } from "@nexia/shared/types/client";
+import type { ClientFilters as ClientFiltersType, Client } from "@nexia/shared/types/client";
 
 // Layouts
 import { DashboardLayout } from "@/components/dashboard/layout";
@@ -70,7 +70,7 @@ export const ClientList: React.FC = () => {
     });
 
     // Validar datos y calcular valores derivados de forma segura (alineado con backend)
-    const clients = data?.items ?? [];  // ← Backend usa "items" (no "clients")
+    const clients: Client[] = data?.items ?? [];  // ← Backend usa "items" (no "clients")
     const totalClients = data?.total ?? 0;
     const currentPage = data?.page ?? page;
     const pageSize = data?.page_size ?? perPage;  // ← Backend usa "page_size" (no "per_page")

@@ -58,6 +58,8 @@ export * from "./types/clientOnboarding";
 export * from "./types/clientStats";
 export * from "./types/trainer";
 export * from "./types/account";
+export * from "./types/progress";
+export * from "./types/training";
 
 // Enums explícitos de client (para uso directo en componentes)
 export {
@@ -88,6 +90,9 @@ export * from "./hooks/useTrainerProfile";
 export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/usePublicNavigation";
 export * from "./hooks/clients/useClientStats";
+export * from "./hooks/clients/useClientDetail";
+export * from "./hooks/clients/useClientProgress";  
+export * from "./hooks/clients/useClientFatigue";
 
 // Hooks - Modals
 export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';

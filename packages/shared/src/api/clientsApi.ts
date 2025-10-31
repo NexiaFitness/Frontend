@@ -18,16 +18,31 @@ import type {
 } from "../types/client";
 import type { ClientStatsResponse } from "../types/clientStats";
 
+import type {
+    ClientProgress,
+    ProgressAnalytics,
+    ProgressTracking,
+} from "../types/progress";
+
+import type {
+    TrainingPlan,
+    TrainingSession,
+    ClientFeedback,
+    FatigueAnalysis,
+} from "../types/training";
+
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // Obtener lista de clientes con filtros y paginación
+        /**
+         * Obtener lista de clientes con filtros y paginación
+         */
         getClients: builder.query<ClientsListResponse, { filters?: ClientFilters; page?: number; per_page?: number }>({
             query: ({ filters = {}, page = 1, per_page = 10 }) => {
                 const params = new URLSearchParams();
                 params.append('page', page.toString());
                 params.append('page_size', per_page.toString());
                 
-                // Agregar filtros existentes - USAR NOMBRES EXACTOS DEL BACKEND
+                // Agregar filtros existentes - Usar nombres exactos del backend
                 if (filters.objetivo_entrenamiento) {
                     params.append('training_goal', filters.objetivo_entrenamiento);
                 }
@@ -64,7 +79,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 };
             },
             providesTags: (result) =>
-                result?.items  // ← Cambiar de "clients" a "items"
+                result?.items
                     ? [
                         ...result.items.map(({ id }) => ({ type: "Client" as const, id })),
                         { type: "Client", id: "LIST" },
@@ -72,7 +87,9 @@ export const clientsApi = baseApi.injectEndpoints({
                     : [{ type: "Client", id: "LIST" }],
         }),
 
-        // Obtener cliente específico por ID
+        /**
+         * Obtener cliente específico por ID
+         */
         getClient: builder.query<Client, number>({
             query: (id) => ({
                 url: `/clients/${id}`,
@@ -81,7 +98,9 @@ export const clientsApi = baseApi.injectEndpoints({
             providesTags: (result, error, id) => [{ type: "Client", id }],
         }),
 
-        // Crear nuevo cliente
+        /**
+         * Crear nuevo cliente
+         */
         createClient: builder.mutation<Client, CreateClientData>({
             query: (clientData) => ({
                 url: "/clients/",
@@ -93,11 +112,13 @@ export const clientsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: [
                 { type: "Client", id: "LIST" },
-                { type: "Client", id: "STATS" }, // ← Invalidar stats al crear
+                { type: "Client", id: "STATS" },
             ],
         }),
 
-        // Actualizar cliente existente
+        /**
+         * Actualizar cliente existente
+         */
         updateClient: builder.mutation<Client, { id: number; data: UpdateClientData }>({
             query: ({ id, data }) => ({
                 url: `/clients/${id}`,
@@ -110,11 +131,13 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: (result, error, { id }) => [
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
-                { type: "Client", id: "STATS" }, // ← Invalidar stats al actualizar
+                { type: "Client", id: "STATS" },
             ],
         }),
 
-        // Eliminar cliente
+        /**
+         * Eliminar cliente
+         */
         deleteClient: builder.mutation<{ message: string }, number>({
             query: (id) => ({
                 url: `/clients/${id}`,
@@ -123,11 +146,13 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: (result, error, id) => [
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
-                { type: "Client", id: "STATS" }, // ← Invalidar stats al eliminar
+                { type: "Client", id: "STATS" },
             ],
         }),
 
-        // Obtener estadísticas de clientes (schema corregido según backend real)
+        /**
+         * Obtener estadísticas de clientes
+         */
         getClientStats: builder.query<ClientStatsResponse, void>({
             query: () => ({
                 url: "/clients/stats",
@@ -135,11 +160,121 @@ export const clientsApi = baseApi.injectEndpoints({
             }),
             providesTags: [{ type: "Client", id: "STATS" }],
         }),
+
+        // ========================================
+        // PROGRESS ENDPOINTS (Client Detail)
+        // ========================================
+
+        /**
+         * Historial de progreso físico del cliente
+         */
+        getClientProgressHistory: builder.query<ClientProgress[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/progress/?client_id=${clientId}&skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `PROGRESS-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Analytics de progreso (tendencias, cambios)
+         */
+        getProgressAnalytics: builder.query<ProgressAnalytics, number>({
+            query: (clientId) => ({
+                url: `/progress/analytics/${clientId}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, clientId) => [
+                { type: "Client", id: `ANALYTICS-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Tracking de ejercicios del cliente
+         */
+        getClientProgressTracking: builder.query<ProgressTracking[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/training-sessions/progress/client/${clientId}?skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `TRACKING-${clientId}` },
+            ],
+        }),
+
+        // ========================================
+        // TRAINING PLAN ENDPOINTS
+        // ========================================
+
+        /**
+         * Training plans del cliente
+         */
+        getClientTrainingPlans: builder.query<TrainingPlan[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/training-plans/?client_id=${clientId}&skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `PLANS-${clientId}` },
+            ],
+        }),
+
+        // ========================================
+        // TRAINING SESSION ENDPOINTS
+        // ========================================
+
+        /**
+         * Sesiones de entrenamiento del cliente
+         */
+        getClientTrainingSessions: builder.query<TrainingSession[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/training-sessions/?client_id=${clientId}&skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `SESSIONS-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Feedback del cliente
+         */
+        getClientFeedback: builder.query<ClientFeedback[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/training-sessions/feedback/client/${clientId}?skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `FEEDBACK-${clientId}` },
+            ],
+        }),
+
+        // ========================================
+        // FATIGUE ENDPOINTS
+        // ========================================
+
+        /**
+         * Análisis de fatiga del cliente
+         */
+        getClientFatigueAnalysis: builder.query<FatigueAnalysis[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/fatigue/clients/${clientId}/fatigue-analysis/?skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `FATIGUE-${clientId}` },
+            ],
+        }),
+
     }),
     overrideExisting: false,
 });
 
+// ========================================
 // Hooks auto-generados por RTK Query
+// ========================================
 export const {
     useGetClientsQuery,
     useGetClientQuery,
@@ -147,4 +282,14 @@ export const {
     useUpdateClientMutation,
     useDeleteClientMutation,
     useGetClientStatsQuery,
+    // Progress hooks
+    useGetClientProgressHistoryQuery,
+    useGetProgressAnalyticsQuery,
+    useGetClientProgressTrackingQuery,
+    // Training hooks
+    useGetClientTrainingPlansQuery,
+    useGetClientTrainingSessionsQuery,
+    useGetClientFeedbackQuery,
+    // Fatigue hooks
+    useGetClientFatigueAnalysisQuery,
 } = clientsApi;

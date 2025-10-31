@@ -39,10 +39,13 @@ frontend/
 ├── tsconfig.base.json
 ├── tsconfig.json
 ├── vercel.json
+├── CLIENT_SWAGGER_ALIGNMENT_REPORT.md          # Documentación de alineación backend
+├── TESTING_CHECKLIST_NEW_CLIENT_FIELDS.md      # Checklist de testing campos nuevos
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── CONTRIBUTING.md
 │   ├── CROSS_PLATFORM_GUIDE.md
+│   ├── CROSS_PLATFORM_ROLE_ARCHITECTURE.md
 │   ├── DEPLOYMENT.md
 │   ├── PROJECT_STATUS.md
 │   ├── ROADMAP.md
@@ -91,21 +94,22 @@ frontend/
 │   │   │   ├── clients/                         # Client management
 │   │   │   │   ├── modals/
 │   │   │   │   │   ├── __tests__/
-│   │   │   │   │   │   ├── CreateClientModal.test.tsx
-│   │   │   │   │   │   ├── DeleteClientModal.test.tsx
-│   │   │   │   │   │   └── EditClientModal.test.tsx
-│   │   │   │   │   ├── CreateClientModal.tsx
+│   │   │   │   │   │   └── DeleteClientModal.test.tsx
+│   │   │   │   │   ├── BmiModal.tsx             # Modal para mostrar IMC calculado
 │   │   │   │   │   ├── DeleteClientModal.tsx
-│   │   │   │   │   ├── EditClientModal.tsx
 │   │   │   │   │   └── index.ts
-│   │   │   │   └── steps/                       # Client onboarding steps
-│   │   │   │       ├── AnthropometricMetrics.tsx
-│   │   │   │       ├── Experience.tsx
-│   │   │   │       ├── HealthInfo.tsx
-│   │   │   │       ├── PersonalInfo.tsx
-│   │   │   │       ├── PhysicalMetrics.tsx
-│   │   │   │       ├── Review.tsx
-│   │   │   │       └── TrainingGoals.tsx
+│   │   │   │   ├── steps/                       # Client onboarding steps (wizard 7 pasos)
+│   │   │   │   │   ├── PersonalInfo.tsx         # Step 0: Datos personales + sexo (GENDER_ENUM)
+│   │   │   │   │   ├── PhysicalMetrics.tsx      # Step 1: Edad, peso, altura
+│   │   │   │   │   ├── AnthropometricMetrics.tsx # Step 2: Métricas antropométricas (opcional)
+│   │   │   │   │   ├── TrainingGoals.tsx        # Step 3: Objetivos (TRAINING_GOAL_ENUM)
+│   │   │   │   │   ├── Experience.tsx           # Step 4: Experiencia (EXPERIENCE_ENUM) + frecuencia + duración sesión
+│   │   │   │   │   ├── HealthInfo.tsx           # Step 5: Lesiones y observaciones
+│   │   │   │   │   └── Review.tsx               # Step 6: Revisión final antes de crear
+│   │   │   │   ├── ClientCard.tsx               # Tarjeta de cliente para lista
+│   │   │   │   ├── ClientFilters.tsx            # Componente de filtros (búsqueda, objetivos, experiencia)
+│   │   │   │   ├── ClientStats.tsx              # Tarjetas de estadísticas (total, activos, inactivos)
+│   │   │   │   └── index.ts
 │   │   │   ├── dashboard/                       # Dashboard components
 │   │   │   │   ├── admin/
 │   │   │   │   │   ├── AdminSideMenu.tsx
@@ -116,11 +120,17 @@ frontend/
 │   │   │   │   ├── layout/
 │   │   │   │   │   ├── DashboardLayout.tsx
 │   │   │   │   │   └── index.ts
+│   │   │   │   ├── modals/
+│   │   │   │   │   ├── BillingInfoModal.tsx
+│   │   │   │   │   ├── CompleteProfileModal.tsx
+│   │   │   │   │   ├── EmailVerificationModal.tsx
+│   │   │   │   │   └── index.ts
 │   │   │   │   ├── shared/
 │   │   │   │   │   ├── CompleteProfileBanner.tsx
 │   │   │   │   │   ├── EmailVerificationBanner.tsx
 │   │   │   │   │   └── index.ts
 │   │   │   │   ├── trainer/
+│   │   │   │   │   ├── CompleteProfileForm.tsx
 │   │   │   │   │   ├── TrainerSideMenu.tsx
 │   │   │   │   │   └── index.ts
 │   │   │   │   ├── DashboardHeader.tsx
@@ -136,45 +146,38 @@ frontend/
 │   │   │   │   └── index.ts
 │   │   │   └── ui/                              # Reusable UI components
 │   │   │       ├── branding/
-│   │   │       │   └── NexiaLogo.tsx
+│   │   │       │   └── NexiaLogoCompact.tsx       # Logo compacto para uso general
 │   │   │       ├── buttons/
 │   │   │       │   ├── __tests__/
 │   │   │       │   │   ├── Button.test.tsx
-│   │   │       │   │   ├── LogoutButton.test.tsx
-│   │   │       │   │   └── SubmitButton.test.tsx
+│   │   │       │   │   └── LogoutButton.test.tsx
 │   │   │       │   ├── Button.tsx
 │   │   │       │   ├── LogoutButton.tsx
-│   │   │       │   ├── SubmitButton.tsx
-│   │   │       │   ├── index.ts
-│   │   │       │   └── types.ts
+│   │   │       │   └── index.ts
 │   │   │       ├── feedback/
 │   │   │       │   ├── __tests__/
-│   │   │       │   │   ├── Alert.test.tsx
-│   │   │       │   │   └── LoadingSpinner.test.tsx
+│   │   │       │   │   └── ServerErrorBanner.test.tsx
 │   │   │       │   ├── Alert.tsx
 │   │   │       │   ├── LoadingSpinner.tsx
+│   │   │       │   ├── ServerErrorBanner.tsx     # Banner para errores de servidor
 │   │   │       │   └── index.ts
 │   │   │       ├── forms/
 │   │   │       │   ├── __tests__/
-│   │   │       │   │   ├── Input.test.tsx
-│   │   │       │   │   ├── Select.test.tsx
-│   │   │       │   │   └── Textarea.test.tsx
+│   │   │       │   │   ├── FormSelect.test.tsx
+│   │   │       │   │   └── Input.test.tsx
+│   │   │       │   ├── FormSelect.tsx            # Select con validación de formulario
 │   │   │       │   ├── Input.tsx
-│   │   │       │   ├── Select.tsx
-│   │   │       │   ├── Textarea.tsx
-│   │   │       │   ├── index.ts
-│   │   │       │   └── types.ts
+│   │   │       │   └── index.ts
 │   │   │       ├── layout/
-│   │   │       │   ├── Container.tsx
-│   │   │       │   ├── Grid.tsx
-│   │   │       │   ├── index.ts
-│   │   │       │   └── types.ts
+│   │   │       │   ├── navbar/
+│   │   │       │   │   ├── NexiaSideMenu.tsx     # Menú lateral con logo Nexia
+│   │   │       │   │   └── PublicNavbar.tsx       # Navbar para páginas públicas
+│   │   │       │   └── PublicLayout.tsx           # Layout para páginas públicas
 │   │   │       └── modals/
 │   │   │           ├── __tests__/
-│   │   │           │   └── Modal.test.tsx
-│   │   │           ├── Modal.tsx
-│   │   │           ├── index.ts
-│   │   │           └── types.ts
+│   │   │           │   └── BaseModal.test.tsx
+│   │   │           ├── BaseModal.tsx              # Modal base reutilizable
+│   │   │           └── index.ts
 │   │   ├── pages/
 │   │   │   ├── account/
 │   │   │   │   └── Account.tsx
@@ -184,7 +187,12 @@ frontend/
 │   │   │   │   ├── Register.tsx
 │   │   │   │   └── ResetPassword.tsx
 │   │   │   ├── clients/
-│   │   │   │   └── ClientOnboarding.tsx
+│   │   │   │   ├── ClientList.tsx                # Lista paginada de clientes con filtros
+│   │   │   │   ├── ClientOnboarding.tsx          # Wizard completo de onboarding (7 steps)
+│   │   │   │   ├── ClientCard.tsx                # Duplicado para uso en lista (deprecated, usar de components/)
+│   │   │   │   ├── ClientFilters.tsx            # Duplicado (deprecated, usar de components/)
+│   │   │   │   ├── ClientStats.tsx               # Duplicado (deprecated, usar de components/)
+│   │   │   │   └── index.ts
 │   │   │   ├── dashboard/
 │   │   │   │   ├── admin/
 │   │   │   │   │   └── AdminDashboard.tsx
@@ -238,8 +246,8 @@ frontend/
 │   ├── tsconfig.vitest.json
 │   ├── vite.config.ts
 │   └── vitest.config.ts
-├── packages/shared/                              # Shared business logic
-│   ├── dist/
+├── packages/shared/                              # Shared business logic (cross-platform)
+│   ├── dist/                                     # Compiled output (build artifacts)
 │   │   └── src/
 │   │       ├── api/
 │   │       ├── components/
@@ -256,57 +264,71 @@ frontend/
 │   │       └── utils/
 │   ├── node_modules/
 │   ├── src/
-│   │   ├── api/
-│   │   │   ├── accountApi.ts
-│   │   │   ├── authApi.ts
-│   │   │   ├── baseApi.ts
-│   │   │   ├── clientsApi.ts
-│   │   │   └── trainerApi.ts
+│   │   ├── api/                                  # RTK Query API definitions
+│   │   │   ├── accountApi.ts                     # Account management endpoints
+│   │   │   ├── authApi.ts                        # Authentication endpoints (login, register, etc.)
+│   │   │   ├── baseApi.ts                        # Base RTK Query configuration
+│   │   │   ├── clientsApi.ts                     # Client CRUD endpoints (getClients, createClient, etc.)
+│   │   │   └── trainerApi.ts                     # Trainer profile endpoints
 │   │   ├── components/
-│   │   │   └── SmartNavigation.tsx
+│   │   │   └── SmartNavigation.tsx               # Cross-platform navigation component
 │   │   ├── config/
-│   │   │   ├── constants.ts
-│   │   │   └── navigationConfig.ts
+│   │   │   ├── constants.ts                      # App constants (roles, routes, etc.)
+│   │   │   ├── env.ts                            # Environment configuration
+│   │   │   └── navigationConfig.ts               # Navigation configuration
 │   │   ├── examples/
-│   │   │   └── RegisterFormExample.tsx
+│   │   │   └── RegisterFormExample.tsx           # Example component usage
 │   │   ├── hooks/
-│   │   │   ├── clients/
-│   │   │   │   └── useClientOnboarding.ts
-│   │   │   ├── useAuth.ts
-│   │   │   ├── useAuthForm.ts
-│   │   │   ├── useCompleteProfile.ts
-│   │   │   ├── useLogout.ts
-│   │   │   ├── useNavigation.ts
-│   │   │   ├── usePublicNavigation.ts
-│   │   │   ├── useRoleGuard.ts
-│   │   │   ├── useRoleNavigation.ts
-│   │   │   ├── useSmartRouting.ts
-│   │   │   ├── useTrainerProfile.ts
-│   │   │   └── useUserRole.ts
-│   │   ├── index.ts
+│   │   │   ├── clients/                          # Client-related hooks
+│   │   │   │   ├── useClientOnboarding.ts       # Hook para wizard de onboarding (7 steps)
+│   │   │   │   └── useClientStats.ts             # Hook para estadísticas de clientes
+│   │   │   ├── modals/                           # Modal hooks
+│   │   │   │   ├── useBillingInfoModal.ts
+│   │   │   │   ├── useCompleteProfileModal.ts
+│   │   │   │   ├── useEmailVerificationGuard.ts
+│   │   │   │   └── useEmailVerificationModal.ts
+│   │   │   ├── useAuth.ts                        # Authentication hook
+│   │   │   ├── useAuthForm.ts                    # Form authentication logic
+│   │   │   ├── useCompleteProfile.ts             # Profile completion check
+│   │   │   ├── useLogout.ts                      # Logout functionality
+│   │   │   ├── useNavigation.ts                  # Navigation utilities
+│   │   │   ├── usePublicNavigation.ts            # Public routes navigation
+│   │   │   ├── useRoleGuard.ts                   # Role-based route protection
+│   │   │   ├── useRoleNavigation.ts              # Role-based navigation
+│   │   │   ├── useSmartRouting.ts                # Smart routing logic
+│   │   │   ├── useTrainerProfile.ts              # Trainer profile management
+│   │   │   └── useUserRole.ts                    # User role utilities
+│   │   ├── index.ts                              # Main export file (all public exports)
 │   │   ├── services/
-│   │   │   └── authService.ts
+│   │   │   └── authService.ts                    # Authentication service
 │   │   ├── storage/
-│   │   │   └── IStorage.ts
-│   │   ├── store/
-│   │   │   ├── authSlice.ts
-│   │   │   ├── clientsSlice.ts
-│   │   │   └── index.ts
-│   │   ├── types/
-│   │   │   ├── account.ts
-│   │   │   ├── auth.ts
-│   │   │   ├── client.ts
-│   │   │   ├── clientOnboarding.ts
-│   │   │   └── trainer.ts
+│   │   │   └── IStorage.ts                       # Cross-platform storage interface
+│   │   ├── store/                                # Redux store
+│   │   │   ├── authSlice.ts                      # Auth state management
+│   │   │   ├── clientsSlice.ts                   # Clients state management
+│   │   │   └── index.ts                          # Store configuration
+│   │   ├── types/                                # TypeScript type definitions
+│   │   │   ├── account.ts                        # Account types
+│   │   │   ├── auth.ts                           # Authentication types
+│   │   │   ├── client.ts                         # Client types (Client, ClientFormData, Enums)
+│   │   │   │                                     # Incluye: GENDER_ENUM, TRAINING_GOAL_ENUM, 
+│   │   │   │                                     # EXPERIENCE_ENUM, WEEKLY_FREQUENCY_ENUM, 
+│   │   │   │                                     # SESSION_DURATION_ENUM
+│   │   │   ├── clientOnboarding.ts               # Onboarding flow types
+│   │   │   ├── clientStats.ts                    # Client statistics types
+│   │   │   └── trainer.ts                        # Trainer types
 │   │   └── utils/
-│   │       ├── calculations/
-│   │       │   ├── bmi.ts
-│   │       │   ├── bodyFat.ts
+│   │       ├── calculations/                     # Calculation utilities
+│   │       │   ├── clients/
+│   │       │   │   ├── calculations.ts          # Client-specific calculations
+│   │       │   │   └── index.ts
 │   │       │   └── index.ts
-│   │       ├── roles.ts
-│   │       └── validations/
-│   │           ├── auth.ts
-│   │           ├── client.ts
+│   │       ├── roles.ts                          # Role utilities
+│   │       └── validations/                      # Validation utilities
+│   │           ├── auth/
+│   │           │   └── validation.ts             # Auth validation rules
+│   │           ├── clients/
+│   │           │   └── clientValidation.ts       # Client form validation (multi-step)
 │   │           └── index.ts
 │   ├── package.json
 │   └── tsconfig.json

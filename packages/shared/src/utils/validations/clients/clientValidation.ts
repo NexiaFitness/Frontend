@@ -61,21 +61,21 @@ export const validateClientForm = (
     }
 
     // Edad (13-100 años)
-    if (data.edad !== undefined) {
+    if (data.edad !== undefined && data.edad !== null) {
         if (data.edad < 13 || data.edad > 100) {
             errors.edad = "La edad debe estar entre 13 y 100 años";
         }
     }
 
     // Peso (20-300 kg)
-    if (data.peso !== undefined) {
+    if (data.peso !== undefined && data.peso !== null) {
         if (data.peso < 20 || data.peso > 300) {
             errors.peso = "El peso debe estar entre 20 y 300 kg";
         }
     }
 
     // Altura (CRÍTICO: ahora en centímetros, rango 100-250cm)
-    if (data.altura !== undefined) {
+    if (data.altura !== undefined && data.altura !== null) {
         if (data.altura < 100 || data.altura > 250) {
             errors.altura = "La altura debe estar entre 100 y 250 cm";
         }

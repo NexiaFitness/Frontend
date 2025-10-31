@@ -305,6 +305,31 @@ export interface ClientCardData {
 }
 
 // ========================================
+// REDUX STATE TYPES
+// ========================================
+
+/**
+ * ClientState - Estado de Redux para gestión de clientes
+ * Usado por clientsSlice.ts
+ */
+export interface ClientState {
+    clients: Client[];
+    selectedClient: Client | null;
+    isLoading: boolean;
+    isCreating: boolean;
+    isUpdating: boolean;
+    isDeleting: boolean;
+    error: string | null;
+    filters: ClientFilters;
+    pagination: {
+        page: number;
+        per_page: number;
+        total: number;
+        total_pages: number;
+    };
+}
+
+// ========================================
 // LEGACY EXPORTS (mantener compatibilidad transitoria)
 // ========================================
 
