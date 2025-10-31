@@ -14,7 +14,7 @@
 
 import React from "react";
 import type { TrainingGoalsStepProps } from "@nexia/shared/types/clientOnboarding";
-import { CLIENT_GOALS } from "@nexia/shared";
+import { TRAINING_GOAL_ENUM } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
@@ -34,10 +34,9 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
                     className="w-full border rounded-lg p-2 bg-white text-slate-800"
                 >
                     <option value="">Selecciona un objetivo</option>
-                    <option value={CLIENT_GOALS.WEIGHT_LOSS}>Pérdida de peso</option>
-                    <option value={CLIENT_GOALS.MUSCLE_GAIN}>Ganancia muscular</option>
-                    <option value={CLIENT_GOALS.PERFORMANCE}>Rendimiento deportivo</option>
-                    <option value={CLIENT_GOALS.HEALTH}>Salud general</option>
+                    <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
+                    <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
+                    <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
                 </select>
                 {errors.objetivo_entrenamiento && (
                     <p className="text-red-600 text-sm">{errors.objetivo_entrenamiento}</p>

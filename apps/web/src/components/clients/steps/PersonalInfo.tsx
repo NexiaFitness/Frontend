@@ -13,6 +13,7 @@
 
 import React from "react";
 import type { PersonalInfoStepProps } from "@nexia/shared/types/clientOnboarding";
+import { GENDER_ENUM } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
@@ -100,9 +101,8 @@ export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
                     className="w-full border rounded-lg p-2 bg-white text-slate-800"
                 >
                     <option value="">Selecciona una opción</option>
-                    <option value="masculino">Masculino</option>
-                    <option value="femenino">Femenino</option>
-                    <option value="otro">Otro</option>
+                    <option value={GENDER_ENUM.MASCULINO}>Masculino</option>
+                    <option value={GENDER_ENUM.FEMENINO}>Femenino</option>
                 </select>
                 {errors.sexo && <p className="text-red-600 text-sm">{errors.sexo}</p>}
             </div>

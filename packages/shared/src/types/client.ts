@@ -55,6 +55,14 @@ export const WEEKLY_FREQUENCY_ENUM = {
 
 export type WeeklyFrequency = (typeof WEEKLY_FREQUENCY_ENUM)[keyof typeof WEEKLY_FREQUENCY_ENUM];
 
+export const SESSION_DURATION_ENUM = {
+    SHORT_LT_1H: "short_lt_1h",
+    MEDIUM_1H_TO_1H30: "medium_1h_to_1h30",
+    LONG_GT_1H30: "long_gt_1h30",
+} as const;
+
+export type SessionDuration = (typeof SESSION_DURATION_ENUM)[keyof typeof SESSION_DURATION_ENUM];
+
 // ========================================
 // CLIENT ENTITY (Response de GET/POST/PUT)
 // ========================================
@@ -210,12 +218,16 @@ export interface ClientFilters {
 // API RESPONSES
 // ========================================
 
+/**
+ * ClientsListResponse - Respuesta de GET /clients/search
+ * Alineado 100% con backend FastAPI ClientListResponse schema
+ */
 export interface ClientsListResponse {
-    clients: Client[];
+    items: Client[];        // ← Backend usa "items" (no "clients")
     total: number;
     page: number;
-    per_page: number;
-    total_pages: number;
+    page_size: number;     // ← Backend usa "page_size" (no "per_page")
+    has_more: boolean;     // ← Backend usa "has_more" (no "total_pages")
 }
 
 export interface DeleteClientResponse {

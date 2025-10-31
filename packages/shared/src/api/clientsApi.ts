@@ -27,18 +27,36 @@ export const clientsApi = baseApi.injectEndpoints({
                 params.append('page', page.toString());
                 params.append('page_size', per_page.toString());
                 
-                // Agregar filtros existentes
-                if (filters.objetivo_entrenamiento) params.append('objetivo_entrenamiento', filters.objetivo_entrenamiento);
-                if (filters.experiencia) params.append('experiencia', filters.experiencia);
-                if (filters.activo !== undefined) params.append('activo', filters.activo.toString());
-                if (filters.search) params.append('search', filters.search);
+                // Agregar filtros existentes - USAR NOMBRES EXACTOS DEL BACKEND
+                if (filters.objetivo_entrenamiento) {
+                    params.append('training_goal', filters.objetivo_entrenamiento);
+                }
+                if (filters.experiencia) {
+                    params.append('experience', filters.experiencia);
+                }
+                if (filters.activo !== undefined) {
+                    params.append('activo', filters.activo.toString());
+                }
+                if (filters.search) {
+                    params.append('search', filters.search);
+                }
 
                 // Filtros avanzados
-                if (filters.age_min !== undefined) params.append('age_min', filters.age_min.toString());
-                if (filters.age_max !== undefined) params.append('age_max', filters.age_max.toString());
-                if (filters.gender) params.append('gender', filters.gender);
-                if (filters.sort_by) params.append('sort_by', filters.sort_by);
-                if (filters.sort_order) params.append('sort_order', filters.sort_order);
+                if (filters.age_min !== undefined) {
+                    params.append('age_min', filters.age_min.toString());
+                }
+                if (filters.age_max !== undefined) {
+                    params.append('age_max', filters.age_max.toString());
+                }
+                if (filters.gender) {
+                    params.append('gender', filters.gender);
+                }
+                if (filters.sort_by) {
+                    params.append('sort_by', filters.sort_by);
+                }
+                if (filters.sort_order) {
+                    params.append('sort_order', filters.sort_order);
+                }
 
                 return {
                     url: `/clients/search?${params.toString()}`,
@@ -46,9 +64,9 @@ export const clientsApi = baseApi.injectEndpoints({
                 };
             },
             providesTags: (result) =>
-                result?.clients
+                result?.items  // ← Cambiar de "clients" a "items"
                     ? [
-                        ...result.clients.map(({ id }) => ({ type: "Client" as const, id })),
+                        ...result.items.map(({ id }) => ({ type: "Client" as const, id })),
                         { type: "Client", id: "LIST" },
                     ]
                     : [{ type: "Client", id: "LIST" }],

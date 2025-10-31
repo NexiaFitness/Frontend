@@ -59,6 +59,20 @@ export * from "./types/clientStats";
 export * from "./types/trainer";
 export * from "./types/account";
 
+// Enums explícitos de client (para uso directo en componentes)
+export {
+    GENDER_ENUM,
+    TRAINING_GOAL_ENUM,
+    EXPERIENCE_ENUM,
+    WEEKLY_FREQUENCY_ENUM,
+    SESSION_DURATION_ENUM,
+    type Gender,
+    type TrainingGoal,
+    type Experience,
+    type WeeklyFrequency,
+    type SessionDuration,
+} from "./types/client";
+
 // Config
 export * from "./config/constants";
 

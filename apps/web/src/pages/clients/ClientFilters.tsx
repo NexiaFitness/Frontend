@@ -22,6 +22,7 @@
 
 import React, { useState, useEffect } from "react";
 import type { ClientFilters as ClientFiltersType } from "@nexia/shared/types/client";
+import { TRAINING_GOAL_ENUM, EXPERIENCE_ENUM } from "@nexia/shared";
 
 interface ClientFiltersProps {
     filters: ClientFiltersType;
@@ -128,10 +129,9 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
                     >
                         <option value="">Todos</option>
-                        <option value="weight_loss">Pérdida de peso</option>
-                        <option value="muscle_gain">Ganancia muscular</option>
-                        <option value="performance">Rendimiento</option>
-                        <option value="health">Salud general</option>
+                        <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
+                        <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
+                        <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
                     </select>
                 </div>
 
@@ -147,9 +147,9 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
                     >
                         <option value="">Todos</option>
-                        <option value="beginner">Principiante</option>
-                        <option value="intermediate">Intermedio</option>
-                        <option value="advanced">Avanzado</option>
+                        <option value={EXPERIENCE_ENUM.BAJA}>Principiante (Baja)</option>
+                        <option value={EXPERIENCE_ENUM.MEDIA}>Intermedio (Media)</option>
+                        <option value={EXPERIENCE_ENUM.ALTA}>Avanzado (Alta)</option>
                     </select>
                 </div>
 

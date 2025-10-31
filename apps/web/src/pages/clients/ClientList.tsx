@@ -69,6 +69,16 @@ export const ClientList: React.FC = () => {
         per_page: perPage,
     });
 
+    // Validar datos y calcular valores derivados de forma segura (alineado con backend)
+    const clients = data?.items ?? [];  // ← Backend usa "items" (no "clients")
+    const totalClients = data?.total ?? 0;
+    const currentPage = data?.page ?? page;
+    const pageSize = data?.page_size ?? perPage;  // ← Backend usa "page_size" (no "per_page")
+    const hasMore = data?.has_more ?? false;  // ← Backend usa "has_more"
+    
+    // Calcular total_pages desde page_size y total (solo para UI)
+    const totalPages = pageSize > 0 ? Math.ceil(totalClients / pageSize) : 0;
+
     // Sincronizar filtros con URL (para compartir links)
     useEffect(() => {
         const params = new URLSearchParams();
@@ -166,7 +176,7 @@ export const ClientList: React.FC = () => {
                     )}
 
                     {/* Empty State */}
-                    {!isLoading && !isError && data?.clients.length === 0 && (
+                    {!isLoading && !isError && clients.length === 0 && (
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8 lg:p-12 text-center">
                             <div className="max-w-md mx-auto">
                                 <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -202,10 +212,10 @@ export const ClientList: React.FC = () => {
                     )}
 
                     {/* Grid de clientes */}
-                    {!isLoading && !isError && data && data.clients.length > 0 && (
+                    {!isLoading && !isError && clients.length > 0 && (
                         <>
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                                {data.clients.map((client) => (
+                                {clients.map((client) => (
                                     <ClientCard
                                         key={client.id}
                                         client={client}
@@ -215,7 +225,7 @@ export const ClientList: React.FC = () => {
                             </div>
 
                             {/* Paginación */}
-                            {data.total_pages > 1 && (
+                            {totalPages > 1 && (
                                 <div className="flex justify-center items-center gap-2 mt-8">
                                     <Button
                                         variant="outline"
@@ -227,15 +237,15 @@ export const ClientList: React.FC = () => {
                                     </Button>
 
                                     <div className="flex items-center gap-2">
-                                        {Array.from({ length: Math.min(5, data.total_pages) }, (_, i) => {
+                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                                             // Lógica para mostrar 5 páginas alrededor de la actual
                                             let pageNumber: number;
-                                            if (data.total_pages <= 5) {
+                                            if (totalPages <= 5) {
                                                 pageNumber = i + 1;
                                             } else if (page <= 3) {
                                                 pageNumber = i + 1;
-                                            } else if (page >= data.total_pages - 2) {
-                                                pageNumber = data.total_pages - 4 + i;
+                                            } else if (page >= totalPages - 2) {
+                                                pageNumber = totalPages - 4 + i;
                                             } else {
                                                 pageNumber = page - 2 + i;
                                             }
@@ -260,7 +270,7 @@ export const ClientList: React.FC = () => {
                                         variant="outline"
                                         size="sm"
                                         onClick={() => handlePageChange(page + 1)}
-                                        disabled={page === data.total_pages}
+                                        disabled={page >= totalPages}
                                     >
                                         Siguiente →
                                     </Button>
@@ -270,8 +280,8 @@ export const ClientList: React.FC = () => {
                             {/* Info de paginación */}
                             <div className="text-center mt-4">
                                 <p className="text-sm text-white/80">
-                                    Mostrando {(page - 1) * perPage + 1}-
-                                    {Math.min(page * perPage, data.total)} de {data.total} clientes
+                                    Mostrando {(page - 1) * pageSize + 1}-
+                                    {Math.min(page * pageSize, totalClients)} de {totalClients} clientes
                                 </p>
                             </div>
                         </>
