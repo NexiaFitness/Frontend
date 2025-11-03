@@ -5,13 +5,14 @@
  * - Layout público para homepage y páginas de autenticación
  * - Smart dashboard routing basado en rol del usuario autenticado
  * - Protección de rutas privadas con redirect automático
- * - Client Management: List (implementado), Detail y Edit (pendientes)
+ * - Client Management: List, Detail, Onboarding
+ * - Training Plans Management: List (FASE 1)
  * 
  * @author Frontend Team
  * @since v1.0.0
  * @updated v3.2.0 - Role-based dashboard routing implementado
- * @updated v2.5.0 - ClientOnboarding wizard agregado
- * @updated v2.6.0 - Client Management Dashboard (List implementado, Detail/Edit pendientes)
+ * @updated v3.2.0 - Training Plans Management agregado (FASE 1)
+ * @updated v2.6.0 - Client Management Dashboard
  */
 
 import React, { useEffect } from "react";
@@ -37,10 +38,11 @@ import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
 // Client Management (trainers only)
 import { ClientOnboarding } from "./pages/clients/ClientOnboarding";
 import { ClientList } from "./pages/clients/ClientList";
-// TODO FASE 3: Descomentar cuando ClientDetail esté implementado
-// import { ClientDetail } from "./pages/clients/ClientDetail";
-// TODO FASE 4: Descomentar cuando ClientEdit esté implementado
-// import { ClientEdit } from "./pages/clients/ClientEdit";
+import { ClientDetail } from "./pages/clients/ClientDetail";
+
+// Training Plans Management (trainers only)
+import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
+import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
 
 // Páginas adicionales
 import Account from "./pages/account/Account";
@@ -126,23 +128,37 @@ function App() {
       />
 
       {/* ============================================ */}
-      {/* CLIENT MANAGEMENT - Trainers only */}
+      {/* TRAINING PLANS MANAGEMENT - Trainers only */}
       {/* ============================================ */}
-      
-      {/* TODO FASE 4: Client Edit - Descomentar cuando esté implementado
+
+      {/* Training Plan Detail - Ruta específica PRIMERO */}
       <Route
-        path="/dashboard/clients/:id/edit"
+        path="/dashboard/training-plans/:id"
         element={
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientEdit />
+              <TrainingPlanDetail />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }
       />
-      */}
 
-      {/* TODO FASE 3: Client Detail - Descomentar cuando esté implementado
+      {/* Training Plans List - ✅ FASE 1 IMPLEMENTADA */}
+      <Route
+        path="/dashboard/training-plans"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <TrainingPlansPage />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* CLIENT MANAGEMENT - Trainers only */}
+      {/* ============================================ */}
+
       <Route
         path="/dashboard/clients/:id"
         element={
@@ -153,7 +169,6 @@ function App() {
           </ProtectedRoute>
         }
       />
-      */}
 
       {/* Client Onboarding (wizard de alta) */}
       <Route
@@ -167,7 +182,7 @@ function App() {
         }
       />
 
-      {/* Client List (lista principal) - ✅ FASE 2 IMPLEMENTADA */}
+      {/* Client List (lista principal) */}
       <Route
         path="/dashboard/clients"
         element={
