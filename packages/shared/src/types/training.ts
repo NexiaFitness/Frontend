@@ -14,10 +14,37 @@
  *
  * @author Frontend Team
  * @since v3.1.0
+ * @updated v3.2.0 - Agregados tipos para CRUD Training Plans (Fase 1)
+ * @updated v3.3.0 - Agregados tipos para Cycles System (Fase 2)
  */
 
 // ========================================
-// TRAINING PLAN
+// ENUMS
+// ========================================
+
+export const TRAINING_PLAN_STATUS = {
+    ACTIVE: "active",
+    COMPLETED: "completed",
+    PAUSED: "paused",
+    CANCELLED: "cancelled",
+} as const;
+
+export type TrainingPlanStatus = (typeof TRAINING_PLAN_STATUS)[keyof typeof TRAINING_PLAN_STATUS];
+
+export const TRAINING_PLAN_GOAL = {
+    MUSCLE_GAIN: "Muscle Gain",
+    WEIGHT_LOSS: "Weight Loss",
+    STRENGTH: "Strength",
+    ENDURANCE: "Endurance",
+    GENERAL_FITNESS: "General Fitness",
+    REHABILITATION: "Rehabilitation",
+    PERFORMANCE: "Performance",
+} as const;
+
+export type TrainingPlanGoal = (typeof TRAINING_PLAN_GOAL)[keyof typeof TRAINING_PLAN_GOAL];
+
+// ========================================
+// TRAINING PLAN (Entity - Backend Response)
 // ========================================
 
 export interface TrainingPlan {
@@ -33,6 +60,274 @@ export interface TrainingPlan {
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
+}
+
+// ========================================
+// TRAINING PLAN REQUEST TYPES
+// ========================================
+
+/**
+ * TrainingPlanCreate - POST /training-plans/
+ * Alineado con TrainingPlanCreate schema de Swagger
+ */
+export interface TrainingPlanCreate {
+    trainer_id: number;
+    client_id: number;
+    name: string;
+    description?: string | null;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    goal: string;
+    status?: string; // Default: "active"
+}
+
+/**
+ * TrainingPlanUpdate - PUT /training-plans/{id}
+ * Todos los campos opcionales
+ */
+export interface TrainingPlanUpdate {
+    name?: string;
+    description?: string | null;
+    start_date?: string;
+    end_date?: string;
+    goal?: string;
+    status?: string;
+}
+
+// ========================================
+// TRAINING PLAN FILTERS & QUERY PARAMS
+// ========================================
+
+export interface TrainingPlanFilters {
+    client_id?: number; // Required si no hay trainer_id
+    trainer_id?: number; // Required si no hay client_id
+    status?: TrainingPlanStatus;
+    goal?: TrainingPlanGoal;
+    skip?: number; // Pagination offset (default: 0)
+    limit?: number; // Pagination limit (default: 100, max: 1000)
+}
+
+// ========================================
+// API RESPONSES
+// ========================================
+
+/**
+ * TrainingPlansListResponse
+ * Backend devuelve array directo (no wrapper con pagination metadata)
+ */
+export type TrainingPlansListResponse = TrainingPlan[];
+
+export interface DeleteTrainingPlanResponse {
+    message: string;
+}
+
+// ========================================
+// REDUX STATE
+// ========================================
+
+/**
+ * TrainingPlanState - Estado de Redux para gestión de training plans
+ */
+export interface TrainingPlanState {
+    plans: TrainingPlan[];
+    selectedPlan: TrainingPlan | null;
+    isLoading: boolean;
+    isCreating: boolean;
+    isUpdating: boolean;
+    isDeleting: boolean;
+    error: string | null;
+    filters: TrainingPlanFilters;
+}
+
+// ========================================
+// FORM TYPES (Frontend only)
+// ========================================
+
+export interface TrainingPlanFormData {
+    name: string;
+    description?: string;
+    start_date: string; // YYYY-MM-DD
+    end_date: string; // YYYY-MM-DD
+    goal: string;
+    client_id?: number; // Pre-filled en algunos contextos
+}
+
+export interface TrainingPlanFormErrors {
+    name?: string;
+    description?: string;
+    start_date?: string;
+    end_date?: string;
+    goal?: string;
+    client_id?: string;
+    general?: string;
+}
+
+// ========================================
+// MACROCYCLE (Fase Macro)
+// ========================================
+
+/**
+ * Macrocycle - Fase macro del plan (ej. "Preparación General - 12 semanas")
+ * Alineado con MacrocycleOut schema de Swagger
+ */
+export interface Macrocycle {
+    id: number;
+    training_plan_id: number;
+    name: string;
+    description: string | null;
+    start_date: string; // ISO date
+    end_date: string; // ISO date
+    focus: string;
+    volume_intensity_ratio: string | null;
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+/**
+ * MacrocycleCreate - POST /training-plans/{plan_id}/macrocycles
+ */
+export interface MacrocycleCreate {
+    training_plan_id: number; // Se sobrescribe desde URL path param
+    name: string;
+    description?: string | null;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    focus: string;
+    volume_intensity_ratio?: string | null;
+}
+
+/**
+ * MacrocycleUpdate - PUT /training-plans/macrocycles/{id}
+ */
+export interface MacrocycleUpdate {
+    name?: string;
+    description?: string | null;
+    start_date?: string;
+    end_date?: string;
+    focus?: string;
+    volume_intensity_ratio?: string | null;
+}
+
+// ========================================
+// MESOCYCLE (Fase Meso)
+// ========================================
+
+/**
+ * Mesocycle - Fase meso del macrociclo (ej. "Hipertrofia - 4 semanas")
+ * Alineado con MesocycleOut schema de Swagger
+ */
+export interface Mesocycle {
+    id: number;
+    macrocycle_id: number;
+    name: string;
+    description: string | null;
+    start_date: string; // ISO date
+    end_date: string; // ISO date
+    duration_weeks: number;
+    primary_focus: string;
+    secondary_focus: string | null;
+    target_volume: string | null;
+    target_intensity: string | null;
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+/**
+ * MesocycleCreate - POST /training-plans/macrocycles/{macrocycle_id}/mesocycles
+ */
+export interface MesocycleCreate {
+    macrocycle_id: number; // Se sobrescribe desde URL path param
+    name: string;
+    description?: string | null;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    duration_weeks: number;
+    primary_focus: string;
+    secondary_focus?: string | null;
+    target_volume?: string | null;
+    target_intensity?: string | null;
+}
+
+/**
+ * MesocycleUpdate - PUT /training-plans/mesocycles/{id}
+ */
+export interface MesocycleUpdate {
+    name?: string;
+    description?: string | null;
+    start_date?: string;
+    end_date?: string;
+    duration_weeks?: number;
+    primary_focus?: string;
+    secondary_focus?: string | null;
+    target_volume?: string | null;
+    target_intensity?: string | null;
+}
+
+// ========================================
+// MICROCYCLE (Fase Micro)
+// ========================================
+
+/**
+ * Microcycle - Fase micro del mesociclo (ej. "Semana 1 - Alta intensidad")
+ * Alineado con MicrocycleOut schema de Swagger
+ */
+export interface Microcycle {
+    id: number;
+    mesocycle_id: number;
+    name: string;
+    description: string | null;
+    start_date: string; // ISO date
+    end_date: string; // ISO date
+    duration_days: number; // Default: 7
+    training_frequency: number; // Default: 3
+    deload_week: boolean; // Default: false
+    notes: string | null;
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+/**
+ * MicrocycleCreate - POST /training-plans/mesocycles/{mesocycle_id}/microcycles
+ */
+export interface MicrocycleCreate {
+    mesocycle_id: number; // Se sobrescribe desde URL path param
+    name: string;
+    description?: string | null;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    duration_days?: number; // Default: 7
+    training_frequency?: number; // Default: 3
+    deload_week?: boolean; // Default: false
+    notes?: string | null;
+}
+
+/**
+ * MicrocycleUpdate - PUT /training-plans/microcycles/{id}
+ */
+export interface MicrocycleUpdate {
+    name?: string;
+    description?: string | null;
+    start_date?: string;
+    end_date?: string;
+    duration_days?: number;
+    training_frequency?: number;
+    deload_week?: boolean;
+    notes?: string | null;
+}
+
+// ========================================
+// CYCLES API RESPONSES
+// ========================================
+
+export type MacrocyclesListResponse = Macrocycle[];
+export type MesocyclesListResponse = Mesocycle[];
+export type MicrocyclesListResponse = Microcycle[];
+
+export interface DeleteCycleResponse {
+    message: string;
 }
 
 // ========================================
@@ -123,4 +418,10 @@ export interface FatigueAnalysis {
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
+}
+
+export interface AllCyclesResponse {
+    macrocycles: Macrocycle[];
+    mesocycles: Mesocycle[];
+    microcycles: Microcycle[];
 }

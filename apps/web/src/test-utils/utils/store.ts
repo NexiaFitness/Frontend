@@ -12,6 +12,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import { baseApi } from "@nexia/shared/api/baseApi";
 import authReducer from "@nexia/shared/store/authSlice";
 import clientsReducer from "@nexia/shared/store/clientsSlice";
+import trainingPlansReducer from "@nexia/shared/store/trainingPlansSlice";
 import type { RootState, AppDispatch } from "@nexia/shared/store";
 
 export const createTestStore = (preloadedState?: Partial<RootState>) =>
@@ -19,6 +20,7 @@ export const createTestStore = (preloadedState?: Partial<RootState>) =>
         reducer: {
             auth: authReducer,
             clients: clientsReducer,
+            trainingPlans: trainingPlansReducer,
             [baseApi.reducerPath]: baseApi.reducer,
         },
         middleware: (getDefaultMiddleware) =>

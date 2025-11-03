@@ -80,10 +80,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
         planId,
     });
 
-    const { data: mesocycles = [], isLoading, isError, error, refetch } = useGetMesocyclesQuery(
+    const { data: mesocyclesData, isLoading, isError, error, refetch } = useGetMesocyclesQuery(
         { macrocycleId: selectedMacrocycleId! },
         { skip: !selectedMacrocycleId }
     );
+    const mesocycles: Mesocycle[] = mesocyclesData ?? [];
 
     const [createMesocycle, { isLoading: isCreating }] = useCreateMesocycleMutation();
     const [deleteMesocycle, { isLoading: isDeleting }] = useDeleteMesocycleMutation();
@@ -148,19 +149,21 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
         if (!validateForm() || !formData.macrocycle_id) return;
 
         try {
+            const payload: MesocycleCreate = {
+                macrocycle_id: formData.macrocycle_id,
+                name: formData.name,
+                description: formData.description || null,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                duration_weeks: Number(formData.duration_weeks),
+                primary_focus: formData.primary_focus,
+                secondary_focus: formData.secondary_focus || null,
+                target_volume: formData.target_volume || null,
+                target_intensity: formData.target_intensity || null,
+            };
             await createMesocycle({
                 macrocycleId: formData.macrocycle_id,
-                data: {
-                    name: formData.name,
-                    description: formData.description || null,
-                    start_date: formData.start_date,
-                    end_date: formData.end_date,
-                    duration_weeks: Number(formData.duration_weeks),
-                    primary_focus: formData.primary_focus,
-                    secondary_focus: formData.secondary_focus || null,
-                    target_volume: formData.target_volume || null,
-                    target_intensity: formData.target_intensity || null,
-                },
+                data: payload,
             }).unwrap();
 
             // Reset form

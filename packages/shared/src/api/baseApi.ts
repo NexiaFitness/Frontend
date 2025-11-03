@@ -5,6 +5,8 @@
  * 
  * @author Frontend Team
  * @since v1.0.0
+ * @updated v3.2.0 - Agregado tagType "TrainingPlan"
+ * @updated v3.3.0 - Agregados tagTypes "Macrocycle", "Mesocycle", "Microcycle"
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -33,5 +35,5 @@ export const baseApi = createApi({
     reducerPath: "api",
     baseQuery,
     endpoints: () => ({}), // los endpoints se añaden en archivos específicos
-    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise"],
+    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise", "TrainingPlan", "Macrocycle", "Mesocycle", "Microcycle"],
 });

@@ -283,6 +283,14 @@ export const ClientList: React.FC = () => {
                                     Mostrando {(page - 1) * pageSize + 1}-
                                     {Math.min(page * pageSize, totalClients)} de {totalClients} clientes
                                 </p>
+                                <p className="text-xs text-white/60 mt-1">
+                                    Página actual: {currentPage} / {totalPages}
+                                </p>
+                                {hasMore && (
+                                    <p className="text-xs text-white/60 mt-1 italic">
+                                        Hay más clientes disponibles en las siguientes páginas...
+                                    </p>
+                                )}
                             </div>
                         </>
                     )}

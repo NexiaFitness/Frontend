@@ -17,7 +17,7 @@
  * @since v3.3.0
  */
 
-import React, { useState } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
@@ -27,7 +27,7 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 
-// Tabs components
+// Tabs components - estáticos (carga inmediata)
 import {
     TrainingPlanHeader,
     OverviewTab,
@@ -36,7 +36,14 @@ import {
     MicrocyclesTab,
 } from "@/components/trainingPlans";
 
-type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles";
+// Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
+const ChartsTab = lazy(() => 
+    import("@/components/trainingPlans").then(module => ({
+        default: module.ChartsTab
+    }))
+);
+
+type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "charts";
 
 interface Tab {
     id: TabId;
@@ -48,6 +55,7 @@ const TABS: Tab[] = [
     { id: "macrocycles", label: "Macrocycles" },
     { id: "mesocycles", label: "Mesocycles" },
     { id: "microcycles", label: "Microcycles" },
+    { id: "charts", label: "Charts" },
 ];
 
 export const TrainingPlanDetail: React.FC = () => {
@@ -169,6 +177,16 @@ export const TrainingPlanDetail: React.FC = () => {
                 return <MesocyclesTab planId={planId} />;
             case "microcycles":
                 return <MicrocyclesTab planId={planId} />;
+            case "charts":
+                return (
+                    <Suspense fallback={<LoadingSpinner size="lg" />}>
+                        <ChartsTab
+                            planId={planId}
+                            planStartDate={plan.start_date}
+                            planEndDate={plan.end_date}
+                        />
+                    </Suspense>
+                );
             default:
                 return null;
         }

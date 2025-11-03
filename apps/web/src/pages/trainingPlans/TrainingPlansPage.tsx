@@ -431,7 +431,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     </svg>
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-800 mb-2">
-                                    You don't have any training plans yet.
+                                    You don&apos;t have any training plans yet.
                                 </h3>
                                 {clients.length === 0 ? (
                                     <>
@@ -468,7 +468,7 @@ export const TrainingPlansPage: React.FC = () => {
                     {!isLoading && !isError && plans.length > 0 && (
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden">
                             <div className="divide-y divide-slate-200">
-                                {plans.map((plan) => (
+                                {plans.map((plan: TrainingPlan) => (
                                     <div
                                         key={plan.id}
                                         className="p-4 lg:p-6 flex items-center justify-between hover:bg-slate-50 transition-colors"

@@ -1,10 +1,10 @@
 /**
  * clientFixture.ts — Fixture para generar clientes mock.
  *
- * Corrigido según Client de packages/shared/src/types/client.ts:
+ * Alineado 100% con Client de packages/shared/src/types/client.ts y Swagger:
  * - id y trainer_id son number.
- * - objetivo es ClientGoal (enum/union).
- * - fecha_registro y created_at son string ISO.
+ * - objetivo_entrenamiento es TrainingGoal (enum).
+ * - fecha_alta es string en formato YYYY-MM-DD (date del backend).
  * - updated_at es opcional.
  *
  * @since v4.3.9
@@ -17,16 +17,14 @@ export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
   nombre: "Carlos",
   apellidos: "Pérez",
   mail: "carlos@test.com",
-  objetivo_entrenamiento: "ganar_masa" as Client["objetivo_entrenamiento"],
+  fecha_alta: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD (date del backend)
+  objetivo_entrenamiento: "Aumentar masa muscular", // Valor exacto del enum TrainingGoalEnum del backend
   edad: 30,
   peso: 80,
   altura: 180,
-  bmi: 24.7,
-  experiencia: "intermediate",
+  imc: 24.7,
+  experiencia: "Media",
   trainer_id: 101,
-  fecha_registro: new Date().toISOString(),
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
   activo: true,
   ...overrides,
 });

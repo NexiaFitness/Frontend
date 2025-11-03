@@ -86,10 +86,11 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
         { skip: !selectedMacrocycleId }
     );
 
-    const { data: microcycles = [], isLoading, isError, error, refetch } = useGetMicrocyclesQuery(
+    const { data: microcyclesData, isLoading, isError, error, refetch } = useGetMicrocyclesQuery(
         { mesocycleId: selectedMesocycleId! },
         { skip: !selectedMesocycleId }
     );
+    const microcycles: Microcycle[] = microcyclesData ?? [];
 
     const [createMicrocycle, { isLoading: isCreating }] = useCreateMicrocycleMutation();
     const [deleteMicrocycle, { isLoading: isDeleting }] = useDeleteMicrocycleMutation();
@@ -157,18 +158,20 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
         if (!validateForm() || !formData.mesocycle_id) return;
 
         try {
+            const payload: MicrocycleCreate = {
+                mesocycle_id: formData.mesocycle_id,
+                name: formData.name,
+                description: formData.description || null,
+                start_date: formData.start_date,
+                end_date: formData.end_date,
+                duration_days: Number(formData.duration_days),
+                training_frequency: Number(formData.training_frequency),
+                deload_week: formData.deload_week,
+                notes: formData.notes || null,
+            };
             await createMicrocycle({
                 mesocycleId: formData.mesocycle_id,
-                data: {
-                    name: formData.name,
-                    description: formData.description || null,
-                    start_date: formData.start_date,
-                    end_date: formData.end_date,
-                    duration_days: Number(formData.duration_days),
-                    training_frequency: Number(formData.training_frequency),
-                    deload_week: formData.deload_week,
-                    notes: formData.notes || null,
-                },
+                data: payload,
             }).unwrap();
 
             // Reset form
