@@ -20,6 +20,8 @@ import type {
     ResendVerificationResponse,
     ForgotPasswordData,
     ResetPasswordData,
+    LogoutRequest,
+    LogoutResponse,
     User,
 } from "../types/auth";
 
@@ -45,10 +47,7 @@ export const authApi = baseApi.injectEndpoints({
             query: (credentials) => ({
                 url: "/auth/login",
                 method: "POST",
-                body: new URLSearchParams({
-                    username: credentials.username,
-                    password: credentials.password,
-                }),
+                body: createLoginBody(credentials),
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded",
                 },
@@ -124,6 +123,19 @@ export const authApi = baseApi.injectEndpoints({
             }),
             providesTags: ["User"],
         }),
+
+        // Logout - revoca refresh token en el backend
+        logout: builder.mutation<LogoutResponse, LogoutRequest>({
+            query: (data) => ({
+                url: "/auth/logout",
+                method: "POST",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: ["Auth", "User"],
+        }),
     }),
     overrideExisting: false,
 });
@@ -137,4 +149,5 @@ export const {
     useForgotPasswordMutation,
     useResetPasswordMutation,
     useGetCurrentUserQuery,
+    useLogoutMutation,
 } = authApi;

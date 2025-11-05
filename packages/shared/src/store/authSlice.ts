@@ -12,6 +12,7 @@ import { createSlice, PayloadAction, Slice, createAsyncThunk } from "@reduxjs/to
 import { AuthState, User } from "@nexia/shared/types/auth";
 import { AUTH_CONFIG } from "@nexia/shared/config/constants";
 import { storage } from '@nexia/shared/storage/IStorage';
+import { authApi } from '@nexia/shared/api/authApi';
 
 /**
  * Carga estado inicial desde storage de forma async.
@@ -63,19 +64,50 @@ export const hydrateAuth = createAsyncThunk(
 // Async thunk para logout profesional
 export const logout = createAsyncThunk(
     'auth/logout',
-    async (_, { rejectWithValue }) => {
+    async (_, { dispatch, rejectWithValue }) => {
+        // Intentar obtener refresh_token del storage
+        let refreshToken: string | null = null;
         try {
-            // Limpieza async de storage
-            await storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-            await storage.removeItem(AUTH_CONFIG.USER_KEY);
-            
-            // Simular delay para UX profesional (opcional)
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
-            return null;
-        } catch (error) {
-            return rejectWithValue('Error during logout process');
+            refreshToken = await storage.getItem(AUTH_CONFIG.REFRESH_KEY);
+        } catch (storageError) {
+            // Si falla obtener del storage, continuar con limpieza local
+            if (process.env.NODE_ENV !== 'production') {
+                console.warn('[logout] Failed to read refresh_token from storage:', storageError);
+            }
         }
+        
+        // Si hay refresh_token, intentar llamar al backend para revocarlo
+        // El backend requiere refresh_token obligatorio según schema RefreshRequest
+        if (refreshToken && typeof refreshToken === 'string' && refreshToken.trim() !== '') {
+            try {
+                // RTK Query initiate devuelve una promesa directamente
+                await dispatch(authApi.endpoints.logout.initiate({ refresh_token: refreshToken }));
+            } catch (apiError) {
+                // Si falla el logout del backend, continuar con limpieza local por seguridad
+                // Esto puede pasar si el token ya está revocado o es inválido
+                // No es un error crítico, continuamos con limpieza local
+                if (process.env.NODE_ENV !== 'production') {
+                    console.warn('[logout] Backend logout failed, proceeding with local cleanup:', apiError);
+                }
+            }
+        }
+        
+        // Limpieza async de storage (siempre ejecutar, incluso si falla el backend)
+        // Esto es lo más importante - garantizar que las credenciales se eliminen localmente
+        try {
+            await storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            await storage.removeItem(AUTH_CONFIG.REFRESH_KEY);
+            await storage.removeItem(AUTH_CONFIG.USER_KEY);
+        } catch (cleanupError) {
+            // Si falla la limpieza, esto SÍ es un error crítico
+            if (process.env.NODE_ENV !== 'production') {
+                console.error('[logout] Critical: Failed to clean storage:', cleanupError);
+            }
+            return rejectWithValue('Error during storage cleanup');
+        }
+        
+        // Logout exitoso (limpieza local completada)
+        return null;
     }
 );
 

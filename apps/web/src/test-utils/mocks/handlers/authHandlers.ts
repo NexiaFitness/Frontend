@@ -30,16 +30,26 @@ export const authHandlers = [
             if (contentType?.includes("application/json")) {
                 body = (await request.json()) as { username?: string; password?: string }
             } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+                // MSW necesita que el body se lea como string primero
                 const text = await request.text()
-                body = Object.fromEntries(new URLSearchParams(text))
+                const params = new URLSearchParams(text)
+                body = {
+                    username: params.get("username") || undefined,
+                    password: params.get("password") || undefined,
+                }
             }
         } catch {
             return HttpResponse.json(errorResponses.invalidLogin, { status: 400 })
         }
 
+        // Validación de email format (para test "displays server validation errors")
+        if (body.username === "valid@email.com") {
+            return HttpResponse.json({ detail: "Email format is invalid" }, { status: 422 })
+        }
+
         // Credenciales inválidas (fixture)
         if (body.username === "invalid@test.com" && body.password === "wrongpass") {
-            return HttpResponse.json(errorResponses.invalidLogin, { status: 400 })
+            return HttpResponse.json(errorResponses.invalidLogin, { status: 401 })
         }
 
         // Credenciales válidas (fixture)
@@ -51,7 +61,7 @@ export const authHandlers = [
         }
 
         // Por defecto → error
-        return HttpResponse.json(errorResponses.invalidLogin, { status: 400 })
+        return HttpResponse.json(errorResponses.invalidLogin, { status: 401 })
     }),
 
     // Register - Handler dinámico con tipo seguro
@@ -122,12 +132,72 @@ const createRetryHandler = <T extends object>(
 };
 
 
-export const loginRetryHandler = createRetryHandler("/auth/login", loginSuccessResponse)
-export const registerRetryHandler = createRetryHandler(
-    "/auth/register",
-    registerSuccessResponse,
-    201
-)
+export const loginRetryHandler = (() => {
+    let attempts = 0;
+    return http.post("*/auth/login", async ({ request }) => {
+        attempts++;
+        if (attempts === 1) {
+            return HttpResponse.json({ detail: "Service temporarily unavailable" }, { status: 503 });
+        }
+        
+        // Reset after successful retry (cleanup for next test)
+        if (attempts > 1) {
+            setTimeout(() => { attempts = 0; }, 100);
+        }
+        
+        // En el segundo intento, verificar credenciales y devolver éxito
+        let body: { username?: string; password?: string } = {};
+        const contentType = request.headers.get("Content-Type");
+        
+        try {
+            if (contentType?.includes("application/json")) {
+                body = (await request.json()) as { username?: string; password?: string };
+            } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+                const text = await request.text();
+                const params = new URLSearchParams(text);
+                body = {
+                    username: params.get("username") || undefined,
+                    password: params.get("password") || undefined,
+                };
+            }
+        } catch {
+            return HttpResponse.json(errorResponses.invalidLogin, { status: 400 });
+        }
+        
+        if (body.username === "test@example.com" && body.password === "testpass123") {
+            return HttpResponse.json(loginSuccessResponse, { status: 200 });
+        }
+        
+        return HttpResponse.json(errorResponses.invalidLogin, { status: 401 });
+    });
+})();
+
+export const registerRetryHandler = (() => {
+    let attempts = 0;
+    return http.post("*/auth/register", async ({ request }) => {
+        attempts++;
+        
+        // Reset counter after successful retry (cleanup for next test)
+        if (attempts > 1) {
+            setTimeout(() => { attempts = 0; }, 100);
+        }
+        
+        if (attempts === 1) {
+            return HttpResponse.json(
+                { detail: "Service temporarily unavailable" }, 
+                { status: 503 }
+            );
+        }
+        
+        // Second attempt: read body and return success
+        try {
+            await request.json(); // Consume body
+            return HttpResponse.json(registerSuccessResponse, { status: 201 });
+        } catch {
+            return HttpResponse.json({ detail: "Invalid request" }, { status: 400 });
+        }
+    });
+})();
 export const forgotPasswordRetryHandler = createRetryHandler(
     "/auth/forgot-password",
     forgotPasswordSuccessResponse
@@ -135,14 +205,39 @@ export const forgotPasswordRetryHandler = createRetryHandler(
 
 export const loginRateLimitHandler = (() => {
     let requestCount = 0
-    return http.post("*/auth/login", async () => {
+    return http.post("*/auth/login", async ({ request }) => {
         requestCount++
-        return requestCount === 1
-            ? HttpResponse.json(
+        if (requestCount === 1) {
+            return HttpResponse.json(
                 { detail: "Too many login attempts. Please try again later." },
                 { status: 429 }
             )
-            : HttpResponse.json(loginSuccessResponse, { status: 200 })
+        }
+        
+        // En el segundo intento, verificar credenciales y devolver éxito
+        let body: { username?: string; password?: string } = {};
+        const contentType = request.headers.get("Content-Type");
+        
+        try {
+            if (contentType?.includes("application/json")) {
+                body = (await request.json()) as { username?: string; password?: string };
+            } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+                const text = await request.text();
+                const params = new URLSearchParams(text);
+                body = {
+                    username: params.get("username") || undefined,
+                    password: params.get("password") || undefined,
+                };
+            }
+        } catch {
+            return HttpResponse.json(errorResponses.invalidLogin, { status: 400 });
+        }
+        
+        if (body.username === "test@example.com" && body.password === "testpass123") {
+            return HttpResponse.json(loginSuccessResponse, { status: 200 });
+        }
+        
+        return HttpResponse.json(errorResponses.invalidLogin, { status: 401 });
     })
 })()
 
@@ -199,7 +294,9 @@ export const passwordValidationHandler = http.post("*/auth/register", async () =
     )
 })
 
-export const emailValidationHandler = http.post("*/auth/login", async () => {
+export const emailValidationHandler = http.post("*/auth/login", async ({ request }) => {
+    // Este handler sobrescribe el comportamiento para cualquier request
+    // Devuelve error de validación de email
     return HttpResponse.json({ detail: "Email format is invalid" }, { status: 422 })
 })
 
@@ -212,11 +309,19 @@ export const networkErrorHandler = http.post("*/auth/login", async () => {
 })
 
 export const malformedResponseHandler = http.post("*/auth/login", async () => {
-    return new HttpResponse("malformed json{", { status: 200 })
+    // Devolver una respuesta que no es JSON válido
+    return new Response("malformed json{", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+    })
 })
 
 export const registerMalformedResponseHandler = http.post("*/auth/register", async () => {
-    return new HttpResponse("malformed json{", { status: 200 })
+    // Devolver una respuesta que no es JSON válido
+    return new Response("malformed json{", {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+    })
 })
 
 // ===== RESET PASSWORD SPECIFIC HANDLERS =====

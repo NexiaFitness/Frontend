@@ -48,6 +48,14 @@ export interface ResetPasswordData {
     new_password: string;
 }
 
+export interface LogoutRequest {
+    refresh_token: string;
+}
+
+export interface LogoutResponse {
+    message: string;
+}
+
 // Registro con autologin - devuelve tokens directamente
 export interface RegisterResponse extends AuthResponse {
     message: string;

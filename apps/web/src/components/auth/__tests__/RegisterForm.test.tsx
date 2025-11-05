@@ -239,8 +239,8 @@ describe("RegisterForm", () => {
       await fillExistingEmailForm(user);
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // Verificar que se muestra algún error (simplificado)
-      expect(await screen.findByText(/error/i))
+      // Verificar que se muestra el error específico del handler
+      expect(await screen.findByText(/email already registered/i))
         .toBeInTheDocument();
 
       expect(mockNavigate).not.toHaveBeenCalled();
@@ -260,7 +260,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "weakpass");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+      expect(await screen.findByText(/password must be at least 8 characters/i))
         .toBeInTheDocument();
     });
   });
@@ -285,7 +285,7 @@ describe("RegisterForm", () => {
 
       // First attempt - should show error
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
-      expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+      expect(await screen.findByText(/service temporarily unavailable/i))
         .toBeInTheDocument();
 
       // Second attempt - should succeed
@@ -305,7 +305,7 @@ describe("RegisterForm", () => {
 
       // First attempt - should show rate limit error
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
-      expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+      expect(await screen.findByText(/too many registration attempts/i))
         .toBeInTheDocument();
 
       // Second attempt - should succeed
@@ -357,7 +357,7 @@ describe("RegisterForm", () => {
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
       // Verificar que se muestra estado de loading (simplificado)
-      expect(screen.getByRole("button", { name: /crear cuenta/i }))
+      expect(screen.getByRole("button", { name: /creando cuenta/i }))
         .toBeInTheDocument();
     });
   });
@@ -379,26 +379,26 @@ describe("RegisterForm", () => {
     });
 
     it("allows retry after server error", async () => {
+      server.use(registerRetryHandler);
+
       const user = userEvent.setup();
       render(<RegisterForm />);
 
-      // First attempt with existing email
-      await user.type(screen.getByLabelText(/correo electrónico/i), "existing@test.com");
+      // Fill form with valid data
+      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
       await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
-      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      expect(await screen.findByText(/error de conexión.*intenta de nuevo/i))
+      // First attempt - should show 503 error
+      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
+      expect(await screen.findByText(/service temporarily unavailable/i))
         .toBeInTheDocument();
 
-      // Fix email and retry
-      await user.clear(screen.getByLabelText(/correo electrónico/i));
-      await user.type(screen.getByLabelText(/correo electrónico/i), "new@example.com");
+      // Second attempt - should succeed
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
-
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith("/dashboard/trainer", { replace: true });
       });

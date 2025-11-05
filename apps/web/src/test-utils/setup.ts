@@ -14,8 +14,39 @@ import { cleanup } from "@testing-library/react";
 import { server } from "./utils/msw";
 import "@/test-utils/mocks/reactRouterMocks";
 import "@/test-utils/mocks/reactReduxMocks";
+import { initStorage } from '@nexia/shared/storage/IStorage';
+import type { IStorage } from '@nexia/shared/storage/IStorage';
+
 // REMOVIDO: authApiMocks causa conflicto con MSW
 // import "@/test-utils/mocks/authApiMocks";
+
+// Mock de storage para tests (usa localStorage real pero con manejo de errores)
+const testStorage: IStorage = {
+    async getItem(key: string): Promise<string | null> {
+        try {
+            return localStorage.getItem(key);
+        } catch {
+            return null;
+        }
+    },
+    async setItem(key: string, value: string): Promise<void> {
+        try {
+            localStorage.setItem(key, value);
+        } catch {
+            // Ignorar errores en tests (puede fallar si localStorage está deshabilitado)
+        }
+    },
+    async removeItem(key: string): Promise<void> {
+        try {
+            localStorage.removeItem(key);
+        } catch {
+            // Ignorar errores en tests
+        }
+    },
+};
+
+// Inicializar storage antes de todos los tests
+initStorage(testStorage);
 
 // MSW Server Setup
 beforeAll(() => {

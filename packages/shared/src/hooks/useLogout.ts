@@ -39,7 +39,15 @@ export const useLogout = (options: UseLogoutOptions = {}): UseLogoutReturn => {
     const handleLogout = async (): Promise<void> => {
         try {
             // Ejecutar async thunk de logout profesional
-            await dispatch(logout()).unwrap();
+            const result = dispatch(logout());
+            
+            // Verificar que el resultado tenga unwrap (thunk action)
+            if (result && typeof result.unwrap === 'function') {
+                await result.unwrap();
+            } else {
+                // Si no tiene unwrap, esperar directamente la promesa
+                await result;
+            }
 
             // Callback de éxito si se proporciona
             onSuccess?.();

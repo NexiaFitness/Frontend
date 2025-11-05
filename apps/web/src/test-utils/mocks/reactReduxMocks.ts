@@ -14,7 +14,29 @@ import type { RootState, AppDispatch } from "@nexia/shared/store";
 import type { AuthState } from "@nexia/shared/types/auth";
 import type { ClientState } from "@nexia/shared/types/client";
 
-export const mockDispatch = vi.fn();
+// Mock de dispatch que devuelve objetos con unwrap para async thunks
+export const mockDispatch = vi.fn((action) => {
+    // Si es una función (thunk), ejecutarla y devolver el resultado
+    if (typeof action === 'function') {
+        const result = action(mockDispatch, () => mockRootState, undefined);
+        // Si el resultado es una promesa (async thunk), devolver objeto con unwrap
+        if (result && typeof result.then === 'function') {
+            return {
+                unwrap: async () => {
+                    try {
+                        return await result;
+                    } catch (error) {
+                        throw error;
+                    }
+                },
+                ...result,
+            };
+        }
+        return result;
+    }
+    // Si es una acción normal, devolverla directamente
+    return action;
+});
 
 // Mock completo del AuthState
 export let mockAuthState: AuthState = {

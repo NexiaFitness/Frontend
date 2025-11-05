@@ -2,18 +2,19 @@
  * RegisterForm.tsx — Formulario de registro con autologin automático.
  *
  * Contexto:
- * - Usa useAuth hook centralizado para registro con autologin.
+ * - Usa RTK Query (authApi) para registro con autologin.
  * - Redirección automática según rol tras registro exitoso.
  * - Compatible con React Web y React Native.
  * - Arquitectura limpia: navegación delegada al componente padre.
  *
  * Flujo:
- * 1. Usuario completa formulario → useAuth.register()
+ * 1. Usuario completa formulario → useRegisterMutation()
  * 2. Backend devuelve tokens → autologin automático
  * 3. Redirección automática según rol (trainer/athlete/admin)
  *
  * @since v1.0.0
  * @updated v2.0.0 - Integración con useAuth y autologin
+ * @updated v4.4.0 - Migrado a RTK Query (authApi)
  */
 
 import React from "react";
@@ -24,8 +25,7 @@ import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useAuth } from "@nexia/shared/hooks/useAuth";
-import { loginFailure } from "@nexia/shared/store/authSlice";
+import { useRegisterMutation, loginSuccess, loginFailure } from "@nexia/shared";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
 import { USER_ROLES } from "@nexia/shared/config/constants";
 import { validateRegisterForm } from "@nexia/shared/utils/validations";
@@ -62,8 +62,8 @@ export const RegisterForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    // Hook centralizado de autenticación con autologin
-    const { register, isLoading, error } = useAuth();
+    // RTK Query mutation para registro
+    const [register, { isLoading }] = useRegisterMutation();
 
     const {
         formData,
@@ -78,9 +78,6 @@ export const RegisterForm: React.FC = () => {
         validate: validateRegisterForm,
     });
 
-    // Usar error del hook useAuth si está disponible, sino usar serverError del form
-    const displayError = error || serverError;
-
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -90,7 +87,10 @@ export const RegisterForm: React.FC = () => {
         try {
             // Validación explícita de role
             if (!formData.role) {
-                dispatch(loginFailure("Debes seleccionar un tipo de cuenta"));
+                handleServerError({
+                    status: 400,
+                    data: { detail: "Debes seleccionar un tipo de cuenta" }
+                });
                 return;
             }
 
@@ -102,8 +102,16 @@ export const RegisterForm: React.FC = () => {
                 role: formData.role as UserRole,
             };
 
-            // Usar hook centralizado con autologin automático
-            await register(credentials);
+            // ✅ USE RTK Query mutation
+            const response = await register(credentials).unwrap();
+
+            // Auto-login: dispatch tokens to Redux
+            dispatch(
+                loginSuccess({
+                    user: response.user,
+                    token: response.access_token,
+                })
+            );
 
             // Redirección directa al dashboard según rol
             const redirectPath = getRedirectPath(formData.role as UserRole);
@@ -146,7 +154,7 @@ export const RegisterForm: React.FC = () => {
                 </p>
             </div>
 
-            <ServerErrorBanner error={displayError} onDismiss={clearErrors} />
+            <ServerErrorBanner error={serverError} onDismiss={clearErrors} />
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
