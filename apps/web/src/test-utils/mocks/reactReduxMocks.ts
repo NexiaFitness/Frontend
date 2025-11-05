@@ -22,13 +22,7 @@ export const mockDispatch = vi.fn((action) => {
         // Si el resultado es una promesa (async thunk), devolver objeto con unwrap
         if (result && typeof result.then === 'function') {
             return {
-                unwrap: async () => {
-                    try {
-                        return await result;
-                    } catch (error) {
-                        throw error;
-                    }
-                },
+                unwrap: async () => await result,
                 ...result,
             };
         }

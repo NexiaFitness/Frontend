@@ -294,7 +294,7 @@ export const passwordValidationHandler = http.post("*/auth/register", async () =
     )
 })
 
-export const emailValidationHandler = http.post("*/auth/login", async ({ request }) => {
+export const emailValidationHandler = http.post("*/auth/login", async () => {
     // Este handler sobrescribe el comportamiento para cualquier request
     // Devuelve error de validación de email
     return HttpResponse.json({ detail: "Email format is invalid" }, { status: 422 })
