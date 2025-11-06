@@ -93,6 +93,23 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     }
 
     if (progressError) {
+        // Verificar si es un error 404 (sin datos) o un error real
+        const isNotFoundError = 
+            progressError &&
+            typeof progressError === 'object' &&
+            'status' in progressError &&
+            progressError.status === 404;
+
+        if (isNotFoundError) {
+            return (
+                <div className="bg-white rounded-lg shadow p-8 text-center">
+                    <p className="text-gray-500">
+                        Aún no hay datos de progreso para este cliente.
+                    </p>
+                </div>
+            );
+        }
+
         return (
             <Alert variant="error">
                 Error al cargar datos de progreso. Por favor, intenta de nuevo.
