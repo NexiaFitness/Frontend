@@ -23,6 +23,12 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
+        // NUEVO: Forzar invalidación de cache con timestamp
+        // Esto genera hashes únicos que Vercel no puede cachear
+        entryFileNames: `assets/[name]-[hash].js`,
+        chunkFileNames: `assets/[name]-[hash].js`,
+        assetFileNames: `assets/[name]-[hash][extname]`,
+        
         manualChunks: (id) => {
           // React y React DOM - vendor core (debe cargarse PRIMERO)
           if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
@@ -51,9 +57,8 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 500, // Mantener el warning para detectar futuros problemas
+    chunkSizeWarningLimit: 500,
   },
-  // TypeScript reconocerá la propiedad 'test'
   test: {
     environment: 'jsdom',
     globals: true,
