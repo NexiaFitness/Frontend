@@ -161,3 +161,5 @@ packages/shared/src/**/*.js.map
 
 # Claude AI local settings
 .claude/
+
+.vercel
