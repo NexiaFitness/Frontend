@@ -103,7 +103,7 @@ export const clientsApi = baseApi.injectEndpoints({
          */
         createClient: builder.mutation<Client, CreateClientData>({
             query: (clientData) => ({
-                url: "/clients/",
+                url: "/clients",
                 method: "POST",
                 body: clientData,
                 headers: {

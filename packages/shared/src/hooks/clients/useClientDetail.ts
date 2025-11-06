@@ -127,12 +127,7 @@ export const useClientDetail = ({
         (includePlans && isLoadingPlans) ||
         (includeSessions && isLoadingSessions);
 
-    const hasError = !!(
-        clientError ||
-        (includeProgress && progressError) ||
-        (includePlans && plansError) ||
-        (includeSessions && sessionsError)
-    );
+    const hasError = !!clientError;
 
     // Refetch all data
     const refetchAll = () => {
