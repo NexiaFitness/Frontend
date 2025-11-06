@@ -20,6 +20,8 @@
 import React, { useState, Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
+import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
@@ -79,27 +81,43 @@ export const ClientDetail: React.FC = () => {
         includeSessions: true,
     });
 
+    // Menu items para navbar
+    const menuItems = [
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Clientes", path: "/dashboard/clients" },
+        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
+        { label: "Mi cuenta", path: "/dashboard/account" },
+    ];
+
     // Validación de ID
     if (!id || isNaN(clientId)) {
         return (
-            <DashboardLayout>
-                <div className="p-6">
-                    <Alert variant="error">
-                        ID de cliente inválido
-                    </Alert>
-                </div>
-            </DashboardLayout>
+            <>
+                <DashboardNavbar menuItems={menuItems} />
+                <TrainerSideMenu />
+                <DashboardLayout>
+                    <div className="p-6">
+                        <Alert variant="error">
+                            ID de cliente inválido
+                        </Alert>
+                    </div>
+                </DashboardLayout>
+            </>
         );
     }
 
     // Loading state
     if (isLoading) {
         return (
-            <DashboardLayout>
-                <div className="flex items-center justify-center min-h-screen">
-                    <LoadingSpinner size="lg" />
-                </div>
-            </DashboardLayout>
+            <>
+                <DashboardNavbar menuItems={menuItems} />
+                <TrainerSideMenu />
+                <DashboardLayout>
+                    <div className="flex items-center justify-center min-h-screen">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                </DashboardLayout>
+            </>
         );
     }
 
@@ -114,24 +132,28 @@ export const ClientDetail: React.FC = () => {
             : null;
 
         return (
-            <DashboardLayout>
-                <div className="p-6">
-                    <Alert variant="error">
-                        Error al cargar los datos del cliente. Por favor, intenta de nuevo.
-                        {errorMessage && (
-                            <div className="mt-2 text-sm text-red-800">
-                                {errorMessage}
-                            </div>
-                        )}
-                    </Alert>
-                    <button
-                        onClick={refetchAll}
-                        className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                        Reintentar
-                    </button>
-                </div>
-            </DashboardLayout>
+            <>
+                <DashboardNavbar menuItems={menuItems} />
+                <TrainerSideMenu />
+                <DashboardLayout>
+                    <div className="p-6">
+                        <Alert variant="error">
+                            Error al cargar los datos del cliente. Por favor, intenta de nuevo.
+                            {errorMessage && (
+                                <div className="mt-2 text-sm text-red-800">
+                                    {errorMessage}
+                                </div>
+                            )}
+                        </Alert>
+                        <button
+                            onClick={refetchAll}
+                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                </DashboardLayout>
+            </>
         );
     }
 
@@ -168,21 +190,28 @@ export const ClientDetail: React.FC = () => {
     };
 
     return (
-        <DashboardLayout>
-            <div className="min-h-screen bg-gray-50">
-                {/* Header con foto, nombre y actions */}
-                <ClientHeader client={client} onRefresh={refetchAll} />
+        <>
+            {/* Navbar móvil/tablet */}
+            <DashboardNavbar menuItems={menuItems} />
 
-                {/* Tabs Navigation */}
-                <div className="bg-white border-b border-gray-200">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <nav className="flex space-x-8" aria-label="Tabs">
-                            {TABS.map((tab) => (
-                                <button
-                                    key={tab.id}
-                                    onClick={() => !tab.disabled && setActiveTab(tab.id)}
-                                    disabled={tab.disabled}
-                                    className={`
+            {/* Sidebar escritorio */}
+            <TrainerSideMenu />
+
+            <DashboardLayout>
+                <div className="min-h-screen bg-gray-50">
+                    {/* Header con foto, nombre y actions */}
+                    <ClientHeader client={client} onRefresh={refetchAll} />
+
+                    {/* Tabs Navigation */}
+                    <div className="bg-white border-b border-gray-200">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <nav className="flex space-x-8" aria-label="Tabs">
+                                {TABS.map((tab) => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => !tab.disabled && setActiveTab(tab.id)}
+                                        disabled={tab.disabled}
+                                        className={`
                     py-4 px-1 border-b-2 font-medium text-sm transition-colors
                     ${activeTab === tab.id
                                             ? "border-blue-500 text-blue-600"
@@ -190,23 +219,24 @@ export const ClientDetail: React.FC = () => {
                                         }
                     ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                          `}
-                                    aria-current={activeTab === tab.id ? "page" : undefined}
-                                >
-                                    {tab.label}
-                                    {tab.disabled && (
-                                        <span className="ml-2 text-xs text-gray-400">(Próximamente)</span>
-                                    )}
-                                </button>
-                            ))}
-                        </nav>
+                                        aria-current={activeTab === tab.id ? "page" : undefined}
+                                    >
+                                        {tab.label}
+                                        {tab.disabled && (
+                                            <span className="ml-2 text-xs text-gray-400">(Próximamente)</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+                    </div>
+
+                    {/* Tab Content */}
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        {renderTabContent()}
                     </div>
                 </div>
-
-                {/* Tab Content */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                    {renderTabContent()}
-                </div>
-            </div>
-        </DashboardLayout>
+            </DashboardLayout>
+        </>
     );
 };

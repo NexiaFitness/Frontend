@@ -18,19 +18,13 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "lucide-react"],
+    include: ["react", "react-dom"],
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // Excluir lucide-react explícitamente del chunk de React
-          // lucide-react debe ir a vendor para evitar problemas de contexto de módulo
-          if (id.includes("node_modules/lucide-react")) {
-            return "vendor";
-          }
-
-          // React y React DOM - vendor core
+          // React y React DOM - vendor core (debe cargarse PRIMERO)
           if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
             return "react-vendor";
           }
