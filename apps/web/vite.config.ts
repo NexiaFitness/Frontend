@@ -18,19 +18,27 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ["react", "react-dom", "lucide-react"],
+    include: ["react", "react-dom"],
+    // Excluir lucide-react de optimizeDeps para evitar pre-bundling con React
+    // Esto previene conflictos de contexto de módulo en producción
+    exclude: ["lucide-react"],
   },
   build: {
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // React y React DOM - vendor core (debe cargarse PRIMERO)
+          // PRIORIDAD 1: React y React DOM - vendor core (debe cargarse PRIMERO)
+          // Verificar PRIMERO para evitar que lucide-react se incluya aquí
           if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
+            // Excluir explícitamente lucide-react del chunk de React
+            if (id.includes("lucide-react")) {
+              return "lucide-vendor";
+            }
             return "react-vendor";
           }
 
-          // lucide-react - chunk dedicado (después de React para garantizar orden de carga)
-          // Chunk dedicado evita conflictos con otras librerías y mejora el control del orden
+          // PRIORIDAD 2: lucide-react - chunk dedicado (después de React)
+          // Debe estar en su propio chunk para evitar conflictos de contexto
           if (id.includes("node_modules/lucide-react")) {
             return "lucide-vendor";
           }
