@@ -23,19 +23,15 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // NUEVO: Forzar invalidación de cache con timestamp
-        // Esto genera hashes únicos que Vercel no puede cachear
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash][extname]`,
         
         manualChunks: (id) => {
-          // React y React DOM - vendor core (debe cargarse PRIMERO)
-          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
-            return "react-vendor";
-          }
-
-          // Recharts - biblioteca pesada de gráficos (se carga bajo demanda)
+          // ELIMINADO: React y React DOM - dejar que Vite lo maneje automáticamente
+          // La separación manual causaba errores de inicialización
+          
+          // Recharts - biblioteca pesada de gráficos
           if (id.includes("node_modules/recharts")) {
             return "recharts-vendor";
           }
@@ -50,7 +46,7 @@ export default defineConfig({
             return "router-vendor";
           }
 
-          // Otros node_modules grandes
+          // Otros node_modules grandes (incluirá React automáticamente)
           if (id.includes("node_modules")) {
             return "vendor";
           }
