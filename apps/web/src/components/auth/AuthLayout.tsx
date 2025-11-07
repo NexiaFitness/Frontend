@@ -23,10 +23,10 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
     >
       {/* Mitad Izquierda - Logo + Claim */}
       <div className="flex-1 flex flex-col items-center justify-center px-8 py-10 text-center">
-        <div className="max-w-2xl">
+        <div className="max-w-4xl">
           {/* Logo adaptativo */}
-          <div className="mb-6">
-            <NexiaLogo className="w-28 sm:w-36 md:w-44 lg:w-80 xl:w-96 h-auto mx-auto" />
+          <div className="mb-2">
+            <NexiaLogo className="w-80 sm:w-96 md:w-[28rem] lg:w-[36rem] xl:w-[44rem] h-auto mx-auto" />
           </div>
 
           {/* Claim adaptativo */}

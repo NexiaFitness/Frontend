@@ -22,7 +22,7 @@ interface NexiaLogoCompactProps {
 export const NexiaLogoCompact: React.FC<NexiaLogoCompactProps> = ({ className }) => {
     return (
         <img
-            src="https://res.cloudinary.com/dcpirdjji/image/upload/v1758709050/Logo_sin_fondo_navbar_ckwzes.png"
+            src="/assets/NEXIA-LOGO.png"
             alt="NEXIA Fitness"
             className={clsx(
                 "h-full max-h-[64px] lg:max-h-[80px] object-contain", // ajusta al alto de navbar

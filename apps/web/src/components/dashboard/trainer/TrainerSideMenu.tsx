@@ -21,7 +21,7 @@ import { useSelector } from "react-redux";
 import { useNavigate, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { LogoutButton } from "@/components/ui/buttons";
-import { NexiaLogo } from "../../auth/NexiaLogo";
+import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerSideMenu: React.FC = () => {
@@ -42,8 +42,8 @@ export const TrainerSideMenu: React.FC = () => {
         <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10 bg-sidebar-nav">
             {/* Header - Logo y título fijos en top */}
             <div className="p-8 bg-sidebar-header border-b-2 border-white/60 text-center shrink-0">
-                <div className="w-[120px] h-auto mx-auto">
-                    <NexiaLogo />
+                <div className="w-24 sm:w-32 md:w-40 h-auto mx-auto">
+                    <NexiaLogoCompact className="w-24 sm:w-32 md:w-40" />
                 </div>
                 <p className="text-slate-300 text-sm mt-2">Trainer Dashboard</p>
             </div>

@@ -19,7 +19,7 @@ interface NexiaLogoProps {
 export const NexiaLogo: React.FC<NexiaLogoProps> = ({ className }) => {
   return (
     <img
-      src="/assets/Logo sin fondo blanco.png"
+      src="/NEXIA-2.png"
       alt="NEXIA Fitness"
       className={clsx("mx-auto h-auto", className || "w-96")}
     />

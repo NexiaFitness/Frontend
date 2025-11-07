@@ -35,7 +35,7 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) =
                 <div className="px-4 sm:px-6 lg:px-8 w-full">
                     <div className="flex justify-between items-center h-navbar-mobile lg:h-navbar-desktop">
                         {/* Logo a la izquierda */}
-                        <NexiaLogoCompact className="w-20 sm:w-24 md:w-28" />
+                        <NexiaLogoCompact className="w-24 sm:w-32 md:w-40" />
 
                         {/* User info + botón hamburguesa */}
                         <div className="flex items-center space-x-4">

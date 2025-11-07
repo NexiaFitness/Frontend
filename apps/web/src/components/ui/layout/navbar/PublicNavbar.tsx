@@ -39,7 +39,7 @@ export const PublicNavbar: React.FC = () => {
                             className="flex items-center space-x-3 hover:opacity-80 transition-opacity duration-200"
                             onClick={closeMobileMenu}
                         >
-                            <NexiaLogoCompact className="w-20 sm:w-24 md:w-28" />
+                            <NexiaLogoCompact className="w-24 sm:w-32 md:w-40" />
                         </Link>
 
                         <div className="hidden md:flex items-center space-x-8">
