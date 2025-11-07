@@ -7,17 +7,6 @@
  * @since v1.1.0
  */
 
-// Helper para obtener variables de entorno de forma segura
-const getEnv = (key: string): string | undefined => {
-  try {
-    const viteEnv = (import.meta as any).env;
-    if (viteEnv && viteEnv[key]) return viteEnv[key];
-  } catch {
-    // Ignorar errores durante compilación
-  }
-  return undefined;
-};
-
 // Detección automática del entorno
 const isProduction =
   typeof window !== 'undefined'
@@ -31,7 +20,10 @@ const getDefaultApiUrl = (): string =>
     ? 'https://nexiaapp.com/api/v1' // producción
     : 'http://127.0.0.1:8000/api/v1'; // desarrollo
 
-// URL final de API — usa variable de entorno si existe, o fallback inteligente
+// URL final de API
+// IMPORTANTE: Acceso ESTÁTICO directo a import.meta.env.VITE_API_BASE_URL
+// Vite necesita acceso estático para reemplazar la variable en build time
+// Si se usa acceso dinámico (ej: env[key]), Vite no puede detectarlo y la variable queda como undefined
 export const API_BASE_URL: string =
-  getEnv('VITE_API_BASE_URL') || getDefaultApiUrl();
+  (import.meta as any).env.VITE_API_BASE_URL || getDefaultApiUrl();
 
