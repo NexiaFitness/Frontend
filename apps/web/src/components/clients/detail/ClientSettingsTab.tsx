@@ -57,9 +57,11 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
                         <p className="text-sm text-gray-600 mb-3">
                             Modifica los datos personales, objetivos y métricas del cliente.
                         </p>
-                        <Button variant="primary" size="md" onClick={handleEdit}>
-                            ✏️ Editar Cliente
-                        </Button>
+                        <div className="flex justify-end pt-4">
+                            <Button variant="primary" size="md" onClick={handleEdit}>
+                                Editar Cliente
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -96,14 +98,15 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
                     Eliminar este cliente es una acción permanente. Todos los datos asociados
                     (entrenamientos, progreso, feedback) serán eliminados.
                 </p>
-                <Button
-                    variant="outline"
-                    size="md"
-                    onClick={() => setShowDeleteModal(true)}
-                    className="bg-red-600 text-white hover:bg-red-700 border-red-600"
-                >
-                    🗑️ Eliminar Cliente
-                </Button>
+                <div className="flex justify-end pt-4">
+                    <Button
+                        variant="danger"
+                        size="md"
+                        onClick={() => setShowDeleteModal(true)}
+                    >
+                        Eliminar Cliente
+                    </Button>
+                </div>
             </div>
 
             {/* Delete Modal */}

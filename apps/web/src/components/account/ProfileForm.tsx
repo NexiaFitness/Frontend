@@ -180,46 +180,22 @@ export const ProfileForm: React.FC = () => {
 
             {/* Zona de Peligro (solo no-admin) */}
             {user?.role !== "admin" && (
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
-                    <div className="text-center">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg
-                                className="w-8 h-8 text-red-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                />
-                            </svg>
-                        </div>
-
-                        <h3 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-4`}>
-                            Zona de Peligro
-                        </h3>
-                        <p
-                            className={`${TYPOGRAPHY.body} text-slate-600 mb-2 max-w-md mx-auto`}
-                        >
-                            Una vez eliminada tu cuenta, perderás acceso permanente a todos tus datos.
-                        </p>
-                        <p
-                            className={`${TYPOGRAPHY.errorText} text-red-600 font-medium mb-8`}
-                        >
-                            Esta acción no se puede deshacer.
-                        </p>
-
+                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2`}>
+                        Zona de Peligro
+                    </h3>
+                    <p className="text-sm text-red-700 mb-4">
+                        Eliminar tu cuenta es una acción permanente. Todos los datos asociados
+                        serán eliminados.
+                    </p>
+                    <div className="flex justify-end pt-4">
                         <Button
                             type="button"
                             variant="danger"
                             size="md"
                             onClick={() => setDeleteOpen(true)}
-                            className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
                         >
-                            Eliminar
+                            Eliminar Cuenta
                         </Button>
                     </div>
                 </div>

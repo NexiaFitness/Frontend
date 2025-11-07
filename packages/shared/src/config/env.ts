@@ -4,7 +4,7 @@
  * Prioriza variable de entorno VITE_API_BASE_URL (Vercel) y aplica fallback inteligente.
  * Compatible con Web (Vite) y futuras integraciones React Native.
  * @author Nexia Team
- * @since v1.1.0
+ * @since v1.1.1
  */
 
 // Detección automática del entorno
@@ -17,13 +17,9 @@ const isProduction =
 // URL por defecto según entorno
 const getDefaultApiUrl = (): string =>
   isProduction
-    ? 'https://nexiaapp.com/api/v1' // producción
-    : 'http://127.0.0.1:8000/api/v1'; // desarrollo
+    ? 'https://api.nexiaapp.com/api/v1' // producción (backend real)
+    : 'http://127.0.0.1:8000/api/v1'; // desarrollo local
 
-// URL final de API
-// IMPORTANTE: Acceso ESTÁTICO directo a import.meta.env.VITE_API_BASE_URL
-// Vite necesita acceso estático para reemplazar la variable en build time
-// Si se usa acceso dinámico (ej: env[key]), Vite no puede detectarlo y la variable queda como undefined
+// URL final de API — acceso estático para que Vite lo reemplace correctamente en build
 export const API_BASE_URL: string =
   (import.meta as any).env.VITE_API_BASE_URL || getDefaultApiUrl();
-

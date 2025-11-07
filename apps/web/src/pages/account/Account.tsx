@@ -89,7 +89,7 @@ export const Account: React.FC = () => {
                 </div>
 
                 {/* Contenido principal con ancho extendido */}
-                <div className="px-4 lg:px-8 max-w-6xl mx-auto">
+                <div className="px-4 lg:px-8 pb-12 lg:pb-20 max-w-6xl mx-auto">
                     <ProfileForm />
                 </div>
             </DashboardLayout>

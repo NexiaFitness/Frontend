@@ -167,6 +167,7 @@ export const ClientDetail: React.FC = () => {
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
                         <ClientProgressTab
                             clientId={clientId}
+                            client={client}
                             progressHistory={progressHistory}
                             progressAnalytics={progressAnalytics}
                         />
@@ -198,7 +199,7 @@ export const ClientDetail: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                <div className="min-h-screen bg-gray-50">
+                <div className="min-h-screen bg-white -mt-16 md:-mt-18 lg:-mt-20 pt-12 lg:pt-20">
                     {/* Header con foto, nombre y actions */}
                     <ClientHeader client={client} onRefresh={refetchAll} />
 
@@ -232,7 +233,7 @@ export const ClientDetail: React.FC = () => {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         {renderTabContent()}
                     </div>
                 </div>

@@ -157,7 +157,7 @@ export const ClientList: React.FC = () => {
                 </div>
 
                 {/* Lista de clientes */}
-                <div className="px-4 lg:px-8 mb-8">
+                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     {/* Loading State */}
                     {isLoading && (
                         <div className="flex justify-center items-center py-16">

@@ -21,6 +21,7 @@ import {
     useGetProgressAnalyticsQuery,
 } from "../../api/clientsApi";
 import type { ProgressAnalytics } from "../../types/progress";
+import type { Client } from "../../types/client";
 
 interface UseClientProgressResult {
     // Raw data
@@ -49,8 +50,14 @@ interface UseClientProgressResult {
 
 /**
  * Hook para gestión de progreso del cliente
+ * 
+ * @param clientId - ID del cliente
+ * @param client - Datos del cliente (opcional) para incluir punto inicial en gráficos
  */
-export const useClientProgress = (clientId: number): UseClientProgressResult => {
+export const useClientProgress = (
+    clientId: number,
+    client?: Client | null
+): UseClientProgressResult => {
     const {
         data: progressHistory,
         isLoading: isLoadingHistory,
@@ -67,25 +74,61 @@ export const useClientProgress = (clientId: number): UseClientProgressResult => 
 
     // Transform data for weight chart
     const weightChartData = useMemo(() => {
-        if (!progressHistory) return [];
-        return progressHistory
-            .map((record) => ({
-                date: record.fecha_registro,
-                weight: record.peso,
-            }))
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }, [progressHistory]);
+        const data: Array<{ date: string; weight: number | null }> = [];
+        
+        // Agregar punto inicial del cliente si existe peso y fecha_alta
+        if (client?.peso && client?.fecha_alta) {
+            data.push({
+                date: client.fecha_alta,
+                weight: client.peso,
+            });
+        }
+        
+        // Agregar registros de progreso, evitando duplicados si fecha_registro == fecha_alta
+        if (progressHistory) {
+            progressHistory.forEach((record) => {
+                // Evitar duplicado si hay registro en la misma fecha que fecha_alta
+                if (record.fecha_registro !== client?.fecha_alta) {
+                    data.push({
+                        date: record.fecha_registro,
+                        weight: record.peso,
+                    });
+                }
+            });
+        }
+        
+        // Ordenar por fecha
+        return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [progressHistory, client]);
 
     // Transform data for BMI chart
     const bmiChartData = useMemo(() => {
-        if (!progressHistory) return [];
-        return progressHistory
-            .map((record) => ({
-                date: record.fecha_registro,
-                bmi: record.imc,
-            }))
-            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }, [progressHistory]);
+        const data: Array<{ date: string; bmi: number | null }> = [];
+        
+        // Agregar punto inicial del cliente si existe IMC y fecha_alta
+        if (client?.imc && client?.fecha_alta) {
+            data.push({
+                date: client.fecha_alta,
+                bmi: client.imc,
+            });
+        }
+        
+        // Agregar registros de progreso, evitando duplicados si fecha_registro == fecha_alta
+        if (progressHistory) {
+            progressHistory.forEach((record) => {
+                // Evitar duplicado si hay registro en la misma fecha que fecha_alta
+                if (record.fecha_registro !== client?.fecha_alta) {
+                    data.push({
+                        date: record.fecha_registro,
+                        bmi: record.imc,
+                    });
+                }
+            });
+        }
+        
+        // Ordenar por fecha
+        return data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [progressHistory, client]);
 
     // Latest metrics
     const latestRecord = useMemo(() => {

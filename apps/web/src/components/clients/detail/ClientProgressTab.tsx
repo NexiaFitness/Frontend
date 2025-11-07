@@ -18,6 +18,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import type { ClientProgress, ProgressAnalytics } from "@nexia/shared/types/progress";
+import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -54,12 +55,14 @@ const formatDate = (date: string | number): string => {
 
 interface ClientProgressTabProps {
     clientId: number;
+    client?: Client | null;
     progressHistory?: ClientProgress[];
     progressAnalytics?: ProgressAnalytics;
 }
 
 export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     clientId,
+    client,
 }) => {
     const [showProgressForm, setShowProgressForm] = useState(false);
     const formRef = useRef<HTMLDivElement>(null);
@@ -74,7 +77,7 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
         trend,
         isLoading: isLoadingProgress,
         error: progressError,
-    } = useClientProgress(clientId);
+    } = useClientProgress(clientId, client);
 
     const {
         fatigueChartData,
@@ -87,6 +90,16 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     } = useClientFatigue(clientId);
 
     const isLoading = isLoadingProgress || isLoadingFatigue;
+
+    // Verificar si es un error 404 (sin datos) o un error real
+    const isNotFoundError: boolean = Boolean(
+        progressError &&
+        typeof progressError === 'object' &&
+        'status' in progressError &&
+        progressError.status === 404
+    );
+
+    const hasRealError: boolean = Boolean(progressError && !isNotFoundError);
 
     // Scroll automático cuando se expande el formulario
     useEffect(() => {
@@ -109,24 +122,8 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
         );
     }
 
-    if (progressError) {
-        // Verificar si es un error 404 (sin datos) o un error real
-        const isNotFoundError = 
-            progressError &&
-            typeof progressError === 'object' &&
-            'status' in progressError &&
-            progressError.status === 404;
-
-        if (isNotFoundError) {
-            return (
-                <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-500">
-                        Aún no hay datos de progreso para este cliente.
-                    </p>
-                </div>
-            );
-        }
-
+    // Si hay un error real (no 404), mostrar alerta y no renderizar el resto
+    if (hasRealError) {
         return (
             <Alert variant="error">
                 Error al cargar datos de progreso. Por favor, intenta de nuevo.
@@ -136,8 +133,18 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
 
     return (
         <div className="space-y-6">
-            {/* Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {/* Mensaje de sin datos (404) - solo si no hay datos y no hay error real */}
+            {isNotFoundError && (
+                <div className="bg-white rounded-lg shadow p-8 text-center">
+                    <p className="text-gray-500">
+                        Aún no hay datos de progreso para este cliente.
+                    </p>
+                </div>
+            )}
+
+            {/* Summary Cards - solo mostrar si hay datos */}
+            {!isNotFoundError && (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <SummaryCard
                     label="Peso Actual"
                     value={latestWeight ? `${latestWeight} kg` : "N/A"}
@@ -162,10 +169,11 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     value={currentRiskLevel || "N/A"}
                     riskLevel={currentRiskLevel}
                 />
-            </div>
+                </div>
+            )}
 
-            {/* Weight Chart */}
-            {weightChartData.length > 0 && (
+            {/* Weight Chart - solo mostrar si hay datos */}
+            {!isNotFoundError && weightChartData.length > 0 && (
                 <ChartCard title="Evolución del Peso">
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={weightChartData}>
@@ -192,8 +200,8 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </ChartCard>
             )}
 
-            {/* BMI Chart */}
-            {bmiChartData.length > 0 && (
+            {/* BMI Chart - solo mostrar si hay datos */}
+            {!isNotFoundError && bmiChartData.length > 0 && (
                 <ChartCard title="Evolución del IMC">
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={bmiChartData}>
@@ -220,8 +228,8 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </ChartCard>
             )}
 
-            {/* Fatigue Chart */}
-            {fatigueChartData.length > 0 && (
+            {/* Fatigue Chart - solo mostrar si hay datos */}
+            {!isNotFoundError && fatigueChartData.length > 0 && (
                 <ChartCard title="Análisis de Fatiga">
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={fatigueChartData}>
@@ -254,8 +262,8 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </ChartCard>
             )}
 
-            {/* Energy Chart */}
-            {energyChartData.length > 0 && (
+            {/* Energy Chart - solo mostrar si hay datos */}
+            {!isNotFoundError && energyChartData.length > 0 && (
                 <ChartCard title="Niveles de Energía">
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={energyChartData}>
@@ -288,8 +296,8 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </ChartCard>
             )}
 
-            {/* Workload Chart */}
-            {workloadChartData.length > 0 && (
+            {/* Workload Chart - solo mostrar si hay datos */}
+            {!isNotFoundError && workloadChartData.length > 0 && (
                 <ChartCard title="Carga de Trabajo y Recuperación">
                     <ResponsiveContainer width="100%" height={300}>
                         <LineChart data={workloadChartData}>
@@ -322,8 +330,8 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </ChartCard>
             )}
 
-            {/* Empty state */}
-            {weightChartData.length === 0 && bmiChartData.length === 0 && (
+            {/* Empty state - solo si no es 404 y no hay datos en los gráficos */}
+            {!isNotFoundError && weightChartData.length === 0 && bmiChartData.length === 0 && (
                 <div className="bg-white rounded-lg shadow p-8 text-center">
                     <p className="text-gray-500">
                         No hay datos de progreso disponibles para este cliente.
