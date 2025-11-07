@@ -95,8 +95,7 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
                     Zona de Peligro
                 </h3>
                 <p className="text-sm text-red-700 mb-4 text-center lg:text-left">
-                    Eliminar este cliente es una acción permanente. Todos los datos asociados
-                    (entrenamientos, progreso, feedback) serán eliminados.
+                    Desvincular este cliente lo eliminará de tu lista. El cliente seguirá existiendo en el sistema.
                 </p>
                 <div className="flex justify-center lg:justify-end pt-4">
                     <Button
@@ -104,7 +103,7 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
                         size="md"
                         onClick={() => setShowDeleteModal(true)}
                     >
-                        Eliminar Cliente
+                        Desvincular Cliente
                     </Button>
                 </div>
             </div>

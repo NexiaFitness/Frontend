@@ -15,12 +15,15 @@
  */
 
 import React from "react";
+import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
-import { useDeleteClientMutation } from "@nexia/shared/api/clientsApi";
+import { useUnlinkClientMutation } from "@nexia/shared/api/trainerApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { Client } from "@nexia/shared/types/client";
+import type { RootState } from "@nexia/shared/store";
 
 interface DeleteClientModalProps {
     isOpen: boolean;
@@ -35,17 +38,21 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
     client,
     onDeleteSuccess,
 }) => {
-    const [deleteClient, { isLoading }] = useDeleteClientMutation();
+    const { user } = useSelector((state: RootState) => state.auth);
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: user?.role !== "trainer",
+    });
+    const [unlinkClient, { isLoading }] = useUnlinkClientMutation();
 
-    const handleDelete = async () => {
-        if (!client) return;
+    const handleUnlink = async () => {
+        if (!client || !trainerProfile) return;
         try {
-            await deleteClient(client.id).unwrap();
+            await unlinkClient({ trainerId: trainerProfile.id, clientId: client.id }).unwrap();
             onDeleteSuccess?.();
             onClose();
         } catch (error) {
             console.error(
-                "[DeleteClientModal] Error eliminando cliente:",
+                "[DeleteClientModal] Error desvinculando cliente:",
                 error
             );
         }
@@ -53,38 +60,24 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
 
     if (!client) return null;
 
-    const description = `¿Estás seguro de que deseas eliminar a ${client.nombre} ${client.apellidos}?`;
+    const description = `¿Estás seguro de que deseas desvincular a ${client.nombre} ${client.apellidos}?`;
 
     return (
         <BaseModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Eliminar Cliente"
+            title="Desvincular Cliente"
             description={description}
             iconType="danger"
             isLoading={isLoading}
-            titleId="delete-client-title"
-            descriptionId="delete-client-description"
+            titleId="unlink-client-title"
+            descriptionId="unlink-client-description"
         >
             {/* Warning text */}
             <div className="text-center mb-6 sm:mb-8">
                 <p className={`${TYPOGRAPHY.errorText} text-red-600 font-medium`}>
-                    Esta acción no se puede deshacer.
+                    Esta acción es irreversible.
                 </p>
-            </div>
-
-            {/* Client details */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6 text-sm text-gray-600">
-                <div className="flex justify-between">
-                    <span>Email:</span>
-                    <span className="font-medium">{client.mail}</span>
-                </div>
-                <div className="flex justify-between mt-1">
-                    <span>Objetivo:</span>
-                    <span className="font-medium capitalize">
-                        {client.objetivo_entrenamiento?.replace("_", " ") || "No especificado"}
-                    </span>
-                </div>
             </div>
 
             {/* Action buttons */}
@@ -100,13 +93,13 @@ export const DeleteClientModal: React.FC<DeleteClientModalProps> = ({
                 </Button>
                 <Button
                     variant="danger"
-                    onClick={handleDelete}
+                    onClick={handleUnlink}
                     isLoading={isLoading}
                     disabled={isLoading}
                     size="md"
                     className={BUTTON_PRESETS.modalEqual}
                 >
-                    Eliminar cliente
+                    Desvincular cliente
                 </Button>
             </div>
         </BaseModal>

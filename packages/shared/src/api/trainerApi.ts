@@ -51,6 +51,18 @@ export const trainerApi = baseApi.injectEndpoints({
             }),
             providesTags: (result, error, id) => [{ type: "Trainer", id }],
         }),
+
+        // Desvincular cliente de trainer
+        unlinkClient: builder.mutation<{ message: string }, { trainerId: number; clientId: number }>({
+            query: ({ trainerId, clientId }) => ({
+                url: `/trainers/${trainerId}/clients/${clientId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: [
+                { type: "Client", id: "LIST" },
+                { type: "Client", id: "STATS" },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -60,4 +72,5 @@ export const {
     useGetCurrentTrainerProfileQuery,
     useUpdateTrainerProfileMutation,
     useGetTrainerQuery,
+    useUnlinkClientMutation,
 } = trainerApi;
