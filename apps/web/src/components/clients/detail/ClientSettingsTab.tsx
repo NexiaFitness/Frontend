@@ -46,18 +46,18 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
         <div className="space-y-6">
             {/* General Settings */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4 text-center lg:text-left`}>
                     Configuración General
                 </h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2 text-center lg:text-left">
                             Editar Perfil del Cliente
                         </label>
-                        <p className="text-sm text-gray-600 mb-3">
+                        <p className="text-sm text-gray-600 mb-3 text-center lg:text-left">
                             Modifica los datos personales, objetivos y métricas del cliente.
                         </p>
-                        <div className="flex justify-end pt-4">
+                        <div className="flex justify-center lg:justify-end pt-4">
                             <Button variant="primary" size="md" onClick={handleEdit}>
                                 Editar Cliente
                             </Button>
@@ -68,7 +68,7 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
 
             {/* Metadata */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4 text-center lg:text-left`}>
                     Información del Sistema
                 </h3>
                 <div className="space-y-2 text-sm">
@@ -91,14 +91,14 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
 
             {/* Danger Zone */}
             <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2`}>
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2 text-center lg:text-left`}>
                     Zona de Peligro
                 </h3>
-                <p className="text-sm text-red-700 mb-4">
+                <p className="text-sm text-red-700 mb-4 text-center lg:text-left">
                     Eliminar este cliente es una acción permanente. Todos los datos asociados
                     (entrenamientos, progreso, feedback) serán eliminados.
                 </p>
-                <div className="flex justify-end pt-4">
+                <div className="flex justify-center lg:justify-end pt-4">
                     <Button
                         variant="danger"
                         size="md"

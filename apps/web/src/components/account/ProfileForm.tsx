@@ -114,10 +114,10 @@ export const ProfileForm: React.FC = () => {
             {/* Información Personal */}
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <div className="mb-8">
-                    <h2 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-2`}>
+                    <h2 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-2 text-center lg:text-left`}>
                         Información Personal
                     </h2>
-                    <p className={`${TYPOGRAPHY.body} text-slate-600`}>
+                    <p className={`${TYPOGRAPHY.body} text-slate-600 text-center lg:text-left`}>
                         Actualiza tus datos básicos de perfil
                     </p>
                 </div>
@@ -158,7 +158,7 @@ export const ProfileForm: React.FC = () => {
                         disabled={isLoading}
                     />
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-center lg:justify-end pt-4">
                         <Button
                             type="submit"
                             variant="primary"
@@ -181,14 +181,14 @@ export const ProfileForm: React.FC = () => {
             {/* Zona de Peligro (solo no-admin) */}
             {user?.role !== "admin" && (
                 <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2`}>
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2 text-center lg:text-left`}>
                         Zona de Peligro
                     </h3>
-                    <p className="text-sm text-red-700 mb-4">
+                    <p className="text-sm text-red-700 mb-4 text-center lg:text-left">
                         Eliminar tu cuenta es una acción permanente. Todos los datos asociados
                         serán eliminados.
                     </p>
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-center lg:justify-end pt-4">
                         <Button
                             type="button"
                             variant="danger"
