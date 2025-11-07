@@ -20,6 +20,7 @@ import type { ClientStatsResponse } from "../types/clientStats";
 
 import type {
     ClientProgress,
+    CreateClientProgressData,
     ProgressAnalytics,
     ProgressTracking,
 } from "../types/progress";
@@ -204,6 +205,24 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        /**
+         * Crear registro de progreso del cliente
+         */
+        createProgressRecord: builder.mutation<ClientProgress, CreateClientProgressData>({
+            query: (data) => ({
+                url: "/progress/",
+                method: "POST",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, data) => [
+                { type: "Client", id: `PROGRESS-${data.client_id}` },
+                { type: "Client", id: `ANALYTICS-${data.client_id}` },
+            ],
+        }),
+
         // ========================================
         // TRAINING PLAN ENDPOINTS
         // ========================================
@@ -286,6 +305,7 @@ export const {
     useGetClientProgressHistoryQuery,
     useGetProgressAnalyticsQuery,
     useGetClientProgressTrackingQuery,
+    useCreateProgressRecordMutation,
     // Training hooks
     useGetClientTrainingPlansQuery,
     useGetClientTrainingSessionsQuery,

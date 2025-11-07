@@ -16,13 +16,14 @@
  * @since v3.1.0
  */
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
 import type { ClientProgress, ProgressAnalytics } from "@nexia/shared/types/progress";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { ProgressForm } from "./ProgressForm";
 import {
     LineChart,
     Line,
@@ -60,6 +61,9 @@ interface ClientProgressTabProps {
 export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     clientId,
 }) => {
+    const [showProgressForm, setShowProgressForm] = useState(false);
+    const formRef = useRef<HTMLDivElement>(null);
+
     const {
         weightChartData,
         bmiChartData,
@@ -83,6 +87,19 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     } = useClientFatigue(clientId);
 
     const isLoading = isLoadingProgress || isLoadingFatigue;
+
+    // Scroll automático cuando se expande el formulario
+    useEffect(() => {
+        if (showProgressForm && formRef.current) {
+            // Pequeño delay para asegurar que el DOM se haya actualizado
+            setTimeout(() => {
+                formRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            }, 100);
+        }
+    }, [showProgressForm]);
 
     if (isLoading) {
         return (
@@ -313,6 +330,27 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     </p>
                 </div>
             )}
+
+            {/* Sección colapsable para agregar nuevo registro */}
+            <div className="mt-8" ref={formRef}>
+                <button
+                    type="button"
+                    onClick={() => setShowProgressForm(!showProgressForm)}
+                    className="w-full flex items-center justify-between bg-white rounded-lg shadow p-4 hover:bg-gray-50 transition-colors"
+                >
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                        {showProgressForm ? "➖" : "➕"} Añadir nuevo registro de progreso
+                    </h3>
+                    <span className="text-gray-500 text-sm">
+                        {showProgressForm ? "Ocultar" : "Mostrar"}
+                    </span>
+                </button>
+                {showProgressForm && (
+                    <div className="mt-4">
+                        <ProgressForm clientId={clientId} />
+                    </div>
+                )}
+            </div>
         </div>
     );
 };

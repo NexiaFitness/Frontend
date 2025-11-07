@@ -32,6 +32,15 @@ export interface ClientProgress {
     is_active: boolean;
 }
 
+export interface CreateClientProgressData {
+    client_id: number;
+    fecha_registro: string; // ISO date (YYYY-MM-DD)
+    peso?: number | null;
+    altura?: number | null; // En metros (0.5 - 3.0)
+    unidad?: string; // Default: "metric"
+    notas?: string | null;
+}
+
 // ========================================
 // PROGRESS ANALYTICS (Análisis de tendencias)
 // ========================================
