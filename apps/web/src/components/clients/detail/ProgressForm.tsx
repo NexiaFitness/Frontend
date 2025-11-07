@@ -22,8 +22,9 @@
  * @updated v4.4.0 - Refactor para usar ClientMetricsFields
  */
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useCreateClientProgress } from "@nexia/shared/hooks/clients/useCreateClientProgress";
+import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { CreateClientProgressData } from "@nexia/shared/types/progress";
 import { ClientMetricsFields } from "@/components/clients/metrics/ClientMetricsFields";
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -56,6 +57,25 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
     const [success, setSuccess] = useState<boolean>(false);
 
     const { createProgressRecord, isLoading, error, isSuccess } = useCreateClientProgress(clientId);
+    const { data: client } = useGetClientQuery(clientId);
+
+    // Prellenar altura desde el perfil del cliente (convertir cm a metros)
+    useEffect(() => {
+        if (client?.altura) {
+            // Altura del cliente está en cm, convertir a metros para progreso
+            const alturaEnMetros = client.altura / 100;
+            setFormData(prev => {
+                // Solo prellenar si no hay altura ya establecida (evitar sobrescribir si el usuario ya editó)
+                if (prev.altura === undefined || prev.altura === null) {
+                    return {
+                        ...prev,
+                        altura: alturaEnMetros,
+                    };
+                }
+                return prev;
+            });
+        }
+    }, [client?.altura]);
 
     const updateField = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -76,10 +96,11 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
             newErrors.peso = "El peso debe estar entre 20 y 300 kg";
         }
 
-        if (!formData.altura) {
-            newErrors.altura = "La altura es requerida";
-        } else if (formData.altura < 0.5 || formData.altura > 3.0) {
-            newErrors.altura = "La altura debe estar en metros (entre 0.5 y 3.0)";
+        // Altura es opcional, pero si se proporciona, debe estar en rango válido
+        if (formData.altura !== undefined && formData.altura !== null) {
+            if (formData.altura < 0.5 || formData.altura > 3.0) {
+                newErrors.altura = "La altura debe estar en metros (entre 0.5 y 3.0)";
+            }
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -91,7 +112,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
             await createProgressRecord({
                 fecha_registro: formData.fecha_registro!,
                 peso: formData.peso!,
-                altura: formData.altura!,
+                altura: formData.altura ?? null, // Opcional: null si no se proporciona
                 unidad: formData.unidad || "metric",
                 notas: formData.notas || null,
             });
@@ -120,7 +141,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                     
                     Campos mostrados:
                     - Peso (kg) - REQUERIDO
-                    - Altura (metros) - REQUERIDO
+                    - Altura (metros) - OPCIONAL (se prellena automáticamente desde perfil si existe)
                     - IMC (calculado en frontend, se envía pero backend lo recalcula)
                     - Fecha de registro - REQUERIDO (default hoy)
                     - Unidad de medida - REQUERIDO (default "metric")
@@ -137,7 +158,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                     heightUnit="meters"
                     includeProgressFields={false}
                     includeAnthropometric={false}
-                    requiredFields={["peso", "altura"]}
+                    requiredFields={["peso"]}
                 />
 
                 {/* Fecha de registro */}

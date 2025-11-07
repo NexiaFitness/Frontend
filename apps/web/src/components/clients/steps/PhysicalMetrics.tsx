@@ -24,7 +24,9 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({
 }) => {
     const bmi = useMemo(() => {
         if (formData.peso && formData.altura) {
-            return calculateBMI(formData.peso, formData.altura);
+            // Altura está en cm, convertir a metros para el cálculo de BMI
+            const alturaEnMetros = formData.altura / 100;
+            return calculateBMI(formData.peso, alturaEnMetros);
         }
         return null;
     }, [formData.peso, formData.altura]);
