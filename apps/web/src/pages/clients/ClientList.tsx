@@ -26,8 +26,11 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useSelector } from "react-redux";
+import { useGetClientsQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { ClientFilters as ClientFiltersType, Client } from "@nexia/shared/types/client";
+import type { RootState } from "@nexia/shared/store";
 
 // Layouts
 import { DashboardLayout } from "@/components/dashboard/layout";
@@ -49,6 +52,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 export const ClientList: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
+    const { user } = useSelector((state: RootState) => state.auth);
 
     // State de filtros (inicializado desde URL) - FIX: Type casting para TypeScript strict
     const [filters, setFilters] = useState<ClientFiltersType>({
@@ -62,12 +66,27 @@ export const ClientList: React.FC = () => {
     const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
     const perPage = 12; // Cards por página
 
-    // Query RTK
-    const { data, isLoading, isError, error } = useGetClientsQuery({
-        filters,
-        page,
-        per_page: perPage,
+    // Obtener trainer_id si es trainer
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: user?.role !== "trainer",
     });
+
+    // Query RTK - usar endpoint correcto según role
+    const isTrainer = user?.role === "trainer";
+    const trainerId = trainerProfile?.id;
+
+    const trainerClientsQuery = useGetTrainerClientsQuery(
+        { trainerId: trainerId!, filters, page, per_page: perPage },
+        { skip: !isTrainer || !trainerId }
+    );
+
+    const allClientsQuery = useGetClientsQuery(
+        { filters, page, per_page: perPage },
+        { skip: isTrainer }
+    );
+
+    // Seleccionar query según role
+    const { data, isLoading, isError, error } = isTrainer ? trainerClientsQuery : allClientsQuery;
 
     // Validar datos y calcular valores derivados de forma segura (alineado con backend)
     const clients: Client[] = data?.items ?? [];  // ← Backend usa "items" (no "clients")

@@ -35,7 +35,40 @@ import type {
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         /**
-         * Obtener lista de clientes con filtros y paginación
+         * Obtener clientes de un trainer específico (filtrado por trainer_id)
+         */
+        getTrainerClients: builder.query<ClientsListResponse, { trainerId: number; filters?: ClientFilters; page?: number; per_page?: number }>({
+            query: ({ trainerId, filters = {}, page = 1, per_page = 10 }) => {
+                const params = new URLSearchParams();
+                params.append('page', page.toString());
+                params.append('page_size', per_page.toString());
+                
+                if (filters.search) {
+                    params.append('search', filters.search);
+                }
+                if (filters.sort_by) {
+                    params.append('sort_by', filters.sort_by);
+                }
+                if (filters.sort_order) {
+                    params.append('sort_order', filters.sort_order);
+                }
+
+                return {
+                    url: `/trainers/${trainerId}/clients?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result) =>
+                result?.items
+                    ? [
+                        ...result.items.map(({ id }) => ({ type: "Client" as const, id })),
+                        { type: "Client", id: "LIST" },
+                    ]
+                    : [{ type: "Client", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener lista de clientes con filtros y paginación (admin only - todos los clientes)
          */
         getClients: builder.query<ClientsListResponse, { filters?: ClientFilters; page?: number; per_page?: number }>({
             query: ({ filters = {}, page = 1, per_page = 10 }) => {
@@ -295,6 +328,7 @@ export const clientsApi = baseApi.injectEndpoints({
 // Hooks auto-generados por RTK Query
 // ========================================
 export const {
+    useGetTrainerClientsQuery,
     useGetClientsQuery,
     useGetClientQuery,
     useCreateClientMutation,
