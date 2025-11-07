@@ -17,7 +17,7 @@ const isProduction =
 // URL por defecto según entorno
 const getDefaultApiUrl = (): string =>
   isProduction
-    ? 'https://api.nexiaapp.com/api/v1' // producción (backend real)
+    ? 'https://nexiaapp.com/api/v1' // producción (backend real)
     : 'http://127.0.0.1:8000/api/v1'; // desarrollo local
 
 // URL final de API — acceso estático para que Vite lo reemplace correctamente en build
