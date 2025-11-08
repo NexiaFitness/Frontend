@@ -58,9 +58,20 @@ export const TrainerSideMenu: React.FC = () => {
                             className={clsx(
                                 "rounded-lg px-6 py-4 cursor-pointer transition",
                                 isActive(item.path)
-                                    ? "bg-slate-800 text-white font-semibold"
-                                    : "text-slate-200 hover:text-white hover:bg-slate-800"
+                                    ? "text-white font-semibold"
+                                    : "text-white/80 hover:text-white"
                             )}
+                            style={isActive(item.path) ? { backgroundColor: '#3a5db3' } : {}}
+                            onMouseEnter={(e) => {
+                                if (!isActive(item.path)) {
+                                    e.currentTarget.style.backgroundColor = 'rgba(74, 103, 179, 0.3)';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (!isActive(item.path)) {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                }
+                            }}
                             onClick={() => navigate(item.path)}
                         >
                             {item.label}

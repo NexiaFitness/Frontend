@@ -142,9 +142,20 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
                                         onClick={onClose}
                                         className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
                                             isActiveLink(path)
-                                                ? "bg-slate-800 text-white font-semibold"
-                                                : "text-slate-200 hover:text-white hover:bg-slate-800"
+                                                ? "text-white font-semibold"
+                                                : "text-white/80 hover:text-white"
                                         }`}
+                                        style={isActiveLink(path) ? { backgroundColor: '#3a5db3' } : {}}
+                                        onMouseEnter={(e) => {
+                                            if (!isActiveLink(path)) {
+                                                e.currentTarget.style.backgroundColor = 'rgba(74, 103, 179, 0.3)';
+                                            }
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            if (!isActiveLink(path)) {
+                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                            }
+                                        }}
                                     >
                                         <span className="text-lg">{label}</span>
                                     </Link>

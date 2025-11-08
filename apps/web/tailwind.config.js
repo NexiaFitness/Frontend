@@ -19,7 +19,7 @@ module.exports = {
                     300: '#60a5fa',
                     400: '#38b6ff',
                     500: '#38b6ff',
-                    600: '#2da1e6',
+                    600: '#4A67B3',
                     700: '#1d4ed8',
                     800: '#ff33c5ff',
                 },
@@ -30,7 +30,7 @@ module.exports = {
                 skyblue: '#7ECFDE',
                 platinum: '#DAE1E2',
                 'sidebar-header': 'rgba(4, 21, 32, 1)',
-                'sidebar-nav': 'rgba(84, 160, 207, 1)',
+                'sidebar-nav': '#4A67B3',
             },
             borderRadius: {
                 '4xl': '2rem',

@@ -48,7 +48,13 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
                     <div className="flex items-center gap-4 lg:gap-6">
                         {/* Profile Photo */}
                         <div className="flex-shrink-0">
-                            <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-bold text-2xl lg:text-3xl shadow-lg">
+                            <div 
+                                className="w-20 h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center text-white font-bold text-2xl lg:text-3xl shadow-lg transition-all duration-300 hover:shadow-xl hover:scale-105"
+                                style={{
+                                    background: 'linear-gradient(135deg, #4A67B3 0%, #3a5db3 50%, #2d4a9e 100%)',
+                                    boxShadow: '0 10px 25px -5px rgba(74, 103, 179, 0.4), 0 0 0 1px rgba(74, 103, 179, 0.1)'
+                                }}
+                            >
                                 {client.nombre.charAt(0).toUpperCase()}
                                 {client.apellidos.charAt(0).toUpperCase()}
                             </div>

@@ -196,7 +196,10 @@ export const ResetPasswordForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleBackToLogin}
-                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
+                        className={`${TYPOGRAPHY.linkText} underline disabled:opacity-50`}
+                        style={{ color: '#4A67B3' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#3a5db3'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#4A67B3'}
                         disabled={isLoading}
                     >
                         Volver al login

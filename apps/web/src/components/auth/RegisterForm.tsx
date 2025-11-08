@@ -146,7 +146,7 @@ export const RegisterForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2 text-primary-400`}>
+                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2`} style={{ color: '#4A67B3' }}>
                     Únete a NEXIA
                 </h1>
                 <p className={`${TYPOGRAPHY.body} text-gray-600`}>
@@ -241,7 +241,10 @@ export const RegisterForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleLogin}
-                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
+                        className={`${TYPOGRAPHY.linkText} underline disabled:opacity-50`}
+                        style={{ color: '#4A67B3' }}
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#3a5db3'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = '#4A67B3'}
                         disabled={isLoading}
                     >
                         Inicia sesión
