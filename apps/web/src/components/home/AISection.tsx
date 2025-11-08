@@ -38,7 +38,7 @@ export const AISection: React.FC = () => {
                             <h3 className={`${TYPOGRAPHY.pageTitle} text-slate-800 leading-tight`}>
                                 Inteligencia Artificial
                                 <br />
-                                <span className="text-blue-400">Especializada</span>
+                                <span style={{ color: '#4A67B3' }}>Especializada</span>
                             </h3>
                             
                             <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 leading-relaxed`}>

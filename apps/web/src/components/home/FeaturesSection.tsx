@@ -75,7 +75,7 @@ export const FeaturesSection: React.FC = () => {
                     <h3 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-8`}>
                         La Ciencia Se Encuentra
                         <br />
-                        <span className="text-blue-400">con la Gestión Empresarial</span>
+                        <span style={{ color: '#4A67B3' }}>con la Gestión Empresarial</span>
                     </h3>
                     <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-4xl mx-auto leading-relaxed`}>
                         La primera plataforma que integra de forma fluida programación de entrenamiento 
@@ -104,7 +104,9 @@ export const FeaturesSection: React.FC = () => {
 
                                 {/* Contenido */}
                                 <div className="relative md:w-3/5 p-6 bg-slate-900 flex flex-col justify-center">
-                                    <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-4 group-hover:text-blue-400 transition-colors duration-300`}>
+                                    <h4 
+                                        className={`${TYPOGRAPHY.cardTitle} text-white mb-4 transition-colors duration-300 group-hover:[color:#4A67B3]`}
+                                    >
                                         {feature.title}
                                     </h4>
                                     <p className={`${TYPOGRAPHY.body} text-slate-300 leading-relaxed`}>
@@ -119,25 +121,25 @@ export const FeaturesSection: React.FC = () => {
                 {/* Stats Section */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>6+</div>
+                        <div className={`${TYPOGRAPHY.metric} mb-2`} style={{ color: '#4A67B3' }}>6+</div>
                         <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
                             Características Principales
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>2.500+</div>
+                        <div className={`${TYPOGRAPHY.metric} mb-2`} style={{ color: '#4A67B3' }}>2.500+</div>
                         <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
                             Estudios Analizados
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>50+</div>
+                        <div className={`${TYPOGRAPHY.metric} mb-2`} style={{ color: '#4A67B3' }}>50+</div>
                         <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
                             Variables Monitorizadas
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>12</div>
+                        <div className={`${TYPOGRAPHY.metric} mb-2`} style={{ color: '#4A67B3' }}>12</div>
                         <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
                             Modelos de IA
                         </div>

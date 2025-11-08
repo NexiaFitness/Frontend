@@ -80,7 +80,7 @@ export const ProblemSection: React.FC = () => {
                     <h2 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-6`}>
                         NEXIA para Entrenadores
                     </h2>
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-blue-400 mb-8`}>
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} mb-8`} style={{ color: '#4A67B3' }}>
                         Programación y <span className="text-slate-800">Gestión Integradas</span>
                     </h3>
                     <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-4xl mx-auto leading-relaxed`}>

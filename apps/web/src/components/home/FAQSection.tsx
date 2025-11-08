@@ -70,7 +70,7 @@ export const FAQSection: React.FC = () => {
                     <h3 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-8`}>
                         Preguntas
                         <br />
-                        <span className="text-blue-400">Frecuentes</span>
+                        <span style={{ color: '#4A67B3' }}>Frecuentes</span>
                     </h3>
                     <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-3xl mx-auto leading-relaxed`}>
                         Respuestas directas a las dudas más comunes sobre NEXIA y cómo puede 
@@ -83,7 +83,18 @@ export const FAQSection: React.FC = () => {
                     {faqData.map((faq, index) => (
                         <div 
                             key={index}
-                            className="border border-slate-200 rounded-xl overflow-hidden transition-all duration-200 hover:border-blue-300"
+                            className="border border-slate-200 rounded-xl overflow-hidden transition-all duration-200"
+                            style={openIndex === index ? { borderColor: '#4A67B3' } : {}}
+                            onMouseEnter={(e) => {
+                                if (openIndex !== index) {
+                                    e.currentTarget.style.borderColor = '#4A67B3';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (openIndex !== index) {
+                                    e.currentTarget.style.borderColor = '';
+                                }
+                            }}
                         >
                             <button
                                 onClick={() => toggleFAQ(index)}

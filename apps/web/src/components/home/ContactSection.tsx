@@ -122,7 +122,7 @@ export const ContactSection: React.FC = () => {
                             <h3 className={`${TYPOGRAPHY.hero} text-white leading-tight`}>
                                 Hablemos sobre
                                 <br />
-                                <span className="text-blue-400">tu proyecto</span>
+                                <span style={{ color: '#4A67B3' }}>tu proyecto</span>
                             </h3>
 
                             <p className={`${TYPOGRAPHY.heroSubtitle} text-white leading-relaxed`}>
@@ -133,19 +133,19 @@ export const ContactSection: React.FC = () => {
 
                             <div className="space-y-6 text-left">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-3 h-3 bg-blue-400 rounded-full flex-shrink-0"></div>
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#4A67B3' }}></div>
                                     <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
                                         Respuesta en menos de 24 horas
                                     </span>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-3 h-3 bg-blue-400 rounded-full flex-shrink-0"></div>
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#4A67B3' }}></div>
                                     <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
                                         Demo personalizada disponible
                                     </span>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-3 h-3 bg-blue-400 rounded-full flex-shrink-0"></div>
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#4A67B3' }}></div>
                                     <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
                                         Registro para acceso beta
                                     </span>

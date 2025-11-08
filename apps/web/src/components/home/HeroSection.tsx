@@ -34,7 +34,7 @@ export const HeroSection: React.FC = () => {
                             {/* Main Headline */}
                             <h1 className={`${TYPOGRAPHY.hero} text-slate-800 leading-tight`}>
                                 Profesionaliza tu{" "}
-                                <span className="block text-blue-400">entrenamiento</span>
+                                <span className="block" style={{ color: '#4A67B3' }}>entrenamiento</span>
                             </h1>
                             
                             {/* Subtitle */}
