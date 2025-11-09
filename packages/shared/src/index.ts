@@ -146,6 +146,7 @@ export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useClientDetail";
 export * from "./hooks/clients/useClientProgress";
 export * from "./hooks/clients/useCreateClientProgress";
+export * from "./hooks/clients/useUpdateClientProgress"; 
 export * from "./hooks/clients/useClientFatigue";
 
 // Hooks - Modals

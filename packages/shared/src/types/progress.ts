@@ -9,6 +9,8 @@
  * Endpoints:
  * - GET /progress/?client_id={id}
  * - GET /progress/analytics/{client_id}
+ * - POST /progress/
+ * - PUT /progress/{progress_id}
  *
  * @author Frontend Team
  * @since v3.1.0
@@ -38,6 +40,32 @@ export interface CreateClientProgressData {
     peso?: number | null;
     altura?: number | null; // En metros (0.5 - 3.0)
     unidad?: string; // Default: "metric"
+    notas?: string | null;
+}
+
+/**
+ * UpdateClientProgressData — Datos para actualizar registro de progreso existente
+ * 
+ * Diferencias con Create:
+ * - ❌ NO incluye client_id (no se puede cambiar)
+ * - ❌ NO incluye fecha_registro (no se puede cambiar)
+ * - ⚠️ imc DEBE calcularse en frontend (backend NO lo calcula automáticamente)
+ * 
+ * Validaciones backend (ClientProgressUpdate):
+ * - peso: 0-500 kg (más permisivo que Create: 20-300 kg)
+ * - altura: 0.5-3.0 m
+ * 
+ * Uso:
+ * - Hook: useUpdateClientProgress
+ * - Endpoint: PUT /api/v1/progress/{progress_id}
+ * 
+ * @since v4.4.0
+ */
+export interface UpdateClientProgressData {
+    peso?: number | null;
+    altura?: number | null; // En metros (0.5 - 3.0)
+    unidad?: string | null;
+    imc?: number | null; // ⚠️ Calcular en frontend (peso / altura²)
     notas?: string | null;
 }
 

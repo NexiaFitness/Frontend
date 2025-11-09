@@ -21,6 +21,7 @@ import type { ClientStatsResponse } from "../types/clientStats";
 import type {
     ClientProgress,
     CreateClientProgressData,
+    UpdateClientProgressData,
     ProgressAnalytics,
     ProgressTracking,
 } from "../types/progress";
@@ -256,6 +257,50 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        /**
+         * Actualizar registro de progreso existente
+         * 
+         * Endpoint: PUT /api/v1/progress/{progress_id}
+         * Auth: require_trainer_or_admin
+         * 
+         * ⚠️ IMPORTANTE: Backend NO calcula IMC automáticamente en Update
+         * El frontend DEBE calcularlo antes de enviar si peso y altura cambian
+         * 
+         * Invalidación:
+         * - Invalida PROGRESS-{client_id} para refrescar lista
+         * - Invalida ANALYTICS-{client_id} para refrescar gráficos
+         * 
+         * @param progressId - ID del registro a actualizar
+         * @param data - Datos a actualizar (todos opcionales)
+         * @returns ClientProgress actualizado
+         * @throws HTTPException 404 si registro no existe
+         * @since v4.4.0
+         */
+        updateProgressRecord: builder.mutation<
+            ClientProgress,
+            { progressId: number; data: UpdateClientProgressData }
+        >({
+            query: ({ progressId, data }) => ({
+                url: `/progress/${progressId}`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { progressId, data }) => {
+                // Invalidar cache del cliente asociado
+                // client_id viene en el resultado del backend
+                if (result) {
+                    return [
+                        { type: "Client", id: `PROGRESS-${result.client_id}` },
+                        { type: "Client", id: `ANALYTICS-${result.client_id}` },
+                    ];
+                }
+                return [];
+            },
+        }),
+
         // ========================================
         // TRAINING PLAN ENDPOINTS
         // ========================================
@@ -340,6 +385,7 @@ export const {
     useGetProgressAnalyticsQuery,
     useGetClientProgressTrackingQuery,
     useCreateProgressRecordMutation,
+    useUpdateProgressRecordMutation,
     // Training hooks
     useGetClientTrainingPlansQuery,
     useGetClientTrainingSessionsQuery,
