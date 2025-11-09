@@ -29,6 +29,7 @@ import React, { useState, useEffect } from "react";
 import { useCreateClientProgress } from "@nexia/shared/hooks/clients/useCreateClientProgress";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { CreateClientProgressData } from "@nexia/shared/types/progress";
+import { calculateBMI } from "@nexia/shared";
 import { ClientMetricsFields } from "@/components/clients/metrics/ClientMetricsFields";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -56,7 +57,7 @@ interface ProgressFormProps {
 export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
     const [formData, setFormData] = useState<Partial<CreateClientProgressData>>({
         fecha_registro: new Date().toISOString().split("T")[0],
-        unidad: "metric",
+        unidad: "metric" as "metric" | "imperial",
     });
 
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -83,10 +84,13 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
         }
     }, [client?.altura]);
 
-    const updateField = (field: string, value: any) => {
+    const updateField = <K extends keyof Partial<CreateClientProgressData>>(
+        field: K,
+        value: Partial<CreateClientProgressData>[K]
+    ) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        if (errors[field]) {
-            setErrors(prev => ({ ...prev, [field]: "" }));
+        if (errors[field as string]) {
+            setErrors(prev => ({ ...prev, [field as string]: "" }));
         }
     };
 
@@ -120,6 +124,24 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                 ? formData.altura / 100 // Convertir cm → m
                 : null;
 
+            // Validar altura en metros (backend espera 0.5-3.0 m)
+            if (alturaEnMetros !== null && (alturaEnMetros < 0.5 || alturaEnMetros > 3.0)) {
+                setErrors({ altura: "La altura debe estar entre 0.5 y 3.0 metros" });
+                return;
+            }
+
+            // Calcular IMC usando la función centralizada (para validación/consistencia)
+            // Nota: El backend recalcula el IMC automáticamente, pero lo calculamos aquí
+            // para asegurar coherencia antes de enviar
+            const imcCalculado = formData.peso && alturaEnMetros
+                ? calculateBMI(formData.peso, alturaEnMetros)
+                : null;
+
+            // Validar que el IMC calculado sea razonable (opcional, para debugging)
+            if (imcCalculado !== null && (imcCalculado < 10 || imcCalculado > 60)) {
+                console.warn(`[ProgressForm] IMC calculado fuera de rango esperado: ${imcCalculado}`);
+            }
+
             await createProgressRecord({
                 fecha_registro: formData.fecha_registro!,
                 peso: formData.peso!,
@@ -132,7 +154,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
             
             setFormData({
                 fecha_registro: new Date().toISOString().split("T")[0],
-                unidad: "metric",
+                unidad: "metric" as "metric" | "imperial",
             });
             setErrors({});
         } catch (err) {
@@ -163,9 +185,16 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                     - Antropometría (skinfolds/girths/diameters) - solo en onboarding
                 */}
                 <ClientMetricsFields
-                    formData={formData}
+                    formData={{
+                        ...formData,
+                        unidad: formData.unidad as "metric" | "imperial" | undefined,
+                    }}
                     errors={errors}
-                    updateField={updateField}
+                    updateField={(field, value) => {
+                        // Wrapper para compatibilidad con UniversalMetricsFormData
+                        const key = field as keyof Partial<CreateClientProgressData>;
+                        updateField(key, value as Partial<CreateClientProgressData>[keyof Partial<CreateClientProgressData>]);
+                    }}
                     heightUnit="cm" // Mostrar en cm (más intuitivo), convertir a metros al enviar
                     includeProgressFields={false}
                     includeAnthropometric={false}

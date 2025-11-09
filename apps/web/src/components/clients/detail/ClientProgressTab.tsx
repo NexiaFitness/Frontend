@@ -25,6 +25,7 @@ import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { ProgressForm } from "./ProgressForm";
+import { EditProgressModal } from "../modals/EditProgressModal";
 import {
     LineChart,
     Line,
@@ -65,9 +66,12 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     client,
 }) => {
     const [showProgressForm, setShowProgressForm] = useState(false);
+    const [editModalOpen, setEditModalOpen] = useState(false);
+    const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
     const formRef = useRef<HTMLDivElement>(null);
 
     const {
+        progressHistory,
         weightChartData,
         bmiChartData,
         latestWeight,
@@ -113,6 +117,17 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
             }, 100);
         }
     }, [showProgressForm]);
+
+    // Handlers para edición
+    const handleEditClick = (record: ClientProgress) => {
+        setSelectedRecord(record);
+        setEditModalOpen(true);
+    };
+
+    const handleCloseModal = () => {
+        setEditModalOpen(false);
+        setSelectedRecord(null);
+    };
 
     if (isLoading) {
         return (
@@ -169,6 +184,47 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     value={currentRiskLevel || "N/A"}
                     riskLevel={currentRiskLevel}
                 />
+                </div>
+            )}
+
+            {/* Lista de registros de progreso con botones de editar */}
+            {!isNotFoundError && progressHistory && progressHistory.length > 0 && (
+                <div className="bg-white rounded-lg shadow p-4 space-y-3">
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+                        Historial de Registros
+                    </h3>
+                    {progressHistory.map((record: ClientProgress) => (
+                        <div key={record.id} className="flex items-center justify-between border-b pb-2 last:border-b-0">
+                            <div className="text-gray-700">
+                                <p><strong>Fecha:</strong> {new Date(record.fecha_registro).toLocaleDateString()}</p>
+                                <p><strong>Peso:</strong> {record.peso ? `${record.peso} kg` : "N/A"} — <strong>IMC:</strong> {record.imc ? record.imc.toFixed(1) : "N/A"}</p>
+                                {record.notas && (
+                                    <p className="text-sm text-gray-500 mt-1"><strong>Notas:</strong> {record.notas}</p>
+                                )}
+                            </div>
+                            <button
+                                onClick={() => handleEditClick(record)}
+                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="Editar registro"
+                                aria-label="Editar registro"
+                            >
+                                <svg
+                                    className="w-4 h-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                >
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={2}
+                                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                                    />
+                                </svg>
+                            </button>
+                        </div>
+                    ))}
                 </div>
             )}
 
@@ -359,6 +415,17 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Modal de edición */}
+            {selectedRecord && (
+                <EditProgressModal
+                    isOpen={editModalOpen}
+                    onClose={handleCloseModal}
+                    progressRecord={selectedRecord}
+                    clientId={clientId}
+                    onSuccess={() => window.location.reload()}
+                />
+            )}
         </div>
     );
 };

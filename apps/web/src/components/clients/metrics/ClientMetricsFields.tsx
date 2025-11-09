@@ -17,18 +17,17 @@
  */
 
 import React, { useMemo } from "react";
-import type { ClientFormData } from "@nexia/shared/types/client";
+import type { UniversalMetricsFormData } from "@nexia/shared/types/forms";
 import { calculateBMI } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ClientMetricsFieldsProps {
-    formData: Partial<ClientFormData & {
-        fecha_registro?: string;
-        unidad?: string;
-        notas?: string | null;
-    }>;
+    formData: UniversalMetricsFormData;
     errors?: Record<string, string>;
-    updateField: (field: string, value: any) => void;
+    updateField: <K extends keyof UniversalMetricsFormData>(
+        field: K,
+        value: UniversalMetricsFormData[K]
+    ) => void;
     /**
      * Modo de altura:
      * - "cm": Para onboarding (altura en centímetros, 100-250)
@@ -199,7 +198,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                             <label className={TYPOGRAPHY.inputLabel}>Unidad de medida</label>
                             <select
                                 value={formData.unidad ?? "metric"}
-                                onChange={(e) => updateField("unidad", e.target.value)}
+                                onChange={(e) => updateField("unidad", e.target.value as "metric" | "imperial")}
                                 className="w-full border rounded-lg p-2 bg-white text-slate-800"
                             >
                                 <option value="metric">Métrica (kg, m)</option>
@@ -254,7 +253,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                                         min="0"
                                         max="50"
                                         value={formData[field as keyof typeof formData] ?? ""}
-                                        onChange={(e) => updateField(field, Number(e.target.value) || null)}
+                                        onChange={(e) => updateField(field as keyof UniversalMetricsFormData, Number(e.target.value) || null)}
                                         className="w-full border rounded-lg p-2 bg-white text-slate-800"
                                         placeholder="0-50 mm"
                                     />
@@ -288,7 +287,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                                         min="10"
                                         max="200"
                                         value={formData[field as keyof typeof formData] ?? ""}
-                                        onChange={(e) => updateField(field, Number(e.target.value) || null)}
+                                        onChange={(e) => updateField(field as keyof UniversalMetricsFormData, Number(e.target.value) || null)}
                                         className="w-full border rounded-lg p-2 bg-white text-slate-800"
                                         placeholder="10-200 cm"
                                     />
@@ -319,7 +318,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                                         min={min}
                                         max={max}
                                         value={formData[field as keyof typeof formData] ?? ""}
-                                        onChange={(e) => updateField(field, Number(e.target.value) || null)}
+                                        onChange={(e) => updateField(field as keyof UniversalMetricsFormData, Number(e.target.value) || null)}
                                         className="w-full border rounded-lg p-2 bg-white text-slate-800"
                                         placeholder={`${min}-${max} cm`}
                                     />
