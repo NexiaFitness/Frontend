@@ -16,10 +16,15 @@ import type { PersonalInfoStepProps } from "@nexia/shared/types/clientOnboarding
 import { GENDER_ENUM } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
-export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
+interface PersonalInfoProps extends PersonalInfoStepProps {
+    isEditMode?: boolean;
+}
+
+export const PersonalInfo: React.FC<PersonalInfoProps> = ({
     formData,
     errors,
     updateField,
+    isEditMode = false,
 }) => {
     return (
         <div className="space-y-6">
@@ -64,20 +69,22 @@ export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
                 {errors.mail && <p className="text-red-600 text-sm">{errors.mail}</p>}
             </div>
 
-            {/* Confirm Email */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Confirmar correo *</label>
-                <input
-                    type="email"
-                    value={formData.confirmEmail || ""}
-                    onChange={(e) => updateField("confirmEmail", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    placeholder="Repite tu correo"
-                />
-                {errors.confirmEmail && (
-                    <p className="text-red-600 text-sm">{errors.confirmEmail}</p>
-                )}
-            </div>
+            {/* Confirm Email - Solo en modo creación */}
+            {!isEditMode && (
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Confirmar correo *</label>
+                    <input
+                        type="email"
+                        value={formData.confirmEmail || ""}
+                        onChange={(e) => updateField("confirmEmail", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        placeholder="Repite tu correo"
+                    />
+                    {errors.confirmEmail && (
+                        <p className="text-red-600 text-sm">{errors.confirmEmail}</p>
+                    )}
+                </div>
+            )}
 
             {/* Teléfono */}
             <div>
@@ -142,3 +149,4 @@ export const PersonalInfo: React.FC<PersonalInfoStepProps> = ({
         </div>
     );
 };
+

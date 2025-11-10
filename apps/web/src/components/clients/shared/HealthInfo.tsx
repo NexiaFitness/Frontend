@@ -52,3 +52,4 @@ export const HealthInfo: React.FC<HealthInfoStepProps> = ({
         </div>
     );
 };
+

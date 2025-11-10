@@ -424,3 +424,4 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
         </div>
     );
 };
+

@@ -39,6 +39,7 @@ import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
 import { ClientOnboarding } from "./pages/clients/ClientOnboarding";
 import { ClientList } from "./pages/clients/ClientList";
 import { ClientDetail } from "./pages/clients/ClientDetail";
+import { ClientEdit } from "./pages/clients/ClientEdit";
 
 // Training Plans Management (trainers only)
 import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
@@ -159,6 +160,19 @@ function App() {
       {/* CLIENT MANAGEMENT - Trainers only */}
       {/* ============================================ */}
 
+      {/* Client Edit - Ruta específica PRIMERO (antes de /:id) */}
+      <Route
+        path="/dashboard/clients/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ClientEdit />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Client Detail */}
       <Route
         path="/dashboard/clients/:id"
         element={

@@ -140,14 +140,16 @@ export * from "./hooks/useSmartRouting";
 export * from "./hooks/useTrainerProfile";
 export * from "./hooks/usePublicNavigation";
 
-// Hooks - Clients
-export * from "./hooks/clients/useClientOnboarding";
-export * from "./hooks/clients/useClientStats";
+// Hooks - Clients (ordenados alfabéticamente)
 export * from "./hooks/clients/useClientDetail";
-export * from "./hooks/clients/useClientProgress";
-export * from "./hooks/clients/useCreateClientProgress";
-export * from "./hooks/clients/useUpdateClientProgress"; 
 export * from "./hooks/clients/useClientFatigue";
+export * from "./hooks/clients/useClientForm";
+export * from "./hooks/clients/useClientOnboarding";
+export * from "./hooks/clients/useClientProgress";
+export * from "./hooks/clients/useClientStats";
+export * from "./hooks/clients/useCreateClientProgress";
+export * from "./hooks/clients/useUpdateClient";
+export * from "./hooks/clients/useUpdateClientProgress";
 
 // Hooks - Modals
 export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';

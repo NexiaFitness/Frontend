@@ -1,6 +1,9 @@
 /**
  * useClientOnboarding.ts — Hook para manejar el flujo multi-step del Client Onboarding.
  *
+ * @deprecated Usar useClientForm en su lugar.
+ * Este hook se mantiene solo por compatibilidad temporal.
+ * 
  * Contexto:
  * - Gestiona datos de formulario, validaciones y navegación por pasos.
  * - Compatible Web + React Native (sin dependencias DOM).
@@ -13,12 +16,14 @@
  * @author Frontend Team
  * @since v2.2.0
  * @updated v2.5.0 - TOTAL_STEPS = 7 (agregado AnthropometricMetrics entre PhysicalMetrics y TrainingGoals)
+ * @updated v4.6.0 - Deprecado, usar useClientForm
  */
 
 import { useState, useCallback } from "react";
 import { useCreateClientMutation } from "@nexia/shared/api/clientsApi";
 import type { ClientFormData, ClientFormErrors } from "@nexia/shared/types/client";
 import { validateClientForm } from "@nexia/shared/utils/validations";
+import { useClientForm } from "./useClientForm";
 
 /**
  * Número fijo de pasos del wizard:

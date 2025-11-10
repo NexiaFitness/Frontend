@@ -81,3 +81,4 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
         </div>
     );
 };
+
