@@ -5,6 +5,7 @@ export * from "./api/clientsApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
+export * from "./api/exercisesApi";
 
 // Store
 export * from "./store/authSlice";
@@ -98,6 +99,7 @@ export * from "./types/client";
 export * from "./types/clientOnboarding";
 export * from "./types/clientStats";
 export * from "./types/trainer";
+export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
@@ -116,6 +118,16 @@ export {
     type WeeklyFrequency,
     type SessionDuration,
 } from "./types/client";
+
+// Enums explícitos de exercise (para uso directo en componentes)
+export {
+    MUSCLE_GROUP_ENUM,
+    EQUIPMENT_ENUM,
+    LEVEL_ENUM,
+    type MuscleGroup,
+    type Equipment,
+    type Level,
+} from "./types/exercise";
 
 // Enums explícitos de training (para uso directo en componentes)
 export {
