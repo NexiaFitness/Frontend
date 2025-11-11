@@ -45,6 +45,10 @@ import { ClientEdit } from "./pages/clients/ClientEdit";
 import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
 import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
 
+// Exercises Management (trainers only)
+import { ExerciseList } from "./pages/exercises/ExerciseList";
+import { ExerciseDetail } from "./pages/exercises/ExerciseDetail";
+
 // Páginas adicionales
 import Account from "./pages/account/Account";
 
@@ -151,6 +155,34 @@ function App() {
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
               <TrainingPlansPage />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* EXERCISES MANAGEMENT - Trainers only */}
+      {/* ============================================ */}
+
+      {/* Exercise Detail */}
+      <Route
+        path="/dashboard/exercises/:id"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ExerciseDetail />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Exercise List */}
+      <Route
+        path="/dashboard/exercises"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ExerciseList />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }

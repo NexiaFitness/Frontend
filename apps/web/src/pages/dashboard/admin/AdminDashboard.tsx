@@ -12,6 +12,7 @@
 
 import React from "react";
 import { useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { AdminSideMenu } from "@/components/dashboard/admin/AdminSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/buttons";
 import type { RootState } from "@nexia/shared/store";
 
 export const AdminDashboard: React.FC = () => {
+    const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
     // Menu items para mobile navbar - Admin específico
@@ -85,6 +87,7 @@ export const AdminDashboard: React.FC = () => {
                             variant="primary"
                             size="lg"
                             className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
+                            onClick={() => navigate("/dashboard/users")}
                         >
                             Manage Users
                         </Button>
@@ -92,6 +95,7 @@ export const AdminDashboard: React.FC = () => {
                             variant="secondary"
                             size="lg"
                             className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30 w-full md:w-auto md:min-w-[220px]"
+                            onClick={() => navigate("/dashboard/system")}
                         >
                             System Settings
                         </Button>
@@ -101,7 +105,10 @@ export const AdminDashboard: React.FC = () => {
                 {/* System Activity responsive */}
                 <div className="px-4 lg:px-8">
                     <div className="max-w-4xl mx-auto">
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group">
+                        <div 
+                            className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group"
+                            onClick={() => navigate("/dashboard/system")}
+                        >
                             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
                                 <div>
                                     <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">

@@ -62,6 +62,7 @@ export const TrainerDashboard: React.FC = () => {
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
         { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
+        { label: "Ejercicios", path: "/dashboard/exercises" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
@@ -164,7 +165,7 @@ export const TrainerDashboard: React.FC = () => {
 
                 {/* Botones principales */}
                 <div className="px-4 lg:px-8 mb-12 lg:mb-16">
-                    <div className="flex flex-col md:flex-row gap-4 lg:gap-6 justify-center max-w-2xl mx-auto">
+                    <div className="flex flex-col md:flex-row gap-4 lg:gap-6 justify-center max-w-4xl mx-auto">
                         <Button
                             variant="primary"
                             size="lg"
@@ -181,6 +182,15 @@ export const TrainerDashboard: React.FC = () => {
                             onClick={() => navigate("/dashboard/training-plans")}
                         >
                             Training Planning
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            size="lg"
+                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
+                            onClick={() => navigate("/dashboard/exercises")}
+                        >
+                            Base de Ejercicios
                         </Button>
                     </div>
                 </div>

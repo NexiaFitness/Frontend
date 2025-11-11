@@ -86,6 +86,7 @@ export const ClientDetail: React.FC = () => {
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
         { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
+        { label: "Ejercicios", path: "/dashboard/exercises" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
@@ -201,7 +202,13 @@ export const ClientDetail: React.FC = () => {
             <DashboardLayout>
                 <div className="min-h-screen bg-white -mt-16 md:-mt-18 lg:-mt-20 pt-4 lg:pt-6">
                     {/* Header con foto, nombre y actions */}
-                    <ClientHeader client={client} onRefresh={refetchAll} />
+                    <ClientHeader 
+                        client={client} 
+                        onRefresh={refetchAll}
+                        onNewTrainingPlan={() => navigate("/dashboard/training-plans")}
+                        onEditTrainingPlan={() => navigate("/dashboard/training-plans")}
+                        onAnthropometricData={() => setActiveTab("progress")}
+                    />
 
                     {/* Tabs Navigation */}
                     <div className="bg-white border-b border-gray-200">

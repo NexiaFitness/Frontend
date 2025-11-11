@@ -23,9 +23,18 @@ import { TYPOGRAPHY } from "@/utils/typography";
 interface ClientHeaderProps {
     client: Client;
     onRefresh: () => void;
+    onNewTrainingPlan?: () => void;
+    onEditTrainingPlan?: () => void;
+    onAnthropometricData?: () => void;
 }
 
-export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh }) => {
+export const ClientHeader: React.FC<ClientHeaderProps> = ({ 
+    client, 
+    onRefresh,
+    onNewTrainingPlan,
+    onEditTrainingPlan,
+    onAnthropometricData,
+}) => {
     // Calcular "Joined Since" (meses desde fecha_alta)
     const getJoinedSince = (fechaAlta: string): string => {
         const now = new Date();
@@ -99,38 +108,45 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
 
                     {/* Right: Actions */}
                     <div className="flex flex-wrap gap-2 lg:gap-3">
+                        {onNewTrainingPlan && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onNewTrainingPlan}
+                                className="flex-1 lg:flex-initial"
+                            >
+                                Nuevo Plan de Entrenamiento
+                            </Button>
+                        )}
+                        {onEditTrainingPlan && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onEditTrainingPlan}
+                                className="flex-1 lg:flex-initial"
+                            >
+                                Editar Plan de Entrenamiento
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => alert("New Training Plan - TODO")}
+                            onClick={() => alert("Nueva Sesión - Funcionalidad próximamente")}
                             className="flex-1 lg:flex-initial"
-                        >
-                            Nuevo Plan de Entrenamiento
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => alert("Edit Training Plan - TODO")}
-                            className="flex-1 lg:flex-initial"
-                        >
-                            Editar Plan de Entrenamiento
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => alert("New Session - TODO")}
-                            className="flex-1 lg:flex-initial"
+                            disabled
                         >
                             Nueva Sesión
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => alert("Anthropometric Data - TODO")}
-                            className="flex-1 lg:flex-initial"
-                        >
-                            Datos Antropométricos
-                        </Button>
+                        {onAnthropometricData && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onAnthropometricData}
+                                className="flex-1 lg:flex-initial"
+                            >
+                                Datos Antropométricos
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="sm"

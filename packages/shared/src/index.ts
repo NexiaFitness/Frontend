@@ -163,6 +163,9 @@ export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
 
+// Hooks - Exercises
+export * from "./hooks/exercises";
+
 // Hooks - Training
 export * from "./hooks/training";
 
