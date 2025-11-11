@@ -425,3 +425,88 @@ export interface AllCyclesResponse {
     mesocycles: Mesocycle[];
     microcycles: Microcycle[];
 }
+
+// ========================================
+// MILESTONES (Hitos importantes del plan)
+// ========================================
+
+/**
+ * Milestone - Hito importante dentro de un Training Plan
+ * 
+ * Backend: MilestoneOut (schema verificado en Swagger)
+ * Ejemplos: Start Date, Competition, Test, End Date
+ * 
+ * @author Nelson Valero
+ * @since v4.7.0 - Training Planning FASE 3A
+ */
+export interface Milestone {
+    id: number;
+    training_plan_id: number;
+    title: string;
+    milestone_date: string; // ISO date YYYY-MM-DD
+    type: MilestoneType;
+    notes: string | null;
+    importance: MilestoneImportance;
+    reminder_offset_days: number | null;
+    done: boolean;
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+/**
+ * MilestoneCreate - Request para crear Milestone
+ * 
+ * Backend: MilestoneCreate schema
+ */
+export interface MilestoneCreate {
+    training_plan_id?: number; // Opcional, se sobrescribe desde URL path param
+    title: string;
+    milestone_date: string; // ISO date YYYY-MM-DD
+    type?: MilestoneType; // Default: "custom"
+    notes?: string | null;
+    importance?: MilestoneImportance; // Default: "medium"
+    reminder_offset_days?: number | null;
+}
+
+/**
+ * MilestoneUpdate - Request para actualizar Milestone
+ * 
+ * Backend: MilestoneUpdate schema
+ * Todos los campos opcionales
+ */
+export interface MilestoneUpdate {
+    title?: string;
+    milestone_date?: string;
+    type?: MilestoneType;
+    notes?: string | null;
+    importance?: MilestoneImportance;
+    reminder_offset_days?: number | null;
+    done?: boolean;
+}
+
+/**
+ * Constantes para milestone type
+ * Backend: MilestoneTypeEnum
+ */
+export const MILESTONE_TYPES = {
+    START: "start",
+    TEST: "test",
+    COMPETITION: "competition",
+    END: "end",
+    CUSTOM: "custom",
+} as const;
+
+export type MilestoneType = (typeof MILESTONE_TYPES)[keyof typeof MILESTONE_TYPES];
+
+/**
+ * Constantes para milestone importance
+ * Backend: "low" | "medium" | "high"
+ */
+export const MILESTONE_IMPORTANCE = {
+    LOW: "low",
+    MEDIUM: "medium",
+    HIGH: "high",
+} as const;
+
+export type MilestoneImportance = (typeof MILESTONE_IMPORTANCE)[keyof typeof MILESTONE_IMPORTANCE];

@@ -5,8 +5,8 @@
  * - Permite modificar métricas físicas (peso, altura, notas, unidad, etc.)
  * - Usa BaseModal para consistencia visual y accesibilidad (como DeleteClientModal)
  * - Reutiliza ClientMetricsFields (layout y tipografía idénticos al Figma)
- * - Calcula automáticamente el IMC al modificar peso/altura
- * - Controla unidad cm ↔ m (frontend ↔ backend)
+ * - El backend calcula automáticamente el IMC al modificar peso/altura
+ * - Altura se maneja en centímetros (100-250 cm)
  *
  * Flujo:
  * - Recibe progressRecord con datos existentes
@@ -16,6 +16,7 @@
  *
  * @author Nelson
  * @since v4.4.0
+ * @updated v4.5.0 - Eliminado cálculo de IMC (backend lo hace), altura en cm
  */
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -25,7 +26,6 @@ import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { ClientMetricsFields } from "../metrics/ClientMetricsFields";
 import { useUpdateClientProgress } from "@nexia/shared/hooks/clients/useUpdateClientProgress";
-import { calculateBMI } from "@nexia/shared";
 import type { ClientProgress } from "@nexia/shared/types/progress";
 import type { UpdateClientProgressData } from "@nexia/shared/types/progress";
 import type { ClientFormData } from "@nexia/shared/types/client";
@@ -78,9 +78,9 @@ export const EditProgressModal: React.FC<EditProgressModalProps> = ({
         const newErrors: Record<string, string> = {};
         if (!formData.peso) newErrors.peso = "El peso es obligatorio.";
         if (!formData.altura) newErrors.altura = "La altura es obligatoria.";
-        // Validar altura en metros (backend espera 0.5-3.0 m)
-        if (formData.altura && (formData.altura <= 0 || formData.altura < 0.5 || formData.altura > 3.0)) {
-            newErrors.altura = "La altura debe estar entre 0.5 y 3.0 metros.";
+        // Validar altura en centímetros (backend espera 100-250 cm)
+        if (formData.altura && (formData.altura < 100 || formData.altura > 250)) {
+            newErrors.altura = "La altura debe estar entre 100 y 250 cm.";
         }
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -90,16 +90,10 @@ export const EditProgressModal: React.FC<EditProgressModalProps> = ({
         if (!validateForm()) return;
 
         try {
-            // Calcular IMC usando la función centralizada
-            // La altura ya está en metros en este modal (según diseño)
-            const imc = formData.peso && formData.altura
-                ? calculateBMI(formData.peso, formData.altura)
-                : null;
-
+            // Enviar datos directamente al backend (altura en cm, IMC lo calcula el backend)
             await updateProgressRecord(progressRecord.id, {
                 ...formData,
-                imc,
-                // conversión UI → backend: la altura ya está en metros (según diseño)
+                // No incluir imc - el backend lo calcula automáticamente
             });
             onSuccess?.();
             onClose();
@@ -137,11 +131,11 @@ export const EditProgressModal: React.FC<EditProgressModalProps> = ({
     }), [formData]);
 
     return (
-        <BaseModal
+            <BaseModal
             isOpen={isOpen}
             onClose={onClose}
             title="Editar métricas del progreso"
-            description="Modifica los valores del registro seleccionado. El IMC se recalcula automáticamente."
+            description="Modifica los valores del registro seleccionado. El IMC se recalcula automáticamente por el backend."
             iconType="info"
             isLoading={isLoading}
             titleId="edit-progress-title"
@@ -176,7 +170,7 @@ export const EditProgressModal: React.FC<EditProgressModalProps> = ({
                             updateField(key, value as UpdateClientProgressData[keyof UpdateClientProgressData]);
                         }
                     }}
-                    heightUnit="meters"
+                    heightUnit="cm"
                     includeProgressFields={false}
                     includeAnthropometric={false}
                     requiredFields={["peso", "altura"]}

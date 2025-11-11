@@ -39,6 +39,10 @@ import type {
     MicrocycleUpdate,
     DeleteCycleResponse,
     AllCyclesResponse,
+    // Milestones
+    Milestone,
+    MilestoneCreate,
+    MilestoneUpdate,
 } from "../types/training";
 
 export const trainingPlansApi = baseApi.injectEndpoints({
@@ -396,6 +400,90 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 { type: "Microcycle", id },
             ],
         }),
+
+        // ========================================
+        // MILESTONES
+        // ========================================
+
+        /**
+         * Obtener milestones de un training plan
+         * Backend: GET /api/v1/training-plans/{plan_id}/milestones
+         */
+        getMilestones: builder.query<Milestone[], number>({
+            query: (planId) => ({
+                url: `/training-plans/${planId}/milestones`,
+                method: "GET",
+            }),
+            providesTags: (result, error, planId) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: "Milestone" as const, id })),
+                        { type: "Milestone", id: `PLAN-${planId}` },
+                    ]
+                    : [{ type: "Milestone", id: `PLAN-${planId}` }],
+        }),
+
+        /**
+         * Obtener milestone específico por ID
+         * Backend: GET /api/v1/training-plans/milestones/{milestone_id}
+         */
+        getMilestone: builder.query<Milestone, number>({
+            query: (id) => ({
+                url: `/training-plans/milestones/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "Milestone", id }],
+        }),
+
+        /**
+         * Crear nuevo milestone
+         * Backend: POST /api/v1/training-plans/{plan_id}/milestones
+         */
+        createMilestone: builder.mutation<Milestone, { planId: number; data: Omit<MilestoneCreate, 'training_plan_id'> }>({
+            query: ({ planId, data }) => ({
+                url: `/training-plans/${planId}/milestones`,
+                method: "POST",
+                body: { ...data, training_plan_id: planId },
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { planId }) => [
+                { type: "Milestone", id: `PLAN-${planId}` },
+            ],
+        }),
+
+        /**
+         * Actualizar milestone
+         * Backend: PUT /api/v1/training-plans/milestones/{milestone_id}
+         */
+        updateMilestone: builder.mutation<Milestone, { id: number; data: MilestoneUpdate }>({
+            query: ({ id, data }) => ({
+                url: `/training-plans/milestones/${id}`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: "Milestone", id },
+            ],
+        }),
+
+        /**
+         * Eliminar milestone
+         * Backend: DELETE /api/v1/training-plans/milestones/{milestone_id}
+         */
+        deleteMilestone: builder.mutation<DeleteCycleResponse, number>({
+            query: (id) => ({
+                url: `/training-plans/milestones/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (result, error, id) => [
+                { type: "Milestone", id },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -429,4 +517,11 @@ export const {
     useCreateMicrocycleMutation,
     useUpdateMicrocycleMutation,
     useDeleteMicrocycleMutation,
+    
+    // Milestones
+    useGetMilestonesQuery,
+    useGetMilestoneQuery,
+    useCreateMilestoneMutation,
+    useUpdateMilestoneMutation,
+    useDeleteMilestoneMutation,
 } = trainingPlansApi;

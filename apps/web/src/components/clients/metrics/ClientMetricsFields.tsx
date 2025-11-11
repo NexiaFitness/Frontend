@@ -3,22 +3,22 @@
  *
  * Contexto:
  * - Componente reutilizable que incluye TODOS los campos de métricas disponibles en NEXIA
- * - Usable tanto en onboarding (altura en cm) como en progreso (altura en metros)
+ * - Usable tanto en onboarding (altura en cm) como en progreso (altura en cm)
  * - Incluye métricas básicas, antropométricas y campos de progreso
- * - Calcula automáticamente IMC y otros valores derivados
+ * - El IMC se calcula en el backend, no en el frontend
  *
  * Campos incluidos:
- * - Métricas básicas: edad, peso, altura, IMC (calculado)
+ * - Métricas básicas: edad, peso, altura
  * - Campos de progreso: fecha_registro, unidad, notas
  * - Antropometría: skinfolds (8), girths (6), diameters (3)
  *
  * @author Frontend Team
  * @since v4.4.0
+ * @updated v4.5.0 - Eliminado cálculo de IMC (backend lo hace)
  */
 
-import React, { useMemo } from "react";
+import React from "react";
 import type { UniversalMetricsFormData } from "@nexia/shared/types/forms";
-import { calculateBMI } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ClientMetricsFieldsProps {
@@ -30,8 +30,7 @@ interface ClientMetricsFieldsProps {
     ) => void;
     /**
      * Modo de altura:
-     * - "cm": Para onboarding (altura en centímetros, 100-250)
-     * - "meters": Para progreso (altura en metros, 0.5-3.0)
+     * - "cm": Altura en centímetros (100-250)
      * @default "cm"
      */
     heightUnit?: "cm" | "meters";
@@ -61,18 +60,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
     includeAnthropometric = false,
     requiredFields = [],
 }) => {
-    // Calcular IMC automáticamente
-    const bmi = useMemo(() => {
-        if (formData.peso && formData.altura) {
-            // Si altura está en cm, convertir a metros para cálculo
-            const alturaEnMetros = heightUnit === "cm" 
-                ? (formData.altura as number) / 100 
-                : (formData.altura as number);
-            return calculateBMI(formData.peso, alturaEnMetros);
-        }
-        return null;
-    }, [formData.peso, formData.altura, heightUnit]);
-
+    // El IMC se calcula en el backend, no en el frontend
     const isRequired = (field: string): boolean => {
         return requiredFields.includes(field);
     };
@@ -129,42 +117,22 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                     {/* Altura */}
                     <div>
                         <label className={TYPOGRAPHY.inputLabel}>
-                            Altura ({heightUnit === "cm" ? "cm" : "m"}) {isRequired("altura") && "*"}
+                            Altura (cm) {isRequired("altura") && "*"}
                         </label>
                         <input
                             type="number"
-                            step={heightUnit === "cm" ? 0.1 : 0.01}
-                            min={heightUnit === "cm" ? 100 : 0.5}
-                            max={heightUnit === "cm" ? 250 : 3.0}
+                            step={0.1}
+                            min={100}
+                            max={250}
                             value={formData.altura ?? ""}
                             onChange={(e) => updateField("altura", Number(e.target.value) || null)}
                             className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                            placeholder={heightUnit === "cm" ? "100-250 cm" : "0.5-3.0 m"}
+                            placeholder="100-250 cm"
                         />
-                        {heightUnit === "meters" && (
-                            <p className="text-gray-500 text-sm mt-1">
-                                Introduce la altura en metros (ejemplo: 1.70)
-                            </p>
-                        )}
                         {errors.altura && (
                             <p className="text-red-600 text-sm mt-1">{errors.altura}</p>
                         )}
                     </div>
-
-                    {/* IMC (calculado, solo lectura) */}
-                    {bmi !== null && (
-                        <div>
-                            <label className={TYPOGRAPHY.inputLabel}>IMC (calculado)</label>
-                            <div className="bg-slate-100 rounded-lg p-4 border border-slate-200">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-slate-700 font-medium">IMC:</span>
-                                    <span className="text-2xl font-bold text-slate-900">
-                                        {bmi.toFixed(1)}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    )}
                 </div>
             </div>
 

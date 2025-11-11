@@ -294,3 +294,4 @@ Estas funcionalidades deben planificarse para **Fase 5 o 6** del roadmap.
 **Fecha**: 2025-01-09  
 **Versión del sistema**: v4.4.2
 
+

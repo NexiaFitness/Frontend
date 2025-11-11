@@ -5,31 +5,31 @@
  * - Se renderiza dentro del tab "Progress" de ClientDetail.
  * - Permite al entrenador registrar nuevos datos de métricas físicas.
  * - Usa ClientMetricsFields para reutilizar lógica y validaciones.
- * - Calcula el IMC automáticamente y envía los datos al backend vía RTK Query.
+ * - Envía los datos al backend vía RTK Query.
  * - Tras crear el registro, refresca los gráficos y métricas del cliente.
  *
  * Campos del backend (POST /api/v1/progress/):
  * - client_id: int (requerido, se inyecta automáticamente)
  * - fecha_registro: date (requerido)
  * - peso: Optional[float] (20-300 kg)
- * - altura: Optional[float] (0.5-3.0 metros) - se convierte de cm a m al enviar
+ * - altura: Optional[float] (100-250 cm) - backend recibe en centímetros
  * - unidad: str (default "metric")
- * - imc: Optional[float] (calculado automáticamente, NO se envía)
+ * - imc: Optional[float] (calculado automáticamente por el backend)
  * - notas: Optional[str]
  * 
- * NOTA: La altura se maneja en cm en el estado (más intuitivo para el usuario),
- * pero se convierte a metros antes de enviar al backend.
+ * NOTA: La altura se maneja y envía en centímetros (100-250 cm).
+ * El backend calcula el IMC automáticamente.
  *
  * @author Frontend Team
  * @since v4.3.0
  * @updated v4.4.0 - Refactor para usar ClientMetricsFields
+ * @updated v4.5.0 - Eliminada conversión cm→m y cálculo de IMC (backend lo hace)
  */
 
 import React, { useState, useEffect } from "react";
 import { useCreateClientProgress } from "@nexia/shared/hooks/clients/useCreateClientProgress";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { CreateClientProgressData } from "@nexia/shared/types/progress";
-import { calculateBMI } from "@nexia/shared";
 import { ClientMetricsFields } from "@/components/clients/metrics/ClientMetricsFields";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -43,7 +43,7 @@ interface ProgressFormProps {
  * Formulario para añadir un nuevo registro de progreso de un cliente.
  * Solo incluye campos soportados por el backend:
  * - peso (kg)
- * - altura (cm en UI, se convierte a metros al enviar)
+ * - altura (cm, 100-250)
  * - fecha_registro
  * - unidad (metric/imperial)
  * - notas
@@ -51,8 +51,8 @@ interface ProgressFormProps {
  * El backend calcula automáticamente el IMC.
  * NO incluye campos antropométricos (skinfolds/girths/diameters).
  * 
- * NOTA: La altura se maneja en cm en el estado (más intuitivo para el usuario),
- * pero se convierte a metros antes de enviar al backend (que espera 0.5-3.0 m).
+ * NOTA: La altura se maneja y envía en centímetros (100-250 cm).
+ * El backend calcula el IMC automáticamente.
  */
 export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
     const [formData, setFormData] = useState<Partial<CreateClientProgressData>>({
@@ -66,17 +66,15 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
     const { createProgressRecord, isLoading, error, isSuccess } = useCreateClientProgress(clientId);
     const { data: client } = useGetClientQuery(clientId);
 
-    // Prellenar altura desde el perfil del cliente (mantener en cm para UI, convertir a metros al enviar)
+    // Prellenar altura desde el perfil del cliente (en cm)
     useEffect(() => {
         if (client?.altura) {
-            // Altura del cliente está en cm, mantener en cm en el estado (más intuitivo para el usuario)
-            // La conversión a metros se hará solo al enviar al backend
             setFormData(prev => {
                 // Solo prellenar si no hay altura ya establecida (evitar sobrescribir si el usuario ya editó)
                 if (prev.altura === undefined || prev.altura === null) {
                     return {
                         ...prev,
-                        altura: client.altura, // Mantener en cm
+                        altura: client.altura, // Altura en cm
                     };
                 }
                 return prev;
@@ -106,9 +104,9 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
             newErrors.peso = "El peso debe estar entre 20 y 300 kg";
         }
 
-        // Altura es obligatoria para calcular IMC
+        // Altura es obligatoria
         if (!formData.altura) {
-            newErrors.altura = "La altura es requerida para calcular el IMC";
+            newErrors.altura = "La altura es requerida";
         } else if (formData.altura < 100 || formData.altura > 250) {
             newErrors.altura = "La altura debe estar entre 100 y 250 cm";
         }
@@ -119,33 +117,11 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
         }
 
         try {
-            // Convertir altura de cm a metros antes de enviar al backend
-            const alturaEnMetros = formData.altura !== undefined && formData.altura !== null
-                ? formData.altura / 100 // Convertir cm → m
-                : null;
-
-            // Validar altura en metros (backend espera 0.5-3.0 m)
-            if (alturaEnMetros !== null && (alturaEnMetros < 0.5 || alturaEnMetros > 3.0)) {
-                setErrors({ altura: "La altura debe estar entre 0.5 y 3.0 metros" });
-                return;
-            }
-
-            // Calcular IMC usando la función centralizada (para validación/consistencia)
-            // Nota: El backend recalcula el IMC automáticamente, pero lo calculamos aquí
-            // para asegurar coherencia antes de enviar
-            const imcCalculado = formData.peso && alturaEnMetros
-                ? calculateBMI(formData.peso, alturaEnMetros)
-                : null;
-
-            // Validar que el IMC calculado sea razonable (opcional, para debugging)
-            if (imcCalculado !== null && (imcCalculado < 10 || imcCalculado > 60)) {
-                console.warn(`[ProgressForm] IMC calculado fuera de rango esperado: ${imcCalculado}`);
-            }
-
+            // Enviar datos directamente al backend (altura en cm, IMC lo calcula el backend)
             await createProgressRecord({
                 fecha_registro: formData.fecha_registro!,
                 peso: formData.peso!,
-                altura: alturaEnMetros, // Enviar en metros (backend espera 0.5-3.0 m)
+                altura: formData.altura!, // Enviar en cm (100-250)
                 unidad: formData.unidad || "metric",
                 notas: formData.notas || null,
             });
@@ -174,8 +150,8 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                     
                     Campos mostrados:
                     - Peso (kg) - REQUERIDO
-                    - Altura (cm) - OPCIONAL (se prellena automáticamente desde perfil si existe, se convierte a metros al enviar)
-                    - IMC (calculado en frontend, se envía pero backend lo recalcula)
+                    - Altura (cm) - REQUERIDO (se prellena automáticamente desde perfil si existe)
+                    - IMC (calculado por backend, se muestra después de guardar)
                     - Fecha de registro - REQUERIDO (default hoy)
                     - Unidad de medida - REQUERIDO (default "metric")
                     - Notas - OPCIONAL
@@ -195,7 +171,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                         const key = field as keyof Partial<CreateClientProgressData>;
                         updateField(key, value as Partial<CreateClientProgressData>[keyof Partial<CreateClientProgressData>]);
                     }}
-                    heightUnit="cm" // Mostrar en cm (más intuitivo), convertir a metros al enviar
+                    heightUnit="cm" // Altura en cm (100-250)
                     includeProgressFields={false}
                     includeAnthropometric={false}
                     requiredFields={["peso", "altura"]}

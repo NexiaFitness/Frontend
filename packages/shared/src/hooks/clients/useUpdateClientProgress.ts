@@ -2,15 +2,13 @@
  * useUpdateClientProgress.ts — Hook para actualizar registros de progreso
  * 
  * Responsabilidades:
- * - Calcular IMC automáticamente si peso y altura están presentes
  * - Validar datos antes de enviar
  * - Manejar estados de loading/error/success
  * - Wrapper sobre useUpdateProgressRecordMutation
  * 
  * Contexto:
- * - Backend NO calcula IMC en Update (solo en Create)
- * - Frontend DEBE calcularlo explícitamente
- * - Altura ya debe venir en metros desde el componente
+ * - Backend calcula IMC automáticamente
+ * - Altura debe venir en centímetros (100-250 cm)
  * 
  * Separación de responsabilidades:
  * - useClientProgress: READ operations (queries + transformación)
@@ -23,13 +21,14 @@
  * 
  * await updateProgressRecord(progressId, {
  *     peso: 75.5,
- *     altura: 1.75, // metros
+ *     altura: 175, // centímetros (100-250)
  *     notas: "Actualización"
  * });
  * ```
  * 
  * @author Frontend Team
  * @since v4.4.0
+ * @updated v4.5.0 - Eliminado cálculo de IMC (backend lo hace)
  */
 
 import { useCallback } from "react";
@@ -51,39 +50,14 @@ interface UseUpdateClientProgressResult {
 }
 
 /**
- * Calcular IMC (Índice de Masa Corporal)
- * 
- * Fórmula: IMC = peso (kg) / altura² (m²)
- * 
- * Validación:
- * - Peso y altura deben ser positivos
- * - Altura no puede ser 0 (división por cero)
- * 
- * @param peso - Peso en kilogramos
- * @param altura - Altura en metros (no centímetros)
- * @returns IMC calculado, redondeado a 1 decimal
- * 
- * @example
- * calculateBMI(75, 1.75) // 24.5
- * calculateBMI(80, 1.80) // 24.7
- * calculateBMI(0, 1.75)  // 0 (peso inválido)
- * calculateBMI(75, 0)    // 0 (altura inválida - evita división por cero)
- */
-const calculateBMI = (peso: number, altura: number): number => {
-    if (!peso || !altura || altura === 0) return 0;
-    const bmi = peso / (altura * altura);
-    return Math.round(bmi * 10) / 10; // Redondear a 1 decimal
-};
-
-/**
  * Hook para actualizar registros de progreso existentes
  * 
  * Features:
- * - Cálculo automático de IMC cuando peso y altura presentes
  * - Wrapper sobre RTK Query mutation
  * - Estados de loading/error/success
  * - Invalidación automática de cache (PROGRESS + ANALYTICS)
  * - Re-throw de errores para manejo en componente
+ * - El backend calcula el IMC automáticamente
  * 
  * Invalidación de cache:
  * - PROGRESS-{clientId}: Lista de registros
@@ -106,21 +80,13 @@ export const useUpdateClientProgress = (
             data: UpdateClientProgressData
         ): Promise<void> => {
             try {
-                // Preparar datos para enviar
-                const updateData: UpdateClientProgressData = { ...data };
-
-                // Calcular IMC si peso y altura están presentes
-                if (data.peso && data.altura) {
-                    updateData.imc = calculateBMI(data.peso, data.altura);
-                    console.log(
-                        `📊 IMC calculado: ${updateData.imc} (peso: ${data.peso}kg, altura: ${data.altura}m)`
-                    );
-                }
-
-                // Enviar mutación
+                // Enviar datos directamente al backend (el backend calcula el IMC automáticamente)
                 await updateMutation({
                     progressId,
-                    data: updateData,
+                    data: {
+                        ...data,
+                        // No incluir imc - el backend lo calcula automáticamente
+                    },
                 }).unwrap();
 
                 console.log(

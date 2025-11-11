@@ -4,15 +4,17 @@ Professional fitness training management platform with React + TypeScript monore
 
 ## Status
 - **Branch**: `develop`
-- **Frontend**: ✅ Complete with responsive design + client onboarding
+- **Frontend**: ✅ Complete with responsive design + unified client forms architecture
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
 - **Testing**: ✅ Comprehensive MSW integration (224/224 passing)
+- **Version**: v4.6.0
 
 ## Tech Stack
-- **React** 19.1.1 + **TypeScript** 5.8.3 + **Vite** 7.1.2
+- **React** 18.3.1 + **TypeScript** 5.8.3 + **Vite** 7.1.2
 - **pnpm** workspaces + **Redux Toolkit** + **RTK Query**
 - **Tailwind CSS** 3.4+ + **Vitest** + **MSW**
 - **JWT Authentication** + **Role-based routing** + **Email verification**
+- **Recharts** for data visualization
 
 ## Quick Start
 ```bash
@@ -39,16 +41,9 @@ frontend/
 ├── tsconfig.base.json
 ├── tsconfig.json
 ├── vercel.json
-├── ANALISIS_COBERTURA_ENDPOINTS.md               # Análisis de cobertura endpoints frontend vs backend
-├── CLIENT_SWAGGER_ALIGNMENT_REPORT.md            # Documentación de alineación backend
-├── INFORMACION_TRAINING_PLANNING.md              # Información para implementar Training Planning
-├── INFORMACION_TRAINING_PLANS_MODULE.md          # Información del módulo Training Plans
-├── REPORTE_CLIENT_DETAIL.md                      # Reporte completo de módulo Client Detail
-├── TESTING_CHECKLIST_NEW_CLIENT_FIELDS.md        # Checklist de testing campos nuevos
-├── TESTING_TRAINING_PLAN_DETAIL_COMPLETO.md      # Reporte completo de testing Training Plan Detail
-├── TESTING_TRAINING_PLANS_COMPLETO.md            # Reporte completo de testing Training Plans
-├── TESTING_TRAINING_PLANS_REPORT.md              # Reporte de testing Training Plans (checklist)
-├── docs/
+├── openapi_local.json
+├── openapi_produccion.json
+├── docs/                                          # Documentation
 │   ├── ARCHITECTURE.md
 │   ├── CONTRIBUTING.md
 │   ├── CROSS_PLATFORM_GUIDE.md
@@ -56,7 +51,11 @@ frontend/
 │   ├── DEPLOYMENT.md
 │   ├── PROJECT_STATUS.md
 │   ├── ROADMAP.md
-│   └── TESTING_ARCHITECTURE.md
+│   ├── TESTING_ARCHITECTURE.md
+│   └── clients/                                  # Client module documentation
+│       ├── client-edit.md                        # Client Edit flow documentation
+│       ├── client-onboarding.md                  # Client Onboarding flow documentation
+│       └── client-progress.md                    # Client Progress flow documentation
 ├── apps/web/                                      # Main React app
 │   ├── public/
 │   │   ├── assets/                               # Brand assets
@@ -64,6 +63,7 @@ frontend/
 │   │   │   ├── LOGO.svg
 │   │   │   ├── LOGO_NEXIA.svg
 │   │   │   └── NEXIA-LOGO.png
+│   │   ├── favicon.ico
 │   │   └── favicon.svg
 │   ├── src/
 │   │   ├── components/
@@ -104,23 +104,35 @@ frontend/
 │   │   │   │   │   ├── ClientProgressTab.tsx   # Tab Progress - Gráficos de evolución
 │   │   │   │   │   ├── ClientSettingsTab.tsx   # Tab Settings - Configuración y delete
 │   │   │   │   │   ├── ClientWorkoutsTab.tsx   # Tab Workouts - Planes y sesiones
+│   │   │   │   │   ├── ProgressForm.tsx         # Formulario para crear registros de progreso
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── forms/                       # Client forms
+│   │   │   │   │   └── ClientEditForm.tsx       # Formulario de edición de cliente
+│   │   │   │   ├── metrics/                      # Metrics components
+│   │   │   │   │   ├── ClientMetricsFields.tsx # Componente reutilizable para métricas
 │   │   │   │   │   └── index.ts
 │   │   │   │   ├── modals/
 │   │   │   │   │   ├── __tests__/
 │   │   │   │   │   │   └── DeleteClientModal.test.tsx
 │   │   │   │   │   ├── BmiModal.tsx            # Modal para mostrar IMC calculado
 │   │   │   │   │   ├── DeleteClientModal.tsx
+│   │   │   │   │   ├── EditProgressModal.tsx   # Modal para editar registros de progreso
 │   │   │   │   │   └── index.ts
-│   │   │   │   ├── steps/                      # Client onboarding steps (wizard 7 pasos)
-│   │   │   │   │   ├── AnthropometricMetrics.tsx # Step 2: Métricas antropométricas
-│   │   │   │   │   ├── Experience.tsx          # Step 4: Experiencia + frecuencia + duración
-│   │   │   │   │   ├── HealthInfo.tsx          # Step 5: Lesiones y observaciones
-│   │   │   │   │   ├── PersonalInfo.tsx         # Step 0: Datos personales + sexo
-│   │   │   │   │   ├── PhysicalMetrics.tsx     # Step 1: Edad, peso, altura
-│   │   │   │   │   ├── Review.tsx              # Step 6: Revisión final antes de crear
-│   │   │   │   │   └── TrainingGoals.tsx       # Step 3: Objetivos + fecha_definicion + descripcion
+│   │   │   │   ├── onboarding/                  # Client onboarding wizard
+│   │   │   │   │   └── ClientOnboardingForm.tsx # Wizard multi-step (7 pasos)
+│   │   │   │   ├── shared/                      # Shared form components (unified architecture)
+│   │   │   │   │   ├── AnthropometricMetrics.tsx # Métricas antropométricas
+│   │   │   │   │   ├── Experience.tsx          # Experiencia + frecuencia + duración
+│   │   │   │   │   ├── HealthInfo.tsx          # Lesiones y observaciones
+│   │   │   │   │   ├── PersonalInfo.tsx        # Datos personales + sexo
+│   │   │   │   │   ├── PhysicalMetrics.tsx     # Edad, peso, altura
+│   │   │   │   │   ├── TrainingGoals.tsx       # Objetivos + fecha_definicion + descripcion
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── steps/                       # Onboarding-specific steps
+│   │   │   │   │   └── Review.tsx              # Step 6: Revisión final antes de crear
 │   │   │   │   ├── ClientCard.tsx              # Tarjeta de cliente para lista
 │   │   │   │   ├── ClientFilters.tsx           # Componente de filtros
+│   │   │   │   ├── ClientFormBase.tsx          # Componente base unificado (create/edit)
 │   │   │   │   ├── ClientStats.tsx             # Tarjetas de estadísticas
 │   │   │   │   └── index.ts
 │   │   │   ├── dashboard/                       # Dashboard components
@@ -158,6 +170,10 @@ frontend/
 │   │   │   │   ├── ProblemSection.tsx
 │   │   │   │   └── index.ts
 │   │   │   ├── trainingPlans/                   # Training Plans components
+│   │   │   │   ├── charts/                      # Chart components
+│   │   │   │   │   ├── VolumeIntensityChart.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── ChartsTab.tsx                # Tab de gráficos (volume/intensity)
 │   │   │   │   ├── MacrocyclesTab.tsx           # Tab de gestión de macrocycles (CRUD)
 │   │   │   │   ├── MesocyclesTab.tsx            # Tab de gestión de mesocycles (CRUD)
 │   │   │   │   ├── MicrocyclesTab.tsx           # Tab de gestión de microcycles (CRUD)
@@ -208,12 +224,10 @@ frontend/
 │   │   │   │   ├── ResetPassword.tsx
 │   │   │   │   └── VerifyEmail.tsx
 │   │   │   ├── clients/
-│   │   │   │   ├── ClientCard.tsx               # Duplicado (deprecated, usar de components/)
 │   │   │   │   ├── ClientDetail.tsx             # Página de detalle con tabs
-│   │   │   │   ├── ClientFilters.tsx            # Duplicado (deprecated, usar de components/)
+│   │   │   │   ├── ClientEdit.tsx               # Página de edición de cliente
 │   │   │   │   ├── ClientList.tsx               # Lista paginada de clientes con filtros
 │   │   │   │   ├── ClientOnboarding.tsx         # Wizard completo de onboarding (7 steps)
-│   │   │   │   ├── ClientStats.tsx              # Duplicado (deprecated, usar de components/)
 │   │   │   │   └── index.ts
 │   │   │   ├── dashboard/
 │   │   │   │   ├── admin/
@@ -224,8 +238,8 @@ frontend/
 │   │   │   │       ├── CompleteProfile.tsx
 │   │   │   │       └── TrainerDashboard.tsx
 │   │   │   ├── trainingPlans/                   # Training Plans pages
-│   │   │   │   ├── TrainingPlanDetail.tsx       # Página de detalle con tabs (Overview, Macrocycles, Mesocycles, Microcycles)
-│   │   │   │   ├── TrainingPlansPage.tsx        # Lista de training plans con formulario inline para crear
+│   │   │   │   ├── TrainingPlanDetail.tsx       # Página de detalle con tabs
+│   │   │   │   ├── TrainingPlansPage.tsx        # Lista de training plans
 │   │   │   │   └── index.ts
 │   │   │   └── Home.tsx
 │   │   ├── storage/
@@ -274,21 +288,7 @@ frontend/
 │   ├── vite.config.ts
 │   └── vitest.config.ts
 ├── packages/shared/                               # Shared business logic (cross-platform)
-│   ├── dist/                                     # Compiled output (build artifacts)
-│   │   └── src/
-│   │       ├── api/
-│   │       ├── components/
-│   │       ├── config/
-│   │       ├── examples/
-│   │       ├── hooks/
-│   │       ├── index.d.ts
-│   │       ├── index.d.ts.map
-│   │       ├── index.js
-│   │       ├── services/
-│   │       ├── storage/
-│   │       ├── store/
-│   │       ├── types/
-│   │       └── utils/
+│   ├── dist/                                      # Compiled output (build artifacts)
 │   ├── node_modules/
 │   ├── src/
 │   │   ├── api/                                  # RTK Query API definitions
@@ -310,9 +310,13 @@ frontend/
 │   │   │   ├── clients/                          # Client-related hooks
 │   │   │   │   ├── useClientDetail.ts           # Hook principal para Client Detail Page
 │   │   │   │   ├── useClientFatigue.ts          # Hook para análisis de fatiga
-│   │   │   │   ├── useClientOnboarding.ts       # Hook para wizard de onboarding (7 steps)
+│   │   │   │   ├── useClientForm.ts             # Hook unificado para formularios (create/edit)
+│   │   │   │   ├── useClientOnboarding.ts       # Hook para wizard de onboarding (deprecated, usar useClientForm)
 │   │   │   │   ├── useClientProgress.ts         # Hook para datos de progreso y analytics
-│   │   │   │   └── useClientStats.ts            # Hook para estadísticas de clientes
+│   │   │   │   ├── useClientStats.ts            # Hook para estadísticas de clientes
+│   │   │   │   ├── useCreateClientProgress.ts   # Hook para crear registros de progreso
+│   │   │   │   ├── useUpdateClient.ts           # Hook para actualizar cliente (deprecated, usar useClientForm)
+│   │   │   │   └── useUpdateClientProgress.ts   # Hook para actualizar registros de progreso
 │   │   │   ├── modals/                           # Modal hooks
 │   │   │   │   ├── useBillingInfoModal.ts
 │   │   │   │   ├── useCompleteProfileModal.ts
@@ -323,12 +327,12 @@ frontend/
 │   │   │   ├── useCompleteProfile.ts             # Profile completion check
 │   │   │   ├── useLogout.ts                      # Logout functionality
 │   │   │   ├── useNavigation.ts                  # Navigation utilities
-│   │   │   ├── usePublicNavigation.ts            # Public routes navigation
+│   │   │   ├── usePublicNavigation.ts             # Public routes navigation
 │   │   │   ├── useRoleGuard.ts                   # Role-based route protection
 │   │   │   ├── useRoleNavigation.ts              # Role-based navigation
 │   │   │   ├── useSmartRouting.ts                # Smart routing logic
-│   │   │   ├── useTrainerProfile.ts             # Trainer profile management
-│   │   │   └── useUserRole.ts                   # User role utilities
+│   │   │   ├── useTrainerProfile.ts              # Trainer profile management
+│   │   │   └── useUserRole.ts                    # User role utilities
 │   │   ├── index.ts                              # Main export file (all public exports)
 │   │   ├── services/
 │   │   │   └── authService.ts                    # Authentication service
@@ -342,25 +346,30 @@ frontend/
 │   │   ├── types/                                # TypeScript type definitions
 │   │   │   ├── account.ts                        # Account types
 │   │   │   ├── auth.ts                           # Authentication types
+│   │   │   ├── charts.ts                         # Chart types
 │   │   │   ├── client.ts                         # Client types (Client, ClientFormData, Enums)
 │   │   │   │                                     # Incluye: GENDER_ENUM, TRAINING_GOAL_ENUM,
 │   │   │   │                                     # EXPERIENCE_ENUM, WEEKLY_FREQUENCY_ENUM,
 │   │   │   │                                     # SESSION_DURATION_ENUM
 │   │   │   ├── clientOnboarding.ts               # Onboarding flow types
 │   │   │   ├── clientStats.ts                    # Client statistics types
+│   │   │   ├── forms.ts                          # Universal form data types
 │   │   │   ├── progress.ts                       # Progress types (ClientProgress, ProgressAnalytics)
 │   │   │   ├── trainer.ts                        # Trainer types
 │   │   │   └── training.ts                       # Training types (TrainingPlan, TrainingSession, ClientFeedback, FatigueAnalysis, Macrocycle, Mesocycle, Microcycle)
 │   │   └── utils/
 │   │       ├── calculations/                     # Calculation utilities
 │   │       │   ├── clients/
-│   │       │   │   ├── calculations.ts          # Client-specific calculations
+│   │       │   │   ├── calculations.ts          # Client-specific calculations (BMI, etc.)
 │   │       │   │   └── index.ts
+│   │       │   └── index.ts
+│   │       ├── charts/                           # Chart utilities
+│   │       │   ├── aggregations.ts              # Data aggregation for charts
 │   │       │   └── index.ts
 │   │       ├── roles.ts                          # Role utilities
 │   │       └── validations/                      # Validation utilities
 │   │           ├── auth/
-│   │           │   └── validation.ts             # Auth validation rules
+│   │           │   └── validation.ts            # Auth validation rules
 │   │           ├── clients/
 │   │           │   └── clientValidation.ts       # Client form validation (multi-step)
 │   │           └── index.ts
@@ -409,8 +418,8 @@ import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 
 // Shared Business Logic (cross-platform)
-import { useAuthForm } from "@nexia/shared/hooks";
-import { useLoginMutation } from "@nexia/shared/api/authApi";
+import { useClientForm } from "@nexia/shared/hooks/clients/useClientForm";
+import { useCreateClientMutation } from "@nexia/shared/api/clientsApi";
 import { USER_ROLES } from "@nexia/shared/config/constants";
 ```
 
@@ -419,11 +428,38 @@ import { USER_ROLES } from "@nexia/shared/config/constants";
 - ✅ Email verification system (auto-verify in development)
 - ✅ Role-based dashboards (Admin/Trainer/Athlete)
 - ✅ Trainer profile completion workflow
-- ✅ Multi-step client onboarding with BMI calculations
+- ✅ **Unified client forms architecture** (ClientFormBase + useClientForm)
+- ✅ Multi-step client onboarding wizard (7 steps)
+- ✅ Client editing with unified form base
+- ✅ Client progress tracking with charts (Recharts)
+- ✅ Progress record creation and editing
 - ✅ Client management with CRUD operations
+- ✅ Training Plans management (complete CRUD)
 - ✅ Responsive UI design system
 - ✅ Comprehensive test coverage (224/224 passing)
 - ✅ Professional deployment pipeline
+
+## Client Management Architecture (v4.6.0)
+
+### Unified Forms Architecture
+- **ClientFormBase**: Componente base unificado para crear/editar clientes
+- **useClientForm**: Hook unificado que maneja lógica de create/edit
+- **Shared Components**: Componentes reutilizables en `clients/shared/`
+  - PersonalInfo, PhysicalMetrics, AnthropometricMetrics
+  - TrainingGoals, Experience, HealthInfo
+- **Onboarding**: Wizard multi-step usando ClientFormBase
+- **Edit**: Formulario directo usando ClientFormBase
+
+### Progress Management
+- **ProgressForm**: Formulario colapsable para crear registros
+- **EditProgressModal**: Modal para editar registros existentes
+- **ClientProgressTab**: Tab con gráficos (peso, IMC, fatiga, energía, carga)
+- **Hooks**: useClientProgress, useCreateClientProgress, useUpdateClientProgress
+
+### Documentation
+- `docs/clients/client-onboarding.md`: Documentación completa del flujo de onboarding
+- `docs/clients/client-edit.md`: Documentación completa del flujo de edición
+- `docs/clients/client-progress.md`: Documentación completa del flujo de progreso
 
 ## Response Architecture Patterns
 **Backend follows consistent pattern:**
@@ -438,6 +474,7 @@ import { USER_ROLES } from "@nexia/shared/config/constants";
 - **Storage**: Cross-platform `IStorage` interface
 - **State**: Redux Toolkit works on both platforms
 - **API**: RTK Query compatible with both
+- **Hooks**: All business logic hooks are platform-agnostic
 
 ## Testing Strategy
 - **MSW Integration**: Realistic API mocking

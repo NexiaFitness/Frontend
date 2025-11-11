@@ -917,3 +917,4 @@ export const useDeleteClientProgress = (clientId: number) => {
 **Estado:** Backend listo, Frontend requiere implementación  
 **Prioridad:** ALTA (funcionalidad crítica faltante)
 
+
