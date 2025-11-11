@@ -4,3 +4,4 @@ export { MacrocyclesTab } from "./MacrocyclesTab";
 export { MesocyclesTab } from "./MesocyclesTab";
 export { MicrocyclesTab } from "./MicrocyclesTab";
 export { ChartsTab } from "./ChartsTab";
+export { MilestonesTab } from "./MilestonesTab";

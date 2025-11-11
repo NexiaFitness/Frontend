@@ -36,7 +36,7 @@ import {
     useCreateTrainingPlanMutation,
     useDeleteTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
-import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
 import type { TrainingPlan, TrainingPlanFormData, TrainingPlanFormErrors } from "@nexia/shared/types/training";
@@ -85,12 +85,18 @@ export const TrainingPlansPage: React.FC = () => {
         { skip: !trainerId } // No hacer query si no hay trainerId
     );
 
-    // Obtener clientes para el dropdown
-    const { data: clientsData } = useGetClientsQuery({
-        filters: {},
-        page: 1,
-        per_page: 100, // Cargar suficientes para dropdown
-    });
+    // Obtener clientes del trainer para el dropdown
+    const { data: clientsData } = useGetTrainerClientsQuery(
+        {
+            trainerId: trainerId!,
+            filters: {},
+            page: 1,
+            per_page: 50, // Backend limita a 50 máximo
+        },
+        {
+            skip: !trainerId, // No hacer query si no hay trainerId
+        }
+    );
 
     const clients = clientsData?.items ?? [];
 
@@ -224,7 +230,7 @@ export const TrainingPlansPage: React.FC = () => {
                 <div className="px-4 lg:px-8 mb-6">
                     <Input
                         type="text"
-                        placeholder="Search Training Plan"
+                        placeholder="Buscar Plan de Entrenamiento"
                         className="w-full max-w-2xl"
                         disabled // TODO: Fase 2 - Implementar búsqueda
                     />
@@ -236,7 +242,7 @@ export const TrainingPlansPage: React.FC = () => {
                         {/* Header del formulario */}
                         <div className="p-4 lg:p-6 border-b border-slate-200 flex items-center justify-between">
                             <h3 className="text-lg lg:text-xl font-bold text-slate-800">
-                                Create Training Plan
+                                Crear Plan de Entrenamiento
                             </h3>
                             <button
                                 onClick={() => setShowCreateForm(!showCreateForm)}
@@ -264,11 +270,11 @@ export const TrainingPlansPage: React.FC = () => {
                                     {/* Name */}
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Name
+                                            Nombre
                                         </label>
                                         <Input
                                             type="text"
-                                            placeholder="e.g., Fall 2025 Plan"
+                                            placeholder="ej., Plan Otoño 2025"
                                             value={formData.name}
                                             onChange={(e) => handleInputChange("name", e.target.value)}
                                             error={formErrors.name}
@@ -278,7 +284,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     {/* Assign Clients (obligatorio según backend) */}
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Assign Client <span className="text-red-500">*</span>
+                                            Asignar Cliente <span className="text-red-500">*</span>
                                         </label>
                                         <select
                                             value={formData.client_id || ""}
@@ -289,7 +295,7 @@ export const TrainingPlansPage: React.FC = () => {
                                             }`}
                                         >
                                             <option value="">
-                                                {clients.length === 0 ? "No clients available" : "Select a client"}
+                                                {clients.length === 0 ? "No hay clientes disponibles" : "Selecciona un cliente"}
                                             </option>
                                             {clients.map((client) => (
                                                 <option key={client.id} value={client.id}>
@@ -310,7 +316,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     {/* Start Date */}
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Start Date
+                                            Fecha de Inicio
                                         </label>
                                         <input
                                             type="date"
@@ -326,7 +332,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     {/* End Date */}
                                     <div>
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            End Date
+                                            Fecha de Fin
                                         </label>
                                         <input
                                             type="date"
@@ -342,11 +348,11 @@ export const TrainingPlansPage: React.FC = () => {
                                     {/* Goal */}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Goal
+                                            Objetivo
                                         </label>
                                         <Input
                                             type="text"
-                                            placeholder="e.g., Muscle Gain, Weight Loss"
+                                            placeholder="ej., Ganancia Muscular, Pérdida de Peso"
                                             value={formData.goal}
                                             onChange={(e) => handleInputChange("goal", e.target.value)}
                                             error={formErrors.goal}
@@ -356,12 +362,12 @@ export const TrainingPlansPage: React.FC = () => {
                                     {/* Description (opcional) */}
                                     <div className="md:col-span-2">
                                         <label className="block text-sm font-medium text-slate-700 mb-2">
-                                            Description (Optional)
+                                            Descripción (Opcional)
                                         </label>
                                         <textarea
                                             value={formData.description}
                                             onChange={(e) => handleInputChange("description", e.target.value)}
-                                            placeholder="Add notes about this plan..."
+                                            placeholder="Añade notas sobre este plan..."
                                             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 min-h-[100px]"
                                         />
                                     </div>
@@ -375,7 +381,7 @@ export const TrainingPlansPage: React.FC = () => {
                                         onClick={handleCreatePlan}
                                         disabled={isCreating || clients.length === 0}
                                     >
-                                        {isCreating ? "Creating..." : "Create"}
+                                        {isCreating ? "Creando..." : "Crear"}
                                     </Button>
                                 </div>
                             </div>
@@ -431,7 +437,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     </svg>
                                 </div>
                                 <h3 className="text-xl font-bold text-slate-800 mb-2">
-                                    You don&apos;t have any training plans yet.
+                                    No tienes planes de entrenamiento aún.
                                 </h3>
                                 {clients.length === 0 ? (
                                     <>
@@ -449,14 +455,14 @@ export const TrainingPlansPage: React.FC = () => {
                                 ) : (
                                     <>
                                         <p className="text-slate-600 mb-6">
-                                            Start by creating your first one!
+                                            ¡Comienza creando tu primer plan!
                                         </p>
                                         <Button
                                             variant="primary"
                                             size="lg"
                                             onClick={() => setShowCreateForm(true)}
                                         >
-                                            + Create First Plan
+                                            + Crear Primer Plan
                                         </Button>
                                     </>
                                 )}
@@ -487,7 +493,7 @@ export const TrainingPlansPage: React.FC = () => {
                                                 size="sm"
                                                 onClick={() => handleEditPlan(plan.id)}
                                             >
-                                                Edit
+                                                Editar
                                             </Button>
                                             <button
                                                 onClick={() => handleDeletePlan(plan.id)}

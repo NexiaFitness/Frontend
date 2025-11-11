@@ -61,7 +61,7 @@ export const TrainerDashboard: React.FC = () => {
     const menuItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/plans" },
+        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
@@ -175,9 +175,10 @@ export const TrainerDashboard: React.FC = () => {
                         </Button>
 
                         <Button
-                            variant="secondary"
+                            variant="outline"
                             size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30 w-full md:w-auto md:min-w-[220px]"
+                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
+                            onClick={() => navigate("/dashboard/training-plans")}
                         >
                             Training Planning
                         </Button>

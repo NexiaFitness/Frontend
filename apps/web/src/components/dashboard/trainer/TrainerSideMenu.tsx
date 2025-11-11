@@ -34,7 +34,7 @@ export const TrainerSideMenu: React.FC = () => {
     const menuItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/plans" },
+        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
@@ -61,7 +61,7 @@ export const TrainerSideMenu: React.FC = () => {
                                     ? "text-white font-semibold"
                                     : "text-white/80 hover:text-white"
                             )}
-                            style={isActive(item.path) ? { backgroundColor: '#3a5db3' } : {}}
+                            style={isActive(item.path) ? { backgroundColor: 'rgba(4, 21, 32, 1)' } : {}}
                             onMouseEnter={(e) => {
                                 if (!isActive(item.path)) {
                                     e.currentTarget.style.backgroundColor = 'rgba(74, 103, 179, 0.3)';

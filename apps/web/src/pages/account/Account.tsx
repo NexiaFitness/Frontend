@@ -42,7 +42,7 @@ export const Account: React.FC = () => {
                 return [
                     { label: "Dashboard", path: "/dashboard" },
                     { label: "Clientes", path: "/dashboard/clients" },
-                    { label: "Planes de entrenamiento", path: "/dashboard/plans" },
+                    { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
                     { label: "Mi cuenta", path: "/dashboard/account" },
                 ];
             case "athlete":

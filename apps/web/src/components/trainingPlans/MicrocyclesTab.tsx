@@ -110,31 +110,31 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
         const errors: MicrocycleFormErrors = {};
 
         if (!formData.mesocycle_id) {
-            errors.mesocycle_id = "Mesocycle is required";
+            errors.mesocycle_id = "El mesociclo es obligatorio";
         }
 
         if (!formData.name.trim()) {
-            errors.name = "Name is required";
+            errors.name = "El nombre es obligatorio";
         }
 
         if (!formData.start_date) {
-            errors.start_date = "Start date is required";
+            errors.start_date = "La fecha de inicio es obligatoria";
         }
 
         if (!formData.end_date) {
-            errors.end_date = "End date is required";
+            errors.end_date = "La fecha de fin es obligatoria";
         }
 
         if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
-            errors.end_date = "End date must be after start date";
+            errors.end_date = "La fecha de fin debe ser posterior a la fecha de inicio";
         }
 
         if (!formData.duration_days || Number(formData.duration_days) <= 0) {
-            errors.duration_days = "Duration must be greater than 0";
+            errors.duration_days = "La duración debe ser mayor que 0";
         }
 
         if (!formData.training_frequency || Number(formData.training_frequency) <= 0) {
-            errors.training_frequency = "Training frequency must be greater than 0";
+            errors.training_frequency = "La frecuencia de entrenamiento debe ser mayor que 0";
         }
 
         // Validar que las fechas estén dentro del mesocycle
@@ -142,10 +142,10 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
             const meso = mesocycles.find((m) => m.id === formData.mesocycle_id);
             if (meso) {
                 if (formData.start_date < meso.start_date) {
-                    errors.start_date = "Start date cannot be before mesocycle start";
+                    errors.start_date = "La fecha de inicio no puede ser anterior al inicio del mesociclo";
                 }
                 if (formData.end_date > meso.end_date) {
-                    errors.end_date = "End date cannot be after mesocycle end";
+                    errors.end_date = "La fecha de fin no puede ser posterior al fin del mesociclo";
                 }
             }
         }
@@ -190,7 +190,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
             refetch();
         } catch (err) {
             console.error("Error creating microcycle:", err);
-            setFormErrors({ general: "Error creating microcycle. Try again." });
+            setFormErrors({ general: "Error al crear el microciclo. Intenta de nuevo." });
         }
     };
 
@@ -221,7 +221,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                 {/* Macrocycle Selector */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Select Macrocycle
+                        Selecciona un Macrociclo
                     </label>
                     <select
                         value={selectedMacrocycleId || ""}
@@ -232,7 +232,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                         disabled={isLoadingMacros || macrocycles.length === 0}
                     >
-                        <option value="">-- Select Macrocycle --</option>
+                        <option value="">-- Selecciona un Macrociclo --</option>
                         {macrocycles.map((macro) => (
                             <option key={macro.id} value={macro.id}>
                                 {macro.name}
@@ -245,7 +245,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                 {selectedMacrocycleId && (
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Select Mesocycle
+                            Selecciona un Mesociclo
                         </label>
                         <select
                             value={selectedMesocycleId || ""}
@@ -253,7 +253,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                             disabled={isLoadingMesos || mesocycles.length === 0}
                         >
-                            <option value="">-- Select Mesocycle --</option>
+                            <option value="">-- Selecciona un Mesociclo --</option>
                             {mesocycles.map((meso) => (
                                 <option key={meso.id} value={meso.id}>
                                     {meso.name} ({formatDate(meso.start_date)} -{" "}
@@ -263,7 +263,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                         </select>
                         {mesocycles.length === 0 && !isLoadingMesos && (
                             <p className="text-sm text-amber-600 mt-2">
-                                ⚠️ No mesocycles available. Create a mesocycle first.
+                                ⚠️ No hay mesociclos disponibles. Crea un mesociclo primero.
                             </p>
                         )}
                     </div>
@@ -271,7 +271,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
 
                 {macrocycles.length === 0 && !isLoadingMacros && (
                     <p className="text-sm text-amber-600">
-                        ⚠️ No macrocycles available. Create a macrocycle first.
+                        ⚠️ No hay macrociclos disponibles. Crea un macrociclo primero.
                     </p>
                 )}
             </div>
@@ -281,7 +281,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     {/* Header */}
                     <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-gray-900">Create Microcycle</h3>
+                        <h3 className="text-lg font-bold text-gray-900">Crear Microciclo</h3>
                         <button
                             onClick={() => setShowCreateForm(!showCreateForm)}
                             className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors"
@@ -301,7 +301,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* Mesocycle (pre-filled) */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Parent Mesocycle *
+                                        Mesociclo Padre *
                                     </label>
                                     <select
                                         value={formData.mesocycle_id || selectedMesocycleId}
@@ -326,11 +326,11 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* Name */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Name *
+                                        Nombre *
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="e.g., Week 1 - High Intensity"
+                                        placeholder="ej., Semana 1 - Alta Intensidad"
                                         value={formData.name}
                                         onChange={(e) => handleInputChange("name", e.target.value)}
                                         error={formErrors.name}
@@ -340,11 +340,11 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* Duration (days) */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Duration (days) *
+                                        Duración (días) *
                                     </label>
                                     <input
                                         type="number"
-                                        placeholder="e.g., 7"
+                                        placeholder="ej., 7"
                                         value={formData.duration_days}
                                         onChange={(e) =>
                                             handleInputChange("duration_days", e.target.value)
@@ -359,7 +359,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* Training Frequency */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Training Frequency (sessions/week) *
+                                        Frecuencia de Entrenamiento (sesiones/semana) *
                                     </label>
                                     <input
                                         type="number"
@@ -390,14 +390,14 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                         htmlFor="deload_week"
                                         className="text-sm font-medium text-gray-700"
                                     >
-                                        Deload Week
+                                        Semana de Descarga
                                     </label>
                                 </div>
 
                                 {/* Start Date */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Start Date *
+                                        Fecha de Inicio *
                                     </label>
                                     <input
                                         type="date"
@@ -417,7 +417,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* End Date */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        End Date *
+                                        Fecha de Fin *
                                     </label>
                                     <input
                                         type="date"
@@ -433,14 +433,14 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* Description */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Description (Optional)
+                                        Descripción (Opcional)
                                     </label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) =>
                                             handleInputChange("description", e.target.value)
                                         }
-                                        placeholder="Add notes about this microcycle..."
+                                        placeholder="Añade notas sobre este microciclo..."
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px]"
                                     />
                                 </div>
@@ -448,12 +448,12 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 {/* Notes */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Notes (Optional)
+                                        Notas (Opcional)
                                     </label>
                                     <textarea
                                         value={formData.notes}
                                         onChange={(e) => handleInputChange("notes", e.target.value)}
-                                        placeholder="Additional notes..."
+                                        placeholder="Notas adicionales..."
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px]"
                                     />
                                 </div>
@@ -467,7 +467,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                     onClick={handleCreate}
                                     disabled={isCreating}
                                 >
-                                    {isCreating ? "Creating..." : "Create Microcycle"}
+                                    {isCreating ? "Creando..." : "Crear Microciclo"}
                                 </Button>
                             </div>
                         </div>
@@ -490,10 +490,10 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                     {/* Error State */}
                     {isError && (
                         <Alert variant="error" className="mb-4">
-                            Error loading microcycles:{" "}
+                            Error al cargar microciclos:{" "}
                             {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data
                                 ? String(error.data.detail)
-                                : "Unknown error"}
+                                : "Error desconocido"}
                         </Alert>
                     )}
 
@@ -516,17 +516,17 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 </svg>
                             </div>
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                                No microcycles yet
+                                Aún no hay microciclos
                             </h4>
                             <p className="text-gray-600 mb-4">
-                                Create your first microcycle for this mesocycle.
+                                Crea tu primer microciclo para este mesociclo.
                             </p>
                             <Button
                                 variant="primary"
                                 size="md"
                                 onClick={() => setShowCreateForm(true)}
                             >
-                                + Create First Microcycle
+                                + Crear Primer Microciclo
                             </Button>
                         </div>
                     )}
@@ -548,18 +548,18 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                                     </h4>
                                                     {micro.deload_week && (
                                                         <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                                                            Deload
+                                                            Descarga
                                                         </span>
                                                     )}
                                                 </div>
                                                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-2">
                                                     <span>
-                                                        <span className="font-medium">Duration:</span>{" "}
-                                                        {micro.duration_days} days
+                                                        <span className="font-medium">Duración:</span>{" "}
+                                                        {micro.duration_days} días
                                                     </span>
                                                     <span>
-                                                        <span className="font-medium">Frequency:</span>{" "}
-                                                        {micro.training_frequency}x/week
+                                                        <span className="font-medium">Frecuencia:</span>{" "}
+                                                        {micro.training_frequency}x/semana
                                                     </span>
                                                     <span>
                                                         {formatDate(micro.start_date)} →{" "}
@@ -573,7 +573,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                                 )}
                                                 {micro.notes && (
                                                     <p className="text-xs text-gray-500 mt-1 italic">
-                                                        Notes: {micro.notes}
+                                                        Notas: {micro.notes}
                                                     </p>
                                                 )}
                                             </div>
@@ -585,7 +585,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                                         alert("Edit Microcycle - TODO: Fase 3")
                                                     }
                                                 >
-                                                    Edit
+                                                    Editar
                                                 </Button>
                                                 <button
                                                     onClick={() => handleDelete(micro.id, micro.name)}

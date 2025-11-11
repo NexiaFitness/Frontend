@@ -151,6 +151,9 @@ export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
 
+// Hooks - Training
+export * from "./hooks/training";
+
 // Hooks - Modals
 export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';
 export { useEmailVerificationModal } from './hooks/modals/useEmailVerificationModal';

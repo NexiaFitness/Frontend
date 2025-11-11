@@ -20,7 +20,10 @@
 import React, { useState, Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
-import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { useSelector } from "react-redux";
+import type { RootState } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
 import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
@@ -34,6 +37,7 @@ import {
     MacrocyclesTab,
     MesocyclesTab,
     MicrocyclesTab,
+    MilestonesTab,
 } from "@/components/trainingPlans";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
@@ -43,7 +47,7 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "charts";
+type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "milestones" | "charts";
 
 interface Tab {
     id: TabId;
@@ -51,31 +55,45 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-    { id: "overview", label: "Overview" },
-    { id: "macrocycles", label: "Macrocycles" },
-    { id: "mesocycles", label: "Mesocycles" },
-    { id: "microcycles", label: "Microcycles" },
-    { id: "charts", label: "Charts" },
+    { id: "overview", label: "Resumen" },
+    { id: "macrocycles", label: "Macrociclos" },
+    { id: "mesocycles", label: "Mesociclos" },
+    { id: "microcycles", label: "Microciclos" },
+    { id: "milestones", label: "Hitos" },
+    { id: "charts", label: "Gráficos" },
 ];
 
 export const TrainingPlanDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<TabId>("overview");
+    const user = useSelector((state: RootState) => state.auth.user);
 
     const planId = parseInt(id || "0", 10);
+
+    // Obtener perfil del trainer para obtener trainer_id correcto
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !user || user.role !== "trainer",
+    });
+    const trainerId = trainerProfile?.id;
 
     // Cargar datos del plan
     const { data: plan, isLoading, isError, error, refetch } = useGetTrainingPlanQuery(planId, {
         skip: !id || isNaN(planId),
     });
 
-    // Cargar clientes para obtener el nombre del cliente asignado
-    const { data: clientsData } = useGetClientsQuery({
-        filters: {},
-        page: 1,
-        per_page: 100,
-    });
+    // Cargar clientes del trainer para obtener el nombre del cliente asignado
+    const { data: clientsData } = useGetTrainerClientsQuery(
+        {
+            trainerId: trainerId!,
+            filters: {},
+            page: 1,
+            per_page: 50, // Backend limita a 50 máximo
+        },
+        {
+            skip: !trainerId, // No hacer query si no hay trainerId
+        }
+    );
 
     const clients = clientsData?.items ?? [];
     const clientName = clients.find((c: Client) => c.id === plan?.client_id)
@@ -98,7 +116,7 @@ export const TrainingPlanDetail: React.FC = () => {
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
-                        <Alert variant="error">Invalid training plan ID</Alert>
+                        <Alert variant="error">ID de plan de entrenamiento inválido</Alert>
                     </div>
                 </DashboardLayout>
             </>
@@ -129,7 +147,7 @@ export const TrainingPlanDetail: React.FC = () => {
                 <DashboardLayout>
                     <div className="p-6">
                         <Alert variant="error">
-                            Error loading training plan. Please try again.
+                            Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo.
                             {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data && (
                                 <div className="mt-2 text-sm">
                                     {String(error.data.detail)}
@@ -146,7 +164,7 @@ export const TrainingPlanDetail: React.FC = () => {
                             onClick={() => navigate("/dashboard/training-plans")}
                             className="mt-4 ml-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
                         >
-                            Back to Plans
+                            Volver a Planes
                         </button>
                     </div>
                 </DashboardLayout>
@@ -177,6 +195,8 @@ export const TrainingPlanDetail: React.FC = () => {
                 return <MesocyclesTab planId={planId} />;
             case "microcycles":
                 return <MicrocyclesTab planId={planId} />;
+            case "milestones":
+                return <MilestonesTab planId={planId} />;
             case "charts":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>

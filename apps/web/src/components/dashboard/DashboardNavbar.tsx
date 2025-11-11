@@ -145,7 +145,7 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
                                                 ? "text-white font-semibold"
                                                 : "text-white/80 hover:text-white"
                                         }`}
-                                        style={isActiveLink(path) ? { backgroundColor: '#3a5db3' } : {}}
+                                        style={isActiveLink(path) ? { backgroundColor: 'rgba(4, 21, 32, 1)' } : {}}
                                         onMouseEnter={(e) => {
                                             if (!isActiveLink(path)) {
                                                 e.currentTarget.style.backgroundColor = 'rgba(74, 103, 179, 0.3)';

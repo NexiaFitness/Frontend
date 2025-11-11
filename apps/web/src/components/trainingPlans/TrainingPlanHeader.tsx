@@ -68,11 +68,19 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             cancelled: "bg-red-100 text-red-800",
         };
 
+        const statusLabels: Record<string, string> = {
+            active: "Activo",
+            completed: "Completado",
+            paused: "Pausado",
+            cancelled: "Cancelado",
+        };
+
         const color = statusColors[plan.status] || "bg-gray-100 text-gray-800";
+        const label = statusLabels[plan.status] || plan.status;
 
         return (
             <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
-                {plan.status}
+                {label}
             </span>
         );
     };
@@ -132,18 +140,18 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             {/* Metrics row */}
                             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                                 <span className="flex items-center gap-1">
-                                    <span className="font-medium">Goal:</span> {plan.goal}
+                                    <span className="font-medium">Objetivo:</span> {plan.goal}
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <span className="font-medium">Duration:</span> {getDuration()}
+                                    <span className="font-medium">Duración:</span> {getDuration()}
                                 </span>
                                 <span className="flex items-center gap-1">
-                                    <span className="font-medium">Dates:</span>{" "}
+                                    <span className="font-medium">Fechas:</span>{" "}
                                     {formatDate(plan.start_date)} → {formatDate(plan.end_date)}
                                 </span>
                                 {clientName && (
                                     <span className="flex items-center gap-1">
-                                        <span className="font-medium">Client:</span> {clientName}
+                                        <span className="font-medium">Cliente:</span> {clientName}
                                     </span>
                                 )}
                             </div>
@@ -165,7 +173,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             onClick={onAddMacrocycle}
                             className="flex-1 lg:flex-initial"
                         >
-                            + Add Macrocycle
+                            + Añadir Macrociclo
                         </Button>
                         <Button
                             variant="outline"
@@ -173,7 +181,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             onClick={handleEdit}
                             className="flex-1 lg:flex-initial"
                         >
-                            Edit Plan
+                            Editar Plan
                         </Button>
                         <Button
                             variant="outline"
@@ -182,14 +190,14 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             disabled={isDeleting}
                             className="flex-1 lg:flex-initial text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
-                            {isDeleting ? "Deleting..." : "Delete Plan"}
+                            {isDeleting ? "Eliminando..." : "Eliminar Plan"}
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={onRefresh}
                             className="lg:ml-2"
-                            title="Refresh data"
+                            title="Actualizar datos"
                         >
                             ↻
                         </Button>

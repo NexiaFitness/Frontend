@@ -45,26 +45,37 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
         });
     };
 
+    // Función para traducir status
+    const translateStatus = (status: string): string => {
+        const statusMap: Record<string, string> = {
+            active: "Activo",
+            completed: "Completado",
+            paused: "Pausado",
+            cancelled: "Cancelado",
+        };
+        return statusMap[status] || status;
+    };
+
     // Info cards data
     const infoCards = [
         {
-            label: "Start Date",
+            label: "Fecha de Inicio",
             value: formatDate(plan.start_date),
             icon: "📅",
         },
         {
-            label: "End Date",
+            label: "Fecha de Fin",
             value: formatDate(plan.end_date),
             icon: "🏁",
         },
         {
-            label: "Goal",
+            label: "Objetivo",
             value: plan.goal,
             icon: "🎯",
         },
         {
-            label: "Status",
-            value: plan.status,
+            label: "Estado",
+            value: translateStatus(plan.status),
             icon: "📊",
         },
     ];
@@ -95,13 +106,13 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
 
             {/* Plan Details */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Plan Details</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Detalles del Plan</h3>
 
                 <div className="space-y-4">
                     {/* Plan Name */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Plan Name
+                            Nombre del Plan
                         </label>
                         <p className="text-base text-gray-900">{plan.name}</p>
                     </div>
@@ -110,7 +121,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
                     {clientName && (
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Assigned Client
+                                Cliente Asignado
                             </label>
                             <p className="text-base text-gray-900">{clientName}</p>
                         </div>
@@ -119,17 +130,17 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
                     {/* Description */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Description
+                            Descripción
                         </label>
                         <p className="text-base text-gray-700 whitespace-pre-wrap">
-                            {plan.description || "No description provided."}
+                            {plan.description || "No se ha proporcionado descripción."}
                         </p>
                     </div>
 
                     {/* Training Goal */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Training Goal
+                            Objetivo de Entrenamiento
                         </label>
                         <p className="text-base text-gray-900">{plan.goal}</p>
                     </div>
@@ -137,7 +148,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
                     {/* Status */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Current Status
+                            Estado Actual
                         </label>
                         <span
                             className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
@@ -150,7 +161,11 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
                                     : "bg-gray-100 text-gray-800"
                             }`}
                         >
-                            {plan.status}
+                            {plan.status === "active" ? "Activo" :
+                             plan.status === "completed" ? "Completado" :
+                             plan.status === "paused" ? "Pausado" :
+                             plan.status === "cancelled" ? "Cancelado" :
+                             plan.status}
                         </span>
                     </div>
                 </div>
@@ -158,12 +173,12 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
 
             {/* Metadata */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-4">Metadata</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-4">Metadatos</h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Created At
+                            Creado el
                         </label>
                         <p className="text-sm text-gray-600">
                             {formatDateTime(plan.created_at)}
@@ -172,7 +187,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Last Updated
+                            Última Actualización
                         </label>
                         <p className="text-sm text-gray-600">
                             {formatDateTime(plan.updated_at)}
@@ -181,14 +196,14 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Plan ID
+                            ID del Plan
                         </label>
                         <p className="text-sm font-mono text-gray-600">{plan.id}</p>
                     </div>
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Active
+                            Activo
                         </label>
                         <span
                             className={`inline-flex px-2 py-1 rounded text-xs font-medium ${
@@ -197,7 +212,7 @@ export const OverviewTab: React.FC<OverviewTabProps> = ({ plan, clientName }) =>
                                     : "bg-gray-100 text-gray-800"
                             }`}
                         >
-                            {plan.is_active ? "Yes" : "No"}
+                            {plan.is_active ? "Sí" : "No"}
                         </span>
                     </div>
                 </div>

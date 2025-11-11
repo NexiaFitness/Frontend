@@ -39,7 +39,7 @@ const variantStyles: Record<ButtonVariant, string> = {
         "bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30 focus:ring-white/50",
     danger: "bg-red-600 text-white border-2 border-transparent hover:bg-red-700 hover:border-red-700 focus:ring-red-500",
     outline:
-        "bg-transparent border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white focus:ring-slate-500",
+        "bg-transparent border-2 border-sidebar-header text-sidebar-header hover:bg-sidebar-header hover:text-white focus:ring-sidebar-header",
 };
 
 // Mobile-first → escalado en sm/md

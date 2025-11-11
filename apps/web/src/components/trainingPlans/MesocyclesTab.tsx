@@ -101,31 +101,31 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
         const errors: MesocycleFormErrors = {};
 
         if (!formData.macrocycle_id) {
-            errors.macrocycle_id = "Macrocycle is required";
+            errors.macrocycle_id = "El macrociclo es obligatorio";
         }
 
         if (!formData.name.trim()) {
-            errors.name = "Name is required";
+            errors.name = "El nombre es obligatorio";
         }
 
         if (!formData.start_date) {
-            errors.start_date = "Start date is required";
+            errors.start_date = "La fecha de inicio es obligatoria";
         }
 
         if (!formData.end_date) {
-            errors.end_date = "End date is required";
+            errors.end_date = "La fecha de fin es obligatoria";
         }
 
         if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
-            errors.end_date = "End date must be after start date";
+            errors.end_date = "La fecha de fin debe ser posterior a la fecha de inicio";
         }
 
         if (!formData.duration_weeks || Number(formData.duration_weeks) <= 0) {
-            errors.duration_weeks = "Duration must be greater than 0";
+            errors.duration_weeks = "La duración debe ser mayor que 0";
         }
 
         if (!formData.primary_focus.trim()) {
-            errors.primary_focus = "Primary focus is required";
+            errors.primary_focus = "El enfoque principal es obligatorio";
         }
 
         // Validar que las fechas estén dentro del macrocycle
@@ -133,10 +133,10 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
             const macro = macrocycles.find((m) => m.id === formData.macrocycle_id);
             if (macro) {
                 if (formData.start_date < macro.start_date) {
-                    errors.start_date = "Start date cannot be before macrocycle start";
+                    errors.start_date = "La fecha de inicio no puede ser anterior al inicio del macrociclo";
                 }
                 if (formData.end_date > macro.end_date) {
-                    errors.end_date = "End date cannot be after macrocycle end";
+                    errors.end_date = "La fecha de fin no puede ser posterior al fin del macrociclo";
                 }
             }
         }
@@ -183,7 +183,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
             refetch();
         } catch (err) {
             console.error("Error creating mesocycle:", err);
-            setFormErrors({ general: "Error creating mesocycle. Try again." });
+            setFormErrors({ general: "Error al crear el mesociclo. Intenta de nuevo." });
         }
     };
 
@@ -212,7 +212,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
             {/* Macrocycle Selector */}
             <div className="bg-white rounded-xl border border-gray-200 p-4 lg:p-6">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Macrocycle to View Mesocycles
+                    Selecciona un Macrociclo para Ver Mesociclos
                 </label>
                 <select
                     value={selectedMacrocycleId || ""}
@@ -220,7 +220,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                     disabled={isLoadingMacros || macrocycles.length === 0}
                 >
-                    <option value="">-- Select Macrocycle --</option>
+                    <option value="">-- Selecciona un Macrociclo --</option>
                     {macrocycles.map((macro) => (
                         <option key={macro.id} value={macro.id}>
                             {macro.name} ({formatDate(macro.start_date)} - {formatDate(macro.end_date)})
@@ -229,7 +229,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                 </select>
                 {macrocycles.length === 0 && !isLoadingMacros && (
                     <p className="text-sm text-amber-600 mt-2">
-                        ⚠️ No macrocycles available. Create a macrocycle first.
+                        ⚠️ No hay macrociclos disponibles. Crea un macrociclo primero.
                     </p>
                 )}
             </div>
@@ -239,7 +239,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                     {/* Header */}
                     <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between">
-                        <h3 className="text-lg font-bold text-gray-900">Create Mesocycle</h3>
+                        <h3 className="text-lg font-bold text-gray-900">Crear Mesociclo</h3>
                         <button
                             onClick={() => setShowCreateForm(!showCreateForm)}
                             className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors"
@@ -259,7 +259,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Macrocycle (pre-filled) */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Parent Macrocycle *
+                                        Macrociclo Padre *
                                     </label>
                                     <select
                                         value={formData.macrocycle_id || selectedMacrocycleId}
@@ -284,11 +284,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Name */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Name *
+                                        Nombre *
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="e.g., Hypertrophy Phase"
+                                        placeholder="ej., Fase de Hipertrofia"
                                         value={formData.name}
                                         onChange={(e) => handleInputChange("name", e.target.value)}
                                         error={formErrors.name}
@@ -298,11 +298,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Duration (weeks) */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Duration (weeks) *
+                                        Duración (semanas) *
                                     </label>
                                     <input
                                         type="number"
-                                        placeholder="e.g., 4"
+                                        placeholder="ej., 4"
                                         value={formData.duration_weeks}
                                         onChange={(e) =>
                                             handleInputChange("duration_weeks", e.target.value)
@@ -317,7 +317,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Start Date */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Start Date *
+                                        Fecha de Inicio *
                                     </label>
                                     <input
                                         type="date"
@@ -337,7 +337,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* End Date */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        End Date *
+                                        Fecha de Fin *
                                     </label>
                                     <input
                                         type="date"
@@ -353,11 +353,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Primary Focus */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Primary Focus *
+                                        Enfoque Principal *
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="e.g., Hypertrophy"
+                                        placeholder="ej., Hipertrofia"
                                         value={formData.primary_focus}
                                         onChange={(e) =>
                                             handleInputChange("primary_focus", e.target.value)
@@ -369,11 +369,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Secondary Focus */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Secondary Focus (Optional)
+                                        Enfoque Secundario (Opcional)
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="e.g., Power"
+                                        placeholder="ej., Potencia"
                                         value={formData.secondary_focus}
                                         onChange={(e) =>
                                             handleInputChange("secondary_focus", e.target.value)
@@ -384,11 +384,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Target Volume */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Target Volume (Optional)
+                                        Volumen Objetivo (Opcional)
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="e.g., 20 sets/muscle"
+                                        placeholder="ej., 20 series/músculo"
                                         value={formData.target_volume}
                                         onChange={(e) =>
                                             handleInputChange("target_volume", e.target.value)
@@ -399,11 +399,11 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Target Intensity */}
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Target Intensity (Optional)
+                                        Intensidad Objetivo (Opcional)
                                     </label>
                                     <Input
                                         type="text"
-                                        placeholder="e.g., 70-80% 1RM"
+                                        placeholder="ej., 70-80% 1RM"
                                         value={formData.target_intensity}
                                         onChange={(e) =>
                                             handleInputChange("target_intensity", e.target.value)
@@ -414,14 +414,14 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 {/* Description */}
                                 <div className="md:col-span-2">
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                                        Description (Optional)
+                                        Descripción (Opcional)
                                     </label>
                                     <textarea
                                         value={formData.description}
                                         onChange={(e) =>
                                             handleInputChange("description", e.target.value)
                                         }
-                                        placeholder="Add notes about this mesocycle..."
+                                        placeholder="Añade notas sobre este mesociclo..."
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]"
                                     />
                                 </div>
@@ -435,7 +435,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                     onClick={handleCreate}
                                     disabled={isCreating}
                                 >
-                                    {isCreating ? "Creating..." : "Create Mesocycle"}
+                                    {isCreating ? "Creando..." : "Crear Mesociclo"}
                                 </Button>
                             </div>
                         </div>
@@ -458,10 +458,10 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                     {/* Error State */}
                     {isError && (
                         <Alert variant="error" className="mb-4">
-                            Error loading mesocycles:{" "}
+                            Error al cargar mesociclos:{" "}
                             {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data
                                 ? String(error.data.detail)
-                                : "Unknown error"}
+                                : "Error desconocido"}
                         </Alert>
                     )}
 
@@ -484,17 +484,17 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                 </svg>
                             </div>
                             <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                                No mesocycles yet
+                                Aún no hay mesociclos
                             </h4>
                             <p className="text-gray-600 mb-4">
-                                Create your first mesocycle for this macrocycle.
+                                Crea tu primer mesociclo para este macrociclo.
                             </p>
                             <Button
                                 variant="primary"
                                 size="md"
                                 onClick={() => setShowCreateForm(true)}
                             >
-                                + Create First Mesocycle
+                                + Crear Primer Mesociclo
                             </Button>
                         </div>
                     )}
@@ -515,14 +515,14 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                                 </h4>
                                                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-2">
                                                     <span>
-                                                        <span className="font-medium">Focus:</span>{" "}
+                                                        <span className="font-medium">Enfoque:</span>{" "}
                                                         {meso.primary_focus}
                                                         {meso.secondary_focus &&
                                                             ` / ${meso.secondary_focus}`}
                                                     </span>
                                                     <span>
-                                                        <span className="font-medium">Duration:</span>{" "}
-                                                        {meso.duration_weeks} weeks
+                                                        <span className="font-medium">Duración:</span>{" "}
+                                                        {meso.duration_weeks} semanas
                                                     </span>
                                                     <span>
                                                         {formatDate(meso.start_date)} →{" "}
@@ -532,13 +532,13 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                                 <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
                                                     {meso.target_volume && (
                                                         <span>
-                                                            <span className="font-medium">Volume:</span>{" "}
+                                                            <span className="font-medium">Volumen:</span>{" "}
                                                             {meso.target_volume}
                                                         </span>
                                                     )}
                                                     {meso.target_intensity && (
                                                         <span>
-                                                            <span className="font-medium">Intensity:</span>{" "}
+                                                            <span className="font-medium">Intensidad:</span>{" "}
                                                             {meso.target_intensity}
                                                         </span>
                                                     )}
@@ -557,7 +557,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                                                         alert("Edit Mesocycle - TODO: Fase 3")
                                                     }
                                                 >
-                                                    Edit
+                                                    Editar
                                                 </Button>
                                                 <button
                                                     onClick={() => handleDelete(meso.id, meso.name)}

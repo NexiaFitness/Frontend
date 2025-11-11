@@ -30,7 +30,7 @@ export const CompleteProfile: React.FC = () => {
     const menuItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/plans" },
+        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 

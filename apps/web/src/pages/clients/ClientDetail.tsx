@@ -49,11 +49,11 @@ interface Tab {
 }
 
 const TABS: Tab[] = [
-    { id: "overview", label: "Overview" },
-    { id: "progress", label: "Progress" },
-    { id: "workouts", label: "Workouts" },
-    { id: "nutrition", label: "Nutrition", disabled: true }, // Futuro
-    { id: "settings", label: "Settings" },
+    { id: "overview", label: "Resumen" },
+    { id: "progress", label: "Progreso" },
+    { id: "workouts", label: "Entrenamientos" },
+    { id: "nutrition", label: "Nutrición", disabled: true }, // Futuro
+    { id: "settings", label: "Configuración" },
 ];
 
 export const ClientDetail: React.FC = () => {

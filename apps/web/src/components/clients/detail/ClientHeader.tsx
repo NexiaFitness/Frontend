@@ -92,7 +92,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
 
                             {/* Joined Since */}
                             <p className="text-xs text-gray-500 mt-1">
-                                Joined Since: {getJoinedSince(client.fecha_alta)}
+                                Se unió: {getJoinedSince(client.fecha_alta)}
                             </p>
                         </div>
                     </div>
@@ -105,7 +105,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
                             onClick={() => alert("New Training Plan - TODO")}
                             className="flex-1 lg:flex-initial"
                         >
-                            New Training Plan
+                            Nuevo Plan de Entrenamiento
                         </Button>
                         <Button
                             variant="outline"
@@ -113,7 +113,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
                             onClick={() => alert("Edit Training Plan - TODO")}
                             className="flex-1 lg:flex-initial"
                         >
-                            Edit Training Plan
+                            Editar Plan de Entrenamiento
                         </Button>
                         <Button
                             variant="outline"
@@ -121,7 +121,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
                             onClick={() => alert("New Session - TODO")}
                             className="flex-1 lg:flex-initial"
                         >
-                            New Session
+                            Nueva Sesión
                         </Button>
                         <Button
                             variant="outline"
@@ -129,14 +129,14 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({ client, onRefresh })
                             onClick={() => alert("Anthropometric Data - TODO")}
                             className="flex-1 lg:flex-initial"
                         >
-                            Anthropometric Data
+                            Datos Antropométricos
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
                             onClick={onRefresh}
                             className="lg:ml-2"
-                            title="Refresh data"
+                            title="Actualizar datos"
                         >
                             ↻
                         </Button>

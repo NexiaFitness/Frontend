@@ -90,27 +90,27 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
         const errors: MacrocycleFormErrors = {};
 
         if (!formData.name.trim()) {
-            errors.name = "Name is required";
+            errors.name = "El nombre es obligatorio";
         }
 
         if (!formData.start_date) {
-            errors.start_date = "Start date is required";
+            errors.start_date = "La fecha de inicio es obligatoria";
         } else if (formData.start_date < planStartDate) {
-            errors.start_date = "Start date cannot be before plan start date";
+            errors.start_date = "La fecha de inicio no puede ser anterior a la fecha de inicio del plan";
         }
 
         if (!formData.end_date) {
-            errors.end_date = "End date is required";
+            errors.end_date = "La fecha de fin es obligatoria";
         } else if (formData.end_date > planEndDate) {
-            errors.end_date = "End date cannot be after plan end date";
+            errors.end_date = "La fecha de fin no puede ser posterior a la fecha de fin del plan";
         }
 
         if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
-            errors.end_date = "End date must be after start date";
+            errors.end_date = "La fecha de fin debe ser posterior a la fecha de inicio";
         }
 
         if (!formData.focus.trim()) {
-            errors.focus = "Focus is required";
+            errors.focus = "El enfoque es obligatorio";
         }
 
         setFormErrors(errors);
@@ -148,7 +148,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
             refetch();
         } catch (err) {
             console.error("Error creating macrocycle:", err);
-            setFormErrors({ general: "Error creating macrocycle. Try again." });
+            setFormErrors({ general: "Error al crear el macrociclo. Intenta de nuevo." });
         }
     };
 
@@ -178,7 +178,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                 {/* Header */}
                 <div className="p-4 lg:p-6 border-b border-gray-200 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-gray-900">Create Macrocycle</h3>
+                    <h3 className="text-lg font-bold text-gray-900">Crear Macrociclo</h3>
                     <button
                         onClick={() => setShowCreateForm(!showCreateForm)}
                         className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 transition-colors"
@@ -198,11 +198,11 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             {/* Name */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Name *
+                                    Nombre *
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="e.g., Preparation Phase"
+                                    placeholder="ej., Fase de Preparación"
                                     value={formData.name}
                                     onChange={(e) => handleInputChange("name", e.target.value)}
                                     error={formErrors.name}
@@ -212,11 +212,11 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             {/* Focus */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Focus *
+                                    Enfoque *
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="e.g., Strength, Endurance"
+                                    placeholder="ej., Fuerza, Resistencia"
                                     value={formData.focus}
                                     onChange={(e) => handleInputChange("focus", e.target.value)}
                                     error={formErrors.focus}
@@ -226,7 +226,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             {/* Start Date */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Start Date *
+                                    Fecha de Inicio *
                                 </label>
                                 <input
                                     type="date"
@@ -244,7 +244,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             {/* End Date */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    End Date *
+                                    Fecha de Fin *
                                 </label>
                                 <input
                                     type="date"
@@ -262,11 +262,11 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             {/* Volume/Intensity Ratio */}
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Volume/Intensity Ratio (Optional)
+                                    Ratio Volumen/Intensidad (Opcional)
                                 </label>
                                 <Input
                                     type="text"
-                                    placeholder="e.g., 70/30, High Volume/Low Intensity"
+                                    placeholder="ej., 70/30, Alto Volumen/Baja Intensidad"
                                     value={formData.volume_intensity_ratio}
                                     onChange={(e) =>
                                         handleInputChange("volume_intensity_ratio", e.target.value)
@@ -277,12 +277,12 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             {/* Description */}
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Description (Optional)
+                                    Descripción (Opcional)
                                 </label>
                                 <textarea
                                     value={formData.description}
                                     onChange={(e) => handleInputChange("description", e.target.value)}
-                                    placeholder="Add notes about this macrocycle..."
+                                    placeholder="Añade notas sobre este macrociclo..."
                                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 min-h-[100px]"
                                 />
                             </div>
@@ -296,7 +296,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                                 onClick={handleCreate}
                                 disabled={isCreating}
                             >
-                                {isCreating ? "Creating..." : "Create Macrocycle"}
+                                {isCreating ? "Creando..." : "Crear Macrociclo"}
                             </Button>
                         </div>
                     </div>
@@ -317,10 +317,10 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                 {/* Error State */}
                 {isError && (
                     <Alert variant="error" className="mb-4">
-                        Error loading macrocycles:{" "}
+                        Error al cargar macrociclos:{" "}
                         {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data
                             ? String(error.data.detail)
-                            : "Unknown error"}
+                            : "Error desconocido"}
                     </Alert>
                 )}
 
@@ -343,17 +343,17 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                             </svg>
                         </div>
                         <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                            No macrocycles yet
+                            Aún no hay macrociclos
                         </h4>
                         <p className="text-gray-600 mb-4">
-                            Create your first macrocycle to structure this training plan.
+                            Crea tu primer macrociclo para estructurar este plan de entrenamiento.
                         </p>
                         <Button
                             variant="primary"
                             size="md"
                             onClick={() => setShowCreateForm(true)}
                         >
-                            + Create First Macrocycle
+                            + Crear Primer Macrociclo
                         </Button>
                     </div>
                 )}
@@ -374,7 +374,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                                             </h4>
                                             <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-2">
                                                 <span>
-                                                    <span className="font-medium">Focus:</span> {macro.focus}
+                                                    <span className="font-medium">Enfoque:</span> {macro.focus}
                                                 </span>
                                                 <span>
                                                     {formatDate(macro.start_date)} → {formatDate(macro.end_date)}
