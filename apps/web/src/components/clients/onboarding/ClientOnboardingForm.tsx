@@ -72,7 +72,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
      * validateStep — Valida solo el paso actual
      */
     const validateStep = useCallback((): boolean => {
-        const { isValid, stepErrors } = validateClientForm(formData, currentStep);
+        const { isValid } = validateClientForm(formData, currentStep);
         // Los errores se manejan en useClientForm, pero validamos aquí para navegación
         return isValid;
     }, [formData, currentStep]);

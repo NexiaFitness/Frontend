@@ -60,7 +60,7 @@ describe("Button", () => {
 
         it("renders outline variant correctly", () => {
             render(<Button variant="outline">Outline</Button>)
-            expect(screen.getByRole("button")).toHaveClass("bg-transparent", "border-2", "border-slate-800")
+            expect(screen.getByRole("button")).toHaveClass("bg-transparent", "border-2", "border-sidebar-header")
         })
     })
 

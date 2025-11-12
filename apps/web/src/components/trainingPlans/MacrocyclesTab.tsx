@@ -73,7 +73,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
     const { data: macrocyclesData, isLoading, isError, error, refetch } = useGetMacrocyclesQuery({
         planId,
     });
-    const macrocycles: Macrocycle[] = macrocyclesData ?? [];
+    const macrocycles: Macrocycle[] = Array.isArray(macrocyclesData) ? macrocyclesData : [];
 
     const [createMacrocycle, { isLoading: isCreating }] = useCreateMacrocycleMutation();
     const [deleteMacrocycle, { isLoading: isDeleting }] = useDeleteMacrocycleMutation();
@@ -325,7 +325,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                 )}
 
                 {/* Empty State */}
-                {!isLoading && !isError && macrocycles.length === 0 && (
+                {!isLoading && !isError && (!macrocycles || macrocycles.length === 0) && (
                     <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                         <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                             <svg
@@ -359,7 +359,7 @@ export const MacrocyclesTab: React.FC<MacrocyclesTabProps> = ({
                 )}
 
                 {/* List */}
-                {!isLoading && !isError && macrocycles.length > 0 && (
+                {!isLoading && !isError && macrocycles && macrocycles.length > 0 && (
                     <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                         <div className="divide-y divide-gray-200">
                             {macrocycles.map((macro) => (

@@ -239,7 +239,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                 </div>
             ) : (
                 <div className="space-y-3">
-                    {milestones
+                    {[...milestones]
                         .sort((a, b) => new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime())
                         .map((milestone) => (
                             <div

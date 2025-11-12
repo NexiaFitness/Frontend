@@ -55,7 +55,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
     formData,
     errors = {},
     updateField,
-    heightUnit = "cm",
+    heightUnit: _heightUnit = "cm", // Prefijo _ para cumplir con ESLint (prop reservado para uso futuro)
     includeProgressFields = false,
     includeAnthropometric = false,
     requiredFields = [],

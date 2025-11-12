@@ -31,10 +31,17 @@ El módulo **Training Plans** es un sistema completo de planificación de entren
 Training Plan (Plan de Entrenamiento)
   ├── Macrocycle (Macrociclo) - Fases largas (meses)
   │     ├── Mesocycle (Mesociclo) - Bloques (4-6 semanas)
-  │     │     └── Microcycle (Microciclo) - Semanas individuales
+  │     │     └── Microcycle (Microciclo) - Semanas individuales (7 días)
+  │     │           └── TrainingSession (Sesión de Entrenamiento)
   │     └── Mesocycle...
   └── Milestones (Hitos) - Eventos importantes
 ```
+
+**Documentación por módulo:**
+- **Macrocycles** - Ver [macrocycles.md](./macrocycles.md)
+- **Mesocycles** - Ver [mesocycles.md](./mesocycles.md)
+- **Microcycles** - Ver [microcycles.md](./microcycles.md)
+- **Milestones** - Ver [milestones.md](./milestones.md)
 
 **Características principales:**
 - ✅ CRUD completo de planes y ciclos
@@ -1035,12 +1042,27 @@ const {
    - Incluye: arquitectura, componentes, API, flujos, validaciones
    - **Ruta:** `frontend/docs/trainingPlans/training-plans.md`
 
-2. **milestones.md**
-   - Documentación específica de Milestones
+2. **macrocycles.md**
+   - Documentación completa del módulo de Macrocycles (Macrociclos)
+   - Incluye: rutas, componentes, API, validaciones, flujos de datos
+   - **Ruta:** `frontend/docs/trainingPlans/macrocycles.md`
+
+3. **mesocycles.md**
+   - Documentación completa del módulo de Mesocycles (Mesociclos)
+   - Incluye: rutas, componentes, API, validaciones, flujos de datos
+   - **Ruta:** `frontend/docs/trainingPlans/mesocycles.md`
+
+4. **microcycles.md**
+   - Documentación completa del módulo de Microcycles (Microciclos)
+   - Incluye: rutas, componentes, API, validaciones, flujos de datos
+   - **Ruta:** `frontend/docs/trainingPlans/microcycles.md`
+
+5. **milestones.md**
+   - Documentación específica de Milestones (Hitos)
    - Incluye: tipos, API, hook, componente, flujos, checklist
    - **Ruta:** `frontend/docs/trainingPlans/milestones.md`
 
-3. **README.md** (este archivo)
+6. **README.md** (este archivo)
    - Índice y referencia rápida
    - Rutas de archivos completas
    - Resumen de funcionalidades

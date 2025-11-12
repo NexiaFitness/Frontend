@@ -90,7 +90,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
         { mesocycleId: selectedMesocycleId! },
         { skip: !selectedMesocycleId }
     );
-    const microcycles: Microcycle[] = microcyclesData ?? [];
+    const microcycles: Microcycle[] = Array.isArray(microcyclesData) ? microcyclesData : [];
 
     const [createMicrocycle, { isLoading: isCreating }] = useCreateMicrocycleMutation();
     const [deleteMicrocycle, { isLoading: isDeleting }] = useDeleteMicrocycleMutation();
@@ -251,7 +251,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                             value={selectedMesocycleId || ""}
                             onChange={(e) => setSelectedMesocycleId(Number(e.target.value) || undefined)}
                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                            disabled={isLoadingMesos || mesocycles.length === 0}
+                            disabled={isLoadingMesos || !mesocycles || mesocycles.length === 0}
                         >
                             <option value="">-- Selecciona un Mesociclo --</option>
                             {mesocycles.map((meso) => (
@@ -261,7 +261,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                                 </option>
                             ))}
                         </select>
-                        {mesocycles.length === 0 && !isLoadingMesos && (
+                        {(!mesocycles || mesocycles.length === 0) && !isLoadingMesos && (
                             <p className="text-sm text-amber-600 mt-2">
                                 ⚠️ No hay mesociclos disponibles. Crea un mesociclo primero.
                             </p>
@@ -498,7 +498,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                     )}
 
                     {/* Empty State */}
-                    {!isLoading && !isError && microcycles.length === 0 && (
+                    {!isLoading && !isError && (!microcycles || microcycles.length === 0) && (
                         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg
@@ -532,7 +532,7 @@ export const MicrocyclesTab: React.FC<MicrocyclesTabProps> = ({ planId }) => {
                     )}
 
                     {/* List */}
-                    {!isLoading && !isError && microcycles.length > 0 && (
+                    {!isLoading && !isError && microcycles && microcycles.length > 0 && (
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                             <div className="divide-y divide-gray-200">
                                 {microcycles.map((micro) => (

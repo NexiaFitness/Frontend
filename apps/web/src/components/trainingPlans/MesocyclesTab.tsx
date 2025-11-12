@@ -84,7 +84,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
         { macrocycleId: selectedMacrocycleId! },
         { skip: !selectedMacrocycleId }
     );
-    const mesocycles: Mesocycle[] = mesocyclesData ?? [];
+    const mesocycles: Mesocycle[] = Array.isArray(mesocyclesData) ? mesocyclesData : [];
 
     const [createMesocycle, { isLoading: isCreating }] = useCreateMesocycleMutation();
     const [deleteMesocycle, { isLoading: isDeleting }] = useDeleteMesocycleMutation();
@@ -466,7 +466,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                     )}
 
                     {/* Empty State */}
-                    {!isLoading && !isError && mesocycles.length === 0 && (
+                    {!isLoading && !isError && (!mesocycles || mesocycles.length === 0) && (
                         <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <svg
@@ -500,7 +500,7 @@ export const MesocyclesTab: React.FC<MesocyclesTabProps> = ({ planId }) => {
                     )}
 
                     {/* List */}
-                    {!isLoading && !isError && mesocycles.length > 0 && (
+                    {!isLoading && !isError && mesocycles && mesocycles.length > 0 && (
                         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
                             <div className="divide-y divide-gray-200">
                                 {mesocycles.map((meso) => (

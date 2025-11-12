@@ -263,11 +263,11 @@ describe("ResetPasswordForm", () => {
 
             // Should show loading text and disabled state
             await waitFor(() => {
-                expect(screen.getByRole("button", { name: /actualizando contraseña/i }))
+                expect(screen.getByRole("button", { name: /actualizando contraseña\.\.\./i }))
                     .toBeInTheDocument();
             }, { timeout: 200 });
 
-            expect(screen.getByRole("button", { name: /actualizando contraseña/i }))
+            expect(screen.getByRole("button", { name: /actualizando contraseña\.\.\./i }))
                 .toBeDisabled();
             expect(screen.getByPlaceholderText("Mínimo 6 caracteres"))
                 .toBeDisabled();
