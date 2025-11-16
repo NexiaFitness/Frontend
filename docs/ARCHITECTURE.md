@@ -105,7 +105,7 @@ import { render } from "@/test-utils/render";
 ---
 
 ## References
-- [Testing Guide](./TESTING.md)  
+- [Testing Guide](./tests/TESTING.md)  
 - [Deployment Guide](./DEPLOYMENT.md)  
 - [Roadmap](./ROADMAP.md)  
 - [Contributing](./CONTRIBUTING.md)  
