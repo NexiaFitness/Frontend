@@ -97,10 +97,11 @@ render(<LoginForm />, {
 Configura el servidor MSW con handlers centralizados:
 
 ```typescript
-import { authHandlers } from "../mocks/handlers/authHandlers";
-import { accountHandlers } from "../mocks/handlers/accountHandlers";
+import { authHandlers } from "../mocks/handlers/auth";
+import { accountHandlers } from "../mocks/handlers/account";
+import { clientsHandlers } from "../mocks/handlers/clients";
 
-export const server = setupServer(...authHandlers, ...accountHandlers);
+export const server = setupServer(...authHandlers, ...accountHandlers, ...clientsHandlers);
 ```
 
 **Tipos de Handlers:**
@@ -137,8 +138,8 @@ Datos de prueba estáticos y reutilizables que reflejan la estructura real del b
 
 ```typescript
 // Ejemplo de uso
-import { validLoginCredentials } from "@/test-utils/fixtures/authFixtures";
-import { createMockClient } from "@/test-utils/fixtures/clientFixture";
+import { validLoginCredentials } from "@/test-utils/fixtures/auth";
+import { createMockClient } from "@/test-utils/fixtures/clients";
 
 const client = createMockClient({ nombre: "Juan" });
 ```
@@ -170,13 +171,13 @@ setAuthenticatedUser(validTrainerUser);
 apps/web/src/
 ├── test-utils/
 │   ├── fixtures/
-│   │   ├── authFixtures.ts          # ✅ Datos de autenticación
-│   │   └── clientFixture.ts         # ✅ Factory para clientes
+│   │   ├── auth/                    # ✅ Datos de autenticación (modular)
+│   │   └── clients/                 # ✅ Factory para clientes (modular)
 │   ├── mocks/
 │   │   ├── handlers/
-│   │   │   ├── authHandlers.ts      # ✅ Handlers de auth (básicos + específicos)
-│   │   │   ├── clientsHandlers.ts    # ✅ Handlers de clientes
-│   │   │   └── accountHandlers.ts   # ✅ Handlers de cuenta
+│   │   │   ├── auth/                # ✅ Handlers de auth (modular)
+│   │   │   ├── clients/             # ✅ Handlers de clientes (modular)
+│   │   │   └── account/             # ✅ Handlers de cuenta (modular)
 │   │   ├── reactRouterMocks.ts       # ✅ Mocks de React Router
 │   │   ├── reactReduxMocks.ts        # ✅ Mocks de Redux
 │   │   ├── authApiMocks.ts           # ⚠️ (Comentado - conflicto con MSW)
@@ -323,9 +324,9 @@ apps/web/src/
 
 ## 🎭 Fixtures Disponibles
 
-### 1. `authFixtures.ts`
+### 1. `auth/` (Modular)
 
-**Ubicación:** `apps/web/src/test-utils/fixtures/authFixtures.ts`
+**Ubicación:** `apps/web/src/test-utils/fixtures/auth/`
 
 **Contenido:**
 - ✅ `validTrainerUser` - Usuario trainer válido
@@ -343,9 +344,9 @@ apps/web/src/
 - Sin campos opcionales innecesarios
 - Type-safe
 
-### 2. `clientFixture.ts`
+### 2. `clients/` (Modular)
 
-**Ubicación:** `apps/web/src/test-utils/fixtures/clientFixture.ts`
+**Ubicación:** `apps/web/src/test-utils/fixtures/clients/`
 
 **Contenido:**
 - ✅ `createMockClient(overrides?)` - Factory function para crear clientes mock
@@ -367,9 +368,9 @@ const client = createMockClient({
 
 ## 🌐 Handlers MSW Disponibles
 
-### 1. `authHandlers.ts`
+### 1. `auth/` (Modular)
 
-**Ubicación:** `apps/web/src/test-utils/mocks/handlers/authHandlers.ts`
+**Ubicación:** `apps/web/src/test-utils/mocks/handlers/auth/`
 
 **Handlers Básicos (Centralizados):**
 - ✅ `authHandlers` - Array con handlers por defecto:
@@ -408,9 +409,9 @@ const client = createMockClient({
 
 **Total: ~30 handlers específicos**
 
-### 2. `clientsHandlers.ts`
+### 2. `clients/` (Modular)
 
-**Ubicación:** `apps/web/src/test-utils/mocks/handlers/clientsHandlers.ts`
+**Ubicación:** `apps/web/src/test-utils/mocks/handlers/clients/`
 
 **Handlers Disponibles:**
 - ✅ `deleteClientHandler` - DELETE exitoso
@@ -419,11 +420,11 @@ const client = createMockClient({
 - ✅ `getClientsHandler` - GET lista de clientes
 - ✅ `createClientHandler` - POST crear cliente
 
-**Nota:** Este archivo es más pequeño que `authHandlers.ts` y podría necesitar más handlers específicos.
+**Nota:** `clients/` tiene menos handlers que `auth/` y podría necesitar más handlers específicos para casos edge.
 
-### 3. `accountHandlers.ts`
+### 3. `account/` (Modular)
 
-**Ubicación:** `apps/web/src/test-utils/mocks/handlers/accountHandlers.ts`
+**Ubicación:** `apps/web/src/test-utils/mocks/handlers/account/`
 
 **Handlers Disponibles:**
 - ✅ `accountHandlers` - Array con handler básico:
@@ -473,7 +474,7 @@ expect(mockNavigate).toHaveBeenCalledWith("/login");
 **Uso:**
 ```typescript
 import { setAuthenticatedUser } from "@/test-utils/mocks";
-import { validTrainerUser } from "@/test-utils/fixtures/authFixtures";
+import { validTrainerUser } from "@/test-utils/fixtures/auth";
 
 setAuthenticatedUser(validTrainerUser);
 ```
@@ -599,8 +600,8 @@ setAuthenticatedUser(validTrainerUser);
 ### 1. Estructura Plana y Escalabilidad
 
 **Problema:**
-- Todos los handlers están en archivos planos (`authHandlers.ts`, `clientsHandlers.ts`, etc.)
-- A medida que crezca el proyecto, estos archivos pueden volverse muy grandes (como `authHandlers.ts` con ~30 handlers)
+- ✅ **RESUELTO** - Estructura modular implementada (auth/, clients/, account/)
+- Handlers organizados por dominio y funcionalidad
 - Difícil de navegar y mantener
 - No hay organización por dominio o funcionalidad
 
@@ -615,18 +616,18 @@ setAuthenticatedUser(validTrainerUser);
 - Esto hace que los tests futuros tengan que crear datos mock inline
 
 **Solución:**
-- Crear fixtures siguiendo el patrón de `authFixtures.ts` y `clientFixture.ts`
+- Crear fixtures siguiendo el patrón modular de `auth/` y `clients/`
 - Usar factory functions cuando sea apropiado
 
 ### 3. Handlers Incompletos
 
 **Problema:**
-- `clientsHandlers.ts` tiene solo 5 handlers básicos
+- `clients/` tiene handlers básicos organizados por funcionalidad
 - Faltan handlers para casos edge (retry, rate limit, timeout, etc.)
 - No hay handlers para muchos endpoints (exercises, progress, sessions, training plans)
 
 **Solución:**
-- Completar handlers siguiendo el patrón de `authHandlers.ts`
+- Completar handlers siguiendo el patrón modular de `auth/`
 - Crear handlers específicos para casos edge cuando se necesiten
 
 ### 4. Tests de Retry con RTK Query
@@ -684,20 +685,20 @@ La estructura actual es plana y puede volverse difícil de mantener:
 ```
 test-utils/
 ├── fixtures/
-│   ├── authFixtures.ts
-│   └── clientFixture.ts
+│   ├── auth/                    # Modular (users, credentials, responses)
+│   └── clients/                  # Modular (clients factory)
 ├── mocks/
 │   └── handlers/
-│       ├── authHandlers.ts      # ~30 handlers, puede crecer más
-│       ├── clientsHandlers.ts    # 5 handlers, necesita más
-│       └── accountHandlers.ts    # 4 handlers
+│       ├── auth/                # Modular (login, register, password, logout)
+│       ├── clients/              # Modular (list, create, delete)
+│       └── account/              # Modular (delete)
 ```
 
-**Problemas:**
-1. Archivos pueden volverse muy grandes (authHandlers.ts ya tiene ~30 handlers)
-2. Difícil encontrar handlers específicos
-3. No hay organización por dominio o funcionalidad
-4. A medida que crezca el proyecto, será difícil mantener
+**Estado Actual:**
+1. ✅ Estructura modular implementada
+2. ✅ Handlers organizados por dominio y funcionalidad
+3. ✅ Fácil de mantener y escalar
+4. ✅ Barrel exports para imports simplificados
 
 ### Nueva Estructura Propuesta
 
@@ -800,16 +801,22 @@ test-utils/
 #### Antes (Estructura Actual):
 
 ```typescript
-// test-utils/mocks/handlers/authHandlers.ts
-export const authHandlers = [
-    http.post("*/auth/login", ...),
-    http.post("*/auth/register", ...),
-    // ... 28 handlers más en el mismo archivo
-];
-
+// test-utils/mocks/handlers/auth/login.ts
+export const loginHandler = http.post("*/auth/login", ...);
 export const loginRetryHandler = ...;
 export const loginRateLimitHandler = ...;
-// ... 28 exports más
+// ... solo handlers relacionados con login
+
+// test-utils/mocks/handlers/auth/index.ts
+import { loginHandler } from "./login";
+import { registerHandler } from "./register";
+// ...
+
+export const authHandlers = [
+    loginHandler,
+    registerHandler,
+    // ...
+];
 ```
 
 #### Después (Nueva Estructura):
@@ -873,36 +880,27 @@ import { loginRetryHandler } from "@/test-utils/mocks/handlers/auth";
 ### Fase 2: Migración Gradual
 
 3. **Migrar fixtures**
-   - Mover `authFixtures.ts` → `fixtures/auth/` (dividir en archivos más pequeños)
-   - Mover `clientFixture.ts` → `fixtures/clients/clients.ts`
+   - ✅ **COMPLETADO** - `authFixtures.ts` → `fixtures/auth/` (users, credentials, responses)
+   - ✅ **COMPLETADO** - `clientFixture.ts` → `fixtures/clients/clients.ts`
    - Actualizar imports en tests existentes
 
 4. **Migrar handlers de auth**
-   - Dividir `authHandlers.ts` en:
-     - `handlers/auth/login.ts`
-     - `handlers/auth/register.ts`
-     - `handlers/auth/password.ts`
-     - `handlers/auth/logout.ts`
-   - Crear `handlers/auth/index.ts` que exporte `authHandlers` array
-   - Actualizar `utils/msw.ts` para importar desde nuevo path
+   - ✅ **COMPLETADO** - `authHandlers.ts` → `handlers/auth/` (login, register, password, logout)
+   - ✅ **COMPLETADO** - `handlers/auth/index.ts` con `authHandlers` array
+   - ✅ **COMPLETADO** - `utils/msw.ts` actualizado
 
 5. **Migrar handlers de clients**
-   - Dividir `clientsHandlers.ts` en:
-     - `handlers/clients/list.ts`
-     - `handlers/clients/detail.ts`
-     - `handlers/clients/create.ts`
-     - `handlers/clients/delete.ts`
-   - Crear `handlers/clients/index.ts`
+   - ✅ **COMPLETADO** - `clientsHandlers.ts` → `handlers/clients/` (list, create, delete)
+   - ✅ **COMPLETADO** - `handlers/clients/index.ts` creado
 
 6. **Migrar handlers de account**
-   - Mover a `handlers/account/delete.ts`
-   - Crear `handlers/account/index.ts`
+   - ✅ **COMPLETADO** - `accountHandlers.ts` → `handlers/account/delete.ts`
+   - ✅ **COMPLETADO** - `handlers/account/index.ts` creado
 
 ### Fase 3: Limpieza
 
 7. **Eliminar archivos antiguos**
-   - Una vez que todos los tests pasen con la nueva estructura
-   - Eliminar archivos antiguos planos
+   - ✅ **COMPLETADO** - Archivos antiguos eliminados después de verificación completa
 
 8. **Actualizar documentación**
    - Actualizar `TESTING.md` con nueva estructura
@@ -938,18 +936,18 @@ import { loginRetryHandler } from "@/test-utils/mocks/handlers/auth";
 ### Estado Actual
 
 - ✅ **14 archivos de test** implementados
-- ✅ **3 archivos de handlers** (auth, clients, account)
-- ✅ **2 archivos de fixtures** (auth, clients)
+- ✅ **Estructura modular de handlers** (auth/, clients/, account/)
+- ✅ **Estructura modular de fixtures** (auth/, clients/)
 - ✅ **Configuración completa** de MSW, Vitest, React Testing Library
-- ⚠️ **Estructura plana** que puede volverse difícil de mantener
+- ✅ **Estructura escalable y mantenible** implementada
 - ⚠️ **Faltan muchos handlers y fixtures** para dominios nuevos
 
 ### Problemas Principales
 
-1. **Escalabilidad:** Archivos planos pueden volverse muy grandes
-2. **Organización:** Difícil encontrar handlers específicos
-3. **Mantenibilidad:** Sin organización por dominio
-4. **Cobertura:** Faltan handlers y fixtures para muchos dominios
+1. ✅ **Escalabilidad:** Estructura modular implementada
+2. ✅ **Organización:** Handlers organizados por dominio y funcionalidad
+3. ✅ **Mantenibilidad:** Estructura clara y fácil de navegar
+4. ⚠️ **Cobertura:** Faltan handlers y fixtures para muchos dominios
 
 ### Solución Propuesta
 
@@ -961,8 +959,8 @@ import { loginRetryHandler } from "@/test-utils/mocks/handlers/auth";
 
 ### Próximos Pasos
 
-1. **Corto Plazo:** Migrar estructura actual a nueva arquitectura
-2. **Medio Plazo:** Crear handlers y fixtures faltantes
+1. ✅ **Corto Plazo:** ✅ Completado - Estructura modular implementada
+2. **Medio Plazo:** Crear handlers y fixtures faltantes siguiendo nueva estructura
 3. **Largo Plazo:** Completar tests para todos los componentes
 
 ---

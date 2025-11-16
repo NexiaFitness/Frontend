@@ -17,7 +17,7 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { DeleteClientModal } from "../DeleteClientModal";
-import { createMockClient } from "@/test-utils/fixtures/clientFixture";
+import { createMockClient } from "@/test-utils/fixtures/clients";
 // Mock inline para este test específico
 const mockUnlinkClient = vi.fn(() => ({
     unwrap: () => Promise.resolve({ message: "Client unlinked successfully" })

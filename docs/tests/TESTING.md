@@ -95,13 +95,30 @@ apps/web/src/
 │               └── FormSelect.test.tsx
 └── test-utils/
     ├── fixtures/
-    │   ├── authFixtures.ts
-    │   └── clientFixture.ts
+    │   ├── auth/
+    │   │   ├── users.ts
+    │   │   ├── credentials.ts
+    │   │   ├── responses.ts
+    │   │   └── index.ts
+    │   └── clients/
+    │       ├── clients.ts
+    │       └── index.ts
     ├── mocks/
     │   ├── handlers/
-    │   │   ├── authHandlers.ts
-    │   │   ├── clientsHandlers.ts
-    │   │   └── accountHandlers.ts
+    │   │   ├── auth/
+    │   │   │   ├── login.ts
+    │   │   │   ├── register.ts
+    │   │   │   ├── password.ts
+    │   │   │   ├── logout.ts
+    │   │   │   └── index.ts
+    │   │   ├── clients/
+    │   │   │   ├── list.ts
+    │   │   │   ├── create.ts
+    │   │   │   ├── delete.ts
+    │   │   │   └── index.ts
+    │   │   └── account/
+    │   │       ├── delete.ts
+    │   │       └── index.ts
     │   ├── reactRouterMocks.ts
     │   ├── reactReduxMocks.ts
     │   └── index.ts
@@ -116,8 +133,8 @@ apps/web/src/
 
 - **Tests:** `*.test.tsx` o `*.test.ts`
 - **Ubicación:** Carpeta `__tests__/` junto al componente
-- **Fixtures:** `*Fixtures.ts` en `test-utils/fixtures/`
-- **Handlers:** `*Handlers.ts` en `test-utils/mocks/handlers/`
+- **Fixtures:** Organizadas por dominio en `test-utils/fixtures/{domain}/`
+- **Handlers:** Organizados por dominio y funcionalidad en `test-utils/mocks/handlers/{domain}/`
 
 ---
 
@@ -131,14 +148,20 @@ Las **fixtures** son datos de prueba estáticos y reutilizables que reflejan la 
 
 ```
 test-utils/fixtures/
-├── authFixtures.ts      # Datos de autenticación
-└── clientFixture.ts     # Datos de clientes
+├── auth/
+│   ├── users.ts          # Usuarios (trainer, athlete)
+│   ├── credentials.ts    # Credenciales de login
+│   ├── responses.ts     # Respuestas de API
+│   └── index.ts         # Barrel export
+└── clients/
+    ├── clients.ts        # Factory para clientes
+    └── index.ts         # Barrel export
 ```
 
 ### Ejemplo: Auth Fixtures
 
 ```typescript
-// test-utils/fixtures/authFixtures.ts
+// test-utils/fixtures/auth/users.ts
 
 export const validTrainerUser: User = {
     id: 1,
@@ -176,7 +199,7 @@ export const errorResponses = {
 ### Ejemplo: Client Fixtures
 
 ```typescript
-// test-utils/fixtures/clientFixture.ts
+// test-utils/fixtures/clients/clients.ts
 
 export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
   id: 1,
@@ -216,9 +239,20 @@ export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
 
 ```
 test-utils/mocks/handlers/
-├── authHandlers.ts      # Endpoints de autenticación
-├── clientsHandlers.ts   # Endpoints de clientes
-└── accountHandlers.ts   # Endpoints de cuenta
+├── auth/
+│   ├── login.ts         # Handlers de login
+│   ├── register.ts      # Handlers de registro
+│   ├── password.ts      # Handlers de forgot/reset password
+│   ├── logout.ts        # Handlers de logout
+│   └── index.ts         # Barrel export + authHandlers array
+├── clients/
+│   ├── list.ts          # GET /clients
+│   ├── create.ts        # POST /clients
+│   ├── delete.ts        # DELETE /clients/:id
+│   └── index.ts         # Barrel export + clientsHandlers array
+└── account/
+    ├── delete.ts        # DELETE /auth/me
+    └── index.ts         # Barrel export + accountHandlers array
 ```
 
 ### Tipos de Handlers
@@ -228,46 +262,32 @@ test-utils/mocks/handlers/
 Handlers que se usan por defecto en todos los tests:
 
 ```typescript
-// test-utils/mocks/handlers/authHandlers.ts
+// test-utils/mocks/handlers/auth/login.ts
 
-export const authHandlers = [
-    // Login - Handler dinámico que acepta JSON y form-data
-    http.post("*/auth/login", async ({ request }) => {
-        await new Promise((res) => setTimeout(res, 300)); // Simular red lenta
+export const loginHandler = http.post("*/auth/login", async ({ request }) => {
+    await new Promise((res) => setTimeout(res, 300)); // Simular red lenta
 
-        let body: { username?: string; password?: string } = {};
-        const contentType = request.headers.get("Content-Type");
+    let body: { username?: string; password?: string } = {};
+    const contentType = request.headers.get("Content-Type");
 
-        if (contentType?.includes("application/json")) {
-            body = await request.json();
-        } else if (contentType?.includes("application/x-www-form-urlencoded")) {
-            const text = await request.text();
-            const params = new URLSearchParams(text);
-            body = {
-                username: params.get("username") || undefined,
-                password: params.get("password") || undefined,
-            };
-        }
+    if (contentType?.includes("application/json")) {
+        body = await request.json();
+    } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+        const text = await request.text();
+        const params = new URLSearchParams(text);
+        body = {
+            username: params.get("username") || undefined,
+            password: params.get("password") || undefined,
+        };
+    }
 
-        // Validación de credenciales
-        if (body.username === "test@example.com" && body.password === "testpass123") {
-            return HttpResponse.json(loginSuccessResponse, { status: 200 });
-        }
+    // Validación de credenciales
+    if (body.username === "test@example.com" && body.password === "testpass123") {
+        return HttpResponse.json(loginSuccessResponse, { status: 200 });
+    }
 
-        return HttpResponse.json(errorResponses.invalidLogin, { status: 401 });
-    }),
-
-    // Register
-    http.post("*/auth/register", async ({ request }) => {
-        const body = await request.json() as { email?: string };
-
-        if (body?.email === "existing@test.com") {
-            return HttpResponse.json(errorResponses.emailAlreadyExists, { status: 409 });
-        }
-
-        return HttpResponse.json(registerSuccessResponse, { status: 201 });
-    }),
-];
+    return HttpResponse.json(errorResponses.invalidLogin, { status: 401 });
+});
 ```
 
 #### 2. Handlers Específicos (Para Tests Avanzados)
@@ -329,7 +349,7 @@ export const networkErrorHandler = http.post("*/auth/login", async () => {
 
 ```typescript
 import { server } from "@/test-utils/utils/msw";
-import { loginRetryHandler, loginRateLimitHandler } from "@/test-utils/mocks/handlers/authHandlers";
+import { loginRetryHandler, loginRateLimitHandler } from "@/test-utils/mocks/handlers/auth";
 
 describe("LoginForm", () => {
     it("handles server error with successful retry", async () => {
@@ -659,9 +679,9 @@ import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { LoginForm } from "../LoginForm";
 import { server } from "@/test-utils/utils/msw";
-import { loginRetryHandler } from "@/test-utils/mocks/handlers/authHandlers";
+import { loginRetryHandler } from "@/test-utils/mocks/handlers/auth";
 import { mockNavigate } from "@/test-utils/mocks";
-import { validLoginCredentials } from "@/test-utils/fixtures/authFixtures";
+import { validLoginCredentials } from "@/test-utils/fixtures/auth";
 
 describe("LoginForm", () => {
     it("successful login redirects to dashboard", async () => {
@@ -757,7 +777,7 @@ describe("UserProfile", () => {
 - **Nota:** Los handlers están diseñados correctamente, pero RTK Query necesita configuración adicional para retry automático
 
 **3. Refactorización de Handlers**
-- **Estado:** ✅ Completada - `clientsHandlers.ts` dividido en módulos organizados
+- **Estado:** ✅ Completada - Estructura modular implementada (auth, clients, account)
 - **Estructura:** `clients/clientListHandlers.ts`, `clients/clientDetailHandlers.ts`, etc.
 - **Problema:** Algunos imports pueden necesitar ajustes después de la refactorización
 
@@ -795,8 +815,8 @@ describe("UserProfile", () => {
 
 ### Fixtures Disponibles
 
-- ✅ `authFixtures.ts` - Usuarios, credenciales, respuestas de auth
-- ✅ `clientFixture.ts` - **ACTUALIZADO** - Factory para crear clientes mock + fixtures adicionales (mockClient1, mockClient2, mockClient3, mockClientsListResponse)
+- ✅ `auth/` - **REFACTORIZADO** - Usuarios, credenciales, respuestas de auth (modular)
+- ✅ `clients/` - **REFACTORIZADO** - Factory para crear clientes mock (modular)
 - ✅ `exerciseFixtures.ts` - **NUEVO** - Factory para ejercicios + fixtures (mockExercise1-3, mockExerciseListResponse)
 - ✅ `progressFixtures.ts` - **NUEVO** - Factory para progreso + fixtures (mockProgress1-3, mockProgressHistory, mockProgressAnalytics)
 - ✅ `sessionFixtures.ts` - **NUEVO** - Factory para sesiones y planes + fixtures (mockTrainingPlan1-3, mockTrainingSession1-4)
@@ -1063,7 +1083,7 @@ describe("ComponentName", () => {
 
 ✅ **Bien:**
 ```typescript
-import { validLoginCredentials } from "@/test-utils/fixtures/authFixtures";
+import { validLoginCredentials } from "@/test-utils/fixtures/auth";
 
 await user.type(
     screen.getByLabelText(/correo electrónico/i),
@@ -1084,7 +1104,7 @@ await user.type(
 ✅ **Bien:**
 ```typescript
 import { server } from "@/test-utils/utils/msw";
-import { loginRetryHandler } from "@/test-utils/mocks/handlers/authHandlers";
+import { loginRetryHandler } from "@/test-utils/mocks/handlers/auth";
 
 it("handles retry", async () => {
     server.use(loginRetryHandler);

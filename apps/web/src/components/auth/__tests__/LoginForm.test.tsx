@@ -19,7 +19,7 @@ import {
   loginTimeoutHandler,
   emailValidationHandler,
   networkErrorHandler
-} from "@/test-utils/mocks/handlers/authHandlers";
+} from "@/test-utils/mocks/handlers/auth";
 import {
   mockNavigate,
   clearRouterMocks,
@@ -29,7 +29,7 @@ import {
 import {
   validLoginCredentials,
   invalidLoginCredentials
-} from "@/test-utils/fixtures/authFixtures";
+} from "@/test-utils/fixtures/auth";
 
 describe("LoginForm", () => {
   beforeEach(() => {

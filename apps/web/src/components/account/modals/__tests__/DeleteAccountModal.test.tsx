@@ -18,7 +18,7 @@ import {
     deleteAccountErrorHandler,
     deleteAccountNetworkErrorHandler,
     deleteAccountRetryHandler,
-} from "@/test-utils/mocks/handlers/accountHandlers";
+} from "@/test-utils/mocks/handlers/account";
 import { clearRouterMocks } from "@/test-utils/mocks";
 
 describe("DeleteAccountModal", () => {

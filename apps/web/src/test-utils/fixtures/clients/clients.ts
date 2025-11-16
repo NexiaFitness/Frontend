@@ -1,5 +1,5 @@
 /**
- * clientFixture.ts — Fixture para generar clientes mock.
+ * Clients Fixtures - Factory para generar clientes mock
  *
  * Alineado 100% con Client de packages/shared/src/types/client.ts y Swagger:
  * - id y trainer_id son number.
@@ -7,6 +7,7 @@
  * - fecha_alta es string en formato YYYY-MM-DD (date del backend).
  * - updated_at es opcional.
  *
+ * @author Frontend Team
  * @since v4.3.9
  */
 
@@ -28,3 +29,4 @@ export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
   activo: true,
   ...overrides,
 });
+

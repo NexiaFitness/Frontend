@@ -1,59 +1,20 @@
 /**
- * Auth Fixtures
+ * Auth Fixtures - API Responses
  *
- * Static test data alineado con backend real en producción.
+ * Respuestas de API de prueba para testing de autenticación.
+ * Alineado con backend real en producción.
  * Elimina campos opcionales que backend no envía para reflejar realidad.
  * 
  * @author Frontend Team
  * @since v2.0.0
  */
 
-import { 
-    User, 
-    LoginCredentials, 
-    ResetPasswordData,
+import {
     AuthResponse,
     RegisterResponse,
     ForgotPasswordResponse,
 } from "@nexia/shared/types/auth";
-import { USER_ROLES } from "@nexia/shared/config/constants";
-
-export const validTrainerUser: User = {
-    id: 1,
-    email: "test@example.com",
-    nombre: "Test",
-    apellidos: "User", 
-    role: USER_ROLES.TRAINER,
-    is_active: true,
-    is_verified: false,
-    created_at: "2025-01-01T00:00:00",
-};
-
-export const validAthleteUser: User = {
-    id: 2,
-    email: "athlete@test.com",
-    nombre: "Test",
-    apellidos: "Athlete",
-    role: USER_ROLES.ATHLETE,
-    is_active: true,
-    is_verified: false,
-    created_at: "2025-01-01T00:00:00",
-};
-
-export const validLoginCredentials: LoginCredentials = {
-    username: "test@example.com",
-    password: "testpass123",
-};
-
-export const invalidLoginCredentials: LoginCredentials = {
-    username: "invalid@test.com",
-    password: "wrongpass",
-};
-
-export const validResetPasswordData: ResetPasswordData = {
-    token: "valid-reset-token-123",
-    new_password: "newTestPass123",
-};
+import { validTrainerUser } from "./users";
 
 // Refleja backend real - sin refresh_token en producción
 export const loginSuccessResponse: AuthResponse = {
@@ -94,3 +55,4 @@ export const errorResponses = {
         detail: "Email already registered",
     },
 };
+

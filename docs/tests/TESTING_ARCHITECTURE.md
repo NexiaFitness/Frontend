@@ -28,7 +28,7 @@ import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { server } from "@/test-utils/utils/msw";
-import { specificHandlers } from "@/test-utils/mocks/handlers/authHandlers";
+import { specificHandlers } from "@/test-utils/mocks/handlers/auth";
 import { mockNavigate, clearRouterMocks } from "@/test-utils/mocks";
 
 describe("Component", () => {
@@ -40,7 +40,7 @@ describe("Component", () => {
 
 ## MSW Handler Strategy (Hybrid Approach)
 
-### Centralized Handlers (`authHandlers.ts`)
+### Centralized Handlers (`auth/`)
 ```typescript
 // Basic handlers for common scenarios
 export const authHandlers = [
@@ -122,8 +122,13 @@ it("navigates to login", async () => {
 
 ```
 src/test-utils/
-├── fixtures/authFixtures.ts        # Test data
-├── mocks/handlers/authHandlers.ts   # MSW handlers (hybrid)
+├── fixtures/
+│   ├── auth/                       # Auth fixtures (modular)
+│   └── clients/                    # Client fixtures (modular)
+├── mocks/handlers/
+│   ├── auth/                       # Auth handlers (modular)
+│   ├── clients/                    # Client handlers (modular)
+│   └── account/                    # Account handlers (modular)
 ├── mocks/index.ts                   # Centralized exports
 ├── utils/msw.ts                     # MSW server setup
 ├── render.tsx                       # Custom render with providers

@@ -1,8 +1,8 @@
 /**
- * Account API Handlers - MSW handlers para endpoints de cuenta
+ * Handlers de MSW para DELETE /auth/me (eliminar cuenta)
  *
- * Handlers para DELETE /auth/me siguiendo patrón establecido en authHandlers.
- * Separado de authHandlers para mantener separation of concerns.
+ * Alineados con backend FastAPI real.
+ * Incluye handlers básicos + específicos para testing avanzado.
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -10,18 +10,15 @@
 
 import { http, HttpResponse } from "msw";
 
-// ===== HANDLERS BÁSICOS =====
+// ===== HANDLER BÁSICO =====
 
-export const accountHandlers = [
-    // Delete account - Success by default
-    http.delete("*/auth/me", async () => {
-        await new Promise((res) => setTimeout(res, 300)); // Simular red
-        return HttpResponse.json(
-            { success: true, message: "Account deleted successfully" },
-            { status: 200 }
-        );
-    }),
-];
+export const deleteAccountHandler = http.delete("*/auth/me", async () => {
+    await new Promise((res) => setTimeout(res, 300)); // Simular red
+    return HttpResponse.json(
+        { success: true, message: "Account deleted successfully" },
+        { status: 200 }
+    );
+});
 
 // ===== HANDLERS ESPECÍFICOS PARA TESTING AVANZADO =====
 
@@ -50,3 +47,4 @@ export const deleteAccountRetryHandler = (() => {
             : HttpResponse.json({ success: true, message: "Account deleted successfully" }, { status: 200 });
     });
 })();
+

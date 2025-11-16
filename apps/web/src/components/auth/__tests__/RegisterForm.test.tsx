@@ -20,7 +20,7 @@ import {
   registerTimeoutHandler,
   passwordValidationHandler,
   registerMalformedResponseHandler
-} from "@/test-utils/mocks/handlers/authHandlers";
+} from "@/test-utils/mocks/handlers/auth";
 import {
   mockNavigate,
   clearRouterMocks,
