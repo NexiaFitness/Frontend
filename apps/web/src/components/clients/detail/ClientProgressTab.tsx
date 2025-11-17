@@ -26,6 +26,7 @@ import { Alert } from "@/components/ui/feedback/Alert";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
+import { FatigueAlertsSection } from "../fatigue/FatigueAlertsSection";
 import {
     LineChart,
     Line,
@@ -385,6 +386,9 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     </ResponsiveContainer>
                 </ChartCard>
             )}
+
+            {/* Sección de Alertas de Fatiga */}
+            <FatigueAlertsSection clientId={clientId} />
 
             {/* Empty state - solo si no es 404 y no hay datos en los gráficos */}
             {!isNotFoundError && weightChartData.length === 0 && bmiChartData.length === 0 && (

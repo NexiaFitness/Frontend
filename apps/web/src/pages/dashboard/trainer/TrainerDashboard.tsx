@@ -3,25 +3,20 @@
  * 
  * Contexto:
  * Vista principal dentro del área privada de un usuario con rol "Trainer".
- * Renderiza la interfaz del dashboard con estructura responsive (1-3 columnas),
- * integra el menú lateral, la barra de navegación superior y los componentes
- * informativos como el banner de perfil incompleto (desacoplado en componente aparte).
+ * Renderiza la interfaz del dashboard con estructura responsive según diseño Figma v2.
+ * Integra widgets de KPIs, billing, progreso de clientes y alertas prioritarias.
  * 
  * Notas de mantenimiento:
- * - El banner "CompleteProfileBanner" se renderiza condicionalmente si el perfil 
- *   no está completo. Se encuentra desacoplado en /components/dashboard/shared/.
- * - El banner "EmailVerificationBanner" se renderiza si el email no está verificado.
- * - No contiene lógica de negocio; toda la información proviene de Redux y RTK Query.
- * - Mantener el uso de TIPOGRAFÍA y componentes UI consistentes con el sistema global.
- * - Botón "Add New Client" ahora redirige a lista de clientes (/dashboard/clients).
+ * - EmailVerificationBanner y CompleteProfileBanner se renderizan condicionalmente
+ * - Usa datos reales de useClientStats y alertas de fatiga
+ * - Usa datos mockeados para: Improvement, Satisfaction, Adherence, Billing, Progress
+ * - Mantener gradiente mesh de fondo corporativo NEXIA
+ * - TODO EN ESPAÑOL según diseño final
+ * - ORDEN FIGMA: KPIs → (Alerts + Actions) → (Billing + Progress)
  * 
  * @author Frontend Team
  * @since v2.4.1
- * @updated v2.5.2 - Agregado EmailVerificationBanner
- * @updated v4.1.0 - Banners reciben datos completos para detectar hydration
- * @updated v4.4.0 - Agregado CompleteProfileModal con bloqueo de creación de clientes
- * @updated v2.6.0 - Botón "Add New Client" redirige a /dashboard/clients (Client Management)
- * @updated v2.6.1 - Integración de estadísticas reales desde API usando useClientStats
+ * @updated v5.0.0 - Refactor completo según diseño Figma v2 (orden correcto + español)
  */
 
 import React, { useState } from "react";
@@ -32,24 +27,36 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileBanner, EmailVerificationBanner } from "@/components/dashboard/shared";
 import { CompleteProfileModal } from "@/components/dashboard/modals";
-import { TYPOGRAPHY } from "@/utils/typography";
-import { Button } from "@/components/ui/buttons";
-import { useCompleteProfileModal, useClientStats } from "@nexia/shared";
+import {
+    KPICard,
+    ClientBillingChart,
+    ClientProgressWidget,
+    PriorityAlertsWidget,
+} from "@/components/dashboard/trainer/widgets";
+import {
+    useClientStats,
+    useCompleteProfileModal,
+    useClientImprovement,
+    useClientSatisfaction,
+    usePlanAdherence,
+} from "@nexia/shared";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    // Hook de estadísticas de clientes
+    // Hooks de datos reales
     const {
         getTotalClients,
-        getActiveClients,
-        getInactiveClients,
-        getActivePercentage,
-        isLoading,
-        isError,
+        isLoading: isLoadingStats,
+        isError: isErrorStats,
     } = useClientStats();
+
+    // Hooks de datos mockeados
+    const clientImprovement = useClientImprovement();
+    const clientSatisfaction = useClientSatisfaction();
+    const planAdherence = usePlanAdherence();
 
     // Estado del modal de Complete Profile
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
@@ -75,19 +82,13 @@ export const TrainerDashboard: React.FC = () => {
         navigate("/dashboard/clients");
     };
 
-    // Loading state para las cards
-    const renderMetricValue = (value: number | string) => {
-        if (isLoading) {
-            return (
-                <div className="h-10 bg-slate-200 rounded animate-pulse" />
-            );
-        }
-        return (
-            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-800 mb-2">
-                {value}
-            </h3>
-        );
-    };
+    // Formatear fecha en español
+    const currentDate = new Date().toLocaleDateString("es-ES", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+    });
 
     return (
         <>
@@ -98,15 +99,13 @@ export const TrainerDashboard: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                {/* Encabezado */}
-                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2
-                        className={`${TYPOGRAPHY.dashboardHero} text-white mb-3 lg:mb-4`}
-                    >
-                        Bienvenido de vuelta, {user?.nombre}
+                {/* Header con nombre y fecha */}
+                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
+                        ¡Bienvenido de vuelta, {user?.nombre}!
                     </h2>
-                    <p className="text-white/80 text-sm md:text-lg lg:text-xl">
-                        Gestiona tus clientes y entrenamientos desde tu panel profesional
+                    <p className="text-white/80 text-sm md:text-base lg:text-lg capitalize">
+                        {currentDate}
                     </p>
                 </div>
 
@@ -116,45 +115,48 @@ export const TrainerDashboard: React.FC = () => {
                 {/* Banner de perfil incompleto */}
                 <CompleteProfileBanner user={user} />
 
-                {/* Cards de métricas */}
-                <div className="px-4 lg:px-8 mb-12 lg:mb-20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-                        {/* Active Clients */}
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            {renderMetricValue(getActiveClients())}
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
-                                Clientes Activos
-                            </p>
-                            <p className="text-slate-600 text-sm lg:text-base">
-                                {getActivePercentage()} del total
-                            </p>
-                        </div>
+                {/* 4 KPI Cards */}
+                <div className="px-4 lg:px-8 mb-8 lg:mb-12">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                        {/* Total Clients - REAL */}
+                        <KPICard
+                            value={getTotalClients()}
+                            trend="+8%"
+                            label="Total de Clientes"
+                            description="vs mes anterior"
+                            isLoading={isLoadingStats}
+                        />
 
-                        {/* Inactive Clients */}
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            {renderMetricValue(getInactiveClients())}
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
-                                Clientes Inactivos
-                            </p>
-                            <p className="text-slate-600 text-sm lg:text-base">
-                                Requieren seguimiento
-                            </p>
-                        </div>
+                        {/* Avg Client Improvement - MOCK */}
+                        <KPICard
+                            value={`${clientImprovement.value}%`}
+                            trend={clientImprovement.trend}
+                            label="Progreso Promedio"
+                            description="en todos los programas"
+                            isLoading={clientImprovement.isLoading}
+                        />
 
-                        {/* Total Clients */}
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 md:col-span-2 lg:col-span-1">
-                            {renderMetricValue(getTotalClients())}
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-slate-700 mb-1">
-                                Total de Clientes
-                            </p>
-                            <p className="text-slate-600 text-sm lg:text-base">
-                                En tu cartera
-                            </p>
-                        </div>
+                        {/* Client Satisfaction - MOCK */}
+                        <KPICard
+                            value={clientSatisfaction.value}
+                            trend={clientSatisfaction.trend}
+                            label="Satisfacción del Cliente"
+                            description="feedback post-sesión"
+                            isLoading={clientSatisfaction.isLoading}
+                        />
+
+                        {/* Plan Adherence - MOCK */}
+                        <KPICard
+                            value={`${planAdherence.value}%`}
+                            trend={planAdherence.trend}
+                            label="Adherencia al Plan"
+                            description="planificado vs ejecutado"
+                            isLoading={planAdherence.isLoading}
+                        />
                     </div>
 
-                    {/* Error state */}
-                    {isError && (
+                    {/* Error state para stats reales */}
+                    {isErrorStats && (
                         <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-4 text-center">
                             <p className="text-red-600 text-sm">
                                 No se pudieron cargar las estadísticas. Intenta recargar la página.
@@ -163,110 +165,88 @@ export const TrainerDashboard: React.FC = () => {
                     )}
                 </div>
 
-                {/* Botones principales */}
-                <div className="px-4 lg:px-8 mb-12 lg:mb-16">
-                    <div className="flex flex-col md:flex-row gap-4 lg:gap-6 justify-center max-w-4xl mx-auto">
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={handleManageClients}
-                        >
-                            Gestionar Clientes
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={() => navigate("/dashboard/training-plans")}
-                        >
-                            Training Planning
-                        </Button>
-
-                        <Button
-                            variant="outline"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={() => navigate("/dashboard/exercises")}
-                        >
-                            Base de Ejercicios
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Bloque de clientes recientes */}
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="max-w-4xl mx-auto">
-                        <div 
-                            className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group"
-                            onClick={handleManageClients}
-                        >
-                            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                                <div>
-                                    <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-2">
-                                        Gestión de Clientes
-                                    </h3>
-                                    <p className="text-slate-600 text-sm lg:text-base">
-                                        Visualiza y administra tus clientes
-                                    </p>
-                                </div>
-                                <div className="text-primary-600 group-hover:text-primary-700 self-end md:self-center">
-                                    <svg
-                                        className="w-6 h-6 lg:w-8 lg:h-8"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5l7 7-7 7"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-                                <div>
-                                    {isLoading ? (
-                                        <div className="h-8 bg-slate-200 rounded animate-pulse mb-2" />
-                                    ) : (
-                                        <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
-                                            {getActiveClients()}
+                {/* Priority Alerts (izq) + Quick Actions (der) - SEGÚN FIGMA */}
+                <div className="px-4 lg:px-8 mb-8 lg:mb-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Priority Alerts - Izquierda */}
+                        <PriorityAlertsWidget />
+                        
+                        {/* Quick Actions - Derecha */}
+                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                            <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-6">
+                                Acciones Rápidas
+                            </h3>
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Crear Plan */}
+                                <div
+                                    className="bg-blue-50 rounded-xl p-4 cursor-pointer hover:bg-blue-100 transition-all"
+                                    onClick={() => navigate("/dashboard/training-plans")}
+                                >
+                                    <div className="text-center">
+                                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                            </svg>
                                         </div>
-                                    )}
-                                    <div className="text-xs lg:text-sm text-slate-600">
-                                        Activos
+                                        <h4 className="font-semibold text-slate-800 text-sm mb-1">Crear Plan de Entrenamiento</h4>
+                                        <p className="text-xs text-slate-600">Construye un programa</p>
                                     </div>
                                 </div>
-                                <div>
-                                    {isLoading ? (
-                                        <div className="h-8 bg-slate-200 rounded animate-pulse mb-2" />
-                                    ) : (
-                                        <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
-                                            {getInactiveClients()}
+
+                                {/* Añadir Cliente */}
+                                <div
+                                    className="bg-blue-50 rounded-xl p-4 cursor-pointer hover:bg-blue-100 transition-all"
+                                    onClick={handleManageClients}
+                                >
+                                    <div className="text-center">
+                                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                                            </svg>
                                         </div>
-                                    )}
-                                    <div className="text-xs lg:text-sm text-slate-600">
-                                        Inactivos
+                                        <h4 className="font-semibold text-slate-800 text-sm mb-1">Añadir Cliente</h4>
+                                        <p className="text-xs text-slate-600">Nuevo registro</p>
                                     </div>
                                 </div>
-                                <div>
-                                    {isLoading ? (
-                                        <div className="h-8 bg-slate-200 rounded animate-pulse mb-2" />
-                                    ) : (
-                                        <div className="text-xl md:text-2xl lg:text-3xl font-bold text-slate-800">
-                                            {getTotalClients()}
+
+                                {/* Generar Reportes - Disabled */}
+                                <div className="bg-blue-50/50 rounded-xl p-4 cursor-not-allowed opacity-50">
+                                    <div className="text-center">
+                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                            </svg>
                                         </div>
-                                    )}
-                                    <div className="text-xs lg:text-sm text-slate-600">
-                                        Total
+                                        <h4 className="font-semibold text-slate-600 text-sm mb-1">Generar Reportes</h4>
+                                        <p className="text-xs text-slate-500">Próximamente</p>
+                                    </div>
+                                </div>
+
+                                {/* Agendar Sesión - Disabled */}
+                                <div className="bg-blue-50/50 rounded-xl p-4 cursor-not-allowed opacity-50">
+                                    <div className="text-center">
+                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
+                                            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                            </svg>
+                                        </div>
+                                        <h4 className="font-semibold text-slate-600 text-sm mb-1">Agendar Sesión</h4>
+                                        <p className="text-xs text-slate-500">Próximamente</p>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Client Billing (izq) + Client Progress (der) - SEGÚN FIGMA */}
+                <div className="px-4 lg:px-8 mb-8 lg:mb-12">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Client Billing - Izquierda */}
+                        <ClientBillingChart />
+                        
+                        {/* Client Progress - Derecha */}
+                        <ClientProgressWidget />
                     </div>
                 </div>
             </DashboardLayout>

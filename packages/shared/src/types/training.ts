@@ -427,6 +427,55 @@ export interface AllCyclesResponse {
 }
 
 // ========================================
+// FATIGUE ALERTS
+// ========================================
+
+export type FatigueAlertType = "overtraining" | "recovery_needed" | "session_adjustment";
+export type FatigueAlertSeverity = "low" | "medium" | "high" | "critical";
+
+export interface FatigueAlert {
+    id: number;
+    client_id: number;
+    trainer_id: number;
+    fatigue_analysis_id: number | null;
+    alert_type: FatigueAlertType;
+    severity: FatigueAlertSeverity;
+    title: string;
+    message: string;
+    recommendations: string | null;
+    is_read: boolean;
+    is_resolved: boolean;
+    resolved_at: string | null; // ISO datetime
+    resolved_by: number | null;
+    resolution_notes: string | null;
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+export interface FatigueAlertCreate {
+    client_id: number;
+    trainer_id: number;
+    fatigue_analysis_id?: number | null;
+    alert_type: FatigueAlertType;
+    severity: FatigueAlertSeverity;
+    title: string;
+    message: string;
+    recommendations?: string | null;
+}
+
+export interface FatigueAlertUpdate {
+    alert_type?: FatigueAlertType;
+    severity?: FatigueAlertSeverity;
+    title?: string;
+    message?: string;
+    recommendations?: string | null;
+    is_read?: boolean;
+    is_resolved?: boolean;
+    resolution_notes?: string | null;
+}
+
+// ========================================
 // MILESTONES (Hitos importantes del plan)
 // ========================================
 

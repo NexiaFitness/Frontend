@@ -6,6 +6,7 @@ export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
 export * from "./api/exercisesApi";
+export * from "./api/fatigueApi";
 
 // Store
 export * from "./store/authSlice";
@@ -155,6 +156,7 @@ export * from "./hooks/usePublicNavigation";
 // Hooks - Clients (ordenados alfabéticamente)
 export * from "./hooks/clients/useClientDetail";
 export * from "./hooks/clients/useClientFatigue";
+export * from "./hooks/clients/useFatigueAlerts";
 export * from "./hooks/clients/useClientForm";
 export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/clients/useClientProgress";
@@ -190,3 +192,6 @@ export * from "./utils/charts/chartAggregators";
 export * from "./components/SmartNavigation";
 export * from "./utils/validations";
 export * from "./utils/calculations";
+
+// Dashboard hooks
+export * from "./hooks/dashboard";
