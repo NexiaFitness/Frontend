@@ -12,7 +12,6 @@
 
 import React from "react";
 import type { FatigueAlert } from "@nexia/shared/types/training";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface FatigueAlertCardProps {
     alert: FatigueAlert;

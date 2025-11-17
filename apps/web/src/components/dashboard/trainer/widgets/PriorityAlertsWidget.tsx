@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { useGetUnreadFatigueAlertsQuery, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
+import type { FatigueAlertSeverity, FatigueAlertType } from "@nexia/shared/types/training";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 
 export const PriorityAlertsWidget: React.FC = () => {
@@ -34,7 +35,7 @@ export const PriorityAlertsWidget: React.FC = () => {
         );
     }
 
-    const getSeverityColor = (severity: string) => {
+    const getSeverityColor = (severity: FatigueAlertSeverity) => {
         switch (severity) {
             case "critical": return "bg-red-100 border-red-500 text-red-800";
             case "high": return "bg-orange-100 border-orange-500 text-orange-800";
@@ -44,7 +45,7 @@ export const PriorityAlertsWidget: React.FC = () => {
         }
     };
 
-    const getAlertTypeLabel = (type: string) => {
+    const getAlertTypeLabel = (type: FatigueAlertType) => {
         switch (type) {
             case "overtraining": return "Sobreentrenamiento";
             case "recovery_needed": return "Recuperación Necesaria";

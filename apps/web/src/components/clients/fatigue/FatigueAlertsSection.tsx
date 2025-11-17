@@ -41,7 +41,6 @@ export const FatigueAlertsSection: React.FC<FatigueAlertsSectionProps> = ({ clie
         isLoading,
         isCreating,
         isError,
-        error,
         refetch,
     } = useFatigueAlerts(clientId);
 

@@ -63,7 +63,11 @@ export const CreateFatigueAlertModal: React.FC<CreateFatigueAlertModalProps> = (
         ) => {
             const value = e.target.value;
             setFormData((prev) => ({ ...prev, [field]: value }));
-            setErrors((prev) => ({ ...prev, [field]: undefined }));
+            setErrors((prev) => {
+                const newErrors = { ...prev };
+                delete newErrors[field];
+                return newErrors;
+            });
         },
         []
     );
