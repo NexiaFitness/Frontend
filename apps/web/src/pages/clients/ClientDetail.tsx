@@ -200,21 +200,19 @@ export const ClientDetail: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                <div className="min-h-screen bg-white -mt-16 md:-mt-18 lg:-mt-20 pt-4 lg:pt-6">
+                <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     {/* Header con foto, nombre y actions */}
                     <ClientHeader 
                         client={client} 
-                        onRefresh={refetchAll}
-                        onNewTrainingPlan={() => navigate("/dashboard/training-plans")}
-                        onEditTrainingPlan={() => navigate("/dashboard/training-plans")}
+                        onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                         onAnthropometricData={() => setActiveTab("progress")}
                     />
 
-                    {/* Tabs Navigation */}
-                    <div className="bg-white border-b border-gray-200">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0">
+                    {/* Tabs Navigation - Separado del header */}
+                    <div className="mt-6 px-4 sm:px-6 lg:px-8">
+                        <div className="bg-white rounded-lg shadow w-fit">
                             <nav 
-                                className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-transparent" 
+                                className="flex space-x-4 sm:space-x-6 lg:space-x-8 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent px-6 py-2 border-b-2 border-gray-200" 
                                 aria-label="Tabs" 
                                 style={{ 
                                     WebkitOverflowScrolling: 'touch',
@@ -231,21 +229,18 @@ export const ClientDetail: React.FC = () => {
                                         onClick={() => !tab.disabled && setActiveTab(tab.id)}
                                         disabled={tab.disabled}
                                         className={`
-                    py-3 sm:py-4 px-3 sm:px-2 lg:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap flex-shrink-0
-                    ${activeTab === tab.id
-                                            ? "border-transparent sm:border-b-2 sm:border-[#4A67B3]"
-                                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                        }
-                    ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                         `}
-                                        style={activeTab === tab.id ? { 
-                                            color: '#4A67B3'
-                                        } : {}}
+                                            py-2 px-2 border-b-2 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-shrink-0
+                                            ${activeTab === tab.id
+                                                ? "border-[#4A67B3] text-[#4A67B3]"
+                                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                            }
+                                            ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                                        `}
                                         aria-current={activeTab === tab.id ? "page" : undefined}
                                     >
                                         {tab.label}
                                         {tab.disabled && (
-                                            <span className="ml-1 sm:ml-2 text-xs text-gray-400">(Próximamente)</span>
+                                            <span className="ml-2 text-xs text-gray-400 font-normal">(Próximamente)</span>
                                         )}
                                     </button>
                                 ))}
@@ -254,7 +249,7 @@ export const ClientDetail: React.FC = () => {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
+                    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         {renderTabContent()}
                     </div>
                 </div>
