@@ -240,7 +240,7 @@ export const TrainerDashboard: React.FC = () => {
                 </div>
 
                 {/* Client Billing (izq) + Client Progress (der) - SEGÚN FIGMA */}
-                <div className="px-4 lg:px-8 mb-8 lg:mb-12">
+                <div className="px-4 lg:px-8 mb-8 lg:mb-12 pb-12 lg:pb-16">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Client Billing - Izquierda */}
                         <ClientBillingChart />
