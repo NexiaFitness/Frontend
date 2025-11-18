@@ -230,10 +230,10 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                                 {day}
                             </span>
 
-                            {/* Badge "Session" si hay sesiones */}
+                            {/* Badge "Sesión" si hay sesiones */}
                             {hasSessions && (
                                 <span className="text-[10px] md:text-xs px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded-full font-medium">
-                                    Session
+                                    Sesión
                                 </span>
                             )}
                         </div>
@@ -244,11 +244,11 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
             <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-4 text-xs md:text-sm text-slate-600">
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-slate-200" />
-                    <span>Scheduled</span>
+                    <span>Programada</span>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-400" />
-                    <span>Completed</span>
+                    <span>Completada</span>
                 </div>
             </div>
         </div>

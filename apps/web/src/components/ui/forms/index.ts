@@ -9,6 +9,9 @@
 
 export { Input } from "./Input";
 export { FormSelect } from "./FormSelect";
+export { Textarea } from "./Textarea";
+export { Checkbox } from "./Checkbox";
 
 export type { InputType, InputSize } from "./Input";
 export type { SelectOption, SelectSize } from "./FormSelect";
+export type { TextareaSize } from "./Textarea";

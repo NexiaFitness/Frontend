@@ -231,3 +231,24 @@ export interface SessionSummary {
     actual_volume: number | null;
 }
 
+// ========================================
+// TRAINING SESSION CREATE (for session programming)
+// ========================================
+
+export interface TrainingSessionCreate {
+    microcycle_id: number;
+    client_id: number;
+    trainer_id: number;
+    session_date: string; // ISO date YYYY-MM-DD
+    session_name: string;
+    session_type: string;
+    planned_duration?: number | null; // in minutes
+    actual_duration?: number | null; // in minutes
+    planned_intensity?: number | null; // 1-10
+    planned_volume?: number | null; // 1-10
+    actual_intensity?: number | null;
+    actual_volume?: number | null;
+    status?: string; // Default: "planned"
+    notes?: string | null;
+}
+

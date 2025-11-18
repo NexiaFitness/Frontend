@@ -131,7 +131,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
 
             {/* Header */}
             <div>
-                <h2 className={TYPOGRAPHY.sectionTitle}>Daily Coherence</h2>
+                <h2 className={TYPOGRAPHY.sectionTitle}>Coherencia Diaria</h2>
                 <p className="text-slate-600 mt-2">
                     Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
                 </p>
@@ -158,7 +158,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                     color={data.monotony > 2.0 ? "orange" : "green"}
                 />
                 <MetricCard
-                    title="Strain"
+                    title="Carga"
                     value={data.strain}
                     subtitle="Carga acumulada"
                     color="blue"
@@ -235,8 +235,8 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                 <ResponsiveContainer width="100%" height={300}>
                     <ComposedChart data={data.monotony_by_week as MonotonyWeekData[]}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="week" />
-                        <YAxis domain={[0, 3]} />
+                        <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
+                        <YAxis domain={[0, 3]} label={{ value: "Monotonía", angle: -90, position: "insideLeft" }} />
                         <Tooltip />
                         <Legend />
                         {/* Zona de riesgo (monotony > 2.0) - área sombreada */}
@@ -274,23 +274,23 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             </ChartCard>
 
             {/* Gráfico 4: Strain & Load (Dual Line + Bar Chart) */}
-            <ChartCard title="Strain y Carga por Semana">
+            <ChartCard title="Carga y Volumen por Semana">
                 <ResponsiveContainer width="100%" height={300}>
                     <ComposedChart data={data.strain_by_week as StrainWeekData[]}>
                         <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="week" />
-                        <YAxis yAxisId="left" />
-                        <YAxis yAxisId="right" orientation="right" />
+                        <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
+                        <YAxis yAxisId="left" label={{ value: "Volumen", angle: -90, position: "insideLeft" }} />
+                        <YAxis yAxisId="right" orientation="right" label={{ value: "Carga", angle: 90, position: "insideRight" }} />
                         <Tooltip />
                         <Legend />
-                        <Bar yAxisId="left" dataKey="load" fill="#94a3b8" name="Carga" />
+                        <Bar yAxisId="left" dataKey="load" fill="#94a3b8" name="Volumen" />
                         <Line
                             yAxisId="right"
                             type="monotone"
                             dataKey="strain"
                             stroke="#4A67B3"
                             strokeWidth={3}
-                            name="Strain"
+                            name="Carga"
                             dot={{ r: 6 }}
                         />
                     </ComposedChart>
@@ -308,7 +308,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             </ChartCard>
 
             {/* Key Recommendations */}
-            <ChartCard title="Recomendaciones Clave">
+            <ChartCard title="Recomendaciones Principales">
                 <ul className="space-y-3">
                     {data.recommendations.map((rec, index) => (
                         <li key={index} className="flex items-start">

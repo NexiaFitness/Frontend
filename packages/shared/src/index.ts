@@ -237,6 +237,9 @@ export * from "./hooks/reports";
 // Hooks - Scheduling
 export * from "./hooks/scheduling";
 
+// Hooks - Session Programming
+export * from "./hooks/sessionProgramming";
+
 // Mocks (temporal - mientras backend implementa endpoints)
 export * from "./mocks/coherenceMockData";
 export * from "./mocks/testingMockData";

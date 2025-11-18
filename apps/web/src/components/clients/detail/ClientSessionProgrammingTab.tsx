@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useGetSessionTemplatesQuery } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -29,6 +30,7 @@ interface ClientSessionProgrammingTabProps {
 export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabProps> = ({
     clientId,
 }) => {
+    const navigate = useNavigate();
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
 
     const { 
@@ -64,21 +66,22 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
     const isLoading = isLoadingTemplates || isLoadingSessions;
     const isError = isErrorTemplates || isErrorSessions;
 
-    // Handlers (placeholders)
+    // Handlers
     const handleEditSchedule = () => {
-        alert("Edit Schedule - Próximamente");
+        // TODO: Implementar edición de schedule
+        alert("Editar Calendario - Próximamente");
     };
 
     const handleAddSession = () => {
-        alert("Add Session - Próximamente");
+        navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`);
     };
 
     const handleUseTemplate = (templateId: number) => {
-        alert(`Usar template ${templateId} - Próximamente`);
+        navigate(`/dashboard/session-programming/create-from-template/${templateId}?clientId=${clientId}`);
     };
 
     const handleCreateTemplate = () => {
-        alert("Create Template - Próximamente");
+        navigate("/dashboard/session-programming/create-template");
     };
 
     const handleDateClick = (date: Date) => {
@@ -113,7 +116,7 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
             {/* Header con título y botones */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
                 <div>
-                    <h2 className={TYPOGRAPHY.sectionTitle}>Session Programming</h2>
+                    <h2 className={TYPOGRAPHY.sectionTitle}>Programación de Sesiones</h2>
                 </div>
                 <div className="flex gap-2">
                     <Button
@@ -121,14 +124,14 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
                         size="sm"
                         onClick={handleEditSchedule}
                     >
-                        Edit Schedule
+                        Editar Calendario
                     </Button>
                     <Button
                         variant="primary"
                         size="sm"
                         onClick={handleAddSession}
                     >
-                        + Add Session
+                        + Añadir Sesión
                     </Button>
                 </div>
             </div>
@@ -182,7 +185,7 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({ session }) =>
     return (
         <div className="bg-white rounded-lg shadow p-4">
             <h3 className="text-sm font-semibold text-slate-600 mb-3">
-                Upcoming Session
+                Próxima Sesión
             </h3>
             
             {session ? (
@@ -196,7 +199,7 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({ session }) =>
                 </div>
             ) : (
                 <p className="text-sm text-slate-500 italic">
-                    No upcoming sessions
+                    No hay sesiones próximas
                 </p>
             )}
         </div>
@@ -221,13 +224,13 @@ const SessionTemplatesList: React.FC<SessionTemplatesListProps> = ({
     return (
         <div className="bg-white rounded-lg shadow p-4">
             <h3 className="text-sm font-semibold text-slate-600 mb-4">
-                Session Templates
+                Plantillas de Sesión
             </h3>
 
             <div className="space-y-3">
                 {templates.length === 0 ? (
                     <p className="text-sm text-slate-500 italic">
-                        No templates available
+                        No hay plantillas disponibles
                     </p>
                 ) : (
                     templates.map((template) => (
@@ -239,7 +242,7 @@ const SessionTemplatesList: React.FC<SessionTemplatesListProps> = ({
                                 {template.name}
                             </h4>
                             <div className="flex items-center gap-3 text-xs text-slate-500 mb-3">
-                                <span>6 exercises</span>
+                                <span>6 ejercicios</span>
                                 {template.estimated_duration && (
                                     <span>{template.estimated_duration} min</span>
                                 )}
@@ -250,7 +253,7 @@ const SessionTemplatesList: React.FC<SessionTemplatesListProps> = ({
                                 onClick={() => onUseTemplate(template.id)}
                                 className="w-full"
                             >
-                                Use Template
+                                Usar Plantilla
                             </Button>
                         </div>
                     ))
@@ -263,7 +266,7 @@ const SessionTemplatesList: React.FC<SessionTemplatesListProps> = ({
                 onClick={onCreateTemplate}
                 className="w-full mt-4"
             >
-                + Create Template
+                + Crear Plantilla
             </Button>
         </div>
     );

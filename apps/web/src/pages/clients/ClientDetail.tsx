@@ -53,9 +53,9 @@ interface Tab {
 
 const TABS: Tab[] = [
     { id: "overview", label: "Resumen" },
-    { id: "session-programming", label: "Session Programming" },
-    { id: "daily-coherence", label: "Daily Coherence" },
-    { id: "testing", label: "Testing" },
+    { id: "session-programming", label: "Programación de Sesiones" },
+    { id: "daily-coherence", label: "Coherencia Diaria" },
+    { id: "testing", label: "Tests" },
     { id: "progress", label: "Progreso" },
     { id: "workouts", label: "Entrenamientos" },
     { id: "nutrition", label: "Nutrición", disabled: true }, // Futuro

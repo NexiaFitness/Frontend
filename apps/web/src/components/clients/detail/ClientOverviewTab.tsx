@@ -154,9 +154,9 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client }) 
             {/* Notes */}
             {(client.notes_1 || client.notes_2 || client.notes_3) && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {client.notes_1 && <NoteCard title="Note #1" content={client.notes_1} />}
-                    {client.notes_2 && <NoteCard title="Note #2" content={client.notes_2} />}
-                    {client.notes_3 && <NoteCard title="Note #3" content={client.notes_3} />}
+                    {client.notes_1 && <NoteCard title="Nota #1" content={client.notes_1} />}
+                    {client.notes_2 && <NoteCard title="Nota #2" content={client.notes_2} />}
+                    {client.notes_3 && <NoteCard title="Nota #3" content={client.notes_3} />}
                 </div>
             )}
         </div>

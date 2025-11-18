@@ -37,7 +37,10 @@ import type {
     SessionBlockExerciseUpdate,
     // Session Summary
     SessionSummary,
+    // Training Session
+    TrainingSessionCreate,
 } from "../types/sessionProgramming";
+import type { TrainingSession } from "../types/training";
 
 export const sessionProgrammingApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -451,6 +454,29 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
                 { type: "SessionBlock", id: `SESSION-${sessionId}` },
             ],
         }),
+
+        // ========================================
+        // TRAINING SESSION
+        // ========================================
+
+        /**
+         * Crear nueva training session
+         * Backend: POST /api/v1/training-sessions/
+         */
+        createTrainingSession: builder.mutation<TrainingSession, TrainingSessionCreate>({
+            query: (data) => ({
+                url: "/training-sessions/",
+                method: "POST",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, data) => [
+                { type: "TrainingSession", id: "LIST" },
+                { type: "Client", id: `SESSIONS-${data.client_id}` },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -488,5 +514,8 @@ export const {
 
     // Session Summary
     useGetSessionSummaryQuery,
+
+    // Training Session
+    useCreateTrainingSessionMutation,
 } = sessionProgrammingApi;
 
