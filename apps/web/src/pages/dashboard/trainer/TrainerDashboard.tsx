@@ -166,24 +166,24 @@ export const TrainerDashboard: React.FC = () => {
 
                 {/* Priority Alerts (izq) + Quick Actions (der) - SEGÚN FIGMA */}
                 <div className="px-4 lg:px-8 mb-8 lg:mb-12">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
                         {/* Priority Alerts - Izquierda */}
                         <PriorityAlertsWidget />
                         
                         {/* Quick Actions - Derecha */}
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 flex flex-col">
                             <h3 className="text-xl lg:text-2xl font-bold text-slate-800 mb-6">
                                 Acciones Rápidas
                             </h3>
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-4 flex-1">
                                 {/* Crear Plan */}
                                 <div
-                                    className="bg-blue-50 rounded-xl p-4 cursor-pointer hover:bg-blue-100 transition-all"
+                                    className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
                                     onClick={() => navigate("/dashboard/training-plans")}
                                 >
                                     <div className="text-center">
-                                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                             </svg>
                                         </div>
@@ -194,12 +194,12 @@ export const TrainerDashboard: React.FC = () => {
 
                                 {/* Añadir Cliente */}
                                 <div
-                                    className="bg-blue-50 rounded-xl p-4 cursor-pointer hover:bg-blue-100 transition-all"
+                                    className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
                                     onClick={handleManageClients}
                                 >
                                     <div className="text-center">
-                                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                            <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
                                             </svg>
                                         </div>
@@ -208,29 +208,35 @@ export const TrainerDashboard: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Generar Reportes - Disabled */}
-                                <div className="bg-blue-50/50 rounded-xl p-4 cursor-not-allowed opacity-50">
+                                {/* Generar Reportes */}
+                                <div
+                                    className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
+                                    onClick={() => navigate("/dashboard/reports/generate")}
+                                >
                                     <div className="text-center">
-                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
                                         </div>
-                                        <h4 className="font-semibold text-slate-600 text-sm mb-1">Generar Reportes</h4>
-                                        <p className="text-xs text-slate-500">Próximamente</p>
+                                        <h4 className="font-semibold text-slate-800 text-sm mb-1">Generar Reportes</h4>
+                                        <p className="text-xs text-slate-600">Análisis y estadísticas</p>
                                     </div>
                                 </div>
 
-                                {/* Agendar Sesión - Disabled */}
-                                <div className="bg-blue-50/50 rounded-xl p-4 cursor-not-allowed opacity-50">
+                                {/* Agendar Sesión */}
+                                <div
+                                    className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
+                                    onClick={() => navigate("/dashboard/scheduling/schedule")}
+                                >
                                     <div className="text-center">
-                                        <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                                            <svg className="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                                            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
-                                        <h4 className="font-semibold text-slate-600 text-sm mb-1">Agendar Sesión</h4>
-                                        <p className="text-xs text-slate-500">Próximamente</p>
+                                        <h4 className="font-semibold text-slate-800 text-sm mb-1">Agendar Sesión</h4>
+                                        <p className="text-xs text-slate-600">Programar cita</p>
                                     </div>
                                 </div>
                             </div>
@@ -239,7 +245,7 @@ export const TrainerDashboard: React.FC = () => {
                 </div>
 
                 {/* Client Billing (izq) + Client Progress (der) - SEGÚN FIGMA */}
-                <div className="px-4 lg:px-8 mb-8 lg:mb-12 pb-12 lg:pb-16">
+                <div className="px-4 lg:px-8 mb-8 lg:mb-12 pb-20 lg:pb-24">
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Client Billing - Izquierda */}
                         <ClientBillingChart />

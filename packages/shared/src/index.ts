@@ -7,6 +7,7 @@ export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
+export * from "./api";
 
 // Store
 export * from "./store/authSlice";
@@ -107,6 +108,28 @@ export * from "./types/training";
 export * from "./types/sessionProgramming";
 export * from "./types/coherence";
 export * from "./types/dashboard";
+export * from "./types/reports";
+// Export scheduling types explicitly to avoid SessionType conflict with training.ts
+export type {
+    ScheduledSessionType,
+    SessionStatus,
+    SessionLocation,
+    ScheduledSession,
+    ScheduledSessionCreate,
+    ScheduledSessionUpdate,
+    ConflictCheckRequest,
+    ConflictCheckResponse,
+    AvailableSlotsRequest,
+    AvailableSlot,
+    AvailableSlotsResponse,
+    ScheduleSessionFormData,
+    ScheduledSessionsFilters,
+} from "./types/scheduling";
+export {
+    SCHEDULED_SESSION_TYPE,
+    SESSION_STATUS,
+    SESSION_LOCATION,
+} from "./types/scheduling";
 export type {
     ChartView,
     ChartDataPoint,
@@ -207,6 +230,12 @@ export * from "./utils/calculations";
 
 // Dashboard hooks
 export * from "./hooks/dashboard";
+
+// Hooks - Reports
+export * from "./hooks/reports";
+
+// Hooks - Scheduling
+export * from "./hooks/scheduling";
 
 // Mocks (temporal - mientras backend implementa endpoints)
 export * from "./mocks/coherenceMockData";

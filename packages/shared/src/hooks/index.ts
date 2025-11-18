@@ -29,4 +29,6 @@ export { useBillingInfoModal } from "./modals/useBillingInfoModal";
 export { useEmailVerificationGuard } from "./modals/useEmailVerificationGuard";
 
 export * from "./dashboard";
+export * from "./reports";
+export * from "./scheduling";
 

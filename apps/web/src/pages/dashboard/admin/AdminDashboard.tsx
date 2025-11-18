@@ -103,7 +103,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
 
                 {/* System Activity responsive */}
-                <div className="px-4 lg:px-8">
+                <div className="px-4 lg:px-8 pb-20 lg:pb-24">
                     <div className="max-w-4xl mx-auto">
                         <div 
                             className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-white/100 transition-all group"

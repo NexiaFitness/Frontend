@@ -49,6 +49,10 @@ import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
 import { ExerciseList } from "./pages/exercises/ExerciseList";
 import { ExerciseDetail } from "./pages/exercises/ExerciseDetail";
 
+// Reports & Scheduling (trainers only)
+import { GenerateReports } from "./pages/reports/GenerateReports";
+import { ScheduleSession } from "./pages/scheduling/ScheduleSession";
+
 // Páginas adicionales
 import Account from "./pages/account/Account";
 
@@ -247,6 +251,34 @@ function App() {
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
               <CompleteProfile />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* REPORTS & SCHEDULING - Trainers only */}
+      {/* ============================================ */}
+
+      {/* Generate Reports */}
+      <Route
+        path="/dashboard/reports/generate"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <GenerateReports />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Schedule Session */}
+      <Route
+        path="/dashboard/scheduling/schedule"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ScheduleSession />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }
