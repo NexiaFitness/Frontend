@@ -1,8 +1,8 @@
 import React from "react";
-import { useDashboardClientProgress } from "@nexia/shared";
+import { useClientProgressCategories } from "@nexia/shared";
 
 export const ClientProgressWidget: React.FC = () => {
-    const { onTrack, behindSchedule, needAttention, overall, trend, isLoading } = useDashboardClientProgress();
+    const { onTrack, behindSchedule, needAttention, overall, trend, isLoading } = useClientProgressCategories();
 
     if (isLoading) {
         return (

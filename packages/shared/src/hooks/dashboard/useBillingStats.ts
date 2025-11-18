@@ -1,35 +1,56 @@
-interface BillingDataPoint {
-    month: string;
-    revenue: number;
-    clients: number;
+/**
+ * useBillingStats.ts — Hook para estadísticas de billing del dashboard
+ *
+ * Contexto:
+ * - Usa RTK Query para consumir endpoint real de billing
+ * - Transforma datos del backend a formato esperado por componentes
+ * - Mantiene misma interfaz que mock para compatibilidad
+ *
+ * @author Frontend Team
+ * @since v5.3.0
+ */
+
+import { useGetBillingStatsQuery } from "../../api/billingApi";
+import type { BillingPeriod } from "../../types/dashboard";
+
+interface UseBillingStatsReturn {
+    data: Array<{
+        month: string;
+        revenue: number;
+        clients: number;
+    }>;
+    summary: {
+        current: number;
+        growth: string;
+        revenue: string;
+        year: number;
+    };
+    isLoading: boolean;
+    isError: boolean;
 }
 
-const MOCK_DATA: BillingDataPoint[] = [
-    { month: "Jan", revenue: 4200, clients: 40 },
-    { month: "Feb", revenue: 4500, clients: 42 },
-    { month: "Mar", revenue: 4800, clients: 44 },
-    { month: "Apr", revenue: 5000, clients: 46 },
-    { month: "May", revenue: 5100, clients: 47 },
-    { month: "Jun", revenue: 5200, clients: 48 },
-    { month: "Jul", revenue: 5280, clients: 48 },
-    { month: "Aug", revenue: 5280, clients: 48 },
-    { month: "Sep", revenue: 5280, clients: 48 },
-    { month: "Oct", revenue: 5280, clients: 48 },
-    { month: "Nov", revenue: 5280, clients: 48 },
-    { month: "Dec", revenue: 5280, clients: 48 },
-];
+/**
+ * Hook para obtener estadísticas de billing
+ * Endpoint: GET /api/v1/billing/stats?period=monthly|annual
+ *
+ * @param period - Periodo de facturación (monthly o annual)
+ */
+export const useBillingStats = (period: BillingPeriod = "monthly"): UseBillingStatsReturn => {
+    const { data, isLoading, isError } = useGetBillingStatsQuery(period, {
+        refetchOnMountOrArgChange: true,
+        refetchOnFocus: false,
+        refetchOnReconnect: true,
+    });
 
-export const useBillingStats = () => {
     return {
-        data: MOCK_DATA,
-        summary: {
-            current: 48,
-            growth: "+8%",
-            revenue: "$5,280",
-            year: 2025,
+        data: data?.data ?? [],
+        summary: data?.summary ?? {
+            current: 0,
+            growth: "",
+            revenue: "$0",
+            year: new Date().getFullYear(),
         },
-        isLoading: false,
-        isError: false,
+        isLoading,
+        isError,
     };
 };
-

@@ -46,3 +46,28 @@ export interface ChartMetrics {
   showStrength?: boolean; // (Futuro) Mostrar métrica de fuerza
   showEndurance?: boolean; // (Futuro) Mostrar métrica de resistencia
 }
+
+// ========================================
+// TIPOS PARA GRÁFICOS DE COHERENCE
+// ========================================
+
+/**
+ * Datos para gráfico de adherencia (pie/donut chart)
+ */
+export interface AdherenceChartData {
+    name: string;
+    value: number;
+}
+
+/**
+ * Datos para scatter plot de intensidad prescrita vs percibida
+ */
+export interface IntensityScatterData {
+    x: number;
+    y: number;
+    session: string;
+}
+
+// Nota: MonotonyWeekData y StrainWeekData están en types/coherence.ts
+// Se re-exportan aquí para compatibilidad con gráficos
+export type { MonotonyWeekData, StrainWeekData } from "./coherence";

@@ -256,10 +256,7 @@ frontend/
 │   │   │           └── index.ts
 │   │   ├── mocks/                                # Mock data for development
 │   │   │   └── dashboard/
-│   │   │       ├── billingMockData.ts
-│   │   │       ├── index.ts
-│   │   │       ├── kpiMockData.ts
-│   │   │       └── progressMockData.ts
+│   │   │       └── (carpeta eliminada - desmockeado 2025-01-20)
 │   │   ├── pages/
 │   │   │   ├── account/
 │   │   │   │   └── Account.tsx
@@ -389,11 +386,11 @@ frontend/
 │   │   │   │   ├── useFatigueAlerts.ts          # Hook para gestión de alertas de fatiga
 │   │   │   │   ├── useUpdateClient.ts           # Hook para actualizar cliente (deprecated, usar useClientForm)
 │   │   │   │   └── useUpdateClientProgress.ts   # Hook para actualizar registros de progreso
-│   │   │   ├── dashboard/                       # Dashboard hooks
+│   │   │   ├── dashboard/                       # Dashboard hooks (todos con datos reales)
 │   │   │   │   ├── index.ts
-│   │   │   │   ├── useBillingStats.ts           # Hook para estadísticas de facturación
-│   │   │   │   ├── useDashboardClientProgress.ts # Hook para progreso de clientes (dashboard)
-│   │   │   │   └── useKPIMocks.ts               # Hooks mock para KPIs
+│   │   │   │   ├── useKPIs.ts                   # Hooks reales para KPIs (Improvement, Satisfaction, Adherence)
+│   │   │   │   ├── useBillingStats.ts           # Hook real para estadísticas de facturación
+│   │   │   │   └── useClientProgressCategories.ts # Hook real para categorías de progreso
 │   │   │   ├── exercises/                       # Exercise hooks
 │   │   │   │   ├── index.ts
 │   │   │   │   └── useExercises.ts              # Hook para gestión de ejercicios

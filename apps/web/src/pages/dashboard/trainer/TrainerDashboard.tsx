@@ -8,8 +8,7 @@
  * 
  * Notas de mantenimiento:
  * - EmailVerificationBanner y CompleteProfileBanner se renderizan condicionalmente
- * - Usa datos reales de useClientStats y alertas de fatiga
- * - Usa datos mockeados para: Improvement, Satisfaction, Adherence, Billing, Progress
+ * - Usa datos reales de backend: Stats, Improvement, Satisfaction, Adherence, Billing, Progress, Alerts
  * - Mantener gradiente mesh de fondo corporativo NEXIA
  * - TODO EN ESPAÑOL según diseño final
  * - ORDEN FIGMA: KPIs → (Alerts + Actions) → (Billing + Progress)
@@ -53,7 +52,7 @@ export const TrainerDashboard: React.FC = () => {
         isError: isErrorStats,
     } = useClientStats();
 
-    // Hooks de datos mockeados
+    // Hooks de KPIs del dashboard (datos reales del backend)
     const clientImprovement = useClientImprovement();
     const clientSatisfaction = useClientSatisfaction();
     const planAdherence = usePlanAdherence();
@@ -127,7 +126,7 @@ export const TrainerDashboard: React.FC = () => {
                             isLoading={isLoadingStats}
                         />
 
-                        {/* Avg Client Improvement - MOCK */}
+                        {/* Avg Client Improvement - REAL */}
                         <KPICard
                             value={`${clientImprovement.value}%`}
                             trend={clientImprovement.trend}
@@ -136,7 +135,7 @@ export const TrainerDashboard: React.FC = () => {
                             isLoading={clientImprovement.isLoading}
                         />
 
-                        {/* Client Satisfaction - MOCK */}
+                        {/* Client Satisfaction - REAL */}
                         <KPICard
                             value={clientSatisfaction.value}
                             trend={clientSatisfaction.trend}
@@ -145,7 +144,7 @@ export const TrainerDashboard: React.FC = () => {
                             isLoading={clientSatisfaction.isLoading}
                         />
 
-                        {/* Plan Adherence - MOCK */}
+                        {/* Plan Adherence - REAL */}
                         <KPICard
                             value={`${planAdherence.value}%`}
                             trend={planAdherence.trend}

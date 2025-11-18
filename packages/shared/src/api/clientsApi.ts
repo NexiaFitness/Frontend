@@ -32,6 +32,11 @@ import type {
     ClientFeedback,
     FatigueAnalysis,
 } from "../types/training";
+import type {
+    ClientImprovementResponse,
+    ClientSatisfactionResponse,
+    ProgressCategoriesResponse,
+} from "../types/dashboard";
 
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -365,6 +370,46 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        // ========================================
+        // DASHBOARD KPI ENDPOINTS
+        // ========================================
+
+        /**
+         * Obtener promedio de mejora de clientes
+         * Endpoint: GET /api/v1/clients/improvement-avg
+         */
+        getClientImprovementAvg: builder.query<ClientImprovementResponse, void>({
+            query: () => ({
+                url: "/clients/improvement-avg",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "DASHBOARD_KPI" }],
+        }),
+
+        /**
+         * Obtener promedio de satisfacción de clientes
+         * Endpoint: GET /api/v1/clients/satisfaction-avg
+         */
+        getClientSatisfactionAvg: builder.query<ClientSatisfactionResponse, void>({
+            query: () => ({
+                url: "/clients/satisfaction-avg",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "DASHBOARD_KPI" }],
+        }),
+
+        /**
+         * Obtener categorías de progreso de clientes
+         * Endpoint: GET /api/v1/clients/progress-categories
+         */
+        getClientProgressCategories: builder.query<ProgressCategoriesResponse, void>({
+            query: () => ({
+                url: "/clients/progress-categories",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "DASHBOARD_KPI" }],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -392,4 +437,8 @@ export const {
     useGetClientFeedbackQuery,
     // Fatigue hooks
     useGetClientFatigueAnalysisQuery,
+    // Dashboard KPI hooks
+    useGetClientImprovementAvgQuery,
+    useGetClientSatisfactionAvgQuery,
+    useGetClientProgressCategoriesQuery,
 } = clientsApi;

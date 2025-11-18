@@ -1,4 +1,4 @@
-export * from "./useKPIMocks";
+export * from "./useKPIs";
 export * from "./useBillingStats";
-export * from "./useDashboardClientProgress";
+export * from "./useClientProgressCategories";
 

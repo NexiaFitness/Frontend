@@ -104,7 +104,18 @@ export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
-export type { ChartView, ChartDataPoint, ChartMetrics } from "./types/charts";
+export * from "./types/sessionProgramming";
+export * from "./types/coherence";
+export * from "./types/dashboard";
+export type {
+    ChartView,
+    ChartDataPoint,
+    ChartMetrics,
+    AdherenceChartData,
+    IntensityScatterData,
+    MonotonyWeekData,
+    StrainWeekData,
+} from "./types/charts";
 
 // Enums explícitos de client (para uso directo en componentes)
 export {
@@ -164,6 +175,7 @@ export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
+export * from "./hooks/clients/useCoherence";
 
 // Hooks - Exercises
 export * from "./hooks/exercises";
@@ -195,3 +207,7 @@ export * from "./utils/calculations";
 
 // Dashboard hooks
 export * from "./hooks/dashboard";
+
+// Mocks (temporal - mientras backend implementa endpoints)
+export * from "./mocks/coherenceMockData";
+export * from "./mocks/testingMockData";

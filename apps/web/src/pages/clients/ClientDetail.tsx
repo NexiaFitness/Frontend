@@ -29,6 +29,9 @@ import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
 import { ClientOverviewTab } from "@/components/clients/detail/ClientOverviewTab";
+import { ClientSessionProgrammingTab } from "@/components/clients/detail/ClientSessionProgrammingTab";
+import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDailyCoherenceTab";
+import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientWorkoutsTab } from "@/components/clients/detail/ClientWorkoutsTab";
 import { ClientNutritionTab } from "@/components/clients/detail/ClientNutritionTab";
 import { ClientSettingsTab } from "@/components/clients/detail/ClientSettingsTab";
@@ -40,7 +43,7 @@ const ClientProgressTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "progress" | "workouts" | "nutrition" | "settings";
+type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts" | "nutrition" | "settings";
 
 interface Tab {
     id: TabId;
@@ -50,6 +53,9 @@ interface Tab {
 
 const TABS: Tab[] = [
     { id: "overview", label: "Resumen" },
+    { id: "session-programming", label: "Session Programming" },
+    { id: "daily-coherence", label: "Daily Coherence" },
+    { id: "testing", label: "Testing" },
     { id: "progress", label: "Progreso" },
     { id: "workouts", label: "Entrenamientos" },
     { id: "nutrition", label: "Nutrición", disabled: true }, // Futuro
@@ -163,6 +169,12 @@ export const ClientDetail: React.FC = () => {
         switch (activeTab) {
             case "overview":
                 return <ClientOverviewTab client={client} />;
+            case "session-programming":
+                return <ClientSessionProgrammingTab clientId={clientId} />;
+            case "daily-coherence":
+                return <ClientDailyCoherenceTab clientId={clientId} />;
+            case "testing":
+                return <ClientTestingTab clientId={clientId} />;
             case "progress":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
