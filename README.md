@@ -120,14 +120,18 @@ frontend/
 │   │   │   │   └── VerifyEmailForm.tsx
 │   │   │   ├── clients/                         # Client management
 │   │   │   │   ├── detail/                      # Client Detail components
+│   │   │   │   │   ├── ClientDailyCoherenceTab.tsx # Tab Coherencia Diaria - Gráficos de coherencia
 │   │   │   │   │   ├── ClientHeader.tsx         # Header con foto y actions
 │   │   │   │   │   ├── ClientNutritionTab.tsx   # Tab Nutrition (placeholder)
 │   │   │   │   │   ├── ClientOverviewTab.tsx   # Tab Overview - Info general
 │   │   │   │   │   ├── ClientProgressTab.tsx   # Tab Progress - Gráficos de evolución
+│   │   │   │   │   ├── ClientSessionProgrammingTab.tsx # Tab Programación de Sesiones
 │   │   │   │   │   ├── ClientSettingsTab.tsx   # Tab Settings - Configuración y delete
+│   │   │   │   │   ├── ClientTestingTab.tsx   # Tab Testing - Tests físicos
 │   │   │   │   │   ├── ClientWorkoutsTab.tsx   # Tab Workouts - Planes y sesiones
 │   │   │   │   │   ├── ProgressForm.tsx         # Formulario para crear registros de progreso
 │   │   │   │   │   └── index.ts
+│   │   │   │   ├── testing/                     # Testing components (placeholder)
 │   │   │   │   ├── fatigue/                     # Fatigue alerts components
 │   │   │   │   │   ├── CreateFatigueAlertModal.tsx # Modal para crear alertas de fatiga
 │   │   │   │   │   ├── FatigueAlertCard.tsx     # Tarjeta de alerta individual
@@ -207,6 +211,9 @@ frontend/
 │   │   │   │   ├── HeroSection.tsx
 │   │   │   │   ├── ProblemSection.tsx
 │   │   │   │   └── index.ts
+│   │   │   ├── sessionProgramming/               # Session Programming components
+│   │   │   │   ├── SessionCalendar.tsx          # Calendario de sesiones
+│   │   │   │   └── index.ts
 │   │   │   ├── trainingPlans/                   # Training Plans components
 │   │   │   │   ├── charts/                      # Chart components
 │   │   │   │   │   ├── ChartControls.tsx
@@ -241,9 +248,11 @@ frontend/
 │   │   │       │   ├── __tests__/
 │   │   │       │   │   ├── FormSelect.test.tsx
 │   │   │       │   │   └── Input.test.tsx
+│   │   │       │   ├── Checkbox.tsx             # Checkbox input component
 │   │   │       │   ├── FormSelect.tsx
 │   │   │       │   ├── index.ts
-│   │   │       │   └── Input.tsx
+│   │   │       │   ├── Input.tsx
+│   │   │       │   └── Textarea.tsx             # Textarea input component
 │   │   │       ├── layout/
 │   │   │       │   ├── navbar/
 │   │   │       │   │   ├── NexiaSideMenu.tsx
@@ -288,6 +297,18 @@ frontend/
 │   │   │   │   ├── ExerciseDetail.tsx
 │   │   │   │   ├── ExerciseList.tsx
 │   │   │   │   └── index.ts
+│   │   │   ├── reports/                         # Reports pages
+│   │   │   │   └── GenerateReports.tsx          # Generación de reportes
+│   │   │   ├── scheduling/                      # Scheduling pages
+│   │   │   │   └── ScheduleSession.tsx          # Programar sesión
+│   │   │   ├── sessionProgramming/              # Session Programming pages
+│   │   │   │   ├── CreateSession.tsx            # Crear sesión
+│   │   │   │   ├── CreateSessionFromTemplate.tsx # Crear sesión desde plantilla
+│   │   │   │   ├── CreateTemplate.tsx           # Crear plantilla de sesión
+│   │   │   │   └── index.ts
+│   │   │   ├── testing/                         # Testing pages
+│   │   │   │   ├── CreateTestResult.tsx         # Crear resultado de test
+│   │   │   │   └── index.ts
 │   │   │   ├── trainingPlans/                   # Training Plans pages
 │   │   │   │   ├── TrainingPlanDetail.tsx       # Página de detalle con tabs
 │   │   │   │   ├── TrainingPlansPage.tsx        # Lista de training plans
@@ -317,7 +338,10 @@ frontend/
 │   │   │   │   │   │   ├── password.ts
 │   │   │   │   │   │   └── register.ts
 │   │   │   │   │   └── clients/
-│   │   │   │   │       └── create.ts
+│   │   │   │   │       ├── create.ts
+│   │   │   │   │       ├── delete.ts
+│   │   │   │   │       ├── index.ts
+│   │   │   │   │       └── list.ts
 │   │   │   │   ├── authApiMocks.ts
 │   │   │   │   ├── index.ts
 │   │   │   │   ├── reactReduxMocks.ts
@@ -360,10 +384,14 @@ frontend/
 │   │   │   ├── accountApi.ts                     # Account management endpoints
 │   │   │   ├── authApi.ts                        # Authentication endpoints
 │   │   │   ├── baseApi.ts                        # Base RTK Query configuration
+│   │   │   ├── billingApi.ts                     # Billing endpoints
 │   │   │   ├── clientsApi.ts                     # Client CRUD + Progress + Training + Fatigue endpoints
 │   │   │   ├── exercisesApi.ts                   # Exercise endpoints
 │   │   │   ├── fatigueApi.ts                     # Fatigue alerts endpoints
 │   │   │   ├── index.ts
+│   │   │   ├── reportsApi.ts                     # Reports endpoints
+│   │   │   ├── schedulingApi.ts                  # Scheduling endpoints
+│   │   │   ├── sessionProgrammingApi.ts          # Session Programming endpoints
 │   │   │   ├── trainerApi.ts                     # Trainer profile endpoints
 │   │   │   └── trainingPlansApi.ts               # Training Plans + Macrocycles + Mesocycles + Microcycles CRUD endpoints
 │   │   ├── components/
@@ -382,7 +410,10 @@ frontend/
 │   │   │   │   ├── useClientOnboarding.ts       # Hook para wizard de onboarding (deprecated, usar useClientForm)
 │   │   │   │   ├── useClientProgress.ts         # Hook para datos de progreso y analytics
 │   │   │   │   ├── useClientStats.ts            # Hook para estadísticas de clientes
+│   │   │   │   ├── useClientTests.ts            # Hook para tests físicos del cliente
+│   │   │   │   ├── useCoherence.ts              # Hook para datos de coherencia
 │   │   │   │   ├── useCreateClientProgress.ts   # Hook para crear registros de progreso
+│   │   │   │   ├── useCreateTestResult.ts      # Hook para crear resultados de tests
 │   │   │   │   ├── useFatigueAlerts.ts          # Hook para gestión de alertas de fatiga
 │   │   │   │   ├── useUpdateClient.ts           # Hook para actualizar cliente (deprecated, usar useClientForm)
 │   │   │   │   └── useUpdateClientProgress.ts   # Hook para actualizar registros de progreso
@@ -399,6 +430,17 @@ frontend/
 │   │   │   │   ├── useCompleteProfileModal.ts
 │   │   │   │   ├── useEmailVerificationGuard.ts
 │   │   │   │   └── useEmailVerificationModal.ts
+│   │   │   ├── reports/                          # Reports hooks
+│   │   │   │   ├── index.ts
+│   │   │   │   └── useGenerateReport.ts          # Hook para generar reportes
+│   │   │   ├── scheduling/                      # Scheduling hooks
+│   │   │   │   ├── index.ts
+│   │   │   │   └── useScheduleSession.ts        # Hook para programar sesiones
+│   │   │   ├── sessionProgramming/               # Session Programming hooks
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useCreateSession.ts          # Hook para crear sesión
+│   │   │   │   ├── useCreateSessionFromTemplate.ts # Hook para crear sesión desde plantilla
+│   │   │   │   └── useCreateTemplate.ts         # Hook para crear plantilla
 │   │   │   ├── training/                        # Training hooks
 │   │   │   │   ├── index.ts
 │   │   │   │   └── useMilestones.ts             # Hook para gestión de milestones
@@ -434,9 +476,15 @@ frontend/
 │   │   │   │                                     # SESSION_DURATION_ENUM
 │   │   │   ├── clientOnboarding.ts               # Onboarding flow types
 │   │   │   ├── clientStats.ts                    # Client statistics types
+│   │   │   ├── coherence.ts                      # Coherence analytics types
+│   │   │   ├── dashboard.ts                      # Dashboard types
 │   │   │   ├── exercise.ts                       # Exercise types
 │   │   │   ├── forms.ts                          # Universal form data types
 │   │   │   ├── progress.ts                       # Progress types (ClientProgress, ProgressAnalytics)
+│   │   │   ├── reports.ts                        # Reports types
+│   │   │   ├── scheduling.ts                     # Scheduling types
+│   │   │   ├── sessionProgramming.ts            # Session Programming types
+│   │   │   ├── testing.ts                        # Testing types
 │   │   │   ├── trainer.ts                        # Trainer types
 │   │   │   └── training.ts                       # Training types (TrainingPlan, TrainingSession, ClientFeedback, FatigueAnalysis, FatigueAlert, Macrocycle, Mesocycle, Microcycle)
 │   │   └── utils/

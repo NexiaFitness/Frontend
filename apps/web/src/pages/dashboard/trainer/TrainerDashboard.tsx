@@ -18,8 +18,8 @@
  * @updated v5.0.0 - Refactor completo según diseño Figma v2 (orden correcto + español)
  */
 
-import React, { useState } from "react";
-import { useSelector } from "react-redux";
+import React, { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
@@ -39,11 +39,26 @@ import {
     useClientSatisfaction,
     usePlanAdherence,
 } from "@nexia/shared";
-import type { RootState } from "@nexia/shared/store";
+import { baseApi } from "@nexia/shared/api/baseApi";
+import type { RootState, AppDispatch } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useSelector((state: RootState) => state.auth);
+    const dispatch = useDispatch<AppDispatch>();
+    const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
+    // ✅ FASE 2.1: Cleanup en useEffect para cancelar queries cuando se desautentica
+    useEffect(() => {
+        if (!isAuthenticated) {
+            // Cancelar todas las queries cuando se desautentica
+            dispatch(baseApi.util.resetApiState());
+        }
+    }, [isAuthenticated, dispatch]);
+    
+    // Early return si no está autenticado
+    if (!isAuthenticated) {
+        return null;
+    }
 
     // Hooks de datos reales
     const {
@@ -61,7 +76,7 @@ export const TrainerDashboard: React.FC = () => {
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
     // Hook para verificar si perfil está completo
-    const { shouldBlock } = useCompleteProfileModal();
+    const { shouldBlock, isProfileComplete } = useCompleteProfileModal();
 
     // Items del menú superior
     const menuItems = [
@@ -112,7 +127,7 @@ export const TrainerDashboard: React.FC = () => {
                 <EmailVerificationBanner user={user} />
 
                 {/* Banner de perfil incompleto */}
-                <CompleteProfileBanner user={user} />
+                <CompleteProfileBanner user={user} isProfileComplete={isProfileComplete} />
 
                 {/* 4 KPI Cards */}
                 <div className="px-4 lg:px-8 mb-8 lg:mb-12">

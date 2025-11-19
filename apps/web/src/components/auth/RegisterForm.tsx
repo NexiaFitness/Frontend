@@ -102,8 +102,28 @@ export const RegisterForm: React.FC = () => {
                 role: formData.role as UserRole,
             };
 
-            // ✅ USE RTK Query mutation
+            // RTK Query mutation
             const response = await register(credentials).unwrap();
+
+            // ✅ RECOMENDACIÓN 2: Validar que response tiene datos válidos
+            if (!response?.user || !response?.access_token) {
+                console.error('[RegisterForm] Invalid response from server:', response);
+                handleServerError({
+                    status: 500,
+                    data: { 
+                        detail: "Respuesta inválida del servidor. El usuario puede haberse creado correctamente. Por favor, intenta iniciar sesión." 
+                    }
+                });
+                return;
+            }
+
+            // ✅ RECOMENDACIÓN 3: Logging estratégico para debugging
+            console.log('[RegisterForm] Registration successful:', {
+                hasUser: !!response.user,
+                hasToken: !!response.access_token,
+                userRole: response.user?.role,
+                userEmail: response.user?.email,
+            });
 
             // Auto-login: dispatch tokens to Redux
             dispatch(
@@ -113,29 +133,60 @@ export const RegisterForm: React.FC = () => {
                 })
             );
 
-            // Redirección directa al dashboard según rol
-            const redirectPath = getRedirectPath(formData.role as UserRole);
-            navigate(redirectPath, { replace: true });
+            // ✅ RECOMENDACIÓN 3: Log después de actualizar Redux
+            console.log('[RegisterForm] Redux updated, navigating to dashboard...');
 
-        } catch (error) {
-            const errorMessage = handleServerError(
-                error as Parameters<typeof handleServerError>[0]
-            );
+            // CORRECCIÓN: Ir a /dashboard (no /dashboard/trainer)
+            // DashboardRouter maneja la redirección según rol
+            navigate("/dashboard", { replace: true });
+
+        } catch (error: any) {
+            // CORRECCIÓN: Manejo de error mejorado
+            console.error('[RegisterForm] Registration failed:', {
+                error,
+                status: error?.status,
+                data: error?.data,
+                message: error?.message,
+            });
+            
+            // ✅ RECOMENDACIÓN 4: Manejar caso de usuario ya existente
+            if (error?.status === 422) {
+                const errorDetail = error?.data?.detail || '';
+                const isDuplicateUser = 
+                    typeof errorDetail === 'string' && 
+                    (errorDetail.toLowerCase().includes('already exists') ||
+                     errorDetail.toLowerCase().includes('ya existe') ||
+                     errorDetail.toLowerCase().includes('duplicate') ||
+                     errorDetail.toLowerCase().includes('duplicado'));
+                
+                if (isDuplicateUser) {
+                    const errorMessage = "Este email ya está registrado. ¿Quieres iniciar sesión?";
+                    handleServerError({
+                        status: 422,
+                        data: { detail: errorMessage }
+                    });
+                    // Redirigir a login con email prellenado
+                    navigate("/auth/login", { 
+                        state: { email: formData.email },
+                        replace: true 
+                    });
+                    return;
+                }
+            }
+            
+            // Extraer mensaje de error de RTK Query
+            const errorMessage = error?.data?.detail || 
+                               error?.message || 
+                               "Error al crear la cuenta. Intenta de nuevo.";
+            
+            // Actualizar UI con error
+            handleServerError({
+                status: error?.status || 500,
+                data: { detail: errorMessage }
+            });
+            
+            // Dispatch failure a Redux
             dispatch(loginFailure(errorMessage));
-        }
-    };
-
-    // Función helper para obtener ruta de redirección según rol
-    const getRedirectPath = (role: UserRole): string => {
-        switch (role) {
-            case USER_ROLES.TRAINER:
-                return "/dashboard/trainer";
-            case USER_ROLES.ATHLETE:
-                return "/dashboard/athlete";
-            case USER_ROLES.ADMIN:
-                return "/dashboard/admin";
-            default:
-                return "/dashboard";
         }
     };
 

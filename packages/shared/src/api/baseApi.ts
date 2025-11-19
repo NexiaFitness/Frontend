@@ -13,6 +13,7 @@
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
+import type { RootState } from "../store";
 
 /**
  * Helper síncrono para leer token de localStorage de forma segura.
@@ -70,12 +71,16 @@ const baseQueryWithReauth: BaseQueryFn<
 > = async (args, api, extraOptions) => {
     const result = await baseQuery(args, api, extraOptions);
     
-    // Si hay error 401 y no hay token, es probable que sea después de logout
-    // En ese caso, retornar un resultado "silencioso" para evitar errores en consola
+    // ✅ FASE 2.2: Mejorar manejo de errores 401 - verificar tanto token como isAuthenticated
     if (result.error && result.error.status === 401) {
         const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
-        if (!token) {
-            // No hay token, probablemente después de logout - retornar resultado "silencioso"
+        // Obtener isAuthenticated del estado Redux
+        const state = api.getState() as RootState;
+        const isAuthenticated = state.auth?.isAuthenticated ?? false;
+        
+        // Si no hay token O no está autenticado, retornar silenciosamente
+        // Esto previene errores en consola después de logout
+        if (!token || !isAuthenticated) {
             return { data: undefined };
         }
     }

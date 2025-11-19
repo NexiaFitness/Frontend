@@ -17,7 +17,9 @@
  * @since v4.4.0
  */
 
+import { useSelector } from "react-redux";
 import { useGetCurrentTrainerProfileQuery } from '../../api/trainerApi';
+import type { RootState } from '../../store';
 
 interface CompleteProfileModalResult {
     shouldBlock: boolean;
@@ -37,7 +39,10 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 export function useCompleteProfileModal(): CompleteProfileModalResult {
-    const { data: trainer, isLoading } = useGetCurrentTrainerProfileQuery();
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { data: trainer, isLoading } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !isAuthenticated,
+    });
 
     // Campos obligatorios
     const requiredFields = [

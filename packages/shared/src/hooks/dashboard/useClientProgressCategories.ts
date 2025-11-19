@@ -10,7 +10,9 @@
  * @since v5.3.0
  */
 
+import { useSelector } from "react-redux";
 import { useGetClientProgressCategoriesQuery } from "../../api/clientsApi";
+import type { RootState } from "../../store";
 
 interface UseClientProgressCategoriesReturn {
     onTrack: number;
@@ -27,10 +29,14 @@ interface UseClientProgressCategoriesReturn {
  * Endpoint: GET /api/v1/clients/progress-categories
  */
 export const useClientProgressCategories = (): UseClientProgressCategoriesReturn => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     const { data, isLoading, isError } = useGetClientProgressCategoriesQuery(undefined, {
-        refetchOnMountOrArgChange: true,
+        skip: !isAuthenticated,
+        // ✅ FASE 1.2: Solo refetch si está autenticado
+        refetchOnMountOrArgChange: isAuthenticated,
         refetchOnFocus: false,
-        refetchOnReconnect: true,
+        refetchOnReconnect: isAuthenticated,
     });
 
     return {

@@ -10,7 +10,9 @@
  * @since v5.3.0
  */
 
+import { useSelector } from "react-redux";
 import { useGetBillingStatsQuery } from "../../api/billingApi";
+import type { RootState } from "../../store";
 import type { BillingPeriod } from "../../types/dashboard";
 
 interface UseBillingStatsReturn {
@@ -36,10 +38,14 @@ interface UseBillingStatsReturn {
  * @param period - Periodo de facturación (monthly o annual)
  */
 export const useBillingStats = (period: BillingPeriod = "monthly"): UseBillingStatsReturn => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     const { data, isLoading, isError } = useGetBillingStatsQuery(period, {
-        refetchOnMountOrArgChange: true,
+        skip: !isAuthenticated,
+        // ✅ FASE 1.2: Solo refetch si está autenticado
+        refetchOnMountOrArgChange: isAuthenticated,
         refetchOnFocus: false,
-        refetchOnReconnect: true,
+        refetchOnReconnect: isAuthenticated,
     });
 
     return {

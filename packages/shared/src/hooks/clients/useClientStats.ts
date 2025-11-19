@@ -9,7 +9,9 @@
  */
 
 import { useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { useGetClientStatsQuery } from '../../api/clientsApi';
+import type { RootState } from '../../store';
 import type { ClientStatsResponse } from '../../types/clientStats';
 
 /**
@@ -17,6 +19,8 @@ import type { ClientStatsResponse } from '../../types/clientStats';
  * @returns Objeto con datos de stats, estado de loading/error y funciones
  */
 export const useClientStats = () => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     // Query de RTK Query con auto-refetch
     const {
         data,
@@ -26,11 +30,13 @@ export const useClientStats = () => {
         error,
         refetch,
     } = useGetClientStatsQuery(undefined, {
+        skip: !isAuthenticated,
         // Configuración de cache y refetch
         pollingInterval: 0, // Desactivar polling automático
-        refetchOnMountOrArgChange: true, // Refetch al montar componente
+        // ✅ FASE 1.2: Solo refetch si está autenticado
+        refetchOnMountOrArgChange: isAuthenticated, // Refetch al montar componente
         refetchOnFocus: false, // No refetch al hacer focus en ventana
-        refetchOnReconnect: true, // Refetch al reconectar
+        refetchOnReconnect: isAuthenticated, // Refetch al reconectar
     });
 
     /**
