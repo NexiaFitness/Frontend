@@ -56,6 +56,9 @@ import { ScheduleSession } from "./pages/scheduling/ScheduleSession";
 // Session Programming (trainers only)
 import { CreateSessionFromTemplate, CreateSession, CreateTemplate } from "./pages/sessionProgramming";
 
+// Testing (trainers only)
+import { CreateTestResult } from "./pages/testing";
+
 // Páginas adicionales
 import Account from "./pages/account/Account";
 
@@ -322,6 +325,22 @@ function App() {
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
               <CreateTemplate />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* TESTING - Trainers only */}
+      {/* ============================================ */}
+
+      {/* Create Test Result */}
+      <Route
+        path="/dashboard/testing/create-test"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+              <CreateTestResult />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }

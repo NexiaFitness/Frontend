@@ -4,20 +4,79 @@
  * Contexto:
  * - Tipos para métricas de coherencia diaria (adherence, sRPE, monotony, strain)
  * - Usado por ClientDailyCoherenceTab y hooks relacionados
- * - Alineado con estructura de datos del backend (cuando esté disponible)
+ * - Alineado con estructura de datos del backend
  *
  * @author Frontend Team
  * @since v5.2.0
+ * @updated v5.4.0 - Tipos actualizados para coincidir con backend real
  */
 
 import type React from "react";
 
 // ========================================
-// TIPOS DE DATOS DE COHERENCE
+// TIPOS DEL BACKEND (snake_case)
 // ========================================
 
 /**
- * Datos de intensidad prescrita vs percibida
+ * Punto de datos sRPE para scatter plot (backend)
+ */
+export interface SRPEPoint {
+    prescribed_srpe: number; // X-axis: planned intensity (0-10)
+    perceived_srpe: number; // Y-axis: perceived effort from feedback (0-10)
+    session_date: string; // ISO date string
+    session_id: number;
+}
+
+/**
+ * Datos semanales de monotonía y strain (backend)
+ */
+export interface WeeklyMonotonyStrain {
+    week_start: string; // ISO date string
+    monotony: number; // Daily mean / Standard deviation
+    strain: number; // Weekly load × Monotony
+    weekly_load: number; // Sum of daily loads for the week
+}
+
+/**
+ * KPIs de coherencia diaria (backend)
+ */
+export interface DailyCoherenceKPIs {
+    adherence_percentage: number; // (Completed / Planned) × 100
+    average_srpe: number; // Average perceived sRPE
+    monotony: number; // Current week monotony
+    strain: number; // Current week strain
+}
+
+/**
+ * Datos de adherencia para gráficos (backend)
+ */
+export interface AdherenceDataPoint {
+    period: string;
+    adherence: number;
+}
+
+/**
+ * Respuesta completa del backend
+ */
+export interface DailyCoherenceAnalyticsOut {
+    client_id: number;
+    period_start: string; // ISO date string
+    period_end: string; // ISO date string
+    period_type: "week" | "month" | "training_block";
+    kpis: DailyCoherenceKPIs;
+    adherence_data: AdherenceDataPoint[]; // For donut/bar chart
+    srpe_scatter_data: SRPEPoint[]; // For scatter plot
+    monotony_strain_data: WeeklyMonotonyStrain[]; // For line/area chart
+    interpretive_summary: string; // Auto-generated text analysis
+    key_recommendations: string[]; // Actionable recommendations
+}
+
+// ========================================
+// TIPOS TRANSFORMADOS (camelCase para UI)
+// ========================================
+
+/**
+ * Datos de intensidad prescrita vs percibida (transformado)
  */
 export interface PrescribedPerceivedData {
     prescribed: number;
@@ -25,7 +84,7 @@ export interface PrescribedPerceivedData {
 }
 
 /**
- * Datos de monotonía por semana
+ * Datos de monotonía por semana (transformado)
  */
 export interface MonotonyWeekData {
     week: string;
@@ -33,7 +92,7 @@ export interface MonotonyWeekData {
 }
 
 /**
- * Datos de strain y carga por semana
+ * Datos de strain y carga por semana (transformado)
  */
 export interface StrainWeekData {
     week: string;
@@ -42,7 +101,7 @@ export interface StrainWeekData {
 }
 
 /**
- * Datos completos de coherencia diaria
+ * Datos completos de coherencia diaria (transformado para UI)
  */
 export interface CoherenceData {
     adherence_percentage: number;

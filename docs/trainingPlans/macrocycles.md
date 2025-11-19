@@ -533,3 +533,4 @@ Los macrociclos se usan en el tab "Gráficos" para:
 **Última actualización:** 2025-11-12  
 **Versión del documento:** 1.0.0
 
+

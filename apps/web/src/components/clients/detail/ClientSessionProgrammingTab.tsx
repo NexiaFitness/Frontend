@@ -84,8 +84,7 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
         navigate("/dashboard/session-programming/create-template");
     };
 
-    const handleDateClick = (date: Date) => {
-        console.log("Fecha clickeada:", date);
+    const handleDateClick = (_date: Date) => {
         // TODO: Mostrar modal con sesiones del día o crear nueva
     };
 

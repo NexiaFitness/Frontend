@@ -4,7 +4,7 @@
  * Contexto:
  * - Muestra métricas de coherencia diaria (adherence, sRPE, monotony, strain)
  * - Gráficos de evolución y análisis
- * - Datos mockeados temporalmente (endpoint en desarrollo)
+ * - Consume datos reales del backend mediante RTK Query
  * - Basado en Figma Profile Page V2
  *
  * Responsabilidades:
@@ -15,10 +15,13 @@
  *
  * @author Frontend Team
  * @since v5.2.0
+ * @updated v5.4.0 - Reemplazado mock por datos reales del backend
  */
 
 import React, { useState } from "react";
 import { useCoherence } from "@nexia/shared";
+import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { Alert } from "@/components/ui/feedback/Alert";
 import type {
     MetricCardProps,
     ChartCardProps,
@@ -30,9 +33,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import {
     LineChart,
     Line,
-    BarChart,
     Bar,
-    ScatterChart,
     Scatter,
     PieChart,
     Pie,
@@ -44,7 +45,7 @@ import {
     ResponsiveContainer,
     Legend,
     ComposedChart,
-    Area,
+    ReferenceLine,
 } from "recharts";
 
 interface ClientDailyCoherenceTabProps {
@@ -98,36 +99,42 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
         adherenceData,
         scatterData,
         idealLineData,
-        monotonyThresholdData,
         colors,
+        isLoading,
+        isError,
     } = useCoherence(clientId);
 
-    const [summary, setSummary] = useState<string>(data.summary);
+    const [summary, setSummary] = useState<string>(data.summary || "");
+
+    // Actualizar summary cuando cambien los datos
+    React.useEffect(() => {
+        if (data.summary) {
+            setSummary(data.summary);
+        }
+    }, [data.summary]);
+
+    // Loading state
+    if (isLoading) {
+        return (
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+                <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
+
+    // Error state
+    if (isError) {
+        return (
+            <div className="p-6">
+                <Alert variant="error">
+                    Error al cargar los datos de coherencia. Por favor, intenta de nuevo.
+                </Alert>
+            </div>
+        );
+    }
 
     return (
         <div className="p-6 space-y-6">
-            {/* Banner de datos de prueba */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                fillRule="evenodd"
-                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                    </div>
-                    <div className="ml-3">
-                        <p className="text-sm font-medium text-yellow-800">
-                            ⚠️ Datos de prueba - Endpoint en desarrollo
-                        </p>
-                        <p className="mt-1 text-sm text-yellow-700">
-                            Esta vista muestra datos mockeados. El endpoint GET /clients/{clientId}/coherence está en desarrollo.
-                        </p>
-                    </div>
-                </div>
-            </div>
 
             {/* Header */}
             <div>
@@ -170,11 +177,15 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                 <ResponsiveContainer width="100%" height={300}>
                     <PieChart>
                         <Pie
-                            data={adherenceData}
+                            data={adherenceData as Array<{ name: string; value: number; [key: string]: string | number }>}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                            label={(entry: { name?: string; percent?: number; value?: number }) => {
+                                const percent = entry.percent || 0;
+                                const name = entry.name || '';
+                                return `${name}: ${(percent * 100).toFixed(0)}%`;
+                            }}
                             outerRadius={80}
                             fill="#8884d8"
                             dataKey="value"
@@ -190,99 +201,158 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             </ChartCard>
 
             {/* Gráfico 2: Prescribed vs Perceived Intensity (Scatter Plot) */}
-            <ChartCard title="Intensidad Prescrita vs Percibida">
-                <ResponsiveContainer width="100%" height={300}>
-                    <ScatterChart>
+            {scatterData && scatterData.length > 0 && (
+                <ChartCard title="Intensidad Prescrita vs Percibida">
+                    <ResponsiveContainer width="100%" height={400}>
+                        <ComposedChart margin={{ top: 20, right: 30, left: 60, bottom: 80 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis
                             type="number"
                             dataKey="x"
                             name="Prescrita"
                             domain={[0, 10]}
-                            label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -5 }}
+                            label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -10 }}
                         />
                         <YAxis
                             type="number"
                             dataKey="y"
                             name="Percibida"
                             domain={[0, 10]}
-                            label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "insideLeft" }}
+                            label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "left", offset: 10, style: { textAnchor: "middle" } }}
                         />
                         <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px" }} align="left" />
+                        {/* Línea de referencia y=x (ideal) */}
+                        <Line
+                            type="linear"
+                            dataKey="y"
+                            data={idealLineData}
+                            stroke="#ef4444"
+                            strokeDasharray="5 5"
+                            strokeWidth={2}
+                            dot={false}
+                            name="Ideal (y=x)"
+                            isAnimationActive={false}
+                        />
                         <Scatter name="Sesiones" data={scatterData} fill="#4A67B3">
                             {scatterData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={colors[0]} />
                             ))}
                         </Scatter>
-                        {/* Línea de referencia y=x (ideal) */}
-                        <Line
-                            type="monotone"
-                            dataKey="x"
-                            stroke="#ef4444"
-                            strokeDasharray="5 5"
-                            dot={false}
-                            legendType="line"
-                            name="Ideal (y=x)"
-                            data={idealLineData}
-                        />
-                    </ScatterChart>
-                </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Gráfico 3: Monotony por Semana (Line Chart con zona roja) */}
-            <ChartCard title="Monotonía por Semana">
-                <ResponsiveContainer width="100%" height={300}>
-                    <ComposedChart data={data.monotony_by_week as MonotonyWeekData[]}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
-                        <YAxis domain={[0, 3]} label={{ value: "Monotonía", angle: -90, position: "insideLeft" }} />
-                        <Tooltip />
-                        <Legend />
-                        {/* Zona de riesgo (monotony > 2.0) - área sombreada */}
-                        <Area
-                            type="monotone"
-                            dataKey="monotony"
-                            stroke="none"
-                            fill="#ef4444"
-                            fillOpacity={0.1}
-                            name="Zona de riesgo (>2.0)"
-                            data={monotonyThresholdData}
-                            stackId="threshold"
-                        />
-                        <Line
-                            type="monotone"
-                            dataKey="monotony"
-                            stroke="#4A67B3"
-                            strokeWidth={3}
-                            name="Monotonía"
-                            dot={{ r: 6 }}
-                        />
-                        {/* Línea de referencia en 2.0 */}
-                        <Line
-                            type="monotone"
-                            dataKey="monotony"
-                            stroke="#ef4444"
-                            strokeDasharray="5 5"
-                            strokeWidth={2}
-                            dot={false}
-                            name="Umbral (2.0)"
-                            data={monotonyThresholdData}
-                        />
                     </ComposedChart>
                 </ResponsiveContainer>
             </ChartCard>
+            )}
+
+            {/* Gráfico 3: Monotony por Semana (Line Chart con zona roja) */}
+            {data.monotony_by_week && data.monotony_by_week.length > 0 && (() => {
+                // Filtrar y normalizar datos de monotony
+                // Aceptar valores hasta 999 (que significa alta monotonía) pero limitarlos a 10 para visualización
+                const validData = data.monotony_by_week
+                    .filter(w => {
+                        const val = w.monotony;
+                        return val !== null && val !== undefined && !isNaN(val) && isFinite(val);
+                    })
+                    .map((w, index) => ({
+                        week: w.week || `W${index + 1}`,
+                        monotony: typeof w.monotony === 'number' && w.monotony > 10 ? 10 : (w.monotony || 0),
+                        threshold: 2.0 // Línea de umbral constante
+                    }));
+                
+                if (validData.length === 0) {
+                    console.warn('No valid monotony data after processing');
+                    return null;
+                }
+                
+                // Calcular dominio Y dinámico basado en los datos
+                const maxMonotony = Math.max(...validData.map(d => d.monotony || 0), 2.0);
+                const yDomain = [0, Math.max(10, Math.ceil(maxMonotony * 1.2))];
+                
+                return (
+                    <ChartCard title="Monotonía por Semana">
+                        <ResponsiveContainer width="100%" height={400}>
+                            <LineChart 
+                                data={validData as MonotonyWeekData[]} 
+                                margin={{ top: 20, right: 30, left: 60, bottom: 80 }}
+                            >
+                            <CartesianGrid strokeDasharray="3 3" />
+                            <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
+                            <YAxis 
+                                domain={yDomain}
+                                label={{ value: "Monotonía", angle: -90, position: "left", offset: 10, style: { textAnchor: "middle" } }} 
+                            />
+                            <Tooltip />
+                            <Legend wrapperStyle={{ paddingTop: "20px" }} align="left" />
+                            {/* Línea principal de Monotonía */}
+                            <Line
+                                type="monotone"
+                                dataKey="monotony"
+                                stroke="#4A67B3"
+                                strokeWidth={3}
+                                name="Monotonía"
+                                dot={{ r: 6 }}
+                                isAnimationActive={false}
+                                connectNulls={false}
+                            />
+                            {/* Línea de referencia en 2.0 (umbral) */}
+                            <ReferenceLine 
+                                y={2.0} 
+                                stroke="#ef4444" 
+                                strokeDasharray="5 5" 
+                                strokeWidth={2}
+                                label={{ value: "Umbral (2.0)", position: "right" }}
+                            />
+                        </LineChart>
+                    </ResponsiveContainer>
+                </ChartCard>
+                );
+            })()}
 
             {/* Gráfico 4: Strain & Load (Dual Line + Bar Chart) */}
-            <ChartCard title="Carga y Volumen por Semana">
-                <ResponsiveContainer width="100%" height={300}>
-                    <ComposedChart data={data.strain_by_week as StrainWeekData[]}>
+            {data.strain_by_week && data.strain_by_week.length > 0 && (() => {
+                // Filtrar y procesar datos válidos
+                const validData = data.strain_by_week
+                    .filter(w => {
+                        const loadValid = w.load !== null && w.load !== undefined && !isNaN(w.load) && isFinite(w.load);
+                        const strainValid = w.strain !== null && w.strain !== undefined && !isNaN(w.strain) && isFinite(w.strain);
+                        return loadValid && strainValid;
+                    })
+                    .map((w, index) => ({
+                        week: w.week || `W${index + 1}`,
+                        load: typeof w.load === 'number' ? w.load : 0,
+                        strain: typeof w.strain === 'number' ? w.strain : 0,
+                    }));
+                
+                if (validData.length === 0) {
+                    console.warn('No valid strain data after processing');
+                    return null;
+                }
+                
+                // Calcular dominios Y dinámicos basados en los datos
+                const maxLoad = Math.max(...validData.map(d => d.load || 0));
+                const maxStrain = Math.max(...validData.map(d => d.strain || 0));
+                const loadDomain = [0, maxLoad > 0 ? Math.ceil(maxLoad * 1.1) : 1000];
+                const strainDomain = [0, maxStrain > 0 ? Math.ceil(maxStrain * 1.1) : 4000];
+                
+                return (
+                    <ChartCard title="Carga y Volumen por Semana">
+                        <ResponsiveContainer width="100%" height={400}>
+                            <ComposedChart data={validData as StrainWeekData[]} margin={{ top: 20, right: 60, left: 60, bottom: 80 }}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
-                        <YAxis yAxisId="left" label={{ value: "Volumen", angle: -90, position: "insideLeft" }} />
-                        <YAxis yAxisId="right" orientation="right" label={{ value: "Carga", angle: 90, position: "insideRight" }} />
+                        <YAxis 
+                            yAxisId="left" 
+                            domain={loadDomain}
+                            label={{ value: "Volumen", angle: -90, position: "left", offset: 10, style: { textAnchor: "middle" } }} 
+                        />
+                        <YAxis 
+                            yAxisId="right" 
+                            orientation="right" 
+                            domain={strainDomain}
+                            label={{ value: "Carga", angle: 90, position: "right", offset: 10, style: { textAnchor: "middle" } }} 
+                        />
                         <Tooltip />
-                        <Legend />
+                        <Legend wrapperStyle={{ paddingTop: "20px" }} align="left" />
                         <Bar yAxisId="left" dataKey="load" fill="#94a3b8" name="Volumen" />
                         <Line
                             yAxisId="right"
@@ -292,10 +362,14 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                             strokeWidth={3}
                             name="Carga"
                             dot={{ r: 6 }}
+                            isAnimationActive={false}
+                            connectNulls={false}
                         />
                     </ComposedChart>
                 </ResponsiveContainer>
             </ChartCard>
+                );
+            })()}
 
             {/* Summary interpretativo (editable) */}
             <ChartCard title="Resumen Interpretativo">

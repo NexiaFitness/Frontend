@@ -187,7 +187,6 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 {days.map((day) => {
                     const hasSessions = sessionsByDay.has(day);
                     const isCurrentDay = isToday(day);
-                    const daySessions = sessionsByDay.get(day) || [];
 
                     return (
                         <div

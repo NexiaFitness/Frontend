@@ -1,6 +1,6 @@
 # Mocks Pendientes de Implementación Backend
 
-**Última actualización:** 2025-01-20 (Actualizado después de desmockeo de Dashboard KPIs)
+**Última actualización:** 2025-01-27 (Daily Coherence Tab desmockeado - Implementado con backend real)
 
 Este documento lista todas las vistas/features que usan datos mockeados temporalmente mientras backend implementa los endpoints necesarios.
 
@@ -8,33 +8,7 @@ Este documento lista todas las vistas/features que usan datos mockeados temporal
 
 ## 🎭 Vistas Mockeadas
 
-### 1. Daily Coherence Tab
-**Ubicación:** `apps/web/src/components/clients/detail/ClientDailyCoherenceTab.tsx`
-
-**Endpoint requerido:**
-```
-GET /clients/{client_id}/coherence?week=2025-W03
-Response esperado:
-typescript{
-  adherence_percentage: number;
-  average_srpe: number;
-  monotony: number;
-  strain: number;
-  prescribed_vs_perceived: Array<{date: string, prescribed: number, perceived: number}>;
-  monotony_by_week: Array<{week: string, monotony: number}>;
-  strain_by_week: Array<{week: string, load: number, strain: number}>;
-}
-```
-
-**Mock data ubicado en:** `packages/shared/src/mocks/coherenceMockData.ts`
-
-**Prioridad:** 🔴 Alta (métrica clave para trainers)
-
-**Estado:** ⏳ Esperando backend
-
----
-
-### 2. Testing Tab
+### 1. Testing Tab
 **Ubicación:** `apps/web/src/components/clients/detail/ClientTestingTab.tsx`
 
 **Endpoints requeridos:**
@@ -120,6 +94,13 @@ typescript{
 **Hook:** `useClientProgressCategories()` en `packages/shared/src/hooks/dashboard/useClientProgressCategories.ts`
 **Estado:** ✅ Funcional con datos reales (desmockeado 2025-01-20)
 
+### 10. Daily Coherence Tab ✅
+**Ubicación:** `apps/web/src/components/clients/detail/ClientDailyCoherenceTab.tsx`
+**Backend:** `GET /api/v1/clients/{client_id}/coherence`
+**Hook:** `useCoherence()` en `packages/shared/src/hooks/clients/useCoherence.ts`
+**API:** `getClientCoherence` en `packages/shared/src/api/clientsApi.ts`
+**Estado:** ✅ Funcional con datos reales (desmockeado 2025-01-27)
+
 ---
 
 ## 🔄 Proceso de Desmockeo
@@ -143,6 +124,7 @@ Cuando backend implemente un endpoint:
 5. **Eliminar mock:**
    - Borrar archivo de `packages/shared/src/mocks/` o `packages/shared/src/hooks/dashboard/`
    - Borrar archivo de `apps/web/src/mocks/dashboard/` (si existe)
+   - Verificar que no queden referencias en imports o código
 
 6. **Actualizar este documento:**
    - Mover vista de "Mockeadas" a "Backend Real"
@@ -151,11 +133,10 @@ Cuando backend implemente un endpoint:
 
 ## 📊 Resumen
 
-- **Vistas mockeadas:** 2
-  - Daily Coherence Tab (Alta prioridad)
+- **Vistas mockeadas:** 1
   - Testing Tab (Media prioridad)
 
-- **Vistas con backend real:** 9
+- **Vistas con backend real:** 10
   - Session Programming Tab
   - Training Plans
   - Client Progress
@@ -165,8 +146,9 @@ Cuando backend implemente un endpoint:
   - Trainer Dashboard KPIs ✅ (desmockeado 2025-01-20)
   - Trainer Dashboard Billing Stats ✅ (desmockeado 2025-01-20)
   - Trainer Dashboard Client Progress Categories ✅ (desmockeado 2025-01-20)
+  - Daily Coherence Tab ✅ (desmockeado 2025-01-27)
 
-- **Prioridad alta:** 1 (Daily Coherence)
+- **Prioridad alta:** 0
 - **Prioridad media:** 1 (Testing)
 
 ---
@@ -174,7 +156,6 @@ Cuando backend implemente un endpoint:
 ## 📁 Archivos de Mocks
 
 ### Mocks de Producción (Client Detail Tabs)
-- `packages/shared/src/mocks/coherenceMockData.ts` - Daily Coherence
 - `packages/shared/src/mocks/testingMockData.ts` - Testing Tab
 
 ### Hooks Reales de Dashboard (Trainer Dashboard) ✅
@@ -182,13 +163,21 @@ Cuando backend implemente un endpoint:
 - `packages/shared/src/hooks/dashboard/useBillingStats.ts` - Billing Stats - **REAL**
 - `packages/shared/src/hooks/dashboard/useClientProgressCategories.ts` - Client Progress Categories - **REAL**
 
-### Archivos Eliminados (Desmockeo 2025-01-20)
-- ❌ `packages/shared/src/hooks/dashboard/useKPIMocks.ts` - Eliminado
-- ❌ `packages/shared/src/hooks/dashboard/useDashboardClientProgress.ts` - Eliminado
-- ❌ `apps/web/src/mocks/dashboard/kpiMockData.ts` - Eliminado
-- ❌ `apps/web/src/mocks/dashboard/billingMockData.ts` - Eliminado
-- ❌ `apps/web/src/mocks/dashboard/progressMockData.ts` - Eliminado
-- ❌ `apps/web/src/mocks/dashboard/index.ts` - Eliminado (carpeta vacía)
+### Archivos Eliminados
+
+#### Desmockeo Dashboard (2025-01-20)
+- ❌ `packages/shared/src/hooks/dashboard/useKPIMocks.ts` - Eliminado ✅
+- ❌ `packages/shared/src/hooks/dashboard/useDashboardClientProgress.ts` - Eliminado ✅
+- ❌ `apps/web/src/mocks/dashboard/kpiMockData.ts` - Eliminado ✅
+- ❌ `apps/web/src/mocks/dashboard/billingMockData.ts` - Eliminado ✅
+- ❌ `apps/web/src/mocks/dashboard/progressMockData.ts` - Eliminado ✅
+- ❌ `apps/web/src/mocks/dashboard/index.ts` - Eliminado ✅
+- ❌ `apps/web/src/mocks/dashboard/` - Carpeta eliminada (estaba vacía) ✅
+
+#### Desmockeo Daily Coherence (2025-01-27)
+- ❌ `packages/shared/src/mocks/coherenceMockData.ts` - Eliminado ✅
+
+**Nota:** Todos los mocks del dashboard y Daily Coherence han sido eliminados y verificados. No quedan referencias a mocks obsoletos en el código.
 
 ---
 

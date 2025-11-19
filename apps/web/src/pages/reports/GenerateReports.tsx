@@ -12,28 +12,21 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useGenerateReport } from "@nexia/shared";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
-import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import type { RootState } from "@nexia/shared/store";
 import type { ReportFormData, ReportType, ReportFormat } from "@nexia/shared/types/reports";
 import { REPORT_TYPE, REPORT_FORMAT } from "@nexia/shared/types/reports";
 
 export const GenerateReports: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useSelector((state: RootState) => state.auth);
     const { generateReport, isLoading, isError, error, trainerId } = useGenerateReport();
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
-        skip: !user || user.role !== "trainer",
-    });
 
     const { data: clientsData } = useGetTrainerClientsQuery(
         { trainerId: trainerId ?? 0, page: 1, per_page: 100 },

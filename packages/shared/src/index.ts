@@ -108,6 +108,7 @@ export * from "./types/training";
 export * from "./types/sessionProgramming";
 export * from "./types/coherence";
 export * from "./types/dashboard";
+export * from "./types/testing";
 export * from "./types/reports";
 // Export scheduling types explicitly to avoid SessionType conflict with training.ts
 export type {
@@ -199,6 +200,8 @@ export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
 export * from "./hooks/clients/useCoherence";
+export * from "./hooks/clients/useClientTests";
+export * from "./hooks/clients/useCreateTestResult";
 
 // Hooks - Exercises
 export * from "./hooks/exercises";
@@ -241,5 +244,3 @@ export * from "./hooks/scheduling";
 export * from "./hooks/sessionProgramming";
 
 // Mocks (temporal - mientras backend implementa endpoints)
-export * from "./mocks/coherenceMockData";
-export * from "./mocks/testingMockData";

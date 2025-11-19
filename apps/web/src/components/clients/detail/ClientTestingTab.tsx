@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Muestra tests organizados por categoría física
- * - Datos mockeados temporalmente (endpoint en desarrollo)
+ * - Consume datos reales del backend mediante RTK Query
  * - UI basada en Figma Testing view
  *
  * Responsabilidades:
@@ -13,10 +13,15 @@
  *
  * @author Frontend Team
  * @since v5.2.0
+ * @updated v5.5.0 - Reemplazado mock por datos reales del backend
  */
 
 import React, { useState } from "react";
-import { MOCK_TESTING_DATA, TEST_CATEGORIES, TestCategory } from "@nexia/shared";
+import { useNavigate } from "react-router-dom";
+import { useClientTests, TEST_CATEGORIES, TestCategory } from "@nexia/shared";
+import type { TestData } from "@nexia/shared/types/testing";
+import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { Alert } from "@/components/ui/feedback/Alert";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ClientTestingTabProps {
@@ -24,12 +29,18 @@ interface ClientTestingTabProps {
 }
 
 export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) => {
+    const navigate = useNavigate();
     const [activeCategory, setActiveCategory] = useState<TestCategory>("strength");
 
-    // Filtrar tests por categoría activa y cliente
-    const testsInCategory = MOCK_TESTING_DATA.filter(
-        (test) => test.category === activeCategory && test.client_id === clientId
-    );
+    // Obtener tests del cliente usando el hook real
+    const { testsByCategory, isLoading, isError, refetch } = useClientTests(clientId);
+
+    // Obtener tests de la categoría activa
+    const testsInCategory = testsByCategory[activeCategory] || [];
+
+    const handleAddTest = () => {
+        navigate(`/dashboard/testing/create-test?clientId=${clientId}`);
+    };
 
     const formatDate = (dateStr: string): string => {
         const date = new Date(dateStr);
@@ -40,31 +51,37 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
         });
     };
 
+    // Estado de carga
+    if (isLoading) {
+        return (
+            <div className="p-6 flex items-center justify-center min-h-[400px]">
+                <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
+
+    // Estado de error
+    if (isError) {
+        return (
+            <div className="p-6">
+                <Alert variant="error">
+                    <div className="space-y-2">
+                        <p className="font-semibold">Error al cargar tests</p>
+                        <p>No se pudieron cargar los tests físicos. Por favor, intenta de nuevo.</p>
+                        <button
+                            onClick={() => refetch()}
+                            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                        >
+                            Reintentar
+                        </button>
+                    </div>
+                </Alert>
+            </div>
+        );
+    }
+
     return (
         <div className="p-6 space-y-6">
-            {/* Banner de datos de prueba */}
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded">
-                <div className="flex items-start">
-                    <div className="flex-shrink-0">
-                        <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
-                            <path
-                                fillRule="evenodd"
-                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                    </div>
-                    <div className="ml-3">
-                        <p className="text-sm font-medium text-yellow-800">
-                            ⚠️ Datos de prueba - Endpoint en desarrollo
-                        </p>
-                        <p className="mt-1 text-sm text-yellow-700">
-                            Esta vista muestra datos mockeados. Los endpoints CRUD de tests están en desarrollo.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
             {/* Header */}
             <div>
                 <h2 className={TYPOGRAPHY.sectionTitle}>Tests Físicos</h2>
@@ -103,13 +120,13 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                 <div className="bg-white rounded-lg shadow p-8 text-center">
                     <p className="text-slate-500 text-lg mb-2">No hay tests registrados</p>
                     <p className="text-slate-400 text-sm">
-                        No se han registrado tests en la categoría "{TEST_CATEGORIES[activeCategory].label}"
+                        No se han registrado tests en la categoría &quot;{TEST_CATEGORIES[activeCategory].label}&quot;
                     </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {testsInCategory.map((test) => {
-                        const categoryInfo = TEST_CATEGORIES[test.category];
+                    {testsInCategory.map((test: TestData) => {
+                        const categoryInfo = TEST_CATEGORIES[test.category as TestCategory];
 
                         return (
                             <div
@@ -120,7 +137,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                                     borderLeftColor: categoryInfo.color,
                                 }}
                             >
-                                <h3 className="font-semibold text-slate-900 mb-3">{test.test_name}</h3>
+                                <h3 className="font-semibold text-slate-900 mb-3">{test.testName}</h3>
                                 <div className="flex items-baseline gap-2 mb-3">
                                     <span
                                         className="text-3xl font-bold"
@@ -131,7 +148,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                                     <span className="text-sm text-slate-600">{test.unit}</span>
                                 </div>
                                 <p className="text-xs text-slate-500 mb-2">
-                                    {formatDate(test.test_date)}
+                                    {formatDate(test.testDate)}
                                 </p>
                                 {test.notes && (
                                     <p className="text-sm text-slate-700 italic mt-2 pt-2 border-t border-slate-200">
@@ -144,16 +161,10 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                 </div>
             )}
 
-            {/* Botón añadir test (placeholder) */}
+            {/* Botón añadir test */}
             <div className="flex justify-end">
                 <button
-                    onClick={() => {
-                        // TODO: Implementar modal de creación de test cuando backend esté disponible
-                        // Por ahora, mostrar mensaje informativo
-                        const message = "Funcionalidad de añadir test - Próximamente";
-                        // eslint-disable-next-line no-alert
-                        alert(message);
-                    }}
+                    onClick={handleAddTest}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
                 >
                     + Añadir Test

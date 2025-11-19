@@ -17,7 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateSession } from "@nexia/shared";
@@ -58,7 +58,7 @@ export const CreateSession: React.FC = () => {
     const microcycles = React.useMemo(() => {
         if (!trainingPlans) return [];
         const allMicrocycles: Array<{ id: number; name: string; planName: string }> = [];
-        trainingPlans.forEach((plan) => {
+        trainingPlans.forEach((_plan) => {
             // TODO: Obtener microcycles de cada plan si hay endpoint
         });
         return allMicrocycles;
@@ -362,4 +362,5 @@ export const CreateSession: React.FC = () => {
         </>
     );
 };
+
 

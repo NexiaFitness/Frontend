@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Vista completa del cliente con tabs
- * - Tabs: Overview, Progress, Workouts, Nutrition (futuro), Settings
+ * - Tabs: Overview, Session Programming, Daily Coherence, Testing, Progress, Workouts
  * - Layout: Header + Tabs + Content
  * - Diseño basado en Figma Profile Page V2
  *
@@ -33,8 +33,6 @@ import { ClientSessionProgrammingTab } from "@/components/clients/detail/ClientS
 import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDailyCoherenceTab";
 import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientWorkoutsTab } from "@/components/clients/detail/ClientWorkoutsTab";
-import { ClientNutritionTab } from "@/components/clients/detail/ClientNutritionTab";
-import { ClientSettingsTab } from "@/components/clients/detail/ClientSettingsTab";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
 const ClientProgressTab = lazy(() => 
@@ -43,7 +41,7 @@ const ClientProgressTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts" | "nutrition" | "settings";
+type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts";
 
 interface Tab {
     id: TabId;
@@ -58,8 +56,6 @@ const TABS: Tab[] = [
     { id: "testing", label: "Tests" },
     { id: "progress", label: "Progreso" },
     { id: "workouts", label: "Entrenamientos" },
-    { id: "nutrition", label: "Nutrición", disabled: true }, // Futuro
-    { id: "settings", label: "Configuración" },
 ];
 
 export const ClientDetail: React.FC = () => {
@@ -194,10 +190,6 @@ export const ClientDetail: React.FC = () => {
                         trainingSessions={trainingSessions}
                     />
                 );
-            case "nutrition":
-                return <ClientNutritionTab />;
-            case "settings":
-                return <ClientSettingsTab client={client} onDelete={() => navigate("/dashboard/clients")} />;
             default:
                 return null;
         }
@@ -222,17 +214,24 @@ export const ClientDetail: React.FC = () => {
 
                     {/* Tabs Navigation - Separado del header */}
                     <div className="mt-6 px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white rounded-lg shadow w-fit">
+                        <div className="bg-white rounded-lg shadow w-fit max-w-full">
                             <nav 
-                                className="flex space-x-4 sm:space-x-6 lg:space-x-8 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent px-6 py-2 border-b-2 border-gray-200" 
+                                className="flex space-x-3 sm:space-x-4 lg:space-x-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent px-4 sm:px-6 py-2" 
                                 aria-label="Tabs" 
                                 style={{ 
                                     WebkitOverflowScrolling: 'touch',
                                 }}
                             >
                                 <style>{`
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar {
+                                        height: 4px;
+                                    }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-track {
+                                        background: transparent;
+                                    }
                                     nav[aria-label="Tabs"]::-webkit-scrollbar-thumb {
                                         background-color: #4A67B3 !important;
+                                        border-radius: 2px;
                                     }
                                 `}</style>
                                 {TABS.map((tab) => (
@@ -241,7 +240,7 @@ export const ClientDetail: React.FC = () => {
                                         onClick={() => !tab.disabled && setActiveTab(tab.id)}
                                         disabled={tab.disabled}
                                         className={`
-                                            py-2 px-2 border-b-2 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-shrink-0
+                                            py-2 px-3 sm:px-4 border-b-2 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-shrink-0
                                             ${activeTab === tab.id
                                                 ? "border-[#4A67B3] text-[#4A67B3]"
                                                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
@@ -251,9 +250,6 @@ export const ClientDetail: React.FC = () => {
                                         aria-current={activeTab === tab.id ? "page" : undefined}
                                     >
                                         {tab.label}
-                                        {tab.disabled && (
-                                            <span className="ml-2 text-xs text-gray-400 font-normal">(Próximamente)</span>
-                                        )}
                                     </button>
                                 ))}
                             </nav>

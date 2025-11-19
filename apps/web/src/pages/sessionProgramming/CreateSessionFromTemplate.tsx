@@ -52,7 +52,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
     const microcycles = React.useMemo(() => {
         if (!trainingPlans) return [];
         const allMicrocycles: Array<{ id: number; name: string; planName: string }> = [];
-        trainingPlans.forEach((plan) => {
+        trainingPlans.forEach((_plan) => {
             // TODO: Obtener microcycles de cada plan si hay endpoint
         });
         return allMicrocycles;
@@ -301,4 +301,5 @@ export const CreateSessionFromTemplate: React.FC = () => {
         </>
     );
 };
+
 

@@ -17,7 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useScheduleSession } from "@nexia/shared";
