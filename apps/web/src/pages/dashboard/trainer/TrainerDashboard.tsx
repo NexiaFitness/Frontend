@@ -210,7 +210,7 @@ export const TrainerDashboard: React.FC = () => {
                                 {/* Añadir Cliente */}
                                 <div
                                     className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={handleManageClients}
+                                    onClick={() => navigate("/dashboard/clients/onboarding")}
                                 >
                                     <div className="text-center">
                                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">

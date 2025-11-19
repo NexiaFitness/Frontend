@@ -19,9 +19,11 @@
 import React, { useState, useMemo, useCallback } from "react";
 import type { ClientFormData } from "@nexia/shared/types/client";
 import { useClientForm } from "@nexia/shared/hooks/clients/useClientForm";
+import { useCompleteProfileModal } from "@nexia/shared";
 import { validateClientForm } from "@nexia/shared/utils/validations";
 import { Button } from "@/components/ui/buttons";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
+import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { PersonalInfo } from "../shared/PersonalInfo";
 import { PhysicalMetrics } from "../shared/PhysicalMetrics";
 import { AnthropometricMetrics } from "../shared/AnthropometricMetrics";
@@ -55,6 +57,10 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
     onBackToDashboard,
 }) => {
     const [currentStep, setCurrentStep] = useState<number>(0);
+    
+    // ✅ Modal de perfil completo
+    const { shouldBlock } = useCompleteProfileModal();
+    const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
     // Usar useClientForm para lógica compartida
     const { formData, errors, updateField, handleSubmit, isSubmitting } = useClientForm({
@@ -116,6 +122,12 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
 
     // Handler para submit final
     const handleFinalSubmit = async () => {
+        // ✅ Verificar si el perfil está completo antes de permitir crear cliente
+        if (shouldBlock) {
+            setShowCompleteProfileModal(true);
+            return;
+        }
+        
         const result = await handleSubmit();
         if (result.success && onSubmitSuccess) {
             onSubmitSuccess();
@@ -217,6 +229,12 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                     </div>
                 </div>
             </div>
+            
+            {/* ✅ Modal de Complete Profile */}
+            <CompleteProfileModal
+                isOpen={showCompleteProfileModal}
+                onClose={() => setShowCompleteProfileModal(false)}
+            />
         </>
     );
 };

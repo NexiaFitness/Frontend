@@ -29,6 +29,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useGetClientsQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { useCompleteProfileModal } from "@nexia/shared";
 import type { ClientFilters as ClientFiltersType, Client } from "@nexia/shared/types/client";
 import type { RootState } from "@nexia/shared/store";
 
@@ -41,6 +42,7 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 import { ClientCard } from "@/components/clients/ClientCard";
 import { ClientFilters } from "@/components/clients/ClientFilters";
 import { ClientStats } from "@/components/clients/ClientStats";
+import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 
 // UI
 import { Button } from "@/components/ui/buttons";
@@ -53,6 +55,10 @@ export const ClientList: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
+    
+    // ✅ Modal de perfil completo
+    const { shouldBlock } = useCompleteProfileModal();
+    const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
     // State de filtros (inicializado desde URL) - FIX: Type casting para TypeScript strict
     const [filters, setFilters] = useState<ClientFiltersType>({
@@ -120,6 +126,11 @@ export const ClientList: React.FC = () => {
     };
 
     const handleAddClient = () => {
+        // ✅ Verificar si el perfil está completo antes de permitir crear cliente
+        if (shouldBlock) {
+            setShowCompleteProfileModal(true);
+            return;
+        }
         navigate("/dashboard/clients/onboarding");
     };
 
@@ -229,7 +240,11 @@ export const ClientList: React.FC = () => {
                                         ? "Intenta ajustar los filtros de búsqueda"
                                         : "Comienza agregando tu primer cliente para empezar a gestionar entrenamientos"}
                                 </p>
-                                <Button variant="primary" size="lg" onClick={handleAddClient}>
+                                <Button 
+                                    variant="primary" 
+                                    size="lg" 
+                                    onClick={handleAddClient}
+                                >
                                     + Agregar Primer Cliente
                                 </Button>
                             </div>
@@ -321,6 +336,12 @@ export const ClientList: React.FC = () => {
                     )}
                 </div>
             </DashboardLayout>
+            
+            {/* ✅ Modal de Complete Profile */}
+            <CompleteProfileModal
+                isOpen={showCompleteProfileModal}
+                onClose={() => setShowCompleteProfileModal(false)}
+            />
         </>
     );
 };
