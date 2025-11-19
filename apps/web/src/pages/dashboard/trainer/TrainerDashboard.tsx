@@ -47,19 +47,7 @@ export const TrainerDashboard: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
     
-    // ✅ FASE 2.1: Cleanup en useEffect para cancelar queries cuando se desautentica
-    useEffect(() => {
-        if (!isAuthenticated) {
-            // Cancelar todas las queries cuando se desautentica
-            dispatch(baseApi.util.resetApiState());
-        }
-    }, [isAuthenticated, dispatch]);
-    
-    // Early return si no está autenticado
-    if (!isAuthenticated) {
-        return null;
-    }
-
+    // ✅ CRÍTICO: TODOS los hooks deben ejecutarse ANTES del early return
     // Hooks de datos reales
     const {
         getTotalClients,
@@ -76,7 +64,20 @@ export const TrainerDashboard: React.FC = () => {
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
     // Hook para verificar si perfil está completo
-    const { shouldBlock, isProfileComplete } = useCompleteProfileModal();
+    const { isProfileComplete } = useCompleteProfileModal();
+    
+    // ✅ FASE 2.1: Cleanup en useEffect para cancelar queries cuando se desautentica
+    useEffect(() => {
+        if (!isAuthenticated) {
+            // Cancelar todas las queries cuando se desautentica
+            dispatch(baseApi.util.resetApiState());
+        }
+    }, [isAuthenticated, dispatch]);
+    
+    // Early return si no está autenticado (DESPUÉS de todos los hooks)
+    if (!isAuthenticated) {
+        return null;
+    }
 
     // Items del menú superior
     const menuItems = [
@@ -86,15 +87,6 @@ export const TrainerDashboard: React.FC = () => {
         { label: "Ejercicios", path: "/dashboard/exercises" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
-
-    // Handler para gestionar clientes con bloqueo condicional
-    const handleManageClients = () => {
-        if (shouldBlock) {
-            setShowCompleteProfileModal(true);
-            return;
-        }
-        navigate("/dashboard/clients");
-    };
 
     // Formatear fecha en español
     const currentDate = new Date().toLocaleDateString("es-ES", {
@@ -210,7 +202,7 @@ export const TrainerDashboard: React.FC = () => {
                                 {/* Añadir Cliente */}
                                 <div
                                     className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={handleManageClients}
+                                    onClick={() => navigate("/dashboard/clients/onboarding")}
                                 >
                                     <div className="text-center">
                                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
