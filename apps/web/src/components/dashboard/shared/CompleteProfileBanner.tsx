@@ -9,7 +9,7 @@
  * @updated v4.1.0 - Recibe user completo para detectar cambios durante hydration
  */
 
-import React, { useMemo } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons/Button";
 import { useCompleteProfile } from "@nexia/shared";

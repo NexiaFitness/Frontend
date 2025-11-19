@@ -47,19 +47,7 @@ export const TrainerDashboard: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
     
-    // ✅ FASE 2.1: Cleanup en useEffect para cancelar queries cuando se desautentica
-    useEffect(() => {
-        if (!isAuthenticated) {
-            // Cancelar todas las queries cuando se desautentica
-            dispatch(baseApi.util.resetApiState());
-        }
-    }, [isAuthenticated, dispatch]);
-    
-    // Early return si no está autenticado
-    if (!isAuthenticated) {
-        return null;
-    }
-
+    // ✅ CRÍTICO: TODOS los hooks deben ejecutarse ANTES del early return
     // Hooks de datos reales
     const {
         getTotalClients,
@@ -76,7 +64,20 @@ export const TrainerDashboard: React.FC = () => {
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
     // Hook para verificar si perfil está completo
-    const { shouldBlock, isProfileComplete } = useCompleteProfileModal();
+    const { isProfileComplete } = useCompleteProfileModal();
+    
+    // ✅ FASE 2.1: Cleanup en useEffect para cancelar queries cuando se desautentica
+    useEffect(() => {
+        if (!isAuthenticated) {
+            // Cancelar todas las queries cuando se desautentica
+            dispatch(baseApi.util.resetApiState());
+        }
+    }, [isAuthenticated, dispatch]);
+    
+    // Early return si no está autenticado (DESPUÉS de todos los hooks)
+    if (!isAuthenticated) {
+        return null;
+    }
 
     // Items del menú superior
     const menuItems = [
@@ -86,15 +87,6 @@ export const TrainerDashboard: React.FC = () => {
         { label: "Ejercicios", path: "/dashboard/exercises" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
-
-    // Handler para gestionar clientes con bloqueo condicional
-    const handleManageClients = () => {
-        if (shouldBlock) {
-            setShowCompleteProfileModal(true);
-            return;
-        }
-        navigate("/dashboard/clients");
-    };
 
     // Formatear fecha en español
     const currentDate = new Date().toLocaleDateString("es-ES", {

@@ -117,14 +117,6 @@ export const RegisterForm: React.FC = () => {
                 return;
             }
 
-            // ✅ RECOMENDACIÓN 3: Logging estratégico para debugging
-            console.log('[RegisterForm] Registration successful:', {
-                hasUser: !!response.user,
-                hasToken: !!response.access_token,
-                userRole: response.user?.role,
-                userEmail: response.user?.email,
-            });
-
             // Auto-login: dispatch tokens to Redux
             dispatch(
                 loginSuccess({
@@ -133,60 +125,58 @@ export const RegisterForm: React.FC = () => {
                 })
             );
 
-            // ✅ RECOMENDACIÓN 3: Log después de actualizar Redux
-            console.log('[RegisterForm] Redux updated, navigating to dashboard...');
-
             // CORRECCIÓN: Ir a /dashboard (no /dashboard/trainer)
             // DashboardRouter maneja la redirección según rol
             navigate("/dashboard", { replace: true });
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             // CORRECCIÓN: Manejo de error mejorado
+            const apiError = error as { status?: number; data?: { detail?: string }; message?: string };
             console.error('[RegisterForm] Registration failed:', {
                 error,
-                status: error?.status,
-                data: error?.data,
-                message: error?.message,
+                status: apiError?.status,
+                data: apiError?.data,
+                message: apiError?.message,
             });
             
-            // ✅ RECOMENDACIÓN 4: Manejar caso de usuario ya existente
-            if (error?.status === 422) {
-                const errorDetail = error?.data?.detail || '';
-                const isDuplicateUser = 
-                    typeof errorDetail === 'string' && 
-                    (errorDetail.toLowerCase().includes('already exists') ||
-                     errorDetail.toLowerCase().includes('ya existe') ||
-                     errorDetail.toLowerCase().includes('duplicate') ||
-                     errorDetail.toLowerCase().includes('duplicado'));
-                
-                if (isDuplicateUser) {
-                    const errorMessage = "Este email ya está registrado. ¿Quieres iniciar sesión?";
-                    handleServerError({
-                        status: 422,
-                        data: { detail: errorMessage }
-                    });
-                    // Redirigir a login con email prellenado
-                    navigate("/auth/login", { 
-                        state: { email: formData.email },
-                        replace: true 
-                    });
-                    return;
+                // ✅ RECOMENDACIÓN 4: Manejar caso de usuario ya existente
+                if (apiError?.status === 422) {
+                    const errorDetail = apiError?.data?.detail || '';
+                    const isDuplicateUser = 
+                        typeof errorDetail === 'string' && 
+                        (errorDetail.toLowerCase().includes('already exists') ||
+                         errorDetail.toLowerCase().includes('ya existe') ||
+                         errorDetail.toLowerCase().includes('duplicate') ||
+                         errorDetail.toLowerCase().includes('duplicado'));
+                    
+                    if (isDuplicateUser) {
+                        const errorMessage = "Este email ya está registrado. ¿Quieres iniciar sesión?";
+                        handleServerError({
+                            status: 422,
+                            data: { detail: errorMessage }
+                        });
+                        // Redirigir a login con email prellenado
+                        navigate("/auth/login", { 
+                            state: { email: formData.email },
+                            replace: true 
+                        });
+                        return;
+                    }
                 }
-            }
-            
-            // Extraer mensaje de error de RTK Query
-            const errorMessage = error?.data?.detail || 
-                               error?.message || 
-                               "Error al crear la cuenta. Intenta de nuevo.";
-            
-            // Actualizar UI con error
-            handleServerError({
-                status: error?.status || 500,
-                data: { detail: errorMessage }
-            });
-            
-            // Dispatch failure a Redux
-            dispatch(loginFailure(errorMessage));
+                
+                // Extraer mensaje de error de RTK Query
+                const errorMessage = apiError?.data?.detail || 
+                                   apiError?.message || 
+                                   "Error al crear la cuenta. Intenta de nuevo.";
+                
+                // Actualizar UI con error
+                handleServerError({
+                    status: apiError?.status || 500,
+                    data: { detail: errorMessage }
+                });
+                
+                // Dispatch failure a Redux
+                dispatch(loginFailure(errorMessage));
         }
     };
 
