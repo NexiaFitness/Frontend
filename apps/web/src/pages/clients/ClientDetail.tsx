@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Vista completa del cliente con tabs
- * - Tabs: Overview, Progress, Workouts, Nutrition (futuro), Settings
+ * - Tabs: Overview, Session Programming, Daily Coherence, Testing, Progress, Workouts
  * - Layout: Header + Tabs + Content
  * - Diseño basado en Figma Profile Page V2
  *
@@ -29,9 +29,10 @@ import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
 import { ClientOverviewTab } from "@/components/clients/detail/ClientOverviewTab";
+import { ClientSessionProgrammingTab } from "@/components/clients/detail/ClientSessionProgrammingTab";
+import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDailyCoherenceTab";
+import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientWorkoutsTab } from "@/components/clients/detail/ClientWorkoutsTab";
-import { ClientNutritionTab } from "@/components/clients/detail/ClientNutritionTab";
-import { ClientSettingsTab } from "@/components/clients/detail/ClientSettingsTab";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
 const ClientProgressTab = lazy(() => 
@@ -40,7 +41,7 @@ const ClientProgressTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "progress" | "workouts" | "nutrition" | "settings";
+type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts";
 
 interface Tab {
     id: TabId;
@@ -50,10 +51,11 @@ interface Tab {
 
 const TABS: Tab[] = [
     { id: "overview", label: "Resumen" },
+    { id: "session-programming", label: "Programación de Sesiones" },
+    { id: "daily-coherence", label: "Coherencia Diaria" },
+    { id: "testing", label: "Tests" },
     { id: "progress", label: "Progreso" },
     { id: "workouts", label: "Entrenamientos" },
-    { id: "nutrition", label: "Nutrición", disabled: true }, // Futuro
-    { id: "settings", label: "Configuración" },
 ];
 
 export const ClientDetail: React.FC = () => {
@@ -163,6 +165,12 @@ export const ClientDetail: React.FC = () => {
         switch (activeTab) {
             case "overview":
                 return <ClientOverviewTab client={client} />;
+            case "session-programming":
+                return <ClientSessionProgrammingTab clientId={clientId} />;
+            case "daily-coherence":
+                return <ClientDailyCoherenceTab clientId={clientId} />;
+            case "testing":
+                return <ClientTestingTab clientId={clientId} />;
             case "progress":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
@@ -182,10 +190,6 @@ export const ClientDetail: React.FC = () => {
                         trainingSessions={trainingSessions}
                     />
                 );
-            case "nutrition":
-                return <ClientNutritionTab />;
-            case "settings":
-                return <ClientSettingsTab client={client} onDelete={() => navigate("/dashboard/clients")} />;
             default:
                 return null;
         }
@@ -200,29 +204,34 @@ export const ClientDetail: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                <div className="min-h-screen bg-white -mt-16 md:-mt-18 lg:-mt-20 pt-4 lg:pt-6">
+                <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     {/* Header con foto, nombre y actions */}
                     <ClientHeader 
                         client={client} 
-                        onRefresh={refetchAll}
-                        onNewTrainingPlan={() => navigate("/dashboard/training-plans")}
-                        onEditTrainingPlan={() => navigate("/dashboard/training-plans")}
+                        onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                         onAnthropometricData={() => setActiveTab("progress")}
                     />
 
-                    {/* Tabs Navigation */}
-                    <div className="bg-white border-b border-gray-200">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-0">
+                    {/* Tabs Navigation - Separado del header */}
+                    <div className="mt-6 px-4 sm:px-6 lg:px-8">
+                        <div className="bg-white rounded-lg shadow w-fit max-w-full">
                             <nav 
-                                className="flex space-x-2 sm:space-x-4 lg:space-x-8 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-transparent" 
+                                className="flex space-x-3 sm:space-x-4 lg:space-x-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-transparent px-4 sm:px-6 py-2" 
                                 aria-label="Tabs" 
                                 style={{ 
                                     WebkitOverflowScrolling: 'touch',
                                 }}
                             >
                                 <style>{`
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar {
+                                        height: 4px;
+                                    }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-track {
+                                        background: transparent;
+                                    }
                                     nav[aria-label="Tabs"]::-webkit-scrollbar-thumb {
                                         background-color: #4A67B3 !important;
+                                        border-radius: 2px;
                                     }
                                 `}</style>
                                 {TABS.map((tab) => (
@@ -231,22 +240,16 @@ export const ClientDetail: React.FC = () => {
                                         onClick={() => !tab.disabled && setActiveTab(tab.id)}
                                         disabled={tab.disabled}
                                         className={`
-                    py-3 sm:py-4 px-3 sm:px-2 lg:px-1 border-b-2 font-medium text-xs sm:text-sm transition-colors whitespace-nowrap flex-shrink-0
-                    ${activeTab === tab.id
-                                            ? "border-transparent sm:border-b-2 sm:border-[#4A67B3]"
-                                            : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                        }
-                    ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                         `}
-                                        style={activeTab === tab.id ? { 
-                                            color: '#4A67B3'
-                                        } : {}}
+                                            py-2 px-3 sm:px-4 border-b-2 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-shrink-0
+                                            ${activeTab === tab.id
+                                                ? "border-[#4A67B3] text-[#4A67B3]"
+                                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                            }
+                                            ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
+                                        `}
                                         aria-current={activeTab === tab.id ? "page" : undefined}
                                     >
                                         {tab.label}
-                                        {tab.disabled && (
-                                            <span className="ml-1 sm:ml-2 text-xs text-gray-400">(Próximamente)</span>
-                                        )}
                                     </button>
                                 ))}
                             </nav>
@@ -254,7 +257,7 @@ export const ClientDetail: React.FC = () => {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
+                    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         {renderTabContent()}
                     </div>
                 </div>

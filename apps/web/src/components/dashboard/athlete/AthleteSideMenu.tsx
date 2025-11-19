@@ -47,7 +47,7 @@ export const AthleteSideMenu: React.FC = () => {
     ];
 
     return (
-        <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10 bg-sidebar-nav">
+        <aside className="hidden lg:flex fixed left-0 top-0 h-full w-80 flex-col z-10 bg-sidebar-nav" style={{ height: '100vh' }}>
             {/* Header - Logo y título fijos en top */}
             <div className="p-8 bg-sidebar-header border-b-2 border-white/60 text-center shrink-0">
                 <div className="w-24 sm:w-32 md:w-40 h-auto mx-auto">

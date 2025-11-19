@@ -49,6 +49,16 @@ import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
 import { ExerciseList } from "./pages/exercises/ExerciseList";
 import { ExerciseDetail } from "./pages/exercises/ExerciseDetail";
 
+// Reports & Scheduling (trainers only)
+import { GenerateReports } from "./pages/reports/GenerateReports";
+import { ScheduleSession } from "./pages/scheduling/ScheduleSession";
+
+// Session Programming (trainers only)
+import { CreateSessionFromTemplate, CreateSession, CreateTemplate } from "./pages/sessionProgramming";
+
+// Testing (trainers only)
+import { CreateTestResult } from "./pages/testing";
+
 // Páginas adicionales
 import Account from "./pages/account/Account";
 
@@ -247,6 +257,90 @@ function App() {
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
               <CompleteProfile />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* REPORTS & SCHEDULING - Trainers only */}
+      {/* ============================================ */}
+
+      {/* Generate Reports */}
+      <Route
+        path="/dashboard/reports/generate"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <GenerateReports />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Schedule Session */}
+      <Route
+        path="/dashboard/scheduling/schedule"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ScheduleSession />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* SESSION PROGRAMMING - Trainers only */}
+      {/* ============================================ */}
+
+      {/* Create Session From Template */}
+      <Route
+        path="/dashboard/session-programming/create-from-template/:templateId"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+              <CreateSessionFromTemplate />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Create Session */}
+      <Route
+        path="/dashboard/session-programming/create-session"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+              <CreateSession />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Create Template */}
+      <Route
+        path="/dashboard/session-programming/create-template"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+              <CreateTemplate />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* ============================================ */}
+      {/* TESTING - Trainers only */}
+      {/* ============================================ */}
+
+      {/* Create Test Result */}
+      <Route
+        path="/dashboard/testing/create-test"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+              <CreateTestResult />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }

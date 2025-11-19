@@ -157,14 +157,19 @@ export const ClientList: React.FC = () => {
                                 Gestiona y monitoriza el progreso de tus clientes
                             </p>
                         </div>
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            onClick={handleAddClient}
-                            className="w-full sm:w-auto sm:min-w-[180px]"
-                        >
-                            + Agregar Cliente
-                        </Button>
+                        <div className="flex flex-col sm:flex-row gap-3">
+                            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                                Volver al Dashboard
+                            </Button>
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleAddClient}
+                                className="w-full sm:w-auto"
+                            >
+                                + Agregar Cliente
+                            </Button>
+                        </div>
                     </div>
                 </div>
 

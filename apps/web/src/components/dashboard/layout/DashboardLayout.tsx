@@ -26,7 +26,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
     return (
-        <div className="min-h-screen" style={{ background: meshGradientInverted }}>
+        <div className="min-h-screen w-full" style={{ background: meshGradientInverted }}>
             {/* Overlay de loading durante logout */}
             {isLoading && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -49,7 +49,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             )}
 
             {/* Contenido principal - offset sidebar, sin padding lateral */}
-            <main className="lg:ml-80 pt-16 md:pt-18 lg:pt-20 min-h-screen">
+            <main className="lg:ml-80 pt-16 md:pt-18 lg:pt-20 pb-16 min-h-screen">
                 {children}
             </main>
         </div>

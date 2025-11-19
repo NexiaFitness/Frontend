@@ -18,6 +18,7 @@ export * from "./clients/useClientStats";
 export * from "./clients/useCreateClientProgress";
 export * from "./clients/useUpdateClient";
 export * from "./clients/useUpdateClientProgress";
+export * from "./clients/useCoherence";
 
 export * from "./exercises";
 export * from "./training";
@@ -28,4 +29,7 @@ export { useBillingInfoModal } from "./modals/useBillingInfoModal";
 export { useEmailVerificationGuard } from "./modals/useEmailVerificationGuard";
 
 export * from "./dashboard";
+export * from "./reports";
+export * from "./scheduling";
+export * from "./sessionProgramming";
 

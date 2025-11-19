@@ -80,7 +80,7 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                     <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => alert(`Create Training Plan for client ${clientId}`)}
+                        onClick={() => alert(`Crear Plan de Entrenamiento para cliente ${clientId}`)}
                     >
                         + Nuevo Plan
                     </Button>
@@ -110,7 +110,7 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                     <Button
                         variant="primary"
                         size="sm"
-                        onClick={() => alert(`Create Session for client ${clientId}`)}
+                        onClick={() => alert(`Crear Sesión para cliente ${clientId}`)}
                     >
                         + Nueva Sesión
                     </Button>
@@ -124,7 +124,12 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                                 background-color: #4A67B3 !important;
                             }
                         `}</style>
-                        {(["all", "planned", "completed", "cancelled"] as SessionFilter[]).map((filter) => (
+                        {([
+                            { value: "all", label: "Todas" },
+                            { value: "planned", label: "Planificadas" },
+                            { value: "completed", label: "Completadas" },
+                            { value: "cancelled", label: "Canceladas" },
+                        ] as Array<{ value: SessionFilter; label: string }>).map(({ value: filter, label }) => (
                             <button
                                 key={filter}
                                 onClick={() => setSessionFilter(filter)}
@@ -134,7 +139,7 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                                     }`}
                                 style={sessionFilter === filter ? { color: '#4A67B3' } : {}}
                             >
-                                {filter.charAt(0).toUpperCase() + filter.slice(1)}
+                                {label}
                                 <span className="ml-2 text-xs text-gray-400">
                                     ({sessionCounts[filter]})
                                 </span>
@@ -152,7 +157,7 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                 ) : filteredSessions.length === 0 ? (
                     <EmptyState
                         icon="🔍"
-                        title={`No hay sesiones ${sessionFilter}`}
+                        title={`No hay sesiones ${sessionFilter === "all" ? "" : sessionFilter === "planned" ? "planificadas" : sessionFilter === "completed" ? "completadas" : "canceladas"}`}
                         description="Intenta cambiar el filtro"
                     />
                 ) : (
@@ -182,6 +187,16 @@ const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({ plan }) => {
         return "bg-gray-100 text-gray-800";
     };
 
+    const getStatusLabel = (status: string) => {
+        const labels: Record<string, string> = {
+            active: "Activo",
+            completed: "Completado",
+            paused: "Pausado",
+            cancelled: "Cancelado",
+        };
+        return labels[status] || status;
+    };
+
     return (
         <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
             <div className="flex items-start justify-between">
@@ -193,7 +208,7 @@ const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({ plan }) => {
                                 plan.status
                             )}`}
                         >
-                            {plan.status}
+                            {getStatusLabel(plan.status)}
                         </span>
                     </div>
                     {plan.description && (
@@ -208,9 +223,9 @@ const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({ plan }) => {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => alert(`View plan ${plan.id} - TODO`)}
+                    onClick={() => alert(`Ver plan ${plan.id} - TODO`)}
                 >
-                    Ver detalles
+                    Ver Detalles
                 </Button>
             </div>
         </div>
@@ -301,10 +316,10 @@ const TrainingSessionCard: React.FC<TrainingSessionCardProps> = ({ session }) =>
             <Button
                 variant="outline"
                 size="sm"
-                onClick={() => alert(`View session ${session.id} - TODO`)}
+                onClick={() => alert(`Ver sesión ${session.id} - TODO`)}
                 className="w-full md:w-auto"
             >
-                Ver detalles
+                Ver Detalles
             </Button>
         </div>
     );

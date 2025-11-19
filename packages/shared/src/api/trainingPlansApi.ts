@@ -44,6 +44,7 @@ import type {
     MilestoneCreate,
     MilestoneUpdate,
 } from "../types/training";
+import type { PlanAdherenceResponse } from "../types/dashboard";
 
 export const trainingPlansApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -484,6 +485,22 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 { type: "Milestone", id },
             ],
         }),
+
+        // ========================================
+        // DASHBOARD KPI ENDPOINTS
+        // ========================================
+
+        /**
+         * Obtener estadísticas de adherencia de planes
+         * Endpoint: GET /api/v1/training-plans/adherence-stats
+         */
+        getPlanAdherenceStats: builder.query<PlanAdherenceResponse, void>({
+            query: () => ({
+                url: "/training-plans/adherence-stats",
+                method: "GET",
+            }),
+            providesTags: [{ type: "TrainingPlan", id: "DASHBOARD_KPI" }],
+        }),
     }),
     overrideExisting: false,
 });
@@ -524,4 +541,6 @@ export const {
     useCreateMilestoneMutation,
     useUpdateMilestoneMutation,
     useDeleteMilestoneMutation,
+    // Dashboard KPI hooks
+    useGetPlanAdherenceStatsQuery,
 } = trainingPlansApi;

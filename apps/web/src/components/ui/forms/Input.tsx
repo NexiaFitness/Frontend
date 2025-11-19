@@ -16,7 +16,7 @@
 import React, { forwardRef, useId, useState } from "react";
 import clsx from "clsx";
 
-export type InputType = "text" | "email" | "password";
+export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
 export type InputSize = "sm" | "md" | "lg";
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {

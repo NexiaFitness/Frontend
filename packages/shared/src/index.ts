@@ -7,6 +7,7 @@ export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
+export * from "./api";
 
 // Store
 export * from "./store/authSlice";
@@ -104,7 +105,41 @@ export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
-export type { ChartView, ChartDataPoint, ChartMetrics } from "./types/charts";
+export * from "./types/sessionProgramming";
+export * from "./types/coherence";
+export * from "./types/dashboard";
+export * from "./types/testing";
+export * from "./types/reports";
+// Export scheduling types explicitly to avoid SessionType conflict with training.ts
+export type {
+    ScheduledSessionType,
+    SessionStatus,
+    SessionLocation,
+    ScheduledSession,
+    ScheduledSessionCreate,
+    ScheduledSessionUpdate,
+    ConflictCheckRequest,
+    ConflictCheckResponse,
+    AvailableSlotsRequest,
+    AvailableSlot,
+    AvailableSlotsResponse,
+    ScheduleSessionFormData,
+    ScheduledSessionsFilters,
+} from "./types/scheduling";
+export {
+    SCHEDULED_SESSION_TYPE,
+    SESSION_STATUS,
+    SESSION_LOCATION,
+} from "./types/scheduling";
+export type {
+    ChartView,
+    ChartDataPoint,
+    ChartMetrics,
+    AdherenceChartData,
+    IntensityScatterData,
+    MonotonyWeekData,
+    StrainWeekData,
+} from "./types/charts";
 
 // Enums explícitos de client (para uso directo en componentes)
 export {
@@ -164,6 +199,9 @@ export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
+export * from "./hooks/clients/useCoherence";
+export * from "./hooks/clients/useClientTests";
+export * from "./hooks/clients/useCreateTestResult";
 
 // Hooks - Exercises
 export * from "./hooks/exercises";
@@ -195,3 +233,14 @@ export * from "./utils/calculations";
 
 // Dashboard hooks
 export * from "./hooks/dashboard";
+
+// Hooks - Reports
+export * from "./hooks/reports";
+
+// Hooks - Scheduling
+export * from "./hooks/scheduling";
+
+// Hooks - Session Programming
+export * from "./hooks/sessionProgramming";
+
+// Mocks (temporal - mientras backend implementa endpoints)

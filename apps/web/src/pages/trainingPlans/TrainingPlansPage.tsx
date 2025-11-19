@@ -215,7 +215,7 @@ export const TrainingPlansPage: React.FC = () => {
             <DashboardLayout>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
                             <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                                 Training Plans
@@ -224,6 +224,9 @@ export const TrainingPlansPage: React.FC = () => {
                                 Gestiona los planes de entrenamiento de tus clientes
                             </p>
                         </div>
+                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                            Volver al Dashboard
+                        </Button>
                     </div>
                 </div>
 

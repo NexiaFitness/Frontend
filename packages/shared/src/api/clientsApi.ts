@@ -32,6 +32,19 @@ import type {
     ClientFeedback,
     FatigueAnalysis,
 } from "../types/training";
+import type {
+    ClientImprovementResponse,
+    ClientSatisfactionResponse,
+    ProgressCategoriesResponse,
+} from "../types/dashboard";
+import type { DailyCoherenceAnalyticsOut } from "../types/coherence";
+import type {
+    PhysicalTestResultOut,
+    PhysicalTestOut,
+    ClientTestingSummary,
+    CreateTestResultData,
+    UpdateTestResultData,
+} from "../types/testing";
 
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -365,6 +378,206 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        // ========================================
+        // DASHBOARD KPI ENDPOINTS
+        // ========================================
+
+        /**
+         * Obtener promedio de mejora de clientes
+         * Endpoint: GET /api/v1/clients/improvement-avg
+         */
+        getClientImprovementAvg: builder.query<ClientImprovementResponse, void>({
+            query: () => ({
+                url: "/clients/improvement-avg",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "DASHBOARD_KPI" }],
+        }),
+
+        /**
+         * Obtener promedio de satisfacción de clientes
+         * Endpoint: GET /api/v1/clients/satisfaction-avg
+         */
+        getClientSatisfactionAvg: builder.query<ClientSatisfactionResponse, void>({
+            query: () => ({
+                url: "/clients/satisfaction-avg",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "DASHBOARD_KPI" }],
+        }),
+
+        /**
+         * Obtener categorías de progreso de clientes
+         * Endpoint: GET /api/v1/clients/progress-categories
+         */
+        getClientProgressCategories: builder.query<ProgressCategoriesResponse, void>({
+            query: () => ({
+                url: "/clients/progress-categories",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "DASHBOARD_KPI" }],
+        }),
+
+        /**
+         * Obtener analytics de coherencia diaria de un cliente
+         * Endpoint: GET /api/v1/clients/{client_id}/coherence
+         */
+        getClientCoherence: builder.query<
+            DailyCoherenceAnalyticsOut,
+            {
+                clientId: number;
+                week?: string; // ISO week format (e.g., "2025-W03")
+                periodStart?: string; // YYYY-MM-DD
+                periodEnd?: string; // YYYY-MM-DD
+                periodType?: "week" | "month" | "training_block";
+            }
+        >({
+            query: ({ clientId, week, periodStart, periodEnd, periodType = "week" }) => {
+                const params = new URLSearchParams();
+                params.append("period_type", periodType);
+                
+                if (week) {
+                    params.append("week", week);
+                } else if (periodStart && periodEnd) {
+                    params.append("period_start", periodStart);
+                    params.append("period_end", periodEnd);
+                }
+
+                return {
+                    url: `/clients/${clientId}/coherence?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: "COHERENCE" },
+            ],
+        }),
+
+        /**
+         * Obtener resultados de tests físicos de un cliente
+         * Endpoint: GET /api/v1/physical-tests/results?client_id={client_id}&category={category}
+         */
+        getClientTestResults: builder.query<
+            PhysicalTestResultOut[],
+            {
+                clientId: number;
+                category?: string;
+                testId?: number;
+            }
+        >({
+            query: ({ clientId, category, testId }) => {
+                const params = new URLSearchParams();
+                params.append("client_id", clientId.toString());
+                if (category) {
+                    params.append("category", category);
+                }
+                if (testId) {
+                    params.append("test_id", testId.toString());
+                }
+
+                return {
+                    url: `/physical-tests/results?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: "TESTS" },
+            ],
+        }),
+
+        /**
+         * Obtener definiciones de tests físicos
+         * Endpoint: GET /api/v1/physical-tests/?category={category}
+         */
+        getPhysicalTests: builder.query<
+            PhysicalTestOut[],
+            {
+                category?: string;
+                isStandard?: boolean;
+            }
+        >({
+            query: ({ category, isStandard }) => {
+                const params = new URLSearchParams();
+                if (category) {
+                    params.append("category", category);
+                }
+                if (isStandard !== undefined) {
+                    params.append("is_standard", isStandard.toString());
+                }
+
+                return {
+                    url: `/physical-tests/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "PhysicalTest", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener resumen de tests del cliente
+         * Endpoint: GET /api/v1/physical-tests/clients/{client_id}/summary
+         */
+        getClientTestingSummary: builder.query<ClientTestingSummary, number>({
+            query: (clientId) => ({
+                url: `/physical-tests/clients/${clientId}/summary`,
+                method: "GET",
+            }),
+            providesTags: (result, error, clientId) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: "TESTING_SUMMARY" },
+            ],
+        }),
+
+        /**
+         * Crear resultado de test físico
+         * Endpoint: POST /api/v1/physical-tests/results
+         */
+        createTestResult: builder.mutation<PhysicalTestResultOut, CreateTestResultData>({
+            query: (data) => ({
+                url: "/physical-tests/results",
+                method: "POST",
+                body: data,
+            }),
+            invalidatesTags: (result, error, { client_id }) => [
+                { type: "Client", id: client_id },
+                { type: "Client", id: "TESTS" },
+                { type: "Client", id: "TESTING_SUMMARY" },
+            ],
+        }),
+
+        /**
+         * Actualizar resultado de test físico
+         * Endpoint: PUT /api/v1/physical-tests/results/{result_id}
+         */
+        updateTestResult: builder.mutation<
+            PhysicalTestResultOut,
+            { resultId: number; data: UpdateTestResultData }
+        >({
+            query: ({ resultId, data }) => ({
+                url: `/physical-tests/results/${resultId}`,
+                method: "PUT",
+                body: data,
+            }),
+            invalidatesTags: (result, error, { resultId }) => [
+                { type: "Client", id: "TESTS" },
+                { type: "Client", id: "TESTING_SUMMARY" },
+            ],
+        }),
+
+        /**
+         * Eliminar resultado de test físico
+         * Endpoint: DELETE /api/v1/physical-tests/results/{result_id}
+         */
+        deleteTestResult: builder.mutation<void, number>({
+            query: (resultId) => ({
+                url: `/physical-tests/results/${resultId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: [{ type: "Client", id: "TESTS" }, { type: "Client", id: "TESTING_SUMMARY" }],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -392,4 +605,17 @@ export const {
     useGetClientFeedbackQuery,
     // Fatigue hooks
     useGetClientFatigueAnalysisQuery,
+    // Dashboard KPI hooks
+    useGetClientImprovementAvgQuery,
+    useGetClientSatisfactionAvgQuery,
+    useGetClientProgressCategoriesQuery,
+    // Coherence hooks
+    useGetClientCoherenceQuery,
+    // Testing hooks
+    useGetClientTestResultsQuery,
+    useGetPhysicalTestsQuery,
+    useGetClientTestingSummaryQuery,
+    useCreateTestResultMutation,
+    useUpdateTestResultMutation,
+    useDeleteTestResultMutation,
 } = clientsApi;
