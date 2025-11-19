@@ -1,11 +1,18 @@
 import React, { useMemo } from "react";
+import { useSelector } from "react-redux";
 import { useGetUnreadFatigueAlertsQuery, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
 import type { FatigueAlertSeverity, FatigueAlertType } from "@nexia/shared/types/training";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import type { RootState } from "@nexia/shared/store";
 
 export const PriorityAlertsWidget: React.FC = () => {
-    const { data: alerts, isLoading: isLoadingAlerts } = useGetUnreadFatigueAlertsQuery();
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    const { data: alerts, isLoading: isLoadingAlerts } = useGetUnreadFatigueAlertsQuery(undefined, {
+        skip: !isAuthenticated,
+    });
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !isAuthenticated,
+    });
     
     // Obtener todos los clientes del trainer para hacer lookup de nombres
     const { data: clientsData } = useGetTrainerClientsQuery(

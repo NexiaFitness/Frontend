@@ -11,11 +11,13 @@
  * @since v5.3.0
  */
 
+import { useSelector } from "react-redux";
 import {
     useGetClientImprovementAvgQuery,
     useGetClientSatisfactionAvgQuery,
 } from "../../api/clientsApi";
 import { useGetPlanAdherenceStatsQuery } from "../../api/trainingPlansApi";
+import type { RootState } from "../../store";
 import type {
     ClientImprovementResponse,
     ClientSatisfactionResponse,
@@ -40,10 +42,14 @@ interface UseClientImprovementReturn {
  * Endpoint: GET /api/v1/clients/improvement-avg
  */
 export const useClientImprovement = (): UseClientImprovementReturn => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     const { data, isLoading, isError } = useGetClientImprovementAvgQuery(undefined, {
-        refetchOnMountOrArgChange: true,
+        skip: !isAuthenticated,
+        // ✅ FASE 1.2: Solo refetch si está autenticado
+        refetchOnMountOrArgChange: isAuthenticated,
         refetchOnFocus: false,
-        refetchOnReconnect: true,
+        refetchOnReconnect: isAuthenticated,
     });
 
     return {
@@ -74,10 +80,14 @@ interface UseClientSatisfactionReturn {
  * Endpoint: GET /api/v1/clients/satisfaction-avg
  */
 export const useClientSatisfaction = (): UseClientSatisfactionReturn => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     const { data, isLoading, isError } = useGetClientSatisfactionAvgQuery(undefined, {
-        refetchOnMountOrArgChange: true,
+        skip: !isAuthenticated,
+        // ✅ FASE 1.2: Solo refetch si está autenticado
+        refetchOnMountOrArgChange: isAuthenticated,
         refetchOnFocus: false,
-        refetchOnReconnect: true,
+        refetchOnReconnect: isAuthenticated,
     });
 
     // Transformar rating numérico a formato "X.X/5"
@@ -111,10 +121,14 @@ interface UsePlanAdherenceReturn {
  * Endpoint: GET /api/v1/training-plans/adherence-stats
  */
 export const usePlanAdherence = (): UsePlanAdherenceReturn => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     const { data, isLoading, isError } = useGetPlanAdherenceStatsQuery(undefined, {
-        refetchOnMountOrArgChange: true,
+        skip: !isAuthenticated,
+        // ✅ FASE 1.2: Solo refetch si está autenticado
+        refetchOnMountOrArgChange: isAuthenticated,
         refetchOnFocus: false,
-        refetchOnReconnect: true,
+        refetchOnReconnect: isAuthenticated,
     });
 
     return {

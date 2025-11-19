@@ -9,7 +9,7 @@
  * @updated v4.1.0 - Recibe user completo para detectar cambios durante hydration
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons/Button";
 import { useCompleteProfile } from "@nexia/shared";
@@ -18,16 +18,21 @@ import type { User } from "@nexia/shared/types/auth";
 interface Props {
     user: User | null;
     redirectTo?: string;
+    isProfileComplete?: boolean; // ✅ OPTIMIZACIÓN: Recibir como prop para evitar hook dentro del componente
 }
 
-export const CompleteProfileBanner: React.FC<Props> = ({
+// ✅ OPTIMIZACIÓN: Recibir isProfileComplete como prop para evitar hook dentro del componente
+const CompleteProfileBannerComponent: React.FC<Props> = ({
     user,
     redirectTo = "/dashboard/trainer/complete-profile",
+    isProfileComplete: isProfileCompleteProp,
 }) => {
     const navigate = useNavigate();
     
-    // Usar hook para detectar si el perfil está completo
-    const { isProfileComplete } = useCompleteProfile();
+    // ✅ OPTIMIZACIÓN: Solo usar hook como fallback si no viene como prop
+    // Esto previene re-renders innecesarios cuando se pasa como prop
+    const { isProfileComplete: isProfileCompleteFromHook } = useCompleteProfile();
+    const isProfileComplete = isProfileCompleteProp ?? isProfileCompleteFromHook;
 
     // Log estratégico del banner
     // eslint-disable-next-line no-console
@@ -94,3 +99,34 @@ export const CompleteProfileBanner: React.FC<Props> = ({
         </div>
     );
 };
+
+// ✅ OPTIMIZACIÓN: Memoizar componente con comparación que incluye isProfileComplete
+export const CompleteProfileBanner = React.memo(CompleteProfileBannerComponent, (prevProps, nextProps) => {
+    // Comparar props básicas
+    const prevRole = prevProps.user?.role ?? null;
+    const nextRole = nextProps.user?.role ?? null;
+    const prevEmail = prevProps.user?.email ?? null;
+    const nextEmail = nextProps.user?.email ?? null;
+    const prevUserId = prevProps.user?.id ?? null;
+    const nextUserId = nextProps.user?.id ?? null;
+    const prevIsComplete = prevProps.isProfileComplete ?? null;
+    const nextIsComplete = nextProps.isProfileComplete ?? null;
+    
+    // Si ambos son null, no re-renderizar
+    if (prevProps.user === null && nextProps.user === null) {
+        return true; // No re-renderizar
+    }
+    
+    // Si cambió el rol, email, ID o isProfileComplete, re-renderizar
+    if (
+        prevRole !== nextRole || 
+        prevEmail !== nextEmail || 
+        prevUserId !== nextUserId ||
+        prevIsComplete !== nextIsComplete
+    ) {
+        return false; // Re-renderizar
+    }
+    
+    // Si no cambió nada relevante, no re-renderizar
+    return true; // No re-renderizar
+});

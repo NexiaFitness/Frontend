@@ -16,6 +16,7 @@
  */
 
 import { useCallback } from "react";
+import { useSelector } from "react-redux";
 import {
     useGetClientFatigueAlertsQuery,
     useCreateFatigueAlertMutation,
@@ -23,6 +24,7 @@ import {
     useResolveFatigueAlertMutation,
 } from "../../api/fatigueApi";
 import { useGetCurrentTrainerProfileQuery } from "../../api/trainerApi";
+import type { RootState } from "../../store";
 import type { FatigueAlert, FatigueAlertCreate } from "../../types/training";
 
 interface UseFatigueAlertsResult {
@@ -52,11 +54,15 @@ interface UseFatigueAlertsResult {
  * Hook para gestión de alertas de fatiga del cliente
  */
 export const useFatigueAlerts = (clientId: number): UseFatigueAlertsResult => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+    
     // Obtener perfil del trainer actual para obtener trainer_id
     const {
         data: trainerProfile,
         isLoading: isLoadingTrainer,
-    } = useGetCurrentTrainerProfileQuery();
+    } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !isAuthenticated,
+    });
 
     const trainerId = trainerProfile?.id ?? null;
 
@@ -68,7 +74,7 @@ export const useFatigueAlerts = (clientId: number): UseFatigueAlertsResult => {
         error,
         refetch,
     } = useGetClientFatigueAlertsQuery(clientId, {
-        skip: !clientId,
+        skip: !clientId || !isAuthenticated,
     });
 
     // Filtrar alertas por client_id

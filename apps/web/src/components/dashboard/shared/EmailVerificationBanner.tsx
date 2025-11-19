@@ -19,7 +19,9 @@ interface Props {
     user: User | null;
 }
 
-export const EmailVerificationBanner: React.FC<Props> = ({ user }) => {
+// ✅ FASE 1.3: Optimizar re-renders con React.memo
+// Solo re-renderizar si cambió is_verified o el email del usuario
+const EmailVerificationBannerComponent: React.FC<Props> = ({ user }) => {
     const [resendVerification, { isLoading, isSuccess }] = useResendVerificationMutation();
     
     // Log estratégico del banner
@@ -97,3 +99,25 @@ export const EmailVerificationBanner: React.FC<Props> = ({ user }) => {
         </div>
     );
 };
+
+// Memoizar componente para evitar re-renders innecesarios
+export const EmailVerificationBanner = React.memo(EmailVerificationBannerComponent, (prevProps, nextProps) => {
+    // Solo re-renderizar si cambió is_verified o el email del usuario
+    const prevIsVerified = prevProps.user?.is_verified ?? null;
+    const nextIsVerified = nextProps.user?.is_verified ?? null;
+    const prevEmail = prevProps.user?.email ?? null;
+    const nextEmail = nextProps.user?.email ?? null;
+    
+    // Si ambos son null, no re-renderizar
+    if (prevProps.user === null && nextProps.user === null) {
+        return true; // No re-renderizar
+    }
+    
+    // Si cambió is_verified o email, re-renderizar
+    if (prevIsVerified !== nextIsVerified || prevEmail !== nextEmail) {
+        return false; // Re-renderizar
+    }
+    
+    // Si no cambió nada relevante, no re-renderizar
+    return true; // No re-renderizar
+});

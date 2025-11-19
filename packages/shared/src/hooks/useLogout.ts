@@ -10,6 +10,7 @@
 
 import { useDispatch, useSelector } from 'react-redux';
 import { logout } from '../store/authSlice';
+import { baseApi } from '../api/baseApi';
 import type { AppDispatch, RootState } from '../store';
 import type { User } from '../types/auth'; 
 
@@ -38,6 +39,10 @@ export const useLogout = (options: UseLogoutOptions = {}): UseLogoutReturn => {
 
     const handleLogout = async (): Promise<void> => {
         try {
+            // ✅ CRÍTICO: Cancelar queries ANTES de disparar logout
+            // Esto previene que queries se ejecuten durante la transición
+            dispatch(baseApi.util.resetApiState());
+            
             // Ejecutar async thunk de logout profesional
             const result = dispatch(logout());
             

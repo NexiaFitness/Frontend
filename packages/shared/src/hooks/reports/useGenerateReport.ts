@@ -16,9 +16,11 @@
  */
 
 import { useCallback } from "react";
+import { useSelector } from "react-redux";
 import { useGenerateReportMutation } from "../../api/reportsApi";
 import { useGetCurrentTrainerProfileQuery } from "../../api/trainerApi";
 import type { ReportFormData, ReportResponse } from "../../types/reports";
+import type { RootState } from "../../store";
 
 interface UseGenerateReportResult {
     generateReport: (formData: ReportFormData) => Promise<ReportResponse>;
@@ -29,8 +31,11 @@ interface UseGenerateReportResult {
 }
 
 export const useGenerateReport = (): UseGenerateReportResult => {
+    const { isAuthenticated } = useSelector((state: RootState) => state.auth);
     const [generateReportMutation, { isLoading, isError, error }] = useGenerateReportMutation();
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !isAuthenticated,
+    });
 
     const generateReport = useCallback(
         async (formData: ReportFormData): Promise<ReportResponse> => {
