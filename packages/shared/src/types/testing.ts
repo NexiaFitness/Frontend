@@ -55,14 +55,106 @@ export interface PhysicalTestResultOut {
 }
 
 /**
- * Resumen de tests del cliente (backend)
+ * Resultado de test con cálculos de progreso (backend)
+ */
+export interface TestResultWithProgress extends PhysicalTestResultOut {
+    baseline_value: number | null;
+    baseline_date: string | null; // ISO date
+    progress_percentage: number | null; // % change from baseline
+    trend: "improving" | "stable" | "declining" | "unknown" | null;
+}
+
+/**
+ * Perfil de cualidades físicas (para radar chart)
+ */
+export interface PhysicalQualityProfile {
+    strength: number; // 0-100 score
+    power: number; // 0-100 score
+    speed: number; // 0-100 score
+    aerobic: number; // 0-100 score
+    anaerobic: number; // 0-100 score
+    mobility: number; // 0-100 score
+}
+
+/**
+ * Punto de tendencia para gráficos de progresión
+ */
+export interface TestTrendPoint {
+    test_date: string; // ISO date
+    value: number;
+    unit: string;
+    progress_percentage: number | null;
+    test_name: string;
+    test_id: number;
+}
+
+/**
+ * Datos de repetición (para tests RSA)
+ */
+export interface RepetitionData {
+    repetition_number: number; // 1, 2, 3, etc.
+    value: number;
+    unit: string;
+}
+
+/**
+ * Análisis de fatiga (para tests RSA)
+ */
+export interface TestFatigueAnalysis {
+    best_value: number;
+    worst_value: number;
+    fatigue_index_percentage: number; // ((worst - best) / best) * 100
+    acceptable_range: string | null; // e.g., "acceptable range", "high fatigue"
+}
+
+/**
+ * Datos de tendencia por categoría
+ */
+export interface CategoryTrendData {
+    category: string;
+    test_name: string;
+    test_id: number;
+    trend_points: TestTrendPoint[];
+    baseline_value: number | null;
+    baseline_date: string | null; // ISO date
+    test_frequency_weeks: number | null;
+    latest_surface: string | null; // e.g., "Track", "Treadmill"
+    latest_repetitions: RepetitionData[] | null; // For tests with multiple reps
+    latest_fatigue_analysis: TestFatigueAnalysis | null; // Calculated from latest repetitions
+}
+
+/**
+ * Comparación bilateral (para tests de movilidad)
+ */
+export interface BilateralComparisonPoint {
+    joint: string; // e.g., "Ankle", "Knee", "Hip", "Shoulder", "Elbow"
+    left_value: number | null;
+    right_value: number | null;
+    unit: string; // e.g., "°"
+}
+
+/**
+ * Test próximo a realizar
+ */
+export interface UpcomingTest {
+    test_id: number;
+    test_name: string;
+    category: string;
+    last_test_date: string; // ISO date
+    next_due_date: string; // ISO date
+}
+
+/**
+ * Resumen completo de testing (ACTUALIZADO - alineado con backend)
  */
 export interface ClientTestingSummary {
     client_id: number;
-    total_tests: number;
-    tests_by_category: Record<TestCategory, number>;
-    latest_test_date: string | null; // ISO date
-    baseline_tests_count: number;
+    physical_quality_profile: PhysicalQualityProfile;
+    latest_tests_by_category: Record<string, TestResultWithProgress | null>; // Dict[str, Optional[TestResultWithProgress]]
+    category_trends: CategoryTrendData[]; // Trend data for charts
+    upcoming_tests: UpcomingTest[]; // Tests due for repetition
+    profile_analysis: string; // Auto-generated analysis text
+    bilateral_comparison: BilateralComparisonPoint[] | null; // For mobility tests: joint ROM left vs right
 }
 
 // ========================================
