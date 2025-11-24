@@ -11,8 +11,6 @@ interface UseReturnToOriginOptions {
     replace?: boolean;
 }
 
-interface NavigateBackOptions extends UseReturnToOriginOptions {}
-
 export const useReturnToOrigin = (options: UseReturnToOriginOptions = {}) => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -21,7 +19,7 @@ export const useReturnToOrigin = (options: UseReturnToOriginOptions = {}) => {
     const originPath = originState.from;
 
     const goBack = useCallback(
-        (overrideOptions: NavigateBackOptions = {}) => {
+        (overrideOptions: UseReturnToOriginOptions = {}) => {
             const target =
                 originPath ??
                 overrideOptions.fallbackPath ??

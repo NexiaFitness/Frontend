@@ -48,16 +48,6 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
     // Obtener summary completo del cliente usando el hook actualizado
     const { summary, isLoading, isError, refetch } = useClientTests(clientId);
 
-    // ✅ FASE 1.1: Logs de depuración
-    React.useEffect(() => {
-        if (summary) {
-            console.log("=== TESTING SUMMARY ===");
-            console.log("Latest tests by category:", summary.latest_tests_by_category);
-            console.log("Category trends:", summary.category_trends);
-            console.log("Physical quality profile:", summary.physical_quality_profile);
-            console.log("Upcoming tests:", summary.upcoming_tests);
-        }
-    }, [summary]);
 
     // Obtener TODOS los tests de la categoría activa (sin límite)
     // Usamos category_trends para obtener todos los tests, no solo el más reciente
@@ -304,7 +294,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">
                         Progresión - {TEST_CATEGORIES[activeCategory].label}
                     </h3>
-                    <ProgressLineChart trends={categoryTrendsData} category={activeCategory} />
+                    <ProgressLineChart trends={categoryTrendsData} _category={activeCategory} />
                 </div>
             )}
 

@@ -17,11 +17,11 @@ import {
     Legend,
     ResponsiveContainer,
 } from "recharts";
-import type { CategoryTrendData, TestTrendPoint } from "@nexia/shared/types/testing";
+import type { CategoryTrendData } from "@nexia/shared/types/testing";
 
 interface ProgressLineChartProps {
     trends: CategoryTrendData[]; // Array de trends para mostrar múltiples líneas
-    category: string;
+    _category: string; // No usado actualmente, pero puede ser útil para futuras mejoras
 }
 
 // Colores para diferentes líneas
@@ -36,7 +36,7 @@ const LINE_COLORS = [
 
 export const ProgressLineChart: React.FC<ProgressLineChartProps> = ({
     trends,
-    category,
+    _category,
 }) => {
     // Transformar datos para el gráfico (combinar todos los trends)
     const chartData = useMemo(() => {
@@ -76,7 +76,7 @@ export const ProgressLineChart: React.FC<ProgressLineChartProps> = ({
 
         // Convertir a array y ordenar por fecha
         return Object.entries(combinedData)
-            .map(([dateKey, { date, values }]) => ({
+            .map(([_dateKey, { date, values }]) => ({
                 date: date.toLocaleDateString("es-ES", {
                     month: "short",
                     day: "numeric",
@@ -85,7 +85,7 @@ export const ProgressLineChart: React.FC<ProgressLineChartProps> = ({
                 ...values,
             }))
             .sort((a, b) => a.dateSort - b.dateSort)
-            .map(({ dateSort, ...rest }) => rest); // Eliminar dateSort del resultado final
+            .map(({ dateSort: _dateSort, ...rest }) => rest); // Eliminar dateSort del resultado final
     }, [trends]);
 
     if (chartData.length === 0) {

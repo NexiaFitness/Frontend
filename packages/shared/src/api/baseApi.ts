@@ -8,6 +8,7 @@
  * @updated v3.2.0 - Agregado tagType "TrainingPlan"
  * @updated v3.3.0 - Agregados tagTypes "Macrocycle", "Mesocycle", "Microcycle"
  * @updated v4.7.0 - Agregado tagType "Milestone"
+ * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance"
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -93,5 +94,5 @@ export const baseApi = createApi({
     reducerPath: "api",
     baseQuery: baseQueryWithReauth,
     endpoints: () => ({}), // los endpoints se añaden en archivos específicos
-    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise", "TrainingPlan", "Macrocycle", "Mesocycle", "Microcycle", "Milestone", "FatigueAlert", "SessionTemplate", "TrainingBlockType", "SessionBlock", "SessionBlockExercise", "TrainingSession", "Report", "ScheduledSession", "PhysicalTest"],
+    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise", "TrainingPlan", "TrainingPlanTemplate", "TrainingPlanInstance", "Macrocycle", "Mesocycle", "Microcycle", "Milestone", "FatigueAlert", "SessionTemplate", "TrainingBlockType", "SessionBlock", "SessionBlockExercise", "TrainingSession", "Report", "ScheduledSession", "PhysicalTest"],
 });
