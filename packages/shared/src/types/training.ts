@@ -50,13 +50,19 @@ export type TrainingPlanGoal = (typeof TRAINING_PLAN_GOAL)[keyof typeof TRAINING
 export interface TrainingPlan {
     id: number;
     trainer_id: number;
-    client_id: number;
+    client_id: number | null; // Made optional for templates
     name: string;
     description: string | null;
     start_date: string; // ISO date
     end_date: string; // ISO date
     goal: string;
     status: string;
+    // New fields for template/instance support
+    template_id?: number | null;
+    is_template?: boolean;
+    can_be_reused?: boolean;
+    was_converted_to_template?: boolean;
+    tags?: string[] | null;
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
@@ -72,13 +78,14 @@ export interface TrainingPlan {
  */
 export interface TrainingPlanCreate {
     trainer_id: number;
-    client_id: number;
+    client_id?: number | null; // Made optional for templates
     name: string;
     description?: string | null;
     start_date: string; // ISO date YYYY-MM-DD
     end_date: string; // ISO date YYYY-MM-DD
     goal: string;
     status?: string; // Default: "active"
+    tags?: string[] | null;
 }
 
 /**
@@ -559,3 +566,146 @@ export const MILESTONE_IMPORTANCE = {
 } as const;
 
 export type MilestoneImportance = (typeof MILESTONE_IMPORTANCE)[keyof typeof MILESTONE_IMPORTANCE];
+
+// ========================================
+// TRAINING PLAN TEMPLATE
+// ========================================
+
+/**
+ * TrainingPlanTemplate - Plantilla reutilizable de plan de entrenamiento
+ * Alineado con TrainingPlanTemplateOut schema de Swagger
+ */
+export interface TrainingPlanTemplate {
+    id: number;
+    trainer_id: number;
+    name: string;
+    description: string | null;
+    goal: string;
+    category: string | null;
+    tags: string[] | null;
+    estimated_duration_weeks: number | null;
+    usage_count: number;
+    success_rate: number | null;
+    is_template: boolean;
+    is_public: boolean;
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+/**
+ * TrainingPlanTemplateCreate - POST /training-plans/templates/
+ */
+export interface TrainingPlanTemplateCreate {
+    trainer_id: number;
+    name: string;
+    description?: string | null;
+    goal: string;
+    category?: string | null;
+    tags?: string[] | null;
+    estimated_duration_weeks?: number | null;
+}
+
+/**
+ * TrainingPlanTemplateUpdate - PUT /training-plans/templates/{id}
+ */
+export interface TrainingPlanTemplateUpdate {
+    name?: string;
+    description?: string | null;
+    goal?: string;
+    category?: string | null;
+    tags?: string[] | null;
+    estimated_duration_weeks?: number | null;
+    is_public?: boolean;
+}
+
+// ========================================
+// TRAINING PLAN INSTANCE
+// ========================================
+
+/**
+ * TrainingPlanInstance - Instancia activa de un plan asignado a un cliente
+ * Alineado con TrainingPlanInstanceOut schema de Swagger
+ */
+export interface TrainingPlanInstance {
+    id: number;
+    template_id: number | null;
+    source_plan_id: number | null;
+    client_id: number;
+    trainer_id: number;
+    name: string;
+    description: string | null;
+    start_date: string; // ISO date
+    end_date: string; // ISO date
+    goal: string;
+    status: string;
+    customizations: Record<string, any> | null;
+    assigned_at: string; // ISO datetime
+    created_at: string; // ISO datetime
+    updated_at: string; // ISO datetime
+    is_active: boolean;
+}
+
+/**
+ * TrainingPlanInstanceCreate - POST /training-plans/instances/
+ */
+export interface TrainingPlanInstanceCreate {
+    template_id?: number | null;
+    source_plan_id?: number | null;
+    client_id: number;
+    trainer_id: number;
+    name: string;
+    description?: string | null;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    goal: string;
+    status?: string;
+    customizations?: Record<string, any> | null;
+}
+
+/**
+ * TrainingPlanInstanceUpdate - PUT /training-plans/instances/{id}
+ */
+export interface TrainingPlanInstanceUpdate {
+    name?: string;
+    description?: string | null;
+    start_date?: string;
+    end_date?: string;
+    goal?: string;
+    status?: string;
+    customizations?: Record<string, any> | null;
+}
+
+// ========================================
+// ASSIGNMENT & CONVERSION TYPES
+// ========================================
+
+/**
+ * AssignTemplateToClientParams - POST /training-plans/templates/{template_id}/assign
+ */
+export interface AssignTemplateToClientParams {
+    template_id: number;
+    client_id: number;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    name?: string; // Optional custom name
+}
+
+/**
+ * AssignPlanToClientParams - POST /training-plans/{plan_id}/assign
+ */
+export interface AssignPlanToClientParams {
+    plan_id: number;
+    client_id: number;
+    start_date: string; // ISO date YYYY-MM-DD
+    end_date: string; // ISO date YYYY-MM-DD
+    name?: string; // Optional custom name
+}
+
+/**
+ * ConvertPlanToTemplateParams - POST /training-plans/{plan_id}/convert-to-template
+ */
+export interface ConvertPlanToTemplateParams {
+    plan_id: number;
+    template_data: TrainingPlanTemplateCreate;
+}

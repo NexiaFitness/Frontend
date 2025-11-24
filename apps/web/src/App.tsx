@@ -44,6 +44,7 @@ import { ClientEdit } from "./pages/clients/ClientEdit";
 // Training Plans Management (trainers only)
 import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
 import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
+import { TrainingPlanEdit } from "./pages/trainingPlans/TrainingPlanEdit";
 
 // Exercises Management (trainers only)
 import { ExerciseList } from "./pages/exercises/ExerciseList";
@@ -146,7 +147,19 @@ function App() {
       {/* TRAINING PLANS MANAGEMENT - Trainers only */}
       {/* ============================================ */}
 
-      {/* Training Plan Detail - Ruta específica PRIMERO */}
+      {/* Training Plan Edit - Ruta específica PRIMERO (antes de detail) */}
+      <Route
+        path="/dashboard/training-plans/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <TrainingPlanEdit />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Training Plan Detail */}
       <Route
         path="/dashboard/training-plans/:id"
         element={

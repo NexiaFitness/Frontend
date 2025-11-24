@@ -20,8 +20,20 @@ import type {
     TrainingPlan,
     TrainingPlansListResponse,
     TrainingPlanCreate,
+    TrainingPlanUpdate,
     TrainingPlanFilters,
     DeleteTrainingPlanResponse,
+    // Templates
+    TrainingPlanTemplate,
+    TrainingPlanTemplateCreate,
+    TrainingPlanTemplateUpdate,
+    // Instances
+    TrainingPlanInstance,
+    TrainingPlanInstanceCreate,
+    TrainingPlanInstanceUpdate,
+    AssignTemplateToClientParams,
+    AssignPlanToClientParams,
+    ConvertPlanToTemplateParams,
     // Macrocycles
     Macrocycle,
     MacrocyclesListResponse,
@@ -59,6 +71,11 @@ export const trainingPlansApi = baseApi.injectEndpoints({
          */
         getTrainingPlans: builder.query<TrainingPlansListResponse, TrainingPlanFilters>({
             query: (filters) => {
+                // Validación temprana: al menos uno de los parámetros requeridos
+                if (filters.client_id === undefined && filters.trainer_id === undefined) {
+                    throw new Error("Either client_id or trainer_id is required for getTrainingPlans");
+                }
+
                 const params = new URLSearchParams();
 
                 // Parámetros requeridos (al menos uno)
@@ -115,6 +132,25 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 },
             }),
             invalidatesTags: [{ type: "TrainingPlan", id: "LIST" }],
+        }),
+
+        /**
+         * Actualizar training plan
+         * Endpoint: PUT /api/v1/training-plans/{plan_id}
+         */
+        updateTrainingPlan: builder.mutation<TrainingPlan, { id: number; data: TrainingPlanUpdate }>({
+            query: ({ id, data }) => ({
+                url: `/training-plans/${id}`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: "TrainingPlan", id },
+                { type: "TrainingPlan", id: "LIST" },
+            ],
         }),
 
         /**
@@ -501,6 +537,325 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             }),
             providesTags: [{ type: "TrainingPlan", id: "DASHBOARD_KPI" }],
         }),
+
+        // ========================================
+        // TRAINING PLAN TEMPLATES
+        // ========================================
+
+        /**
+         * Obtener lista de plantillas de planes
+         * Endpoint: GET /api/v1/training-plans/templates/
+         */
+        getTrainingPlanTemplates: builder.query<
+            TrainingPlanTemplate[],
+            { trainerId: number; category?: string; skip?: number; limit?: number }
+        >({
+            query: ({ trainerId, category, skip = 0, limit = 100 }) => {
+                // Validación defensiva: RTK Query puede ejecutar query() incluso con skip: true
+                // para construir la cache key. Nunca lanzar errores, retornar query válida pero que fallará controladamente
+                if (trainerId === undefined || trainerId === null || trainerId === 0) {
+                    // Retornar query que será rechazada por el backend (trainer_id=0 no existe)
+                    // Esto permite que RTK Query construya la cache key sin errores
+                    const params = new URLSearchParams();
+                    params.append("trainer_id", "0");
+                    params.append("skip", skip.toString());
+                    params.append("limit", limit.toString());
+                    return {
+                        url: `/training-plans/templates/?${params.toString()}`,
+                        method: "GET",
+                    };
+                }
+
+                const params = new URLSearchParams();
+                params.append("trainer_id", trainerId.toString());
+                if (category) params.append("category", category);
+                params.append("skip", skip.toString());
+                params.append("limit", limit.toString());
+
+                return {
+                    url: `/training-plans/templates/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: "TrainingPlanTemplate" as const, id })),
+                        { type: "TrainingPlanTemplate", id: "LIST" },
+                    ]
+                    : [{ type: "TrainingPlanTemplate", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener plantilla específica por ID
+         * Endpoint: GET /api/v1/training-plans/templates/{template_id}
+         */
+        getTrainingPlanTemplate: builder.query<TrainingPlanTemplate, number>({
+            query: (id) => ({
+                url: `/training-plans/templates/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "TrainingPlanTemplate", id }],
+        }),
+
+        /**
+         * Crear nueva plantilla
+         * Endpoint: POST /api/v1/training-plans/templates/
+         */
+        createTrainingPlanTemplate: builder.mutation<
+            TrainingPlanTemplate,
+            TrainingPlanTemplateCreate
+        >({
+            query: (data) => ({
+                url: "/training-plans/templates/",
+                method: "POST",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: [{ type: "TrainingPlanTemplate", id: "LIST" }],
+        }),
+
+        /**
+         * Actualizar plantilla
+         * Endpoint: PUT /api/v1/training-plans/templates/{template_id}
+         */
+        updateTrainingPlanTemplate: builder.mutation<
+            TrainingPlanTemplate,
+            { id: number; data: TrainingPlanTemplateUpdate }
+        >({
+            query: ({ id, data }) => ({
+                url: `/training-plans/templates/${id}`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: "TrainingPlanTemplate", id },
+                { type: "TrainingPlanTemplate", id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Eliminar plantilla
+         * Endpoint: DELETE /api/v1/training-plans/templates/{template_id}
+         */
+        deleteTrainingPlanTemplate: builder.mutation<DeleteTrainingPlanResponse, number>({
+            query: (id) => ({
+                url: `/training-plans/templates/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (result, error, id) => [
+                { type: "TrainingPlanTemplate", id },
+                { type: "TrainingPlanTemplate", id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Duplicar plantilla
+         * Endpoint: POST /api/v1/training-plans/templates/{template_id}/duplicate
+         */
+        duplicateTrainingPlanTemplate: builder.mutation<TrainingPlanTemplate, number>({
+            query: (id) => ({
+                url: `/training-plans/templates/${id}/duplicate`,
+                method: "POST",
+            }),
+            invalidatesTags: [{ type: "TrainingPlanTemplate", id: "LIST" }],
+        }),
+
+        /**
+         * Asignar plantilla a cliente (crea instancia)
+         * Endpoint: POST /api/v1/training-plans/templates/{template_id}/assign
+         */
+        assignTemplateToClient: builder.mutation<
+            TrainingPlanInstance,
+            AssignTemplateToClientParams & { trainer_id: number }
+        >({
+            query: ({ template_id, client_id, start_date, end_date, name, trainer_id }) => {
+                // Validar que client_id y trainer_id existan
+                if (!client_id || !trainer_id) {
+                    throw new Error("client_id and trainer_id are required");
+                }
+
+                const params = new URLSearchParams();
+                params.append("client_id", client_id.toString());
+                params.append("start_date", start_date);
+                params.append("end_date", end_date);
+                params.append("trainer_id", trainer_id.toString());
+                if (name) params.append("name", name);
+
+                return {
+                    url: `/training-plans/templates/${template_id}/assign?${params.toString()}`,
+                    method: "POST",
+                };
+            },
+            invalidatesTags: [
+                { type: "TrainingPlanTemplate", id: "LIST" },
+                { type: "TrainingPlanInstance", id: "LIST" },
+                { type: "TrainingPlan", id: "LIST" },
+            ],
+        }),
+
+        // ========================================
+        // TRAINING PLAN INSTANCES
+        // ========================================
+
+        /**
+         * Obtener lista de instancias de planes
+         * Endpoint: GET /api/v1/training-plans/instances/
+         */
+        getTrainingPlanInstances: builder.query<
+            TrainingPlanInstance[],
+            { trainerId?: number; clientId?: number; skip?: number; limit?: number }
+        >({
+            query: ({ trainerId, clientId, skip = 0, limit = 100 }) => {
+                // Validación temprana: al menos uno de los parámetros requeridos
+                if (trainerId === undefined && clientId === undefined) {
+                    throw new Error("Either trainerId or clientId is required for getTrainingPlanInstances");
+                }
+
+                const params = new URLSearchParams();
+                if (trainerId !== undefined) params.append("trainer_id", trainerId.toString());
+                if (clientId !== undefined) params.append("client_id", clientId.toString());
+                params.append("skip", skip.toString());
+                params.append("limit", limit.toString());
+
+                return {
+                    url: `/training-plans/instances/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: "TrainingPlanInstance" as const, id })),
+                        { type: "TrainingPlanInstance", id: "LIST" },
+                    ]
+                    : [{ type: "TrainingPlanInstance", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener instancia específica por ID
+         * Endpoint: GET /api/v1/training-plans/instances/{instance_id}
+         */
+        getTrainingPlanInstance: builder.query<TrainingPlanInstance, number>({
+            query: (id) => ({
+                url: `/training-plans/instances/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "TrainingPlanInstance", id }],
+        }),
+
+        /**
+         * Crear nueva instancia
+         * Endpoint: POST /api/v1/training-plans/instances/
+         */
+        createTrainingPlanInstance: builder.mutation<
+            TrainingPlanInstance,
+            TrainingPlanInstanceCreate
+        >({
+            query: (data) => ({
+                url: "/training-plans/instances/",
+                method: "POST",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: [{ type: "TrainingPlanInstance", id: "LIST" }],
+        }),
+
+        /**
+         * Actualizar instancia
+         * Endpoint: PUT /api/v1/training-plans/instances/{instance_id}
+         */
+        updateTrainingPlanInstance: builder.mutation<
+            TrainingPlanInstance,
+            { id: number; data: TrainingPlanInstanceUpdate }
+        >({
+            query: ({ id, data }) => ({
+                url: `/training-plans/instances/${id}`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { id }) => [
+                { type: "TrainingPlanInstance", id },
+                { type: "TrainingPlanInstance", id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Eliminar instancia
+         * Endpoint: DELETE /api/v1/training-plans/instances/{instance_id}
+         */
+        deleteTrainingPlanInstance: builder.mutation<DeleteTrainingPlanResponse, number>({
+            query: (id) => ({
+                url: `/training-plans/instances/${id}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (result, error, id) => [
+                { type: "TrainingPlanInstance", id },
+                { type: "TrainingPlanInstance", id: "LIST" },
+            ],
+        }),
+
+        // ========================================
+        // UTILITY ENDPOINTS
+        // ========================================
+
+        /**
+         * Asignar plan a otro cliente (crea instancia)
+         * Endpoint: POST /api/v1/training-plans/{plan_id}/assign
+         */
+        assignPlanToClient: builder.mutation<
+            TrainingPlanInstance,
+            AssignPlanToClientParams
+        >({
+            query: ({ plan_id, client_id, start_date, end_date, name }) => {
+                const params = new URLSearchParams();
+                params.append("client_id", client_id.toString());
+                params.append("start_date", start_date);
+                params.append("end_date", end_date);
+                if (name) params.append("name", name);
+
+                return {
+                    url: `/training-plans/${plan_id}/assign?${params.toString()}`,
+                    method: "POST",
+                };
+            },
+            invalidatesTags: [
+                { type: "TrainingPlan", id: "LIST" },
+                { type: "TrainingPlanInstance", id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Convertir plan a plantilla
+         * Endpoint: POST /api/v1/training-plans/{plan_id}/convert-to-template
+         */
+        convertPlanToTemplate: builder.mutation<
+            TrainingPlanTemplate,
+            ConvertPlanToTemplateParams
+        >({
+            query: ({ plan_id, template_data }) => ({
+                url: `/training-plans/${plan_id}/convert-to-template`,
+                method: "POST",
+                body: template_data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: [
+                { type: "TrainingPlanTemplate", id: "LIST" },
+                { type: "TrainingPlan", id: "LIST" },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -511,8 +866,29 @@ export const {
     useGetTrainingPlansQuery,
     useGetTrainingPlanQuery,
     useCreateTrainingPlanMutation,
+    useUpdateTrainingPlanMutation,
     useDeleteTrainingPlanMutation,
     useGetAllCyclesQuery,
+    
+    // Templates
+    useGetTrainingPlanTemplatesQuery,
+    useGetTrainingPlanTemplateQuery,
+    useCreateTrainingPlanTemplateMutation,
+    useUpdateTrainingPlanTemplateMutation,
+    useDeleteTrainingPlanTemplateMutation,
+    useDuplicateTrainingPlanTemplateMutation,
+    useAssignTemplateToClientMutation,
+    
+    // Instances
+    useGetTrainingPlanInstancesQuery,
+    useGetTrainingPlanInstanceQuery,
+    useCreateTrainingPlanInstanceMutation,
+    useUpdateTrainingPlanInstanceMutation,
+    useDeleteTrainingPlanInstanceMutation,
+    
+    // Utility
+    useAssignPlanToClientMutation,
+    useConvertPlanToTemplateMutation,
     
     // Macrocycles
     useGetMacrocyclesQuery,

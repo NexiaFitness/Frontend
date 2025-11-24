@@ -22,6 +22,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateTestResult } from "@nexia/shared";
 import { useGetClientQuery, useGetPhysicalTestsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 
 export const CreateTestResult: React.FC = () => {
     const navigate = useNavigate();
@@ -29,6 +30,8 @@ export const CreateTestResult: React.FC = () => {
 
     const clientIdFromQuery = searchParams.get("clientId");
     const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
+    const fallbackPath = clientId ? `/dashboard/clients/${clientId}` : "/dashboard";
+    const { goBack } = useReturnToOrigin({ fallbackPath });
 
     // Obtener perfil del trainer actual
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
@@ -129,7 +132,7 @@ export const CreateTestResult: React.FC = () => {
 
             setSuccess(true);
             setTimeout(() => {
-                navigate(clientId ? `/dashboard/clients/${clientId}` : "/dashboard");
+                goBack({ replace: true });
             }, 2000);
         } catch (err) {
             console.error("Error creando test:", err);
@@ -174,8 +177,8 @@ export const CreateTestResult: React.FC = () => {
                                 Registrar un nuevo resultado de test físico
                             </p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
-                            Volver al Dashboard
+                        <Button variant="outline" size="sm" onClick={() => goBack()}>
+                            Volver
                         </Button>
                     </div>
                 </div>
@@ -353,7 +356,7 @@ export const CreateTestResult: React.FC = () => {
                                     type="button"
                                     variant="outline"
                                     size="lg"
-                                    onClick={() => navigate(-1)}
+                                    onClick={() => goBack()}
                                     className="w-full sm:w-auto"
                                 >
                                     Cancelar

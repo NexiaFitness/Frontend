@@ -86,8 +86,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     };
 
     const handleEdit = () => {
-        // TODO: Implementar edición inline o modal
-        alert("Edit Plan - TODO: Implementar en Fase 3");
+        navigate(`/dashboard/training-plans/${plan.id}/edit`);
     };
 
     const handleDelete = async () => {
