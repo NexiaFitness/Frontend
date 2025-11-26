@@ -20,9 +20,9 @@ import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { useCreateSession } from "@nexia/shared";
+import { useCreateSession, useClientMicrocycles } from "@nexia/shared";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import { useGetTrainingPlansQuery } from "@nexia/shared/api/trainingPlansApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
 
 const SESSION_TYPES = [
@@ -41,7 +41,12 @@ export const CreateSession: React.FC = () => {
 
     const clientIdFromQuery = searchParams.get("clientId");
     const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
-    const trainerId = user?.id && user.role === "trainer" ? Number(user.id) : 0;
+    
+    // Obtener el trainer_id correcto desde el perfil del trainer (no user.id)
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !user || user.role !== "trainer",
+    });
+    const trainerId = trainerProfile?.id ?? 0;
 
     const { createSession, isCreating, isError, error } = useCreateSession({
         clientId,
@@ -49,20 +54,15 @@ export const CreateSession: React.FC = () => {
     });
 
     const { data: client } = useGetClientQuery(clientId, { skip: !clientId });
-    const { data: trainingPlans } = useGetTrainingPlansQuery(
-        { client_id: clientId, limit: 100 },
-        { skip: !clientId }
-    );
 
     // Obtener microcycles de los planes activos
-    const microcycles = React.useMemo(() => {
-        if (!trainingPlans) return [];
-        const allMicrocycles: Array<{ id: number; name: string; planName: string }> = [];
-        trainingPlans.forEach((_plan) => {
-            // TODO: Obtener microcycles de cada plan si hay endpoint
-        });
-        return allMicrocycles;
-    }, [trainingPlans]);
+    const {
+        microcycles,
+        isLoading: isLoadingMicrocycles,
+    } = useClientMicrocycles({
+        clientId,
+        maxPlans: 10,
+    });
 
     const [formData, setFormData] = useState({
         sessionName: "",
@@ -99,6 +99,14 @@ export const CreateSession: React.FC = () => {
         if (!formData.sessionType) {
             errors.sessionType = "El tipo de sesión es obligatorio";
         }
+        // Validar microcycle solo si hay microcycles disponibles y no está cargando
+        if (!isLoadingMicrocycles) {
+            if (microcycles.length > 0 && !formData.microcycleId) {
+                errors.microcycleId = "Debe seleccionar un microciclo";
+            } else if (microcycles.length === 0) {
+                errors.microcycleId = "No hay microciclos disponibles. Por favor, cree un plan de entrenamiento con microciclos primero.";
+            }
+        }
 
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -106,22 +114,76 @@ export const CreateSession: React.FC = () => {
         }
 
         try {
-            await createSession({
+            // Validar microcycleId antes de enviar
+            if (!formData.microcycleId || formData.microcycleId === "") {
+                setFormErrors({ microcycleId: "Debe seleccionar un microciclo" });
+                return;
+            }
+
+            const microcycleIdNum = Number(formData.microcycleId);
+            if (isNaN(microcycleIdNum) || microcycleIdNum <= 0) {
+                setFormErrors({ microcycleId: "El microciclo seleccionado no es válido" });
+                return;
+            }
+
+            // Validar que el microcycle seleccionado esté en la lista disponible
+            const microcycleExists = microcycles.some((mc) => mc.id === microcycleIdNum);
+            if (!microcycleExists) {
+                setFormErrors({
+                    microcycleId: "El microciclo seleccionado ya no está disponible. Por favor, recargue la página y seleccione otro microciclo.",
+                });
+                return;
+            }
+
+            const sessionPayload = {
                 sessionName: formData.sessionName,
                 sessionDate: formData.sessionDate,
                 sessionType: formData.sessionType,
                 plannedDuration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
                 plannedIntensity: formData.plannedIntensity ? Number(formData.plannedIntensity) : null,
                 plannedVolume: formData.plannedVolume ? Number(formData.plannedVolume) : null,
-                microcycleId: formData.microcycleId ? Number(formData.microcycleId) : undefined,
+                microcycleId: microcycleIdNum,
                 notes: formData.notes || null,
-            });
+            };
+
+            await createSession(sessionPayload);
             setSuccess(true);
             setTimeout(() => {
                 navigate(clientId ? `/dashboard/clients/${clientId}` : "/dashboard");
             }, 2000);
         } catch (err) {
             console.error("Error creando sesión:", err);
+            // DEBUG: Ver el error completo
+            if (err && typeof err === "object" && "data" in err) {
+                const errorData = (err as { data: unknown }).data;
+                console.error("Error data:", JSON.stringify(errorData, null, 2));
+                
+                // Manejar errores del backend
+                if (errorData && typeof errorData === "object" && "detail" in errorData) {
+                    const detail = (errorData as { detail: unknown }).detail;
+                    if (typeof detail === "string") {
+                        // Si el mensaje menciona que el microcycle pertenece a otro cliente
+                        if (detail.includes("belongs to client") || detail.includes("not to client")) {
+                            setFormErrors({
+                                microcycleId: "El microciclo seleccionado pertenece a otro cliente. Por favor, seleccione un microciclo válido para este cliente.",
+                            });
+                            return;
+                        }
+                        // Si es un error de integridad o el microcycle no existe
+                        if (detail.includes("integrity") || detail.includes("not found") || detail.includes("Microcycle")) {
+                            setFormErrors({
+                                microcycleId: "El microciclo seleccionado ya no existe o no es válido. Por favor, recargue la página y seleccione otro microciclo.",
+                            });
+                            return;
+                        }
+                        // Mostrar el mensaje del backend directamente
+                        setFormErrors({
+                            microcycleId: detail,
+                        });
+                        return;
+                    }
+                }
+            }
         }
     };
 
@@ -281,25 +343,50 @@ export const CreateSession: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Microcycle (opcional) */}
-                            {microcycles.length > 0 && (
+                            {/* Microcycle */}
+                            {isLoadingMicrocycles ? (
                                 <div>
                                     <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Microciclo (Opcional)
+                                        Microciclo
+                                    </label>
+                                    <div className="text-sm text-slate-500">
+                                        Cargando microciclos disponibles...
+                                    </div>
+                                </div>
+                            ) : microcycles.length > 0 ? (
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Microciclo *
                                     </label>
                                     <FormSelect
                                         value={formData.microcycleId}
                                         onChange={(e) =>
                                             setFormData({ ...formData, microcycleId: e.target.value })
                                         }
+                                        required
                                         options={[
-                                            { value: "", label: "Sin microciclo" },
+                                            { value: "", label: "Seleccione un microciclo" },
                                             ...microcycles.map((mc) => ({
                                                 value: mc.id.toString(),
                                                 label: `${mc.name} (${mc.planName})`,
                                             })),
                                         ]}
                                     />
+                                    {formErrors.microcycleId && (
+                                        <p className="text-red-600 text-sm mt-1">{formErrors.microcycleId}</p>
+                                    )}
+                                </div>
+                            ) : (
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        Microciclo
+                                    </label>
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                                        <p className="text-sm text-amber-800">
+                                            No hay microciclos disponibles para este cliente. 
+                                            Asegúrese de que el cliente tenga planes de entrenamiento activos con microciclos.
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 
@@ -344,7 +431,13 @@ export const CreateSession: React.FC = () => {
                             {isError && (
                                 <Alert variant="error">
                                     {error && typeof error === "object" && "data" in error
-                                        ? String((error as { data: unknown }).data)
+                                        ? (() => {
+                                              const errorData = (error as { data: unknown }).data;
+                                              if (errorData && typeof errorData === "object" && "detail" in errorData) {
+                                                  return String((errorData as { detail: unknown }).detail);
+                                              }
+                                              return JSON.stringify(errorData, null, 2);
+                                          })()
                                         : "Error al crear la sesión"}
                                 </Alert>
                             )}

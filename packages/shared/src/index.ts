@@ -105,6 +105,7 @@ export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
+export * from "./types/trainingAnalytics";
 export * from "./types/sessionProgramming";
 export * from "./types/coherence";
 export * from "./types/dashboard";

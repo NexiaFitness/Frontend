@@ -94,5 +94,5 @@ export const baseApi = createApi({
     reducerPath: "api",
     baseQuery: baseQueryWithReauth,
     endpoints: () => ({}), // los endpoints se añaden en archivos específicos
-    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise", "TrainingPlan", "TrainingPlanTemplate", "TrainingPlanInstance", "Macrocycle", "Mesocycle", "Microcycle", "Milestone", "FatigueAlert", "SessionTemplate", "TrainingBlockType", "SessionBlock", "SessionBlockExercise", "TrainingSession", "Report", "ScheduledSession", "PhysicalTest"],
+    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise", "TrainingPlan", "TrainingPlanTemplate", "TrainingPlanInstance", "Macrocycle", "Mesocycle", "Microcycle", "Milestone", "FatigueAlert", "SessionTemplate", "TrainingBlockType", "SessionBlock", "SessionBlockExercise", "TrainingSession", "Report", "ScheduledSession", "PhysicalTest", "TrainingPlanSummary", "TrainingPlanMonthlySummary", "TrainingPlanWeeklySummary", "TrainingPlanAdherenceStats"],
 });

@@ -52,6 +52,7 @@ import { ExerciseDetail } from "./pages/exercises/ExerciseDetail";
 
 // Reports & Scheduling (trainers only)
 import { GenerateReports } from "./pages/reports/GenerateReports";
+import { SchedulingPage } from "./pages/scheduling/SchedulingPage";
 import { ScheduleSession } from "./pages/scheduling/ScheduleSession";
 
 // Session Programming (trainers only)
@@ -291,7 +292,19 @@ function App() {
         }
       />
 
-      {/* Schedule Session */}
+      {/* Scheduling Page (main calendar view) */}
+      <Route
+        path="/dashboard/scheduling"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <SchedulingPage />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Schedule Session (legacy form page) */}
       <Route
         path="/dashboard/scheduling/schedule"
         element={

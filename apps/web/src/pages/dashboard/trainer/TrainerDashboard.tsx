@@ -231,10 +231,10 @@ export const TrainerDashboard: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Agendar Sesión */}
+                                {/* Programación de Sesiones */}
                                 <div
                                     className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={() => navigate("/dashboard/scheduling/schedule")}
+                                    onClick={() => navigate("/dashboard/scheduling")}
                                 >
                                     <div className="text-center">
                                         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -242,8 +242,8 @@ export const TrainerDashboard: React.FC = () => {
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                             </svg>
                                         </div>
-                                        <h4 className="font-semibold text-slate-800 text-sm mb-1">Agendar Sesión</h4>
-                                        <p className="text-xs text-slate-600">Programar cita</p>
+                                        <h4 className="font-semibold text-slate-800 text-sm mb-1">Programación</h4>
+                                        <p className="text-xs text-slate-600">Calendario de citas</p>
                                     </div>
                                 </div>
                             </div>

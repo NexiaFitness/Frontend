@@ -11,4 +11,6 @@ export { useTrainingPlans } from './useTrainingPlans';
 export { useAssignTemplate } from './useAssignTemplate';
 export { useConvertPlanToTemplate } from './useConvertPlanToTemplate';
 export { useTrainingPlanTemplates } from './useTrainingPlanTemplates';
+export { useClientMicrocycles } from './useClientMicrocycles';
+export type { ClientMicrocycleOption } from './useClientMicrocycles';
 

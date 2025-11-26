@@ -5,15 +5,24 @@
  * - Muestra planes de entrenamiento y sesiones del cliente
  * - Lista de training plans activos/pasados
  * - Lista de sesiones recientes con estado
+ * - Dashboards de planning analytics (yearly/monthly/weekly/calendar)
  * - Basado en Figma Profile Page
  *
  * Responsabilidades:
  * - Mostrar training plans del cliente
  * - Mostrar sesiones de entrenamiento
  * - Filtros por estado (planned, completed, cancelled)
+ * - Dashboards de planning (yearly, monthly, weekly, calendar views)
+ * - Título principal "Training Plan" arriba de sub-tabs
+ *
+ * Notas de mantenimiento:
+ * - El título "Training Plan" se muestra ANTES de los sub-tabs
+ * - Los sub-tabs incluyen: Planes, Sesiones, Planning Anual, Planning Mensual, Calendario
+ * - Cada dashboard (Yearly/Monthly/Weekly) tiene su propio subtítulo interno pequeño
  *
  * @author Frontend Team
  * @since v3.1.0
+ * @updated v5.1.0 - Agregado título principal "Training Plan" siguiendo Figma
  */
 
 import React, { useState, useEffect } from "react";
@@ -21,6 +30,11 @@ import type { TrainingPlan, TrainingSession } from "@nexia/shared/types/training
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { TYPOGRAPHY } from "@/utils/typography";
+import {
+    YearlyPlanningDashboard,
+    MonthlyPlanningDashboard,
+    WeeklyPlanningDashboard,
+} from "@/components/trainingPlans/planning";
 
 interface ClientWorkoutsTabProps {
     clientId: number;
@@ -29,12 +43,23 @@ interface ClientWorkoutsTabProps {
 }
 
 type SessionFilter = "all" | "completed" | "planned" | "cancelled";
+type EntrenamientosSubTab = "plans" | "sessions" | "yearly" | "monthly" | "weekly" | "calendar";
+
+const ENTRENAMIENTOS_SUBTABS: Array<{ id: EntrenamientosSubTab; label: string }> = [
+    { id: "plans", label: "Planes" },
+    { id: "sessions", label: "Sesiones" },
+    { id: "yearly", label: "Planning Anual" },
+    { id: "monthly", label: "Planning Mensual" },
+    { id: "weekly", label: "Planning Semanal" },
+    { id: "calendar", label: "Calendario" },
+];
 
 export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
     clientId,
     trainingPlans = [],
     trainingSessions = [],
 }) => {
+    const [activeSubTab, setActiveSubTab] = useState<EntrenamientosSubTab>("yearly");
     const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
     const [isLoading, setIsLoading] = useState<boolean>(true);
 
@@ -69,104 +94,269 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
         );
     }
 
+    // Render sub-tab content
+    const renderSubTabContent = () => {
+        switch (activeSubTab) {
+            case "plans":
+                return <PlansSubTab clientId={clientId} trainingPlans={trainingPlans} />;
+            case "sessions":
+                return (
+                    <SessionsSubTab
+                        clientId={clientId}
+                        trainingSessions={trainingSessions}
+                        sessionFilter={sessionFilter}
+                        onSessionFilterChange={setSessionFilter}
+                        filteredSessions={filteredSessions}
+                        sessionCounts={sessionCounts}
+                    />
+                );
+            case "yearly":
+                return <YearlyPlanningSubTab clientId={clientId} />;
+            case "monthly":
+                return <MonthlyPlanningSubTab clientId={clientId} />;
+            case "weekly":
+                return <WeeklyPlanningSubTab clientId={clientId} />;
+            case "calendar":
+                return <CalendarSubTab clientId={clientId} />;
+            default:
+                return null;
+        }
+    };
+
     return (
         <div className="space-y-6">
-            {/* Training Plans Section */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
-                        Planes de Entrenamiento
-                    </h3>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => alert(`Crear Plan de Entrenamiento para cliente ${clientId}`)}
-                    >
-                        + Nuevo Plan
-                    </Button>
-                </div>
+            {/* TÍTULO PRINCIPAL - Training Plan */}
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Training Plan</h1>
 
-                {trainingPlans.length === 0 ? (
-                    <EmptyState
-                        icon="📋"
-                        title="No hay planes de entrenamiento"
-                        description="Crea el primer plan de entrenamiento para este cliente"
-                    />
-                ) : (
-                    <div className="space-y-3">
-                        {trainingPlans.map((plan) => (
-                            <TrainingPlanCard key={plan.id} plan={plan} />
-                        ))}
-                    </div>
-                )}
+            {/* Sub-tabs Navigation */}
+            <div className="bg-white rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
+                <nav
+                    className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#4A67B3]/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center"
+                    aria-label="Sub-tabs"
+                    style={{
+                        WebkitOverflowScrolling: "touch",
+                    }}
+                >
+                    <style>{`
+                        nav[aria-label="Sub-tabs"]::-webkit-scrollbar {
+                            height: 4px;
+                        }
+                        nav[aria-label="Sub-tabs"]::-webkit-scrollbar-track {
+                            background: transparent;
+                        }
+                        nav[aria-label="Sub-tabs"]::-webkit-scrollbar-thumb {
+                            background-color: #4A67B3 !important;
+                            border-radius: 2px;
+                        }
+                    `}</style>
+                    {ENTRENAMIENTOS_SUBTABS.map((subTab) => {
+                        const isActive = activeSubTab === subTab.id;
+                        return (
+                            <button
+                                key={subTab.id}
+                                onClick={() => setActiveSubTab(subTab.id)}
+                                className={`
+                                    relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[120px] text-center
+                                    ${isActive
+                                        ? "text-[#4A67B3]"
+                                        : "text-gray-500 hover:text-gray-700"
+                                    }
+                                    cursor-pointer
+                                `}
+                                aria-current={isActive ? "page" : undefined}
+                            >
+                                {subTab.label}
+                            </button>
+                        );
+                    })}
+                </nav>
             </div>
 
-            {/* Training Sessions Section */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
-                        Sesiones de Entrenamiento
-                    </h3>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => alert(`Crear Sesión para cliente ${clientId}`)}
-                    >
-                        + Nueva Sesión
-                    </Button>
-                </div>
+            {/* Sub-tab Content */}
+            <div>{renderSubTabContent()}</div>
+        </div>
+    );
+};
 
-                {/* Filter Tabs */}
-                <div className="mb-4 border-b border-gray-200">
-                    <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-transparent">
-                        <style>{`
-                            div[class*="overflow-x-auto"]::-webkit-scrollbar-thumb {
-                                background-color: #4A67B3 !important;
-                            }
-                        `}</style>
-                        {([
-                            { value: "all", label: "Todas" },
-                            { value: "planned", label: "Planificadas" },
-                            { value: "completed", label: "Completadas" },
-                            { value: "cancelled", label: "Canceladas" },
-                        ] as Array<{ value: SessionFilter; label: string }>).map(({ value: filter, label }) => (
-                            <button
-                                key={filter}
-                                onClick={() => setSessionFilter(filter)}
-                                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${sessionFilter === filter
-                                        ? "border-transparent sm:border-b-2 sm:border-[#4A67B3]"
-                                        : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                    }`}
-                                style={sessionFilter === filter ? { color: '#4A67B3' } : {}}
-                            >
-                                {label}
-                                <span className="ml-2 text-xs text-gray-400">
-                                    ({sessionCounts[filter]})
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
+// ========================================
+// SUB-TAB COMPONENTS
+// ========================================
 
-                {trainingSessions.length === 0 ? (
-                    <EmptyState
-                        icon="🏋️"
-                        title="No hay sesiones de entrenamiento"
-                        description="Las sesiones aparecerán aquí una vez que se creen"
-                    />
-                ) : filteredSessions.length === 0 ? (
-                    <EmptyState
-                        icon="🔍"
-                        title={`No hay sesiones ${sessionFilter === "all" ? "" : sessionFilter === "planned" ? "planificadas" : sessionFilter === "completed" ? "completadas" : "canceladas"}`}
-                        description="Intenta cambiar el filtro"
-                    />
-                ) : (
-                    <div className="space-y-3">
-                        {filteredSessions.map((session) => (
-                            <TrainingSessionCard key={session.id} session={session} />
-                        ))}
-                    </div>
-                )}
+// Sub-tab: Planes
+interface PlansSubTabProps {
+    clientId: number;
+    trainingPlans: TrainingPlan[];
+}
+
+const PlansSubTab: React.FC<PlansSubTabProps> = ({ clientId, trainingPlans }) => {
+    return (
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                    Planes de Entrenamiento
+                </h3>
+                <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => alert(`Crear Plan de Entrenamiento para cliente ${clientId}`)}
+                >
+                    + Nuevo Plan
+                </Button>
+            </div>
+
+            {trainingPlans.length === 0 ? (
+                <EmptyState
+                    icon="📋"
+                    title="No hay planes de entrenamiento"
+                    description="Crea el primer plan de entrenamiento para este cliente"
+                />
+            ) : (
+                <div className="space-y-3">
+                    {trainingPlans.map((plan) => (
+                        <TrainingPlanCard key={plan.id} plan={plan} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Sub-tab: Sesiones
+interface SessionsSubTabProps {
+    clientId: number;
+    trainingSessions: TrainingSession[];
+    sessionFilter: SessionFilter;
+    onSessionFilterChange: (filter: SessionFilter) => void;
+    filteredSessions: TrainingSession[];
+    sessionCounts: Record<SessionFilter, number>;
+}
+
+const SessionsSubTab: React.FC<SessionsSubTabProps> = ({
+    clientId,
+    trainingSessions,
+    sessionFilter,
+    onSessionFilterChange,
+    filteredSessions,
+    sessionCounts,
+}) => {
+    return (
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between mb-4">
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                    Sesiones de Entrenamiento
+                </h3>
+                <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => alert(`Crear Sesión para cliente ${clientId}`)}
+                >
+                    + Nueva Sesión
+                </Button>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="mb-4 border-b border-gray-200">
+                <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full sm:[&::-webkit-scrollbar-thumb]:bg-transparent">
+                    <style>{`
+                        div[class*="overflow-x-auto"]::-webkit-scrollbar-thumb {
+                            background-color: #4A67B3 !important;
+                        }
+                    `}</style>
+                    {([
+                        { value: "all", label: "Todas" },
+                        { value: "planned", label: "Planificadas" },
+                        { value: "completed", label: "Completadas" },
+                        { value: "cancelled", label: "Canceladas" },
+                    ] as Array<{ value: SessionFilter; label: string }>).map(({ value: filter, label }) => (
+                        <button
+                            key={filter}
+                            onClick={() => onSessionFilterChange(filter)}
+                            className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 whitespace-nowrap flex-shrink-0 ${sessionFilter === filter
+                                ? "border-transparent sm:border-b-2 sm:border-[#4A67B3]"
+                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                }`}
+                            style={sessionFilter === filter ? { color: "#4A67B3" } : {}}
+                        >
+                            {label}
+                            <span className="ml-2 text-xs text-gray-400">
+                                ({sessionCounts[filter]})
+                            </span>
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {trainingSessions.length === 0 ? (
+                <EmptyState
+                    icon="🏋️"
+                    title="No hay sesiones de entrenamiento"
+                    description="Las sesiones aparecerán aquí una vez que se creen"
+                />
+            ) : filteredSessions.length === 0 ? (
+                <EmptyState
+                    icon="🔍"
+                    title={`No hay sesiones ${sessionFilter === "all" ? "" : sessionFilter === "planned" ? "planificadas" : sessionFilter === "completed" ? "completadas" : "canceladas"}`}
+                    description="Intenta cambiar el filtro"
+                />
+            ) : (
+                <div className="space-y-3">
+                    {filteredSessions.map((session) => (
+                        <TrainingSessionCard key={session.id} session={session} />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+// Sub-tab: Planning Anual
+interface YearlyPlanningSubTabProps {
+    clientId: number;
+}
+
+const YearlyPlanningSubTab: React.FC<YearlyPlanningSubTabProps> = ({ clientId }) => {
+    return <YearlyPlanningDashboard clientId={clientId} />;
+};
+
+// Sub-tab: Planning Mensual
+interface MonthlyPlanningSubTabProps {
+    clientId: number;
+}
+
+const MonthlyPlanningSubTab: React.FC<MonthlyPlanningSubTabProps> = ({ clientId }) => {
+    return <MonthlyPlanningDashboard clientId={clientId} />;
+};
+
+// Sub-tab: Planning Semanal
+interface WeeklyPlanningSubTabProps {
+    clientId: number;
+}
+
+const WeeklyPlanningSubTab: React.FC<WeeklyPlanningSubTabProps> = ({ clientId }) => {
+    return <WeeklyPlanningDashboard clientId={clientId} />;
+};
+
+// Sub-tab: Calendario
+interface CalendarSubTabProps {
+    clientId: number;
+}
+
+const CalendarSubTab: React.FC<CalendarSubTabProps> = ({ clientId: _clientId }) => {
+    return (
+        <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+                <div className="text-6xl mb-4">🗓️</div>
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+                    Calendario
+                </h3>
+                <p className="text-slate-500 max-w-md">
+                    Vista de Calendario - En desarrollo
+                </p>
+                <p className="text-sm text-slate-400 mt-2">
+                    {/* TODO: CalendarViews */}
+                    Esta vista mostrará calendarios anuales, mensuales y semanales para navegación temporal
+                    de los planes de entrenamiento.
+                </p>
             </div>
         </div>
     );

@@ -26,7 +26,7 @@ interface CreateSessionFormData {
     plannedDuration?: number | null;
     plannedIntensity?: number | null;
     plannedVolume?: number | null;
-    microcycleId?: number;
+    microcycleId: number; // Requerido - el backend lo exige como NOT NULL
     notes?: string | null;
 }
 
@@ -45,21 +45,76 @@ export const useCreateSession = ({
 
     const createSession = useCallback(
         async (data: CreateSessionFormData) => {
-            const sessionData: TrainingSessionCreate = {
-                microcycle_id: data.microcycleId || 0,
+            // Validar que microcycleId sea obligatorio y válido
+            if (data.microcycleId === undefined || data.microcycleId === null) {
+                throw new Error(
+                    "El microciclo es obligatorio. Por favor, seleccione un microciclo válido."
+                );
+            }
+
+            const microcycleId = Number(data.microcycleId);
+            if (isNaN(microcycleId) || microcycleId <= 0) {
+                throw new Error("El microciclo seleccionado no es válido");
+            }
+
+            // Construir objeto base requerido
+            const sessionDataBase: {
+                microcycle_id: number;
+                client_id: number;
+                trainer_id: number;
+                session_date: string;
+                session_name: string;
+                session_type: string;
+                status: string;
+            } = {
+                microcycle_id: microcycleId,
                 client_id: clientId,
                 trainer_id: trainerId,
                 session_date: data.sessionDate,
                 session_name: data.sessionName,
                 session_type: data.sessionType,
-                planned_duration: data.plannedDuration,
-                planned_intensity: data.plannedIntensity,
-                planned_volume: data.plannedVolume,
                 status: "planned",
-                notes: data.notes,
             };
 
-            await createMutation(sessionData).unwrap();
+            // Agregar campos opcionales solo si tienen valor (no null/undefined)
+            const sessionData: TrainingSessionCreate = {
+                ...sessionDataBase,
+                ...(data.plannedDuration !== null && data.plannedDuration !== undefined
+                    ? { planned_duration: data.plannedDuration }
+                    : {}),
+                ...(data.plannedIntensity !== null && data.plannedIntensity !== undefined
+                    ? { planned_intensity: data.plannedIntensity }
+                    : {}),
+                ...(data.plannedVolume !== null && data.plannedVolume !== undefined
+                    ? { planned_volume: data.plannedVolume }
+                    : {}),
+                ...(data.notes !== null && data.notes !== undefined && data.notes.trim() !== ""
+                    ? { notes: data.notes }
+                    : {}),
+            };
+
+            // DEBUG: Ver qué se envía al backend
+            console.log("=== SENDING TO BACKEND ===");
+            console.log("Session Data:", JSON.stringify(sessionData, null, 2));
+            console.log("microcycle_id type:", typeof sessionData.microcycle_id);
+            console.log("microcycle_id value:", sessionData.microcycle_id);
+            console.log("==========================");
+
+            try {
+                await createMutation(sessionData).unwrap();
+            } catch (error) {
+                // DEBUG: Ver el error completo del backend
+                console.error("=== BACKEND ERROR ===");
+                console.error("Full error:", error);
+                if (error && typeof error === "object" && "data" in error) {
+                    console.error("Error data:", JSON.stringify((error as { data: unknown }).data, null, 2));
+                }
+                if (error && typeof error === "object" && "status" in error) {
+                    console.error("Error status:", (error as { status: unknown }).status);
+                }
+                console.error("=====================");
+                throw error;
+            }
         },
         [createMutation, clientId, trainerId]
     );

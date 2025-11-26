@@ -64,8 +64,8 @@ export interface CreateClientProgressData {
 export interface UpdateClientProgressData {
     peso?: number | null;
     altura?: number | null; // En metros (0.5 - 3.0)
-    unidad?: string | null;
-    imc?: number | null; // ⚠️ Calcular en frontend (peso / altura²)
+    unidad?: "metric" | "imperial";
+    imc?: number | null; // Calcular en frontend (peso / altura²)
     notas?: string | null;
 }
 

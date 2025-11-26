@@ -32,7 +32,7 @@ Training Plan (Plan de Entrenamiento)
   ├── Macrocycle (Macrociclo) - Fases largas (meses)
   │     ├── Mesocycle (Mesociclo) - Bloques (4-6 semanas)
   │     │     └── Microcycle (Microciclo) - Semanas individuales (7 días)
-  │     │           └── TrainingSession (Sesión de Entrenamiento)
+  │     │           └── TrainingSession (Sesión de Entrenamiento) 
   │     └── Mesocycle...
   └── Milestones (Hitos) - Eventos importantes
 ```

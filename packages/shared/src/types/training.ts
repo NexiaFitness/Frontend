@@ -232,10 +232,14 @@ export interface Mesocycle {
     start_date: string; // ISO date
     end_date: string; // ISO date
     duration_weeks: number;
+    // Coherence system fields (Adrián's requirement)
+    physical_quality: string | null; // e.g., "Fuerza", "Power", "Aerobic", "Mobility"
+    volume: number | null; // Float 1-10 for coherence calculation
+    intensity: number | null; // Float 1-10 for coherence calculation
     primary_focus: string;
     secondary_focus: string | null;
-    target_volume: string | null;
-    target_intensity: string | null;
+    target_volume: string | null; // Legacy field (kept for backward compatibility)
+    target_intensity: string | null; // Legacy field (kept for backward compatibility)
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
@@ -251,10 +255,14 @@ export interface MesocycleCreate {
     start_date: string; // ISO date YYYY-MM-DD
     end_date: string; // ISO date YYYY-MM-DD
     duration_weeks: number;
+    // Coherence system fields (optional)
+    physical_quality?: string | null;
+    volume?: number | null; // Float 1-10
+    intensity?: number | null; // Float 1-10
     primary_focus: string;
     secondary_focus?: string | null;
-    target_volume?: string | null;
-    target_intensity?: string | null;
+    target_volume?: string | null; // Legacy field
+    target_intensity?: string | null; // Legacy field
 }
 
 /**
@@ -266,10 +274,14 @@ export interface MesocycleUpdate {
     start_date?: string;
     end_date?: string;
     duration_weeks?: number;
+    // Coherence system fields (optional)
+    physical_quality?: string | null;
+    volume?: number | null; // Float 1-10
+    intensity?: number | null; // Float 1-10
     primary_focus?: string;
     secondary_focus?: string | null;
-    target_volume?: string | null;
-    target_intensity?: string | null;
+    target_volume?: string | null; // Legacy field
+    target_intensity?: string | null; // Legacy field
 }
 
 // ========================================
@@ -289,6 +301,10 @@ export interface Microcycle {
     end_date: string; // ISO date
     duration_days: number; // Default: 7
     training_frequency: number; // Default: 3
+    // Coherence system fields (Adrián's requirement)
+    physical_quality: string | null; // e.g., "Fuerza", "Power", "Aerobic", "Mobility"
+    volume: number | null; // Float 1-10 for coherence calculation
+    intensity: number | null; // Float 1-10 for coherence calculation
     deload_week: boolean; // Default: false
     notes: string | null;
     created_at: string; // ISO datetime
@@ -307,6 +323,10 @@ export interface MicrocycleCreate {
     end_date: string; // ISO date YYYY-MM-DD
     duration_days?: number; // Default: 7
     training_frequency?: number; // Default: 3
+    // Coherence system fields (optional)
+    physical_quality?: string | null;
+    volume?: number | null; // Float 1-10
+    intensity?: number | null; // Float 1-10
     deload_week?: boolean; // Default: false
     notes?: string | null;
 }
@@ -321,6 +341,10 @@ export interface MicrocycleUpdate {
     end_date?: string;
     duration_days?: number;
     training_frequency?: number;
+    // Coherence system fields (optional)
+    physical_quality?: string | null;
+    volume?: number | null; // Float 1-10
+    intensity?: number | null; // Float 1-10
     deload_week?: boolean;
     notes?: string | null;
 }

@@ -33,6 +33,12 @@ import type {
     FatigueAnalysis,
 } from "../types/training";
 import type {
+    ClientTrainingPlanSummary,
+    TrainingPlanMonthlySummary,
+    TrainingPlanWeeklySummary,
+    PlanAdherenceStats,
+} from "../types/trainingAnalytics";
+import type {
     ClientImprovementResponse,
     ClientSatisfactionResponse,
     ProgressCategoriesResponse,
@@ -578,6 +584,105 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: [{ type: "Client", id: "TESTS" }, { type: "Client", id: "TESTING_SUMMARY" }],
         }),
 
+        // ========================================
+        // TRAINING PLAN ANALYTICS ENDPOINTS
+        // ========================================
+
+        /**
+         * Obtener resumen anual del plan de entrenamiento del cliente
+         * Endpoint: GET /api/v1/clients/{client_id}/training-plan/summary?year={year}&trainer_id={trainer_id}
+         */
+        getClientTrainingPlanSummary: builder.query<
+            ClientTrainingPlanSummary,
+            { clientId: number; year?: number; trainerId?: number }
+        >({
+            query: ({ clientId, year, trainerId }) => {
+                const params = new URLSearchParams();
+                if (year) params.append('year', year.toString());
+                if (trainerId) params.append('trainer_id', trainerId.toString());
+                const queryString = params.toString();
+                return {
+                    url: `/clients/${clientId}/training-plan/summary${queryString ? `?${queryString}` : ''}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client" as const, id: clientId },
+                { type: "TrainingPlanSummary" as const, id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Obtener resumen mensual del plan de entrenamiento del cliente
+         * Endpoint: GET /api/v1/clients/{client_id}/training-plan/monthly?year={year}&month={month}&week={week}&trainer_id={trainer_id}
+         */
+        getClientTrainingPlanMonthlySummary: builder.query<
+            TrainingPlanMonthlySummary,
+            { clientId: number; year?: number; month?: number; week?: number; trainerId?: number }
+        >({
+            query: ({ clientId, year, month, week, trainerId }) => {
+                const params = new URLSearchParams();
+                if (year) params.append('year', year.toString());
+                if (month) params.append('month', month.toString());
+                if (week) params.append('week', week.toString());
+                if (trainerId) params.append('trainer_id', trainerId.toString());
+                const queryString = params.toString();
+                return {
+                    url: `/clients/${clientId}/training-plan/monthly${queryString ? `?${queryString}` : ''}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client" as const, id: clientId },
+                { type: "TrainingPlanMonthlySummary" as const, id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Obtener resumen semanal del plan de entrenamiento del cliente
+         * Endpoint: GET /api/v1/clients/{client_id}/training-plan/weekly?week_start={date}&day={date}&trainer_id={trainer_id}
+         */
+        getClientTrainingPlanWeeklySummary: builder.query<
+            TrainingPlanWeeklySummary,
+            { clientId: number; weekStart?: string; day?: string; trainerId?: number }
+        >({
+            query: ({ clientId, weekStart, day, trainerId }) => {
+                const params = new URLSearchParams();
+                if (weekStart) params.append('week_start', weekStart);
+                if (day) params.append('day', day);
+                if (trainerId) params.append('trainer_id', trainerId.toString());
+                const queryString = params.toString();
+                return {
+                    url: `/clients/${clientId}/training-plan/weekly${queryString ? `?${queryString}` : ''}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client" as const, id: clientId },
+                { type: "TrainingPlanWeeklySummary" as const, id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Obtener estadísticas de adherencia del plan de entrenamiento
+         * Endpoint: GET /api/v1/training-plans/adherence-stats?trainer_id={trainer_id}
+         */
+        getTrainingPlanAdherenceStats: builder.query<
+            PlanAdherenceStats,
+            { trainerId?: number }
+        >({
+            query: ({ trainerId }) => {
+                const params = new URLSearchParams();
+                if (trainerId) params.append('trainer_id', trainerId.toString());
+                const queryString = params.toString();
+                return {
+                    url: `/training-plans/adherence-stats${queryString ? `?${queryString}` : ''}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "TrainingPlanAdherenceStats" as const, id: "LIST" }],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -618,4 +723,9 @@ export const {
     useCreateTestResultMutation,
     useUpdateTestResultMutation,
     useDeleteTestResultMutation,
+    // Training Plan Analytics hooks
+    useGetClientTrainingPlanSummaryQuery,
+    useGetClientTrainingPlanMonthlySummaryQuery,
+    useGetClientTrainingPlanWeeklySummaryQuery,
+    useGetTrainingPlanAdherenceStatsQuery,
 } = clientsApi;
