@@ -35,6 +35,7 @@ export interface WeeklyMonotonyStrain {
     monotony: number; // Daily mean / Standard deviation
     strain: number; // Weekly load × Monotony
     weekly_load: number; // Sum of daily loads for the week
+    cumulative_strain: number; // Running total of strain across weeks
 }
 
 /**
@@ -98,6 +99,7 @@ export interface StrainWeekData {
     week: string;
     load: number;
     strain: number;
+    cumulative_strain: number;
 }
 
 /**

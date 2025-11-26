@@ -5,19 +5,19 @@
  * - Muestra planes de entrenamiento y sesiones del cliente
  * - Lista de training plans activos/pasados
  * - Lista de sesiones recientes con estado
- * - Dashboards de planning analytics (yearly/monthly/weekly/calendar)
+ * - Dashboards de planning analytics (yearly/monthly/weekly)
  * - Basado en Figma Profile Page
  *
  * Responsabilidades:
  * - Mostrar training plans del cliente
  * - Mostrar sesiones de entrenamiento
  * - Filtros por estado (planned, completed, cancelled)
- * - Dashboards de planning (yearly, monthly, weekly, calendar views)
+ * - Dashboards de planning (yearly, monthly, weekly views)
  * - Título principal "Training Plan" arriba de sub-tabs
  *
  * Notas de mantenimiento:
  * - El título "Training Plan" se muestra ANTES de los sub-tabs
- * - Los sub-tabs incluyen: Planes, Sesiones, Planning Anual, Planning Mensual, Calendario
+ * - Los sub-tabs incluyen: Planes, Sesiones, Planning Anual, Planning Mensual, Planning Semanal
  * - Cada dashboard (Yearly/Monthly/Weekly) tiene su propio subtítulo interno pequeño
  *
  * @author Frontend Team
@@ -43,7 +43,7 @@ interface ClientWorkoutsTabProps {
 }
 
 type SessionFilter = "all" | "completed" | "planned" | "cancelled";
-type EntrenamientosSubTab = "plans" | "sessions" | "yearly" | "monthly" | "weekly" | "calendar";
+type EntrenamientosSubTab = "plans" | "sessions" | "yearly" | "monthly" | "weekly";
 
 const ENTRENAMIENTOS_SUBTABS: Array<{ id: EntrenamientosSubTab; label: string }> = [
     { id: "plans", label: "Planes" },
@@ -51,7 +51,6 @@ const ENTRENAMIENTOS_SUBTABS: Array<{ id: EntrenamientosSubTab; label: string }>
     { id: "yearly", label: "Planning Anual" },
     { id: "monthly", label: "Planning Mensual" },
     { id: "weekly", label: "Planning Semanal" },
-    { id: "calendar", label: "Calendario" },
 ];
 
 export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
@@ -116,8 +115,6 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                 return <MonthlyPlanningSubTab clientId={clientId} />;
             case "weekly":
                 return <WeeklyPlanningSubTab clientId={clientId} />;
-            case "calendar":
-                return <CalendarSubTab clientId={clientId} />;
             default:
                 return null;
         }
@@ -334,32 +331,6 @@ interface WeeklyPlanningSubTabProps {
 
 const WeeklyPlanningSubTab: React.FC<WeeklyPlanningSubTabProps> = ({ clientId }) => {
     return <WeeklyPlanningDashboard clientId={clientId} />;
-};
-
-// Sub-tab: Calendario
-interface CalendarSubTabProps {
-    clientId: number;
-}
-
-const CalendarSubTab: React.FC<CalendarSubTabProps> = ({ clientId: _clientId }) => {
-    return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-6xl mb-4">🗓️</div>
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
-                    Calendario
-                </h3>
-                <p className="text-slate-500 max-w-md">
-                    Vista de Calendario - En desarrollo
-                </p>
-                <p className="text-sm text-slate-400 mt-2">
-                    {/* TODO: CalendarViews */}
-                    Esta vista mostrará calendarios anuales, mensuales y semanales para navegación temporal
-                    de los planes de entrenamiento.
-                </p>
-            </div>
-        </div>
-    );
 };
 
 // ========================================

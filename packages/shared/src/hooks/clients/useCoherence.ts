@@ -59,21 +59,26 @@ const transformBackendData = (
         }));
 
     // Transformar monotony_strain_data a monotony_by_week
-    const monotonyByWeek: MonotonyWeekData[] = backendData.monotony_strain_data.map(
-        (item, index) => ({
+    const monotonyByWeek: MonotonyWeekData[] = backendData.monotony_strain_data
+        .filter(item => item.monotony !== null && item.monotony !== undefined && !isNaN(item.monotony))
+        .map((item, index) => ({
             week: `W${index + 1}`, // Formato simplificado
-            monotony: item.monotony,
-        })
-    );
+            monotony: typeof item.monotony === 'number' && item.monotony > 10 ? 10 : item.monotony,
+        }));
 
     // Transformar monotony_strain_data a strain_by_week
-    const strainByWeek: StrainWeekData[] = backendData.monotony_strain_data.map(
-        (item, index) => ({
+    const strainByWeek: StrainWeekData[] = backendData.monotony_strain_data
+        .filter(item => 
+            item.weekly_load !== null && item.weekly_load !== undefined && !isNaN(item.weekly_load) &&
+            item.strain !== null && item.strain !== undefined && !isNaN(item.strain) &&
+            item.cumulative_strain !== null && item.cumulative_strain !== undefined && !isNaN(item.cumulative_strain)
+        )
+        .map((item, index) => ({
             week: `W${index + 1}`, // Formato simplificado
             load: item.weekly_load,
             strain: item.strain,
-        })
-    );
+            cumulative_strain: item.cumulative_strain,
+        }));
 
     return {
         adherence_percentage: backendData.kpis.adherence_percentage,
@@ -123,6 +128,35 @@ const getCurrentWeekRange = (): { start: string; end: string } => {
 };
 
 /**
+ * Calcula el rango de fechas del mes actual (primer día a último día)
+ * Retorna { start: "YYYY-MM-DD", end: "YYYY-MM-DD" }
+ */
+const getCurrentMonthRange = (): { start: string; end: string } => {
+    const now = new Date();
+    
+    // Primer día del mes
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    firstDay.setHours(0, 0, 0, 0);
+    
+    // Último día del mes
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    lastDay.setHours(23, 59, 59, 999);
+    
+    // Formatear como YYYY-MM-DD
+    const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+    
+    return {
+        start: formatDate(firstDay),
+        end: formatDate(lastDay),
+    };
+};
+
+/**
  * Hook para obtener y transformar datos de coherence
  * @param clientId - ID del cliente
  * @param week - Semana en formato ISO (opcional, ej: "2025-W03"). Si no se proporciona, usa la semana actual
@@ -138,10 +172,21 @@ export const useCoherence = (
     periodEnd?: string,
     periodType: "week" | "month" | "training_block" = "week"
 ): UseCoherenceReturn => {
-    // Si no se proporciona week ni periodStart/periodEnd, usar semana actual
-    const weekRange = !week && !periodStart && !periodEnd ? getCurrentWeekRange() : null;
-    const effectivePeriodStart = periodStart || weekRange?.start;
-    const effectivePeriodEnd = periodEnd || weekRange?.end;
+    // Si no se proporciona week ni periodStart/periodEnd, calcular según periodType
+    let effectivePeriodStart = periodStart;
+    let effectivePeriodEnd = periodEnd;
+    
+    if (!week && !periodStart && !periodEnd) {
+        if (periodType === "month") {
+            const monthRange = getCurrentMonthRange();
+            effectivePeriodStart = monthRange.start;
+            effectivePeriodEnd = monthRange.end;
+        } else if (periodType === "week") {
+            const weekRange = getCurrentWeekRange();
+            effectivePeriodStart = weekRange.start;
+            effectivePeriodEnd = weekRange.end;
+        }
+    }
 
     const { data: backendData, isLoading, isError } = useGetClientCoherenceQuery(
         {

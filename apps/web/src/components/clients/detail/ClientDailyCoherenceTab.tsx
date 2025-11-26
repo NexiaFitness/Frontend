@@ -82,9 +82,11 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
 const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => {
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h3 className={`${TYPOGRAPHY.cardTitle} mb-4`}>{title}</h3>
-            {children}
+        <div className="bg-white rounded-lg shadow px-4 pt-4 pb-2">
+            <h3 className={`${TYPOGRAPHY.cardTitle} mb-6`}>{title}</h3>
+            <div className="w-full" style={{ minHeight: '300px' }}>
+                {children}
+            </div>
         </div>
     );
 };
@@ -93,7 +95,10 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => {
 // COMPONENTE PRINCIPAL
 // ========================================
 
+type PeriodType = "week" | "month" | "training_block";
+
 export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = ({ clientId }) => {
+    const [periodType, setPeriodType] = useState<PeriodType>("week");
     const {
         data,
         adherenceData,
@@ -102,7 +107,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
         colors,
         isLoading,
         isError,
-    } = useCoherence(clientId);
+    } = useCoherence(clientId, undefined, undefined, undefined, periodType);
 
     const [summary, setSummary] = useState<string>(data.summary || "");
 
@@ -135,14 +140,46 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
 
     return (
         <div className="p-6 space-y-6">
-
-            {/* Header */}
-            <div>
-                <h2 className={TYPOGRAPHY.sectionTitle}>Coherencia Diaria</h2>
-                <p className="text-slate-600 mt-2">
-                    Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
-                </p>
+            {/* Header con botón Export PDF */}
+            <div className="flex items-start justify-between">
+                <div>
+                    <h2 className={TYPOGRAPHY.sectionTitle}>Coherencia Diaria</h2>
+                    <p className="text-slate-600 mt-2">
+                        Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
+                    </p>
+                </div>
+                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Exportar PDF
+                </button>
             </div>
+
+            {/* Sub-tabs: Week, Month, Training Block */}
+            <nav aria-label="Period tabs" className="flex gap-1 border-b border-gray-200">
+                {[
+                    { id: "week" as PeriodType, label: "Semana" },
+                    { id: "month" as PeriodType, label: "Mes" },
+                    { id: "training_block" as PeriodType, label: "Bloque de Entrenamiento" },
+                ].map((tab) => {
+                    const isActive = periodType === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setPeriodType(tab.id)}
+                            className={`
+                                relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[120px] text-center
+                                ${isActive
+                                    ? "text-[#4A67B3]"
+                                    : "text-gray-500 hover:text-gray-700"
+                                }
+                                cursor-pointer
+                            `}
+                            aria-current={isActive ? "page" : undefined}
+                        >
+                            {tab.label}
+                        </button>
+                    );
+                })}
+            </nav>
 
             {/* Cards de métricas principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -172,213 +209,212 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                 />
             </div>
 
-            {/* Gráfico 1: Adherence Overview (Donut Chart) */}
-            <ChartCard title="Adherencia - Sesiones Completadas">
-                <ResponsiveContainer width="100%" height={300}>
-                    <PieChart>
-                        <Pie
-                            data={adherenceData as Array<{ name: string; value: number; [key: string]: string | number }>}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            label={(entry: { name?: string; percent?: number; value?: number }) => {
-                                const percent = entry.percent || 0;
-                                const name = entry.name || '';
-                                return `${name}: ${(percent * 100).toFixed(0)}%`;
-                            }}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                        >
-                            {adherenceData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                            ))}
-                        </Pie>
-                        <Tooltip />
-                        <Legend />
-                    </PieChart>
-                </ResponsiveContainer>
-            </ChartCard>
-
-            {/* Gráfico 2: Prescribed vs Perceived Intensity (Scatter Plot) */}
-            {scatterData && scatterData.length > 0 && (
-                <ChartCard title="Intensidad Prescrita vs Percibida">
-                    <ResponsiveContainer width="100%" height={400}>
-                        <ComposedChart margin={{ top: 20, right: 30, left: 60, bottom: 80 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                            type="number"
-                            dataKey="x"
-                            name="Prescrita"
-                            domain={[0, 10]}
-                            label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -10 }}
-                        />
-                        <YAxis
-                            type="number"
-                            dataKey="y"
-                            name="Percibida"
-                            domain={[0, 10]}
-                            label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "left", offset: 10, style: { textAnchor: "middle" } }}
-                        />
-                        <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                        <Legend wrapperStyle={{ paddingTop: "20px" }} align="left" />
-                        {/* Línea de referencia y=x (ideal) */}
-                        <Line
-                            type="linear"
-                            dataKey="y"
-                            data={idealLineData}
-                            stroke="#ef4444"
-                            strokeDasharray="5 5"
-                            strokeWidth={2}
-                            dot={false}
-                            name="Ideal (y=x)"
-                            isAnimationActive={false}
-                        />
-                        <Scatter name="Sesiones" data={scatterData} fill="#4A67B3">
-                            {scatterData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={colors[0]} />
-                            ))}
-                        </Scatter>
-                    </ComposedChart>
-                </ResponsiveContainer>
-            </ChartCard>
-            )}
-
-            {/* Gráfico 3: Monotony por Semana (Line Chart con zona roja) */}
-            {data.monotony_by_week && data.monotony_by_week.length > 0 && (() => {
-                // Filtrar y normalizar datos de monotony
-                // Aceptar valores hasta 999 (que significa alta monotonía) pero limitarlos a 10 para visualización
-                const validData = data.monotony_by_week
-                    .filter(w => {
-                        const val = w.monotony;
-                        return val !== null && val !== undefined && !isNaN(val) && isFinite(val);
-                    })
-                    .map((w, index) => ({
-                        week: w.week || `W${index + 1}`,
-                        monotony: typeof w.monotony === 'number' && w.monotony > 10 ? 10 : (w.monotony || 0),
-                        threshold: 2.0 // Línea de umbral constante
-                    }));
-                
-                if (validData.length === 0) {
-                    console.warn('No valid monotony data after processing');
-                    return null;
-                }
-                
-                // Calcular dominio Y dinámico basado en los datos
-                const maxMonotony = Math.max(...validData.map(d => d.monotony || 0), 2.0);
-                const yDomain = [0, Math.max(10, Math.ceil(maxMonotony * 1.2))];
-                
-                return (
-                    <ChartCard title="Monotonía por Semana">
-                        <ResponsiveContainer width="100%" height={400}>
-                            <LineChart 
-                                data={validData as MonotonyWeekData[]} 
-                                margin={{ top: 20, right: 30, left: 60, bottom: 80 }}
-                            >
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
-                            <YAxis 
-                                domain={yDomain}
-                                label={{ value: "Monotonía", angle: -90, position: "left", offset: 10, style: { textAnchor: "middle" } }} 
-                            />
-                            <Tooltip />
-                            <Legend wrapperStyle={{ paddingTop: "20px" }} align="left" />
-                            {/* Línea principal de Monotonía */}
-                            <Line
-                                type="monotone"
-                                dataKey="monotony"
-                                stroke="#4A67B3"
-                                strokeWidth={3}
-                                name="Monotonía"
-                                dot={{ r: 6 }}
-                                isAnimationActive={false}
-                                connectNulls={false}
-                            />
-                            {/* Línea de referencia en 2.0 (umbral) */}
-                            <ReferenceLine 
-                                y={2.0} 
-                                stroke="#ef4444" 
-                                strokeDasharray="5 5" 
-                                strokeWidth={2}
-                                label={{ value: "Umbral (2.0)", position: "right" }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
+            {/* Gráficos en 2 columnas: Adherence Overview y Scatter Plot */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gráfico 1: Adherence Overview (Donut Chart con texto en el centro) */}
+                <ChartCard title="Adherencia - Sesiones Completadas">
+                    <div className="relative w-full" style={{ height: '300px', minHeight: '300px' }}>
+                        <ResponsiveContainer width="100%" height={300}>
+                            <PieChart>
+                                <Pie
+                                    data={adherenceData as Array<{ name: string; value: number; [key: string]: string | number }>}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={100}
+                                    labelLine={false}
+                                    label={false}
+                                    fill="#8884d8"
+                                    dataKey="value"
+                                >
+                                    {adherenceData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                                    ))}
+                                </Pie>
+                                <Tooltip />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        {/* Texto en el centro del donut */}
+                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                            <div className="text-4xl font-bold text-gray-900">
+                                {data.adherence_percentage.toFixed(0)}%
+                            </div>
+                            <div className="text-sm text-gray-600 mt-1">
+                                {data.sessions_completed}/{data.sessions_total} sesiones
+                            </div>
+                        </div>
+                    </div>
                 </ChartCard>
-                );
-            })()}
 
-            {/* Gráfico 4: Strain & Load (Dual Line + Bar Chart) */}
-            {data.strain_by_week && data.strain_by_week.length > 0 && (() => {
-                // Filtrar y procesar datos válidos
-                const validData = data.strain_by_week
-                    .filter(w => {
-                        const loadValid = w.load !== null && w.load !== undefined && !isNaN(w.load) && isFinite(w.load);
-                        const strainValid = w.strain !== null && w.strain !== undefined && !isNaN(w.strain) && isFinite(w.strain);
-                        return loadValid && strainValid;
-                    })
-                    .map((w, index) => ({
-                        week: w.week || `W${index + 1}`,
-                        load: typeof w.load === 'number' ? w.load : 0,
-                        strain: typeof w.strain === 'number' ? w.strain : 0,
-                    }));
-                
-                if (validData.length === 0) {
-                    console.warn('No valid strain data after processing');
-                    return null;
-                }
-                
-                // Calcular dominios Y dinámicos basados en los datos
-                const maxLoad = Math.max(...validData.map(d => d.load || 0));
-                const maxStrain = Math.max(...validData.map(d => d.strain || 0));
-                const loadDomain = [0, maxLoad > 0 ? Math.ceil(maxLoad * 1.1) : 1000];
-                const strainDomain = [0, maxStrain > 0 ? Math.ceil(maxStrain * 1.1) : 4000];
-                
-                return (
-                    <ChartCard title="Carga y Volumen por Semana">
-                        <ResponsiveContainer width="100%" height={400}>
-                            <ComposedChart data={validData as StrainWeekData[]} margin={{ top: 20, right: 60, left: 60, bottom: 80 }}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="week" label={{ value: "Semana", position: "insideBottom", offset: -5 }} />
-                        <YAxis 
-                            yAxisId="left" 
-                            domain={loadDomain}
-                            label={{ value: "Volumen", angle: -90, position: "left", offset: 10, style: { textAnchor: "middle" } }} 
-                        />
-                        <YAxis 
-                            yAxisId="right" 
-                            orientation="right" 
-                            domain={strainDomain}
-                            label={{ value: "Carga", angle: 90, position: "right", offset: 10, style: { textAnchor: "middle" } }} 
-                        />
-                        <Tooltip />
-                        <Legend wrapperStyle={{ paddingTop: "20px" }} align="left" />
-                        <Bar yAxisId="left" dataKey="load" fill="#94a3b8" name="Volumen" />
-                        <Line
-                            yAxisId="right"
-                            type="monotone"
-                            dataKey="strain"
-                            stroke="#4A67B3"
-                            strokeWidth={3}
-                            name="Carga"
-                            dot={{ r: 6 }}
-                            isAnimationActive={false}
-                            connectNulls={false}
-                        />
-                    </ComposedChart>
-                </ResponsiveContainer>
-            </ChartCard>
-                );
-            })()}
+                {/* Gráfico 2: Prescribed vs Perceived Intensity (Scatter Plot) */}
+                {scatterData && scatterData.length > 0 && (
+                    <ChartCard title="Intensidad Prescrita vs Percibida">
+                        <div className="w-full" style={{ minHeight: '400px' }}>
+                            <ResponsiveContainer width="100%" height={400}>
+                                <ComposedChart margin={{ top: 5, right: 10, left: 30, bottom: 60 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis
+                                        type="number"
+                                        dataKey="x"
+                                        name="Prescrita"
+                                        domain={[0, 10]}
+                                        label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -5 }}
+                                    />
+                                    <YAxis
+                                        type="number"
+                                        dataKey="y"
+                                        name="Percibida"
+                                        domain={[0, 10]}
+                                        label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
+                                    />
+                                    <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+                                    <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                    {/* Línea de referencia y=x (ideal) */}
+                                    <Line
+                                        type="linear"
+                                        dataKey="y"
+                                        data={idealLineData}
+                                        stroke="#ef4444"
+                                        strokeDasharray="5 5"
+                                        strokeWidth={2}
+                                        dot={false}
+                                        name="Ideal (y=x)"
+                                        isAnimationActive={false}
+                                    />
+                                    <Scatter name="Sesiones" data={scatterData} fill="#4A67B3">
+                                        {scatterData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={colors[0]} />
+                                        ))}
+                                    </Scatter>
+                                </ComposedChart>
+                            </ResponsiveContainer>
+                        </div>
+                    </ChartCard>
+                )}
+            </div>
 
-            {/* Summary interpretativo (editable) */}
+            {/* Gráficos en 2 columnas: Monotony y Strain & Load */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Gráfico 3: Monotony (Line Chart) */}
+                <ChartCard title="Monotonía">
+                    {data.monotony_by_week && data.monotony_by_week.length > 0 ? (
+                        <div className="w-full" style={{ minHeight: '400px' }}>
+                            <ResponsiveContainer width="100%" height={400}>
+                            <LineChart 
+                                data={data.monotony_by_week} 
+                                margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
+                            >
+                                <CartesianGrid strokeDasharray="3 3" />
+                                <XAxis 
+                                    dataKey="week" 
+                                    label={{ value: "Semana", position: "insideBottom", offset: -5 }} 
+                                />
+                                <YAxis 
+                                    domain={[0, 'dataMax + 1']}
+                                    label={{ value: "Monotonía", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }} 
+                                />
+                                <Tooltip />
+                                <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                <Line
+                                    type="monotone"
+                                    dataKey="monotony"
+                                    stroke="#4A67B3"
+                                    strokeWidth={3}
+                                    name="Monotonía"
+                                    dot={{ r: 6, fill: "#4A67B3" }}
+                                    isAnimationActive={false}
+                                    connectNulls={false}
+                                />
+                                <ReferenceLine 
+                                    y={2.0} 
+                                    stroke="#ef4444" 
+                                    strokeDasharray="5 5" 
+                                    strokeWidth={2}
+                                    label={{ value: "Umbral (2.0)", position: "right" }}
+                                />
+                            </LineChart>
+                        </ResponsiveContainer>
+                        </div>
+                    ) : (
+                        <div className="flex items-center justify-center h-[400px] text-gray-500">
+                            No hay datos de monotonía disponibles
+                        </div>
+                    )}
+                </ChartCard>
+
+                {/* Gráfico 4: Strain & Load (Bar + Line Chart) */}
+                <ChartCard title="Carga y Volumen">
+                    {data.strain_by_week && data.strain_by_week.length > 0 ? (() => {
+                        // Calcular el máximo valor para normalizar a escala 0-1000 como en Figma
+                        const maxLoad = Math.max(...data.strain_by_week.map(d => d.load || 0));
+                        const maxStrain = Math.max(...data.strain_by_week.map(d => d.cumulative_strain || 0));
+                        const maxValue = Math.max(maxLoad, maxStrain);
+                        
+                        // Normalizar datos a escala 0-1000
+                        const normalizedData = data.strain_by_week.map(d => ({
+                            week: d.week,
+                            load: maxValue > 0 ? (d.load / maxValue) * 1000 : 0,
+                            cumulative_strain: maxValue > 0 ? (d.cumulative_strain / maxValue) * 1000 : 0,
+                        }));
+                        
+                        return (
+                            <div className="w-full" style={{ minHeight: '400px' }}>
+                                <ResponsiveContainer width="100%" height={400}>
+                                <ComposedChart 
+                                    data={normalizedData} 
+                                    margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
+                                >
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis 
+                                        dataKey="week" 
+                                        label={{ value: "Semana", position: "insideBottom", offset: -5 }} 
+                                    />
+                                    <YAxis 
+                                        domain={[0, 1000]}
+                                        label={{ value: "Carga de Entrenamiento / Carga", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }} 
+                                    />
+                                    <Tooltip />
+                                    <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                    <Bar 
+                                        dataKey="load" 
+                                        fill="#94a3b8" 
+                                        name="Volumen" 
+                                    />
+                                    <Line
+                                        type="monotone"
+                                        dataKey="cumulative_strain"
+                                        stroke="#4A67B3"
+                                        strokeWidth={3}
+                                        name="Carga Acumulada"
+                                        dot={{ r: 6, fill: "#4A67B3" }}
+                                        isAnimationActive={false}
+                                        connectNulls={false}
+                                    />
+                                </ComposedChart>
+                            </ResponsiveContainer>
+                            </div>
+                        );
+                    })() : (
+                        <div className="flex items-center justify-center h-[400px] text-gray-500">
+                            No hay datos de carga y volumen disponibles
+                        </div>
+                    )}
+                </ChartCard>
+            </div>
+
+            {/* Summary interpretativo (editable) con botón Edit */}
             <ChartCard title="Resumen Interpretativo">
-                <textarea
-                    value={summary}
-                    onChange={(e) => setSummary(e.target.value)}
-                    className="w-full min-h-[120px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y"
-                    placeholder="Escribe un resumen interpretativo de los datos..."
-                />
+                <div className="relative">
+                    <textarea
+                        value={summary}
+                        onChange={(e) => setSummary(e.target.value)}
+                        className="w-full min-h-[120px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y pr-20"
+                        placeholder="Escribe un resumen interpretativo de los datos..."
+                    />
+                    <button className="absolute top-4 right-4 px-3 py-1 text-sm font-medium text-gray-700 hover:text-gray-900">
+                        Editar
+                    </button>
+                </div>
             </ChartCard>
 
             {/* Key Recommendations */}
