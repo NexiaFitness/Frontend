@@ -1,101 +1,86 @@
 # NEXIA Cross-Platform Guide
 
 ## Overview
-This guide describes the migration plan required to make the NEXIA UI layer fully cross-platform.  
-The goal is to separate UI contracts from implementations, ensuring **web (Tailwind)** and **mobile (React Native)** can share the same logic without introducing technical debt.
+This guide describes the approach chosen for the cross-platform architecture of the NEXIA project.  
+The goal is to keep **business logic and type definitions fully shared** while allowing each platform (web and native) to develop and maintain its **own UI layer** independently.  
+
+This approach avoids unnecessary abstraction layers at this stage and follows a professional pattern seen in many large companies:  
+- **Shared package** → Business logic, state, APIs, validation, types.  
+- **Web app** → Tailwind-based UI, optimized for browser.  
+- **Mobile app** (future) → React Native UI, optimized for native platforms.  
+
+No `ui-primitives` package is created. Contracts will be naturally enforced through TypeScript types in `shared`, while each platform owns its own rendering and styling system.
 
 ---
 
-## Phase 1 – Define Contracts (`ui-primitives`)
+## Current Decision
 
-**Objective:** Separate component interfaces from implementations.  
+### packages/shared
+- **Responsibility:** Business logic, store, API clients, hooks, validation schemas, types.  
+- **Forbidden:** React components, Tailwind imports, DOM APIs.  
+- **Status:** Already implemented cleanly.
 
-### Steps
-1. Create folder `packages/ui-primitives/src/` with subfolders:
-   ```
-   packages/ui-primitives/src/
-   ├── Button/
-   ├── Input/
-   └── FormSelect/
-   ```
-2. Define interfaces with platform-agnostic props.  
-   - Example `ButtonProps`: `variant`, `size`, `onPress`, `children`.  
-   - No styles or platform-specific imports allowed.  
-3. Add minimal unit tests to ensure contracts exist and export correctly.  
+### apps/web
+- **Responsibility:** UI components built with Tailwind CSS and React.  
+- **Scope:** Authentication forms, buttons, modals, layouts, dashboards.  
+- **Location:** `apps/web/src/components/ui/`  
+- **Relation with shared:** Imports only logic and types (`store`, `api`, `utils`, `validation`).  
 
----
-
-## Phase 2 – Migrate Current Implementations (`ui-web`)
-
-**Objective:** Keep the current web UI working but decoupled from shared.  
-
-### Steps
-1. Create folder `packages/ui-web/src/components/forms/`.  
-2. Move existing implementations:
-   - `Button.tsx`  
-   - `Input.tsx`  
-   - `FormSelect.tsx`  
-3. Update them to import contracts from `ui-primitives`.  
-4. Update imports in `apps/web` from:  
-   ```ts
-   import { Button } from "@shared";
-   ```
-   to:
-   ```ts
-   import { Button } from "@ui-web";
-   ```
-5. Run full frontend test suite (currently 228 cases) to confirm nothing breaks.  
+### apps/mobile (future)
+- **Responsibility:** Own UI built with React Native (`TouchableOpacity`, `StyleSheet`, `TextInput`, etc.).  
+- **Scope:** Replicates the UX patterns of the web app but using native components.  
+- **Relation with shared:** Reuses exactly the same business logic, APIs, store, and validation.  
 
 ---
 
-## Phase 3 – Prepare Native Stubs (`ui-native`)
+## Why Not Use `ui-primitives`?
+We evaluated creating a `ui-primitives` package (contracts for UI components) with `ui-web` and `ui-native` implementations.  
+Although this is a valid approach in some architectures, we decided **not** to adopt it for NEXIA right now because:  
 
-**Objective:** Lay the groundwork for future mobile development.  
-
-### Steps
-1. Create folder `packages/ui-native/src/components/forms/`.  
-2. Create stubs for each component with `React Native StyleSheet`.  
-   - Example: `Button.tsx` using `TouchableOpacity` with `ButtonProps`.  
-3. Add a README in `ui-native` explaining components are placeholders for mobile.  
-4. Add contract tests to verify both `ui-web/Button` and `ui-native/Button` satisfy `ButtonProps`.  
+1. **Team Size** → The project is currently developed by a single frontend developer (plus backend). Managing three UI packages would add unnecessary complexity and slow down feature delivery.  
+2. **Simplicity** → Each platform can own its own UI. This is a common and professional approach in many production systems.  
+3. **Scalability** → The real cross-platform layer is in `shared`. That's what guarantees logic consistency across web and mobile.  
+4. **Future Flexibility** → If later a design system abstraction (`ui-primitives`) becomes necessary (e.g. multiple web apps or design tokens shared across platforms), it can still be added. Nothing in the current architecture blocks that move.  
 
 ---
 
-## Recommended Migration Order
-1. **Button** (most used).  
-2. **Input**.  
-3. **FormSelect**.  
+## Current Architecture
 
-Once these three are migrated, the same pattern can be applied to all other components.
+```
+frontend/
+├── apps/
+│   └── web/                    # React web app
+│       └── src/
+│           └── components/
+│               └── ui/         # UI components (Tailwind)
+├── packages/
+│   └── shared/                 # Business logic (NO UI)
+│       ├── api/                # RTK Query APIs
+│       ├── hooks/              # Business hooks
+│       ├── store/              # Redux store
+│       ├── types/              # TypeScript types
+│       └── utils/              # Utilities
+└── docs/                       # Documentation
+```
 
 ---
 
-## Validation
-
-- Run:
-  ```bash
-  pnpm -F web test
-  pnpm -F web dev
-  pnpm -F web build
-  ```
-- Confirm:
-  - All tests pass.  
-  - Hot reload works.  
-  - Builds succeed.  
-  - `tsc --noEmit` shows no broken imports.  
+## Future Development (Mobile App)
+When the mobile app is implemented:  
+- **Reused directly from `shared`:** Redux store, RTK Query APIs, validation schemas, types, utils.  
+- **New in RN:** UI layer implemented with React Native components.  
+- **Testing:** Shared logic tests will remain valid; UI will require its own test suite (Jest + React Native Testing Library).  
 
 ---
 
 ## Expected Result
-
 - `packages/shared` → Only business logic and type definitions.  
-- `packages/ui-primitives` → Pure UI contracts, platform-agnostic.  
-- `packages/ui-web` → Tailwind implementations.  
-- `packages/ui-native` → React Native implementations (stub for now).  
+- `apps/web` → Tailwind-based UI.  
+- `apps/mobile` → React Native UI (future).  
 
-With this structure, technical debt is eliminated. When mobile development begins, only `ui-native` needs to be filled out — no backend or shared logic changes will be required.
+This structure eliminates technical debt by ensuring that the **shared logic remains platform-agnostic**, while each platform develops its UI in a way that feels natural and professional for its ecosystem.  
 
 ---
 
-**Last Updated**: September 19, 2025  
-**Maintainers**: Frontend Lead Developer (Nelson Valero), CTO, Backend Team
+**Last Updated:** January 2025  
+**Maintainer:** Nelson Valero (Frontend Lead Developer)

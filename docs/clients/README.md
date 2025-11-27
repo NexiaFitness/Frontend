@@ -82,11 +82,18 @@ apps/web/src/components/clients/
 ├── detail/
 │   ├── ClientHeader.tsx           # Header del detalle
 │   ├── ClientOverviewTab.tsx      # Tab de resumen
+│   ├── ClientSessionProgrammingTab.tsx  # Tab de programación de sesiones
+│   ├── ClientDailyCoherenceTab.tsx      # Tab de coherencia diaria
+│   ├── ClientTestingTab.tsx             # Tab de tests
 │   ├── ClientProgressTab.tsx      # Tab de progreso
 │   ├── ClientWorkoutsTab.tsx      # Tab de entrenamientos
-│   ├── ClientNutritionTab.tsx     # Tab de nutrición (futuro)
 │   ├── ClientSettingsTab.tsx      # Tab de configuración
 │   ├── ProgressForm.tsx           # Formulario de progreso
+│   └── index.ts
+├── fatigue/
+│   ├── FatigueAlertsSection.tsx   # Sección de alertas de fatiga
+│   ├── FatigueAlertCard.tsx       # Card de alerta
+│   ├── CreateFatigueAlertModal.tsx # Modal para crear alerta
 │   └── index.ts
 ├── forms/
 │   └── ClientEditForm.tsx         # Formulario de edición
@@ -167,6 +174,10 @@ packages/shared/src/api/
 - `createProgressRecord` - POST /progress/
 - `updateProgressRecord` - PUT /progress/{id}
 - `getClientFatigue` - GET /fatigue/clients/{client_id}/fatigue-analysis/
+- `getClientFatigueAlerts` - GET /fatigue/fatigue-alerts/?client_id={id}
+- `createFatigueAlert` - POST /fatigue/fatigue-alerts/
+- `markFatigueAlertAsRead` - PUT /fatigue/fatigue-alerts/{id}/read
+- `resolveFatigueAlert` - PUT /fatigue/fatigue-alerts/{id}/resolve
 
 ### Hooks Personalizados
 
@@ -179,6 +190,7 @@ packages/shared/src/hooks/clients/
 ├── useClientProgress.ts            # Hook para progreso y gráficos
 ├── useClientStats.ts               # Hook para estadísticas
 ├── useClientFatigue.ts             # Hook para análisis de fatiga
+├── useFatigueAlerts.ts             # Hook para alertas de fatiga
 ├── useCreateClientProgress.ts      # Hook para crear progreso
 └── useUpdateClientProgress.ts      # Hook para actualizar progreso
 ```
@@ -233,9 +245,11 @@ packages/shared/src/hooks/clients/
 
 **Tabs disponibles:**
 - **Resumen** (`ClientOverviewTab`) - Info general, métricas, objetivos
-- **Progreso** (`ClientProgressTab`) - Gráficos y registros de progreso
-- **Entrenamientos** (`ClientWorkoutsTab`) - Planes y sesiones
-- **Nutrición** (`ClientNutritionTab`) - Info nutricional (futuro, disabled)
+- **Programación de Sesiones** (`ClientSessionProgrammingTab`) - Calendario de sesiones de entrenamiento
+- **Coherencia Diaria** (`ClientDailyCoherenceTab`) - Métricas de adherence, sRPE, monotony, strain
+- **Tests** (`ClientTestingTab`) - Resultados de pruebas físicas
+- **Progreso** (`ClientProgressTab`) - Gráficos y registros de progreso (peso, IMC, fatiga, energía)
+- **Entrenamientos** (`ClientWorkoutsTab`) - Planes y sesiones de entrenamiento
 - **Configuración** (`ClientSettingsTab`) - Editar y eliminar cliente
 
 #### Edición de Cliente
@@ -534,10 +548,11 @@ useGetClientStatsQuery() // Trainer stats
 
 **Tabs:**
 1. **Resumen** (`ClientOverviewTab`) - Info general, métricas, objetivos
-2. **Progreso** (`ClientProgressTab`) - Gráficos y registros
-3. **Entrenamientos** (`ClientWorkoutsTab`) - Planes y sesiones
-4. **Nutrición** (`ClientNutritionTab`) - Info nutricional (disabled)
-5. **Configuración** (`ClientSettingsTab`) - Editar y eliminar
+2. **Programación de Sesiones** (`ClientSessionProgrammingTab`) - Calendario de sesiones de entrenamiento
+3. **Coherencia Diaria** (`ClientDailyCoherenceTab`) - Métricas de adherence, sRPE, monotony, strain
+4. **Tests** (`ClientTestingTab`) - Resultados de pruebas físicas
+5. **Progreso** (`ClientProgressTab`) - Gráficos y registros (peso, IMC, fatiga, energía)
+6. **Entrenamientos** (`ClientWorkoutsTab`) - Planes y sesiones de entrenamiento
 
 ### ClientOnboarding
 
@@ -637,11 +652,13 @@ interface ClientFormBaseProps {
 - Lista de registros de progreso
 - Formulario colapsable para añadir progreso
 - Modal de edición de progreso
+- Sección de alertas de fatiga
 - Analytics y tendencias
 
 **Hooks utilizados:**
 - `useClientProgress(clientId)` - Progreso y gráficos
 - `useClientFatigue(clientId)` - Análisis de fatiga
+- `useFatigueAlerts(clientId)` - Alertas de fatiga
 - `useCreateClientProgress()` - Crear progreso
 - `useUpdateClientProgress()` - Actualizar progreso
 
@@ -651,6 +668,11 @@ interface ClientFormBaseProps {
 - Análisis de Fatiga (LineChart)
 - Análisis de Energía (LineChart)
 - Análisis de Carga de Trabajo (LineChart)
+
+**Componentes relacionados:**
+- `FatigueAlertsSection` - Sección de alertas de fatiga
+- `FatigueAlertCard` - Card individual de alerta
+- `CreateFatigueAlertModal` - Modal para crear alerta
 
 ### ClientHeader
 
@@ -811,6 +833,32 @@ const {
 } = useClientFatigue(clientId);
 ```
 
+### useFatigueAlerts
+
+**Ruta:** `packages/shared/src/hooks/clients/useFatigueAlerts.ts`
+
+**Propósito:** Gestionar alertas de fatiga del cliente (crear, marcar como leída, resolver).
+
+**Uso:**
+```typescript
+const {
+    alerts,
+    unreadCount,
+    activeCount,
+    createAlert,
+    markAsRead,
+    resolveAlert,
+    isLoading,
+    isCreating,
+} = useFatigueAlerts(clientId);
+```
+
+**Características:**
+- ✅ Obtiene automáticamente `trainer_id` del trainer autenticado
+- ✅ Filtra alertas por `client_id`
+- ✅ Calcula métricas (unreadCount, activeCount)
+- ✅ Acciones encapsuladas (create, markAsRead, resolve)
+
 ---
 
 ## 🔄 Flujos de Datos
@@ -934,6 +982,28 @@ const {
 - `packages/shared/src/api/clientsApi.ts` (API)
 - Backend: `DELETE /api/v1/clients/{id}`
 
+### Flujo: Crear Alerta de Fatiga
+
+1. Usuario navega a `ClientDetail` → Tab "Progreso"
+2. Sección "Alertas de Fatiga" muestra alertas existentes
+3. Click en botón "Crear Alerta"
+4. Se abre `CreateFatigueAlertModal`
+5. Usuario completa: tipo, nivel de riesgo, mensaje, fecha
+6. `useFatigueAlerts(clientId).createAlert()` llama a `useCreateFatigueAlertMutation()`
+7. RTK Query envía `POST /fatigue/fatigue-alerts/`
+8. Backend crea alerta
+9. Cache se invalida (`FatigueAlert` tag)
+10. Lista de alertas se actualiza
+11. Alerta aparece en dashboard del trainer (si no está leída)
+
+**Archivos involucrados:**
+- `apps/web/src/components/clients/detail/ClientProgressTab.tsx` (tab)
+- `apps/web/src/components/clients/fatigue/FatigueAlertsSection.tsx` (sección)
+- `apps/web/src/components/clients/fatigue/CreateFatigueAlertModal.tsx` (modal)
+- `packages/shared/src/hooks/clients/useFatigueAlerts.ts` (lógica)
+- `packages/shared/src/api/fatigueApi.ts` (API)
+- Backend: `POST /api/v1/fatigue/fatigue-alerts/`
+
 ---
 
 ## ✅ Validaciones
@@ -1023,11 +1093,22 @@ const {
 
 #### Detalle
 - [x] Header con info y acciones
-- [x] Tabs: Resumen, Progreso, Entrenamientos, Nutrición, Configuración
+- [x] Tabs: Resumen, Programación de Sesiones, Coherencia Diaria, Tests, Progreso, Entrenamientos
 - [x] Tab de resumen (`ClientOverviewTab`)
+- [x] Tab de programación de sesiones (`ClientSessionProgrammingTab`)
+- [x] Tab de coherencia diaria (`ClientDailyCoherenceTab`)
+- [x] Tab de tests (`ClientTestingTab`)
 - [x] Tab de progreso (`ClientProgressTab`)
 - [x] Tab de entrenamientos (`ClientWorkoutsTab`)
-- [x] Tab de configuración (`ClientSettingsTab`)
+
+#### Alertas de Fatiga
+- [x] Sistema completo de alertas de fatiga
+- [x] Crear alertas desde ProgressTab
+- [x] Marcar alertas como leídas
+- [x] Resolver alertas con notas
+- [x] Visualizar alertas no leídas en dashboard
+- [x] Hook `useFatigueAlerts` para gestión completa
+- [x] Componentes: `FatigueAlertsSection`, `FatigueAlertCard`, `CreateFatigueAlertModal`
 
 #### Progreso
 - [x] Crear registro de progreso
@@ -1036,6 +1117,15 @@ const {
 - [x] Gráficos de evolución (peso, IMC, fatiga, energía, carga)
 - [x] Analytics y tendencias
 - [x] Punto inicial desde `fecha_alta`
+
+#### Alertas de Fatiga
+- [x] Sistema completo de alertas de fatiga
+- [x] Crear alertas desde ProgressTab
+- [x] Marcar alertas como leídas
+- [x] Resolver alertas con notas
+- [x] Visualizar alertas no leídas en dashboard
+- [x] Hook `useFatigueAlerts` para gestión completa
+- [x] Componentes: `FatigueAlertsSection`, `FatigueAlertCard`, `CreateFatigueAlertModal`
 
 #### Arquitectura
 - [x] Formulario base unificado (`ClientFormBase`)

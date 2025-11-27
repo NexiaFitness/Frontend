@@ -1,156 +1,195 @@
-# Nexia — Estado del Proyecto y Plan de Acción
+# Nexia — Estado del Proyecto
 
 ## 📌 Contexto General
 Nexia es una plataforma profesional de gestión de entrenamiento fitness con:
-- **Frontend** en React (monorepo con apps/web + packages/shared + UI components).
-- **Backend** en FastAPI (implementado por Sosina).
-- **Diseño UI/UX** en Figma (desarrollado por Hussein).
-- **Equipo**: Adrián (PM), Sosina (Backend), Hussein (Diseño), Nelson (Frontend).
+- **Frontend** en React (monorepo con apps/web + packages/shared)
+- **Backend** en FastAPI (implementado por Sosina)
+- **Diseño UI/UX** en Figma (desarrollado por Hussein)
+- **Equipo**: Adrián (PM), Sosina (Backend), Hussein (Diseño), Nelson (Frontend)
 
-Este documento resume lo implementado hasta ahora y define el plan de acción conjunto.
+Este documento resume el estado actual del proyecto (Enero 2025).
 
 ---
 
-## ✅ Backend — Implementado por Sosina
+## ✅ Backend — Estado Actual
+
 El backend está construido con **FastAPI**, **SQLAlchemy**, **Alembic** y **Pydantic**.  
 Está documentado con **Swagger** y **ReDoc**. Soporta **RBAC** (admin, trainer, athlete).
 
-### Endpoints implementados
-- **Auth**
-  - `POST /auth/register` → Registro de usuarios (admin/trainer/athlete).
-  - `POST /auth/login` → Inicio de sesión.
-  - `GET /auth/me` → Info usuario actual.
-  - `POST /auth/forgot-password` → Genera token + email (si SMTP configurado).
-  - `POST /auth/reset-password` → Reseteo con token.
-  - `POST /auth/change-password` → Cambiar contraseña con la actual.
-  - `PUT /auth/me` → Actualizar perfil.
-  - `DELETE /auth/me` → Desactivar cuenta.
-  - `POST /auth/refresh` → Refresh token.
-  - `POST /auth/logout` → Logout.
-
-- **Clientes**
-  - CRUD completo de clientes (`/clients/`).
-  - Autocalculadora de **IMC**.
-  - Acceso restringido por rol:
-    - Trainer → Solo sus clientes.
-    - Athlete → Solo su perfil.
-
-- **Entrenadores**
-  - CRUD de entrenadores (`/trainers/`).
-
-- **Ejercicios**
-  - CRUD de ejercicios (`/exercises/`).
-  - Filtros por grupo muscular, equipo, nivel, ID.
-  - Estadísticas agregadas (`/exercises/stats/summary`).
-
-- **Planes y Sesiones de Entrenamiento**
-  - CRUD de planes (`/training-plans/`).
-  - Macro/meso/micro ciclos.
-  - CRUD de sesiones (`/training-sessions/`).
-  - Gestión de ejercicios dentro de sesiones.
-  - Feedback de clientes en sesiones.
-  - Progreso por cliente y por ejercicio.
-
-- **Fatiga y Carga de Trabajo**
-  - Análisis de fatiga (`/fatigue/fatigue-analysis/`).
-  - Alertas de fatiga (`/fatigue/fatigue-alerts/`).
-  - Tracking de carga (`/fatigue/workload-tracking/`).
+### Endpoints Implementados
+- ✅ **Auth** - Login, registro, verificación de email, forgot/reset password, logout
+- ✅ **Clientes** - CRUD completo, progreso, métricas, fatiga, coherencia
+- ✅ **Entrenadores** - CRUD de entrenadores
+- ✅ **Ejercicios** - CRUD completo con filtros y estadísticas
+- ✅ **Planes de Entrenamiento** - CRUD completo, macro/meso/micro ciclos, milestones
+- ✅ **Sesiones** - Training sessions, scheduled sessions, session programming
+- ✅ **Fatiga y Carga** - Análisis de fatiga, alertas, tracking de carga
+- ✅ **Reportes** - Generación de reportes
+- ✅ **Testing** - Tests físicos y resultados
 
 ---
 
-## 🎨 Diseño — Hussein (Figma)
-Hussein ha preparado en Figma el flujo principal con etiquetas **Ready for dev**:
+## 🎨 Diseño — Estado Actual
 
-- **Trainer Registration**
-  - Pantallas de registro detalladas para entrenadores.
-  - Formularios con pasos múltiples.
-  - Validación visual y mensajes de error.
-
-- **Dashboard**
-  - Vista inicial con KPIs, gráficas de progreso, métricas clave.
-
-- **Client Onboarding**
-  - Formularios de alta de cliente, versión 1 y versión 2.
-  - Datos personales, métricas físicas, cuestionarios iniciales.
-
-- **Training Planning**
-  - Vistas para crear planes, ciclos y sesiones.
-  - Gráficas de planificación de carga de trabajo.
-
-- **Client Profiles**
-  - Perfiles de clientes con métricas, histórico y gráficas.
-
-- **Session Programming**
-  - Pantallas para asignar ejercicios y programar entrenamientos.
-
-- **Monitoring**
-  - Paneles con gráficas de fatiga, carga, progreso.
-
-👉 Todo esto está diseñado, pero aún no implementado en frontend.
+Hussein ha preparado en Figma el diseño completo:
+- ✅ **Trainer Registration** - Pantallas de registro
+- ✅ **Dashboard** - Vista con KPIs, gráficas, métricas
+- ✅ **Client Onboarding** - Formularios de alta (v1 y v2)
+- ✅ **Training Planning** - Vistas para planes, ciclos y sesiones
+- ✅ **Client Profiles** - Perfiles con métricas, histórico y gráficas
+- ✅ **Session Programming** - Pantallas para programar entrenamientos
+- ✅ **Monitoring** - Paneles con gráficas de fatiga, carga, progreso
 
 ---
 
-## 💻 Frontend — Estado Actual
-- **Auth**:  
-  - Login, registro, forgot/reset password → implementados y testeados.  
-  - Register form ahora pide **tipo de cuenta** (trainer/athlete).  
-  - Tests integrados con **MSW** (autenticación, errores de servidor, validaciones).
+## 💻 Frontend — Estado Actual (Enero 2025)
 
-- **UI System**:
-  - Inputs, selects, botones → unificados con `BUTTON_PRESETS` y `TYPOGRAPHY`.
-  - Tests actualizados para Login y Register.
+### ✅ Implementado y Funcional
 
-- **Responsive**:  
-  - En curso → algunas pantallas ya adaptadas, falta revisar formularios complejos y dashboards.
+#### Autenticación
+- ✅ Login, registro, forgot/reset password
+- ✅ Verificación de email con resend
+- ✅ Protección de rutas (ProtectedRoute, RoleProtectedRoute)
+- ✅ Logout con revocación de token
+- ✅ Persistencia de sesión
+
+#### Dashboard
+- ✅ Trainer Dashboard con KPIs (improvement, satisfaction, adherence)
+- ✅ Gráficos de billing (revenue, clients)
+- ✅ Widget de progreso de clientes
+- ✅ Widget de alertas prioritarias
+- ✅ Banners de verificación y perfil completo
+- ✅ Admin Dashboard (estructura básica)
+- ✅ Athlete Dashboard (estructura básica)
+
+#### Clientes
+- ✅ Onboarding de clientes (wizard de 7 pasos)
+- ✅ Lista de clientes con filtros y búsqueda
+- ✅ Detalle de cliente con tabs:
+  - Resumen (overview)
+  - Progreso (gráficos de peso, IMC, fatiga, energía)
+  - Entrenamientos (planes y sesiones)
+  - Coherencia diaria (adherence, sRPE, monotony, strain)
+  - Testing (resultados de pruebas físicas)
+  - Configuración
+- ✅ Edición de clientes
+- ✅ Registro y edición de progreso
+- ✅ Gráficos de evolución con Recharts
+
+#### Planes de Entrenamiento
+- ✅ Lista de planes
+- ✅ Crear, editar, eliminar planes
+- ✅ Gestión de macrociclos, mesociclos, microciclos
+- ✅ Milestones (hitos importantes)
+- ✅ Gráficos de volumen/intensidad
+- ✅ Validación de fechas en cascada
+
+#### Ejercicios
+- ✅ Lista de ejercicios con filtros
+- ✅ Detalle de ejercicio
+- ✅ Filtros por músculo, equipamiento, nivel
+- ✅ Búsqueda de ejercicios
+- ✅ Estadísticas agregadas
+
+#### Sesiones
+- ✅ Scheduling (calendario de sesiones agendadas)
+- ✅ Crear, editar, eliminar sesiones agendadas
+- ✅ Session Programming (crear sesiones de entrenamiento)
+- ✅ Plantillas de sesiones
+- ✅ Verificación de conflictos de horario
+
+#### Cuenta
+- ✅ Perfil de usuario (editar nombre, email)
+- ✅ Cambio de contraseña
+- ✅ Eliminación de cuenta
+
+#### Reportes
+- ✅ Generación de reportes
+- ✅ Filtros por tipo, cliente, fechas
+- ✅ Múltiples formatos (JSON)
+
+#### Testing
+- ✅ Crear resultados de tests físicos
+- ✅ Tests estándar del sistema
+- ✅ Historial de tests por cliente
+
+#### UI Components
+- ✅ Sistema completo de componentes compartidos
+- ✅ Buttons, Forms, Cards, Feedback, Layout
+- ✅ Responsive design
+- ✅ Traducción completa al español
+
+#### Landing Page
+- ✅ Hero section
+- ✅ Problem, Features, AI sections
+- ✅ FAQ y Contact sections
+
+### 🚧 En Progreso
+
+- [ ] Contenido completo de Admin Dashboard
+- [ ] Contenido completo de Athlete Dashboard
+- [ ] Formato PDF para reportes
+- [ ] Tests personalizados del entrenador
+- [ ] Edición inline de ciclos en training plans
+
+### 🔮 Futuro
+
+- [ ] App móvil (React Native)
+- [ ] Notificaciones push
+- [ ] Integración con wearables
+- [ ] Análisis predictivo con IA
+- [ ] Exportar datos a PDF/Excel
 
 ---
 
-## 🔜 Plan de Acción
+## 📊 Resumen de Módulos
 
-### 1. Prioridades inmediatas
-- Revisar con Sosina los **endpoints ya estables** para comenzar integración real:
-  - `/clients/`
-  - `/training-plans/`
-  - `/training-sessions/`
-- Revisar si **SMTP** ya está activo en backend (para forgot-password real).
-- Validar si `auth/me` ya devuelve roles correctos.
-
-### 2. Frontend — Próximos pasos
-- **Client Onboarding**:
-  - Implementar formulario de alta de cliente según Figma.
-  - Conectar con `/clients/` (POST).
-  - Validar datos y errores de servidor.
-
-- **Dashboard**:
-  - Crear estructura inicial con datos mockeados.
-  - Sustituir con datos reales desde endpoints de progreso y fatiga.
-
-- **Training Planning**:
-  - Maquetar flujo de planes/ciclos.
-  - Conectar con endpoints `/training-plans/`.
-
-- **Client Profiles**:
-  - Empezar por vista lista de clientes.
-  - Luego detalle de cliente + métricas.
-
-### 3. Backend — Coordinar con Sosina
-- Confirmar si todos los endpoints de planificación están ya estables.
-- Verificar RBAC funcionando en `/auth/me`.
-- Configuración definitiva de **PostgreSQL en producción** (ahora SQLite en dev).
-
-### 4. Diseño — Coordinar con Hussein
-- Confirmar cuál versión de **Client Onboarding** se usará (v1 vs v2).
-- Pedir estilos definitivos para **gráficas** (dashboard, monitoring).
-- Asegurar componentes reutilizables → inputs, selects, tablas.
+| Módulo | Estado | Documentación |
+|--------|--------|---------------|
+| Auth | ✅ Completo | [docs/auth/](./auth/README.md) |
+| Dashboard | ✅ Completo | [docs/dashboard/](./dashboard/README.md) |
+| Clients | ✅ Completo | [docs/clients/](./clients/README.md) |
+| Training Plans | ✅ Completo | [docs/trainingPlans/](./trainingPlans/README.md) |
+| Exercises | ✅ Completo | [docs/exercises/](./exercises/README.md) |
+| Sessions | ✅ Completo | [docs/sessions/](./sessions/README.md) |
+| Account | ✅ Completo | [docs/account/](./account/README.md) |
+| Reports | ✅ Completo | [docs/reports/](./reports/README.md) |
+| Testing | ✅ Completo | [docs/testing/](./testing/README.md) |
+| Home | ✅ Completo | [docs/home/](./home/README.md) |
+| UI Components | ✅ Completo | [docs/ui/](./ui/README.md) |
 
 ---
 
-## 📊 Resumen claro
-- **Backend (Sosina)**: Tiene todo lo core → auth, clientes, entrenadores, ejercicios, planes, sesiones, fatiga.  
-- **Diseño (Hussein)**: Ha entregado Figma completo → registro, dashboard, onboarding, planes, perfiles, monitoreo.  
-- **Frontend (Nelson)**: Auth implementado y testeado, UI base lista, responsive en progreso.  
+## 🔜 Próximos Pasos
 
-👉 Próximo gran bloque: **Onboarding de clientes** + **Dashboard inicial** con datos reales.  
-Esto conecta directamente lo que Hussein diseñó con lo que Sosina ya expuso en API.
+### Prioridades Inmediatas
+1. Completar contenido de Admin y Athlete dashboards
+2. Implementar formato PDF para reportes
+3. Agregar tests personalizados del entrenador
+4. Mejorar edición inline de ciclos
+
+### Coordinación con Backend
+- Verificar endpoints de analytics avanzados
+- Coordinar nuevas features de IA
+- Optimizar queries para mejor rendimiento
+
+### Coordinación con Diseño
+- Revisar nuevas pantallas de Figma
+- Asegurar consistencia visual
+- Implementar mejoras de UX
 
 ---
+
+## 📈 Métricas del Proyecto
+
+- **Versión Frontend:** v5.5.0
+- **Tests:** 228+ casos de prueba
+- **Cobertura:** >90% en módulos críticos
+- **Documentación:** 100% de módulos documentados
+- **Build:** Exitoso y estable
+- **Deployment:** Automático en Vercel
+
+---
+
+**Última actualización:** Enero 2025  
+**Mantenedor:** Frontend Team (Nelson Valero)

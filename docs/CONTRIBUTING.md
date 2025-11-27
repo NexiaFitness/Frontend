@@ -80,5 +80,5 @@ Before submitting a PR, ensure:
 
 ---
 
-**Last Updated**: September 19, 2025  
+**Last Updated**: January 2025  
 **Maintainers**: Frontend Lead Developer (Nelson Valero), CTO, Backend Team

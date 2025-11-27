@@ -37,6 +37,7 @@ import {
     ResponsiveContainer,
     Legend,
 } from "recharts";
+import type { LegendProps } from "recharts";
 
 // ========================================
 // HELPER FUNCTIONS
@@ -69,6 +70,7 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     const [showProgressForm, setShowProgressForm] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
+    const [activeTab, setActiveTab] = useState<"overview" | "history">("overview");
     const formRef = useRef<HTMLDivElement>(null);
 
     const {
@@ -95,6 +97,19 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     } = useClientFatigue(clientId);
 
     const isLoading = isLoadingProgress || isLoadingFatigue;
+    const defaultChartMargin = { top: 5, right: 10, left: 30, bottom: 60 };
+    const chartHeight = 400;
+    const minChartContainerHeight = 360;
+    const legendConfig: LegendProps = {
+        align: "left",
+        verticalAlign: "bottom",
+        wrapperStyle: { paddingTop: 15 },
+    };
+
+    const hasBodyCompCharts = weightChartData.length > 0 || bmiChartData.length > 0;
+    const hasFatigueEnergyCharts =
+        fatigueChartData.length > 0 || energyChartData.length > 0;
+    const hasWorkloadChart = workloadChartData.length > 0;
 
     // Verificar si es un error 404 (sin datos) o un error real
     const isNotFoundError: boolean = Boolean(
@@ -148,7 +163,47 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     }
 
     return (
-        <div className="space-y-6">
+        <div className="p-6 space-y-6">
+            <div className="flex items-start justify-between">
+                <div>
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                        Progreso del Cliente
+                    </h2>
+                    <p className="text-slate-600 mt-2">
+                        Evolución de métricas corporales, fatiga, energía y carga de trabajo
+                    </p>
+                </div>
+                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    Exportar PDF
+                </button>
+            </div>
+
+            <nav aria-label="Tabs progreso" className="flex gap-1 border-b border-gray-200">
+                {[
+                    { id: "overview", label: "Resumen" },
+                    { id: "history", label: "Historial de Registros" },
+                ].map((tab) => {
+                    const isActive = activeTab === tab.id;
+                    return (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as "overview" | "history")}
+                            className={`relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center ${
+                                isActive
+                                    ? "text-[#4A67B3]"
+                                    : "text-gray-500 hover:text-gray-700"
+                            }`}
+                            aria-current={isActive ? "page" : undefined}
+                        >
+                            {tab.label}
+                            {isActive && (
+                                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#4A67B3]" />
+                            )}
+                        </button>
+                    );
+                })}
+            </nav>
+
             {/* Mensaje de sin datos (404) - solo si no hay datos y no hay error real */}
             {isNotFoundError && (
                 <div className="bg-white rounded-lg shadow p-8 text-center">
@@ -158,49 +213,62 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </div>
             )}
 
-            {/* Summary Cards - solo mostrar si hay datos */}
-            {!isNotFoundError && (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <SummaryCard
-                    label="Peso Actual"
-                    value={latestWeight ? `${latestWeight} kg` : "N/A"}
-                    change={weightChange}
-                    trend={trend}
-                />
-                <SummaryCard
-                    label="IMC Actual"
-                    value={latestBmi ? latestBmi.toFixed(1) : "N/A"}
-                    change={bmiChange}
-                />
-                <SummaryCard
-                    label="Fatiga Promedio (Pre)"
-                    value={avgPreFatigue ? avgPreFatigue.toFixed(1) : "N/A"}
-                />
-                <SummaryCard
-                    label="Fatiga Promedio (Post)"
-                    value={avgPostFatigue ? avgPostFatigue.toFixed(1) : "N/A"}
-                />
-                <SummaryCard
-                    label="Nivel de Riesgo"
-                    value={currentRiskLevel || "N/A"}
-                    riskLevel={currentRiskLevel}
-                />
-                </div>
+            {activeTab === "overview" && (
+                <>
+                    {/* Summary Cards - solo mostrar si hay datos */}
+                    {!isNotFoundError && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                            <SummaryCard
+                                label="Peso Actual"
+                                value={latestWeight ? `${latestWeight} kg` : "N/A"}
+                                change={weightChange}
+                                trend={trend}
+                            />
+                            <SummaryCard
+                                label="IMC Actual"
+                                value={latestBmi ? latestBmi.toFixed(1) : "N/A"}
+                                change={bmiChange}
+                            />
+                            <SummaryCard
+                                label="Fatiga Promedio (Pre)"
+                                value={avgPreFatigue ? avgPreFatigue.toFixed(1) : "N/A"}
+                            />
+                            <SummaryCard
+                                label="Fatiga Promedio (Post)"
+                                value={avgPostFatigue ? avgPostFatigue.toFixed(1) : "N/A"}
+                            />
+                            <SummaryCard
+                                label="Nivel de Riesgo"
+                                value={currentRiskLevel || "N/A"}
+                                riskLevel={currentRiskLevel}
+                            />
+                        </div>
+                    )}
+                </>
             )}
 
-            {/* Lista de registros de progreso con botones de editar */}
-            {!isNotFoundError && progressHistory && progressHistory.length > 0 && (
-                <div className="bg-white rounded-lg shadow p-4 space-y-3">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+            {activeTab === "history" && !isNotFoundError && progressHistory && progressHistory.length > 0 && (
+                <div className="bg-white rounded-lg shadow px-4 pt-4 pb-4 space-y-4">
+                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
                         Historial de Registros
                     </h3>
                     {progressHistory.map((record: ClientProgress) => (
                         <div key={record.id} className="flex items-center justify-between border-b pb-2 last:border-b-0">
                             <div className="text-gray-700">
-                                <p><strong>Fecha:</strong> {new Date(record.fecha_registro).toLocaleDateString()}</p>
-                                <p><strong>Peso:</strong> {record.peso ? `${record.peso} kg` : "N/A"} — <strong>IMC:</strong> {record.imc ? record.imc.toFixed(1) : "N/A"}</p>
+                                <p>
+                                    <strong>Fecha:</strong>{" "}
+                                    {new Date(record.fecha_registro).toLocaleDateString()}
+                                </p>
+                                <p>
+                                    <strong>Peso:</strong>{" "}
+                                    {record.peso ? `${record.peso} kg` : "N/A"} —{" "}
+                                    <strong>IMC:</strong>{" "}
+                                    {record.imc ? record.imc.toFixed(1) : "N/A"}
+                                </p>
                                 {record.notas && (
-                                    <p className="text-sm text-gray-500 mt-1"><strong>Notas:</strong> {record.notas}</p>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        <strong>Notas:</strong> {record.notas}
+                                    </p>
                                 )}
                             </div>
                             <button
@@ -229,162 +297,224 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                 </div>
             )}
 
-            {/* Weight Chart - solo mostrar si hay datos */}
-            {!isNotFoundError && weightChartData.length > 0 && (
-                <ChartCard title="Evolución del Peso">
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={weightChartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="date"
-                                tickFormatter={formatDate}
-                            />
-                            <YAxis />
-                            <Tooltip
-                                labelFormatter={formatDate}
-                            />
-                            <Legend />
-                            <Line
-                                type="monotone"
-                                dataKey="weight"
-                                stroke="#3b82f6"
-                                name="Peso (kg)"
-                                strokeWidth={2}
-                                dot={{ r: 4 }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-            )}
+            {activeTab === "overview" && (
+                <>
+                    {!isNotFoundError && hasBodyCompCharts && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {weightChartData.length > 0 && (
+                                <ChartCard title="Evolución del Peso">
+                                    <div
+                                        className="w-full flex items-center justify-center"
+                                        style={{ minHeight: `${minChartContainerHeight}px` }}
+                                    >
+                                        <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                            <ResponsiveContainer width="100%" height={chartHeight}>
+                                                <LineChart data={weightChartData} margin={defaultChartMargin}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
+                                            <YAxis
+                                                domain={[0, 150]}
+                                                allowDataOverflow
+                                                label={{
+                                                    value: "Peso (kg)",
+                                                    angle: -90,
+                                                    position: "insideLeft",
+                                                    style: { textAnchor: "middle" },
+                                                }}
+                                            />
+                                                    <Tooltip labelFormatter={formatDate} />
+                                            <Legend {...legendConfig} />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="weight"
+                                                        stroke="#3b82f6"
+                                                        name="Peso (kg)"
+                                                        strokeWidth={2}
+                                                        dot={{ r: 4 }}
+                                                    />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </ChartCard>
+                            )}
 
-            {/* BMI Chart - solo mostrar si hay datos */}
-            {!isNotFoundError && bmiChartData.length > 0 && (
-                <ChartCard title="Evolución del IMC">
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={bmiChartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="date"
-                                tickFormatter={formatDate}
-                            />
-                            <YAxis />
-                            <Tooltip
-                                labelFormatter={formatDate}
-                            />
-                            <Legend />
-                            <Line
-                                type="monotone"
-                                dataKey="bmi"
-                                stroke="#10b981"
-                                name="IMC"
-                                strokeWidth={2}
-                                dot={{ r: 4 }}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-            )}
+                            {bmiChartData.length > 0 && (
+                                <ChartCard title="Evolución del IMC">
+                                    <div
+                                        className="w-full flex items-center justify-center"
+                                        style={{ minHeight: `${minChartContainerHeight}px` }}
+                                    >
+                                        <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                            <ResponsiveContainer width="100%" height={chartHeight}>
+                                                <LineChart data={bmiChartData} margin={defaultChartMargin}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
+                                            <YAxis
+                                                domain={[0, 40]}
+                                                allowDataOverflow
+                                                label={{
+                                                    value: "IMC",
+                                                    angle: -90,
+                                                    position: "insideLeft",
+                                                    style: { textAnchor: "middle" },
+                                                }}
+                                            />
+                                                    <Tooltip labelFormatter={formatDate} />
+                                            <Legend {...legendConfig} />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="bmi"
+                                                        stroke="#10b981"
+                                                        name="IMC"
+                                                        strokeWidth={2}
+                                                        dot={{ r: 4 }}
+                                                    />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </ChartCard>
+                            )}
+                        </div>
+                    )}
 
-            {/* Fatigue Chart - solo mostrar si hay datos */}
-            {!isNotFoundError && fatigueChartData.length > 0 && (
-                <ChartCard title="Análisis de Fatiga">
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={fatigueChartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="date"
-                                tickFormatter={formatDate}
-                            />
-                            <YAxis domain={[0, 10]} />
-                            <Tooltip
-                                labelFormatter={formatDate}
-                            />
-                            <Legend />
-                            <Line
-                                type="monotone"
-                                dataKey="pre_fatigue"
-                                stroke="#f59e0b"
-                                name="Fatiga Pre-Sesión"
-                                strokeWidth={2}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="post_fatigue"
-                                stroke="#ef4444"
-                                name="Fatiga Post-Sesión"
-                                strokeWidth={2}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-            )}
+                    {!isNotFoundError && hasFatigueEnergyCharts && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {fatigueChartData.length > 0 && (
+                                <ChartCard title="Análisis de Fatiga">
+                                    <div
+                                        className="w-full flex items-center justify-center"
+                                        style={{ minHeight: `${minChartContainerHeight}px` }}
+                                    >
+                                        <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                            <ResponsiveContainer width="100%" height={chartHeight}>
+                                                <LineChart data={fatigueChartData} margin={defaultChartMargin}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
+                                                    <YAxis
+                                                        domain={[0, 10]}
+                                                        label={{
+                                                            value: "Nivel de Fatiga (1-10)",
+                                                            angle: -90,
+                                                            position: "insideLeft",
+                                                            style: { textAnchor: "middle" },
+                                                        }}
+                                                    />
+                                                    <Tooltip labelFormatter={formatDate} />
+                                            <Legend {...legendConfig} />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="pre_fatigue"
+                                                        stroke="#f59e0b"
+                                                        name="Fatiga Pre-Sesión"
+                                                        strokeWidth={2}
+                                                    />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="post_fatigue"
+                                                        stroke="#ef4444"
+                                                        name="Fatiga Post-Sesión"
+                                                        strokeWidth={2}
+                                                    />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </ChartCard>
+                            )}
 
-            {/* Energy Chart - solo mostrar si hay datos */}
-            {!isNotFoundError && energyChartData.length > 0 && (
-                <ChartCard title="Niveles de Energía">
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={energyChartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="date"
-                                tickFormatter={formatDate}
-                            />
-                            <YAxis domain={[0, 10]} />
-                            <Tooltip
-                                labelFormatter={formatDate}
-                            />
-                            <Legend />
-                            <Line
-                                type="monotone"
-                                dataKey="pre_energy"
-                                stroke="#8b5cf6"
-                                name="Energía Pre-Sesión"
-                                strokeWidth={2}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="post_energy"
-                                stroke="#6366f1"
-                                name="Energía Post-Sesión"
-                                strokeWidth={2}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </ChartCard>
-            )}
+                            {energyChartData.length > 0 && (
+                                <ChartCard title="Niveles de Energía">
+                                    <div
+                                        className="w-full flex items-center justify-center"
+                                        style={{ minHeight: `${minChartContainerHeight}px` }}
+                                    >
+                                        <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                            <ResponsiveContainer width="100%" height={chartHeight}>
+                                                <LineChart data={energyChartData} margin={defaultChartMargin}>
+                                                    <CartesianGrid strokeDasharray="3 3" />
+                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
+                                                    <YAxis
+                                                        domain={[0, 10]}
+                                                        label={{
+                                                            value: "Nivel de Energía (1-10)",
+                                                            angle: -90,
+                                                            position: "insideLeft",
+                                                            style: { textAnchor: "middle" },
+                                                        }}
+                                                    />
+                                                    <Tooltip labelFormatter={formatDate} />
+                                            <Legend {...legendConfig} />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="pre_energy"
+                                                        stroke="#8b5cf6"
+                                                        name="Energía Pre-Sesión"
+                                                        strokeWidth={2}
+                                                    />
+                                                    <Line
+                                                        type="monotone"
+                                                        dataKey="post_energy"
+                                                        stroke="#6366f1"
+                                                        name="Energía Post-Sesión"
+                                                        strokeWidth={2}
+                                                    />
+                                                </LineChart>
+                                            </ResponsiveContainer>
+                                        </div>
+                                    </div>
+                                </ChartCard>
+                            )}
+                        </div>
+                    )}
 
-            {/* Workload Chart - solo mostrar si hay datos */}
-            {!isNotFoundError && workloadChartData.length > 0 && (
-                <ChartCard title="Carga de Trabajo y Recuperación">
-                    <ResponsiveContainer width="100%" height={300}>
-                        <LineChart data={workloadChartData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis
-                                dataKey="date"
-                                tickFormatter={formatDate}
-                            />
-                            <YAxis />
-                            <Tooltip
-                                labelFormatter={formatDate}
-                            />
-                            <Legend />
-                            <Line
-                                type="monotone"
-                                dataKey="workload_score"
-                                stroke="#06b6d4"
-                                name="Carga de Trabajo"
-                                strokeWidth={2}
-                            />
-                            <Line
-                                type="monotone"
-                                dataKey="recovery_need_score"
-                                stroke="#ec4899"
-                                name="Necesidad de Recuperación"
-                                strokeWidth={2}
-                            />
-                        </LineChart>
-                    </ResponsiveContainer>
-                </ChartCard>
+                    {!isNotFoundError && hasWorkloadChart && (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <ChartCard title="Carga de Trabajo y Recuperación" className="lg:col-span-2">
+                                <div
+                                    className="w-full flex items-center justify-center"
+                                    style={{ minHeight: `${minChartContainerHeight}px` }}
+                                >
+                                    <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                        <ResponsiveContainer width="100%" height={chartHeight}>
+                                            <LineChart data={workloadChartData} margin={defaultChartMargin}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="date" tickFormatter={formatDate} />
+                                            <YAxis
+                                                domain={[0, 1500]}
+                                                allowDataOverflow
+                                                label={{
+                                                    value: "Carga / Recuperación",
+                                                    angle: -90,
+                                                    position: "insideLeft",
+                                                    style: { textAnchor: "middle" },
+                                                }}
+                                            />
+                                                <Tooltip labelFormatter={formatDate} />
+                                            <Legend {...legendConfig} />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="workload_score"
+                                                    stroke="#06b6d4"
+                                                    name="Carga de Trabajo"
+                                                    strokeWidth={2}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="recovery_need_score"
+                                                    stroke="#ec4899"
+                                                    name="Necesidad de Recuperación"
+                                                    strokeWidth={2}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </ChartCard>
+                        </div>
+                    )}
+                </>
             )}
 
             {/* Sección de Alertas de Fatiga */}
@@ -453,27 +583,28 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     trend,
     riskLevel,
 }) => {
-    const getRiskColor = (level?: string | null) => {
-        if (!level) return "text-gray-600";
-        if (level === "low") return "text-green-600";
-        if (level === "medium") return "text-yellow-600";
-        return "text-red-600";
+    const themeMap: Record<string, { bg: string; border: string; text: string }> = {
+        "Peso Actual": { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-800" },
+        "IMC Actual": { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
+        "Fatiga Promedio (Pre)": { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800" },
+        "Fatiga Promedio (Post)": { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800" },
+        "Nivel de Riesgo": { bg: "bg-rose-50", border: "border-rose-200", text: riskLevel === "low" ? "text-emerald-700" : riskLevel === "medium" ? "text-amber-600" : "text-rose-700" },
     };
 
+    const theme = themeMap[label] || { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-800" };
+
     return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <p className="text-sm text-gray-500 mb-1">{label}</p>
-            <p className={`${TYPOGRAPHY.metric} ${getRiskColor(riskLevel)}`}>
-                {value}
-            </p>
+        <div className={`rounded-lg border ${theme.bg} ${theme.border} p-4 min-h-[136px] flex flex-col gap-1`}>
+            <p className="text-sm font-medium text-slate-600">{label}</p>
+            <p className={`text-3xl font-bold ${theme.text}`}>{value}</p>
             {change !== null && change !== undefined && (
-                <p className={`text-sm mt-1 ${change >= 0 ? "text-green-600" : "text-red-600"}`}>
+                <p className={`text-sm mt-1 font-semibold ${change >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     {change >= 0 ? "+" : ""}
                     {change.toFixed(1)}
                 </p>
             )}
             {trend && (
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="text-xs text-slate-500 mt-1">
                     Tendencia: {trend}
                 </p>
             )}
@@ -484,15 +615,16 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
 interface ChartCardProps {
     title: string;
     children: React.ReactNode;
+    className?: string;
 }
 
-const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => {
+const ChartCard: React.FC<ChartCardProps> = ({ title, children, className }) => {
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+        <div className={`bg-white rounded-lg shadow px-4 pt-4 pb-2 min-w-0 ${className ?? ""}`}>
+            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-6">
                 {title}
             </h3>
-            {children}
+            <div className="w-full min-w-0">{children}</div>
         </div>
     );
 };

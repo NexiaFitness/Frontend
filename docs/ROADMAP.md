@@ -47,7 +47,8 @@ The strategy ensures incremental delivery of value to administrators, trainers, 
 ---
 
 ## Phase 6 – Mobile + PWA
-- Mobile app (React Native) integrated with `shared`, `ui-primitives`, and `ui-native`.  
+- Mobile app (React Native) integrated with `packages/shared` for business logic.
+- React Native UI layer implemented independently.  
 - Offline mode with data synchronization.  
 - Push notifications for trainers and athletes.  
 - Full mobile-first optimization.  
@@ -62,5 +63,5 @@ The strategy ensures incremental delivery of value to administrators, trainers, 
 
 ---
 
-**Last Updated**: September 19, 2025  
+**Last Updated**: January 2025  
 **Maintainers**: Frontend Lead Developer (Nelson Valero), CTO, Backend Team

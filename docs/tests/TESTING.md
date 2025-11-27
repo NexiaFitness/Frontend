@@ -753,6 +753,8 @@ describe("UserProfile", () => {
 **Total de tests implementados:** 22 archivos de test  
 **Cobertura estimada:** ~45% (componentes críticos cubiertos)
 
+> **Nota:** Para una guía rápida de patrones y mejores prácticas, consulta [TESTING_ARCHITECTURE.md](./TESTING_ARCHITECTURE.md)
+
 ### ⚠️ Problemas Conocidos
 
 #### Tests Fallando (Estado Actual)
@@ -1262,6 +1264,64 @@ it("navigates on success", async () => {
 2. **Timers en Handlers:** Algunos handlers usan `setTimeout` que puede causar problemas con Vitest. Solución: eliminar timers o usar `vi.useFakeTimers()`.
 
 3. **Handlers de Retry:** El patrón actual de retry funciona, pero requiere que RTK Query esté configurado para hacer retry automático, o que los tests fuercen el refetch manualmente.
+
+---
+
+## 🏗️ Arquitectura y Mejoras Futuras
+
+### Estructura Actual
+
+La estructura actual está organizada de forma modular por dominio:
+
+```
+test-utils/
+├── fixtures/
+│   ├── auth/                    # Modular (users, credentials, responses)
+│   └── clients/                  # Modular (clients factory)
+├── mocks/
+│   └── handlers/
+│       ├── auth/                # Modular (login, register, password, logout)
+│       ├── clients/              # Modular (list, create, delete)
+│       └── account/              # Modular (delete)
+```
+
+**Estado Actual:**
+- ✅ Estructura modular implementada
+- ✅ Handlers organizados por dominio y funcionalidad
+- ✅ Fácil de mantener y escalar
+- ✅ Barrel exports para imports simplificados
+
+### Mejoras Propuestas
+
+Para mejor escalabilidad futura, se propone organizar handlers por endpoint/funcionalidad:
+
+```
+test-utils/
+├── mocks/handlers/
+│   ├── auth/
+│   │   ├── login.ts              # Handlers de login (básicos + específicos)
+│   │   ├── register.ts          # Handlers de registro
+│   │   ├── password.ts           # Handlers de forgot/reset password
+│   │   └── index.ts              # Export authHandlers array
+│   ├── clients/
+│   │   ├── list.ts               # GET /clients (básicos + específicos)
+│   │   ├── detail.ts              # GET /clients/:id
+│   │   ├── create.ts              # POST /clients
+│   │   └── index.ts               # Export clientsHandlers array
+```
+
+**Ventajas:**
+- Archivos más pequeños y enfocados
+- Fácil encontrar handlers específicos
+- Mejor organización para equipos grandes
+
+> **Nota:** Esta mejora es opcional y puede implementarse gradualmente sin romper tests existentes.
+
+### Próximos Pasos
+
+1. **Corto Plazo:** Completar handlers y fixtures faltantes siguiendo estructura actual
+2. **Medio Plazo:** Implementar mejoras de arquitectura si es necesario
+3. **Largo Plazo:** Completar tests para todos los componentes
 
 ---
 

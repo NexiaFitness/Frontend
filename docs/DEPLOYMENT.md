@@ -1,64 +1,123 @@
-# NEXIA Cross-Platform Guide
+# NEXIA Deployment Guide
 
 ## Overview
-This guide describes the approach chosen for the cross-platform architecture of the NEXIA project.  
-The goal is to keep **business logic and type definitions fully shared** while allowing each platform (web and native) to develop and maintain its **own UI layer** independently.  
-
-This approach avoids unnecessary abstraction layers at this stage and follows a professional pattern seen in many large companies:  
-- **Shared package** → Business logic, state, APIs, validation, types.  
-- **Web app** → Tailwind-based UI, optimized for browser.  
-- **Mobile app** (future) → React Native UI, optimized for native platforms.  
-
-No `ui-primitives` package is created. Contracts will be naturally enforced through TypeScript types in `shared`, while each platform owns its own rendering and styling system.
+This guide describes the deployment process for the NEXIA frontend application.  
+The frontend is deployed to **Vercel** for automatic deployments from the main branch.
 
 ---
 
-## Current Decision
+## Deployment Platforms
 
-### packages/shared
-- **Responsibility:** Business logic, store, API clients, hooks, validation schemas, types.  
-- **Forbidden:** React components, Tailwind imports, DOM APIs.  
-- **Status:** Already implemented cleanly.
+### Production
+- **Platform:** Vercel
+- **URL:** https://nexiaapp.com (o URL de producción)
+- **Branch:** `main`
+- **Auto-deploy:** Enabled (deploys on every push to `main`)
 
-### apps/web
-- **Responsibility:** UI components built with Tailwind CSS and React.  
-- **Scope:** Authentication forms, buttons, modals, layouts, dashboards.  
-- **Relation with shared:** Imports only logic and types (`store`, `api`, `utils`, `validation`).  
-
-### apps/mobile (future)
-- **Responsibility:** Own UI built with React Native (`TouchableOpacity`, `StyleSheet`, `TextInput`, etc.).  
-- **Scope:** Replicates the UX patterns of the web app but using native components.  
-- **Relation with shared:** Reuses exactly the same business logic, APIs, store, and validation.  
+### Staging (if applicable)
+- **Platform:** Vercel Preview
+- **URL:** Auto-generated preview URLs per PR
+- **Branch:** `develop` o PR branches
+- **Auto-deploy:** Enabled for PRs
 
 ---
 
-## Why Not Use `ui-primitives`?
-We evaluated creating a `ui-primitives` package (contracts for UI components) with `ui-web` and `ui-native` implementations.  
-Although this is a valid approach in some architectures, we decided **not** to adopt it for NEXIA right now because:  
+## Build Configuration
 
-1. **Team Size** → The project is currently developed by a single frontend developer (plus backend). Managing three UI packages would add unnecessary complexity and slow down feature delivery.  
-2. **Simplicity** → Each platform can own its own UI. This is a common and professional approach in many production systems.  
-3. **Scalability** → The real cross-platform layer is in `shared`. That’s what guarantees logic consistency across web and mobile.  
-4. **Future Flexibility** → If later a design system abstraction (`ui-primitives`) becomes necessary (e.g. multiple web apps or design tokens shared across platforms), it can still be added. Nothing in the current architecture blocks that move.  
+### Vercel Configuration
+The project uses `vercel.json` for deployment settings:
 
----
+```json
+{
+  "buildCommand": "pnpm -F web build",
+  "outputDirectory": "apps/web/dist",
+  "installCommand": "pnpm install",
+  "framework": "vite"
+}
+```
 
-## Future Development (Mobile App)
-When the mobile app is implemented:  
-- **Reused directly from `shared`:** Redux store, RTK Query APIs, validation schemas, types, utils.  
-- **New in RN:** UI layer implemented with React Native components.  
-- **Testing:** Shared logic tests will remain valid; UI will require its own test suite (Jest + React Native Testing Library).  
-
----
-
-## Expected Result
-- `packages/shared` → Only business logic and type definitions.  
-- `apps/web` → Tailwind-based UI.  
-- `apps/mobile` → React Native UI (future).  
-
-This structure eliminates technical debt by ensuring that the **shared logic remains platform-agnostic**, while each platform develops its UI in a way that feels natural and professional for its ecosystem.  
+### Environment Variables
+Required environment variables in Vercel:
+- `VITE_API_BASE_URL` - Backend API URL (https://nexiaapp.com/api/v1)
+- `VITE_ENVIRONMENT` - Environment (production/staging)
 
 ---
 
-**Last Updated:** September 19, 2025  
-**Maintainer:** Nelson Valero (Frontend Lead Developer)  
+## Build Process
+
+### Local Build
+```bash
+# Build the web app
+pnpm -F web build
+
+# Build shared package (if needed)
+pnpm -F shared build
+```
+
+### Build Output
+- **Location:** `apps/web/dist/`
+- **Contents:** Static files (HTML, CSS, JS) ready for deployment
+
+---
+
+## Deployment Steps
+
+### Automatic (Recommended)
+1. Push to `main` branch
+2. Vercel automatically:
+   - Installs dependencies (`pnpm install`)
+   - Builds the app (`pnpm -F web build`)
+   - Deploys to production
+
+### Manual (if needed)
+1. Go to Vercel dashboard
+2. Select project
+3. Click "Redeploy" → "Redeploy with existing Build Cache"
+
+---
+
+## Pre-Deployment Checklist
+
+Before merging to `main`:
+- [ ] All tests pass (`pnpm -F web test:run`)
+- [ ] Build succeeds (`pnpm -F web build`)
+- [ ] No linting errors (`pnpm -F web lint`)
+- [ ] Environment variables configured in Vercel
+- [ ] Backend API is accessible from production URL
+
+---
+
+## Troubleshooting
+
+### Build Failures
+- Check Vercel build logs
+- Verify `package.json` scripts are correct
+- Ensure all dependencies are in `package.json`
+
+### Environment Variables
+- Verify variables are set in Vercel dashboard
+- Check variable names match code (prefixed with `VITE_`)
+
+### API Connection Issues
+- Verify `VITE_API_BASE_URL` is correct
+- Check CORS settings on backend
+- Ensure backend is accessible from Vercel's IPs
+
+---
+
+## Monitoring
+
+### Vercel Analytics
+- View deployment history
+- Monitor build times
+- Check error rates
+
+### Application Monitoring
+- Use browser DevTools for runtime errors
+- Check backend logs for API errors
+- Monitor user feedback
+
+---
+
+**Last Updated:** January 2025  
+**Maintainer:** Frontend Team  

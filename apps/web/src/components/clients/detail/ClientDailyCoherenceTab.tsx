@@ -15,7 +15,7 @@
  *
  * @author Frontend Team
  * @since v5.2.0
- * @updated v5.4.0 - Reemplazado mock por datos reales del backend
+ * @updated v5.4.1 - Corregidas dimensiones de gráficos y tipos TypeScript
  */
 
 import React, { useState } from "react";
@@ -82,11 +82,11 @@ const MetricCard: React.FC<MetricCardProps> = ({
 
 const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => {
     return (
-        <div className="bg-white rounded-lg shadow px-4 pt-4 pb-2">
+        <div className="bg-white rounded-lg shadow px-4 pt-4 pb-2 min-w-0">
             <h3 className={`${TYPOGRAPHY.cardTitle} mb-6`}>{title}</h3>
-            <div className="w-full" style={{ minHeight: '300px' }}>
-                {children}
-            </div>
+            <div className="w-full min-w-0">
+    {children}
+</div>
         </div>
     );
 };
@@ -117,6 +117,9 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             setSummary(data.summary);
         }
     }, [data.summary]);
+
+    const chartHeight = 400;
+    const minChartHeight = 360;
 
     // Loading state
     if (isLoading) {
@@ -213,34 +216,35 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico 1: Adherence Overview (Donut Chart con texto en el centro) */}
                 <ChartCard title="Adherencia - Sesiones Completadas">
-                    <div className="relative w-full" style={{ height: '300px', minHeight: '300px' }}>
-                        <ResponsiveContainer width="100%" height={300}>
-                            <PieChart>
-                                <Pie
-                                    data={adherenceData as Array<{ name: string; value: number; [key: string]: string | number }>}
-                                    cx="50%"
-                                    cy="50%"
-                                    innerRadius={60}
-                                    outerRadius={100}
-                                    labelLine={false}
-                                    label={false}
-                                    fill="#8884d8"
-                                    dataKey="value"
-                                >
-                                    {adherenceData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-                                    ))}
-                                </Pie>
-                                <Tooltip />
-                            </PieChart>
-                        </ResponsiveContainer>
-                        {/* Texto en el centro del donut */}
-                        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                            <div className="text-4xl font-bold text-gray-900">
-                                {data.adherence_percentage.toFixed(0)}%
-                            </div>
-                            <div className="text-sm text-gray-600 mt-1">
-                                {data.sessions_completed}/{data.sessions_total} sesiones
+                    <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
+                        <div className="relative w-full" style={{ height: `${chartHeight}px`, minHeight: `${chartHeight}px` }}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={adherenceData as Array<{ name: string; value: number; [key: string]: string | number }>}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={100}
+                                        labelLine={false}
+                                        label={false}
+                                        fill="#8884d8"
+                                        dataKey="value"
+                                    >
+                                        {adherenceData.map((entry, index) => (
+                                            <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                                        ))}
+                                    </Pie>
+                                    <Tooltip />
+                                </PieChart>
+                            </ResponsiveContainer>
+                            <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                                <div className="text-4xl font-bold text-gray-900">
+                                    {data.adherence_percentage.toFixed(0)}%
+                                </div>
+                                <div className="text-sm text-gray-600 mt-1">
+                                    {data.sessions_completed}/{data.sessions_total} sesiones
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -249,45 +253,47 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                 {/* Gráfico 2: Prescribed vs Perceived Intensity (Scatter Plot) */}
                 {scatterData && scatterData.length > 0 && (
                     <ChartCard title="Intensidad Prescrita vs Percibida">
-                        <div className="w-full" style={{ minHeight: '400px' }}>
-                            <ResponsiveContainer width="100%" height={400}>
-                                <ComposedChart margin={{ top: 5, right: 10, left: 30, bottom: 60 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis
-                                        type="number"
-                                        dataKey="x"
-                                        name="Prescrita"
-                                        domain={[0, 10]}
-                                        label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -5 }}
-                                    />
-                                    <YAxis
-                                        type="number"
-                                        dataKey="y"
-                                        name="Percibida"
-                                        domain={[0, 10]}
-                                        label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
-                                    />
-                                    <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                                    <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
-                                    {/* Línea de referencia y=x (ideal) */}
-                                    <Line
-                                        type="linear"
-                                        dataKey="y"
-                                        data={idealLineData}
-                                        stroke="#ef4444"
-                                        strokeDasharray="5 5"
-                                        strokeWidth={2}
-                                        dot={false}
-                                        name="Ideal (y=x)"
-                                        isAnimationActive={false}
-                                    />
-                                    <Scatter name="Sesiones" data={scatterData} fill="#4A67B3">
-                                        {scatterData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={colors[0]} />
-                                        ))}
-                                    </Scatter>
-                                </ComposedChart>
-                            </ResponsiveContainer>
+                        <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
+                            <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
+                                <ResponsiveContainer width="100%" height={chartHeight}>
+                                    <ComposedChart margin={{ top: 5, right: 10, left: 30, bottom: 60 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            type="number"
+                                            dataKey="x"
+                                            name="Prescrita"
+                                            domain={[0, 10]}
+                                            label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -5 }}
+                                        />
+                                        <YAxis
+                                            type="number"
+                                            dataKey="y"
+                                            name="Percibida"
+                                            domain={[0, 10]}
+                                            label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
+                                        />
+                                        <Tooltip cursor={{ strokeDasharray: "3 3" }} />
+                                        <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                        {/* Línea de referencia y=x (ideal) */}
+                                        <Line
+                                            type="linear"
+                                            dataKey="y"
+                                            data={idealLineData}
+                                            stroke="#ef4444"
+                                            strokeDasharray="5 5"
+                                            strokeWidth={2}
+                                            dot={false}
+                                            name="Ideal (y=x)"
+                                            isAnimationActive={false}
+                                        />
+                                        <Scatter name="Sesiones" data={scatterData} fill="#4A67B3">
+                                            {scatterData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={colors[0]} />
+                                            ))}
+                                        </Scatter>
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     </ChartCard>
                 )}
@@ -298,45 +304,50 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                 {/* Gráfico 3: Monotony (Line Chart) */}
                 <ChartCard title="Monotonía">
                     {data.monotony_by_week && data.monotony_by_week.length > 0 ? (
-                        <div className="w-full" style={{ minHeight: '400px' }}>
-                            <ResponsiveContainer width="100%" height={400}>
-                            <LineChart 
-                                data={data.monotony_by_week} 
-                                margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
-                            >
-                                <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis 
-                                    dataKey="week" 
-                                    label={{ value: "Semana", position: "insideBottom", offset: -5 }} 
-                                />
-                                <YAxis 
-                                    domain={[0, 'dataMax + 1']}
-                                    label={{ value: "Monotonía", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }} 
-                                />
-                                <Tooltip />
-                                <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
-                                <Line
-                                    type="monotone"
-                                    dataKey="monotony"
-                                    stroke="#4A67B3"
-                                    strokeWidth={3}
-                                    name="Monotonía"
-                                    dot={{ r: 6, fill: "#4A67B3" }}
-                                    isAnimationActive={false}
-                                    connectNulls={false}
-                                />
-                                <ReferenceLine 
-                                    y={2.0} 
-                                    stroke="#ef4444" 
-                                    strokeDasharray="5 5" 
-                                    strokeWidth={2}
-                                    label={{ value: "Umbral (2.0)", position: "right" }}
-                                />
-                            </LineChart>
-                        </ResponsiveContainer>
+                        <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
+                            <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
+                                <ResponsiveContainer width="100%" height={chartHeight}>
+                                    <LineChart
+                                        data={data.monotony_by_week}
+                                        margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="week"
+                                            label={{ value: "Semana", position: "insideBottom", offset: -5 }}
+                                        />
+                                        <YAxis
+                                            domain={[0, "dataMax + 1"]}
+                                            label={{ value: "Monotonía", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
+                                        />
+                                        <Tooltip />
+                                        <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="monotony"
+                                            stroke="#4A67B3"
+                                            strokeWidth={3}
+                                            name="Monotonía"
+                                            dot={{ r: 6, fill: "#4A67B3" }}
+                                            isAnimationActive={false}
+                                            connectNulls={false}
+                                        />
+                                        <ReferenceLine
+                                            y={2.0}
+                                            stroke="#ef4444"
+                                            strokeDasharray="5 5"
+                                            strokeWidth={2}
+                                            label={{ value: "Umbral (2.0)", position: "right" }}
+                                        />
+                                    </LineChart>
+                                </ResponsiveContainer>
+                            </div>
                         </div>
                     ) : (
-                        <div className="flex items-center justify-center h-[400px] text-gray-500">
+                        <div
+                            className="flex items-center justify-center w-full min-w-0 text-gray-500"
+                            style={{ minHeight: `${minChartHeight}px` }}
+                        >
                             No hay datos de monotonía disponibles
                         </div>
                     )}
@@ -345,57 +356,58 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                 {/* Gráfico 4: Strain & Load (Bar + Line Chart) */}
                 <ChartCard title="Carga y Volumen">
                     {data.strain_by_week && data.strain_by_week.length > 0 ? (() => {
-                        // Calcular el máximo valor para normalizar a escala 0-1000 como en Figma
+                        // ✅ FIX: Usar 'strain' en lugar de 'cumulative_strain'
                         const maxLoad = Math.max(...data.strain_by_week.map(d => d.load || 0));
-                        const maxStrain = Math.max(...data.strain_by_week.map(d => d.cumulative_strain || 0));
+                        const maxStrain = Math.max(...data.strain_by_week.map(d => d.strain || 0));
                         const maxValue = Math.max(maxLoad, maxStrain);
                         
                         // Normalizar datos a escala 0-1000
                         const normalizedData = data.strain_by_week.map(d => ({
                             week: d.week,
                             load: maxValue > 0 ? (d.load / maxValue) * 1000 : 0,
-                            cumulative_strain: maxValue > 0 ? (d.cumulative_strain / maxValue) * 1000 : 0,
+                            strain: maxValue > 0 ? (d.strain / maxValue) * 1000 : 0,
                         }));
                         
                         return (
-                            <div className="w-full" style={{ minHeight: '400px' }}>
-                                <ResponsiveContainer width="100%" height={400}>
-                                <ComposedChart 
-                                    data={normalizedData} 
-                                    margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis 
-                                        dataKey="week" 
-                                        label={{ value: "Semana", position: "insideBottom", offset: -5 }} 
-                                    />
-                                    <YAxis 
-                                        domain={[0, 1000]}
-                                        label={{ value: "Carga de Entrenamiento / Carga", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }} 
-                                    />
-                                    <Tooltip />
-                                    <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
-                                    <Bar 
-                                        dataKey="load" 
-                                        fill="#94a3b8" 
-                                        name="Volumen" 
-                                    />
-                                    <Line
-                                        type="monotone"
-                                        dataKey="cumulative_strain"
-                                        stroke="#4A67B3"
-                                        strokeWidth={3}
-                                        name="Carga Acumulada"
-                                        dot={{ r: 6, fill: "#4A67B3" }}
-                                        isAnimationActive={false}
-                                        connectNulls={false}
-                                    />
-                                </ComposedChart>
-                            </ResponsiveContainer>
+                            <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
+                                <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
+                                    <ResponsiveContainer width="100%" height={chartHeight}>
+                                        <ComposedChart
+                                            data={normalizedData}
+                                            margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis
+                                                dataKey="week"
+                                                label={{ value: "Semana", position: "insideBottom", offset: -5 }}
+                                            />
+                                            <YAxis
+                                                domain={[0, 1000]}
+                                                label={{ value: "Carga de Entrenamiento / Carga", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
+                                            />
+                                            <Tooltip />
+                                            <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                            <Bar dataKey="load" fill="#94a3b8" name="Volumen" />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="strain"
+                                                stroke="#4A67B3"
+                                                strokeWidth={3}
+                                                name="Carga Acumulada"
+                                                dot={{ r: 6, fill: "#4A67B3" }}
+                                                isAnimationActive={false}
+                                                connectNulls={false}
+                                            />
+                                        </ComposedChart>
+                                    </ResponsiveContainer>
+                                </div>
                             </div>
                         );
                     })() : (
-                        <div className="flex items-center justify-center h-[400px] text-gray-500">
+                        <div
+                            className="flex items-center justify-center w-full min-w-0 text-gray-500"
+                            style={{ minHeight: `${minChartHeight}px` }}
+                        >
                             No hay datos de carga y volumen disponibles
                         </div>
                     )}
@@ -403,33 +415,36 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             </div>
 
             {/* Summary interpretativo (editable) con botón Edit */}
-            <ChartCard title="Resumen Interpretativo">
-                <div className="relative">
-                    <textarea
-                        value={summary}
-                        onChange={(e) => setSummary(e.target.value)}
-                        className="w-full min-h-[120px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-y pr-20"
-                        placeholder="Escribe un resumen interpretativo de los datos..."
-                    />
-                    <button className="absolute top-4 right-4 px-3 py-1 text-sm font-medium text-gray-700 hover:text-gray-900">
+            <div className="bg-white rounded-lg shadow px-4 pt-4 pb-2">
+                <div className="flex items-center justify-between mb-6">
+                    <h3 className={`${TYPOGRAPHY.cardTitle}`}>Resumen Interpretativo</h3>
+                    <button className="px-4 py-2 text-sm font-semibold text-[#4A67B3] border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
                         Editar
                     </button>
                 </div>
-            </ChartCard>
 
-            {/* Key Recommendations */}
-            <ChartCard title="Recomendaciones Principales">
-                <ul className="space-y-3">
-                    {data.recommendations.map((rec, index) => (
-                        <li key={index} className="flex items-start">
-                            <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
-                                {index + 1}
-                            </span>
-                            <span className="text-slate-700">{rec}</span>
-                        </li>
-                    ))}
-                </ul>
-            </ChartCard>
+                <div className="space-y-5">
+                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                        {summary || "Sin información disponible."}
+                    </p>
+
+                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 w-full">
+                        <div className="text-xs font-semibold text-slate-500 tracking-wide mb-3">
+                            RECOMENDACIONES PRINCIPALES
+                        </div>
+                        <ul className="space-y-3">
+                            {data.recommendations.map((rec, index) => (
+                                <li key={index} className="flex items-start">
+                                    <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
+                                        {index + 1}
+                                    </span>
+                                    <span className="text-slate-700">{rec}</span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };

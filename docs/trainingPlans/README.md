@@ -112,6 +112,12 @@ packages/shared/src/types/
 - `TrainingPlan` - Plan completo
 - `TrainingPlanCreate` - Payload para crear
 - `TrainingPlanUpdate` - Payload para actualizar
+- `TrainingPlanTemplate` - Plantilla reutilizable
+- `TrainingPlanTemplateCreate` - Payload para crear plantilla
+- `TrainingPlanTemplateUpdate` - Payload para actualizar plantilla
+- `TrainingPlanInstance` - Instancia de plan desde plantilla
+- `TrainingPlanInstanceCreate` - Payload para crear instancia
+- `TrainingPlanInstanceUpdate` - Payload para actualizar instancia
 - `Macrocycle` - Macrociclo
 - `MacrocycleCreate` - Payload para crear macrociclo
 - `Mesocycle` - Mesociclo
@@ -157,19 +163,34 @@ packages/shared/src/api/
 - `updateMilestone` - PUT /training-plans/milestones/{id}
 - `deleteMilestone` - DELETE /training-plans/milestones/{id}
 - `getAllCycles` - GET /training-plans/{id}/all-cycles (optimizado)
+- **Templates:** `getTrainingPlanTemplates`, `getTrainingPlanTemplate`, `createTrainingPlanTemplate`, `updateTrainingPlanTemplate`, `deleteTrainingPlanTemplate`, `duplicateTrainingPlanTemplate`
+- **Instances:** `getTrainingPlanInstances`, `getTrainingPlanInstance`, `createTrainingPlanInstance`, `updateTrainingPlanInstance`, `deleteTrainingPlanInstance`
+- **Utilidades:** `assignTemplateToClient`, `assignPlanToClient`, `convertPlanToTemplate`
 
 ### Hooks Personalizados
 
 ```
 packages/shared/src/hooks/training/
-└── useMilestones.ts                # Hook de negocio para milestones
+├── useMilestones.ts                # Hook de negocio para milestones
+├── useTrainingPlans.ts            # Hook principal para training plans
+├── useTrainingPlanTemplates.ts    # Hook para plantillas
+├── useAssignTemplate.ts            # Hook para asignar plantillas
+└── useConvertPlanToTemplate.ts    # Hook para convertir plan a plantilla
 ```
 
-**Ruta completa:**
+**Rutas completas:**
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useMilestones.ts`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useTrainingPlans.ts`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useTrainingPlanTemplates.ts`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useAssignTemplate.ts`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useConvertPlanToTemplate.ts`
 
 **Exports:**
 - `useMilestones` - Hook principal para gestión de milestones
+- `useTrainingPlans` - Hook principal para gestión de training plans
+- `useTrainingPlanTemplates` - Hook para gestión de plantillas
+- `useAssignTemplate` - Hook para asignar plantillas a clientes
+- `useConvertPlanToTemplate` - Hook para convertir plan a plantilla
 
 **Archivo de exports:**
 - `packages/shared/src/hooks/training/index.ts`
@@ -460,6 +481,60 @@ useGetAllCyclesQuery(planId: number)
 // Retorna: { macrocycles: Macrocycle[], mesocycles: Mesocycle[], microcycles: Microcycle[] }
 ```
 
+#### Templates
+
+```typescript
+// Obtener plantillas del trainer
+useGetTrainingPlanTemplatesQuery({ trainerId, category? })
+
+// Obtener una plantilla específica
+useGetTrainingPlanTemplateQuery(templateId)
+
+// Crear plantilla
+useCreateTrainingPlanTemplateMutation()
+
+// Actualizar plantilla
+useUpdateTrainingPlanTemplateMutation()
+
+// Eliminar plantilla
+useDeleteTrainingPlanTemplateMutation()
+
+// Duplicar plantilla
+useDuplicateTrainingPlanTemplateMutation()
+
+// Asignar plantilla a cliente
+useAssignTemplateToClientMutation()
+```
+
+#### Instances
+
+```typescript
+// Obtener instancias del trainer
+useGetTrainingPlanInstancesQuery({ trainerId, clientId? })
+
+// Obtener una instancia específica
+useGetTrainingPlanInstanceQuery(instanceId)
+
+// Crear instancia
+useCreateTrainingPlanInstanceMutation()
+
+// Actualizar instancia
+useUpdateTrainingPlanInstanceMutation()
+
+// Eliminar instancia
+useDeleteTrainingPlanInstanceMutation()
+```
+
+#### Utilidades
+
+```typescript
+// Asignar plan a otro cliente
+useAssignPlanToClientMutation()
+
+// Convertir plan a plantilla
+useConvertPlanToTemplateMutation()
+```
+
 ### Backend Endpoints
 
 **Base URL:** `https://nexiaapp.com/api/v1`
@@ -484,6 +559,9 @@ useGetAllCyclesQuery(planId: number)
 - `PUT /training-plans/milestones/{id}` - Actualizar milestone
 - `DELETE /training-plans/milestones/{id}` - Eliminar milestone
 - `GET /training-plans/{id}/all-cycles` - Todos los ciclos (optimizado)
+- **Templates:** `GET /training-plans/templates/`, `POST /training-plans/templates/`, `GET /training-plans/templates/{id}`, `PUT /training-plans/templates/{id}`, `DELETE /training-plans/templates/{id}`, `POST /training-plans/templates/{id}/duplicate`, `POST /training-plans/templates/{id}/assign`
+- **Instances:** `GET /training-plans/instances/`, `POST /training-plans/instances/`, `GET /training-plans/instances/{id}`, `PUT /training-plans/instances/{id}`, `DELETE /training-plans/instances/{id}`
+- **Utilidades:** `POST /training-plans/{id}/assign`, `POST /training-plans/{id}/convert-to-template`
 
 ---
 
@@ -747,6 +825,75 @@ interface ChartsTabProps {
 
 **Propósito:** Encapsular toda la lógica CRUD de milestones sin dependencias de UI.
 
+### useTrainingPlanTemplates
+
+**Ruta:** `packages/shared/src/hooks/training/useTrainingPlanTemplates.ts`
+
+**Propósito:** Gestión completa de plantillas de training plans.
+
+**Uso:**
+```typescript
+const {
+    templates,
+    template,
+    createTemplate,
+    updateTemplate,
+    deleteTemplate,
+    duplicateTemplate,
+    isLoading,
+} = useTrainingPlanTemplates({
+    trainerId: 123,
+    templateId: 456, // Opcional
+});
+```
+
+### useAssignTemplate
+
+**Ruta:** `packages/shared/src/hooks/training/useAssignTemplate.ts`
+
+**Propósito:** Asignar plantillas o planes a clientes (crea instancias).
+
+**Uso:**
+```typescript
+const {
+    assignTemplate,
+    assignPlan,
+    isAssigning,
+} = useAssignTemplate();
+
+await assignTemplate({
+    template_id: 123,
+    client_id: 456,
+    trainer_id: 789,
+    start_date: "2025-01-01",
+    end_date: "2025-12-31",
+});
+```
+
+### useConvertPlanToTemplate
+
+**Ruta:** `packages/shared/src/hooks/training/useConvertPlanToTemplate.ts`
+
+**Propósito:** Convertir un plan existente en una plantilla reutilizable.
+
+**Uso:**
+```typescript
+const {
+    convertPlan,
+    isConverting,
+} = useConvertPlanToTemplate();
+
+await convertPlan({
+    plan_id: 123,
+    template_data: {
+        trainer_id: 789,
+        name: "Plan de Fuerza",
+        goal: "Muscle Gain",
+        // ...
+    },
+});
+```
+
 **Interface:**
 ```typescript
 interface UseMilestonesParams {
@@ -897,6 +1044,40 @@ const {
 - `packages/shared/src/api/trainingPlansApi.ts` (API)
 - Backend: `PUT /api/v1/training-plans/milestones/{id}`
 
+### Flujo: Crear Plantilla desde Plan
+
+1. Usuario navega a `TrainingPlanDetail`
+2. Click en botón "Convertir a Plantilla"
+3. Se abre modal con formulario de plantilla
+4. Usuario completa: nombre, descripción, categoría, tags
+5. `useConvertPlanToTemplate().convertPlan()` llama a `useConvertPlanToTemplateMutation()`
+6. RTK Query envía `POST /training-plans/{id}/convert-to-template`
+7. Backend crea plantilla y retorna `TrainingPlanTemplate`
+8. Cache se invalida (`TrainingPlanTemplate` tag)
+9. Plan original se marca con `was_converted_to_template = true`
+
+**Archivos involucrados:**
+- `packages/shared/src/hooks/training/useConvertPlanToTemplate.ts` (lógica)
+- `packages/shared/src/api/trainingPlansApi.ts` (API)
+- Backend: `POST /api/v1/training-plans/{id}/convert-to-template`
+
+### Flujo: Asignar Plantilla a Cliente
+
+1. Usuario selecciona plantilla de la lista
+2. Click en "Asignar a Cliente"
+3. Se abre modal con selector de cliente y fechas
+4. Usuario selecciona cliente, fecha inicio, fecha fin
+5. `useAssignTemplate().assignTemplate()` llama a `useAssignTemplateToClientMutation()`
+6. RTK Query envía `POST /training-plans/templates/{id}/assign`
+7. Backend crea instancia del plan para el cliente
+8. Cache se invalida (`TrainingPlanInstance` tag)
+9. Cliente ahora tiene el plan asignado
+
+**Archivos involucrados:**
+- `packages/shared/src/hooks/training/useAssignTemplate.ts` (lógica)
+- `packages/shared/src/api/trainingPlansApi.ts` (API)
+- Backend: `POST /api/v1/training-plans/templates/{id}/assign`
+
 ---
 
 ## ✅ Validaciones
@@ -1009,6 +1190,17 @@ const {
 - [x] Controles de vista (weekly/monthly/annual)
 - [x] Gráficos de volumen/intensidad
 
+#### Templates e Instances
+- [x] Tipos TypeScript para Templates e Instances
+- [x] Endpoints RTK Query para Templates (CRUD completo)
+- [x] Endpoints RTK Query para Instances (CRUD completo)
+- [x] Hook `useTrainingPlanTemplates` para gestión de plantillas
+- [x] Hook `useAssignTemplate` para asignar plantillas a clientes
+- [x] Hook `useConvertPlanToTemplate` para convertir plan a plantilla
+- [x] Duplicar plantillas
+- [ ] UI para gestión de templates (TODO: Fase 3)
+- [ ] UI para asignar templates a clientes (TODO: Fase 3)
+
 #### Internacionalización
 - [x] Todos los textos traducidos al español
 - [x] Estados traducidos (Activo, Completado, etc.)
@@ -1019,6 +1211,8 @@ const {
 
 - [ ] Edición inline de planes
 - [ ] Edición inline de ciclos
+- [ ] UI para gestión de templates
+- [ ] UI para asignar templates a clientes
 - [ ] Drag & drop para reordenar ciclos
 - [ ] Exportar plan a PDF
 - [ ] Compartir plan entre entrenadores

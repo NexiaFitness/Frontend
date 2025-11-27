@@ -1,45 +1,39 @@
-# Testing Documentation - NEXIA
+# Testing Framework Documentation - NEXIA
 
-Esta carpeta contiene toda la documentación relacionada con testing en el proyecto NEXIA.
+> **Nota:** Este documento describe el **framework de testing** (Vitest, MSW, cómo escribir tests).  
+> Para documentación del **módulo de Testing** (pruebas físicas de clientes), ver [testing/](../testing/README.md)
+
+Esta carpeta contiene toda la documentación relacionada con el framework de testing en el proyecto NEXIA.
 
 ## 📚 Documentos Disponibles
 
 ### 1. [TESTING.md](./TESTING.md)
 **Documentación completa del framework de testing**
 - Stack tecnológico (Vitest, React Testing Library, MSW)
-- Estructura de tests
-- Fixtures y handlers MSW
+- Estructura de tests y organización de archivos
+- Fixtures y handlers MSW (completos y disponibles)
 - Mocks de React Router y Redux
-- Utilidades de testing
-- Cobertura de código
-- Ejemplos prácticos
-- Estado actual y cobertura
+- Utilidades de testing (render, setup, providers)
+- Cobertura de código y configuración
+- Ejemplos prácticos (componentes, integración, Redux)
+- Estado actual y cobertura (tests implementados, problemas conocidos)
+- Qué falta por implementar
 - Mejores prácticas
+- Arquitectura y mejoras futuras
 
 ### 2. [TESTING_ARCHITECTURE.md](./TESTING_ARCHITECTURE.md)
-**Guía rápida de arquitectura de testing**
+**Guía rápida de arquitectura y patrones**
 - Filosofía core (MSW-First, Integration over Unit)
 - Patrones de estructura de tests
 - Estrategia de handlers MSW (Hybrid Approach)
 - Patrones comunes (form testing, error testing, navigation)
-- Mejores prácticas y quick reference
-
-### 3. [TESTING_IMPLEMENTATION.md](./TESTING_IMPLEMENTATION.md)
-**Guía detallada de implementación y arquitectura**
-- Cómo funcionan los tests actualmente
-- Estructura actual de archivos
-- Tests implementados (14 archivos)
-- Fixtures y handlers disponibles
-- Qué falta por implementar
-- Problemas conocidos y soluciones
-- Propuesta de nueva arquitectura organizada por dominio
-- Plan de migración
+- Quick reference (queries, mocks, async patterns)
+- Mejores prácticas resumidas
 
 ## 🎯 ¿Qué Documento Leer?
 
-- **Empezando con tests:** Lee [TESTING.md](./TESTING.md) para entender el framework completo
-- **Escribiendo tests:** Lee [TESTING_ARCHITECTURE.md](./TESTING_ARCHITECTURE.md) para patrones y mejores prácticas
-- **Entendiendo la estructura:** Lee [TESTING_IMPLEMENTATION.md](./TESTING_IMPLEMENTATION.md) para ver cómo está organizado todo y qué mejoras se proponen
+- **Empezando con tests:** Lee [TESTING.md](./TESTING.md) para entender el framework completo, estructura, fixtures, handlers, y estado actual
+- **Escribiendo tests:** Lee [TESTING_ARCHITECTURE.md](./TESTING_ARCHITECTURE.md) para patrones rápidos, mejores prácticas y guía de referencia
 
 ---
 

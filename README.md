@@ -7,7 +7,7 @@ Professional fitness training management platform with React + TypeScript monore
 - **Frontend**: ✅ Complete with responsive design + unified client forms architecture
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
 - **Testing**: ✅ Comprehensive MSW integration (224/224 passing)
-- **Version**: v4.6.0
+- **Version**: v5.5.0
 
 ## Tech Stack
 - **React** 18.3.1 + **TypeScript** 5.8.3 + **Vite** 7.1.2
@@ -44,12 +44,6 @@ frontend/
 ├── openapi_local.json
 ├── openapi_produccion.json
 ├── react-vendor-production.js
-├── ANALISIS_CAMPOS_OBLIGATORIOS_PROGRESO.md
-├── ANALISIS_COMPLETO_PROGRESS_EDIT.md
-├── AUDITORIA_TRAINING_PLANNING.md
-├── REPORTE_ESTADO_PROYECTO.md
-├── REPORTE_IMPLEMENTACION_HOOK_PROGRESO.md
-├── REPORTE_IMPLEMENTACION_METRICAS_CORPORALES.md
 ├── docs/                                          # Documentation
 │   ├── ARCHITECTURE.md
 │   ├── CONTRIBUTING.md
@@ -58,25 +52,51 @@ frontend/
 │   ├── DEPLOYMENT.md
 │   ├── PROJECT_STATUS.md
 │   ├── ROADMAP.md
+│   ├── README.md                                 # Main documentation index
+│   ├── ARCHITECTURE.md                           # Architecture documentation
+│   ├── CONTRIBUTING.md                           # Contribution guidelines
+│   ├── CROSS_PLATFORM_GUIDE.md                   # Cross-platform guide
+│   ├── CROSS_PLATFORM_ROLE_ARCHITECTURE.md       # Role architecture
+│   ├── DEPLOYMENT.md                             # Deployment guide
+│   ├── PROJECT_STATUS.md                         # Current project status
+│   ├── ROADMAP.md                                # Project roadmap
+│   ├── account/                                  # Account module documentation
+│   │   └── README.md
+│   ├── auth/                                     # Auth module documentation
+│   │   └── README.md
+│   ├── backend/                                  # Backend documentation
+│   │   └── API_ENDPOINTS.md                      # Backend endpoints audit
 │   ├── clients/                                  # Client module documentation
 │   │   ├── client-edit.md                        # Client Edit flow documentation
 │   │   ├── client-onboarding.md                  # Client Onboarding flow documentation
 │   │   ├── client-progress.md                    # Client Progress flow documentation
 │   │   └── README.md
+│   ├── dashboard/                                # Dashboard module documentation
+│   │   └── README.md
 │   ├── exercises/                                # Exercises module documentation
+│   │   └── README.md
+│   ├── home/                                     # Home module documentation
+│   │   └── README.md
+│   ├── reports/                                  # Reports module documentation
+│   │   └── README.md
+│   ├── sessions/                                 # Sessions module documentation (scheduling + programming)
+│   │   └── README.md
+│   ├── testing/                                  # Testing module documentation
 │   │   └── README.md
 │   ├── tests/                                    # Testing documentation
 │   │   ├── README.md
 │   │   ├── TESTING_ARCHITECTURE.md
 │   │   ├── TESTING_IMPLEMENTATION.md
 │   │   └── TESTING.md
-│   └── trainingPlans/                           # Training Plans documentation
-│       ├── macrocycles.md
-│       ├── mesocycles.md
-│       ├── microcycles.md
-│       ├── milestones.md
-│       ├── README.md
-│       └── training-plans.md
+│   ├── trainingPlans/                           # Training Plans documentation
+│   │   ├── macrocycles.md
+│   │   ├── mesocycles.md
+│   │   ├── microcycles.md
+│   │   ├── milestones.md
+│   │   ├── README.md
+│   │   └── training-plans.md
+│   └── ui/                                       # UI components documentation
+│       └── README.md
 ├── apps/web/                                      # Main React app
 │   ├── public/
 │   │   ├── assets/                               # Brand assets
@@ -131,7 +151,6 @@ frontend/
 │   │   │   │   │   ├── ClientWorkoutsTab.tsx   # Tab Workouts - Planes y sesiones
 │   │   │   │   │   ├── ProgressForm.tsx         # Formulario para crear registros de progreso
 │   │   │   │   │   └── index.ts
-│   │   │   │   ├── testing/                     # Testing components (placeholder)
 │   │   │   │   ├── fatigue/                     # Fatigue alerts components
 │   │   │   │   │   ├── CreateFatigueAlertModal.tsx # Modal para crear alertas de fatiga
 │   │   │   │   │   ├── FatigueAlertCard.tsx     # Tarjeta de alerta individual
@@ -211,6 +230,13 @@ frontend/
 │   │   │   │   ├── HeroSection.tsx
 │   │   │   │   ├── ProblemSection.tsx
 │   │   │   │   └── index.ts
+│   │   │   ├── scheduling/                       # Scheduling components
+│   │   │   │   ├── ScheduledSessionCalendar.tsx  # Calendario de sesiones programadas
+│   │   │   │   ├── ScheduledSessionCard.tsx     # Card de sesión programada
+│   │   │   │   ├── ScheduledSessionModal.tsx   # Modal de sesión programada
+│   │   │   │   ├── SessionTemplatesList.tsx    # Lista de plantillas de sesión
+│   │   │   │   ├── UpcomingScheduledSessionCard.tsx # Card de próxima sesión
+│   │   │   │   └── index.ts
 │   │   │   ├── sessionProgramming/               # Session Programming components
 │   │   │   │   ├── SessionCalendar.tsx          # Calendario de sesiones
 │   │   │   │   └── index.ts
@@ -219,13 +245,27 @@ frontend/
 │   │   │   │   │   ├── ChartControls.tsx
 │   │   │   │   │   ├── VolumeIntensityChart.tsx
 │   │   │   │   │   └── index.ts
+│   │   │   │   ├── planning/                    # Planning components
+│   │   │   │   │   ├── MonthlyPlanningDashboard.tsx
+│   │   │   │   │   ├── PhysicalQualitiesList.tsx
+│   │   │   │   │   ├── PhysicalQualitiesPieChart.tsx
+│   │   │   │   │   ├── PhysicalQualitiesRadarChart.tsx
+│   │   │   │   │   ├── ProgressionChart.tsx
+│   │   │   │   │   ├── TrainingLoadSliders.tsx
+│   │   │   │   │   ├── TrainingPlanSummaryCard.tsx
+│   │   │   │   │   ├── WeeklyPlanningDashboard.tsx
+│   │   │   │   │   ├── YearlyPlanningDashboard.tsx
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── AssignTemplateModal.tsx      # Modal para asignar plantillas
 │   │   │   │   ├── ChartsTab.tsx                # Tab de gráficos (volume/intensity)
 │   │   │   │   ├── MacrocyclesTab.tsx           # Tab de gestión de macrocycles (CRUD)
 │   │   │   │   ├── MesocyclesTab.tsx            # Tab de gestión de mesocycles (CRUD)
 │   │   │   │   ├── MicrocyclesTab.tsx            # Tab de gestión de microcycles (CRUD)
 │   │   │   │   ├── MilestonesTab.tsx            # Tab de gestión de milestones
 │   │   │   │   ├── OverviewTab.tsx              # Tab Overview - Info general del plan (read-only)
+│   │   │   │   ├── TrainingPlanCard.tsx         # Card de plan de entrenamiento
 │   │   │   │   ├── TrainingPlanHeader.tsx       # Header del detail con info y actions
+│   │   │   │   ├── TrainingPlansSection.tsx     # Sección de planes
 │   │   │   │   └── index.ts
 │   │   │   └── ui/                              # Reusable UI components
 │   │   │       ├── branding/
@@ -237,6 +277,13 @@ frontend/
 │   │   │       │   ├── Button.tsx
 │   │   │       │   ├── index.ts
 │   │   │       │   └── LogoutButton.tsx
+│   │   │       ├── cards/
+│   │   │       │   ├── ChartCard.tsx
+│   │   │       │   ├── MetricCard.tsx
+│   │   │       │   └── index.ts
+│   │   │       ├── charts/
+│   │   │       │   ├── ProgressLineChart.tsx
+│   │   │       │   └── RadarChart.tsx
 │   │   │       ├── feedback/
 │   │   │       │   ├── __tests__/
 │   │   │       │   │   └── ServerErrorBanner.test.tsx
@@ -252,6 +299,7 @@ frontend/
 │   │   │       │   ├── FormSelect.tsx
 │   │   │       │   ├── index.ts
 │   │   │       │   ├── Input.tsx
+│   │   │       │   ├── Slider.tsx
 │   │   │       │   └── Textarea.tsx             # Textarea input component
 │   │   │       ├── layout/
 │   │   │       │   ├── navbar/
@@ -297,10 +345,12 @@ frontend/
 │   │   │   │   ├── ExerciseDetail.tsx
 │   │   │   │   ├── ExerciseList.tsx
 │   │   │   │   └── index.ts
+│   │   │   ├── Home.tsx
 │   │   │   ├── reports/                         # Reports pages
 │   │   │   │   └── GenerateReports.tsx          # Generación de reportes
 │   │   │   ├── scheduling/                      # Scheduling pages
-│   │   │   │   └── ScheduleSession.tsx          # Programar sesión
+│   │   │   │   ├── ScheduleSession.tsx          # Programar sesión
+│   │   │   │   └── SchedulingPage.tsx           # Página principal de scheduling
 │   │   │   ├── sessionProgramming/              # Session Programming pages
 │   │   │   │   ├── CreateSession.tsx            # Crear sesión
 │   │   │   │   ├── CreateSessionFromTemplate.tsx # Crear sesión desde plantilla
@@ -309,11 +359,11 @@ frontend/
 │   │   │   ├── testing/                         # Testing pages
 │   │   │   │   ├── CreateTestResult.tsx         # Crear resultado de test
 │   │   │   │   └── index.ts
-│   │   │   ├── trainingPlans/                   # Training Plans pages
-│   │   │   │   ├── TrainingPlanDetail.tsx       # Página de detalle con tabs
-│   │   │   │   ├── TrainingPlansPage.tsx        # Lista de training plans
-│   │   │   │   └── index.ts
-│   │   │   └── Home.tsx
+│   │   │   └── trainingPlans/                   # Training Plans pages
+│   │   │       ├── TrainingPlanDetail.tsx       # Página de detalle con tabs
+│   │   │       ├── TrainingPlanEdit.tsx          # Página de edición de plan
+│   │   │       ├── TrainingPlansPage.tsx        # Lista de training plans
+│   │   │       └── index.ts
 │   │   ├── storage/
 │   │   │   └── webStorage.ts
 │   │   ├── test-utils/
@@ -407,7 +457,7 @@ frontend/
 │   │   │   │   ├── useClientDetail.ts           # Hook principal para Client Detail Page
 │   │   │   │   ├── useClientFatigue.ts          # Hook para análisis de fatiga
 │   │   │   │   ├── useClientForm.ts             # Hook unificado para formularios (create/edit)
-│   │   │   │   ├── useClientOnboarding.ts       # Hook para wizard de onboarding (deprecated, usar useClientForm)
+│   │   │   │   │   ├── useClientOnboarding.ts       # Hook para wizard de onboarding (deprecated, usar useClientForm)
 │   │   │   │   ├── useClientProgress.ts         # Hook para datos de progreso y analytics
 │   │   │   │   ├── useClientStats.ts            # Hook para estadísticas de clientes
 │   │   │   │   ├── useClientTests.ts            # Hook para tests físicos del cliente
@@ -435,7 +485,11 @@ frontend/
 │   │   │   │   └── useGenerateReport.ts          # Hook para generar reportes
 │   │   │   ├── scheduling/                      # Scheduling hooks
 │   │   │   │   ├── index.ts
-│   │   │   │   └── useScheduleSession.ts        # Hook para programar sesiones
+│   │   │   │   ├── useDeleteScheduledSession.ts  # Hook para eliminar sesión programada
+│   │   │   │   ├── useGetScheduledSessions.ts    # Hook para obtener sesiones programadas
+│   │   │   │   ├── useScheduleSession.ts        # Hook para programar sesiones
+│   │   │   │   ├── useUpcomingScheduledSession.ts # Hook para próxima sesión
+│   │   │   │   └── useUpdateScheduledSession.ts # Hook para actualizar sesión programada
 │   │   │   ├── sessionProgramming/               # Session Programming hooks
 │   │   │   │   ├── index.ts
 │   │   │   │   ├── useCreateSession.ts          # Hook para crear sesión
@@ -443,7 +497,12 @@ frontend/
 │   │   │   │   └── useCreateTemplate.ts         # Hook para crear plantilla
 │   │   │   ├── training/                        # Training hooks
 │   │   │   │   ├── index.ts
-│   │   │   │   └── useMilestones.ts             # Hook para gestión de milestones
+│   │   │   │   ├── useAssignTemplate.ts          # Hook para asignar plantillas a clientes
+│   │   │   │   ├── useClientMicrocycles.ts       # Hook para microciclos del cliente
+│   │   │   │   ├── useConvertPlanToTemplate.ts  # Hook para convertir plan a plantilla
+│   │   │   │   ├── useMilestones.ts             # Hook para gestión de milestones
+│   │   │   │   ├── useTrainingPlans.ts          # Hook principal para training plans
+│   │   │   │   └── useTrainingPlanTemplates.ts  # Hook para gestión de plantillas
 │   │   │   ├── useAuth.ts                        # Authentication hook
 │   │   │   ├── useAuthForm.ts                    # Form authentication logic
 │   │   │   ├── useCompleteProfile.ts             # Profile completion check
@@ -486,7 +545,8 @@ frontend/
 │   │   │   ├── sessionProgramming.ts            # Session Programming types
 │   │   │   ├── testing.ts                        # Testing types
 │   │   │   ├── trainer.ts                        # Trainer types
-│   │   │   └── training.ts                       # Training types (TrainingPlan, TrainingSession, ClientFeedback, FatigueAnalysis, FatigueAlert, Macrocycle, Mesocycle, Microcycle)
+│   │   │   ├── training.ts                       # Training types (TrainingPlan, TrainingSession, ClientFeedback, FatigueAnalysis, FatigueAlert, Macrocycle, Mesocycle, Microcycle, TrainingPlanTemplate, TrainingPlanInstance)
+│   │   │   └── trainingAnalytics.ts              # Training analytics types
 │   │   └── utils/
 │   │       ├── calculations/                     # Calculation utilities
 │   │       │   ├── clients/
@@ -563,8 +623,13 @@ import { USER_ROLES } from "@nexia/shared/config/constants";
 - ✅ Client editing with unified form base
 - ✅ Client progress tracking with charts (Recharts)
 - ✅ Progress record creation and editing
+- ✅ Fatigue alerts system (create, mark as read, resolve)
 - ✅ Client management with CRUD operations
 - ✅ Training Plans management (complete CRUD)
+- ✅ Training Plan Templates and Instances (backend + hooks ready)
+- ✅ Scheduling and Session Programming
+- ✅ Physical testing module
+- ✅ Reports generation
 - ✅ Responsive UI design system
 - ✅ Comprehensive test coverage (224/224 passing)
 - ✅ Professional deployment pipeline
