@@ -111,6 +111,29 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
             newErrors.altura = "La altura debe estar entre 100 y 250 cm";
         }
 
+        // Validar fecha de registro
+        if (!formData.fecha_registro) {
+            newErrors.fecha_registro = "La fecha de medición es requerida";
+        } else {
+            const fechaRegistro = new Date(formData.fecha_registro);
+            const hoy = new Date();
+            hoy.setHours(23, 59, 59, 999); // Fin del día de hoy
+            
+            // No permitir fechas futuras
+            if (fechaRegistro > hoy) {
+                newErrors.fecha_registro = "La fecha de medición no puede ser futura";
+            }
+            
+            // No permitir fechas anteriores a fecha_alta del cliente
+            if (client?.fecha_alta) {
+                const fechaAlta = new Date(client.fecha_alta);
+                fechaAlta.setHours(0, 0, 0, 0);
+                if (fechaRegistro < fechaAlta) {
+                    newErrors.fecha_registro = `La fecha de medición no puede ser anterior a la fecha de alta del cliente (${new Date(client.fecha_alta).toLocaleDateString()})`;
+                }
+            }
+        }
+
         if (Object.keys(newErrors).length > 0) {
             setErrors(newErrors);
             return;
@@ -180,15 +203,46 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                 {/* Fecha de registro */}
                 <div>
                     <label className={TYPOGRAPHY.inputLabel}>
-                        Fecha de registro *
+                        Fecha de medición *
                     </label>
                     <input
                         type="date"
                         value={formData.fecha_registro ?? new Date().toISOString().split("T")[0]}
-                        onChange={(e) => updateField("fecha_registro", e.target.value)}
+                        onChange={(e) => {
+                            updateField("fecha_registro", e.target.value);
+                            // Validar en tiempo real
+                            if (e.target.value) {
+                                const fechaRegistro = new Date(e.target.value);
+                                const hoy = new Date();
+                                hoy.setHours(23, 59, 59, 999);
+                                
+                                if (fechaRegistro > hoy) {
+                                    setErrors(prev => ({
+                                        ...prev,
+                                        fecha_registro: "La fecha de medición no puede ser futura"
+                                    }));
+                                } else if (client?.fecha_alta && fechaRegistro < new Date(client.fecha_alta)) {
+                                    setErrors(prev => ({
+                                        ...prev,
+                                        fecha_registro: `La fecha no puede ser anterior a la fecha de alta (${new Date(client.fecha_alta).toLocaleDateString()})`
+                                    }));
+                                } else {
+                                    setErrors(prev => {
+                                        const newErrors = { ...prev };
+                                        delete newErrors.fecha_registro;
+                                        return newErrors;
+                                    });
+                                }
+                            }
+                        }}
+                        max={new Date().toISOString().split("T")[0]} // No permitir fechas futuras
+                        min={client?.fecha_alta ? new Date(client.fecha_alta).toISOString().split("T")[0] : undefined} // No permitir fechas anteriores a fecha_alta
                         className="w-full border rounded-lg p-2 bg-white text-slate-800"
                         required
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                        Fecha en que se realizó la medición (no puede ser futura)
+                    </p>
                     {errors.fecha_registro && (
                         <p className="text-red-600 text-sm mt-1">{errors.fecha_registro}</p>
                     )}

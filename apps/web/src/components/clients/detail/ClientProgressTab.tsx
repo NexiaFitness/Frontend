@@ -16,20 +16,23 @@
  * @since v3.1.0
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import type { ClientProgress, ProgressAnalytics } from "@nexia/shared/types/progress";
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
+import { CompactChartCard } from "@/components/ui/cards";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
 import { FatigueAlertsSection } from "../fatigue/FatigueAlertsSection";
 import {
     LineChart,
+    ComposedChart,
     Line,
+    Area,
     XAxis,
     YAxis,
     CartesianGrid,
@@ -40,16 +43,37 @@ import {
 import type { LegendProps } from "recharts";
 
 // ========================================
+// TYPES
+// ========================================
+
+interface NormalizedWorkloadDataPoint {
+    date: string;
+    workload_score: number | null;
+    recovery_need_score: number | null;
+    workload_score_original?: number | null;
+    recovery_need_score_original?: number | null;
+}
+
+interface WorkloadTooltipPayloadItem {
+    payload?: NormalizedWorkloadDataPoint;
+    value?: number;
+    name?: string;
+}
+
+// ========================================
 // HELPER FUNCTIONS
 // ========================================
 
 /**
  * Formatea fechas para gráficos de Recharts
  * @param date - Fecha en formato string o number (timestamp)
- * @returns Fecha formateada para locale
+ * @returns Fecha formateada en formato corto (día/mes)
  */
 const formatDate = (date: string | number): string => {
-    return new Date(date).toLocaleDateString();
+    const d = new Date(date);
+    const day = d.getDate();
+    const month = d.getMonth() + 1;
+    return `${day}/${month}`;  // Formato corto: 20/8
 };
 
 // ========================================
@@ -63,7 +87,19 @@ interface ClientProgressTabProps {
     progressAnalytics?: ProgressAnalytics;
 }
 
-export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
+// Función de comparación personalizada para React.memo
+const arePropsEqual = (
+    prevProps: ClientProgressTabProps,
+    nextProps: ClientProgressTabProps
+): boolean => {
+    return (
+        prevProps.clientId === nextProps.clientId &&
+        prevProps.client?.id === nextProps.client?.id &&
+        prevProps.client?.updated_at === nextProps.client?.updated_at
+    );
+};
+
+const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     clientId,
     client,
 }) => {
@@ -97,14 +133,73 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     } = useClientFatigue(clientId);
 
     const isLoading = isLoadingProgress || isLoadingFatigue;
-    const defaultChartMargin = { top: 5, right: 10, left: 30, bottom: 60 };
     const chartHeight = 400;
     const minChartContainerHeight = 360;
-    const legendConfig: LegendProps = {
-        align: "left",
-        verticalAlign: "bottom",
-        wrapperStyle: { paddingTop: 15 },
-    };
+    
+    // Memoizar objetos de configuración para evitar recreaciones innecesarias
+    const defaultChartMargin = useMemo(() => ({ top: 5, right: 10, left: 30, bottom: 60 }), []);
+    const legendConfig: LegendProps = useMemo(() => ({
+        align: "left" as const,
+        wrapperStyle: { paddingTop: "15px" },
+    }), []);
+
+    // Calcular dominios dinámicos para Peso (memoizado para evitar recálculos innecesarios)
+    const weightDomain = useMemo(() => {
+        if (weightChartData.length === 0) return [0, 150];
+        const weights = weightChartData.map(d => d.weight).filter((w): w is number => w !== null && w !== undefined);
+        if (weights.length === 0) return [0, 150];
+        const min = Math.min(...weights);
+        const max = Math.max(...weights);
+        return [
+            Math.floor(min - 10),
+            Math.ceil(max + 10)
+        ];
+    }, [weightChartData]);
+
+    // Calcular dominios dinámicos para IMC (memoizado para evitar recálculos innecesarios)
+    const bmiDomain = useMemo(() => {
+        if (bmiChartData.length === 0) return [0, 40];
+        const bmis = bmiChartData.map(d => d.bmi).filter((b): b is number => b !== null && b !== undefined);
+        if (bmis.length === 0) return [0, 40];
+        const min = Math.min(...bmis);
+        const max = Math.max(...bmis);
+        return [
+            Math.floor(min - 2),
+            Math.ceil(max + 2)
+        ];
+    }, [bmiChartData]);
+
+    // Normalizar datos de workload a escala 0-10
+    const normalizedWorkloadChartData = useMemo(() => {
+        if (!workloadChartData || workloadChartData.length === 0) return [];
+        
+        // Calcular el máximo histórico de ambos scores
+        const allValues = workloadChartData
+            .map(d => [d.workload_score, d.recovery_need_score])
+            .flat()
+            .filter((v): v is number => v !== null && v !== undefined);
+        
+        if (allValues.length === 0) return [];
+        
+        const maxValue = Math.max(...allValues);
+        
+        // Si el máximo es 0, retornar datos sin normalizar
+        if (maxValue === 0) return workloadChartData;
+        
+        // Normalizar cada valor a escala 0-10
+        return workloadChartData.map(d => ({
+            date: d.date,
+            workload_score: d.workload_score !== null && d.workload_score !== undefined
+                ? (d.workload_score / maxValue) * 10
+                : null,
+            recovery_need_score: d.recovery_need_score !== null && d.recovery_need_score !== undefined
+                ? (d.recovery_need_score / maxValue) * 10
+                : null,
+            // Guardar valores originales para el tooltip
+            workload_score_original: d.workload_score,
+            recovery_need_score_original: d.recovery_need_score,
+        }));
+    }, [workloadChartData]);
 
     const hasBodyCompCharts = weightChartData.length > 0 || bmiChartData.length > 0;
     const hasFatigueEnergyCharts =
@@ -134,16 +229,16 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
         }
     }, [showProgressForm]);
 
-    // Handlers para edición
-    const handleEditClick = (record: ClientProgress) => {
+    // Handlers para edición (memoizados para evitar recreaciones innecesarias)
+    const handleEditClick = useCallback((record: ClientProgress) => {
         setSelectedRecord(record);
         setEditModalOpen(true);
-    };
+    }, []);
 
-    const handleCloseModal = () => {
+    const handleCloseModal = useCallback(() => {
         setEditModalOpen(false);
         setSelectedRecord(null);
-    };
+    }, []);
 
     if (isLoading) {
         return (
@@ -302,7 +397,7 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     {!isNotFoundError && hasBodyCompCharts && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {weightChartData.length > 0 && (
-                                <ChartCard title="Evolución del Peso">
+                                <CompactChartCard title="Evolución del Peso">
                                     <div
                                         className="w-full flex items-center justify-center"
                                         style={{ minHeight: `${minChartContainerHeight}px` }}
@@ -311,36 +406,51 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                                             <ResponsiveContainer width="100%" height={chartHeight}>
                                                 <LineChart data={weightChartData} margin={defaultChartMargin}>
                                                     <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
-                                            <YAxis
-                                                domain={[0, 150]}
-                                                allowDataOverflow
-                                                label={{
-                                                    value: "Peso (kg)",
-                                                    angle: -90,
-                                                    position: "insideLeft",
-                                                    style: { textAnchor: "middle" },
-                                                }}
-                                            />
-                                                    <Tooltip labelFormatter={formatDate} />
-                                            <Legend {...legendConfig} />
+                                                    <XAxis 
+                                                        dataKey="date" 
+                                                        tickFormatter={formatDate}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
+                                                    />
+                                                    <YAxis
+                                                        domain={weightDomain}
+                                                        label={{
+                                                            value: "Peso (kg)",
+                                                            angle: -90,
+                                                            position: "left",
+                                                            offset: -5,
+                                                            style: { textAnchor: "middle" },
+                                                        }}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    />
+                                                    <Tooltip 
+                                                        labelFormatter={formatDate}
+                                                        contentStyle={{ 
+                                                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                        }}
+                                                    />
+                                                    <Legend {...legendConfig} />
                                                     <Line
                                                         type="monotone"
                                                         dataKey="weight"
-                                                        stroke="#3b82f6"
+                                                        stroke="#4A67B3"
                                                         name="Peso (kg)"
                                                         strokeWidth={2}
-                                                        dot={{ r: 4 }}
+                                                        dot={{ r: 4, fill: "#4A67B3" }}
+                                                        isAnimationActive={false}
                                                     />
                                                 </LineChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-                                </ChartCard>
+                                </CompactChartCard>
                             )}
 
                             {bmiChartData.length > 0 && (
-                                <ChartCard title="Evolución del IMC">
+                                <CompactChartCard title="Evolución del IMC">
                                     <div
                                         className="w-full flex items-center justify-center"
                                         style={{ minHeight: `${minChartContainerHeight}px` }}
@@ -349,32 +459,47 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                                             <ResponsiveContainer width="100%" height={chartHeight}>
                                                 <LineChart data={bmiChartData} margin={defaultChartMargin}>
                                                     <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
-                                            <YAxis
-                                                domain={[0, 40]}
-                                                allowDataOverflow
-                                                label={{
-                                                    value: "IMC",
-                                                    angle: -90,
-                                                    position: "insideLeft",
-                                                    style: { textAnchor: "middle" },
-                                                }}
-                                            />
-                                                    <Tooltip labelFormatter={formatDate} />
-                                            <Legend {...legendConfig} />
+                                                    <XAxis 
+                                                        dataKey="date" 
+                                                        tickFormatter={formatDate}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
+                                                    />
+                                                    <YAxis
+                                                        domain={bmiDomain}
+                                                        label={{
+                                                            value: "IMC",
+                                                            angle: -90,
+                                                            position: "left",
+                                                            offset: -5,
+                                                            style: { textAnchor: "middle" },
+                                                        }}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    />
+                                                    <Tooltip 
+                                                        labelFormatter={formatDate}
+                                                        contentStyle={{ 
+                                                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                        }}
+                                                    />
+                                                    <Legend {...legendConfig} />
                                                     <Line
                                                         type="monotone"
                                                         dataKey="bmi"
-                                                        stroke="#10b981"
+                                                        stroke="#4A67B3"
                                                         name="IMC"
                                                         strokeWidth={2}
-                                                        dot={{ r: 4 }}
+                                                        dot={{ r: 4, fill: "#4A67B3" }}
+                                                        isAnimationActive={false}
                                                     />
                                                 </LineChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-                                </ChartCard>
+                                </CompactChartCard>
                             )}
                         </div>
                     )}
@@ -382,136 +507,215 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
                     {!isNotFoundError && hasFatigueEnergyCharts && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             {fatigueChartData.length > 0 && (
-                                <ChartCard title="Análisis de Fatiga">
+                                <CompactChartCard title="Análisis de Fatiga">
                                     <div
                                         className="w-full flex items-center justify-center"
                                         style={{ minHeight: `${minChartContainerHeight}px` }}
                                     >
                                         <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
                                             <ResponsiveContainer width="100%" height={chartHeight}>
-                                                <LineChart data={fatigueChartData} margin={defaultChartMargin}>
+                                                <ComposedChart data={fatigueChartData} margin={defaultChartMargin}>
                                                     <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
+                                                    <XAxis 
+                                                        dataKey="date" 
+                                                        tickFormatter={formatDate}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
+                                                    />
                                                     <YAxis
                                                         domain={[0, 10]}
+                                                        ticks={[0, 2, 4, 6, 8, 10]}
                                                         label={{
-                                                            value: "Nivel de Fatiga (1-10)",
+                                                            value: "Nivel de Fatiga (0-10)",
                                                             angle: -90,
-                                                            position: "insideLeft",
+                                                            position: "left",
+                                                            offset: -5,
                                                             style: { textAnchor: "middle" },
                                                         }}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
                                                     />
-                                                    <Tooltip labelFormatter={formatDate} />
-                                            <Legend {...legendConfig} />
-                                                    <Line
+                                                    <Tooltip 
+                                                        labelFormatter={formatDate}
+                                                        contentStyle={{ 
+                                                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                        }}
+                                                    />
+                                                    <Legend {...legendConfig} />
+                                                    <Area
                                                         type="monotone"
                                                         dataKey="pre_fatigue"
-                                                        stroke="#f59e0b"
-                                                        name="Fatiga Pre-Sesión"
+                                                        stroke="#4A67B3"
+                                                        fill="#4A67B3"
+                                                        fillOpacity={0.08}
                                                         strokeWidth={2}
+                                                        name="Fatiga Pre-Sesión"
+                                                        isAnimationActive={false}
                                                     />
-                                                    <Line
+                                                    <Area
                                                         type="monotone"
                                                         dataKey="post_fatigue"
                                                         stroke="#ef4444"
-                                                        name="Fatiga Post-Sesión"
+                                                        fill="#ef4444"
+                                                        fillOpacity={0.06}
                                                         strokeWidth={2}
+                                                        name="Fatiga Post-Sesión"
+                                                        isAnimationActive={false}
                                                     />
-                                                </LineChart>
+                                                </ComposedChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-                                </ChartCard>
+                                </CompactChartCard>
                             )}
 
                             {energyChartData.length > 0 && (
-                                <ChartCard title="Niveles de Energía">
+                                <CompactChartCard title="Niveles de Energía">
                                     <div
                                         className="w-full flex items-center justify-center"
                                         style={{ minHeight: `${minChartContainerHeight}px` }}
                                     >
                                         <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
                                             <ResponsiveContainer width="100%" height={chartHeight}>
-                                                <LineChart data={energyChartData} margin={defaultChartMargin}>
+                                                <ComposedChart data={energyChartData} margin={defaultChartMargin}>
                                                     <CartesianGrid strokeDasharray="3 3" />
-                                                    <XAxis dataKey="date" tickFormatter={formatDate} />
+                                                    <XAxis 
+                                                        dataKey="date" 
+                                                        tickFormatter={formatDate}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
+                                                    />
                                                     <YAxis
                                                         domain={[0, 10]}
+                                                        ticks={[0, 2, 4, 6, 8, 10]}
                                                         label={{
-                                                            value: "Nivel de Energía (1-10)",
+                                                            value: "Nivel de Energía (0-10)",
                                                             angle: -90,
-                                                            position: "insideLeft",
+                                                            position: "left",
+                                                            offset: -5,
                                                             style: { textAnchor: "middle" },
                                                         }}
+                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
                                                     />
-                                                    <Tooltip labelFormatter={formatDate} />
-                                            <Legend {...legendConfig} />
-                                                    <Line
+                                                    <Tooltip 
+                                                        labelFormatter={formatDate}
+                                                        contentStyle={{ 
+                                                            backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                            border: '1px solid #e5e7eb',
+                                                            borderRadius: '8px',
+                                                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                        }}
+                                                    />
+                                                    <Legend {...legendConfig} />
+                                                    <Area
                                                         type="monotone"
                                                         dataKey="pre_energy"
-                                                        stroke="#8b5cf6"
-                                                        name="Energía Pre-Sesión"
+                                                        stroke="#4A67B3"
+                                                        fill="#4A67B3"
+                                                        fillOpacity={0.08}
                                                         strokeWidth={2}
+                                                        name="Energía Pre-Sesión"
+                                                        isAnimationActive={false}
                                                     />
-                                                    <Line
+                                                    <Area
                                                         type="monotone"
                                                         dataKey="post_energy"
-                                                        stroke="#6366f1"
-                                                        name="Energía Post-Sesión"
+                                                        stroke="#ef4444"
+                                                        fill="#ef4444"
+                                                        fillOpacity={0.06}
                                                         strokeWidth={2}
+                                                        name="Energía Post-Sesión"
+                                                        isAnimationActive={false}
                                                     />
-                                                </LineChart>
+                                                </ComposedChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-                                </ChartCard>
+                                </CompactChartCard>
                             )}
                         </div>
                     )}
 
                     {!isNotFoundError && hasWorkloadChart && (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <ChartCard title="Carga de Trabajo y Recuperación" className="lg:col-span-2">
+                            <CompactChartCard title="Carga de Trabajo y Recuperación" className="lg:col-span-2">
                                 <div
                                     className="w-full flex items-center justify-center"
                                     style={{ minHeight: `${minChartContainerHeight}px` }}
                                 >
                                     <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
                                         <ResponsiveContainer width="100%" height={chartHeight}>
-                                            <LineChart data={workloadChartData} margin={defaultChartMargin}>
+                                            <ComposedChart data={normalizedWorkloadChartData} margin={defaultChartMargin}>
                                                 <CartesianGrid strokeDasharray="3 3" />
-                                                <XAxis dataKey="date" tickFormatter={formatDate} />
-                                            <YAxis
-                                                domain={[0, 1500]}
-                                                allowDataOverflow
-                                                label={{
-                                                    value: "Carga / Recuperación",
-                                                    angle: -90,
-                                                    position: "insideLeft",
-                                                    style: { textAnchor: "middle" },
-                                                }}
-                                            />
-                                                <Tooltip labelFormatter={formatDate} />
-                                            <Legend {...legendConfig} />
-                                                <Line
+                                                <XAxis 
+                                                    dataKey="date" 
+                                                    tickFormatter={formatDate}
+                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
+                                                />
+                                                <YAxis
+                                                    domain={[0, 10]}
+                                                    label={{
+                                                        value: "Índice de Carga (0-10)",
+                                                        angle: -90,
+                                                        position: "left",
+                                                        offset: -5,
+                                                        style: { textAnchor: "middle" },
+                                                    }}
+                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                />
+                                                <Tooltip 
+                                                    labelFormatter={formatDate}
+                                                    contentStyle={{ 
+                                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                        border: '1px solid #e5e7eb',
+                                                        borderRadius: '8px',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }}
+                                                    formatter={(value: number, name: string, props?: WorkloadTooltipPayloadItem) => {
+                                                        if (!props?.payload) {
+                                                            return [`${value.toFixed(1)}/10`, name];
+                                                        }
+                                                        
+                                                        const payload = props.payload;
+                                                        const originalValue = name === "Carga de Trabajo" 
+                                                            ? payload.workload_score_original
+                                                            : payload.recovery_need_score_original;
+                                                        
+                                                        return [
+                                                            `${value.toFixed(1)}/10 (${originalValue?.toFixed(1) ?? 'N/A'})`,
+                                                            name
+                                                        ];
+                                                    }}
+                                                />
+                                                <Legend {...legendConfig} />
+                                                <Area
                                                     type="monotone"
                                                     dataKey="workload_score"
-                                                    stroke="#06b6d4"
-                                                    name="Carga de Trabajo"
+                                                    stroke="#4A67B3"
+                                                    fill="#4A67B3"
+                                                    fillOpacity={0.08}
                                                     strokeWidth={2}
+                                                    name="Carga de Trabajo"
+                                                    isAnimationActive={false}
                                                 />
-                                                <Line
+                                                <Area
                                                     type="monotone"
                                                     dataKey="recovery_need_score"
-                                                    stroke="#ec4899"
-                                                    name="Necesidad de Recuperación"
+                                                    stroke="#ef4444"
+                                                    fill="#ef4444"
+                                                    fillOpacity={0.06}
                                                     strokeWidth={2}
+                                                    name="Necesidad de Recuperación"
+                                                    isAnimationActive={false}
                                                 />
-                                            </LineChart>
+                                            </ComposedChart>
                                         </ResponsiveContainer>
                                     </div>
                                 </div>
-                            </ChartCard>
+                            </CompactChartCard>
                         </div>
                     )}
                 </>
@@ -564,6 +768,9 @@ export const ClientProgressTab: React.FC<ClientProgressTabProps> = ({
     );
 };
 
+// Exportar componente memoizado para evitar re-renders innecesarios
+export const ClientProgressTab = React.memo(ClientProgressTabComponent, arePropsEqual);
+
 // ========================================
 // HELPER COMPONENTS
 // ========================================
@@ -576,7 +783,7 @@ interface SummaryCardProps {
     riskLevel?: string | null;
 }
 
-const SummaryCard: React.FC<SummaryCardProps> = ({
+const SummaryCardComponent: React.FC<SummaryCardProps> = ({
     label,
     value,
     change,
@@ -612,19 +819,5 @@ const SummaryCard: React.FC<SummaryCardProps> = ({
     );
 };
 
-interface ChartCardProps {
-    title: string;
-    children: React.ReactNode;
-    className?: string;
-}
-
-const ChartCard: React.FC<ChartCardProps> = ({ title, children, className }) => {
-    return (
-        <div className={`bg-white rounded-lg shadow px-4 pt-4 pb-2 min-w-0 ${className ?? ""}`}>
-            <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-6">
-                {title}
-            </h3>
-            <div className="w-full min-w-0">{children}</div>
-        </div>
-    );
-};
+// Memoizar SummaryCard para evitar re-renders innecesarios
+const SummaryCard = React.memo(SummaryCardComponent);

@@ -18,17 +18,15 @@
  * @updated v5.4.1 - Corregidas dimensiones de gráficos y tipos TypeScript
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useCoherence } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import type {
     MetricCardProps,
-    ChartCardProps,
-    MonotonyWeekData,
-    StrainWeekData,
     MetricCardColor,
 } from "@nexia/shared/types/coherence";
+import { CompactChartCard } from "@/components/ui/cards";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
     LineChart,
@@ -56,7 +54,7 @@ interface ClientDailyCoherenceTabProps {
 // COMPONENTES HELPER
 // ========================================
 
-const MetricCard: React.FC<MetricCardProps> = ({
+const MetricCardComponent: React.FC<MetricCardProps> = ({
     title,
     value,
     subtitle,
@@ -80,16 +78,8 @@ const MetricCard: React.FC<MetricCardProps> = ({
     );
 };
 
-const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => {
-    return (
-        <div className="bg-white rounded-lg shadow px-4 pt-4 pb-2 min-w-0">
-            <h3 className={`${TYPOGRAPHY.cardTitle} mb-6`}>{title}</h3>
-            <div className="w-full min-w-0">
-    {children}
-</div>
-        </div>
-    );
-};
+// Memoizar MetricCard para evitar re-renders innecesarios
+const MetricCard = React.memo(MetricCardComponent);
 
 // ========================================
 // COMPONENTE PRINCIPAL
@@ -97,7 +87,15 @@ const ChartCard: React.FC<ChartCardProps> = ({ title, children }) => {
 
 type PeriodType = "week" | "month" | "training_block";
 
-export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = ({ clientId }) => {
+// Función de comparación personalizada para React.memo
+const areCoherencePropsEqual = (
+    prevProps: ClientDailyCoherenceTabProps,
+    nextProps: ClientDailyCoherenceTabProps
+): boolean => {
+    return prevProps.clientId === nextProps.clientId;
+};
+
+const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> = ({ clientId }) => {
     const [periodType, setPeriodType] = useState<PeriodType>("week");
     const {
         data,
@@ -120,6 +118,28 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
 
     const chartHeight = 400;
     const minChartHeight = 360;
+
+    // Handler memoizado para cambio de período
+    const handlePeriodChange = useCallback((period: PeriodType) => {
+        setPeriodType(period);
+    }, []);
+
+    // Normalizar datos de strain/load a escala 0-10 (memoizado para evitar recálculos innecesarios)
+    const normalizedStrainData = useMemo(() => {
+        if (!data.strain_by_week || data.strain_by_week.length === 0) return [];
+        
+        const maxLoad = Math.max(...data.strain_by_week.map(d => d.load || 0));
+        const maxStrain = Math.max(...data.strain_by_week.map(d => d.strain || 0));
+        const maxValue = Math.max(maxLoad, maxStrain);
+        
+        if (maxValue === 0) return [];
+        
+        return data.strain_by_week.map(d => ({
+            week: d.week,
+            load: maxValue > 0 ? (d.load / maxValue) * 10 : 0,
+            strain: maxValue > 0 ? (d.strain / maxValue) * 10 : 0,
+        }));
+    }, [data.strain_by_week]);
 
     // Loading state
     if (isLoading) {
@@ -167,7 +187,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setPeriodType(tab.id)}
+                            onClick={() => handlePeriodChange(tab.id)}
                             className={`
                                 relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[120px] text-center
                                 ${isActive
@@ -215,10 +235,10 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
             {/* Gráficos en 2 columnas: Adherence Overview y Scatter Plot */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico 1: Adherence Overview (Donut Chart con texto en el centro) */}
-                <ChartCard title="Adherencia - Sesiones Completadas">
+                <CompactChartCard title="Adherencia - Sesiones Completadas">
                     <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
                         <div className="relative w-full" style={{ height: `${chartHeight}px`, minHeight: `${chartHeight}px` }}>
-                            <ResponsiveContainer width="100%" height="100%">
+                            <ResponsiveContainer width="100%" height={chartHeight}>
                                 <PieChart>
                                     <Pie
                                         data={adherenceData as Array<{ name: string; value: number; [key: string]: string | number }>}
@@ -230,6 +250,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                         label={false}
                                         fill="#8884d8"
                                         dataKey="value"
+                                        isAnimationActive={false}
                                     >
                                         {adherenceData.map((entry, index) => (
                                             <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
@@ -248,11 +269,11 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                             </div>
                         </div>
                     </div>
-                </ChartCard>
+                </CompactChartCard>
 
                 {/* Gráfico 2: Prescribed vs Perceived Intensity (Scatter Plot) */}
                 {scatterData && scatterData.length > 0 && (
-                    <ChartCard title="Intensidad Prescrita vs Percibida">
+                    <CompactChartCard title="Intensidad Prescrita vs Percibida">
                         <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
                             <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
                                 <ResponsiveContainer width="100%" height={chartHeight}>
@@ -263,6 +284,8 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                             dataKey="x"
                                             name="Prescrita"
                                             domain={[0, 10]}
+                                            ticks={[0, 2, 4, 6, 8, 10]}
+                                            style={{ fontSize: '12px', fill: '#6b7280' }}
                                             label={{ value: "Intensidad Prescrita (RPE)", position: "insideBottom", offset: -5 }}
                                         />
                                         <YAxis
@@ -270,6 +293,8 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                             dataKey="y"
                                             name="Percibida"
                                             domain={[0, 10]}
+                                            ticks={[0, 2, 4, 6, 8, 10]}
+                                            style={{ fontSize: '12px', fill: '#6b7280' }}
                                             label={{ value: "Intensidad Percibida (RPE)", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
                                         />
                                         <Tooltip cursor={{ strokeDasharray: "3 3" }} />
@@ -286,7 +311,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                             name="Ideal (y=x)"
                                             isAnimationActive={false}
                                         />
-                                        <Scatter name="Sesiones" data={scatterData} fill="#4A67B3">
+                                        <Scatter name="Sesiones" data={scatterData} fill="#4A67B3" isAnimationActive={false}>
                                             {scatterData.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={colors[0]} />
                                             ))}
@@ -295,14 +320,14 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                 </ResponsiveContainer>
                             </div>
                         </div>
-                    </ChartCard>
+                    </CompactChartCard>
                 )}
             </div>
 
             {/* Gráficos en 2 columnas: Monotony y Strain & Load */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Gráfico 3: Monotony (Line Chart) */}
-                <ChartCard title="Monotonía">
+                <CompactChartCard title="Monotonía">
                     {data.monotony_by_week && data.monotony_by_week.length > 0 ? (
                         <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
                             <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
@@ -314,10 +339,13 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                         <CartesianGrid strokeDasharray="3 3" />
                                         <XAxis
                                             dataKey="week"
+                                            style={{ fontSize: '12px', fill: '#6b7280' }}
                                             label={{ value: "Semana", position: "insideBottom", offset: -5 }}
                                         />
                                         <YAxis
-                                            domain={[0, "dataMax + 1"]}
+                                            domain={[0, 10]}
+                                            ticks={[0, 2, 4, 6, 8, 10]}
+                                            style={{ fontSize: '12px', fill: '#6b7280' }}
                                             label={{ value: "Monotonía", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
                                         />
                                         <Tooltip />
@@ -326,9 +354,9 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                                             type="monotone"
                                             dataKey="monotony"
                                             stroke="#4A67B3"
-                                            strokeWidth={3}
+                                            strokeWidth={2}
                                             name="Monotonía"
-                                            dot={{ r: 6, fill: "#4A67B3" }}
+                                            dot={{ r: 4, fill: "#4A67B3" }}
                                             isAnimationActive={false}
                                             connectNulls={false}
                                         />
@@ -351,59 +379,48 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                             No hay datos de monotonía disponibles
                         </div>
                     )}
-                </ChartCard>
+                </CompactChartCard>
 
                 {/* Gráfico 4: Strain & Load (Bar + Line Chart) */}
-                <ChartCard title="Carga y Volumen">
-                    {data.strain_by_week && data.strain_by_week.length > 0 ? (() => {
-                        // ✅ FIX: Usar 'strain' en lugar de 'cumulative_strain'
-                        const maxLoad = Math.max(...data.strain_by_week.map(d => d.load || 0));
-                        const maxStrain = Math.max(...data.strain_by_week.map(d => d.strain || 0));
-                        const maxValue = Math.max(maxLoad, maxStrain);
-                        
-                        // Normalizar datos a escala 0-1000
-                        const normalizedData = data.strain_by_week.map(d => ({
-                            week: d.week,
-                            load: maxValue > 0 ? (d.load / maxValue) * 1000 : 0,
-                            strain: maxValue > 0 ? (d.strain / maxValue) * 1000 : 0,
-                        }));
-                        
-                        return (
-                            <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
-                                <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
-                                    <ResponsiveContainer width="100%" height={chartHeight}>
-                                        <ComposedChart
-                                            data={normalizedData}
-                                            margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
-                                        >
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis
-                                                dataKey="week"
-                                                label={{ value: "Semana", position: "insideBottom", offset: -5 }}
-                                            />
-                                            <YAxis
-                                                domain={[0, 1000]}
-                                                label={{ value: "Carga de Entrenamiento / Carga", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
-                                            />
-                                            <Tooltip />
-                                            <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
-                                            <Bar dataKey="load" fill="#94a3b8" name="Volumen" />
-                                            <Line
-                                                type="monotone"
-                                                dataKey="strain"
-                                                stroke="#4A67B3"
-                                                strokeWidth={3}
-                                                name="Carga Acumulada"
-                                                dot={{ r: 6, fill: "#4A67B3" }}
-                                                isAnimationActive={false}
-                                                connectNulls={false}
-                                            />
-                                        </ComposedChart>
-                                    </ResponsiveContainer>
-                                </div>
+                <CompactChartCard title="Carga y Volumen">
+                    {normalizedStrainData && normalizedStrainData.length > 0 ? (
+                        <div className="w-full flex items-center justify-center" style={{ minHeight: `${minChartHeight}px` }}>
+                            <div className="w-full" style={{ minHeight: `${minChartHeight}px` }}>
+                                <ResponsiveContainer width="100%" height={chartHeight}>
+                                    <ComposedChart
+                                        data={normalizedStrainData}
+                                        margin={{ top: 5, right: 10, left: 30, bottom: 60 }}
+                                    >
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis
+                                            dataKey="week"
+                                            style={{ fontSize: '12px', fill: '#6b7280' }}
+                                            label={{ value: "Semana", position: "insideBottom", offset: -5 }}
+                                        />
+                                        <YAxis
+                                            domain={[0, 10]}
+                                            ticks={[0, 2, 4, 6, 8, 10]}
+                                            style={{ fontSize: '12px', fill: '#6b7280' }}
+                                            label={{ value: "Índice de Carga (0-10)", angle: -90, position: "left", offset: -5, style: { textAnchor: "middle" } }}
+                                        />
+                                        <Tooltip />
+                                        <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
+                                        <Bar dataKey="load" fill="#94a3b8" name="Volumen" />
+                                        <Line
+                                            type="monotone"
+                                            dataKey="strain"
+                                            stroke="#4A67B3"
+                                            strokeWidth={2}
+                                            name="Carga Acumulada"
+                                            dot={{ r: 4, fill: "#4A67B3" }}
+                                            isAnimationActive={false}
+                                            connectNulls={false}
+                                        />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
                             </div>
-                        );
-                    })() : (
+                        </div>
+                    ) : (
                         <div
                             className="flex items-center justify-center w-full min-w-0 text-gray-500"
                             style={{ minHeight: `${minChartHeight}px` }}
@@ -411,7 +428,7 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
                             No hay datos de carga y volumen disponibles
                         </div>
                     )}
-                </ChartCard>
+                </CompactChartCard>
             </div>
 
             {/* Summary interpretativo (editable) con botón Edit */}
@@ -448,3 +465,6 @@ export const ClientDailyCoherenceTab: React.FC<ClientDailyCoherenceTabProps> = (
         </div>
     );
 };
+
+// Exportar componente memoizado para evitar re-renders innecesarios
+export const ClientDailyCoherenceTab = React.memo(ClientDailyCoherenceTabComponent, areCoherencePropsEqual);

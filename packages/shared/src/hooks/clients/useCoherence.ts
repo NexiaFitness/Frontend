@@ -172,21 +172,20 @@ export const useCoherence = (
     periodEnd?: string,
     periodType: "week" | "month" | "training_block" = "week"
 ): UseCoherenceReturn => {
-    // Si no se proporciona week ni periodStart/periodEnd, calcular según periodType
-    let effectivePeriodStart = periodStart;
-    let effectivePeriodEnd = periodEnd;
-    
-    if (!week && !periodStart && !periodEnd) {
+    // Memoizar cálculos de fechas para evitar recálculos innecesarios
+    // Solo se recalcula cuando cambia periodType
+    const dateRanges = useMemo(() => {
         if (periodType === "month") {
-            const monthRange = getCurrentMonthRange();
-            effectivePeriodStart = monthRange.start;
-            effectivePeriodEnd = monthRange.end;
+            return getCurrentMonthRange();
         } else if (periodType === "week") {
-            const weekRange = getCurrentWeekRange();
-            effectivePeriodStart = weekRange.start;
-            effectivePeriodEnd = weekRange.end;
+            return getCurrentWeekRange();
         }
-    }
+        return { start: "", end: "" };
+    }, [periodType]);
+
+    // Si no se proporciona week ni periodStart/periodEnd, usar rangos memoizados
+    const effectivePeriodStart = periodStart || (dateRanges.start || undefined);
+    const effectivePeriodEnd = periodEnd || (dateRanges.end || undefined);
 
     const { data: backendData, isLoading, isError } = useGetClientCoherenceQuery(
         {
@@ -197,7 +196,7 @@ export const useCoherence = (
             periodType,
         },
         {
-            refetchOnMountOrArgChange: true,
+            refetchOnMountOrArgChange: 30, // Refetch solo si los datos tienen más de 30 segundos
             refetchOnFocus: false,
             refetchOnReconnect: true,
         }
