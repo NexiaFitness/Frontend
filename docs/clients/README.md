@@ -1174,7 +1174,12 @@ const {
    - Incluye: gráficos, registros, analytics, validaciones, flujos
    - **Ruta:** `frontend/docs/clients/client-progress.md`
 
-4. **README.md** (este archivo)
+4. **client-coherence.md**
+   - Documentación completa del módulo de coherencia diaria
+   - Incluye: multi-granularidad, gráficos, navegación temporal, optimizaciones
+   - **Ruta:** `frontend/docs/clients/client-coherence.md`
+
+5. **README.md** (este archivo)
    - Índice y referencia rápida
    - Rutas de archivos completas
    - Resumen de funcionalidades
@@ -1186,6 +1191,7 @@ const {
 - Consultar `client-onboarding.md` para implementación del wizard
 - Consultar `client-edit.md` para implementación de edición
 - Consultar `client-progress.md` para implementación de progreso
+- Consultar `client-coherence.md` para implementación de coherencia diaria
 
 **Para seguimiento:**
 - Ver sección "Estado Actual" para saber qué está implementado

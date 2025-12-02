@@ -8,4 +8,10 @@
  */
 
 export * from "./clients";
+export * from "./clientFormData";
+export * from "./coherence";
+export * from "./progress";
+export * from "./fatigue";
+export * from "./sessions";
+export * from "./tests";
 

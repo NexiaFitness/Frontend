@@ -8,6 +8,7 @@
  */
 
 import { http, HttpResponse } from "msw"
+import { createMockClient } from "@/test-utils/fixtures/clients"
 
 export const getClientsHandler = http.get("*/clients", async () => {
     await new Promise((res) => setTimeout(res, 50))
@@ -29,4 +30,19 @@ export const getClientsHandler = http.get("*/clients", async () => {
         limit: 10
     }, { status: 200 })
 })
+
+// GET /clients/:id
+export const getClientHandler = http.get("*/clients/:id", async ({ params }) => {
+    await new Promise((res) => setTimeout(res, 100));
+    
+    const clientId = Number(params.id);
+    if (!clientId || clientId <= 0) {
+        return HttpResponse.json(
+            { detail: "Invalid client ID" },
+            { status: 400 }
+        );
+    }
+
+    return HttpResponse.json(createMockClient({ id: clientId }), { status: 200 });
+});
 

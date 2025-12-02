@@ -30,3 +30,50 @@ export const createClientHandler = http.post("*/clients", async ({ request }) =>
     }
 })
 
+/**
+ * Handler para error 500 al crear cliente
+ */
+export const createClientErrorHandler = http.post("*/clients", async () => {
+    await new Promise((res) => setTimeout(res, 100))
+    
+    return HttpResponse.json(
+        { detail: "Error creating client" },
+        { status: 500 }
+    )
+})
+
+/**
+ * Handler para error de validación 422 al crear cliente
+ */
+export const createClientValidationErrorHandler = http.post("*/clients", async () => {
+    await new Promise((res) => setTimeout(res, 100))
+    
+    return HttpResponse.json(
+        {
+            detail: [
+                {
+                    loc: ["body", "mail"],
+                    msg: "value is not a valid email address",
+                    type: "value_error.email"
+                }
+            ]
+        },
+        { status: 422 }
+    )
+})
+
+/**
+ * Handler para timeout al crear cliente
+ */
+export const createClientTimeoutHandler = http.post("*/clients", async () => {
+    await new Promise((res) => setTimeout(res, 150))
+    return new Response(null, { status: 408 })
+})
+
+/**
+ * Handler para error de red al crear cliente
+ */
+export const createClientNetworkErrorHandler = http.post("*/clients", async () => {
+    return HttpResponse.error()
+})
+

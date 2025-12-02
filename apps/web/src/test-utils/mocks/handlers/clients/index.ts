@@ -17,6 +17,11 @@ import { deleteClientHandler } from "./delete"
 export * from "./list"
 export * from "./create"
 export * from "./delete"
+export * from "./coherence"
+export * from "./progress"
+export * from "./fatigue"
+export * from "./sessions"
+export * from "./tests"
 
 // ===== ARRAY DE HANDLERS BÁSICOS (COMPATIBILIDAD) =====
 
