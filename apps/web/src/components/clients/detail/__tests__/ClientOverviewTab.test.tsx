@@ -56,6 +56,7 @@ import {
     createMockTrainingSession,
     createMockTestResult,
 } from "@/test-utils/fixtures/clients";
+import { GENDER_ENUM } from "@nexia/shared/types/client";
 
 describe("ClientOverviewTab", () => {
     const mockClient = createMockClient({
@@ -64,7 +65,7 @@ describe("ClientOverviewTab", () => {
         apellidos: "Pérez",
         mail: "juan@test.com",
         telefono: "+34612345678",
-        sexo: "M",
+        sexo: GENDER_ENUM.MASCULINO,
         id_passport: "12345678X",
         peso: 80,
         altura: 180,

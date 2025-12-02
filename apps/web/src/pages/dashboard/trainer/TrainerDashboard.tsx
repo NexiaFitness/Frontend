@@ -186,7 +186,7 @@ export const TrainerDashboard: React.FC = () => {
                                 {/* Crear Plan */}
                                 <div
                                     className="bg-blue-50 rounded-xl p-5 cursor-pointer hover:bg-blue-100 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={() => navigate("/dashboard/training-plans")}
+                                    onClick={() => navigate("/dashboard/training-plans/create")}
                                 >
                                     <div className="text-center">
                                         <div className="w-12 h-12 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-3">

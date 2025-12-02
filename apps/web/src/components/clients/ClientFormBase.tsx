@@ -20,7 +20,6 @@ import React from "react";
 import type { ClientFormData } from "@nexia/shared/types/client";
 import { useClientForm } from "@nexia/shared/hooks/clients/useClientForm";
 import { Button } from "@/components/ui/buttons";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { PersonalInfo } from "./shared/PersonalInfo";
 import { PhysicalMetrics } from "./shared/PhysicalMetrics";
 import { AnthropometricMetrics } from "./shared/AnthropometricMetrics";
@@ -59,7 +58,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
         <form onSubmit={onSubmit} className="space-y-10">
             {/* Datos personales */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={TYPOGRAPHY.sectionTitle}>Datos personales</h3>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Datos personales</h3>
                 <PersonalInfo
                     formData={formData}
                     errors={errors}
@@ -70,7 +69,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
 
             {/* Métricas físicas básicas */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={TYPOGRAPHY.sectionTitle}>Métricas físicas</h3>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Métricas físicas</h3>
                 <PhysicalMetrics
                     formData={formData}
                     errors={errors}
@@ -80,7 +79,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
 
             {/* Métricas antropométricas */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={TYPOGRAPHY.sectionTitle}>Antropometría</h3>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Antropometría</h3>
                 <AnthropometricMetrics
                     formData={formData}
                     errors={errors}
@@ -90,7 +89,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
 
             {/* Objetivos */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={TYPOGRAPHY.sectionTitle}>Objetivos</h3>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Objetivos</h3>
                 <TrainingGoals
                     formData={formData}
                     errors={errors}
@@ -100,7 +99,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
 
             {/* Experiencia */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={TYPOGRAPHY.sectionTitle}>Experiencia</h3>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Experiencia</h3>
                 <Experience
                     formData={formData}
                     errors={errors}
@@ -110,7 +109,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
 
             {/* Información de salud */}
             <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={TYPOGRAPHY.sectionTitle}>Salud</h3>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Salud</h3>
                 <HealthInfo
                     formData={formData}
                     errors={errors}

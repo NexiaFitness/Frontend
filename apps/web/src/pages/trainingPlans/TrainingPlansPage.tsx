@@ -269,7 +269,6 @@ export const TrainingPlansPage: React.FC = () => {
     };
 
     const handleCreatePlan = () => {
-        // TODO: Navegar a página de crear plan o abrir modal
         navigate("/dashboard/training-plans/create");
     };
 

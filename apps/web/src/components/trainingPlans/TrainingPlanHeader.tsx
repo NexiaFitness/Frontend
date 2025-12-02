@@ -20,7 +20,6 @@ import { useNavigate } from "react-router-dom";
 import type { TrainingPlan } from "@nexia/shared/types/training";
 import { useDeleteTrainingPlanMutation } from "@nexia/shared/api/trainingPlansApi";
 import { Button } from "@/components/ui/buttons";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface TrainingPlanHeaderProps {
     plan: TrainingPlan;
@@ -32,7 +31,7 @@ interface TrainingPlanHeaderProps {
 export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     plan,
     clientName,
-    onRefresh,
+    onRefresh: _onRefresh,
     onAddMacrocycle,
 }) => {
     const navigate = useNavigate();
@@ -103,16 +102,21 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
 
     return (
         <div className="bg-white border-b border-gray-200">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-                {/* Top row: Icon + Info + Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-                    {/* Left: Icon + Info */}
-                    <div className="flex items-center gap-4 lg:gap-6">
+            <div className="px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+                {/* Fila 1: Icono + Nombre + Métricas + Actions */}
+                <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
+                    {/* Left: Icono + Info */}
+                    <div className="flex items-start gap-4 flex-1">
                         {/* Plan Icon */}
                         <div className="flex-shrink-0">
-                            <div className="w-20 h-20 lg:w-24 lg:h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl flex items-center justify-center text-white shadow-lg">
+                            <div 
+                                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md"
+                                style={{
+                                    background: 'linear-gradient(135deg, #4A67B3 0%, #3a5db3 50%, #2d4a9e 100%)',
+                                }}
+                            >
                                 <svg
-                                    className="w-10 h-10 lg:w-12 lg:h-12"
+                                    className="w-8 h-8"
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -128,49 +132,53 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                         </div>
 
                         {/* Plan Info */}
-                        <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-3 mb-2">
-                                <h1 className={`${TYPOGRAPHY.cardTitle} text-gray-900`}>
-                                    {plan.name}
-                                </h1>
-                                {getStatusBadge()}
-                            </div>
+                        <div className="flex-1">
+                            {/* Nombre */}
+                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+                                {plan.name}
+                            </h1>
 
-                            {/* Metrics row */}
-                            <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600">
-                                <span className="flex items-center gap-1">
-                                    <span className="font-medium">Objetivo:</span> {plan.goal}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <span className="font-medium">Duración:</span> {getDuration()}
-                                </span>
-                                <span className="flex items-center gap-1">
-                                    <span className="font-medium">Fechas:</span>{" "}
-                                    {formatDate(plan.start_date)} → {formatDate(plan.end_date)}
-                                </span>
-                                {clientName && (
-                                    <span className="flex items-center gap-1">
-                                        <span className="font-medium">Cliente:</span> {clientName}
-                                    </span>
+                            {/* Metrics Grid - Similar a ClientHeader */}
+                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-1 text-sm">
+                                <div>
+                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Objetivo</span>
+                                    <p className="text-gray-900 font-medium">{plan.goal}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Duración</span>
+                                    <p className="text-gray-900 font-medium">{getDuration()}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Inicio</span>
+                                    <p className="text-gray-900 font-medium">{formatDate(plan.start_date)}</p>
+                                </div>
+                                <div>
+                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Fin</span>
+                                    <p className="text-gray-900 font-medium">{formatDate(plan.end_date)}</p>
+                                </div>
+                                {clientName ? (
+                                    <div>
+                                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Cliente</span>
+                                        <p className="text-gray-900 font-medium">{clientName}</p>
+                                    </div>
+                                ) : (
+                                    <div>
+                                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Estado</span>
+                                        <div className="mt-0.5">
+                                            {getStatusBadge()}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
-
-                            {/* Description (if exists) */}
-                            {plan.description && (
-                                <p className="text-sm text-gray-600 mt-2 line-clamp-2">
-                                    {plan.description}
-                                </p>
-                            )}
                         </div>
                     </div>
 
-                    {/* Right: Actions */}
-                    <div className="flex flex-wrap gap-2 lg:gap-3">
+                    {/* Right: Actions - Botones en columna */}
+                    <div className="flex flex-col gap-2">
                         <Button
                             variant="primary"
                             size="sm"
                             onClick={onAddMacrocycle}
-                            className="flex-1 lg:flex-initial"
                         >
                             + Añadir Macrociclo
                         </Button>
@@ -178,7 +186,6 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             variant="outline"
                             size="sm"
                             onClick={handleEdit}
-                            className="flex-1 lg:flex-initial"
                         >
                             Editar Plan
                         </Button>
@@ -187,21 +194,39 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             size="sm"
                             onClick={handleDelete}
                             disabled={isDeleting}
-                            className="flex-1 lg:flex-initial text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         >
                             {isDeleting ? "Eliminando..." : "Eliminar Plan"}
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onRefresh}
-                            className="lg:ml-2"
-                            title="Actualizar datos"
-                        >
-                            ↻
-                        </Button>
                     </div>
                 </div>
+
+                {/* Línea azul debajo de Fila 1 */}
+                <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+
+                {/* Fila 2: Estado y Descripción */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                    {/* Estado */}
+                    <div>
+                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Estado</span>
+                        <div className="mt-0.5">
+                            {getStatusBadge()}
+                        </div>
+                    </div>
+
+                    {/* Descripción (si existe) */}
+                    {plan.description && (
+                        <div className="md:col-span-2 lg:col-span-3">
+                            <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Descripción</span>
+                            <p className="text-gray-900 font-medium text-sm mt-0.5">{plan.description}</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Línea azul debajo de Fila 2 (si hay descripción) */}
+                {plan.description && (
+                    <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                )}
             </div>
         </div>
     );

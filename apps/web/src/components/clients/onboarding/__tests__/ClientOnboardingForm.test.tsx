@@ -21,10 +21,8 @@ import { ClientOnboardingForm } from "../ClientOnboardingForm";
 import { server } from "@/test-utils/utils/msw";
 import {
     createClientErrorHandler,
-    createClientValidationErrorHandler,
 } from "@/test-utils/mocks/handlers/clients";
 import {
-    mockNavigate,
     clearRouterMocks,
     setAuthenticatedUser,
 } from "@/test-utils/mocks";

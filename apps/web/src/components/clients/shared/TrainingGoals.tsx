@@ -24,41 +24,45 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
 }) => {
     return (
         <div className="space-y-6">
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Objetivo principal *</label>
-                <select
-                    value={formData.objetivo_entrenamiento || ""}
-                    onChange={(e) =>
-                        updateField("objetivo_entrenamiento", e.target.value as typeof formData.objetivo_entrenamiento)
-                    }
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                >
-                    <option value="">Selecciona un objetivo</option>
-                    <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
-                    <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
-                    <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
-                </select>
-                {errors.objetivo_entrenamiento && (
-                    <p className="text-red-600 text-sm">{errors.objetivo_entrenamiento}</p>
-                )}
+            {/* Objetivo principal y Fecha en dos columnas */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Columna 1: Objetivo principal */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Objetivo principal *</label>
+                    <select
+                        value={formData.objetivo_entrenamiento || ""}
+                        onChange={(e) =>
+                            updateField("objetivo_entrenamiento", e.target.value as typeof formData.objetivo_entrenamiento)
+                        }
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                    >
+                        <option value="">Selecciona un objetivo</option>
+                        <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
+                        <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
+                        <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
+                    </select>
+                    {errors.objetivo_entrenamiento && (
+                        <p className="text-red-600 text-sm">{errors.objetivo_entrenamiento}</p>
+                    )}
+                </div>
+
+                {/* Columna 2: Fecha de definición del objetivo */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Fecha de definición del objetivo (opcional)</label>
+                    <input
+                        type="date"
+                        value={formData.fecha_definicion_objetivo || ""}
+                        onChange={(e) => updateField("fecha_definicion_objetivo", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        max={new Date().toISOString().split('T')[0]}
+                    />
+                    {errors.fecha_definicion_objetivo && (
+                        <p className="text-red-600 text-sm">{errors.fecha_definicion_objetivo}</p>
+                    )}
+                </div>
             </div>
 
-            {/* Fecha de definición del objetivo */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Fecha de definición del objetivo (opcional)</label>
-                <input
-                    type="date"
-                    value={formData.fecha_definicion_objetivo || ""}
-                    onChange={(e) => updateField("fecha_definicion_objetivo", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    max={new Date().toISOString().split('T')[0]}
-                />
-                {errors.fecha_definicion_objetivo && (
-                    <p className="text-red-600 text-sm">{errors.fecha_definicion_objetivo}</p>
-                )}
-            </div>
-
-            {/* Descripción detallada de objetivos */}
+            {/* Descripción detallada de objetivos (ancho completo) */}
             <div>
                 <label className={TYPOGRAPHY.inputLabel}>Descripción detallada de objetivos (opcional)</label>
                 <textarea

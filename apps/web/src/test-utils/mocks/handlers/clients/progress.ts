@@ -67,8 +67,8 @@ export const getProgressAnalyticsErrorHandler = http.get("*/progress/analytics/:
     );
 });
 
-// POST /progress/
-export const createProgressRecordHandler = http.post("*/progress/", async ({ request }) => {
+// Helper function para crear un registro de progreso (reutilizable en tests)
+export const createProgressRecordFromRequest = async (request: Request) => {
     await new Promise((res) => setTimeout(res, 100));
     
     try {
@@ -91,6 +91,11 @@ export const createProgressRecordHandler = http.post("*/progress/", async ({ req
             { status: 400 }
         );
     }
+};
+
+// POST /progress/
+export const createProgressRecordHandler = http.post("*/progress/", async ({ request }) => {
+    return createProgressRecordFromRequest(request);
 });
 
 export const createProgressRecordErrorHandler = http.post("*/progress/", async () => {

@@ -222,7 +222,7 @@ export const TrainingPlanDetail: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                <div className="min-h-screen bg-gray-50">
+                <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     {/* Header con info del plan y actions */}
                     <TrainingPlanHeader
                         plan={plan}
@@ -231,33 +231,54 @@ export const TrainingPlanDetail: React.FC = () => {
                         onAddMacrocycle={handleAddMacrocycle}
                     />
 
-                    {/* Tabs Navigation */}
-                    <div className="bg-white border-b border-gray-200">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <nav className="flex space-x-8" aria-label="Tabs">
-                                {TABS.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`
-                                            py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer
-                                            ${
-                                                activeTab === tab.id
-                                                    ? "border-indigo-500 text-indigo-600"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                            }
-                                        `}
-                                        aria-current={activeTab === tab.id ? "page" : undefined}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                    {/* Tabs Navigation - Separado del header */}
+                    <div className="mt-6 px-4 sm:px-6 lg:px-8">
+                        <div className="bg-white rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
+                            <nav 
+                                className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#4A67B3]/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
+                                aria-label="Tabs" 
+                                style={{ 
+                                    WebkitOverflowScrolling: 'touch',
+                                }}
+                            >
+                                <style>{`
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar {
+                                        height: 4px;
+                                    }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-track {
+                                        background: transparent;
+                                    }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-thumb {
+                                        background-color: #4A67B3 !important;
+                                        border-radius: 2px;
+                                    }
+                                `}</style>
+                                {TABS.map((tab) => {
+                                    const isActive = activeTab === tab.id;
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            className={`
+                                                relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center
+                                                ${isActive
+                                                    ? "text-[#4A67B3]"
+                                                    : "text-gray-500 hover:text-gray-700"
+                                                }
+                                                cursor-pointer
+                                            `}
+                                            aria-current={isActive ? "page" : undefined}
+                                        >
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
                             </nav>
                         </div>
                     </div>
 
                     {/* Tab Content */}
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         {renderTabContent()}
                     </div>
                 </div>

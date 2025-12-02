@@ -20,7 +20,7 @@ import { Alert } from "@/components/ui/feedback/Alert";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { ClientEditForm } from "@/components/clients/forms/ClientEditForm";
 import { Button } from "@/components/ui/buttons";
-import { TYPOGRAPHY } from "@/utils/typography";
+import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 
 export const ClientEdit: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -105,30 +105,21 @@ export const ClientEdit: React.FC = () => {
         <>
             <DashboardNavbar menuItems={menuItems} />
             <TrainerSideMenu />
-            <DashboardLayout>
-                <div className="min-h-screen bg-white -mt-16 md:-mt-18 lg:-mt-20 pt-4 lg:pt-6 pb-12 lg:pb-20">
-                    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-                        {/* Header */}
-                        <div className="mb-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <h1 className={`${TYPOGRAPHY.pageTitle} text-gray-900`}>
-                                    Editar Cliente
-                                </h1>
-                                <Button
-                                    variant="outline"
-                                    onClick={() => navigate(`/dashboard/clients/${clientId}`)}
-                                >
-                                    Cancelar
-                                </Button>
-                            </div>
-                            <p className="text-gray-600">
-                                Modifica los datos personales, objetivos y métricas del cliente.
-                            </p>
-                        </div>
 
-                        {/* Form */}
-                        <ClientEditForm client={client} onSuccess={handleSuccess} />
-                    </div>
+            <DashboardLayout>
+                {/* Encabezado responsive igual a dashboards */}
+                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
+                    <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
+                        Editar Cliente
+                    </h2>
+                    <p className={TYPOGRAPHY_COMBINATIONS.dashboardHeroSubtitle}>
+                        Modifica los datos personales, objetivos y métricas del cliente
+                    </p>
+                </div>
+
+                {/* Contenido principal con ancho completo */}
+                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
+                    <ClientEditForm client={client} onSuccess={handleSuccess} />
                 </div>
             </DashboardLayout>
         </>

@@ -27,124 +27,130 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({
     isEditMode = false,
 }) => {
     return (
-        <div className="space-y-6">
-            {/* Nombre */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Nombre *</label>
-                <input
-                    type="text"
-                    value={formData.nombre}
-                    onChange={(e) => updateField("nombre", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    placeholder="Ej: Juan"
-                />
-                {errors.nombre && <p className="text-red-600 text-sm">{errors.nombre}</p>}
-            </div>
-
-            {/* Apellidos */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Apellidos *</label>
-                <input
-                    type="text"
-                    value={formData.apellidos}
-                    onChange={(e) => updateField("apellidos", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    placeholder="Ej: Pérez Gómez"
-                />
-                {errors.apellidos && (
-                    <p className="text-red-600 text-sm">{errors.apellidos}</p>
-                )}
-            </div>
-
-            {/* Email */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Correo electrónico *</label>
-                <input
-                    type="email"
-                    value={formData.mail}
-                    onChange={(e) => updateField("mail", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    placeholder="ejemplo@correo.com"
-                />
-                {errors.mail && <p className="text-red-600 text-sm">{errors.mail}</p>}
-            </div>
-
-            {/* Confirm Email - Solo en modo creación */}
-            {!isEditMode && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Columna 1 */}
+            <div className="space-y-6">
+                {/* Nombre */}
                 <div>
-                    <label className={TYPOGRAPHY.inputLabel}>Confirmar correo *</label>
+                    <label className={TYPOGRAPHY.inputLabel}>Nombre *</label>
+                    <input
+                        type="text"
+                        value={formData.nombre}
+                        onChange={(e) => updateField("nombre", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        placeholder="Ej: Juan"
+                    />
+                    {errors.nombre && <p className="text-red-600 text-sm">{errors.nombre}</p>}
+                </div>
+
+                {/* Email */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Correo electrónico *</label>
                     <input
                         type="email"
-                        value={formData.confirmEmail || ""}
-                        onChange={(e) => updateField("confirmEmail", e.target.value)}
+                        value={formData.mail}
+                        onChange={(e) => updateField("mail", e.target.value)}
                         className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                        placeholder="Repite tu correo"
+                        placeholder="ejemplo@correo.com"
                     />
-                    {errors.confirmEmail && (
-                        <p className="text-red-600 text-sm">{errors.confirmEmail}</p>
+                    {errors.mail && <p className="text-red-600 text-sm">{errors.mail}</p>}
+                </div>
+
+                {/* Teléfono */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Teléfono</label>
+                    <input
+                        type="tel"
+                        value={formData.telefono || ""}
+                        onChange={(e) => updateField("telefono", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        placeholder="+34 600 000 000"
+                    />
+                    {errors.telefono && <p className="text-red-600 text-sm">{errors.telefono}</p>}
+                </div>
+
+                {/* DNI/Pasaporte */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>DNI/Pasaporte (opcional)</label>
+                    <input
+                        type="text"
+                        value={formData.id_passport || ""}
+                        onChange={(e) => updateField("id_passport", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        placeholder="12345678X"
+                    />
+                    {errors.id_passport && (
+                        <p className="text-red-600 text-sm">{errors.id_passport}</p>
                     )}
                 </div>
-            )}
-
-            {/* Teléfono */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Teléfono</label>
-                <input
-                    type="tel"
-                    value={formData.telefono || ""}
-                    onChange={(e) => updateField("telefono", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    placeholder="+34 600 000 000"
-                />
-                {errors.telefono && <p className="text-red-600 text-sm">{errors.telefono}</p>}
             </div>
 
-            {/* Sexo */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Sexo</label>
-                <select
-                    value={formData.sexo || ""}
-                    onChange={(e) => updateField("sexo", e.target.value as typeof formData.sexo)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                >
-                    <option value="">Selecciona una opción</option>
-                    <option value={GENDER_ENUM.MASCULINO}>Masculino</option>
-                    <option value={GENDER_ENUM.FEMENINO}>Femenino</option>
-                </select>
-                {errors.sexo && <p className="text-red-600 text-sm">{errors.sexo}</p>}
-            </div>
+            {/* Columna 2 */}
+            <div className="space-y-6">
+                {/* Apellidos */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Apellidos *</label>
+                    <input
+                        type="text"
+                        value={formData.apellidos}
+                        onChange={(e) => updateField("apellidos", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        placeholder="Ej: Pérez Gómez"
+                    />
+                    {errors.apellidos && (
+                        <p className="text-red-600 text-sm">{errors.apellidos}</p>
+                    )}
+                </div>
 
-            {/* DNI/Pasaporte */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>DNI/Pasaporte (opcional)</label>
-                <input
-                    type="text"
-                    value={formData.id_passport || ""}
-                    onChange={(e) => updateField("id_passport", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    placeholder="12345678X"
-                />
-                {errors.id_passport && (
-                    <p className="text-red-600 text-sm">{errors.id_passport}</p>
+                {/* Confirm Email - Solo en modo creación */}
+                {!isEditMode && (
+                    <div>
+                        <label className={TYPOGRAPHY.inputLabel}>Confirmar correo *</label>
+                        <input
+                            type="email"
+                            value={formData.confirmEmail || ""}
+                            onChange={(e) => updateField("confirmEmail", e.target.value)}
+                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            placeholder="Repite tu correo"
+                        />
+                        {errors.confirmEmail && (
+                            <p className="text-red-600 text-sm">{errors.confirmEmail}</p>
+                        )}
+                    </div>
                 )}
-            </div>
 
-            {/* Fecha de nacimiento */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Fecha de nacimiento (opcional)</label>
-                <input
-                    type="date"
-                    value={formData.birthdate || ""}
-                    onChange={(e) => updateField("birthdate", e.target.value)}
-                    className="w-full border rounded-lg p-2 bg-white text-slate-800"
-                    max={new Date().toISOString().split('T')[0]}
-                />
-                <p className="text-xs text-slate-500 mt-1">
-                    Alternativa a edad. Si proporcionas esta fecha, puedes omitir el campo de edad.
-                </p>
-                {errors.birthdate && (
-                    <p className="text-red-600 text-sm">{errors.birthdate}</p>
-                )}
+                {/* Sexo */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Sexo</label>
+                    <select
+                        value={formData.sexo || ""}
+                        onChange={(e) => updateField("sexo", e.target.value as typeof formData.sexo)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                    >
+                        <option value="">Selecciona una opción</option>
+                        <option value={GENDER_ENUM.MASCULINO}>Masculino</option>
+                        <option value={GENDER_ENUM.FEMENINO}>Femenino</option>
+                    </select>
+                    {errors.sexo && <p className="text-red-600 text-sm">{errors.sexo}</p>}
+                </div>
+
+                {/* Fecha de nacimiento */}
+                <div>
+                    <label className={TYPOGRAPHY.inputLabel}>Fecha de nacimiento (opcional)</label>
+                    <input
+                        type="date"
+                        value={formData.birthdate || ""}
+                        onChange={(e) => updateField("birthdate", e.target.value)}
+                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        max={new Date().toISOString().split('T')[0]}
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                        Alternativa a edad. Si proporcionas esta fecha, puedes omitir el campo de edad.
+                    </p>
+                    {errors.birthdate && (
+                        <p className="text-red-600 text-sm">{errors.birthdate}</p>
+                    )}
+                </div>
             </div>
         </div>
     );

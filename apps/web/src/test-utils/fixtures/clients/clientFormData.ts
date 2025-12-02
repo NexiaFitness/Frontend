@@ -9,6 +9,7 @@
  */
 
 import type { ClientFormData } from "@nexia/shared/types/client";
+import { GENDER_ENUM } from "@nexia/shared/types/client";
 
 /**
  * Crea datos iniciales vacíos para el formulario
@@ -41,7 +42,7 @@ export const createCompleteValidFormData = (overrides: Partial<ClientFormData> =
     mail: "juan@test.com",
     confirmEmail: "juan@test.com",
     telefono: "+34612345678",
-    sexo: "M",
+    sexo: GENDER_ENUM.MASCULINO,
     id_passport: "12345678X",
     birthdate: "1990-01-15",
     

@@ -27,22 +27,15 @@ import {
 import {
     createProgressRecordHandler,
     createProgressRecordErrorHandler,
+    createProgressRecordFromRequest,
 } from "@/test-utils/mocks/handlers/clients/progress";
 import {
     clearRouterMocks,
     setAuthenticatedUser,
 } from "@/test-utils/mocks";
 import { validTrainerUser } from "@/test-utils/fixtures/auth";
-import { createMockClient } from "@/test-utils/fixtures/clients";
 
 describe("ProgressForm", () => {
-    const mockClient = createMockClient({
-        id: 1,
-        nombre: "Juan",
-        apellidos: "Pérez",
-        altura: 180, // En cm
-        fecha_alta: "2025-01-01",
-    });
 
     beforeEach(() => {
         clearRouterMocks();
@@ -111,7 +104,7 @@ describe("ProgressForm", () => {
                 getClientHandler,
                 http.post("*/progress/", async ({ request }) => {
                     mockCreateProgressRecord();
-                    return createProgressRecordHandler({ request } as any);
+                    return createProgressRecordFromRequest(request);
                 })
             );
         });
@@ -335,7 +328,7 @@ describe("ProgressForm", () => {
             server.use(
                 http.post("*/progress/", async ({ request }) => {
                     await new Promise((res) => setTimeout(res, 200)); // Delay para capturar loading
-                    return createProgressRecordHandler({ request } as any);
+                    return createProgressRecordFromRequest(request);
                 })
             );
 

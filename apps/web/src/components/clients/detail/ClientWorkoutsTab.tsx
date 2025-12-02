@@ -26,6 +26,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { TrainingPlan, TrainingSession } from "@nexia/shared/types/training";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -173,6 +174,12 @@ interface PlansSubTabProps {
 }
 
 const PlansSubTab: React.FC<PlansSubTabProps> = ({ clientId, trainingPlans }) => {
+    const navigate = useNavigate();
+
+    const handleCreatePlan = () => {
+        navigate(`/dashboard/training-plans/create?clientId=${clientId}`);
+    };
+
     return (
         <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
@@ -182,7 +189,7 @@ const PlansSubTab: React.FC<PlansSubTabProps> = ({ clientId, trainingPlans }) =>
                 <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => alert(`Crear Plan de Entrenamiento para cliente ${clientId}`)}
+                    onClick={handleCreatePlan}
                 >
                     + Nuevo Plan
                 </Button>
