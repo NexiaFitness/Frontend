@@ -38,6 +38,53 @@ export interface UseCoherenceReturn {
 }
 
 /**
+ * Formatea period_start en etiqueta legible según period_type
+ * Frontend controla la presentación (no confía en period_label del backend)
+ */
+const formatPeriodLabel = (
+    periodStart: string,
+    periodType: "week" | "month" | "training_block" | "year",
+    index: number
+): string => {
+    try {
+        const date = new Date(periodStart);
+        
+        switch (periodType) {
+            case "week":
+                // Vista semanal: Lun, Mar, Mié, Jue, Vie, Sáb, Dom
+                const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+                return dayNames[date.getDay()];
+            
+            case "month":
+                // Vista mensual: S1, S2, S3, S4, S5 (semanas del mes)
+                // Calcular semana del mes basado en el día
+                const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+                const dayOfMonth = date.getDate();
+                const weekOfMonth = Math.ceil((dayOfMonth + firstDayOfMonth.getDay()) / 7);
+                return `S${weekOfMonth}`;
+            
+            case "year":
+                // Vista anual: Ene, Feb, Mar, Abr, etc.
+                const monthNames = [
+                    "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                    "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+                ];
+                return monthNames[date.getMonth()];
+            
+            case "training_block":
+                // Para training_block, usar S1, S2, etc. (similar a month)
+                return `S${index + 1}`;
+            
+            default:
+                return periodStart;
+        }
+    } catch {
+        // Fallback si hay error parseando la fecha
+        return periodStart;
+    }
+};
+
+/**
  * Transforma datos del backend al formato esperado por el componente
  */
 const transformBackendData = (
@@ -58,27 +105,142 @@ const transformBackendData = (
             perceived: point.perceived_srpe,
         }));
 
+    // Helper: Completar datos faltantes para mostrar todos los períodos en el eje X
+    const completePeriodData = <T extends { week: string }>(
+        data: T[],
+        periodType: "week" | "month" | "training_block" | "year",
+        periodStart: string,
+        periodEnd: string,
+        getDefaultValue: (label: string, index: number) => T
+    ): T[] => {
+        if (periodType === "week") {
+            // Generar todos los días de la semana (Lun-Dom) basado en period_start
+            const startDate = new Date(periodStart);
+            const dayNames = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+            const completeData: T[] = [];
+            
+            // Crear un mapa de datos existentes por label del día
+            const dataMap = new Map<string, T>();
+            data.forEach((item) => {
+                dataMap.set(item.week, item);
+            });
+            
+            // Generar los 7 días de la semana
+            for (let i = 0; i < 7; i++) {
+                const currentDate = new Date(startDate);
+                currentDate.setDate(startDate.getDate() + i);
+                const dayIndex = currentDate.getDay(); // 0=Dom, 1=Lun, ..., 6=Sáb
+                const dayLabel = dayNames[dayIndex];
+                
+                const existingData = dataMap.get(dayLabel);
+                if (existingData) {
+                    completeData.push(existingData);
+                } else {
+                    completeData.push(getDefaultValue(dayLabel, i));
+                }
+            }
+            return completeData;
+        } else if (periodType === "year") {
+            // Generar todos los meses del año (Ene-Dic)
+            const monthNames = [
+                "Ene", "Feb", "Mar", "Abr", "May", "Jun",
+                "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"
+            ];
+            const completeData: T[] = [];
+            
+            // Crear un mapa de datos existentes por mes
+            const dataMap = new Map<string, T>();
+            data.forEach((item) => {
+                const monthIndex = monthNames.indexOf(item.week);
+                if (monthIndex !== -1) {
+                    dataMap.set(item.week, item);
+                }
+            });
+            
+            // Generar los 12 meses
+            for (let month = 0; month < 12; month++) {
+                const monthLabel = monthNames[month];
+                const existingData = dataMap.get(monthLabel);
+                
+                if (existingData) {
+                    completeData.push(existingData);
+                } else {
+                    completeData.push(getDefaultValue(monthLabel, month));
+                }
+            }
+            return completeData;
+        }
+        
+        // Para month y training_block, devolver datos tal cual
+        return data;
+    };
+
     // Transformar monotony_strain_data a monotony_by_week
-    const monotonyByWeek: MonotonyWeekData[] = backendData.monotony_strain_data
-        .filter(item => item.monotony !== null && item.monotony !== undefined && !isNaN(item.monotony))
-        .map((item, index) => ({
-            week: `W${index + 1}`, // Formato simplificado
-            monotony: typeof item.monotony === 'number' && item.monotony > 10 ? 10 : item.monotony,
-        }));
+    // Frontend controla las etiquetas según period_type
+    const monotonyByWeekRaw: MonotonyWeekData[] = backendData.monotony_strain_data
+        .filter((item) => item.monotony !== null && item.monotony !== undefined && !isNaN(item.monotony))
+        .map((item, index) => {
+            const readableLabel = formatPeriodLabel(
+                item.period_start,
+                backendData.period_type,
+                index
+            );
+            const monotonyValue =
+                typeof item.monotony === "number" && item.monotony > 10 ? 10 : item.monotony;
+            return {
+                week: readableLabel,
+                monotony: monotonyValue,
+            };
+        });
+
+    // Completar datos faltantes para semana y año
+    // Usar 0 para períodos sin datos: línea continua (mejor UX) y todos los períodos visibles en eje X
+    const monotonyByWeek = completePeriodData(
+        monotonyByWeekRaw,
+        backendData.period_type,
+        backendData.period_start,
+        backendData.period_end,
+        (label) => ({ week: label, monotony: 0 })
+    );
 
     // Transformar monotony_strain_data a strain_by_week
-    const strainByWeek: StrainWeekData[] = backendData.monotony_strain_data
-        .filter(item => 
-            item.weekly_load !== null && item.weekly_load !== undefined && !isNaN(item.weekly_load) &&
-            item.strain !== null && item.strain !== undefined && !isNaN(item.strain) &&
-            item.cumulative_strain !== null && item.cumulative_strain !== undefined && !isNaN(item.cumulative_strain)
+    // Frontend controla las etiquetas según period_type
+    const strainByWeekRaw: StrainWeekData[] = backendData.monotony_strain_data
+        .filter(
+            (item) =>
+                item.period_load !== null &&
+                item.period_load !== undefined &&
+                !isNaN(item.period_load) &&
+                item.strain !== null &&
+                item.strain !== undefined &&
+                !isNaN(item.strain) &&
+                item.cumulative_strain !== null &&
+                item.cumulative_strain !== undefined &&
+                !isNaN(item.cumulative_strain)
         )
-        .map((item, index) => ({
-            week: `W${index + 1}`, // Formato simplificado
-            load: item.weekly_load,
-            strain: item.strain,
-            cumulative_strain: item.cumulative_strain,
-        }));
+        .map((item, index) => {
+            const readableLabel = formatPeriodLabel(
+                item.period_start,
+                backendData.period_type,
+                index
+            );
+            return {
+                week: readableLabel,
+                load: item.period_load,
+                strain: item.strain,
+                cumulative_strain: item.cumulative_strain,
+            };
+        });
+
+    // Completar datos faltantes para semana y año
+    // Usar 0 para períodos sin datos: línea continua (mejor UX) y todos los períodos visibles en eje X
+    const strainByWeek = completePeriodData(
+        strainByWeekRaw,
+        backendData.period_type,
+        backendData.period_start,
+        backendData.period_end,
+        (label) => ({ week: label, load: 0, strain: 0, cumulative_strain: 0 })
+    );
 
     return {
         adherence_percentage: backendData.kpis.adherence_percentage,
@@ -157,6 +319,35 @@ const getCurrentMonthRange = (): { start: string; end: string } => {
 };
 
 /**
+ * Calcula el rango de fechas del año actual (1 enero a 31 diciembre)
+ * Retorna { start: "YYYY-MM-DD", end: "YYYY-MM-DD" }
+ */
+const getCurrentYearRange = (): { start: string; end: string } => {
+    const now = new Date();
+    
+    // Primer día del año
+    const firstDay = new Date(now.getFullYear(), 0, 1);
+    firstDay.setHours(0, 0, 0, 0);
+    
+    // Último día del año
+    const lastDay = new Date(now.getFullYear(), 11, 31);
+    lastDay.setHours(23, 59, 59, 999);
+    
+    // Formatear como YYYY-MM-DD
+    const formatDate = (date: Date): string => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0");
+        const day = String(date.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+    };
+    
+    return {
+        start: formatDate(firstDay),
+        end: formatDate(lastDay),
+    };
+};
+
+/**
  * Hook para obtener y transformar datos de coherence
  * @param clientId - ID del cliente
  * @param week - Semana en formato ISO (opcional, ej: "2025-W03"). Si no se proporciona, usa la semana actual
@@ -170,7 +361,7 @@ export const useCoherence = (
     week?: string,
     periodStart?: string,
     periodEnd?: string,
-    periodType: "week" | "month" | "training_block" = "week"
+    periodType: "week" | "month" | "training_block" | "year" = "week"
 ): UseCoherenceReturn => {
     // Memoizar cálculos de fechas para evitar recálculos innecesarios
     // Solo se recalcula cuando cambia periodType
@@ -179,6 +370,8 @@ export const useCoherence = (
             return getCurrentMonthRange();
         } else if (periodType === "week") {
             return getCurrentWeekRange();
+        } else if (periodType === "year") {
+            return getCurrentYearRange();
         }
         return { start: "", end: "" };
     }, [periodType]);

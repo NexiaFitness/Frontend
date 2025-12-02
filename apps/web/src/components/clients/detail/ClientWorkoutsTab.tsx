@@ -123,51 +123,38 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
     return (
         <div className="space-y-6">
             {/* TÍTULO PRINCIPAL - Training Plan */}
-            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Training Plan</h1>
+            <div>
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">Training Plan</h1>
+                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                    Planes de entrenamiento, sesiones y análisis de carga de trabajo
+                </p>
+            </div>
 
             {/* Sub-tabs Navigation */}
-            <div className="bg-white rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
-                <nav
-                    className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#4A67B3]/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center"
-                    aria-label="Sub-tabs"
-                    style={{
-                        WebkitOverflowScrolling: "touch",
-                    }}
-                >
-                    <style>{`
-                        nav[aria-label="Sub-tabs"]::-webkit-scrollbar {
-                            height: 4px;
-                        }
-                        nav[aria-label="Sub-tabs"]::-webkit-scrollbar-track {
-                            background: transparent;
-                        }
-                        nav[aria-label="Sub-tabs"]::-webkit-scrollbar-thumb {
-                            background-color: #4A67B3 !important;
-                            border-radius: 2px;
-                        }
-                    `}</style>
-                    {ENTRENAMIENTOS_SUBTABS.map((subTab) => {
-                        const isActive = activeSubTab === subTab.id;
-                        return (
-                            <button
-                                key={subTab.id}
-                                onClick={() => setActiveSubTab(subTab.id)}
-                                className={`
-                                    relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[120px] text-center
-                                    ${isActive
-                                        ? "text-[#4A67B3]"
-                                        : "text-gray-500 hover:text-gray-700"
-                                    }
-                                    cursor-pointer
-                                `}
-                                aria-current={isActive ? "page" : undefined}
-                            >
-                                {subTab.label}
-                            </button>
-                        );
-                    })}
-                </nav>
-            </div>
+            <nav aria-label="Tabs entrenamiento" className="flex gap-1 border-b border-gray-200">
+                {ENTRENAMIENTOS_SUBTABS.map((subTab) => {
+                    const isActive = activeSubTab === subTab.id;
+                    return (
+                        <button
+                            key={subTab.id}
+                            onClick={() => setActiveSubTab(subTab.id)}
+                            className={`
+                                relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center
+                                ${isActive
+                                    ? "text-[#4A67B3]"
+                                    : "text-gray-500 hover:text-gray-700"
+                                }
+                            `}
+                            aria-current={isActive ? "page" : undefined}
+                        >
+                            {subTab.label}
+                            {isActive && (
+                                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#4A67B3]"></span>
+                            )}
+                        </button>
+                    );
+                })}
+            </nav>
 
             {/* Sub-tab Content */}
             <div>{renderSubTabContent()}</div>

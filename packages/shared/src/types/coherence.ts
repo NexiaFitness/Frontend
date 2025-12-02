@@ -28,14 +28,15 @@ export interface SRPEPoint {
 }
 
 /**
- * Datos semanales de monotonía y strain (backend)
+ * Punto genérico de monotonía/strain según granularidad solicitada
  */
-export interface WeeklyMonotonyStrain {
-    week_start: string; // ISO date string
-    monotony: number; // Daily mean / Standard deviation
-    strain: number; // Weekly load × Monotony
-    weekly_load: number; // Sum of daily loads for the week
-    cumulative_strain: number; // Running total of strain across weeks
+export interface MonotonyStrainDataPoint {
+    period_start: string; // ISO date string del inicio del periodo
+    period_label: string; // Etiqueta amigable (día, semana "W46", mes "Nov 2025")
+    monotony: number; // Promedio diario / desviación estándar del periodo
+    strain: number; // Carga del periodo × monotonía
+    period_load: number; // Carga agregada del periodo (antes weekly_load)
+    cumulative_strain: number; // Suma acumulada de strain
 }
 
 /**
@@ -63,11 +64,11 @@ export interface DailyCoherenceAnalyticsOut {
     client_id: number;
     period_start: string; // ISO date string
     period_end: string; // ISO date string
-    period_type: "week" | "month" | "training_block";
+    period_type: "week" | "month" | "training_block" | "year";
     kpis: DailyCoherenceKPIs;
     adherence_data: AdherenceDataPoint[]; // For donut/bar chart
     srpe_scatter_data: SRPEPoint[]; // For scatter plot
-    monotony_strain_data: WeeklyMonotonyStrain[]; // For line/area chart
+    monotony_strain_data: MonotonyStrainDataPoint[]; // For line/area chart
     interpretive_summary: string; // Auto-generated text analysis
     key_recommendations: string[]; // Actionable recommendations
 }
@@ -144,5 +145,34 @@ export interface MetricCardProps {
 export interface ChartCardProps {
     title: string;
     children: React.ReactNode;
+}
+
+// ========================================
+// TIPOS PARA TOOLTIPS DE GRÁFICOS
+// ========================================
+
+/**
+ * Payload de tooltip para datos de monotonía
+ */
+export interface MonotonyTooltipPayload {
+    payload?: MonotonyWeekData & {
+        periodLabel?: string;
+    };
+    value?: number;
+    name?: string;
+}
+
+/**
+ * Payload de tooltip para datos de strain y carga
+ */
+export interface StrainTooltipPayload {
+    payload?: StrainWeekData & {
+        periodLabel?: string;
+        periodLoad?: number;
+        rawStrain?: number;
+        rawLoad?: number;
+    };
+    value?: number;
+    name?: string;
 }
 

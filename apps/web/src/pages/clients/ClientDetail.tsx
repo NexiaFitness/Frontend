@@ -178,7 +178,7 @@ export const ClientDetail: React.FC = () => {
     const renderTabContent = () => {
         switch (activeTab) {
             case "overview":
-                return <ClientOverviewTab client={client} />;
+                return <ClientOverviewTab client={client} clientId={clientId} />;
             case "session-programming":
                 return <ClientSessionProgrammingTab clientId={clientId} />;
             case "daily-coherence":

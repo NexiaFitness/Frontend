@@ -435,7 +435,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 week?: string; // ISO week format (e.g., "2025-W03")
                 periodStart?: string; // YYYY-MM-DD
                 periodEnd?: string; // YYYY-MM-DD
-                periodType?: "week" | "month" | "training_block";
+                periodType?: "week" | "month" | "training_block" | "year";
             }
         >({
             query: ({ clientId, week, periodStart, periodEnd, periodType = "week" }) => {
