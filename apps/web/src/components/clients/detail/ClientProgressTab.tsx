@@ -17,6 +17,7 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useSubTabNavigation } from "@/hooks/useSubTabNavigation";
 import type { ClientProgress, ProgressAnalytics } from "@nexia/shared/types/progress";
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
@@ -106,8 +107,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     const [showProgressForm, setShowProgressForm] = useState(false);
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
-    const [activeTab, setActiveTab] = useState<"overview" | "history">("overview");
     const formRef = useRef<HTMLDivElement>(null);
+
+    // Sub-tab navigation con query parameters
+    type ProgressSubTab = "overview" | "history";
+    const { activeSubTab: activeTab, setActiveSubTab: setActiveTab } = useSubTabNavigation<ProgressSubTab>({
+        validSubTabs: ["overview", "history"] as const,
+        defaultSubTab: "overview",
+    });
 
     const {
         progressHistory,

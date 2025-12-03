@@ -27,6 +27,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useSubTabNavigation } from "@/hooks/useSubTabNavigation";
 import type { TrainingPlan, TrainingSession } from "@nexia/shared/types/training";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -59,7 +60,11 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
     trainingPlans = [],
     trainingSessions = [],
 }) => {
-    const [activeSubTab, setActiveSubTab] = useState<EntrenamientosSubTab>("yearly");
+    // Sub-tab navigation con query parameters
+    const { activeSubTab, setActiveSubTab } = useSubTabNavigation<EntrenamientosSubTab>({
+        validSubTabs: ENTRENAMIENTOS_SUBTABS.map((t) => t.id),
+        defaultSubTab: "yearly",
+    });
     const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
     const [isLoading, setIsLoading] = useState<boolean>(true);
 

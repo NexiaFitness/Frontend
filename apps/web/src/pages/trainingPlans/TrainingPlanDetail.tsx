@@ -17,8 +17,9 @@
  * @since v3.3.0
  */
 
-import React, { useState, Suspense, lazy } from "react";
+import React, { Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -40,14 +41,21 @@ import {
     MilestonesTab,
 } from "@/components/trainingPlans";
 
-// Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
+// Lazy loading para tabs pesados (carga bajo demanda)
 const ChartsTab = lazy(() => 
     import("@/components/trainingPlans").then(module => ({
         default: module.ChartsTab
     }))
 );
 
-type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "milestones" | "charts";
+// PlanningTab con componentes editables pesados (gráficos, dashboards)
+const PlanningTab = lazy(() => 
+    import("@/components/trainingPlans/planning").then(module => ({
+        default: module.PlanningTab
+    }))
+);
+
+type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "milestones" | "charts" | "planning";
 
 interface Tab {
     id: TabId;
@@ -60,14 +68,20 @@ const TABS: Tab[] = [
     { id: "mesocycles", label: "Mesociclos" },
     { id: "microcycles", label: "Microciclos" },
     { id: "milestones", label: "Hitos" },
+    { id: "planning", label: "Planificación" },
     { id: "charts", label: "Gráficos" },
 ];
 
 export const TrainingPlanDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<TabId>("overview");
     const user = useSelector((state: RootState) => state.auth.user);
+
+    // Tab navigation con query parameters
+    const { activeTab, setActiveTab } = useTabNavigation<TabId>({
+        validTabs: TABS.map((t) => t.id),
+        defaultTab: "overview",
+    });
 
     const planId = parseInt(id || "0", 10);
 
@@ -198,6 +212,12 @@ export const TrainingPlanDetail: React.FC = () => {
                 return <MicrocyclesTab planId={planId} />;
             case "milestones":
                 return <MilestonesTab planId={planId} />;
+            case "planning":
+                return (
+                    <Suspense fallback={<LoadingSpinner size="lg" />}>
+                        <PlanningTab planId={planId} plan={plan} />
+                    </Suspense>
+                );
             case "charts":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>

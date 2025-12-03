@@ -15,6 +15,10 @@ export { TrainingPlanSummaryCard } from "./TrainingPlanSummaryCard";
 export { YearlyPlanningDashboard } from "./YearlyPlanningDashboard";
 export { MonthlyPlanningDashboard } from "./MonthlyPlanningDashboard";
 export { WeeklyPlanningDashboard } from "./WeeklyPlanningDashboard";
+export { YearlyPlanningDashboardEditable } from "./YearlyPlanningDashboardEditable";
+export { MonthlyPlanningDashboardEditable } from "./MonthlyPlanningDashboardEditable";
+export { WeeklyPlanningDashboardEditable } from "./WeeklyPlanningDashboardEditable";
+export { PlanningTab } from "./PlanningTab";
 
 export type { TrainingLoadSlidersProps } from "./TrainingLoadSliders";
 export type { PhysicalQualitiesRadarChartProps } from "./PhysicalQualitiesRadarChart";
@@ -25,4 +29,8 @@ export type { TrainingPlanSummaryCardProps } from "./TrainingPlanSummaryCard";
 export type { YearlyPlanningDashboardProps } from "./YearlyPlanningDashboard";
 export type { MonthlyPlanningDashboardProps } from "./MonthlyPlanningDashboard";
 export type { WeeklyPlanningDashboardProps } from "./WeeklyPlanningDashboard";
+export type { YearlyPlanningDashboardEditableProps } from "./YearlyPlanningDashboardEditable";
+export type { MonthlyPlanningDashboardEditableProps } from "./MonthlyPlanningDashboardEditable";
+export type { WeeklyPlanningDashboardEditableProps } from "./WeeklyPlanningDashboardEditable";
+export type { PlanningTabProps } from "./PlanningTab";
 

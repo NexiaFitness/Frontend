@@ -28,10 +28,7 @@ export default defineConfig({
         assetFileNames: `assets/[name]-[hash][extname]`,
         
         manualChunks: (id) => {
-          // ELIMINADO: React y React DOM - dejar que Vite lo maneje automáticamente
-          // La separación manual causaba errores de inicialización
-          
-          // Recharts - biblioteca pesada de gráficos
+          // Recharts - biblioteca pesada de gráficos (267 KB)
           if (id.includes("node_modules/recharts")) {
             return "recharts-vendor";
           }
@@ -46,14 +43,24 @@ export default defineConfig({
             return "router-vendor";
           }
 
-          // Otros node_modules grandes (incluirá React automáticamente)
+          // React y React DOM - core de React
+          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
+            return "react-vendor";
+          }
+
+          // Otros node_modules grandes
           if (id.includes("node_modules")) {
             return "vendor";
+          }
+
+          // Separar componentes de planning (tienen gráficos pesados)
+          if (id.includes("/components/trainingPlans/planning/")) {
+            return "planning-components";
           }
         },
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 600, // Aumentado temporalmente, pero optimizamos con code-splitting
   },
   test: {
     environment: 'jsdom',

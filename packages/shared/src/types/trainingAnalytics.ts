@@ -255,3 +255,148 @@ export interface PlanAdherenceStats {
     note: string | null;
 }
 
+// ============================================================================
+// PLANNING ENDPOINTS (Training Plan-based, Editable)
+// ============================================================================
+// Estos tipos son para los endpoints /training-plans/{id}/planning/*
+// Difieren de los tipos de cliente porque son editables y orientados a plan
+
+/**
+ * PlanningCycleItem - Ciclo individual en vista de planning con campos editables
+ * 
+ * Alineado con backend/app/schemas.py PlanningCycleItem
+ */
+export interface PlanningCycleItem {
+    cycle_id: number;
+    cycle_type: "macrocycle" | "mesocycle" | "microcycle";
+    name: string;
+    start_date: string;  // ISO date YYYY-MM-DD
+    end_date: string;    // ISO date YYYY-MM-DD
+    physical_quality: string | null;
+    volume: number | null;  // 1-10
+    intensity: number | null;  // 1-10
+    has_values: boolean;  // True if volume/intensity are set
+    inherited: boolean;  // True if values are inherited from parent
+}
+
+/**
+ * PlanningDistributionItem - Item de distribución de cualidades físicas
+ * 
+ * Alineado con backend/app/schemas.py PlanningDistributionItem
+ * Diferente de TrainingPlanDistributionItem porque incluye cycle_ids
+ */
+export interface PlanningDistributionItem {
+    name: string;
+    percentage: number;  // 0-100
+    cycle_ids: number[];  // IDs of cycles with this quality
+}
+
+/**
+ * PlanningLoadSummary - Resumen de carga de entrenamiento (volume/intensity)
+ * 
+ * Alineado con backend/app/schemas.py PlanningLoadSummary
+ * Diferente de TrainingLoadSummary porque incluye cycle_ids
+ */
+export interface PlanningLoadSummary {
+    volume_level: number;  // 1-10
+    intensity_level: number;  // 1-10
+    cycle_ids: number[];  // IDs of cycles included in calculation
+}
+
+/**
+ * TrainingPlanYearlyPlanning - Vista de planning anual del plan
+ * 
+ * Endpoint: GET /training-plans/{id}/planning/yearly?year={year}
+ * 
+ * Alineado con backend/app/schemas.py PlanningYearlyResponse
+ */
+export interface TrainingPlanYearlyPlanning {
+    plan_id: number;
+    plan_name: string;
+    year: number;
+    distribution: PlanningDistributionItem[];
+    training_load: PlanningLoadSummary;
+    cycles: PlanningCycleItem[];  // All macrocycles for the year
+    monthly_progression: Record<string, unknown>[];  // Month-by-month breakdown (Dict from backend)
+}
+
+/**
+ * TrainingPlanMonthlyPlanning - Vista de planning mensual del plan
+ * 
+ * Endpoint: GET /training-plans/{id}/planning/monthly?year={year}&month={month}
+ * 
+ * Alineado con backend/app/schemas.py PlanningMonthlyResponse
+ */
+export interface TrainingPlanMonthlyPlanning {
+    plan_id: number;
+    plan_name: string;
+    year: number;
+    month: number;  // 1-12
+    distribution: PlanningDistributionItem[];
+    training_load: PlanningLoadSummary;
+    cycles: PlanningCycleItem[];  // All mesocycles for the month
+    weekly_progression: Record<string, unknown>[];  // Week-by-week breakdown (Dict from backend)
+}
+
+/**
+ * TrainingPlanWeeklyPlanning - Vista de planning semanal del plan
+ * 
+ * Endpoint: GET /training-plans/{id}/planning/weekly?week_start={date}
+ * 
+ * Alineado con backend/app/schemas.py PlanningWeeklyResponse
+ */
+export interface TrainingPlanWeeklyPlanning {
+    plan_id: number;
+    plan_name: string;
+    week_start: string;  // ISO date YYYY-MM-DD
+    week_end: string;    // ISO date YYYY-MM-DD
+    distribution: PlanningDistributionItem[];
+    training_load: PlanningLoadSummary;
+    cycles: PlanningCycleItem[];  // All microcycles for the week
+    daily_progression: Record<string, unknown>[];  // Day-by-day breakdown (Dict from backend)
+}
+
+// ============================================================================
+// PLANNING UPDATE REQUESTS
+// ============================================================================
+
+/**
+ * DistributionUpdateItem - Item individual de actualización de distribución
+ * 
+ * Alineado con backend/app/schemas.py DistributionUpdateItem
+ */
+export interface DistributionUpdateItem {
+    name: string;
+    percentage: number;  // 0-100
+}
+
+/**
+ * UpdatePlanningDistributionRequest - Request para actualizar distribución de cualidades físicas
+ * 
+ * Endpoint: PUT /training-plans/{id}/planning/distribution
+ * 
+ * Alineado con backend/app/schemas.py DistributionUpdateRequest
+ * 
+ * Validación: Los porcentajes deben sumar 100%
+ */
+export interface UpdatePlanningDistributionRequest {
+    cycle_ids: number[];  // IDs of cycles to update
+    distribution: DistributionUpdateItem[];  // Must sum to 100%
+    cascade: boolean;  // If True, update child cycles too
+}
+
+/**
+ * UpdatePlanningLoadRequest - Request para actualizar volume/intensity
+ * 
+ * Endpoint: PUT /training-plans/{id}/planning/load
+ * 
+ * Alineado con backend/app/schemas.py LoadUpdateRequest
+ */
+export interface UpdatePlanningLoadRequest {
+    cycle_ids: number[];  // IDs of cycles to update
+    physical_quality: string | null;  // Optional: filter by quality
+    volume: number | null;  // 1-10
+    intensity: number | null;  // 1-10
+    cascade: boolean;  // If True, update child cycles too
+}
+

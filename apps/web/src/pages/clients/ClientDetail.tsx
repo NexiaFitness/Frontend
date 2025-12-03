@@ -17,8 +17,9 @@
  * @since v3.1.0
  */
 
-import React, { useState, Suspense, lazy } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import React, { Suspense, lazy } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
@@ -61,21 +62,12 @@ const TABS: Tab[] = [
 export const ClientDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const location = useLocation();
-    const getInitialTab = (): TabId => {
-        const stateTab = (location.state as { tab?: TabId } | null)?.tab;
-        if (stateTab && TABS.some((tab) => tab.id === stateTab)) {
-            return stateTab;
-        }
-        const params = new URLSearchParams(location.search);
-        const searchTab = params.get("tab") as TabId | null;
-        if (searchTab && TABS.some((tab) => tab.id === searchTab)) {
-            return searchTab;
-        }
-        return "overview";
-    };
 
-    const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
+    // Tab navigation con query parameters
+    const { activeTab, setActiveTab } = useTabNavigation<TabId>({
+        validTabs: TABS.map((t) => t.id),
+        defaultTab: "overview",
+    });
 
     const clientId = parseInt(id || "0", 10);
 

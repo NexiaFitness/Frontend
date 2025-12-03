@@ -57,6 +57,13 @@ import type {
     MilestoneUpdate,
 } from "../types/training";
 import type { PlanAdherenceResponse } from "../types/dashboard";
+import type {
+    TrainingPlanYearlyPlanning,
+    TrainingPlanMonthlyPlanning,
+    TrainingPlanWeeklyPlanning,
+    UpdatePlanningDistributionRequest,
+    UpdatePlanningLoadRequest,
+} from "../types/trainingAnalytics";
 
 export const trainingPlansApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -856,6 +863,142 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 { type: "TrainingPlan", id: "LIST" },
             ],
         }),
+
+        // ========================================
+        // PLANNING ENDPOINTS (Training Plan-based, Editable)
+        // ========================================
+
+        /**
+         * Get yearly planning view for a training plan
+         * Endpoint: GET /training-plans/{plan_id}/planning/yearly?year={year}
+         */
+        getTrainingPlanYearlyPlanning: builder.query<
+            TrainingPlanYearlyPlanning,
+            { planId: number; year?: number }
+        >({
+            query: ({ planId, year }) => {
+                const params = new URLSearchParams();
+                if (year !== undefined) {
+                    params.append("year", year.toString());
+                }
+                const queryString = params.toString();
+                return {
+                    url: `/training-plans/${planId}/planning/yearly${queryString ? `?${queryString}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-YEARLY` },
+            ],
+        }),
+
+        /**
+         * Get monthly planning view for a training plan
+         * Endpoint: GET /training-plans/{plan_id}/planning/monthly?year={year}&month={month}
+         */
+        getTrainingPlanMonthlyPlanning: builder.query<
+            TrainingPlanMonthlyPlanning,
+            { planId: number; year?: number; month?: number }
+        >({
+            query: ({ planId, year, month }) => {
+                const params = new URLSearchParams();
+                if (year !== undefined) {
+                    params.append("year", year.toString());
+                }
+                if (month !== undefined) {
+                    params.append("month", month.toString());
+                }
+                const queryString = params.toString();
+                return {
+                    url: `/training-plans/${planId}/planning/monthly${queryString ? `?${queryString}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-MONTHLY` },
+            ],
+        }),
+
+        /**
+         * Get weekly planning view for a training plan
+         * Endpoint: GET /training-plans/{plan_id}/planning/weekly?week_start={date}
+         */
+        getTrainingPlanWeeklyPlanning: builder.query<
+            TrainingPlanWeeklyPlanning,
+            { planId: number; weekStart?: string }
+        >({
+            query: ({ planId, weekStart }) => {
+                const params = new URLSearchParams();
+                if (weekStart) {
+                    params.append("week_start", weekStart);
+                }
+                const queryString = params.toString();
+                return {
+                    url: `/training-plans/${planId}/planning/weekly${queryString ? `?${queryString}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-WEEKLY` },
+            ],
+        }),
+
+        /**
+         * Update physical qualities distribution for multiple cycles
+         * Endpoint: PUT /training-plans/{plan_id}/planning/distribution
+         */
+        updatePlanningDistribution: builder.mutation<
+            { message: string; updated_cycles: number },
+            { planId: number; data: UpdatePlanningDistributionRequest }
+        >({
+            query: ({ planId, data }) => ({
+                url: `/training-plans/${planId}/planning/distribution`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-YEARLY` },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-MONTHLY` },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-WEEKLY` },
+                { type: "Macrocycle", id: "LIST" },
+                { type: "Mesocycle", id: "LIST" },
+                { type: "Microcycle", id: "LIST" },
+            ],
+        }),
+
+        /**
+         * Update volume/intensity for multiple cycles
+         * Endpoint: PUT /training-plans/{plan_id}/planning/load
+         */
+        updatePlanningLoad: builder.mutation<
+            { message: string; updated_cycles: number },
+            { planId: number; data: UpdatePlanningLoadRequest }
+        >({
+            query: ({ planId, data }) => ({
+                url: `/training-plans/${planId}/planning/load`,
+                method: "PUT",
+                body: data,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            invalidatesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-YEARLY` },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-MONTHLY` },
+                { type: "TrainingPlan", id: `${planId}-PLANNING-WEEKLY` },
+                { type: "Macrocycle", id: "LIST" },
+                { type: "Mesocycle", id: "LIST" },
+                { type: "Microcycle", id: "LIST" },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -917,6 +1060,14 @@ export const {
     useCreateMilestoneMutation,
     useUpdateMilestoneMutation,
     useDeleteMilestoneMutation,
+    
     // Dashboard KPI hooks
     useGetPlanAdherenceStatsQuery,
+    
+    // Planning hooks (Training Plan-based, Editable)
+    useGetTrainingPlanYearlyPlanningQuery,
+    useGetTrainingPlanMonthlyPlanningQuery,
+    useGetTrainingPlanWeeklyPlanningQuery,
+    useUpdatePlanningDistributionMutation,
+    useUpdatePlanningLoadMutation,
 } = trainingPlansApi;
