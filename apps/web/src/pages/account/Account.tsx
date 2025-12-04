@@ -22,7 +22,7 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer";
 import { AdminSideMenu } from "@/components/dashboard/admin";
 import { AthleteSideMenu } from "@/components/dashboard/athlete";
 import { ProfileForm } from "@/components/account/ProfileForm";
-import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { TYPOGRAPHY } from "@/utils/typography";
 import type { RootState } from "@nexia/shared/store";
 
 export const Account: React.FC = () => {
@@ -80,10 +80,12 @@ export const Account: React.FC = () => {
             {renderSideMenu()}
 
             <DashboardLayout>
-                {/* Encabezado responsive igual a dashboards */}
-                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>Mi Cuenta</h2>
-                    <p className={TYPOGRAPHY_COMBINATIONS.dashboardHeroSubtitle}>
+                {/* Header */}
+                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                        Mi Cuenta
+                    </h2>
+                    <p className="text-white/80 text-sm md:text-base">
                         Gestiona tu información personal y configuración de seguridad
                     </p>
                 </div>

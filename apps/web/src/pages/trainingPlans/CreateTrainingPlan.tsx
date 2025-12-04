@@ -286,12 +286,12 @@ export const CreateTrainingPlan: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                {/* Encabezado responsive igual a dashboards */}
-                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
+                {/* Header */}
+                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Crear Plan de Entrenamiento
                     </h2>
-                    <p className={TYPOGRAPHY_COMBINATIONS.dashboardHeroSubtitle}>
+                    <p className="text-white/80 text-sm md:text-base">
                         {client
                             ? `Plan de entrenamiento para ${client.nombre} ${client.apellidos}`
                             : "Crea un nuevo plan de entrenamiento con objetivos, duración e hitos"}

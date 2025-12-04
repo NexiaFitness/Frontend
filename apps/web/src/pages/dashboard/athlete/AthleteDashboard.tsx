@@ -17,6 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { AthleteSideMenu } from "@/components/dashboard/athlete/AthleteSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
+import { TYPOGRAPHY } from "@/utils/typography";
 import type { RootState } from "@nexia/shared/store";
 
 export const AthleteDashboard: React.FC = () => {
@@ -41,12 +42,12 @@ export const AthleteDashboard: React.FC = () => {
             <AthleteSideMenu />
 
             <DashboardLayout>
-                {/* Encabezado responsive */}
-                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-3 lg:mb-4">
+                {/* Header */}
+                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Bienvenido {user?.nombre}, a tu Panel de Entrenamiento
                     </h2>
-                    <p className="text-white/80 text-sm md:text-lg lg:text-xl">
+                    <p className="text-white/80 text-sm md:text-base">
                         Sigue tu progreso y accede a tus planes de entrenamiento personalizados
                     </p>
                 </div>

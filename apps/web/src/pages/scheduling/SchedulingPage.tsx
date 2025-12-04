@@ -159,20 +159,13 @@ export const SchedulingPage: React.FC = () => {
 
             <DashboardLayout>
                 {/* Header */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
-                                Programación de Sesiones
-                            </h2>
-                            <p className="text-white/80 text-sm md:text-base">
-                                Gestiona tus citas agendadas con clientes
-                            </p>
-                        </div>
-                        <Button variant="primary" size="sm" onClick={handleAddSession}>
-                            + Añadir Sesión
-                        </Button>
-                    </div>
+                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                        Programación de Sesiones
+                    </h2>
+                    <p className="text-white/80 text-sm md:text-base">
+                        Gestiona tus citas agendadas con clientes
+                    </p>
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">

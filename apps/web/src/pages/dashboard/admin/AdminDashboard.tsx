@@ -17,6 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { AdminSideMenu } from "@/components/dashboard/admin/AdminSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
+import { TYPOGRAPHY } from "@/utils/typography";
 import type { RootState } from "@nexia/shared/store";
 
 export const AdminDashboard: React.FC = () => {
@@ -41,12 +42,12 @@ export const AdminDashboard: React.FC = () => {
             <AdminSideMenu />
 
             <DashboardLayout>
-                {/* Encabezado responsive */}
-                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-3 lg:mb-4">
+                {/* Header */}
+                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Bienvenido {user?.nombre}, Panel de Administración
                     </h2>
-                    <p className="text-white/80 text-sm md:text-lg lg:text-xl">
+                    <p className="text-white/80 text-sm md:text-base">
                         Gestiona usuarios, entrenadores y el sistema desde tu panel de control
                     </p>
                 </div>
