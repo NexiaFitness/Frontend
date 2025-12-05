@@ -18,7 +18,7 @@
  * @updated v5.0.0 - Rediseño completo basado en Figma
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useGetClientsWithMetricsQuery, useGetRecentActivityQuery } from "@nexia/shared/api/clientsApi";
@@ -216,11 +216,11 @@ export const ClientList: React.FC = () => {
         { skip: !trainerId }
     );
 
-    const clients: ClientListItem[] = clientsData?.items ?? [];
     const activities: RecentActivityItem[] = activityData?.items ?? [];
 
     // Filtrar clientes por búsqueda
     const filteredClients = useMemo(() => {
+        const clients: ClientListItem[] = clientsData?.items ?? [];
         if (!searchQuery.trim()) return clients;
         const query = searchQuery.toLowerCase();
         return clients.filter(
@@ -229,7 +229,7 @@ export const ClientList: React.FC = () => {
                 client.apellidos.toLowerCase().includes(query) ||
                 client.mail.toLowerCase().includes(query)
         );
-    }, [clients, searchQuery]);
+    }, [clientsData?.items, searchQuery]);
 
     // Handlers
     const handleClientClick = (clientId: number) => {

@@ -133,7 +133,7 @@ export const Experience: React.FC<ExperienceStepProps> = ({
                                 : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                         }`}
                     >
-                        Media (1h-1h30')
+                        Media (1h-1h30&apos;)
                     </button>
                     <button
                         type="button"
@@ -144,7 +144,7 @@ export const Experience: React.FC<ExperienceStepProps> = ({
                                 : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
                         }`}
                     >
-                        Larga (&gt;1h30')
+                        Larga (&gt;1h30&apos;)
                     </button>
                 </div>
                 {errors.session_duration && (

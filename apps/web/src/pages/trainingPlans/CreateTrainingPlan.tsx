@@ -19,7 +19,7 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
-import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { TYPOGRAPHY } from "@/utils/typography";
 import {
     useCreateTrainingPlanMutation,
     useCreateMilestoneMutation,

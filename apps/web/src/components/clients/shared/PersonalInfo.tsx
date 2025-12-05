@@ -23,7 +23,7 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({
     formData,
     errors,
     updateField,
-    isEditMode = false,
+    isEditMode: _isEditMode = false,
 }) => {
     return (
         <div>

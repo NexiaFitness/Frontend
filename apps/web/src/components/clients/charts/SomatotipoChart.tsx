@@ -104,20 +104,16 @@ export const SomatotipoChart: React.FC<SomatotipoChartProps> = ({
         const y = endoNorm * endoY + mesoNorm * mesoY + ectoNorm * ectoY;
 
         // Determinar dominante
-        let dominantType = "balanced";
         let dominant = "Balanceado";
         let description = "Combinación equilibrada de características endomórficas, mesomórficas y ectomórficas.";
 
         if (endo > meso && endo > ecto) {
-            dominantType = "endomorph";
             dominant = SOMATOTYPE_DESCRIPTIONS.endomorph.dominant;
             description = SOMATOTYPE_DESCRIPTIONS.endomorph.description;
         } else if (meso > endo && meso > ecto) {
-            dominantType = "mesomorph";
             dominant = SOMATOTYPE_DESCRIPTIONS.mesomorph.dominant;
             description = SOMATOTYPE_DESCRIPTIONS.mesomorph.description;
         } else if (ecto > endo && ecto > meso) {
-            dominantType = "ectomorph";
             dominant = SOMATOTYPE_DESCRIPTIONS.ectomorph.dominant;
             description = SOMATOTYPE_DESCRIPTIONS.ectomorph.description;
         }

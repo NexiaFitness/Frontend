@@ -34,21 +34,6 @@ export const Review: React.FC<ExtendedReviewProps> = ({
     // Helper para mostrar valores opcionales
     const display = (value: string | number | undefined | null) => value || "—";
 
-    // Helper para formatear fechas
-    const formatDate = (dateStr: string | undefined | null) => {
-        if (!dateStr) return "—";
-        try {
-            const date = new Date(dateStr);
-            return date.toLocaleDateString("es-ES", {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-            });
-        } catch {
-            return dateStr;
-        }
-    };
-
     // Helper para formatear fecha corta (March 12, 1999)
     const formatDateShort = (dateStr: string | undefined | null) => {
         if (!dateStr) return "—";

@@ -43,7 +43,6 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { ClientOnboardingForm } from "@/components/clients/onboarding/ClientOnboardingForm";
 import type { ClientFormData } from "@nexia/shared/types/client";
 

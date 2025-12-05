@@ -17,7 +17,6 @@ import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
@@ -103,13 +102,6 @@ export const SchedulingPage: React.FC = () => {
 
     const handleSessionClick = (session: ScheduledSession) => {
         setSelectedSession(session);
-        setPrefilledDate(null);
-        setPrefilledTemplate(null);
-        setIsModalOpen(true);
-    };
-
-    const handleAddSession = () => {
-        setSelectedSession(null);
         setPrefilledDate(null);
         setPrefilledTemplate(null);
         setIsModalOpen(true);

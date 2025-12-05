@@ -40,7 +40,7 @@ export interface ClientOnboardingFormProps {
 export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
     initialData,
     onSubmitSuccess,
-    onBackToDashboard,
+    onBackToDashboard: _onBackToDashboard,
 }) => {
     // ✅ Modal de perfil completo
     const { shouldBlock } = useCompleteProfileModal();
