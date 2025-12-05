@@ -15,7 +15,6 @@
 import React from "react";
 import type { ExperienceStepProps } from "@nexia/shared/types/clientOnboarding";
 import { EXPERIENCE_ENUM, WEEKLY_FREQUENCY_ENUM, SESSION_DURATION_ENUM } from "@nexia/shared";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 export const Experience: React.FC<ExperienceStepProps> = ({
     formData,
@@ -23,70 +22,134 @@ export const Experience: React.FC<ExperienceStepProps> = ({
     updateField,
 }) => {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Columna 1 */}
-            <div className="space-y-6">
-                {/* Nivel de experiencia */}
-                <div>
-                    <label className={TYPOGRAPHY.inputLabel}>Nivel de experiencia *</label>
-                    <select
-                        value={formData.experiencia || ""}
-                        onChange={(e) =>
-                            updateField(
-                                "experiencia",
-                                e.target.value as typeof formData.experiencia
-                            )
-                        }
-                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+        <div className="space-y-8">
+            {/* Nivel de experiencia con botones segmentados */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Nivel de Experiencia <span className="text-white">*</span></label>
+                <div className="flex gap-2 mt-2">
+                    <button
+                        type="button"
+                        onClick={() => updateField("experiencia", EXPERIENCE_ENUM.BAJA)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.experiencia === EXPERIENCE_ENUM.BAJA
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
                     >
-                        <option value="">Selecciona una opción</option>
-                        <option value={EXPERIENCE_ENUM.BAJA}>Principiante (Baja)</option>
-                        <option value={EXPERIENCE_ENUM.MEDIA}>Intermedio (Media)</option>
-                        <option value={EXPERIENCE_ENUM.ALTA}>Avanzado (Alta)</option>
-                    </select>
-                    {errors.experiencia && (
-                        <p className="text-red-600 text-sm">{errors.experiencia}</p>
-                    )}
+                        Baja
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => updateField("experiencia", EXPERIENCE_ENUM.MEDIA)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.experiencia === EXPERIENCE_ENUM.MEDIA
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                        Media
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => updateField("experiencia", EXPERIENCE_ENUM.ALTA)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.experiencia === EXPERIENCE_ENUM.ALTA
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                        Alta
+                    </button>
                 </div>
+                {errors.experiencia && (
+                    <p className="text-red-600 text-sm mt-1">{errors.experiencia}</p>
+                )}
             </div>
 
-            {/* Columna 2 */}
-            <div className="space-y-6">
-                {/* Frecuencia semanal */}
-                <div>
-                    <label className={TYPOGRAPHY.inputLabel}>Frecuencia semanal</label>
-                    <select
-                        value={formData.frecuencia_semanal || ""}
-                        onChange={(e) => updateField("frecuencia_semanal", e.target.value as typeof formData.frecuencia_semanal)}
-                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+            {/* Frecuencia de entrenamiento con botones segmentados */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Frecuencia de Entrenamiento (Sesiones/semana)</label>
+                <div className="flex gap-2 mt-2">
+                    <button
+                        type="button"
+                        onClick={() => updateField("frecuencia_semanal", WEEKLY_FREQUENCY_ENUM.BAJA)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.frecuencia_semanal === WEEKLY_FREQUENCY_ENUM.BAJA
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
                     >
-                        <option value="">Selecciona una opción</option>
-                        <option value={WEEKLY_FREQUENCY_ENUM.BAJA}>1-2 veces por semana</option>
-                        <option value={WEEKLY_FREQUENCY_ENUM.MEDIA}>3-5 veces por semana</option>
-                        <option value={WEEKLY_FREQUENCY_ENUM.ALTA}>6-7 veces por semana</option>
-                    </select>
-                    {errors.frecuencia_semanal && (
-                        <p className="text-red-600 text-sm">{errors.frecuencia_semanal}</p>
-                    )}
+                        Baja (1-2)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => updateField("frecuencia_semanal", WEEKLY_FREQUENCY_ENUM.MEDIA)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.frecuencia_semanal === WEEKLY_FREQUENCY_ENUM.MEDIA
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                        Media (3-5)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => updateField("frecuencia_semanal", WEEKLY_FREQUENCY_ENUM.ALTA)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.frecuencia_semanal === WEEKLY_FREQUENCY_ENUM.ALTA
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                        Alta (6-7)
+                    </button>
                 </div>
+                {errors.frecuencia_semanal && (
+                    <p className="text-red-600 text-sm mt-1">{errors.frecuencia_semanal}</p>
+                )}
+            </div>
 
-                {/* Duración típica de sesión */}
-                <div>
-                    <label className={TYPOGRAPHY.inputLabel}>Duración típica de sesión (opcional)</label>
-                    <select
-                        value={formData.session_duration || ""}
-                        onChange={(e) => updateField("session_duration", e.target.value)}
-                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+            {/* Duración de sesión con botones segmentados */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Duración de Sesiones</label>
+                <div className="flex gap-2 mt-2">
+                    <button
+                        type="button"
+                        onClick={() => updateField("session_duration", SESSION_DURATION_ENUM.SHORT_LT_1H)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.session_duration === SESSION_DURATION_ENUM.SHORT_LT_1H
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
                     >
-                        <option value="">Selecciona una opción</option>
-                        <option value={SESSION_DURATION_ENUM.SHORT_LT_1H}>30-45 minutos</option>
-                        <option value={SESSION_DURATION_ENUM.MEDIUM_1H_TO_1H30}>60 minutos</option>
-                        <option value={SESSION_DURATION_ENUM.LONG_GT_1H30}>90+ minutos</option>
-                    </select>
-                    {errors.session_duration && (
-                        <p className="text-red-600 text-sm">{errors.session_duration}</p>
-                    )}
+                        Corta (&lt;1h)
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => updateField("session_duration", SESSION_DURATION_ENUM.MEDIUM_1H_TO_1H30)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.session_duration === SESSION_DURATION_ENUM.MEDIUM_1H_TO_1H30
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                        Media (1h-1h30')
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => updateField("session_duration", SESSION_DURATION_ENUM.LONG_GT_1H30)}
+                        className={`flex-1 px-4 py-3 rounded-lg font-medium transition-colors ${
+                            formData.session_duration === SESSION_DURATION_ENUM.LONG_GT_1H30
+                                ? "bg-primary-600 text-white"
+                                : "bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                        }`}
+                    >
+                        Larga (&gt;1h30')
+                    </button>
                 </div>
+                {errors.session_duration && (
+                    <p className="text-red-600 text-sm mt-1">{errors.session_duration}</p>
+                )}
             </div>
         </div>
     );

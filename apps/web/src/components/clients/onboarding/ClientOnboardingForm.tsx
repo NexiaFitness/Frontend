@@ -16,14 +16,13 @@
  * @since v4.6.0
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState } from "react";
 import type { ClientFormData } from "@nexia/shared/types/client";
 import { useClientForm } from "@nexia/shared/hooks/clients/useClientForm";
 import { useCompleteProfileModal } from "@nexia/shared";
-import { validateClientForm } from "@nexia/shared/utils/validations";
 import { Button } from "@/components/ui/buttons";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { PersonalInfo } from "../shared/PersonalInfo";
 import { PhysicalMetrics } from "../shared/PhysicalMetrics";
 import { AnthropometricMetrics } from "../shared/AnthropometricMetrics";
@@ -31,19 +30,6 @@ import { TrainingGoals } from "../shared/TrainingGoals";
 import { Experience } from "../shared/Experience";
 import { HealthInfo } from "../shared/HealthInfo";
 import { Review } from "../steps/Review";
-
-const TOTAL_STEPS = 7;
-
-// Metadata de steps
-const STEP_METADATA = [
-    { title: "Datos personales", description: "Información básica del cliente" },
-    { title: "Métricas físicas", description: "Edad, peso, altura y BMI" },
-    { title: "Antropometría", description: "Mediciones avanzadas (opcional)" },
-    { title: "Objetivos", description: "Meta principal de entrenamiento" },
-    { title: "Experiencia", description: "Nivel y frecuencia de entrenamiento" },
-    { title: "Salud", description: "Lesiones y observaciones" },
-    { title: "Revisión", description: "Confirma los datos antes de guardar" },
-];
 
 export interface ClientOnboardingFormProps {
     initialData: ClientFormData;
@@ -56,11 +42,10 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
     onSubmitSuccess,
     onBackToDashboard,
 }) => {
-    const [currentStep, setCurrentStep] = useState<number>(0);
-    
     // ✅ Modal de perfil completo
     const { shouldBlock } = useCompleteProfileModal();
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
+    const [showReview, setShowReview] = useState(false);
 
     // Usar useClientForm para lógica compartida
     const { formData, errors, updateField, handleSubmit, isSubmitting } = useClientForm({
@@ -68,60 +53,21 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
         initialData,
     });
 
-    // Calcular progreso (%)
-    const progressPercentage = useMemo(
-        () => ((currentStep + 1) / TOTAL_STEPS) * 100,
-        [currentStep]
-    );
+    // Props compartidos para todos los componentes
+    const stepProps = { formData, errors, updateField };
 
-    /**
-     * validateStep — Valida solo el paso actual
-     */
-    const validateStep = useCallback((): boolean => {
-        const { isValid } = validateClientForm(formData, currentStep);
-        // Los errores se manejan en useClientForm, pero validamos aquí para navegación
-        return isValid;
-    }, [formData, currentStep]);
+    // Handler para mostrar Review
+    const handleShowReview = () => {
+        setShowReview(true);
+    };
 
-    /**
-     * Navegación de pasos
-     */
-    const nextStep = useCallback(() => {
-        if (validateStep()) {
-            setCurrentStep((prev) => Math.min(prev + 1, TOTAL_STEPS - 1));
-        }
-    }, [validateStep]);
-
-    const prevStep = useCallback(() => {
-        setCurrentStep((prev) => Math.max(prev - 1, 0));
-    }, []);
-
-    // Renderizar step actual
-    const renderCurrentStep = () => {
-        const stepProps = { formData, errors, updateField };
-
-        switch (currentStep) {
-            case 0:
-                return <PersonalInfo {...stepProps} isEditMode={false} />;
-            case 1:
-                return <PhysicalMetrics {...stepProps} />;
-            case 2:
-                return <AnthropometricMetrics {...stepProps} />;
-            case 3:
-                return <TrainingGoals {...stepProps} />;
-            case 4:
-                return <Experience {...stepProps} />;
-            case 5:
-                return <HealthInfo {...stepProps} />;
-            case 6:
-                return <Review formData={formData} />;
-            default:
-                return null;
-        }
+    // Handler para volver al formulario desde Review
+    const handleBackToForm = () => {
+        setShowReview(false);
     };
 
     // Handler para submit final
-    const handleFinalSubmit = async () => {
+    const handleCreateProfile = async () => {
         // ✅ Verificar si el perfil está completo antes de permitir crear cliente
         if (shouldBlock) {
             setShowCompleteProfileModal(true);
@@ -134,98 +80,84 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
         }
     };
 
-    // Labels de botones
-    const isLastStep = currentStep === TOTAL_STEPS - 1;
-    const isFirstStep = currentStep === 0;
-    const nextButtonLabel = isLastStep ? "Crear cliente" : "Siguiente";
+    // Si estamos en Review, mostrar solo Review
+    if (showReview) {
+        return (
+            <>
+                <Review
+                    formData={formData}
+                    onBack={handleBackToForm}
+                    onCreateProfile={handleCreateProfile}
+                    isSubmitting={isSubmitting}
+                />
+                <CompleteProfileModal
+                    isOpen={showCompleteProfileModal}
+                    onClose={() => setShowCompleteProfileModal(false)}
+                />
+            </>
+        );
+    }
 
+    // Formulario normal (todos los pasos visibles)
     return (
         <>
-            {/* Progress Bar */}
-            <div className="px-4 lg:px-8 mb-8 lg:mb-12">
-                <div className="max-w-4xl mx-auto">
-                    {/* Progress indicator con steps */}
-                    <div className="flex items-center justify-between mb-4">
-                        <span className="text-white/80 text-sm font-medium">
-                            Paso {currentStep + 1} de {TOTAL_STEPS}
-                        </span>
-                        <span className="text-white/80 text-sm font-medium">
-                            {Math.round(progressPercentage)}% completado
-                        </span>
-                    </div>
-
-                    {/* Barra de progreso */}
-                    <div className="w-full bg-white/20 rounded-full h-2 overflow-hidden">
-                        <div
-                            className="bg-primary-500 h-full transition-all duration-500 ease-out rounded-full"
-                            style={{ width: `${progressPercentage}%` }}
-                        />
-                    </div>
-
-                    {/* Título y descripción del step actual */}
-                    <div className="mt-4 text-center">
-                        <h2 className="text-white text-xl lg:text-2xl font-semibold mb-2">
-                            {STEP_METADATA[currentStep].title}
-                        </h2>
-                        <p className="text-white/70 text-sm">
-                            {STEP_METADATA[currentStep].description}
-                        </p>
-                    </div>
-                </div>
+            {/* Header - Solo en formulario, no en Review */}
+            <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
+                <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    Agregar Nuevo Cliente
+                </h2>
+                <p className="text-white/80 text-sm md:text-base">
+                    Ingresa la información básica de tu cliente para comenzar a construir su plan de entrenamiento
+                </p>
             </div>
 
-            {/* Form Card */}
+            {/* Form - Una sola vista con scroll, sin contenedor blanco */}
             <div className="px-4 lg:px-8 mb-12">
-                <div className="max-w-4xl mx-auto">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-2xl p-6 sm:p-8 lg:p-10">
-                        {/* Step content */}
-                        <div className="mb-8">{renderCurrentStep()}</div>
+                <div className="max-w-7xl mx-auto">
+                    {/* Todo el formulario en una sola vista */}
+                    <div className="space-y-8">
+                        {/* Separador visual entre secciones */}
+                        <div className="border-b border-gray-300"></div>
+                        
+                        {/* Información Personal */}
+                        <PersonalInfo {...stepProps} isEditMode={false} />
+                        
+                        <div className="border-b border-gray-300"></div>
+                        
+                        {/* Datos Antropométricos */}
+                        <PhysicalMetrics {...stepProps} />
+                        
+                        <div className="border-b border-gray-300"></div>
+                        
+                        {/* Antropometría (Pliegues, Perímetros, Diámetros) */}
+                        <AnthropometricMetrics {...stepProps} />
+                        
+                        <div className="border-b border-gray-300"></div>
+                        
+                        {/* Parámetros de Entrenamiento */}
+                        <TrainingGoals {...stepProps} />
+                        
+                        <div className="border-b border-gray-300"></div>
+                        
+                        {/* Experiencia y Frecuencia */}
+                        <Experience {...stepProps} />
+                        
+                        <div className="border-b border-gray-300"></div>
+                        
+                        {/* Notas */}
+                        <HealthInfo {...stepProps} />
+                    </div>
 
-                        {/* Navigation buttons */}
-                        <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-slate-200">
-                            {/* Botón volver al dashboard (solo en primer step) */}
-                            {isFirstStep && onBackToDashboard && (
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    onClick={onBackToDashboard}
-                                    className={BUTTON_PRESETS.modalPrimary}
-                                    disabled={isSubmitting}
-                                >
-                                    ← Volver al dashboard
-                                </Button>
-                            )}
-
-                            {/* Botón anterior (no en primer step) */}
-                            {!isFirstStep && (
-                                <Button
-                                    variant="secondary"
-                                    size="lg"
-                                    onClick={prevStep}
-                                    className={BUTTON_PRESETS.modalPrimary}
-                                    disabled={isSubmitting}
-                                >
-                                    ← Anterior
-                                </Button>
-                            )}
-
-                            {/* Spacer para empujar siguiente a la derecha */}
-                            <div className="flex-1" />
-
-                            {/* Botón siguiente/enviar */}
-                            <Button
-                                variant="primary"
-                                size="lg"
-                                onClick={isLastStep ? handleFinalSubmit : nextStep}
-                                className={BUTTON_PRESETS.modalPrimary}
-                                isLoading={isSubmitting}
-                                disabled={isSubmitting}
-                            >
-                                {isSubmitting
-                                    ? "Guardando..."
-                                    : `${nextButtonLabel} →`}
-                            </Button>
-                        </div>
+                    {/* Navigation buttons - Solo botón Next al final */}
+                    <div className="flex justify-end pt-6 mt-8">
+                        <Button
+                            variant="primary"
+                            size="lg"
+                            onClick={handleShowReview}
+                            className="bg-primary-600 hover:bg-primary-700 text-white min-w-[120px]"
+                        >
+                            Siguiente
+                        </Button>
                     </div>
                 </div>
             </div>

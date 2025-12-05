@@ -236,6 +236,52 @@ export interface DeleteClientResponse {
 }
 
 // ========================================
+// CLIENT LIST WITH METRICS (Dashboard view)
+// ========================================
+
+/**
+ * ClientListItem - Cliente con métricas de fatiga y adherencia
+ * Usado en GET /clients/with-metrics
+ */
+export interface ClientListItem {
+    id: number;
+    nombre: string;
+    apellidos: string;
+    mail: string;
+    fatigue_level: string | null; // "Perfect", "Slightly Tired", "Very Tired", "Exhausted"
+    fatigue_level_numeric: number | null; // 1-10 scale for sorting
+    adherence_percentage: number | null; // 0-100
+}
+
+export interface ClientListWithMetricsResponse {
+    items: ClientListItem[];
+    total: number;
+    page: number;
+    page_size: number;
+    has_more: boolean;
+}
+
+// ========================================
+// RECENT ACTIVITY
+// ========================================
+
+export interface RecentActivityItem {
+    id: number;
+    type: "session_completed" | "client_added" | "session_scheduled" | "goal_achieved" | "test_completed";
+    actor_name: string;
+    description: string;
+    timestamp: string; // ISO date string
+    client_id?: number;
+    session_id?: number;
+    icon?: string; // Icon identifier for UI
+}
+
+export interface RecentActivityResponse {
+    items: RecentActivityItem[];
+    total: number;
+}
+
+// ========================================
 // FORMULARIOS (Frontend only)
 // ========================================
 

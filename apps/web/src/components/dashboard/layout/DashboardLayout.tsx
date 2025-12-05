@@ -49,7 +49,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
             )}
 
             {/* Contenido principal - offset sidebar, sin padding lateral */}
-            <main className="lg:ml-80 pt-16 md:pt-18 lg:pt-20 pb-16 min-h-screen">
+            <main className="lg:ml-80 pt-8 md:pt-10 lg:pt-12 pb-16 min-h-screen">
                 {children}
             </main>
         </div>

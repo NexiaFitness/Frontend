@@ -15,6 +15,8 @@ import type {
     CreateClientData,
     UpdateClientData,
     ClientFilters,
+    ClientListWithMetricsResponse,
+    RecentActivityResponse,
 } from "../types/client";
 import type { ClientStatsResponse } from "../types/clientStats";
 
@@ -683,6 +685,51 @@ export const clientsApi = baseApi.injectEndpoints({
             providesTags: [{ type: "TrainingPlanAdherenceStats" as const, id: "LIST" }],
         }),
 
+        /**
+         * Obtener lista de clientes con métricas de fatiga y adherencia
+         * Endpoint: GET /api/v1/clients/with-metrics
+         */
+        getClientsWithMetrics: builder.query<
+            ClientListWithMetricsResponse,
+            { page?: number; page_size?: number; trainer_id?: number }
+        >({
+            query: ({ page = 1, page_size = 20, trainer_id }) => {
+                const params = new URLSearchParams();
+                params.append('page', page.toString());
+                params.append('page_size', page_size.toString());
+                if (trainer_id) {
+                    params.append('trainer_id', trainer_id.toString());
+                }
+                return {
+                    url: `/clients/with-metrics?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "Client", id: "LIST_WITH_METRICS" }],
+        }),
+
+        /**
+         * Obtener actividad reciente del dashboard
+         * Endpoint: GET /api/v1/clients/recent-activity
+         */
+        getRecentActivity: builder.query<
+            RecentActivityResponse,
+            { limit?: number; trainer_id?: number }
+        >({
+            query: ({ limit = 10, trainer_id }) => {
+                const params = new URLSearchParams();
+                params.append('limit', limit.toString());
+                if (trainer_id) {
+                    params.append('trainer_id', trainer_id.toString());
+                }
+                return {
+                    url: `/clients/recent-activity?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "Client", id: "RECENT_ACTIVITY" }],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -728,4 +775,7 @@ export const {
     useGetClientTrainingPlanMonthlySummaryQuery,
     useGetClientTrainingPlanWeeklySummaryQuery,
     useGetTrainingPlanAdherenceStatsQuery,
+    // Dashboard hooks
+    useGetClientsWithMetricsQuery,
+    useGetRecentActivityQuery,
 } = clientsApi;

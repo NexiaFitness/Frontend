@@ -13,7 +13,6 @@
 
 import React from "react";
 import type { AnthropometricMetricsStepProps } from "@nexia/shared/types/clientOnboarding";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = ({
     formData,
@@ -21,27 +20,21 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
     updateField,
 }) => {
     return (
-        <div className="space-y-8">
-            {/* Header explicativo */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <p className="text-sm text-blue-800">
-                    <span className="font-semibold">Campos opcionales:</span> Estas mediciones
-                    antropométricas son útiles para análisis avanzados de composición corporal.
-                    Puedes omitirlas y agregarlas más tarde.
-                </p>
-            </div>
-
+        <div className="space-y-6">
             {/* ============================================ */}
-            {/* SKINFOLDS (Pliegues cutáneos, mm) */}
+            {/* SKINFOLDS (Pliegues cutáneos, mm) - EN CARD */}
             {/* ============================================ */}
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                    Pliegues cutáneos (mm)
-                </h3>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Pliegues cutáneos (mm)
+                    </h3>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Opcional</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Triceps */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Tríceps</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Tríceps</label>
                         <input
                             type="number"
                             step="0.1"
@@ -49,7 +42,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_triceps ?? ""}
                             onChange={(e) => updateField("skinfold_triceps", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_triceps && (
@@ -59,7 +52,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Subscapular */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Subescapular</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Subescapular</label>
                         <input
                             type="number"
                             step="0.1"
@@ -67,7 +60,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_subscapular ?? ""}
                             onChange={(e) => updateField("skinfold_subscapular", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_subscapular && (
@@ -77,7 +70,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Biceps */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Bíceps</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Bíceps</label>
                         <input
                             type="number"
                             step="0.1"
@@ -85,7 +78,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_biceps ?? ""}
                             onChange={(e) => updateField("skinfold_biceps", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_biceps && (
@@ -95,7 +88,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Iliac Crest */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Cresta ilíaca</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Cresta ilíaca</label>
                         <input
                             type="number"
                             step="0.1"
@@ -103,7 +96,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_iliac_crest ?? ""}
                             onChange={(e) => updateField("skinfold_iliac_crest", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_iliac_crest && (
@@ -113,7 +106,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Supraspinal */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Supraespinal</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Supraespinal</label>
                         <input
                             type="number"
                             step="0.1"
@@ -121,7 +114,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_supraspinal ?? ""}
                             onChange={(e) => updateField("skinfold_supraspinal", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_supraspinal && (
@@ -131,7 +124,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Abdominal */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Abdominal</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Abdominal</label>
                         <input
                             type="number"
                             step="0.1"
@@ -139,7 +132,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_abdominal ?? ""}
                             onChange={(e) => updateField("skinfold_abdominal", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_abdominal && (
@@ -149,7 +142,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Thigh */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Muslo</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Muslo</label>
                         <input
                             type="number"
                             step="0.1"
@@ -157,7 +150,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_thigh ?? ""}
                             onChange={(e) => updateField("skinfold_thigh", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_thigh && (
@@ -167,7 +160,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Calf */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Pantorrilla</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Pantorrilla</label>
                         <input
                             type="number"
                             step="0.1"
@@ -175,7 +168,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="50"
                             value={formData.skinfold_calf ?? ""}
                             onChange={(e) => updateField("skinfold_calf", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="0-50 mm"
                         />
                         {errors.skinfold_calf && (
@@ -186,16 +179,19 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
             </div>
 
             {/* ============================================ */}
-            {/* GIRTHS (Perímetros, cm) */}
+            {/* GIRTHS (Perímetros, cm) - EN CARD */}
             {/* ============================================ */}
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                    Perímetros (cm)
-                </h3>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Perímetros (cm)
+                    </h3>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Opcional</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Arm Girth Relaxed */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Perímetro de brazo (relajado)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perímetro de brazo (relajado)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -203,7 +199,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="200"
                             value={formData.girth_relaxed_arm ?? ""}
                             onChange={(e) => updateField("girth_relaxed_arm", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="10-200 cm"
                         />
                         {errors.girth_relaxed_arm && (
@@ -213,7 +209,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Arm Girth Flexed */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Perímetro de brazo (flexionado/contraído)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perímetro de brazo (flexionado/contraído)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -221,7 +217,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="200"
                             value={formData.girth_flexed_contracted_arm ?? ""}
                             onChange={(e) => updateField("girth_flexed_contracted_arm", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="10-200 cm"
                         />
                         {errors.girth_flexed_contracted_arm && (
@@ -231,7 +227,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Waist Girth */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Perímetro de cintura (mínimo)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perímetro de cintura (mínimo)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -239,7 +235,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="200"
                             value={formData.girth_waist_minimum ?? ""}
                             onChange={(e) => updateField("girth_waist_minimum", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="10-200 cm"
                         />
                         {errors.girth_waist_minimum && (
@@ -249,7 +245,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Hip Girth */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Perímetro de cadera (máximo)</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perímetro de cadera (máximo)</label>
                         <input
                             type="number"
                             step="0.1"
@@ -257,7 +253,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="200"
                             value={formData.girth_hips_maximum ?? ""}
                             onChange={(e) => updateField("girth_hips_maximum", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="10-200 cm"
                         />
                         {errors.girth_hips_maximum && (
@@ -267,7 +263,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Medial Thigh Girth */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Perímetro medial de muslo</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perímetro medial de muslo</label>
                         <input
                             type="number"
                             step="0.1"
@@ -275,7 +271,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="200"
                             value={formData.girth_medial_thigh ?? ""}
                             onChange={(e) => updateField("girth_medial_thigh", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="10-200 cm"
                         />
                         {errors.girth_medial_thigh && (
@@ -285,7 +281,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Maximum Calf Girth */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Perímetro máximo de pantorrilla</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Perímetro máximo de pantorrilla</label>
                         <input
                             type="number"
                             step="0.1"
@@ -293,7 +289,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="200"
                             value={formData.girth_maximum_calf ?? ""}
                             onChange={(e) => updateField("girth_maximum_calf", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="10-200 cm"
                         />
                         {errors.girth_maximum_calf && (
@@ -304,16 +300,19 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
             </div>
 
             {/* ============================================ */}
-            {/* DIAMETERS (Diámetros óseos, cm) */}
+            {/* DIAMETERS (Diámetros óseos, cm) - EN CARD */}
             {/* ============================================ */}
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                    Diámetros óseos (cm)
-                </h3>
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Diámetros óseos (cm)
+                    </h3>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Opcional</span>
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Wrist Diameter */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Diámetro biestiloideo de muñeca</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Diámetro biestiloideo de muñeca</label>
                         <input
                             type="number"
                             step="0.1"
@@ -321,7 +320,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="15"
                             value={formData.diameter_bi_styloid_wrist ?? ""}
                             onChange={(e) => updateField("diameter_bi_styloid_wrist", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="3-15 cm"
                         />
                         {errors.diameter_bi_styloid_wrist && (
@@ -331,7 +330,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Humerus Diameter */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Diámetro biepicondilar de húmero</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Diámetro biepicondilar de húmero</label>
                         <input
                             type="number"
                             step="0.1"
@@ -339,7 +338,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="20"
                             value={formData.diameter_humerus_biepicondylar ?? ""}
                             onChange={(e) => updateField("diameter_humerus_biepicondylar", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="3-20 cm"
                         />
                         {errors.diameter_humerus_biepicondylar && (
@@ -349,7 +348,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
 
                     {/* Knee Diameter */}
                     <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Diámetro bicondilar de fémur</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Diámetro bicondilar de fémur</label>
                         <input
                             type="number"
                             step="0.1"
@@ -357,7 +356,7 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                             max="20"
                             value={formData.diameter_femur_bicondylar ?? ""}
                             onChange={(e) => updateField("diameter_femur_bicondylar", Number(e.target.value))}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                             placeholder="5-20 cm"
                         />
                         {errors.diameter_femur_bicondylar && (
@@ -367,60 +366,6 @@ export const AnthropometricMetrics: React.FC<AnthropometricMetricsStepProps> = (
                 </div>
             </div>
 
-            {/* ============================================ */}
-            {/* NOTES (Notas adicionales) */}
-            {/* ============================================ */}
-            <div>
-                <h3 className="text-lg font-semibold text-slate-900 mb-4">
-                    Notas adicionales
-                </h3>
-                <div className="space-y-4">
-                    {/* Notes 1 */}
-                    <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Nota 1</label>
-                        <textarea
-                            value={formData.notes_1 || ""}
-                            onChange={(e) => updateField("notes_1", e.target.value)}
-                            className="w-full border rounded-lg p-3 bg-white text-slate-800 min-h-[80px]"
-                            placeholder="Observaciones sobre mediciones, condiciones especiales, etc."
-                            maxLength={500}
-                        />
-                        {errors.notes_1 && (
-                            <p className="text-red-600 text-sm">{errors.notes_1}</p>
-                        )}
-                    </div>
-
-                    {/* Notes 2 */}
-                    <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Nota 2</label>
-                        <textarea
-                            value={formData.notes_2 || ""}
-                            onChange={(e) => updateField("notes_2", e.target.value)}
-                            className="w-full border rounded-lg p-3 bg-white text-slate-800 min-h-[80px]"
-                            placeholder="Información adicional relevante"
-                            maxLength={500}
-                        />
-                        {errors.notes_2 && (
-                            <p className="text-red-600 text-sm">{errors.notes_2}</p>
-                        )}
-                    </div>
-
-                    {/* Notes 3 */}
-                    <div>
-                        <label className={TYPOGRAPHY.inputLabel}>Nota 3</label>
-                        <textarea
-                            value={formData.notes_3 || ""}
-                            onChange={(e) => updateField("notes_3", e.target.value)}
-                            className="w-full border rounded-lg p-3 bg-white text-slate-800 min-h-[80px]"
-                            placeholder="Cualquier otra anotación"
-                            maxLength={500}
-                        />
-                        {errors.notes_3 && (
-                            <p className="text-red-600 text-sm">{errors.notes_3}</p>
-                        )}
-                    </div>
-                </div>
-            </div>
         </div>
     );
 };

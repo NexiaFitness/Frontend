@@ -13,7 +13,6 @@
 
 import React from "react";
 import type { HealthInfoStepProps } from "@nexia/shared/types/clientOnboarding";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 export const HealthInfo: React.FC<HealthInfoStepProps> = ({
     formData,
@@ -21,33 +20,58 @@ export const HealthInfo: React.FC<HealthInfoStepProps> = ({
     updateField,
 }) => {
     return (
-        <div className="space-y-6">
-            {/* Lesiones relevantes */}
+        <div>
+            {/* Sección: Notas */}
             <div>
-                <label className={TYPOGRAPHY.inputLabel}>Lesiones relevantes</label>
-                <textarea
-                    value={formData.lesiones_relevantes || ""}
-                    onChange={(e) => updateField("lesiones_relevantes", e.target.value)}
-                    className="w-full border rounded-lg p-3 bg-white text-slate-800 min-h-[100px]"
-                    placeholder="Describe cualquier lesión actual o pasada que pueda afectar el entrenamiento"
-                />
-                {errors.lesiones_relevantes && (
-                    <p className="text-red-600 text-sm">{errors.lesiones_relevantes}</p>
-                )}
-            </div>
+                <div className="flex items-center gap-3 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Notas</h3>
+                    <div className="flex-1 h-0.5 bg-gray-900"></div>
+                </div>
+                
+                {/* Notas en 3 columnas */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Nota 1 */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">Nota #1</label>
+                        <textarea
+                            value={formData.lesiones_relevantes || ""}
+                            onChange={(e) => updateField("lesiones_relevantes", e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Añade notas aquí..."
+                        />
+                        {errors.lesiones_relevantes && (
+                            <p className="text-red-600 text-sm mt-1">{errors.lesiones_relevantes}</p>
+                        )}
+                    </div>
 
-            {/* Observaciones generales */}
-            <div>
-                <label className={TYPOGRAPHY.inputLabel}>Observaciones generales</label>
-                <textarea
-                    value={formData.observaciones || ""}
-                    onChange={(e) => updateField("observaciones", e.target.value)}
-                    className="w-full border rounded-lg p-3 bg-white text-slate-800 min-h-[100px]"
-                    placeholder="Cualquier información adicional relevante (medicación, condiciones médicas, preferencias, etc.)"
-                />
-                {errors.observaciones && (
-                    <p className="text-red-600 text-sm">{errors.observaciones}</p>
-                )}
+                    {/* Nota 2 */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">Nota #2</label>
+                        <textarea
+                            value={formData.observaciones || ""}
+                            onChange={(e) => updateField("observaciones", e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Añade notas aquí..."
+                        />
+                        {errors.observaciones && (
+                            <p className="text-red-600 text-sm mt-1">{errors.observaciones}</p>
+                        )}
+                    </div>
+
+                    {/* Nota 3 */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-2">Nota #3</label>
+                        <textarea
+                            value={formData.notes_1 || ""}
+                            onChange={(e) => updateField("notes_1", e.target.value)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 min-h-[120px] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="Añade notas aquí..."
+                        />
+                        {errors.notes_1 && (
+                            <p className="text-red-600 text-sm mt-1">{errors.notes_1}</p>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     );

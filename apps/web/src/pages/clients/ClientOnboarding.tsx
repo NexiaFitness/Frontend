@@ -43,7 +43,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
+import { TYPOGRAPHY } from "@/utils/typography";
 import { ClientOnboardingForm } from "@/components/clients/onboarding/ClientOnboardingForm";
 import type { ClientFormData } from "@nexia/shared/types/client";
 
@@ -75,16 +75,6 @@ export const ClientOnboarding: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                {/* Encabezado responsive igual a dashboards */}
-                <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
-                        Nuevo cliente
-                    </h2>
-                    <p className={TYPOGRAPHY_COMBINATIONS.dashboardHeroSubtitle}>
-                        Completa el formulario para crear un nuevo cliente
-                    </p>
-                </div>
-
                 {/* ClientOnboardingForm con wizard */}
                 <ClientOnboardingForm
                     initialData={initialFormData}
