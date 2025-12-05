@@ -17,7 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { Alert } from "@/components/ui/feedback";
+import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
@@ -61,6 +61,7 @@ export const CreateTrainingPlan: React.FC = () => {
     const [createPlan, { isLoading: isCreatingPlan, error: planError }] =
         useCreateTrainingPlanMutation();
     const [createMilestone, { isLoading: isCreatingMilestone }] = useCreateMilestoneMutation();
+    const { showSuccess, showError } = useToast();
 
     // Estado del formulario principal
     const [formData, setFormData] = useState<Partial<TrainingPlanCreate>>({
@@ -85,7 +86,6 @@ export const CreateTrainingPlan: React.FC = () => {
     const [tagInput, setTagInput] = useState("");
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [success, setSuccess] = useState(false);
 
     useEffect(() => {
         if (!trainerId) {
@@ -207,7 +207,6 @@ export const CreateTrainingPlan: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormErrors({});
-        setSuccess(false);
 
         if (!validateForm()) {
             return;
@@ -233,7 +232,7 @@ export const CreateTrainingPlan: React.FC = () => {
                 await createMilestonesForPlan(result.id);
             }
 
-            setSuccess(true);
+            showSuccess("Plan creado exitosamente. Redirigiendo...", 2000);
             setTimeout(() => {
                 if (clientId) {
                     navigate(`/dashboard/clients/${clientId}`);
@@ -243,6 +242,11 @@ export const CreateTrainingPlan: React.FC = () => {
             }, 1500);
         } catch (err) {
             console.error("Error creando plan:", err);
+            const errorMessage =
+                err && typeof err === "object" && "data" in err
+                    ? String((err as { data: unknown }).data || "Error al crear el plan")
+                    : "Error al crear el plan";
+            showError(errorMessage);
         }
     };
 
@@ -608,23 +612,6 @@ export const CreateTrainingPlan: React.FC = () => {
                             </Button>
                         </div>
 
-                        {/* Mensajes de error y éxito */}
-                        {planError && (
-                            <Alert variant="error">
-                                {planError && typeof planError === "object" && "data" in planError
-                                    ? String(
-                                          (planError as { data: unknown }).data ||
-                                              "Error al crear el plan"
-                                      )
-                                    : "Error al crear el plan"}
-                            </Alert>
-                        )}
-
-                        {success && (
-                            <Alert variant="success">
-                                Plan creado exitosamente. Redirigiendo...
-                            </Alert>
-                        )}
                     </form>
                 </div>
             </DashboardLayout>

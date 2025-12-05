@@ -17,7 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { Alert } from "@/components/ui/feedback";
+import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useScheduleSession } from "@nexia/shared";
@@ -30,6 +30,7 @@ import { SCHEDULED_SESSION_TYPE, SESSION_LOCATION } from "@nexia/shared/types/sc
 export const ScheduleSession: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
+    const { showSuccess, showError } = useToast();
     const { createSession, checkConflict, isLoading, isCreating, isError, error } = useScheduleSession();
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
@@ -57,7 +58,6 @@ export const ScheduleSession: React.FC = () => {
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [conflictCheck, setConflictCheck] = useState<{ hasConflict: boolean; message: string } | null>(null);
-    const [success, setSuccess] = useState(false);
 
     // Calcular duración automáticamente
     useEffect(() => {
@@ -108,7 +108,6 @@ export const ScheduleSession: React.FC = () => {
         e.preventDefault();
         setFormErrors({});
         setConflictCheck(null);
-        setSuccess(false);
 
         // Validación
         const errors: Record<string, string> = {};
@@ -135,12 +134,17 @@ export const ScheduleSession: React.FC = () => {
 
         try {
             await createSession(formData);
-            setSuccess(true);
+            showSuccess("Sesión agendada exitosamente. Redirigiendo...", 2000);
             setTimeout(() => {
                 navigate("/dashboard");
-            }, 2000);
+            }, 1500);
         } catch (err) {
             console.error("Error creando sesión:", err);
+            const errorMessage =
+                err && typeof err === "object" && "data" in err
+                    ? String((err as { data: unknown }).data || "Error al agendar la sesión")
+                    : "Error al agendar la sesión";
+            showError(errorMessage);
         }
     };
 
@@ -391,12 +395,6 @@ export const ScheduleSession: React.FC = () => {
                             </div>
                         </form>
 
-                        {/* Success */}
-                        {success && (
-                            <div className="mt-6">
-                                <Alert variant="success">Sesión agendada exitosamente. Redirigiendo...</Alert>
-                            </div>
-                        )}
 
                         {/* Error */}
                         {isError && (

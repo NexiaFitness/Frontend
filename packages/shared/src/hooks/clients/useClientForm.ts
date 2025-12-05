@@ -33,7 +33,7 @@ export interface UseClientFormResult {
         field: K,
         value: ClientFormData[K]
     ) => void;
-    handleSubmit: () => Promise<{ success: boolean; error?: unknown }>;
+    handleSubmit: () => Promise<{ success: boolean; clientId?: number; error?: unknown }>;
     isSubmitting: boolean;
 }
 
@@ -83,8 +83,8 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
         try {
             if (mode === "create") {
                 // Crear nuevo cliente
-                await createClient(formData).unwrap();
-                return { success: true };
+                const client = await createClient(formData).unwrap();
+                return { success: true, clientId: client.id };
             } else {
                 // Actualizar cliente existente
                 if (!clientId) {

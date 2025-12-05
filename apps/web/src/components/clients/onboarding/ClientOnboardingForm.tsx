@@ -21,6 +21,7 @@ import type { ClientFormData } from "@nexia/shared/types/client";
 import { useClientForm } from "@nexia/shared/hooks/clients/useClientForm";
 import { useCompleteProfileModal } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
+import { useToast } from "@/components/ui/feedback";
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { PersonalInfo } from "../shared/PersonalInfo";
@@ -33,7 +34,7 @@ import { Review } from "../steps/Review";
 
 export interface ClientOnboardingFormProps {
     initialData: ClientFormData;
-    onSubmitSuccess?: () => void;
+    onSubmitSuccess?: (clientId: number) => void;
     onBackToDashboard?: () => void;
 }
 
@@ -44,6 +45,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
 }) => {
     // ✅ Modal de perfil completo
     const { shouldBlock } = useCompleteProfileModal();
+    const { showSuccess } = useToast();
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
     const [showReview, setShowReview] = useState(false);
 
@@ -75,8 +77,19 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
         }
         
         const result = await handleSubmit();
-        if (result.success && onSubmitSuccess) {
-            onSubmitSuccess();
+        if (result.success && result.clientId) {
+            // Mostrar toast de éxito
+            const clientName = formData.nombre && formData.apellidos 
+                ? `${formData.nombre} ${formData.apellidos}`
+                : formData.nombre || "Cliente";
+            showSuccess(`Cliente ${clientName} creado exitosamente. Redirigiendo...`, 2000);
+            
+            // Llamar callback con clientId después de un breve delay para que se vea el toast
+            setTimeout(() => {
+                if (onSubmitSuccess) {
+                    onSubmitSuccess(result.clientId);
+                }
+            }, 1500);
         }
     };
 

@@ -16,7 +16,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { LoadingSpinner, useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateTestResult } from "@nexia/shared";
@@ -27,6 +27,7 @@ import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
 export const CreateTestResult: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
+    const { showSuccess, showError } = useToast();
 
     const clientIdFromQuery = searchParams.get("clientId");
     const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
@@ -87,7 +88,6 @@ export const CreateTestResult: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormErrors({});
-        setSuccess(false);
 
         const errors: Record<string, string> = {};
 
@@ -130,12 +130,17 @@ export const CreateTestResult: React.FC = () => {
                 conditions: formData.conditions || null,
             });
 
-            setSuccess(true);
+            showSuccess("Test creado exitosamente. Redirigiendo...", 2000);
             setTimeout(() => {
                 goBack({ replace: true });
-            }, 2000);
+            }, 1500);
         } catch (err) {
             console.error("Error creando test:", err);
+            const errorMessage =
+                err && typeof err === "object" && "data" in err
+                    ? String((err as { data: unknown }).data || "Error al crear el test")
+                    : "Error al crear el test";
+            showError(errorMessage);
         }
     };
 
@@ -373,19 +378,6 @@ export const CreateTestResult: React.FC = () => {
                                 </Button>
                             </div>
 
-                            {error ? (
-                                <Alert variant="error">
-                                    {error && typeof error === "object" && "data" in error
-                                        ? String((error as { data: unknown }).data || "Error al crear el test")
-                                        : "Error al crear el test"}
-                                </Alert>
-                            ) : null}
-
-                            {success ? (
-                                <Alert variant="success">
-                                    Test creado exitosamente. Redirigiendo...
-                                </Alert>
-                            ) : null}
                         </form>
                     </div>
                 </div>

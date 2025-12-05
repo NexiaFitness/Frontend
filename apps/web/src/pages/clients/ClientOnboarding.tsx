@@ -64,8 +64,8 @@ export const ClientOnboarding: React.FC = () => {
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
-    const handleSuccess = () => {
-        navigate("/dashboard/clients", { replace: true });
+    const handleSuccess = (clientId: number) => {
+        navigate(`/dashboard/clients/${clientId}`, { replace: true });
     };
 
     return (

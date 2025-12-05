@@ -17,7 +17,7 @@ import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
-import { Alert } from "@/components/ui/feedback";
+import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateSession, useClientMicrocycles } from "@nexia/shared";
@@ -38,6 +38,7 @@ export const CreateSession: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
+    const { showSuccess, showError } = useToast();
 
     const clientIdFromQuery = searchParams.get("clientId");
     const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
@@ -76,7 +77,6 @@ export const CreateSession: React.FC = () => {
     });
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [success, setSuccess] = useState(false);
 
     useEffect(() => {
         if (!clientId) {
@@ -87,7 +87,6 @@ export const CreateSession: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormErrors({});
-        setSuccess(false);
 
         const errors: Record<string, string> = {};
         if (!formData.sessionName.trim()) {
@@ -147,12 +146,19 @@ export const CreateSession: React.FC = () => {
             };
 
             await createSession(sessionPayload);
-            setSuccess(true);
+            showSuccess("Sesión creada exitosamente. Redirigiendo...", 2000);
             setTimeout(() => {
                 navigate(clientId ? `/dashboard/clients/${clientId}` : "/dashboard");
-            }, 2000);
+            }, 1500);
         } catch (err) {
             console.error("Error creando sesión:", err);
+            const errorMessage =
+                err && typeof err === "object" && "data" in err
+                    ? String(
+                          (err as { data: unknown }).data || "Error al crear la sesión"
+                      )
+                    : "Error al crear la sesión";
+            showError(errorMessage);
             // DEBUG: Ver el error completo
             if (err && typeof err === "object" && "data" in err) {
                 const errorData = (err as { data: unknown }).data;
@@ -427,27 +433,6 @@ export const CreateSession: React.FC = () => {
                                 </Button>
                             </div>
 
-                            {/* Error */}
-                            {isError && (
-                                <Alert variant="error">
-                                    {error && typeof error === "object" && "data" in error
-                                        ? (() => {
-                                              const errorData = (error as { data: unknown }).data;
-                                              if (errorData && typeof errorData === "object" && "detail" in errorData) {
-                                                  return String((errorData as { detail: unknown }).detail);
-                                              }
-                                              return JSON.stringify(errorData, null, 2);
-                                          })()
-                                        : "Error al crear la sesión"}
-                                </Alert>
-                            )}
-
-                            {/* Success */}
-                            {success && (
-                                <Alert variant="success">
-                                    Sesión creada exitosamente. Redirigiendo...
-                                </Alert>
-                            )}
                         </form>
                     </div>
                 </div>
