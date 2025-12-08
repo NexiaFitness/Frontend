@@ -10,4 +10,5 @@ export { ServerErrorBanner } from './ServerErrorBanner';
 export { LoadingSpinner } from './LoadingSpinner';
 export { Alert } from './Alert';
 export { Toast, type ToastVariant, type ToastProps } from './Toast';
-export { ToastProvider, useToast } from './ToastProvider';
+export { ToastProvider } from './ToastProvider';
+export { useToast } from './useToast';

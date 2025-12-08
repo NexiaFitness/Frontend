@@ -11,8 +11,9 @@
  * @since v6.1.0
  */
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import React, { useState, useCallback, ReactNode } from "react";
 import { Toast, type ToastVariant } from "./Toast";
+import { ToastContext, type ToastContextType } from "./ToastContext";
 
 export interface ToastItem {
     id: string;
@@ -20,24 +21,6 @@ export interface ToastItem {
     message: string;
     duration?: number;
 }
-
-interface ToastContextType {
-    showToast: (variant: ToastVariant, message: string, duration?: number) => void;
-    showSuccess: (message: string, duration?: number) => void;
-    showError: (message: string, duration?: number) => void;
-    showWarning: (message: string, duration?: number) => void;
-    showInfo: (message: string, duration?: number) => void;
-}
-
-const ToastContext = createContext<ToastContextType | undefined>(undefined);
-
-export const useToast = (): ToastContextType => {
-    const context = useContext(ToastContext);
-    if (!context) {
-        throw new Error("useToast must be used within a ToastProvider");
-    }
-    return context;
-};
 
 interface ToastProviderProps {
     children: ReactNode;

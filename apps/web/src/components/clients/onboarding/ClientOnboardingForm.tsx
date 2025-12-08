@@ -77,7 +77,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
         }
         
         const result = await handleSubmit();
-        if (result.success && result.clientId) {
+        if (result.success && result.clientId !== undefined) {
             // Mostrar toast de éxito
             const clientName = formData.nombre && formData.apellidos 
                 ? `${formData.nombre} ${formData.apellidos}`
@@ -86,7 +86,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
             
             // Llamar callback con clientId después de un breve delay para que se vea el toast
             setTimeout(() => {
-                if (onSubmitSuccess) {
+                if (onSubmitSuccess && result.clientId !== undefined) {
                     onSubmitSuccess(result.clientId);
                 }
             }, 1500);
@@ -129,33 +129,20 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                 <div className="max-w-7xl mx-auto">
                     {/* Todo el formulario en una sola vista */}
                     <div className="space-y-8">
-                        {/* Separador visual entre secciones */}
-                        <div className="border-b border-gray-300"></div>
-                        
                         {/* Información Personal */}
                         <PersonalInfo {...stepProps} isEditMode={false} />
-                        
-                        <div className="border-b border-gray-300"></div>
                         
                         {/* Datos Antropométricos */}
                         <PhysicalMetrics {...stepProps} />
                         
-                        <div className="border-b border-gray-300"></div>
-                        
                         {/* Antropometría (Pliegues, Perímetros, Diámetros) */}
                         <AnthropometricMetrics {...stepProps} />
-                        
-                        <div className="border-b border-gray-300"></div>
                         
                         {/* Parámetros de Entrenamiento */}
                         <TrainingGoals {...stepProps} />
                         
-                        <div className="border-b border-gray-300"></div>
-                        
                         {/* Experiencia y Frecuencia */}
                         <Experience {...stepProps} />
-                        
-                        <div className="border-b border-gray-300"></div>
                         
                         {/* Notas */}
                         <HealthInfo {...stepProps} />

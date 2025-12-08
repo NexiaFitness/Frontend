@@ -12,7 +12,7 @@
  * @since v6.1.0
  */
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 
 export type ToastVariant = "success" | "error" | "warning" | "info";
 
@@ -99,6 +99,14 @@ export const Toast: React.FC<ToastProps> = ({
     const styles = variantStyles[variant];
     const icon = icons[variant];
 
+    const handleClose = useCallback(() => {
+        setIsExiting(true);
+        // Esperar a que termine la animación antes de llamar onClose
+        setTimeout(() => {
+            onClose(id);
+        }, 300); // Duración de la animación de salida
+    }, [id, onClose]);
+
     // Animación de entrada
     useEffect(() => {
         // Pequeño delay para activar animación
@@ -113,15 +121,7 @@ export const Toast: React.FC<ToastProps> = ({
         }, duration);
 
         return () => clearTimeout(timer);
-    }, [duration]);
-
-    const handleClose = () => {
-        setIsExiting(true);
-        // Esperar a que termine la animación antes de llamar onClose
-        setTimeout(() => {
-            onClose(id);
-        }, 300); // Duración de la animación de salida
-    };
+    }, [duration, handleClose]);
 
     return (
         <div

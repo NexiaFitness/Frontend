@@ -38,7 +38,7 @@ export const CreateTestResult: React.FC = () => {
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
     const trainerId = trainerProfile?.id || 0;
 
-    const { createTestResult, isSubmitting, error } = useCreateTestResult();
+    const { createTestResult, isSubmitting } = useCreateTestResult();
 
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(clientId, {
         skip: !clientId,
@@ -61,7 +61,6 @@ export const CreateTestResult: React.FC = () => {
     });
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [success, setSuccess] = useState(false);
 
     // Test seleccionado
     const selectedTest = React.useMemo(() => {

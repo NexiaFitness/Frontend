@@ -58,7 +58,7 @@ export const CreateTrainingPlan: React.FC = () => {
         skip: !clientId,
     });
 
-    const [createPlan, { isLoading: isCreatingPlan, error: planError }] =
+    const [createPlan, { isLoading: isCreatingPlan }] =
         useCreateTrainingPlanMutation();
     const [createMilestone, { isLoading: isCreatingMilestone }] = useCreateMilestoneMutation();
     const { showSuccess, showError } = useToast();

@@ -38,6 +38,26 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     onEditProfile,
     onAnthropometricData,
 }) => {
+    // Calcular edad desde birthdate si no está disponible directamente
+    const calculateAge = (birthdate: string | undefined | null): number | null => {
+        if (!birthdate) return null;
+        try {
+            const birth = new Date(birthdate);
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            return age;
+        } catch {
+            return null;
+        }
+    };
+
+    // Obtener edad: primero de client.edad, si no existe calcular desde birthdate
+    const clientAge = client.edad ?? (client.birthdate ? calculateAge(client.birthdate) : null);
+
     // Formatear fecha de alta como "15 de enero de 2024"
     const formatJoinedDate = (fechaAlta: string): string => {
         const date = new Date(fechaAlta);
@@ -117,7 +137,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                                 <div>
                                     <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Edad</span>
                                     <p className="text-gray-900 font-medium">
-                                        {client.edad ? `${client.edad} años` : "—"}
+                                        {clientAge ? `${clientAge} años` : "—"}
                                     </p>
                                 </div>
 

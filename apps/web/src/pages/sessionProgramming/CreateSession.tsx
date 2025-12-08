@@ -49,7 +49,7 @@ export const CreateSession: React.FC = () => {
     });
     const trainerId = trainerProfile?.id ?? 0;
 
-    const { createSession, isCreating, isError, error } = useCreateSession({
+    const { createSession, isCreating } = useCreateSession({
         clientId,
         trainerId,
     });

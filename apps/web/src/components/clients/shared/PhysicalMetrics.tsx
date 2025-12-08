@@ -78,10 +78,10 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({
                     {/* BMI Display */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1.5">IMC</label>
-                        <div className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 flex items-center justify-between">
+                        <div className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 flex items-center justify-between pointer-events-none">
                             <span className="text-gray-600 text-sm">Auto-calculado</span>
                             {bmi !== null ? (
-                                <span className="text-lg font-semibold text-gray-900">
+                                <span className="text-gray-900">
                                     {bmi.toFixed(1)}
                                 </span>
                             ) : (
