@@ -32,4 +32,5 @@ export * from "./dashboard";
 export * from "./reports";
 export * from "./scheduling";
 export * from "./sessionProgramming";
+export * from "./metrics";
 

@@ -111,6 +111,7 @@ export * from "./types/coherence";
 export * from "./types/dashboard";
 export * from "./types/testing";
 export * from "./types/reports";
+export * from "./types/metrics";
 // Export scheduling types explicitly to avoid SessionType conflict with training.ts
 export type {
     ScheduledSessionType,
@@ -243,5 +244,8 @@ export * from "./hooks/scheduling";
 
 // Hooks - Session Programming
 export * from "./hooks/sessionProgramming";
+
+// Hooks - Metrics
+export * from "./hooks/metrics";
 
 // Mocks (temporal - mientras backend implementa endpoints)
