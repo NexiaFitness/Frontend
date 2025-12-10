@@ -135,11 +135,17 @@ export interface DailyMetricsRequest {
     date: string; // ISO date
 }
 
+export interface CIDCalcIn {
+    volumen_level: number; // 1-10
+    intensidad_level: number; // 1-10
+    k_fase?: number; // Default 1.0
+    k_experiencia?: number; // Default 1.0
+    p?: number; // Default 1.0, Exponent 1.0-1.3
+}
+
 export interface WeeklyMetricsRequest {
-    client_id: number;
-    trainer_id?: number;
+    items: CIDCalcIn[];
     start_date: string; // ISO date
-    end_date: string; // ISO date
 }
 
 export interface MonthlyMetricsRequest {
@@ -213,9 +219,14 @@ export interface DailyMetricsResponse extends AggregateMetrics {
     day: string; // ISO date
 }
 
-export interface WeeklyMetricsResponse extends AggregateMetrics {
-    week_start: string; // ISO date
-    week_end: string; // ISO date
+export interface WeeklyBucket {
+    week_start: string; // ISO date (Monday)
+    cid_sum: number;
+    cid_avg: number;
+}
+
+export interface WeeklyMetricsResponse {
+    buckets: WeeklyBucket[];
 }
 
 export interface MonthlyMetricsResponse extends AggregateMetrics {

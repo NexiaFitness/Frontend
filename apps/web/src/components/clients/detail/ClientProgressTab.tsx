@@ -11,9 +11,11 @@
  * - Gráficos de progreso físico (peso, IMC)
  * - Gráficos de entrenamiento (intensity, volume)
  * - Métricas de cambio y tendencias
+ * - Métricas de carga de entrenamiento (CID, alertas)
  *
  * @author Frontend Team
  * @since v3.1.0
+ * @updated v5.6.0 - Agregado sub-tab "Carga de Entrenamiento" con métricas METRICS
  */
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
@@ -22,6 +24,7 @@ import type { ClientProgress, ProgressAnalytics } from "@nexia/shared/types/prog
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
+import { useWeeklyMetrics, useMetricsAlerts } from "@nexia/shared/hooks/metrics";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { CompactChartCard } from "@/components/ui/cards";
@@ -110,9 +113,9 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     const formRef = useRef<HTMLDivElement>(null);
 
     // Sub-tab navigation con query parameters
-    type ProgressSubTab = "overview" | "history";
+    type ProgressSubTab = "overview" | "load" | "history";
     const { activeSubTab: activeTab, setActiveSubTab: setActiveTab } = useSubTabNavigation<ProgressSubTab>({
-        validSubTabs: ["overview", "history"] as const,
+        validSubTabs: ["overview", "load", "history"] as const,
         defaultSubTab: "overview",
     });
 
@@ -139,7 +142,27 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
         isLoading: isLoadingFatigue,
     } = useClientFatigue(clientId);
 
-    const isLoading = isLoadingProgress || isLoadingFatigue;
+    // Calcular fecha de inicio para métricas semanales (4 semanas atrás)
+    const metricsStartDate = useMemo(() => {
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - 28); // 4 semanas atrás
+        return startDate.toISOString().split('T')[0]; // YYYY-MM-DD
+    }, []);
+
+    // Hooks de métricas de carga de entrenamiento
+    // TODO: Obtener sesiones del cliente y transformarlas a CIDCalcIn items
+    // Por ahora, enviamos array vacío - el backend devolverá error si no hay items
+    const weeklyMetrics = useWeeklyMetrics({
+        items: [], // TODO: Obtener y transformar sesiones del cliente
+        startDate: metricsStartDate,
+    });
+
+    const metricsAlerts = useMetricsAlerts({
+        clientId: clientId,
+        trainerId: client?.trainer_id,
+    });
+
+    const isLoading = isLoadingProgress || isLoadingFatigue || weeklyMetrics.isLoading;
     const chartHeight = 400;
     const minChartContainerHeight = 360;
     
@@ -283,13 +306,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             <nav aria-label="Tabs progreso" className="flex gap-1 border-b border-gray-200">
                 {[
                     { id: "overview", label: "Resumen" },
+                    { id: "load", label: "Carga de Entrenamiento" },
                     { id: "history", label: "Historial de Registros" },
                 ].map((tab) => {
                     const isActive = activeTab === tab.id;
                     return (
                         <button
                             key={tab.id}
-                            onClick={() => setActiveTab(tab.id as "overview" | "history")}
+                            onClick={() => setActiveTab(tab.id as ProgressSubTab)}
                             className={`relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center ${
                                 isActive
                                     ? "text-[#4A67B3]"
@@ -347,6 +371,130 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         </div>
                     )}
                 </>
+            )}
+
+            {activeTab === "load" && (
+                <div className="space-y-6">
+                    {/* Gráfico CID Semanal */}
+                    {weeklyMetrics.chartData && weeklyMetrics.chartData.length > 0 && (
+                        <CompactChartCard title="CID Semanal">
+                            <div
+                                className="w-full flex items-center justify-center"
+                                style={{ minHeight: `${minChartContainerHeight}px` }}
+                            >
+                                <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                    <ResponsiveContainer width="100%" height={chartHeight}>
+                                        <LineChart data={weeklyMetrics.chartData} margin={defaultChartMargin}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis 
+                                                dataKey="week" 
+                                                style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                label={{ value: "Semana", position: "insideBottom", offset: -5 }}
+                                            />
+                                            <YAxis
+                                                label={{
+                                                    value: "CID",
+                                                    angle: -90,
+                                                    position: "left",
+                                                    offset: -5,
+                                                    style: { textAnchor: "middle" },
+                                                }}
+                                                style={{ fontSize: '12px', fill: '#6b7280' }}
+                                            />
+                                            <Tooltip 
+                                                contentStyle={{ 
+                                                    backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                    border: '1px solid #e5e7eb',
+                                                    borderRadius: '8px',
+                                                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                }}
+                                            />
+                                            <Legend {...legendConfig} />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="cid"
+                                                stroke="#38b6ff"
+                                                name="CID"
+                                                strokeWidth={2}
+                                                dot={{ r: 4, fill: "#38b6ff" }}
+                                                isAnimationActive={false}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </CompactChartCard>
+                    )}
+
+                    {/* Estado de carga para métricas semanales */}
+                    {weeklyMetrics.isLoading && (
+                        <div className="flex justify-center items-center py-16">
+                            <LoadingSpinner size="lg" />
+                        </div>
+                    )}
+
+                    {/* Mensaje si no hay datos de CID */}
+                    {!weeklyMetrics.isLoading && (!weeklyMetrics.chartData || weeklyMetrics.chartData.length === 0) && (
+                        <div className="bg-white rounded-lg shadow p-8 text-center">
+                            <p className="text-gray-500">
+                                Aún no hay datos de carga de entrenamiento para este cliente.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Alertas de Métricas */}
+                    {metricsAlerts.hasAlerts && (
+                        <div className="bg-white rounded-xl shadow-sm p-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Alertas de Carga</h3>
+                            <div className="space-y-3">
+                                {metricsAlerts.activeAlerts.map((alert, index) => (
+                                    <div
+                                        key={index}
+                                        className={`p-4 rounded-lg border ${
+                                            alert.severity === "critical"
+                                                ? "bg-red-50 border-red-300"
+                                                : "bg-yellow-50 border-yellow-300"
+                                        }`}
+                                    >
+                                        <div className="flex justify-between items-start">
+                                            <div>
+                                                <p className="font-medium text-gray-900">{alert.type}</p>
+                                                <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                                            </div>
+                                            <span
+                                                className={`px-2 py-1 text-xs rounded font-medium ${
+                                                    alert.severity === "critical"
+                                                        ? "bg-red-100 text-red-800"
+                                                        : "bg-yellow-100 text-yellow-800"
+                                                }`}
+                                            >
+                                                {alert.severity === "critical" ? "Crítica" : "Advertencia"}
+                                            </span>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Cards de métricas agregadas */}
+                    {weeklyMetrics.latestWeek && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <SummaryCard
+                                label="CID Semanal"
+                                value={weeklyMetrics.latestWeek.cid.toFixed(1)}
+                            />
+                            <SummaryCard
+                                label="Volumen Total"
+                                value={weeklyMetrics.latestWeek.volume.toFixed(0)}
+                            />
+                            <SummaryCard
+                                label="Intensidad Promedio"
+                                value={weeklyMetrics.latestWeek.intensity.toFixed(1)}
+                            />
+                        </div>
+                    )}
+                </div>
             )}
 
             {activeTab === "history" && !isNotFoundError && progressHistory && progressHistory.length > 0 && (

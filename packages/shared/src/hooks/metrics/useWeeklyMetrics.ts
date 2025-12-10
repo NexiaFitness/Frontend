@@ -9,12 +9,11 @@
 import React from "react";
 import { useMemo } from "react";
 import { useGetWeeklyMetricsMutation } from "../../api/metricsApi";
-import type { WeeklyMetricsRequest } from "../../types/metrics";
+import type { WeeklyMetricsRequest, CIDCalcIn } from "../../types/metrics";
 
 interface UseWeeklyMetricsParams {
-    clientId: number;
-    startDate: string; // ISO date
-    endDate: string; // ISO date
+    items: CIDCalcIn[]; // Array de items para calcular CID
+    startDate: string; // ISO date - fecha de inicio
 }
 
 interface WeeklyMetricsChartData {
@@ -36,35 +35,31 @@ type UseWeeklyMetricsReturn = {
 };
 
 const buildRequest = (params: UseWeeklyMetricsParams): WeeklyMetricsRequest => ({
-    client_id: params.clientId,
+    items: params.items,
     start_date: params.startDate,
-    end_date: params.endDate,
 });
 
-export const useWeeklyMetrics = ({ clientId, startDate, endDate }: UseWeeklyMetricsParams): UseWeeklyMetricsReturn => {
+export const useWeeklyMetrics = ({ items, startDate }: UseWeeklyMetricsParams): UseWeeklyMetricsReturn => {
     const [getWeeklyMetrics, { data, isLoading, error }] = useGetWeeklyMetricsMutation();
 
     // Efecto para cargar datos automáticamente
     React.useEffect(() => {
-        if (clientId && startDate && endDate) {
-            getWeeklyMetrics(buildRequest({ clientId, startDate, endDate }));
+        if (items.length > 0 && startDate) {
+            getWeeklyMetrics(buildRequest({ items, startDate }));
         }
-    }, [clientId, startDate, endDate, getWeeklyMetrics]);
+    }, [items, startDate, getWeeklyMetrics]);
 
-    // Formatear datos para Recharts
+    // Formatear datos para Recharts desde la respuesta del backend
     const chartData = useMemo<WeeklyMetricsChartData[]>(() => {
-        if (!data) return [];
+        if (!data?.buckets) return [];
 
-        const weeks = (data as any).weeks ?? [];
-        if (!Array.isArray(weeks)) return [];
-
-        return weeks.map((week: any) => ({
-            week: week.week_label ?? week.week_start ?? week.week_start_date ?? week.week ?? "",
-            cid: week.total_cid ?? week.cid ?? 0,
-            volume: week.total_volume ?? 0,
-            intensity: week.average_intensity ?? week.avg_intensity ?? 0,
-            monotony: week.monotony,
-            strain: week.strain,
+        return data.buckets.map((bucket) => ({
+            week: bucket.week_start,
+            cid: bucket.cid_sum, // Usamos cid_sum como el CID total de la semana
+            volume: 0, // No disponible en la respuesta actual
+            intensity: 0, // No disponible en la respuesta actual
+            monotony: undefined,
+            strain: undefined,
         }));
     }, [data]);
 
@@ -73,14 +68,18 @@ export const useWeeklyMetrics = ({ clientId, startDate, endDate }: UseWeeklyMetr
         if (chartData.length < 2) return "stable";
         const lastWeek = chartData[chartData.length - 1];
         const prevWeek = chartData[chartData.length - 2];
-        if (!prevWeek.cid) return "stable";
+        if (!prevWeek.cid || prevWeek.cid === 0) return "stable";
         const change = ((lastWeek.cid - prevWeek.cid) / prevWeek.cid) * 100;
         if (change > 10) return "up";
         if (change < -10) return "down";
         return "stable";
     }, [chartData]);
 
-    const refetch = () => getWeeklyMetrics(buildRequest({ clientId, startDate, endDate }));
+    const refetch = () => {
+        if (items.length > 0 && startDate) {
+            getWeeklyMetrics(buildRequest({ items, startDate }));
+        }
+    };
 
     return {
         chartData,
