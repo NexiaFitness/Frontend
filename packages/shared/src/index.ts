@@ -112,6 +112,8 @@ export * from "./types/dashboard";
 export * from "./types/testing";
 export * from "./types/reports";
 export * from "./types/metrics";
+// V2 Types (Fase 1: Preparación - no interfiere con legacy)
+export * from "./types/metricsV2";
 // Export scheduling types explicitly to avoid SessionType conflict with training.ts
 export type {
     ScheduledSessionType,

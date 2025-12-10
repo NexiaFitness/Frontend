@@ -11,11 +11,12 @@
  * - Gráficos de progreso físico (peso, IMC)
  * - Gráficos de entrenamiento (intensity, volume)
  * - Métricas de cambio y tendencias
- * - Métricas de carga de entrenamiento (CID, alertas)
+ * - Métricas de carga de entrenamiento (CID, alertas) - V2
  *
  * @author Frontend Team
  * @since v3.1.0
  * @updated v5.6.0 - Agregado sub-tab "Carga de Entrenamiento" con métricas METRICS
+ * @updated v5.6.0 - Fase 3: Migrado a hooks V2 (useWeeklyMetricsV2, useMetricsAlertsV2)
  */
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
@@ -24,7 +25,7 @@ import type { ClientProgress, ProgressAnalytics } from "@nexia/shared/types/prog
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
-import { useWeeklyMetrics, useMetricsAlerts } from "@nexia/shared/hooks/metrics";
+import { useWeeklyMetricsV2, useMetricsAlertsV2, useMonthlyMetricsV2 } from "@nexia/shared/hooks/metrics";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { CompactChartCard } from "@/components/ui/cards";
@@ -111,6 +112,10 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     const [editModalOpen, setEditModalOpen] = useState(false);
     const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
     const formRef = useRef<HTMLDivElement>(null);
+    
+    // Estado para selector de período (semanal/mensual/anual)
+    type MetricsPeriod = "weekly" | "monthly" | "annual";
+    const [metricsPeriod, setMetricsPeriod] = useState<MetricsPeriod>("weekly");
 
     // Sub-tab navigation con query parameters
     type ProgressSubTab = "overview" | "load" | "history";
@@ -142,27 +147,65 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
         isLoading: isLoadingFatigue,
     } = useClientFatigue(clientId);
 
-    // Calcular fecha de inicio para métricas semanales (4 semanas atrás)
-    const metricsStartDate = useMemo(() => {
+    // Calcular rango de fechas para métricas según período seleccionado
+    const metricsDateRange = useMemo(() => {
+        const endDate = new Date();
         const startDate = new Date();
-        startDate.setDate(startDate.getDate() - 28); // 4 semanas atrás
-        return startDate.toISOString().split('T')[0]; // YYYY-MM-DD
-    }, []);
+        
+        switch (metricsPeriod) {
+            case "weekly":
+                // Últimas 8 semanas
+                startDate.setDate(startDate.getDate() - (8 * 7));
+                break;
+            case "monthly":
+                // Últimos 12 meses
+                startDate.setMonth(startDate.getMonth() - 12);
+                break;
+            case "annual":
+                // Últimos 3 años
+                startDate.setFullYear(startDate.getFullYear() - 3);
+                break;
+            default:
+                startDate.setDate(startDate.getDate() - (8 * 7));
+        }
 
-    // Hooks de métricas de carga de entrenamiento
-    // TODO: Obtener sesiones del cliente y transformarlas a CIDCalcIn items
-    // Por ahora, enviamos array vacío - el backend devolverá error si no hay items
-    const weeklyMetrics = useWeeklyMetrics({
-        items: [], // TODO: Obtener y transformar sesiones del cliente
-        startDate: metricsStartDate,
-    });
+        return {
+            startDate: startDate.toISOString().split('T')[0], // YYYY-MM-DD
+            endDate: endDate.toISOString().split('T')[0], // YYYY-MM-DD
+        };
+    }, [metricsPeriod]);
 
-    const metricsAlerts = useMetricsAlerts({
+    // Hooks V2 de métricas de carga de entrenamiento
+    // Obtiene sesiones, las transforma y calcula métricas semanales
+    const weeklyMetrics = useWeeklyMetricsV2({
         clientId: clientId,
-        trainerId: client?.trainer_id,
+        startDate: metricsDateRange.startDate,
+        endDate: metricsDateRange.endDate,
+    });
+    
+    // Hook V2 para métricas mensuales
+    const monthlyMetrics = useMonthlyMetricsV2({
+        clientId: clientId,
+        startDate: metricsDateRange.startDate,
+        endDate: metricsDateRange.endDate,
+        w_fase: 1.0,
     });
 
-    const isLoading = isLoadingProgress || isLoadingFatigue || weeklyMetrics.isLoading;
+    // Hook V2 para alertas de métricas (verifica umbrales sobre múltiples días)
+    const metricsAlerts = useMetricsAlertsV2({
+        clientId: clientId,
+        startDate: metricsDateRange.startDate,
+        endDate: metricsDateRange.endDate,
+        trainerId: client?.trainer_id,
+        daily_threshold: 80.0,
+        weekly_threshold: 450.0,
+        consecutive_threshold: 70.0,
+        consecutive_days: 3,
+        create_alerts: false, // No crear alertas en BD por ahora
+    });
+
+    const isLoading = isLoadingProgress || isLoadingFatigue || 
+        (metricsPeriod === "weekly" ? weeklyMetrics.isLoading : monthlyMetrics.isLoading);
     const chartHeight = 400;
     const minChartContainerHeight = 360;
     
@@ -375,8 +418,52 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
             {activeTab === "load" && (
                 <div className="space-y-6">
-                    {/* Gráfico CID Semanal */}
-                    {weeklyMetrics.chartData && weeklyMetrics.chartData.length > 0 && (
+                    {/* Selector de período (Semanal/Mensual/Anual) */}
+                    <div className="bg-white rounded-lg shadow-sm p-4">
+                        <div className="flex items-center justify-center gap-2 bg-gray-100 p-1 rounded-lg">
+                            {[
+                                { id: "weekly" as MetricsPeriod, label: "Semanal" },
+                                { id: "monthly" as MetricsPeriod, label: "Mensual" },
+                                { id: "annual" as MetricsPeriod, label: "Anual" },
+                            ].map((period) => (
+                                <button
+                                    key={period.id}
+                                    onClick={() => setMetricsPeriod(period.id)}
+                                    className={`
+                                        px-4 py-2 text-sm font-medium rounded-md transition-colors
+                                        ${metricsPeriod === period.id
+                                            ? 'bg-white text-indigo-600 shadow-sm'
+                                            : 'text-gray-600 hover:text-gray-900'
+                                        }
+                                    `}
+                                >
+                                    {period.label}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                    
+                    {/* Estado de carga para métricas */}
+                    {isLoading && (
+                        <div className="flex justify-center items-center py-16">
+                            <LoadingSpinner size="lg" />
+                        </div>
+                    )}
+
+                    {/* Mensaje si no hay datos de CID */}
+                    {!isLoading && (metricsPeriod === "weekly" ? weeklyMetrics.items.length === 0 : monthlyMetrics.items.length === 0) && (
+                        <div className="bg-white rounded-lg shadow p-8 text-center">
+                            <p className="text-gray-500">
+                                No hay sesiones de entrenamiento con datos de volumen/intensidad en el rango seleccionado.
+                            </p>
+                            <p className="text-sm text-gray-400 mt-2">
+                                Las sesiones necesitan tener valores de volumen e intensidad (actuales o planificados) para calcular métricas.
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Vista Semanal */}
+                    {metricsPeriod === "weekly" && !isLoading && weeklyMetrics.chartData && weeklyMetrics.chartData.length > 0 && (
                         <CompactChartCard title="CID Semanal">
                             <div
                                 className="w-full flex items-center justify-center"
@@ -387,7 +474,16 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                         <LineChart data={weeklyMetrics.chartData} margin={defaultChartMargin}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis 
-                                                dataKey="week" 
+                                                dataKey="weekStart" 
+                                                tickFormatter={(value) => {
+                                                    // value ya es weekStart (ISO date del lunes de la semana)
+                                                    const monday = new Date(value);
+                                                    const sunday = new Date(monday);
+                                                    sunday.setDate(sunday.getDate() + 6);
+                                                    
+                                                    const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                                                    return `${monday.getDate()}–${sunday.getDate()} ${monthNames[sunday.getMonth()]}`;
+                                                }}
                                                 style={{ fontSize: '12px', fill: '#6b7280' }}
                                                 label={{ value: "Semana", position: "insideBottom", offset: -5 }}
                                             />
@@ -402,6 +498,16 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 style={{ fontSize: '12px', fill: '#6b7280' }}
                                             />
                                             <Tooltip 
+                                                labelFormatter={(value) => {
+                                                    // value ya es weekStart (ISO date del lunes de la semana)
+                                                    const monday = new Date(value);
+                                                    const sunday = new Date(monday);
+                                                    sunday.setDate(sunday.getDate() + 6);
+                                                    
+                                                    const monthNames = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+                                                    return `Semana del ${monday.getDate()} al ${sunday.getDate()} de ${monthNames[sunday.getMonth()]}, ${sunday.getFullYear()}`;
+                                                }}
+                                                formatter={(value: number) => [`${value.toFixed(1)}`, "CID"]}
                                                 contentStyle={{ 
                                                     backgroundColor: 'rgba(255, 255, 255, 0.98)',
                                                     border: '1px solid #e5e7eb',
@@ -414,9 +520,18 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 type="monotone"
                                                 dataKey="cid"
                                                 stroke="#38b6ff"
-                                                name="CID"
+                                                name="CID Total"
                                                 strokeWidth={2}
                                                 dot={{ r: 4, fill: "#38b6ff" }}
+                                                isAnimationActive={false}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="avg"
+                                                stroke="#10b981"
+                                                name="CID Promedio"
+                                                strokeWidth={2}
+                                                dot={{ r: 4, fill: "#10b981" }}
                                                 isAnimationActive={false}
                                             />
                                         </LineChart>
@@ -425,75 +540,371 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             </div>
                         </CompactChartCard>
                     )}
-
-                    {/* Estado de carga para métricas semanales */}
-                    {weeklyMetrics.isLoading && (
-                        <div className="flex justify-center items-center py-16">
-                            <LoadingSpinner size="lg" />
-                        </div>
-                    )}
-
-                    {/* Mensaje si no hay datos de CID */}
-                    {!weeklyMetrics.isLoading && (!weeklyMetrics.chartData || weeklyMetrics.chartData.length === 0) && (
-                        <div className="bg-white rounded-lg shadow p-8 text-center">
-                            <p className="text-gray-500">
-                                Aún no hay datos de carga de entrenamiento para este cliente.
-                            </p>
-                        </div>
-                    )}
+                    
+                    {/* Vista Mensual */}
+                    {metricsPeriod === "monthly" && !isLoading && monthlyMetrics.monthlyMetrics && monthlyMetrics.monthlyMetrics.length > 0 && (() => {
+                        const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+                        const monthlyChartData = monthlyMetrics.monthlyMetrics.map(bucket => ({
+                            month: bucket.month,
+                            monthName: monthNames[bucket.month - 1] || `M${bucket.month}`,
+                            cid: bucket.cid_sum,
+                            avg: bucket.cid_avg,
+                        }));
+                        
+                        return (
+                            <CompactChartCard title="CID Mensual">
+                                <div
+                                    className="w-full flex items-center justify-center"
+                                    style={{ minHeight: `${minChartContainerHeight}px` }}
+                                >
+                                    <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                        <ResponsiveContainer width="100%" height={chartHeight}>
+                                            <LineChart data={monthlyChartData} margin={defaultChartMargin}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis 
+                                                    dataKey="monthName" 
+                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    label={{ value: "Mes", position: "insideBottom", offset: -5 }}
+                                                />
+                                                <YAxis
+                                                    label={{
+                                                        value: "CID",
+                                                        angle: -90,
+                                                        position: "left",
+                                                        offset: -5,
+                                                        style: { textAnchor: "middle" },
+                                                    }}
+                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                />
+                                                <Tooltip 
+                                                    labelFormatter={(value, payload) => {
+                                                        const data = payload?.[0]?.payload;
+                                                        if (!data) return value;
+                                                        const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+                                                        return monthNames[data.month - 1] || value;
+                                                    }}
+                                                    formatter={(value: number) => [`${value.toFixed(1)}`, "CID"]}
+                                                    contentStyle={{ 
+                                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                        border: '1px solid #e5e7eb',
+                                                        borderRadius: '8px',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }}
+                                                />
+                                                <Legend {...legendConfig} />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="cid"
+                                                    stroke="#38b6ff"
+                                                    name="CID Total"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 4, fill: "#38b6ff" }}
+                                                    isAnimationActive={false}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="avg"
+                                                    stroke="#10b981"
+                                                    name="CID Promedio"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 4, fill: "#10b981" }}
+                                                    isAnimationActive={false}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </CompactChartCard>
+                        );
+                    })()}
+                    
+                    {/* Vista Anual */}
+                    {metricsPeriod === "annual" && !isLoading && monthlyMetrics.monthlyMetrics && monthlyMetrics.monthlyMetrics.length > 0 && (() => {
+                        // Agrupar buckets mensuales por año
+                        // Necesitamos inferir el año basándonos en el rango de fechas y el mes del bucket
+                        const annualDataMap = new Map<number, { cid_sum: number; cid_avg: number; count: number }>();
+                        const startDateObj = new Date(metricsDateRange.startDate);
+                        const endDateObj = new Date(metricsDateRange.endDate);
+                        const currentYear = new Date().getFullYear();
+                        
+                        monthlyMetrics.monthlyMetrics.forEach(bucket => {
+                            // Inferir el año: si el mes es mayor al mes actual, probablemente es del año anterior
+                            // Si el mes es menor o igual al mes actual, es del año actual
+                            // Pero también consideramos el rango de fechas para ser más precisos
+                            let year = currentYear;
+                            
+                            // Si el rango de fechas abarca múltiples años, necesitamos calcular mejor
+                            const startYear = startDateObj.getFullYear();
+                            const endYear = endDateObj.getFullYear();
+                            
+                            if (startYear === endYear) {
+                                // Mismo año: todos los buckets son de ese año
+                                year = startYear;
+                            } else {
+                                // Múltiples años: inferir basándose en el mes
+                                // Si el mes es mayor al mes de inicio, probablemente es del año de inicio
+                                // Si el mes es menor al mes de fin, probablemente es del año de fin
+                                const startMonth = startDateObj.getMonth() + 1; // 1-12
+                                const endMonth = endDateObj.getMonth() + 1; // 1-12
+                                
+                                if (bucket.month >= startMonth && bucket.month <= 12) {
+                                    year = startYear;
+                                } else if (bucket.month >= 1 && bucket.month <= endMonth) {
+                                    year = endYear;
+                                } else {
+                                    // Mes intermedio: usar año más reciente
+                                    year = endYear;
+                                }
+                            }
+                            
+                            if (!annualDataMap.has(year)) {
+                                annualDataMap.set(year, { cid_sum: 0, cid_avg: 0, count: 0 });
+                            }
+                            
+                            const yearData = annualDataMap.get(year)!;
+                            yearData.cid_sum += bucket.cid_sum;
+                            yearData.cid_avg += bucket.cid_avg;
+                            yearData.count += 1;
+                        });
+                        
+                        const annualChartData = Array.from(annualDataMap.entries())
+                            .map(([year, data]) => ({
+                                year: year.toString(),
+                                cid: data.cid_sum,
+                                avg: data.count > 0 ? data.cid_avg / data.count : 0,
+                            }))
+                            .sort((a, b) => parseInt(a.year) - parseInt(b.year));
+                        
+                        if (annualChartData.length === 0) return null;
+                        
+                        return (
+                            <CompactChartCard title="CID Anual">
+                                <div
+                                    className="w-full flex items-center justify-center"
+                                    style={{ minHeight: `${minChartContainerHeight}px` }}
+                                >
+                                    <div className="w-full" style={{ minHeight: `${minChartContainerHeight}px` }}>
+                                        <ResponsiveContainer width="100%" height={chartHeight}>
+                                            <LineChart data={annualChartData} margin={defaultChartMargin}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis 
+                                                    dataKey="year" 
+                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    label={{ value: "Año", position: "insideBottom", offset: -5 }}
+                                                />
+                                                <YAxis
+                                                    label={{
+                                                        value: "CID",
+                                                        angle: -90,
+                                                        position: "left",
+                                                        offset: -5,
+                                                        style: { textAnchor: "middle" },
+                                                    }}
+                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                />
+                                                <Tooltip 
+                                                    labelFormatter={(value) => `Año ${value}`}
+                                                    formatter={(value: number) => [`${value.toFixed(1)}`, "CID"]}
+                                                    contentStyle={{ 
+                                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                                                        border: '1px solid #e5e7eb',
+                                                        borderRadius: '8px',
+                                                        boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                                                    }}
+                                                />
+                                                <Legend {...legendConfig} />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="cid"
+                                                    stroke="#38b6ff"
+                                                    name="CID Total"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 4, fill: "#38b6ff" }}
+                                                    isAnimationActive={false}
+                                                />
+                                                <Line
+                                                    type="monotone"
+                                                    dataKey="avg"
+                                                    stroke="#10b981"
+                                                    name="CID Promedio"
+                                                    strokeWidth={2}
+                                                    dot={{ r: 4, fill: "#10b981" }}
+                                                    isAnimationActive={false}
+                                                />
+                                            </LineChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </div>
+                            </CompactChartCard>
+                        );
+                    })()}
 
                     {/* Alertas de Métricas */}
-                    {metricsAlerts.hasAlerts && (
+                    {!isLoading && metricsAlerts.hasAlerts && (
                         <div className="bg-white rounded-xl shadow-sm p-6">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Alertas de Carga</h3>
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-gray-900">Alertas de Carga</h3>
+                                {metricsAlerts.hasCritical && (
+                                    <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                                        {metricsAlerts.criticalAlerts.length} Crítica{metricsAlerts.criticalAlerts.length !== 1 ? 's' : ''}
+                                    </span>
+                                )}
+                            </div>
                             <div className="space-y-3">
-                                {metricsAlerts.activeAlerts.map((alert, index) => (
-                                    <div
-                                        key={index}
-                                        className={`p-4 rounded-lg border ${
-                                            alert.severity === "critical"
-                                                ? "bg-red-50 border-red-300"
-                                                : "bg-yellow-50 border-yellow-300"
-                                        }`}
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <p className="font-medium text-gray-900">{alert.type}</p>
-                                                <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                                {metricsAlerts.activeAlerts.map((alert, index) => {
+                                    const severityColors = {
+                                        critical: {
+                                            bg: "bg-red-50",
+                                            border: "border-red-300",
+                                            badge: "bg-red-100 text-red-800",
+                                            label: "Crítica"
+                                        },
+                                        high: {
+                                            bg: "bg-orange-50",
+                                            border: "border-orange-300",
+                                            badge: "bg-orange-100 text-orange-800",
+                                            label: "Alta"
+                                        },
+                                        medium: {
+                                            bg: "bg-yellow-50",
+                                            border: "border-yellow-300",
+                                            badge: "bg-yellow-100 text-yellow-800",
+                                            label: "Media"
+                                        }
+                                    };
+                                    const colors = severityColors[alert.severity] || severityColors.medium;
+                                    
+                                    return (
+                                        <div
+                                            key={index}
+                                            className={`p-4 rounded-lg border ${colors.bg} ${colors.border}`}
+                                        >
+                                            <div className="flex justify-between items-start">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <p className="font-semibold text-gray-900 capitalize">
+                                                            {alert.type === "daily_high" ? "CID Diario Alto" : 
+                                                             alert.type === "weekly_high" ? "CID Semanal Alto" :
+                                                             alert.type === "consecutive_high" ? "Días Consecutivos Altos" :
+                                                             alert.type}
+                                                        </p>
+                                                    </div>
+                                                    <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                                                    {alert.date && (
+                                                        <p className="text-xs text-gray-500 mt-2">
+                                                            Fecha: {new Date(alert.date).toLocaleDateString('es-ES')}
+                                                        </p>
+                                                    )}
+                                                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                                        <span>Valor: <strong>{alert.value.toFixed(1)}</strong></span>
+                                                        <span>Umbral: <strong>{alert.threshold.toFixed(1)}</strong></span>
+                                                    </div>
+                                                </div>
+                                                <span
+                                                    className={`px-2 py-1 text-xs rounded font-medium ${colors.badge}`}
+                                                >
+                                                    {colors.label}
+                                                </span>
                                             </div>
-                                            <span
-                                                className={`px-2 py-1 text-xs rounded font-medium ${
-                                                    alert.severity === "critical"
-                                                        ? "bg-red-100 text-red-800"
-                                                        : "bg-yellow-100 text-yellow-800"
-                                                }`}
-                                            >
-                                                {alert.severity === "critical" ? "Crítica" : "Advertencia"}
-                                            </span>
                                         </div>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
 
                     {/* Cards de métricas agregadas */}
-                    {weeklyMetrics.latestWeek && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <SummaryCard
-                                label="CID Semanal"
-                                value={weeklyMetrics.latestWeek.cid.toFixed(1)}
-                            />
-                            <SummaryCard
-                                label="Volumen Total"
-                                value={weeklyMetrics.latestWeek.volume.toFixed(0)}
-                            />
-                            <SummaryCard
-                                label="Intensidad Promedio"
-                                value={weeklyMetrics.latestWeek.intensity.toFixed(1)}
-                            />
-                        </div>
-                    )}
+                    {!isLoading && (() => {
+                        if (metricsPeriod === "weekly" && weeklyMetrics.chartData && weeklyMetrics.chartData.length > 0) {
+                            const latestWeek = weeklyMetrics.chartData[weeklyMetrics.chartData.length - 1];
+                            return (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <SummaryCard
+                                        label="CID Semanal Total"
+                                        value={latestWeek.cid.toFixed(1)}
+                                    />
+                                    <SummaryCard
+                                        label="CID Promedio Semanal"
+                                        value={latestWeek.avg.toFixed(1)}
+                                    />
+                                    <SummaryCard
+                                        label="Sesiones Procesadas"
+                                        value={weeklyMetrics.items.length.toString()}
+                                    />
+                                </div>
+                            );
+                        }
+                        
+                        if (metricsPeriod === "monthly" && monthlyMetrics.monthlyMetrics && monthlyMetrics.monthlyMetrics.length > 0) {
+                            const latestMonth = monthlyMetrics.monthlyMetrics[monthlyMetrics.monthlyMetrics.length - 1];
+                            return (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <SummaryCard
+                                        label="CID Mensual Total"
+                                        value={latestMonth.cid_sum.toFixed(1)}
+                                    />
+                                    <SummaryCard
+                                        label="CID Promedio Mensual"
+                                        value={latestMonth.cid_avg.toFixed(1)}
+                                    />
+                                    <SummaryCard
+                                        label="Sesiones Procesadas"
+                                        value={monthlyMetrics.items.length.toString()}
+                                    />
+                                </div>
+                            );
+                        }
+                        
+                        if (metricsPeriod === "annual" && monthlyMetrics.monthlyMetrics && monthlyMetrics.monthlyMetrics.length > 0) {
+                            const totalCid = monthlyMetrics.monthlyMetrics.reduce((sum, bucket) => sum + bucket.cid_sum, 0);
+                            const avgCid = monthlyMetrics.monthlyMetrics.reduce((sum, bucket) => sum + bucket.cid_avg, 0) / monthlyMetrics.monthlyMetrics.length;
+                            return (
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <SummaryCard
+                                        label="CID Anual Total"
+                                        value={totalCid.toFixed(1)}
+                                    />
+                                    <SummaryCard
+                                        label="CID Promedio Anual"
+                                        value={avgCid.toFixed(1)}
+                                    />
+                                    <SummaryCard
+                                        label="Sesiones Procesadas"
+                                        value={monthlyMetrics.items.length.toString()}
+                                    />
+                                </div>
+                            );
+                        }
+                        
+                        return null;
+                    })()}
+
+                    {/* Información adicional si hay items pero no hay datos en el gráfico */}
+                    {!isLoading && (() => {
+                        if (metricsPeriod === "weekly" && weeklyMetrics.items.length > 0 && weeklyMetrics.chartData.length === 0) {
+                            return (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Nota:</strong> Se encontraron {weeklyMetrics.items.length} sesión{weeklyMetrics.items.length !== 1 ? 'es' : ''} con datos, 
+                                        pero no se pudieron agrupar en semanas. Verifica que las fechas estén dentro del rango seleccionado.
+                                    </p>
+                                </div>
+                            );
+                        }
+                        
+                        if ((metricsPeriod === "monthly" || metricsPeriod === "annual") && monthlyMetrics.items.length > 0 && (!monthlyMetrics.monthlyMetrics || monthlyMetrics.monthlyMetrics.length === 0)) {
+                            return (
+                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                    <p className="text-sm text-blue-800">
+                                        <strong>Nota:</strong> Se encontraron {monthlyMetrics.items.length} sesión{monthlyMetrics.items.length !== 1 ? 'es' : ''} con datos, 
+                                        pero no se pudieron agrupar en {metricsPeriod === "monthly" ? "meses" : "años"}. Verifica que las fechas estén dentro del rango seleccionado.
+                                    </p>
+                                </div>
+                            );
+                        }
+                        
+                        return null;
+                    })()}
                 </div>
             )}
 
