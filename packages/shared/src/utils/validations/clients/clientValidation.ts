@@ -165,6 +165,23 @@ export const validateClientForm = (
         }
     }
 
+    // Somatotipo (1.0-7.0 para cada componente)
+    if (data.somatotype_endomorph !== undefined && data.somatotype_endomorph !== null) {
+        if (data.somatotype_endomorph < 1.0 || data.somatotype_endomorph > 7.0) {
+            errors.somatotype_endomorph = "El valor de endomorph debe estar entre 1.0 y 7.0";
+        }
+    }
+    if (data.somatotype_mesomorph !== undefined && data.somatotype_mesomorph !== null) {
+        if (data.somatotype_mesomorph < 1.0 || data.somatotype_mesomorph > 7.0) {
+            errors.somatotype_mesomorph = "El valor de mesomorph debe estar entre 1.0 y 7.0";
+        }
+    }
+    if (data.somatotype_ectomorph !== undefined && data.somatotype_ectomorph !== null) {
+        if (data.somatotype_ectomorph < 1.0 || data.somatotype_ectomorph > 7.0) {
+            errors.somatotype_ectomorph = "El valor de ectomorph debe estar entre 1.0 y 7.0";
+        }
+    }
+
     // Notas (límite de caracteres)
     if (data.notes_1 && data.notes_1.length > 500) {
         errors.notes_1 = "Las notas no pueden superar 500 caracteres";

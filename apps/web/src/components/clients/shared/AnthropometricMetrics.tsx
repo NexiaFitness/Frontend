@@ -366,6 +366,71 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
                     </div>
                 </div>
             </div>
+
+            {/* SOMATOTIPO */}
+            <div>
+                <div className="flex items-center gap-3 mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Somatotipo
+                    </h3>
+                    <div className="flex-1 h-0.5 bg-gray-900"></div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Endomorph */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Endomorph</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="1.0"
+                            max="7.0"
+                            value={formData.somatotype_endomorph ?? ""}
+                            onChange={(e) => updateField("somatotype_endomorph", e.target.value ? Number(e.target.value) : null)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1.0-7.0"
+                        />
+                        {errors.somatotype_endomorph && (
+                            <p className="text-red-600 text-sm">{errors.somatotype_endomorph}</p>
+                        )}
+                    </div>
+
+                    {/* Mesomorph */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Mesomorph</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="1.0"
+                            max="7.0"
+                            value={formData.somatotype_mesomorph ?? ""}
+                            onChange={(e) => updateField("somatotype_mesomorph", e.target.value ? Number(e.target.value) : null)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1.0-7.0"
+                        />
+                        {errors.somatotype_mesomorph && (
+                            <p className="text-red-600 text-sm">{errors.somatotype_mesomorph}</p>
+                        )}
+                    </div>
+
+                    {/* Ectomorph */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Ectomorph</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="1.0"
+                            max="7.0"
+                            value={formData.somatotype_ectomorph ?? ""}
+                            onChange={(e) => updateField("somatotype_ectomorph", e.target.value ? Number(e.target.value) : null)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1.0-7.0"
+                        />
+                        {errors.somatotype_ectomorph && (
+                            <p className="text-red-600 text-sm">{errors.somatotype_ectomorph}</p>
+                        )}
+                    </div>
+                </div>
+            </div>
             </div>
         );
     }
@@ -713,6 +778,73 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
                         />
                         {errors.diameter_femur_bicondylar && (
                             <p className="text-red-600 text-sm">{errors.diameter_femur_bicondylar}</p>
+                        )}
+                    </div>
+                </div>
+            </div>
+
+            {/* ============================================ */}
+            {/* SOMATOTIPO - EN CARD */}
+            {/* ============================================ */}
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Somatotipo
+                    </h3>
+                    <span className="text-xs text-gray-500 uppercase tracking-wide">Opcional</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Endomorph */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Endomorph</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="1.0"
+                            max="7.0"
+                            value={formData.somatotype_endomorph ?? ""}
+                            onChange={(e) => updateField("somatotype_endomorph", e.target.value ? Number(e.target.value) : null)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1.0-7.0"
+                        />
+                        {errors.somatotype_endomorph && (
+                            <p className="text-red-600 text-sm">{errors.somatotype_endomorph}</p>
+                        )}
+                    </div>
+
+                    {/* Mesomorph */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Mesomorph</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="1.0"
+                            max="7.0"
+                            value={formData.somatotype_mesomorph ?? ""}
+                            onChange={(e) => updateField("somatotype_mesomorph", e.target.value ? Number(e.target.value) : null)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1.0-7.0"
+                        />
+                        {errors.somatotype_mesomorph && (
+                            <p className="text-red-600 text-sm">{errors.somatotype_mesomorph}</p>
+                        )}
+                    </div>
+
+                    {/* Ectomorph */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Ectomorph</label>
+                        <input
+                            type="number"
+                            step="0.1"
+                            min="1.0"
+                            max="7.0"
+                            value={formData.somatotype_ectomorph ?? ""}
+                            onChange={(e) => updateField("somatotype_ectomorph", e.target.value ? Number(e.target.value) : null)}
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                            placeholder="1.0-7.0"
+                        />
+                        {errors.somatotype_ectomorph && (
+                            <p className="text-red-600 text-sm">{errors.somatotype_ectomorph}</p>
                         )}
                     </div>
                 </div>

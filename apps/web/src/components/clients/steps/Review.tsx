@@ -376,12 +376,12 @@ export const Review: React.FC<ExtendedReviewProps> = ({
 
                         {/* Columna derecha: Somatotype Chart y botones */}
                         <div className="flex flex-col h-full">
-                            {/* Somatotype Chart - Mockeado por ahora */}
+                            {/* Somatotype Chart */}
                             <div className="mb-6">
                                 <SomatotipoChart
-                                    endomorph={null}
-                                    mesomorph={null}
-                                    ectomorph={null}
+                                    endomorph={formData.somatotype_endomorph ?? null}
+                                    mesomorph={formData.somatotype_mesomorph ?? null}
+                                    ectomorph={formData.somatotype_ectomorph ?? null}
                                 />
                             </div>
 

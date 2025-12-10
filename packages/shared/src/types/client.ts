@@ -130,6 +130,11 @@ export interface Client {
     diameter_femur_bicondylar?: number | null;
     diameter_bi_styloid_wrist?: number | null;
     
+    // Somatotipo (valores 1.0-7.0 para cada componente)
+    somatotype_endomorph?: number | null;
+    somatotype_mesomorph?: number | null;
+    somatotype_ectomorph?: number | null;
+    
     // Notas
     notes_1?: string | null;
     notes_2?: string | null;
@@ -187,6 +192,9 @@ export interface CreateClientData {
     diameter_humerus_biepicondylar?: number | null;
     diameter_femur_bicondylar?: number | null;
     diameter_bi_styloid_wrist?: number | null;
+    somatotype_endomorph?: number | null;
+    somatotype_mesomorph?: number | null;
+    somatotype_ectomorph?: number | null;
     notes_1?: string | null;
     notes_2?: string | null;
     notes_3?: string | null;
@@ -329,6 +337,9 @@ export interface ClientFormErrors {
     diameter_humerus_biepicondylar?: string;
     diameter_femur_bicondylar?: string;
     diameter_bi_styloid_wrist?: string;
+    somatotype_endomorph?: string;
+    somatotype_mesomorph?: string;
+    somatotype_ectomorph?: string;
     notes_1?: string;
     notes_2?: string;
     notes_3?: string;
