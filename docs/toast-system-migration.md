@@ -205,3 +205,4 @@ Los toasts aparecen en la esquina superior derecha (`top-4 right-4`). Para cambi
 3. Migrar `CreateTrainingPlan` cuando se toque
 4. Considerar migrar otros usos de `Alert` según necesidad
 
+

@@ -378,3 +378,4 @@ await createSession({
 **Versión del documento:** 1.0.0  
 **Módulo:** Sessions v5.3.0
 
+

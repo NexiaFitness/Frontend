@@ -210,3 +210,4 @@ apps/web/src/components/home/
 **Versión del documento:** 1.0.0  
 **Módulo:** Home v2.3.0
 
+

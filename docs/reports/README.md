@@ -323,3 +323,4 @@ const result = await generateReport({
 **Versión del documento:** 1.0.0  
 **Módulo:** Reports v5.1.0
 
+

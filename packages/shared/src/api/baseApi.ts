@@ -121,5 +121,6 @@ export const baseApi = createApi({
         "TrainingPlanWeeklySummary",
         "TrainingPlanAdherenceStats",
         "Metrics",
+        "Injuries",
     ],
 });

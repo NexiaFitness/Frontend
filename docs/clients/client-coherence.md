@@ -469,3 +469,4 @@ Los valores originales se guardan en `rawLoad` y `rawStrain` para tooltips.
 **Versión del documento:** 1.0.0  
 **Módulo:** Daily Coherence v5.5.0
 
+

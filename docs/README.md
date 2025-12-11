@@ -63,7 +63,13 @@ Esta documentación está organizada por módulos principales del frontend. Cada
     - Hero section
     - Features, FAQ, Contact
 
-11. **[UI Components](./ui/README.md)** - Componentes compartidos
+11. **[Metrics](./metrics/README.md)** - Cálculo de Cargas y Métricas
+    - Cálculo de CID (Carga Interna Diaria)
+    - Métricas agregadas (diarias, semanales, mensuales, anuales)
+    - Alertas de umbrales (sobrecarga, monotonía, strain)
+    - Gráficos de carga de entrenamiento
+
+12. **[UI Components](./ui/README.md)** - Componentes compartidos
     - Buttons, Forms, Cards
     - Feedback, Layout
     - Utilidades
@@ -137,6 +143,9 @@ frontend/docs/
 │   └── README.md
 │
 ├── home/                        # Landing page
+│   └── README.md
+│
+├── metrics/                     # Cálculo de Cargas y Métricas
 │   └── README.md
 │
 ├── ui/                          # Componentes UI
@@ -225,6 +234,7 @@ Cada módulo debe tener un `README.md` con:
 - [x] Reports - Documentación completa
 - [x] Testing - Documentación completa
 - [x] Home - Documentación completa
+- [x] Metrics - Documentación completa
 - [x] UI Components - Documentación completa
 
 ### 🚧 Pendiente

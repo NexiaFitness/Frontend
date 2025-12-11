@@ -7,6 +7,7 @@ export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
+export * from "./api/injuriesApi";
 export * from "./api";
 
 // Store
@@ -112,6 +113,7 @@ export * from "./types/dashboard";
 export * from "./types/testing";
 export * from "./types/reports";
 export * from "./types/metrics";
+export * from "./types/injuries";
 // V2 Types (Fase 1: Preparación - no interfiere con legacy)
 export * from "./types/metricsV2";
 // Export scheduling types explicitly to avoid SessionType conflict with training.ts
@@ -246,6 +248,9 @@ export * from "./hooks/scheduling";
 
 // Hooks - Session Programming
 export * from "./hooks/sessionProgramming";
+
+// Hooks - Injuries
+export * from "./hooks/injuries";
 
 // Hooks - Metrics
 export * from "./hooks/metrics";

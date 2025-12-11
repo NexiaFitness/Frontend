@@ -1,2 +1,3 @@
 export { SomatotipoChart } from "./SomatotipoChart";
 
+

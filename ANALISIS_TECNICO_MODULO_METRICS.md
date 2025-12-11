@@ -884,3 +884,4 @@ trainingSessions: ReturnType<typeof useGetClientTrainingSessionsQuery>["data"];
 **Documento generado automáticamente desde análisis del código**  
 **Última actualización:** 2025-01-XX
 
+
