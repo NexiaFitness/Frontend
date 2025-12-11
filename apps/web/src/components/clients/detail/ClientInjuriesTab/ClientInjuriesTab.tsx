@@ -14,6 +14,7 @@ import React, { useMemo, useState } from "react";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
+import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { InjuriesActiveSection } from "./InjuriesActiveSection";
 import { InjuriesHistorySection } from "./InjuriesHistorySection";
 import { InjuryFormModal } from "./InjuryFormModal";
@@ -24,6 +25,7 @@ interface ClientInjuriesTabProps {
 
 export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedInjury, setSelectedInjury] = useState<InjuryWithDetails | null>(null);
 
     const {
         activeInjuries,
@@ -77,7 +79,14 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                     <InjuriesActiveSection
                         injuries={activeInjuries}
                         isLoading={isLoadingActive}
-                        onAddClick={() => setIsModalOpen(true)}
+                        onAddClick={() => {
+                            setSelectedInjury(null);
+                            setIsModalOpen(true);
+                        }}
+                        onEditClick={(injury) => {
+                            setSelectedInjury(injury);
+                            setIsModalOpen(true);
+                        }}
                     />
 
                     {/* Historial */}
@@ -89,12 +98,15 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                 </>
             )}
 
-            {/* Modal registro */}
+            {/* Modal registro/edición */}
             <InjuryFormModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false);
+                    setSelectedInjury(null);
+                }}
                 clientId={clientId}
-                injury={null}
+                injury={selectedInjury}
             />
 
             {/* Empty global fallback si no hay datos en absoluto */}

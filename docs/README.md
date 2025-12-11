@@ -69,7 +69,13 @@ Esta documentación está organizada por módulos principales del frontend. Cada
     - Alertas de umbrales (sobrecarga, monotonía, strain)
     - Gráficos de carga de entrenamiento
 
-12. **[UI Components](./ui/README.md)** - Componentes compartidos
+12. **[Injuries](./injuries/README.md)** - Sistema de Lesiones y Articulaciones
+    - Registro de lesiones estructurado (Joint → Movement → Muscle)
+    - Gestión de lesiones activas y historial
+    - Edición, resolución y eliminación de lesiones
+    - Nivel de dolor 1-5 y estados (Activa, Monitoreo, Resuelta)
+
+13. **[UI Components](./ui/README.md)** - Componentes compartidos
     - Buttons, Forms, Cards
     - Feedback, Layout
     - Utilidades
@@ -146,6 +152,9 @@ frontend/docs/
 │   └── README.md
 │
 ├── metrics/                     # Cálculo de Cargas y Métricas
+│   └── README.md
+│
+├── injuries/                    # Sistema de Lesiones y Articulaciones
 │   └── README.md
 │
 ├── ui/                          # Componentes UI
@@ -235,6 +244,7 @@ Cada módulo debe tener un `README.md` con:
 - [x] Testing - Documentación completa
 - [x] Home - Documentación completa
 - [x] Metrics - Documentación completa
+- [x] Injuries - Documentación completa
 - [x] UI Components - Documentación completa
 
 ### 🚧 Pendiente
