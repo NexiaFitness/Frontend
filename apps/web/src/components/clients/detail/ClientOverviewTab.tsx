@@ -33,6 +33,7 @@ import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetClientTestResultsQuery } from "@nexia/shared/api/clientsApi";
+import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 
 interface ClientOverviewTabProps {
     client: Client;
@@ -88,6 +89,15 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
         },
         { skip: !isValidClientId }
     );
+
+    // Obtener lesiones activas (solo para widget compacto)
+    const {
+        activeInjuries: activeInjuriesCompact = [],
+        isLoadingActive: isLoadingInjuries,
+    } = useClientInjuries({
+        clientId: isValidClientId ? clientId : 0,
+        includeHistory: false,
+    });
 
     // Calcular próxima sesión (antes de cualquier return)
     const upcomingSession = useMemo((): TrainingSession | null => {
@@ -297,6 +307,65 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
                     </div>
                 </div>
             ) : null}
+
+            {/* LESIONES ACTIVAS (widget compacto) */}
+            {isLoadingInjuries ? (
+                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                    <LoadingSpinner size="md" />
+                </div>
+            ) : (
+                activeInjuriesCompact.length > 0 && (
+                    <div className="bg-white rounded-lg shadow p-6">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>Lesiones Activas</h3>
+                                <p className="text-slate-600 text-sm">
+                                    Control rápido de lesiones actuales del cliente.
+                                </p>
+                            </div>
+                            <button
+                                onClick={() => navigate(`/dashboard/clients/${clientId}?tab=injuries`)}
+                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                            >
+                                Ver todas →
+                            </button>
+                        </div>
+                        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {activeInjuriesCompact.slice(0, 2).map((injury) => (
+                                <div
+                                    key={injury.id}
+                                    className="border border-red-200 bg-red-50 rounded-lg p-4"
+                                >
+                                    <div className="flex items-start justify-between">
+                                        <div>
+                                            <p className="text-sm text-slate-500">Articulación</p>
+                                            <p className="text-base font-semibold text-slate-900">
+                                                {injury.joint_name || `Joint #${injury.joint_id}`}
+                                            </p>
+                                            {injury.movement_name && (
+                                                <p className="text-sm text-slate-700 mt-1">
+                                                    {injury.movement_name}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                            Dolor {injury.pain_level}/5
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-slate-600 mt-2">
+                                        Inicio: {new Date(injury.injury_date).toLocaleDateString("es-ES")}
+                                    </p>
+                                    {injury.notes && (
+                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                            Notas: {injury.notes}
+                                        </p>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )
+            )}
 
             {/* ACTIVIDAD RECIENTE */}
             {(lastCompletedSession || lastTest || lastProgressRecord) && (

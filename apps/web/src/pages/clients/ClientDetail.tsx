@@ -34,6 +34,7 @@ import { ClientSessionProgrammingTab } from "@/components/clients/detail/ClientS
 import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDailyCoherenceTab";
 import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientWorkoutsTab } from "@/components/clients/detail/ClientWorkoutsTab";
+import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
 const ClientProgressTab = lazy(() => 
@@ -42,7 +43,7 @@ const ClientProgressTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts";
+type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts" | "injuries";
 
 interface Tab {
     id: TabId;
@@ -56,6 +57,7 @@ const TABS: Tab[] = [
     { id: "daily-coherence", label: "Coherencia Diaria" },
     { id: "testing", label: "Tests" },
     { id: "progress", label: "Progreso" },
+    { id: "injuries", label: "Lesiones" },
     { id: "workouts", label: "Entrenamientos" },
 ];
 
@@ -188,6 +190,8 @@ export const ClientDetail: React.FC = () => {
                         />
                     </Suspense>
                 );
+            case "injuries":
+                return <ClientInjuriesTab clientId={clientId} />;
             case "workouts":
                 return (
                     <ClientWorkoutsTab
