@@ -1029,6 +1029,7 @@ const {
 - Skinfolds: 3-50 mm
 - Girths: 10-200 cm
 - Diameters: 3-20 cm
+- Somatotipo: 1.0-7.0 (calculado automáticamente por backend, editable manualmente)
 
 **Step 3 - TrainingGoals:**
 - Objetivo* (obligatorio, enum)
@@ -1065,9 +1066,112 @@ const {
 
 ---
 
+## 🧬 Cálculo Automático de Somatotipo
+
+### Visión General
+
+El sistema calcula automáticamente los valores de somatotipo (endomorph, mesomorph, ectomorph) usando el método **Heath-Carter** cuando se proporcionan las medidas antropométricas necesarias.
+
+**Características:**
+- ✅ Cálculo automático en el backend (método Heath-Carter)
+- ✅ Sin cálculo en el frontend (solo muestra valores del backend)
+- ✅ Override manual disponible cuando sea necesario
+- ✅ Indicadores visuales claros (badges "Auto")
+- ✅ Actualización inmediata después de crear/actualizar
+
+### Medidas Requeridas
+
+**Para cálculo completo:**
+- **Endomorph:** Requiere triceps, subscapular, supraspinal skinfolds + altura
+- **Mesomorph:** Requiere humerus/femur diameters, arm/calf girths, triceps/calf skinfolds
+- **Ectomorph:** Requiere altura + peso (siempre calculado si disponible)
+
+**Rango de valores:** 1.0 - 7.0 para cada componente
+
+### Flujo de Funcionamiento
+
+#### Crear Cliente
+1. Usuario completa medidas antropométricas en el formulario
+2. Envía formulario → `POST /clients/`
+3. Backend calcula somatotipo automáticamente (si hay datos suficientes)
+4. Backend retorna `Client` con valores calculados
+5. `useClientForm` actualiza `formData` con la respuesta
+6. UI muestra valores calculados con badges "Auto"
+
+#### Actualizar Cliente
+1. Usuario modifica medidas antropométricas
+2. Envía formulario → `PUT /clients/{id}`
+3. Backend recalcula somatotipo (si no hay override manual)
+4. Backend retorna `Client` actualizado
+5. `useClientForm` actualiza `formData` con la respuesta
+6. UI muestra valores recalculados con badges "Auto"
+
+#### Override Manual
+- Si el usuario edita manualmente los campos de somatotipo, esos valores se envían al backend
+- El backend respeta los valores manuales (no recalcula)
+- Los badges "Auto" desaparecen si el usuario borra los valores
+
+### Componentes y Archivos
+
+**Hook:**
+- `packages/shared/src/hooks/clients/useClientForm.ts`
+  - Actualiza `formData` después de `createClient()` y `updateClient()`
+  - Sincroniza valores calculados del backend con el estado del formulario
+
+**Componente UI:**
+- `apps/web/src/components/clients/shared/AnthropometricMetrics.tsx`
+  - Muestra campos de somatotipo (endomorph, mesomorph, ectomorph)
+  - Badges "Auto" cuando hay valores calculados
+  - Texto informativo sobre cálculo automático
+  - Campos editables para override manual
+
+**Tipos:**
+- `packages/shared/src/types/client.ts`
+  - `Client.somatotype_endomorph?: number | null`
+  - `Client.somatotype_mesomorph?: number | null`
+  - `Client.somatotype_ectomorph?: number | null`
+
+### Indicadores Visuales
+
+**Badges "Auto":**
+- Aparecen cuando hay valores de somatotipo (calculados o manuales)
+- Color: azul claro (`bg-blue-100 text-blue-700`)
+- Posición: junto al label de cada campo
+
+**Texto Informativo:**
+- "Los valores se calculan automáticamente desde las medidas antropométricas. Puedes editarlos manualmente si es necesario."
+- Aparece debajo del título "Somatotipo"
+
+### Validaciones
+
+**Frontend:**
+- Rango: 1.0 - 7.0 para cada componente
+- Validación en `validateClientForm()` (packages/shared/src/utils/validations)
+
+**Backend:**
+- Rango: 1.0 - 7.0 (validación Pydantic)
+- Cálculo automático si hay datos suficientes
+- Preserva valores manuales si se proporcionan
+
+### Notas Técnicas
+
+1. **No hay cálculo en frontend:** El frontend solo envía datos antropométricos y muestra valores retornados
+2. **Actualización inmediata:** `formData` se actualiza automáticamente después de crear/actualizar
+3. **Preservación de confirmEmail:** El campo `confirmEmail` (solo validación frontend) se preserva al actualizar `formData`
+4. **Compatibilidad:** Los tipos `Client` y `ClientFormData` ya incluyen campos de somatotipo
+
+---
+
 ## 📊 Estado Actual
 
 ### ✅ Implementado (v4.6.0)
+
+#### Somatotipo Automático
+- [x] Cálculo automático en backend (método Heath-Carter)
+- [x] Actualización de `formData` después de crear/actualizar
+- [x] Indicadores visuales (badges "Auto")
+- [x] Override manual disponible
+- [x] Sincronización inmediata con valores del backend
 
 #### Onboarding
 - [x] Wizard de 7 pasos (`ClientOnboardingForm`)

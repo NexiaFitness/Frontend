@@ -71,6 +71,7 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
     /**
      * handleSubmit — Valida y envía el formulario
      * Decide automáticamente entre crear o actualizar según mode
+     * Actualiza formData con los valores retornados del backend (incluyendo somatotipo calculado)
      */
     const handleSubmit = useCallback(async () => {
         // Validar formulario completo
@@ -84,6 +85,13 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
             if (mode === "create") {
                 // Crear nuevo cliente
                 const client = await createClient(formData).unwrap();
+                // Actualizar formData con la respuesta del backend (incluye somatotipo calculado)
+                setFormData((prev) => ({
+                    ...prev,
+                    ...client,
+                    // Preservar confirmEmail si existe (no viene del backend)
+                    confirmEmail: prev.confirmEmail,
+                }));
                 return { success: true, clientId: client.id };
             } else {
                 // Actualizar cliente existente
@@ -94,7 +102,14 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
                 // Excluir confirmEmail del payload (solo validación frontend)
                 const { confirmEmail, ...updateData } = formData;
                 
-                await updateClient({ id: clientId, data: updateData }).unwrap();
+                const updatedClient = await updateClient({ id: clientId, data: updateData }).unwrap();
+                // Actualizar formData con la respuesta del backend (incluye somatotipo recalculado)
+                setFormData((prev) => ({
+                    ...prev,
+                    ...updatedClient,
+                    // Preservar confirmEmail si existe (no viene del backend)
+                    confirmEmail: prev.confirmEmail,
+                }));
                 return { success: true };
             }
         } catch (err) {

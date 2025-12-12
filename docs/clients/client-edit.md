@@ -13,7 +13,7 @@ El módulo **Client Edit** permite a los entrenadores y administradores editar l
 
 - Datos personales (nombre, apellidos, email, teléfono, sexo, DNI, fecha de nacimiento)
 - Métricas físicas básicas (edad, peso, altura, IMC)
-- Métricas antropométricas avanzadas (skinfolds, girths, diameters, notas)
+- Métricas antropométricas avanzadas (skinfolds, girths, diameters, somatotipo, notas)
 - Objetivos de entrenamiento
 - Nivel de experiencia y frecuencia
 - Información de salud (lesiones, observaciones)
@@ -297,6 +297,10 @@ Client {
     apellidos: string;
     mail: string;
     // ... resto de campos actualizados
+    // Somatotipo recalculado automáticamente (si se modificaron medidas antropométricas)
+    somatotype_endomorph?: number | null;   // 1.0-7.0
+    somatotype_mesomorph?: number | null;   // 1.0-7.0
+    somatotype_ectomorph?: number | null;   // 1.0-7.0
 }
 ```
 
@@ -564,6 +568,12 @@ await updateClient({ id: clientId, data: updateData }).unwrap();
 **Efecto:**
 - `ClientDetail` se actualiza automáticamente después de editar
 - `ClientList` se refresca si está abierto
+- `formData` se actualiza con valores recalculados del backend (incluyendo somatotipo si se modificaron medidas antropométricas)
+
+**Nota sobre Somatotipo:**
+- Si se modifican medidas antropométricas, el backend recalcula automáticamente el somatotipo
+- Los valores recalculados se reflejan inmediatamente en el formulario
+- Si se proporcionan valores manuales de somatotipo, el backend los respeta (no recalcula)
 
 ---
 

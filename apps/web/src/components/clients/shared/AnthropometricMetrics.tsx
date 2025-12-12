@@ -369,16 +369,27 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
 
             {/* SOMATOTIPO */}
             <div>
-                <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-3 mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">
                         Somatotipo
                     </h3>
                     <div className="flex-1 h-0.5 bg-gray-900"></div>
                 </div>
+                {/* Información sobre cálculo automático */}
+                <p className="text-xs text-gray-600 mb-4">
+                    Los valores se calculan automáticamente desde las medidas antropométricas. Puedes editarlos manualmente si es necesario.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Endomorph */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Endomorph</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Endomorph</label>
+                            {formData.somatotype_endomorph !== null && formData.somatotype_endomorph !== undefined && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Auto
+                                </span>
+                            )}
+                        </div>
                         <input
                             type="number"
                             step="0.1"
@@ -396,7 +407,14 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
 
                     {/* Mesomorph */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Mesomorph</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Mesomorph</label>
+                            {formData.somatotype_mesomorph !== null && formData.somatotype_mesomorph !== undefined && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Auto
+                                </span>
+                            )}
+                        </div>
                         <input
                             type="number"
                             step="0.1"
@@ -414,7 +432,14 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
 
                     {/* Ectomorph */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Ectomorph</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Ectomorph</label>
+                            {formData.somatotype_ectomorph !== null && formData.somatotype_ectomorph !== undefined && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Auto
+                                </span>
+                            )}
+                        </div>
                         <input
                             type="number"
                             step="0.1"
@@ -787,16 +812,27 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
             {/* SOMATOTIPO - EN CARD */}
             {/* ============================================ */}
             <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-2">
                     <h3 className="text-lg font-semibold text-gray-900">
                         Somatotipo
                     </h3>
                     <span className="text-xs text-gray-500 uppercase tracking-wide">Opcional</span>
                 </div>
+                {/* Información sobre cálculo automático */}
+                <p className="text-xs text-gray-600 mb-4">
+                    Los valores se calculan automáticamente desde las medidas antropométricas. Puedes editarlos manualmente si es necesario.
+                </p>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Endomorph */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Endomorph</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Endomorph</label>
+                            {formData.somatotype_endomorph !== null && formData.somatotype_endomorph !== undefined && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Auto
+                                </span>
+                            )}
+                        </div>
                         <input
                             type="number"
                             step="0.1"
@@ -814,7 +850,14 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
 
                     {/* Mesomorph */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Mesomorph</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Mesomorph</label>
+                            {formData.somatotype_mesomorph !== null && formData.somatotype_mesomorph !== undefined && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Auto
+                                </span>
+                            )}
+                        </div>
                         <input
                             type="number"
                             step="0.1"
@@ -832,7 +875,14 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
 
                     {/* Ectomorph */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Ectomorph</label>
+                        <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-sm font-medium text-gray-700">Ectomorph</label>
+                            {formData.somatotype_ectomorph !== null && formData.somatotype_ectomorph !== undefined && (
+                                <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                                    Auto
+                                </span>
+                            )}
+                        </div>
                         <input
                             type="number"
                             step="0.1"

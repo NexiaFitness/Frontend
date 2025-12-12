@@ -13,7 +13,7 @@ El módulo **Client Onboarding** permite a los entrenadores y administradores re
 
 - **Datos personales** (nombre, apellidos, email, teléfono, sexo, DNI, fecha de nacimiento)
 - **Métricas físicas básicas** (edad, peso, altura, IMC calculado)
-- **Métricas antropométricas avanzadas** (skinfolds, girths, diameters, notas)
+- **Métricas antropométricas avanzadas** (skinfolds, girths, diameters, somatotipo, notas)
 - **Objetivos de entrenamiento** (objetivo principal, fecha de definición, descripción)
 - **Nivel de experiencia** (experiencia, frecuencia semanal, duración de sesión)
 - **Información de salud** (lesiones relevantes, observaciones)
@@ -592,8 +592,18 @@ Client {
     mail: string;
     // ... resto de campos creados
     fecha_alta: string; // ISO date string (fecha de creación)
+    // Somatotipo calculado automáticamente (si hay datos suficientes)
+    somatotype_endomorph?: number | null;   // 1.0-7.0
+    somatotype_mesomorph?: number | null;   // 1.0-7.0
+    somatotype_ectomorph?: number | null;   // 1.0-7.0
 }
 ```
+
+**Nota sobre Somatotipo:**
+- El backend calcula automáticamente los valores de somatotipo usando el método Heath-Carter
+- Los valores se calculan si hay medidas antropométricas suficientes
+- El frontend actualiza `formData` automáticamente con los valores calculados
+- Los valores pueden editarse manualmente si es necesario (override)
 
 **RTK Query Hook:**
 ```typescript
