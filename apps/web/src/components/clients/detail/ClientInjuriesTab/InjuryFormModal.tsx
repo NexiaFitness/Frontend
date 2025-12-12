@@ -36,6 +36,7 @@ interface FormState {
     painful_movement_id: number | "";
     affected_muscle_id: number | "" | null;
     pain_level: PainLevel | "";
+    severity: "mild" | "moderate" | "severe";
     status: InjuryStatus;
     restrictions: string;
     notes: string;
@@ -58,6 +59,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
         painful_movement_id: "",
         affected_muscle_id: null,
         pain_level: 3,
+        severity: "moderate",
         status: "active",
         restrictions: "",
         notes: "",
@@ -82,13 +84,19 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
 
     useEffect(() => {
         if (injury) {
+            // Convertir restrictions de array a string para el textarea
+            const restrictionsStr = Array.isArray(injury.restrictions)
+                ? injury.restrictions.join("\n")
+                : injury.restrictions || "";
+            
             setForm({
                 joint_id: injury.joint_id,
                 painful_movement_id: injury.painful_movement_id,
                 affected_muscle_id: injury.affected_muscle_id ?? null,
                 pain_level: injury.pain_level as PainLevel,
+                severity: "moderate", // TODO: obtener del backend si está disponible
                 status: injury.status,
-                restrictions: injury.restrictions || "",
+                restrictions: restrictionsStr,
                 notes: injury.notes || "",
                 injury_date: injury.injury_date?.split("T")[0] || injury.injury_date,
                 resolution_date: injury.resolution_date || "",
@@ -99,6 +107,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 painful_movement_id: "",
                 affected_muscle_id: null,
                 pain_level: 3,
+                severity: "moderate",
                 status: "active",
                 restrictions: "",
                 notes: "",
@@ -140,9 +149,15 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
         if (!canSubmit) return;
 
         if (!isEdit) {
+            // Convertir restrictions de string a array (si hay contenido)
+            const restrictionsArray = form.restrictions
+                ? form.restrictions.split("\n").filter((r) => r.trim().length > 0)
+                : null;
+
             await createInjury({
                 clientId,
                 data: {
+                    client_id: clientId, // Requerido por schema
                     joint_id: Number(form.joint_id),
                     painful_movement_id: Number(form.painful_movement_id),
                     affected_muscle_id:
@@ -150,9 +165,10 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                             ? undefined
                             : Number(form.affected_muscle_id),
                     pain_level: Number(form.pain_level) as PainLevel,
-                    restrictions: form.restrictions || undefined,
+                    severity: form.severity,
+                    restrictions: restrictionsArray,
                     notes: form.notes || undefined,
-                    injury_date: form.injury_date,
+                    is_active: true,
                 },
             });
         } else {
@@ -258,7 +274,13 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                                 <button
                                     key={level}
                                     type="button"
-                                    onClick={() => handleChange("pain_level", level)}
+                                    onClick={() => {
+                                        handleChange("pain_level", level);
+                                        // Auto-calcular severity basado en pain_level
+                                        if (level <= 2) handleChange("severity", "mild");
+                                        else if (level === 3) handleChange("severity", "moderate");
+                                        else handleChange("severity", "severe");
+                                    }}
                                     className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${painLevelClass(
                                         level
                                     )} ${isSelected ? "ring-2 ring-offset-1 ring-blue-500" : ""}`}

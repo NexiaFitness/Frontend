@@ -88,13 +88,16 @@ export interface ClientInjury {
 // ============================================================================
 
 export interface CreateInjuryRequest {
+    client_id: number; // Requerido por schema aunque también va en URL
     joint_id: number;
     painful_movement_id: number; // ⚠️ CRÍTICO
     affected_muscle_id?: number | null;
     pain_level: PainLevel;
-    restrictions?: string | null;
+    severity: "mild" | "moderate" | "severe"; // Requerido por backend
+    restrictions?: string[] | null; // Backend espera array, no string
     notes?: string | null;
-    injury_date: string;
+    is_active?: boolean; // Default: true
+    // Nota: injury_date NO se envía, el backend usa start_date automáticamente
 }
 
 export interface UpdateInjuryRequest {

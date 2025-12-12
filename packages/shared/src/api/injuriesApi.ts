@@ -92,7 +92,7 @@ export const injuriesApi = baseApi.injectEndpoints({
 
         getClientActiveInjuries: builder.query<ClientInjury[], number>({
             query: (clientId) => ({
-                url: `/injuries/clients/${clientId}/active`,
+                url: `/injuries/clients/${clientId}?active_only=true`,
                 method: "GET",
             }),
             providesTags: (result, error, clientId) => [
