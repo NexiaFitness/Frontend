@@ -200,6 +200,7 @@ export * from "./hooks/clients/useClientFatigue";
 export * from "./hooks/clients/useFatigueAlerts";
 export * from "./hooks/clients/useClientForm";
 export * from "./hooks/clients/useClientOnboarding";
+export * from "./hooks/clients/useClientPreview";
 export * from "./hooks/clients/useClientProgress";
 export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";

@@ -244,6 +244,24 @@ export interface DeleteClientResponse {
 }
 
 // ========================================
+// CLIENT PREVIEW RESPONSE (POST /clients/preview)
+// ========================================
+
+/**
+ * ClientPreviewResponse - Respuesta de POST /clients/preview
+ * Devuelve solo los valores calculados (BMI y somatotipo) sin persistir
+ * Alineado 100% con backend FastAPI ClientPreviewResponse schema
+ */
+export interface ClientPreviewResponse {
+    bmi: number | null;
+    somatotype: {
+        endomorph: number | null;
+        mesomorph: number | null;
+        ectomorph: number | null;
+    };
+}
+
+// ========================================
 // CLIENT LIST WITH METRICS (Dashboard view)
 // ========================================
 

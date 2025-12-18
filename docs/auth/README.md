@@ -713,3 +713,4 @@ await logout(); // Cierra sesión y limpia estado
 **Módulo:** Auth v5.0.0
 
 
+

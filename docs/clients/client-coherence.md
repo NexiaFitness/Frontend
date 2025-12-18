@@ -470,3 +470,4 @@ Los valores originales se guardan en `rawLoad` y `rawStrain` para tooltips.
 **Módulo:** Daily Coherence v5.5.0
 
 
+

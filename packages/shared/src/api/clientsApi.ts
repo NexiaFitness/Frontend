@@ -17,6 +17,7 @@ import type {
     ClientFilters,
     ClientListWithMetricsResponse,
     RecentActivityResponse,
+    ClientPreviewResponse,
 } from "../types/client";
 import type { ClientStatsResponse } from "../types/clientStats";
 
@@ -170,6 +171,22 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id: "LIST" },
                 { type: "Client", id: "STATS" },
             ],
+        }),
+
+        /**
+         * Preview cálculos de cliente (BMI y somatotipo) sin persistir
+         * Usado en el paso Review antes de crear el cliente
+         */
+        previewClientCalculations: builder.mutation<ClientPreviewResponse, CreateClientData>({
+            query: (clientData) => ({
+                url: "/clients/preview",
+                method: "POST",
+                body: clientData,
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            }),
+            // No invalida tags porque no persiste nada
         }),
 
         /**
@@ -742,6 +759,7 @@ export const {
     useGetClientsQuery,
     useGetClientQuery,
     useCreateClientMutation,
+    usePreviewClientCalculationsMutation,
     useUpdateClientMutation,
     useDeleteClientMutation,
     useGetClientStatsQuery,

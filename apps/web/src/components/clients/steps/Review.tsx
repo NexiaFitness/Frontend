@@ -15,7 +15,7 @@
 import React, { useMemo } from "react";
 import type { ReviewStepProps } from "@nexia/shared/types/clientOnboarding";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { calculateBMI } from "@nexia/shared";
+import { calculateBMI, useClientPreview } from "@nexia/shared";
 import { SomatotipoChart } from "../charts/SomatotipoChart";
 import { Button } from "@/components/ui/buttons";
 
@@ -31,6 +31,12 @@ export const Review: React.FC<ExtendedReviewProps> = ({
     onCreateProfile,
     isSubmitting = false,
 }) => {
+    // Obtener preview de cálculos del backend (BMI y somatotipo)
+    const { preview, isLoading: isLoadingPreview } = useClientPreview({
+        formData,
+        enabled: true,
+    });
+
     // Helper para mostrar valores opcionales
     const display = (value: string | number | undefined | null) => value || "—";
 
@@ -106,14 +112,19 @@ export const Review: React.FC<ExtendedReviewProps> = ({
         return durationMap[duration] || duration;
     };
 
-    // Calcular BMI
+    // Calcular BMI: usar valor del preview del backend si está disponible, sino calcular en frontend
     const bmi = useMemo(() => {
+        // Prioridad 1: Valor calculado del backend (preview)
+        if (preview?.bmi !== null && preview?.bmi !== undefined) {
+            return preview.bmi;
+        }
+        // Prioridad 2: Calcular en frontend como fallback
         if (formData.peso && formData.altura) {
             const alturaEnMetros = formData.altura / 100;
             return calculateBMI(formData.peso, alturaEnMetros);
         }
         return null;
-    }, [formData.peso, formData.altura]);
+    }, [preview?.bmi, formData.peso, formData.altura]);
 
     // Calcular edad
     const age = useMemo(() => {
@@ -379,10 +390,30 @@ export const Review: React.FC<ExtendedReviewProps> = ({
                             {/* Somatotype Chart */}
                             <div className="mb-6">
                                 <SomatotipoChart
-                                    endomorph={formData.somatotype_endomorph ?? null}
-                                    mesomorph={formData.somatotype_mesomorph ?? null}
-                                    ectomorph={formData.somatotype_ectomorph ?? null}
+                                    endomorph={
+                                        // Prioridad 1: Valor manual del usuario
+                                        formData.somatotype_endomorph ??
+                                        // Prioridad 2: Valor calculado del backend (preview)
+                                        preview?.somatotype?.endomorph ??
+                                        null
+                                    }
+                                    mesomorph={
+                                        formData.somatotype_mesomorph ??
+                                        preview?.somatotype?.mesomorph ??
+                                        null
+                                    }
+                                    ectomorph={
+                                        formData.somatotype_ectomorph ??
+                                        preview?.somatotype?.ectomorph ??
+                                        null
+                                    }
                                 />
+                                {/* Indicador de carga si está calculando */}
+                                {isLoadingPreview && (
+                                    <p className="text-xs text-gray-500 text-center mt-2">
+                                        Calculando somatotipo...
+                                    </p>
+                                )}
                             </div>
 
                             {/* Navigation Buttons - Debajo del chart */}
