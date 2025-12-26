@@ -123,6 +123,7 @@ export const LoginForm: React.FC = () => {
                     placeholder="Introduce tu correo electrónico"
                     isRequired
                     disabled={isLoading}
+                    autoComplete="email"
                 />
 
                 <Input
@@ -134,6 +135,7 @@ export const LoginForm: React.FC = () => {
                     placeholder="Introduce tu contraseña"
                     isRequired
                     disabled={isLoading}
+                    autoComplete="current-password"
                 />
 
                 <Button
