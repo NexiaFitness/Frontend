@@ -10,19 +10,20 @@
  * Flujo:
  * 1. Obtener sesiones del cliente en rango de fechas
  * 2. Transformar sesiones → CIDCalcIn[]
- * 3. Llamar a POST /metrics/daily con items + start_date
+ * 3. Llamar a POST /metrics/daily con items + start_date (usando query con skipToken)
  * 4. Retornar días con CID calculado
  * 
  * @author Nelson Valero
  * @since v5.6.0 - Fase 2: Integración V2
+ * @updated v6.4.0 - Convertido a query con skipToken para evitar 422
  */
 
-import React from "react";
 import { useMemo } from "react";
-import { useGetDailyMetricsV2Mutation } from "../../api/metricsApiV2";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useGetDailyMetricsV2Query } from "../../api/metricsApiV2";
 import { useClientSessionsByDateRange } from "./useClientSessionsByDateRange";
 import { transformSessionsToCIDCalcInWithDates } from "../../utils/metrics/transformSessionsToCIDCalcIn";
-import type { DailyMetricsResponseV2, DailyCIDItemV2 } from "../../types/metricsV2";
+import type { DailyMetricsResponseV2 } from "../../types/metricsV2";
 
 export interface UseDailyMetricsV2Params {
     clientId: number;
@@ -76,30 +77,46 @@ export function useDailyMetricsV2(
         return transformSessionsToCIDCalcInWithDates(sessionsFiltradas);
     }, [sessionsFiltradas]);
 
-    // Paso 3: Llamar a POST /metrics/daily
-    const [getDailyMetricsV2, { data, isLoading: isLoadingMetrics, error: metricsError }] =
-        useGetDailyMetricsV2Mutation();
-
-    // Efecto para cargar métricas cuando hay items disponibles
-    React.useEffect(() => {
-        if (items.length > 0 && startDate) {
-            getDailyMetricsV2({
-                items,
-                start_date: startDate,
-            });
+    // Paso 3: Llamar a POST /metrics/daily usando query con skipToken
+    // La query solo se ejecuta cuando hay datos válidos
+    const queryArg = useMemo(() => {
+        // Validación estricta: no ejecutar si no hay datos válidos
+        if (isLoadingSessions) {
+            return skipToken;
         }
-    }, [items, startDate, getDailyMetricsV2]);
+        if (sessionsFiltradas.length === 0) {
+            return skipToken;
+        }
+        if (items.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length !== items.length) {
+            return skipToken;
+        }
+        if (!startDate || startDate.trim() === "") {
+            return skipToken;
+        }
+
+        // Todos los datos son válidos, retornar el argumento de la query
+        return {
+            items,
+            start_date: startDate,
+        };
+    }, [isLoadingSessions, sessionsFiltradas.length, items, dateMapping, startDate]);
+
+    const { data, isLoading: isLoadingMetrics, error: metricsError, refetch: refetchMetrics } =
+        useGetDailyMetricsV2Query(queryArg);
 
     const isLoading = isLoadingSessions || isLoadingMetrics;
     const error = sessionsError || metricsError;
 
     const refetch = () => {
         refetchSessions();
-        if (items.length > 0 && startDate) {
-            getDailyMetricsV2({
-                items,
-                start_date: startDate,
-            });
+        if (queryArg !== skipToken) {
+            refetchMetrics();
         }
     };
 

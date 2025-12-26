@@ -3,10 +3,10 @@
  *
  * Contexto:
  * - Obtiene todos los microcycles disponibles de todos los planes activos de un cliente
- * - Usa endpoint optimizado getAllCycles para cada plan
+ * - Usa endpoint batch optimizado para obtener cycles de múltiples planes en un solo request
  * - Combina resultados en formato útil para selectores
  * - Cross-platform (sin dependencias del DOM)
- * - Limita a primeros 10 planes para evitar demasiadas queries simultáneas
+ * - Limita a primeros N planes (default: 10) para evitar demasiados datos
  *
  * Uso:
  * ```tsx
@@ -15,10 +15,12 @@
  *
  * @author NEXIA Frontend Team
  * @since v1.0.0
+ * @updated v2.0.0 - Refactorizado para usar endpoint batch
  */
 
-import { useMemo } from "react";
-import { useGetTrainingPlansQuery, useGetAllCyclesQuery } from "../../api/trainingPlansApi";
+import { useMemo, useRef } from "react";
+import { useGetTrainingPlansQuery, useGetBatchCyclesQuery } from "../../api/trainingPlansApi";
+import type { TrainingPlan } from "../../types/training";
 
 export interface ClientMicrocycleOption {
     id: number;
@@ -45,8 +47,8 @@ interface UseClientMicrocyclesResult {
 /**
  * Hook para obtener todos los microcycles de los planes de un cliente
  * 
- * Nota: Limita a los primeros N planes (default: 10) para evitar demasiadas
- * queries simultáneas. Si un cliente tiene más planes, solo se procesarán los primeros.
+ * Usa endpoint batch para obtener cycles de múltiples planes en un solo request.
+ * Limita a los primeros N planes (default: 10) para evitar demasiados datos.
  */
 export const useClientMicrocycles = ({
     clientId,
@@ -54,7 +56,7 @@ export const useClientMicrocycles = ({
 }: UseClientMicrocyclesParams): UseClientMicrocyclesResult => {
     // Obtener planes del cliente
     const {
-        data: trainingPlans = [],
+        data: trainingPlansData,
         isLoading: isLoadingPlans,
         isError: isErrorPlans,
         error: errorPlans,
@@ -63,115 +65,94 @@ export const useClientMicrocycles = ({
         { skip: !clientId }
     );
 
-    // Filtrar solo planes activos y limitar a primeros N planes
+    const trainingPlans = trainingPlansData ?? [];
+
+    // Estabilizar limitedPlans usando comparación de IDs para evitar recálculos innecesarios
+    const previousPlanIdsRef = useRef<number[]>([]);
     const limitedPlans = useMemo(() => {
-        // Incluir planes que estén activos (is_active !== false) y tengan status "active" o sin status
+        // Filtrar planes activos
         const activePlans = trainingPlans.filter(
-            (plan) => plan.is_active !== false && (plan.status === "active" || !plan.status || plan.status === "")
+            (plan) =>
+                plan.is_active !== false &&
+                (plan.status === "active" || !plan.status || plan.status === "")
         );
-        return activePlans.slice(0, maxPlans);
-    }, [trainingPlans, maxPlans]);
 
-    // Obtener cycles de cada plan usando queries condicionales
-    // Nota: React no permite hooks en loops, por lo que creamos queries estáticas
-    // hasta el límite máximo. Esto es aceptable porque la mayoría de clientes
-    // tienen menos de 10 planes activos simultáneamente.
-    const plan1Query = useGetAllCyclesQuery(limitedPlans[0]?.id ?? 0, {
-        skip: !limitedPlans[0]?.id,
-    });
-    const plan2Query = useGetAllCyclesQuery(limitedPlans[1]?.id ?? 0, {
-        skip: !limitedPlans[1]?.id,
-    });
-    const plan3Query = useGetAllCyclesQuery(limitedPlans[2]?.id ?? 0, {
-        skip: !limitedPlans[2]?.id,
-    });
-    const plan4Query = useGetAllCyclesQuery(limitedPlans[3]?.id ?? 0, {
-        skip: !limitedPlans[3]?.id,
-    });
-    const plan5Query = useGetAllCyclesQuery(limitedPlans[4]?.id ?? 0, {
-        skip: !limitedPlans[4]?.id,
-    });
-    const plan6Query = useGetAllCyclesQuery(limitedPlans[5]?.id ?? 0, {
-        skip: !limitedPlans[5]?.id,
-    });
-    const plan7Query = useGetAllCyclesQuery(limitedPlans[6]?.id ?? 0, {
-        skip: !limitedPlans[6]?.id,
-    });
-    const plan8Query = useGetAllCyclesQuery(limitedPlans[7]?.id ?? 0, {
-        skip: !limitedPlans[7]?.id,
-    });
-    const plan9Query = useGetAllCyclesQuery(limitedPlans[8]?.id ?? 0, {
-        skip: !limitedPlans[8]?.id,
-    });
-    const plan10Query = useGetAllCyclesQuery(limitedPlans[9]?.id ?? 0, {
-        skip: !limitedPlans[9]?.id,
-    });
+        // Limitar a primeros N planes
+        const limited = activePlans.slice(0, maxPlans);
 
-    // Combinar todas las queries en un array
-    const planQueries = useMemo(
-        () => [
-            plan1Query,
-            plan2Query,
-            plan3Query,
-            plan4Query,
-            plan5Query,
-            plan6Query,
-            plan7Query,
-            plan8Query,
-            plan9Query,
-            plan10Query,
-        ],
-        [
-            plan1Query,
-            plan2Query,
-            plan3Query,
-            plan4Query,
-            plan5Query,
-            plan6Query,
-            plan7Query,
-            plan8Query,
-            plan9Query,
-            plan10Query,
-        ]
-    );
+        // Comparar IDs para estabilizar (solo actualizar si los IDs cambian)
+        const currentPlanIds = limited.map((p) => p.id).sort();
+        const previousPlanIds = previousPlanIdsRef.current.sort();
 
-    // Extraer microcycles de todos los planes
-    const microcycles = useMemo(() => {
-        const result: ClientMicrocycleOption[] = [];
-
-        if (limitedPlans.length === 0) {
-            return result;
+        if (
+            currentPlanIds.length !== previousPlanIds.length ||
+            !currentPlanIds.every((id, idx) => id === previousPlanIds[idx])
+        ) {
+            previousPlanIdsRef.current = currentPlanIds;
         }
 
-        limitedPlans.forEach((plan, index) => {
-            const query = planQueries[index];
-            
-            // Verificar que la query tiene datos y no está en error
-            if (query?.data && !query.isError) {
-                const cyclesData = query.data;
-                
-                // Verificar que microcycles existe y es un array
-                if (cyclesData.microcycles && Array.isArray(cyclesData.microcycles) && cyclesData.microcycles.length > 0) {
-                    cyclesData.microcycles.forEach((microcycle) => {
-                        // Solo incluir microcycles activos (is_active puede ser true o undefined/null)
-                        if (microcycle.is_active !== false) {
-                            result.push({
-                                id: microcycle.id,
-                                name: microcycle.name,
-                                planId: plan.id,
-                                planName: plan.name,
-                                mesocycleId: microcycle.mesocycle_id,
-                                startDate: microcycle.start_date,
-                                endDate: microcycle.end_date,
-                            });
-                        }
-                    });
-                }
-            } else if (query?.isError) {
-                // Log error para debugging (solo en desarrollo)
-                if (process.env.NODE_ENV !== 'production') {
-                    console.warn(`[useClientMicrocycles] Error loading cycles for plan ${plan.id}:`, query.error);
-                }
+        return limited;
+    }, [trainingPlans, maxPlans]);
+
+    // Extraer IDs de planes activos (estable)
+    const activePlanIds = useMemo(() => {
+        return limitedPlans.map((plan) => plan.id);
+    }, [limitedPlans]);
+
+    // Crear mapa de planId -> plan para lookup rápido
+    const plansMap = useMemo(() => {
+        const map = new Map<number, TrainingPlan>();
+        limitedPlans.forEach((plan) => {
+            map.set(plan.id, plan);
+        });
+        return map;
+    }, [limitedPlans]);
+
+    // Batch query para obtener todos los cycles de una vez
+    const {
+        data: batchCyclesData,
+        isLoading: isLoadingCycles,
+        isError: isErrorCycles,
+        error: cyclesError,
+    } = useGetBatchCyclesQuery(
+        { plan_ids: activePlanIds },
+        { skip: activePlanIds.length === 0 }
+    );
+
+    // Extraer microcycles de todos los planes y mapear a ClientMicrocycleOption
+    const microcycles = useMemo(() => {
+        if (!batchCyclesData?.cycles) {
+            return [];
+        }
+
+        const result: ClientMicrocycleOption[] = [];
+
+        // Iterar sobre cada plan en los resultados
+        Object.entries(batchCyclesData.cycles).forEach(([planIdStr, cycles]) => {
+            const planId = Number(planIdStr);
+            const plan = plansMap.get(planId);
+
+            // Si el plan no está en el mapa, saltarlo (no debería pasar)
+            if (!plan) {
+                return;
+            }
+
+            // Extraer microcycles de este plan
+            if (cycles.microcycles && Array.isArray(cycles.microcycles)) {
+                cycles.microcycles.forEach((microcycle) => {
+                    // Solo incluir microcycles activos
+                    if (microcycle.is_active !== false) {
+                        result.push({
+                            id: microcycle.id,
+                            name: microcycle.name,
+                            planId: plan.id,
+                            planName: plan.name,
+                            mesocycleId: microcycle.mesocycle_id,
+                            startDate: microcycle.start_date,
+                            endDate: microcycle.end_date,
+                        });
+                    }
+                });
             }
         });
 
@@ -181,41 +162,26 @@ export const useClientMicrocycles = ({
             const dateB = new Date(b.startDate).getTime();
             return dateB - dateA;
         });
-    }, [limitedPlans, planQueries]);
+    }, [batchCyclesData?.cycles, plansMap]);
 
-    // Calcular estados combinados
-    const isLoading = isLoadingPlans || planQueries.some((q) => q.isLoading);
-    const isError = isErrorPlans || planQueries.some((q) => q.isError);
-    const error = errorPlans || planQueries.find((q) => q.error)?.error;
-
-    // Debug logging (solo en desarrollo)
-    if (process.env.NODE_ENV !== 'production' && clientId) {
-        if (!isLoading && !isLoadingPlans) {
-            const hasData = planQueries.some((q) => q.data);
-            const hasErrors = planQueries.some((q) => q.isError);
-            const queriesLoading = planQueries.filter((q) => q.isLoading).length;
-            
-            // Log siempre para debugging
-            console.log('[useClientMicrocycles] Debug info:', {
-                clientId,
-                plansCount: trainingPlans.length,
-                activePlansCount: limitedPlans.length,
-                planIds: limitedPlans.map((p) => p.id),
-                queriesWithData: planQueries.filter((q) => q.data).length,
-                queriesWithErrors: planQueries.filter((q) => q.isError).length,
-                queriesLoading,
-                microcyclesFound: microcycles.length,
-                planQueriesDetails: limitedPlans.map((plan, idx) => ({
-                    planId: plan.id,
-                    planName: plan.name,
-                    hasData: !!planQueries[idx]?.data,
-                    isLoading: planQueries[idx]?.isLoading,
-                    isError: planQueries[idx]?.isError,
-                    microcyclesCount: planQueries[idx]?.data?.microcycles?.length || 0,
-                })),
-            });
+    // Log errores del batch (solo en desarrollo)
+    if (process.env.NODE_ENV !== 'production' && batchCyclesData?.errors) {
+        const errorEntries = Object.entries(batchCyclesData.errors);
+        if (errorEntries.length > 0) {
+            console.warn(
+                '[useClientMicrocycles] Errors from batch query:',
+                errorEntries.map(([planId, error]) => ({
+                    planId: Number(planId),
+                    error,
+                }))
+            );
         }
     }
+
+    // Calcular estados combinados
+    const isLoading = isLoadingPlans || isLoadingCycles;
+    const isError = isErrorPlans || isErrorCycles;
+    const error = errorPlans || cyclesError;
 
     return {
         microcycles,

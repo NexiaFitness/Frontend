@@ -51,6 +51,8 @@ import type {
     MicrocycleUpdate,
     DeleteCycleResponse,
     AllCyclesResponse,
+    BatchCyclesRequest,
+    BatchCyclesResponse,
     // Milestones
     Milestone,
     MilestoneCreate,
@@ -188,6 +190,35 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 { type: "Mesocycle" as const, id: "LIST" },
                 { type: "Microcycle" as const, id: "LIST" },
             ],
+        }),
+
+        /**
+         * Obtener cycles de múltiples training plans en un solo request (batch)
+         * Optimizado para evitar múltiples queries individuales
+         */
+        getBatchCycles: builder.query<BatchCyclesResponse, BatchCyclesRequest>({
+            query: (request) => ({
+                url: "/training-plans/batch-cycles",
+                method: "POST",
+                body: request,
+            }),
+            providesTags: (result) =>
+                result
+                    ? [
+                          ...Object.keys(result.cycles).map((id) => ({
+                              type: "TrainingPlan" as const,
+                              id: Number(id),
+                          })),
+                          { type: "Macrocycle" as const, id: "LIST" },
+                          { type: "Mesocycle" as const, id: "LIST" },
+                          { type: "Microcycle" as const, id: "LIST" },
+                      ]
+                    : [
+                          { type: "TrainingPlan" as const, id: "LIST" },
+                          { type: "Macrocycle" as const, id: "LIST" },
+                          { type: "Mesocycle" as const, id: "LIST" },
+                          { type: "Microcycle" as const, id: "LIST" },
+                      ],
         }),
 
         // ========================================
@@ -1012,6 +1043,7 @@ export const {
     useUpdateTrainingPlanMutation,
     useDeleteTrainingPlanMutation,
     useGetAllCyclesQuery,
+    useGetBatchCyclesQuery,
     
     // Templates
     useGetTrainingPlanTemplatesQuery,

@@ -18,8 +18,8 @@
  * @updated v6.0.0 - Convertido en dashboard ejecutivo
  */
 
-import React, { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useMemo, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { PhysicalTestResultOut } from "@nexia/shared/types/testing";
@@ -34,6 +34,8 @@ import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetClientTestResultsQuery } from "@nexia/shared/api/clientsApi";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
+import { ClientAlertsSection } from "./ClientAlertsSection";
+import { ClientStatusSection } from "./ClientStatusSection";
 
 interface ClientOverviewTabProps {
     client: Client;
@@ -42,9 +44,28 @@ interface ClientOverviewTabProps {
 
 export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, clientId }) => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const alertsSectionRef = useRef<HTMLDivElement>(null);
 
     // Validar clientId antes de hacer cualquier llamada
     const isValidClientId = clientId && clientId > 0;
+
+    /**
+     * Scroll automático a sección de alertas cuando hay ?focus=alerts en la URL
+     * Se ejecuta cuando el componente se monta o cuando cambia el query param
+     */
+    useEffect(() => {
+        const focusParam = searchParams.get("focus");
+        if (focusParam === "alerts" && alertsSectionRef.current) {
+            // Pequeño delay para asegurar que el DOM se haya renderizado
+            setTimeout(() => {
+                alertsSectionRef.current?.scrollIntoView({
+                    behavior: "smooth",
+                    block: "start",
+                });
+            }, 100);
+        }
+    }, [searchParams]);
 
     // Obtener datos de coherencia (adherencia, monotonía) - solo si clientId es válido
     const { data: coherenceData, isLoading: isLoadingCoherence } = useCoherence(
@@ -224,89 +245,15 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
                 />
             </div>
 
-            {/* ALERTAS PRIORITARIAS */}
-            {(coherenceData?.monotony && coherenceData.monotony > 2.0) ||
-            (coherenceData?.adherence_percentage && coherenceData.adherence_percentage < 80) ||
-            currentRiskLevel ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Alertas</h3>
-                    <div className="space-y-3">
-                        {coherenceData?.monotony && coherenceData.monotony > 2.0 && (
-                            <div className="flex items-center gap-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                                <span className="text-orange-600 font-bold">⚠️</span>
-                                <div className="flex-1">
-                                    <p className="font-semibold text-orange-900">Monotonía Alta</p>
-                                    <p className="text-sm text-orange-700">
-                                        Monotonía: {coherenceData.monotony.toFixed(1)} (umbral: 2.0). Revisar planificación.
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => navigate(`/dashboard/clients/${clientId}?tab=daily-coherence`)}
-                                    className="text-sm text-orange-600 hover:text-orange-800 font-medium underline"
-                                >
-                                    Ver Coherencia
-                                </button>
-                            </div>
-                        )}
-                        {coherenceData?.adherence_percentage && coherenceData.adherence_percentage < 80 && (
-                            <div className="flex items-center gap-3 p-3 bg-red-50 border border-red-200 rounded-lg">
-                                <span className="text-red-600 font-bold">⚠️</span>
-                                <div className="flex-1">
-                                    <p className="font-semibold text-red-900">Adherencia Baja</p>
-                                    <p className="text-sm text-red-700">
-                                        Adherencia: {coherenceData.adherence_percentage.toFixed(0)}%. Considerar contactar al cliente.
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => navigate(`/dashboard/clients/${clientId}?tab=daily-coherence`)}
-                                    className="text-sm text-red-600 hover:text-red-800 font-medium underline"
-                                >
-                                    Ver Coherencia
-                                </button>
-                            </div>
-                        )}
-                        {currentRiskLevel && currentRiskLevel !== "low" && (
-                            <div
-                                className={`flex items-center gap-3 p-3 rounded-lg ${
-                                    currentRiskLevel === "high"
-                                        ? "bg-red-50 border border-red-200"
-                                        : "bg-amber-50 border border-amber-200"
-                                }`}
-                            >
-                                <span className={`font-bold ${currentRiskLevel === "high" ? "text-red-600" : "text-amber-600"}`}>
-                                    ⚠️
-                                </span>
-                                <div className="flex-1">
-                                    <p
-                                        className={`font-semibold ${
-                                            currentRiskLevel === "high" ? "text-red-900" : "text-amber-900"
-                                        }`}
-                                    >
-                                        Nivel de Riesgo: {currentRiskLevel === "high" ? "Alto" : "Medio"}
-                                    </p>
-                                    <p
-                                        className={`text-sm ${
-                                            currentRiskLevel === "high" ? "text-red-700" : "text-amber-700"
-                                        }`}
-                                    >
-                                        Revisar carga de trabajo y recuperación.
-                                    </p>
-                                </div>
-                                <button
-                                    onClick={() => navigate(`/dashboard/clients/${clientId}?tab=progress`)}
-                                    className={`text-sm font-medium underline ${
-                                        currentRiskLevel === "high"
-                                            ? "text-red-600 hover:text-red-800"
-                                            : "text-amber-600 hover:text-amber-800"
-                                    }`}
-                                >
-                                    Ver Progreso
-                                </button>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            ) : null}
+            {/* SECCIÓN DE ALERTAS PERSISTENTES */}
+            {/* Estas son las MISMAS alertas que aparecen en el dashboard del trainer */}
+            {/* Acciones: Mark as read (opcional) y Resolve (acción principal) */}
+            <ClientAlertsSection clientId={clientId} sectionRef={alertsSectionRef} />
+
+            {/* SECCIÓN DE ESTADO DEL CLIENTE */}
+            {/* Indicadores informativos: coherencia, monotonía, adherencia, tendencias */}
+            {/* NO son alertas persistentes, solo información de contexto */}
+            <ClientStatusSection client={client} clientId={clientId} />
 
             {/* LESIONES ACTIVAS (widget compacto) */}
             {isLoadingInjuries ? (

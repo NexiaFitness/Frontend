@@ -68,6 +68,9 @@ import Account from "./pages/account/Account";
 // Layouts
 import { PublicLayout } from "./components/ui/layout/PublicLayout";
 
+// UI Components
+import { ToastProvider } from "./components/ui/feedback";
+
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
@@ -119,8 +122,9 @@ function App() {
   }, [isAuthenticated, isLoading, user]);
 
   return (
-    <Routes>
-      {/* Rutas públicas */}
+    <ToastProvider>
+      <Routes>
+        {/* Rutas públicas */}
       <Route element={<PublicLayout />}>
         <Route
           path="/"
@@ -397,7 +401,8 @@ function App() {
 
       {/* Catch-all */}
       <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+      </Routes>
+    </ToastProvider>
   );
 }
 

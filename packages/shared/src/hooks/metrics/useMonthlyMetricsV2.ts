@@ -10,16 +10,17 @@
  * Flujo:
  * 1. Obtener sesiones del cliente en rango de fechas
  * 2. Transformar sesiones → CIDCalcIn[]
- * 3. Llamar a POST /metrics/monthly con items + start_date + w_fase
+ * 3. Llamar a POST /metrics/monthly con items + start_date + w_fase (usando query con skipToken)
  * 4. Retornar buckets mensuales con CID agregado
  * 
  * @author Nelson Valero
  * @since v5.6.0 - Fase 2: Integración V2
+ * @updated v6.4.0 - Convertido a query con skipToken para evitar 422
  */
 
-import React from "react";
 import { useMemo } from "react";
-import { useGetMonthlyMetricsV2Mutation } from "../../api/metricsApiV2";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useGetMonthlyMetricsV2Query } from "../../api/metricsApiV2";
 import { useClientSessionsByDateRange } from "./useClientSessionsByDateRange";
 import { transformSessionsToCIDCalcInWithDates, calculateCIDFromItem } from "../../utils/metrics/transformSessionsToCIDCalcIn";
 import type { MonthlyMetricsResponseV2, MonthlyBucketV2 } from "../../types/metricsV2";
@@ -90,20 +91,39 @@ export function useMonthlyMetricsV2(
         return earliestDate < originalStart ? startDate : dateMapping[0];
     }, [dateMapping, startDate]);
 
-    // Paso 3: Llamar a POST /metrics/monthly
-    const [getMonthlyMetricsV2, { data, isLoading: isLoadingMetrics, error: metricsError }] =
-        useGetMonthlyMetricsV2Mutation();
-
-    // Efecto para cargar métricas cuando hay items disponibles
-    React.useEffect(() => {
-        if (items.length > 0 && actualStartDate) {
-            getMonthlyMetricsV2({
-                items,
-                start_date: actualStartDate,
-                w_fase,
-            });
+    // Paso 3: Llamar a POST /metrics/monthly usando query con skipToken
+    // La query solo se ejecuta cuando hay datos válidos
+    const queryArg = useMemo(() => {
+        // Validación estricta: no ejecutar si no hay datos válidos
+        if (isLoadingSessions) {
+            return skipToken;
         }
-    }, [items, actualStartDate, w_fase, getMonthlyMetricsV2]);
+        if (sessionsFiltradas.length === 0) {
+            return skipToken;
+        }
+        if (items.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length !== items.length) {
+            return skipToken;
+        }
+        if (!actualStartDate || actualStartDate.trim() === "") {
+            return skipToken;
+        }
+
+        // Todos los datos son válidos, retornar el argumento de la query
+        return {
+            items,
+            start_date: actualStartDate,
+            w_fase,
+        };
+    }, [isLoadingSessions, sessionsFiltradas.length, items, dateMapping, actualStartDate, w_fase]);
+
+    const { data, isLoading: isLoadingMetrics, error: metricsError, refetch: refetchMetrics } =
+        useGetMonthlyMetricsV2Query(queryArg);
 
     // Paso 4: Recalcular buckets mensuales usando fechas reales
     // El backend agrupa por mes basándose en fechas consecutivas, pero necesitamos usar fechas reales
@@ -210,7 +230,9 @@ export function useMonthlyMetricsV2(
 
     const refetch = () => {
         refetchSessions();
-        // El refetch se disparará automáticamente cuando cambien items o actualStartDate
+        if (queryArg !== skipToken) {
+            refetchMetrics();
+        }
     };
 
     return {

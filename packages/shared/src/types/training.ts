@@ -457,6 +457,15 @@ export interface AllCyclesResponse {
     microcycles: Microcycle[];
 }
 
+export interface BatchCyclesRequest {
+    plan_ids: number[];
+}
+
+export interface BatchCyclesResponse {
+    cycles: Record<number, AllCyclesResponse>;
+    errors: Record<number, string>;
+}
+
 // ========================================
 // FATIGUE ALERTS
 // ========================================

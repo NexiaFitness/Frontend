@@ -5,7 +5,7 @@ export const fatigueApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getUnreadFatigueAlerts: builder.query<FatigueAlert[], void>({
             query: () => ({
-                url: "/fatigue/fatigue-alerts/",
+                url: "/fatigue/fatigue-alerts/unread/",
                 method: "GET",
             }),
             providesTags: ["FatigueAlert"],

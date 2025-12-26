@@ -10,16 +10,17 @@
  * Flujo:
  * 1. Obtener sesiones del cliente en rango de fechas
  * 2. Transformar sesiones → CIDCalcIn[]
- * 3. Llamar a POST /metrics/weekly con items + start_date
+ * 3. Llamar a POST /metrics/weekly con items + start_date (usando query con skipToken)
  * 4. Formatear buckets para gráficos
  * 
  * @author Nelson Valero
  * @since v5.6.0 - Fase 2: Integración V2
+ * @updated v6.4.0 - Convertido a query con skipToken para evitar 422
  */
 
-import React from "react";
 import { useMemo } from "react";
-import { useGetWeeklyMetricsV2Mutation } from "../../api/metricsApiV2";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useGetWeeklyMetricsV2Query } from "../../api/metricsApiV2";
 import { useClientSessionsByDateRange } from "./useClientSessionsByDateRange";
 import { transformSessionsToCIDCalcInWithDates, calculateCIDFromItem } from "../../utils/metrics/transformSessionsToCIDCalcIn";
 
@@ -95,19 +96,38 @@ export function useWeeklyMetricsV2(
         return earliestDate < originalStart ? startDate : dateMapping[0];
     }, [dateMapping, startDate]);
 
-    // Paso 3: Llamar a POST /metrics/weekly
-    const [getWeeklyMetricsV2, { data, isLoading: isLoadingMetrics, error: metricsError }] =
-        useGetWeeklyMetricsV2Mutation();
-
-    // Efecto para cargar métricas cuando hay items disponibles
-    React.useEffect(() => {
-        if (items.length > 0 && actualStartDate) {
-            getWeeklyMetricsV2({
-                items,
-                start_date: actualStartDate,
-            });
+    // Paso 3: Llamar a POST /metrics/weekly usando query con skipToken
+    // La query solo se ejecuta cuando hay datos válidos
+    const queryArg = useMemo(() => {
+        // Validación estricta: no ejecutar si no hay datos válidos
+        if (isLoadingSessions) {
+            return skipToken;
         }
-    }, [items, actualStartDate, getWeeklyMetricsV2]);
+        if (sessionsFiltradas.length === 0) {
+            return skipToken;
+        }
+        if (items.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length !== items.length) {
+            return skipToken;
+        }
+        if (!actualStartDate || actualStartDate.trim() === "") {
+            return skipToken;
+        }
+
+        // Todos los datos son válidos, retornar el argumento de la query
+        return {
+            items,
+            start_date: actualStartDate,
+        };
+    }, [isLoadingSessions, sessionsFiltradas.length, items, dateMapping, actualStartDate]);
+
+    const { data, isLoading: isLoadingMetrics, error: metricsError, refetch: refetchMetrics } =
+        useGetWeeklyMetricsV2Query(queryArg);
 
     // Paso 4: Formatear buckets para gráficos
     // IMPORTANTE: El backend agrupa por semana ISO basándose en las fechas que asigna (consecutivas desde start_date)
@@ -174,7 +194,9 @@ export function useWeeklyMetricsV2(
 
     const refetch = () => {
         refetchSessions();
-        // El refetch se disparará automáticamente cuando cambien items o actualStartDate
+        if (queryArg !== skipToken) {
+            refetchMetrics();
+        }
     };
 
     return {

@@ -10,16 +10,17 @@
  * Flujo:
  * 1. Obtener sesiones del cliente en rango de fechas
  * 2. Transformar sesiones → CIDCalcIn[]
- * 3. Llamar a POST /metrics/check-thresholds con items + start_date + thresholds
+ * 3. Llamar a POST /metrics/check-thresholds con items + start_date + thresholds (usando query con skipToken)
  * 4. Retornar alertas formateadas por severidad
  * 
  * @author Nelson Valero
  * @since v5.6.0 - Fase 2: Integración V2
+ * @updated v6.4.0 - Convertido a query con skipToken para evitar 422
  */
 
-import React from "react";
 import { useMemo } from "react";
-import { useCheckThresholdsV2Mutation } from "../../api/metricsApiV2";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useCheckThresholdsV2Query } from "../../api/metricsApiV2";
 import { useClientSessionsByDateRange } from "./useClientSessionsByDateRange";
 import { transformSessionsToCIDCalcInWithDates } from "../../utils/metrics/transformSessionsToCIDCalcIn";
 import type { CheckThresholdsResponseV2, ThresholdAlertV2 } from "../../types/metricsV2";
@@ -113,27 +114,46 @@ export function useMetricsAlertsV2(
         return earliestDate < originalStart ? startDate : dateMapping[0];
     }, [dateMapping, startDate]);
 
-    // Paso 3: Llamar a POST /metrics/check-thresholds
-    const [checkThresholdsV2, { data, isLoading: isLoadingMetrics, error: metricsError }] =
-        useCheckThresholdsV2Mutation();
-
-    // Efecto para verificar umbrales cuando hay items disponibles
-    React.useEffect(() => {
-        if (items.length > 0 && actualStartDate) {
-            checkThresholdsV2({
-                items,
-                start_date: actualStartDate,
-                daily_threshold,
-                weekly_threshold,
-                consecutive_threshold,
-                consecutive_days,
-                create_alerts,
-                client_id: create_alerts ? clientId : undefined,
-                trainer_id: create_alerts ? trainerId : undefined,
-            });
+    // Paso 3: Llamar a POST /metrics/check-thresholds usando query con skipToken
+    // La query solo se ejecuta cuando hay datos válidos
+    const queryArg = useMemo(() => {
+        // Validación estricta: no ejecutar si no hay datos válidos
+        if (isLoadingSessions) {
+            return skipToken;
         }
+        if (sessionsFiltradas.length === 0) {
+            return skipToken;
+        }
+        if (items.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length === 0) {
+            return skipToken;
+        }
+        if (dateMapping.length !== items.length) {
+            return skipToken;
+        }
+        if (!actualStartDate || actualStartDate.trim() === "") {
+            return skipToken;
+        }
+
+        // Todos los datos son válidos, retornar el argumento de la query
+        return {
+            items,
+            start_date: actualStartDate,
+            daily_threshold,
+            weekly_threshold,
+            consecutive_threshold,
+            consecutive_days,
+            create_alerts,
+            client_id: create_alerts ? clientId : undefined,
+            trainer_id: create_alerts ? trainerId : undefined,
+        };
     }, [
+        isLoadingSessions,
+        sessionsFiltradas.length,
         items,
+        dateMapping,
         actualStartDate,
         daily_threshold,
         weekly_threshold,
@@ -142,8 +162,10 @@ export function useMetricsAlertsV2(
         create_alerts,
         clientId,
         trainerId,
-        checkThresholdsV2,
     ]);
+
+    const { data, isLoading: isLoadingMetrics, error: metricsError, refetch: refetchMetrics } =
+        useCheckThresholdsV2Query(queryArg);
 
     // Paso 4: Formatear alertas por severidad
     const alerts = useMemo(() => {
@@ -184,7 +206,9 @@ export function useMetricsAlertsV2(
 
     const refetch = () => {
         refetchSessions();
-        // El refetch se disparará automáticamente cuando cambien los datos
+        if (queryArg !== skipToken) {
+            refetchMetrics();
+        }
     };
 
     return {

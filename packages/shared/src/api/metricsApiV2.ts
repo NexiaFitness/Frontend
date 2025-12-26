@@ -11,8 +11,12 @@
  * - Legacy: usa tipos que esperan client_id, trainer_id, date/month individuales
  * - V2: usa tipos que esperan items: CIDCalcIn[] y start_date (contrato real)
  * 
+ * IMPORTANTE: Estos endpoints son queries (no mutations) porque son cálculos idempotentes.
+ * Se usan con skipToken para evitar llamadas cuando no hay datos válidos.
+ * 
  * @author Nelson Valero
  * @since v5.6.0 - Fase 1: Preparación V2
+ * @updated v6.4.0 - Convertido de mutations a queries con skipToken para evitar 422
  */
 
 import { baseApi } from "./baseApi";
@@ -32,56 +36,59 @@ import type {
 /**
  * API V2 para métricas
  * 
- * Endpoints implementados:
+ * Endpoints implementados como queries (no mutations) porque son cálculos idempotentes:
  * - POST /metrics/weekly - Métricas semanales (items + start_date)
  * - POST /metrics/daily - Métricas diarias (items + start_date)
  * - POST /metrics/monthly - Métricas mensuales (items + start_date + w_fase)
  * - POST /metrics/check-thresholds - Verificación de umbrales (items + start_date + thresholds)
  * - POST /metrics/total-load - Carga total combinada (cargas parciales + pesos)
+ * 
+ * Nota: Aunque son POST, se definen como queries porque son operaciones de lectura/cálculo.
+ * Se usan con skipToken para evitar llamadas cuando no hay datos válidos.
  */
 export const metricsApiV2 = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        // POST /metrics/weekly
-        getWeeklyMetricsV2: builder.mutation<WeeklyMetricsResponseV2, WeeklyMetricsRequestV2>({
+        // POST /metrics/weekly - Convertido a query
+        getWeeklyMetricsV2: builder.query<WeeklyMetricsResponseV2, WeeklyMetricsRequestV2>({
             query: (data) => ({
                 url: "/metrics/weekly",
                 method: "POST",
                 body: data,
             }),
-            invalidatesTags: ["Metrics", "Client"],
+            providesTags: ["Metrics", "Client"],
         }),
 
-        // POST /metrics/daily
-        getDailyMetricsV2: builder.mutation<DailyMetricsResponseV2, DailyMetricsRequestV2>({
+        // POST /metrics/daily - Convertido a query
+        getDailyMetricsV2: builder.query<DailyMetricsResponseV2, DailyMetricsRequestV2>({
             query: (data) => ({
                 url: "/metrics/daily",
                 method: "POST",
                 body: data,
             }),
-            invalidatesTags: ["Metrics", "Client"],
+            providesTags: ["Metrics", "Client"],
         }),
 
-        // POST /metrics/monthly
-        getMonthlyMetricsV2: builder.mutation<MonthlyMetricsResponseV2, MonthlyMetricsRequestV2>({
+        // POST /metrics/monthly - Convertido a query
+        getMonthlyMetricsV2: builder.query<MonthlyMetricsResponseV2, MonthlyMetricsRequestV2>({
             query: (data) => ({
                 url: "/metrics/monthly",
                 method: "POST",
                 body: data,
             }),
-            invalidatesTags: ["Metrics", "Client"],
+            providesTags: ["Metrics", "Client"],
         }),
 
-        // POST /metrics/check-thresholds
-        checkThresholdsV2: builder.mutation<CheckThresholdsResponseV2, CheckThresholdsRequestV2>({
+        // POST /metrics/check-thresholds - Convertido a query
+        checkThresholdsV2: builder.query<CheckThresholdsResponseV2, CheckThresholdsRequestV2>({
             query: (data) => ({
                 url: "/metrics/check-thresholds",
                 method: "POST",
                 body: data,
             }),
-            invalidatesTags: ["Metrics", "Client"],
+            providesTags: ["Metrics", "Client"],
         }),
 
-        // POST /metrics/total-load
+        // POST /metrics/total-load - Mantenido como mutation (puede mutar estado)
         getTotalLoadV2: builder.mutation<TotalLoadResponseV2, TotalLoadRequestV2>({
             query: (data) => ({
                 url: "/metrics/total-load",
@@ -95,12 +102,21 @@ export const metricsApiV2 = baseApi.injectEndpoints({
 
 /**
  * Hooks exportados para uso en componentes V2
+ * 
+ * Nota: Los hooks de queries se usan con skipToken cuando no hay datos válidos.
+ * Ejemplo:
+ * ```typescript
+ * import { skipToken } from '@reduxjs/toolkit/query';
+ * const { data } = useGetWeeklyMetricsV2Query(
+ *   items.length > 0 && actualStartDate ? { items, start_date: actualStartDate } : skipToken
+ * );
+ * ```
  */
 export const {
-    useGetWeeklyMetricsV2Mutation,
-    useGetDailyMetricsV2Mutation,
-    useGetMonthlyMetricsV2Mutation,
-    useCheckThresholdsV2Mutation,
+    useGetWeeklyMetricsV2Query,
+    useGetDailyMetricsV2Query,
+    useGetMonthlyMetricsV2Query,
+    useCheckThresholdsV2Query,
     useGetTotalLoadV2Mutation,
 } = metricsApiV2;
 

@@ -134,6 +134,13 @@ export const ClientDetail: React.FC = () => {
 
     // Error state
     if (hasError || !client) {
+        // Detectar si es error 403 (Forbidden) - acceso denegado
+        const isForbiddenError = clientError && 
+            typeof clientError === "object" && 
+            clientError !== null &&
+            "status" in clientError &&
+            clientError.status === 403;
+
         const errorMessage = clientError 
             ? typeof clientError === "string" 
                 ? clientError 
@@ -149,19 +156,54 @@ export const ClientDetail: React.FC = () => {
                 <DashboardLayout>
                     <div className="p-6">
                         <Alert variant="error">
-                            Error al cargar los datos del cliente. Por favor, intenta de nuevo.
-                            {errorMessage && (
-                                <div className="mt-2 text-sm text-red-800">
-                                    {errorMessage}
-                                </div>
+                            {isForbiddenError ? (
+                                <>
+                                    <p className="font-semibold mb-2">
+                                        No tienes acceso a este cliente
+                                    </p>
+                                    <p className="text-sm">
+                                        Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
+                                    </p>
+                                </>
+                            ) : (
+                                <>
+                                    <p className="font-semibold mb-2">
+                                        Error al cargar los datos del cliente
+                                    </p>
+                                    <p className="text-sm mb-2">
+                                        Por favor, intenta de nuevo.
+                                    </p>
+                                    {errorMessage && (
+                                        <div className="mt-2 text-sm text-red-800 font-mono text-xs">
+                                            {errorMessage}
+                                        </div>
+                                    )}
+                                </>
                             )}
                         </Alert>
-                        <button
-                            onClick={refetchAll}
-                            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                        >
-                            Reintentar
-                        </button>
+                        <div className="mt-4 flex gap-3">
+                            {isForbiddenError ? (
+                                <button
+                                    onClick={() => navigate("/dashboard/clients")}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    Volver a Clientes
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={refetchAll}
+                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                                >
+                                    Reintentar
+                                </button>
+                            )}
+                            <button
+                                onClick={() => navigate("/dashboard")}
+                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
+                            >
+                                Ir al Dashboard
+                            </button>
+                        </div>
                     </div>
                 </DashboardLayout>
             </>

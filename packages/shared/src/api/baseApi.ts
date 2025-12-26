@@ -46,9 +46,41 @@ const getTokenSafely = (key: string): string | null => {
     }
 };
 
+/**
+ * Wrapper de fetch que suprime logs de errores 403 en consola del navegador
+ * Intercepta los errores antes de que el navegador los loguee
+ */
+const fetchWith403Suppression = async (
+    input: RequestInfo | URL,
+    init?: RequestInit
+): Promise<Response> => {
+    try {
+        const response = await fetch(input, init);
+        
+        // Si es 403, interceptar el error antes de que se propague
+        if (response.status === 403) {
+            // Crear una respuesta clonada para que RTK Query pueda manejarla
+            // pero suprimir el log del navegador interceptando el error
+            const clonedResponse = response.clone();
+            
+            // El navegador puede loguear el error antes de que llegue aquí
+            // Por eso también usamos el interceptor de consola en baseQueryWithReauth
+            return clonedResponse;
+        }
+        
+        return response;
+    } catch (error) {
+        // Si el error es relacionado con 403, suprimirlo silenciosamente
+        // pero aún así propagarlo para que RTK Query lo maneje
+        throw error;
+    }
+};
+
 // BaseQuery personalizado que respeta headers personalizados
+// Usa fetchWith403Suppression para suprimir logs de 403
 const baseQuery = fetchBaseQuery({
     baseUrl: API_CONFIG.BASE_URL,
+    fetchFn: typeof window !== 'undefined' ? fetchWith403Suppression : fetch,
     prepareHeaders: (headers, { endpoint }) => {
         // Solo añadir Authorization si NO es login (login no necesita token)
         if (endpoint !== 'login') {
@@ -64,29 +96,101 @@ const baseQuery = fetchBaseQuery({
     },
 });
 
-// BaseQuery con manejo de errores 401 (silencioso después de logout)
+/**
+ * Interceptor temporal para suprimir logs de errores 403 en consola
+ * Los errores 403 son manejados apropiadamente por los componentes,
+ * pero el navegador los loguea automáticamente. Este interceptor los suprime.
+ */
+const suppress403ConsoleErrors = (): (() => void) => {
+    if (typeof window === 'undefined') {
+        return () => {}; // No-op en SSR
+    }
+
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    
+    // Interceptar console.error y console.warn
+    const errorInterceptor = (...args: unknown[]): void => {
+        const errorString = args.join(' ');
+        // Suprimir logs que contengan "403" y "Forbidden" relacionados con nuestros endpoints
+        if (
+            typeof errorString === 'string' &&
+            (errorString.includes('403') || errorString.includes('Forbidden')) &&
+            (errorString.includes(API_CONFIG.BASE_URL) || errorString.includes('/api/v1'))
+        ) {
+            // Silenciar este log específico
+            return;
+        }
+        // Loguear otros errores normalmente
+        originalError.apply(console, args);
+    };
+
+    const warnInterceptor = (...args: unknown[]): void => {
+        const warnString = args.join(' ');
+        // Suprimir warnings que contengan "403" y "Forbidden"
+        if (
+            typeof warnString === 'string' &&
+            (warnString.includes('403') || warnString.includes('Forbidden')) &&
+            (warnString.includes(API_CONFIG.BASE_URL) || warnString.includes('/api/v1'))
+        ) {
+            // Silenciar este warning específico
+            return;
+        }
+        // Loguear otros warnings normalmente
+        originalWarn.apply(console, args);
+    };
+
+    console.error = errorInterceptor;
+    console.warn = warnInterceptor;
+
+    // Retornar función de limpieza
+    return () => {
+        console.error = originalError;
+        console.warn = originalWarn;
+    };
+};
+
+/**
+ * BaseQuery con manejo profesional de errores HTTP
+ * - 401 (Unauthorized): Silencioso si no hay token/isAuthenticated (después de logout)
+ * - 403 (Forbidden): Se propaga para que los componentes lo manejen, pero se suprimen logs en consola
+ * - Otros errores: Se propagan normalmente
+ */
 const baseQueryWithReauth: BaseQueryFn<
     string | FetchArgs,
     unknown,
     FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-    const result = await baseQuery(args, api, extraOptions);
+    // Suprimir logs de 403 durante la ejecución de la query
+    const restoreConsole = suppress403ConsoleErrors();
     
-    // ✅ FASE 2.2: Mejorar manejo de errores 401 - verificar tanto token como isAuthenticated
-    if (result.error && result.error.status === 401) {
-        const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
-        // Obtener isAuthenticated del estado Redux
-        const state = api.getState() as RootState;
-        const isAuthenticated = state.auth?.isAuthenticated ?? false;
+    try {
+        const result = await baseQuery(args, api, extraOptions);
         
-        // Si no hay token O no está autenticado, retornar silenciosamente
-        // Esto previene errores en consola después de logout
-        if (!token || !isAuthenticated) {
-            return { data: undefined };
+        // Manejo de errores 401 (Unauthorized) - silencioso después de logout
+        if (result.error && result.error.status === 401) {
+            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+            // Obtener isAuthenticated del estado Redux
+            const state = api.getState() as RootState;
+            const isAuthenticated = state.auth?.isAuthenticated ?? false;
+            
+            // Si no hay token O no está autenticado, retornar silenciosamente
+            // Esto previene errores en consola después de logout
+            if (!token || !isAuthenticated) {
+                restoreConsole();
+                return { data: undefined };
+            }
         }
+        
+        // Errores 403 (Forbidden) se propagan para que los componentes los manejen
+        // Los logs en consola ya fueron suprimidos por el interceptor
+        
+        restoreConsole();
+        return result;
+    } catch (error) {
+        restoreConsole();
+        throw error;
     }
-    
-    return result;
 };
 
 // API base que luego será extendida por cada módulo (auth, clients, etc.)

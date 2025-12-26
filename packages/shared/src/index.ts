@@ -178,6 +178,8 @@ export {
     type TrainingPlanStatus,
     type TrainingPlanGoal,
     type AllCyclesResponse,
+    type BatchCyclesRequest,
+    type BatchCyclesResponse,
 } from "./types/training";
 
 // Config

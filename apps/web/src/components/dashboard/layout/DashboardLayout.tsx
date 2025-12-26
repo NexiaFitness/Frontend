@@ -16,7 +16,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { meshGradientInverted } from "@/utils/backgrounds";
-import { ToastProvider } from "@/components/ui/feedback";
 import type { RootState } from "@nexia/shared/store";
 
 interface DashboardLayoutProps {
@@ -27,8 +26,7 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
     const { isLoading, error } = useSelector((state: RootState) => state.auth);
 
     return (
-        <ToastProvider>
-            <div className="min-h-screen w-full" style={{ background: meshGradientInverted }}>
+        <div className="min-h-screen w-full" style={{ background: meshGradientInverted }}>
             {/* Overlay de loading durante logout */}
             {isLoading && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
@@ -55,6 +53,5 @@ export const DashboardLayout: React.FC<DashboardLayoutProps> = ({ children }) =>
                 {children}
             </main>
         </div>
-        </ToastProvider>
     );
 };
