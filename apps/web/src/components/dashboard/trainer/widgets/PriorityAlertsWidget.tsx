@@ -9,7 +9,7 @@ import type { RootState } from "@nexia/shared/store";
 export const PriorityAlertsWidget: React.FC = () => {
     const navigate = useNavigate();
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-    const { alerts, isLoading: isLoadingAlerts, count } = useDashboardAlerts();
+    const { alerts, isLoading: isLoadingAlerts } = useDashboardAlerts();
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !isAuthenticated,
     });

@@ -160,9 +160,10 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
                 <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm font-semibold text-blue-900 mb-1">Tendencia de Progreso</p>
                     <p className="text-sm text-blue-700">
-                        {trend === "improving" && "📈 Mejora constante"}
+                        {trend === "gaining_weight" && "📈 Ganando peso"}
+                        {trend === "losing_weight" && "📉 Perdiendo peso"}
                         {trend === "stable" && "➡️ Estable"}
-                        {trend === "declining" && "📉 En declive"}
+                        {trend === "maintaining_weight" && "➡️ Manteniendo peso"}
                     </p>
                 </div>
             )}

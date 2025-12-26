@@ -89,7 +89,6 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
     const {
         avgPreFatigue,
         avgPostFatigue,
-        currentRiskLevel,
         isLoading: isLoadingFatigue,
     } = useClientFatigue(isValidClientId ? clientId : 0);
 
