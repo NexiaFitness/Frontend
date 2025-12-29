@@ -1,7 +1,7 @@
 # Training Plans Module - Documentación Completa
 
 **Módulo:** Frontend - Planificación de Entrenamiento  
-**Versión:** v4.7.0  
+**Versión:** v6.0.0  
 **Fecha:** 2025-01-XX  
 **Autor:** Frontend Team - NEXIA Fitness
 
@@ -45,11 +45,15 @@ Training Plan (Plan de Entrenamiento)
 
 **Características principales:**
 - ✅ CRUD completo de planes y ciclos
+- ✅ **Templates genéricos** con campos específicos (is_generic, folder_name, level, training_days_per_week)
+- ✅ **Biblioteca de templates** reutilizables
+- ✅ **Programas activos** con paginación (6 por página)
 - ✅ Validación de fechas en cascada
 - ✅ Gestión de milestones (hitos importantes)
 - ✅ Visualización de gráficos (volumen/intensidad)
 - ✅ Traducción completa al español
 - ✅ Arquitectura cross-platform (lógica en `packages/shared`)
+- ✅ Componentes reutilizables (Avatar, ClientAvatarsGroup, Pagination)
 
 ---
 
@@ -59,14 +63,16 @@ Training Plan (Plan de Entrenamiento)
 
 ```
 apps/web/src/pages/trainingPlans/
-├── TrainingPlansPage.tsx          # Lista principal de planes
+├── TrainingPlansPage.tsx          # Lista principal: Programas Activos + Biblioteca de Templates
 ├── TrainingPlanDetail.tsx         # Página de detalle con tabs
+├── CreateTrainingPlanTemplate.tsx # Página para crear template genérico
 └── index.ts                       # Exports
 ```
 
 **Rutas completas:**
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\pages\trainingPlans\TrainingPlansPage.tsx`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\pages\trainingPlans\TrainingPlanDetail.tsx`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\pages\trainingPlans\CreateTrainingPlanTemplate.tsx`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\pages\trainingPlans\index.ts`
 
 ### Componentes UI
@@ -74,6 +80,10 @@ apps/web/src/pages/trainingPlans/
 ```
 apps/web/src/components/trainingPlans/
 ├── TrainingPlanHeader.tsx         # Header con info y acciones
+├── TrainingPlansSection.tsx       # Sección reutilizable (activos/templates)
+├── TrainingPlanCard.tsx          # Card individual (horizontal/vertical según tipo)
+├── TemplatePreviewModal.tsx      # Modal para previsualizar template
+├── AssignTemplateModal.tsx       # Modal para asignar template a cliente
 ├── OverviewTab.tsx                # Tab de resumen
 ├── MacrocyclesTab.tsx             # Tab de macrociclos
 ├── MesocyclesTab.tsx              # Tab de mesociclos
@@ -89,6 +99,10 @@ apps/web/src/components/trainingPlans/
 
 **Rutas completas:**
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\TrainingPlanHeader.tsx`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\TrainingPlansSection.tsx`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\TrainingPlanCard.tsx`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\TemplatePreviewModal.tsx`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\AssignTemplateModal.tsx`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\OverviewTab.tsx`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\MacrocyclesTab.tsx`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web\src\components\trainingPlans\MesocyclesTab.tsx`
@@ -112,12 +126,13 @@ packages/shared/src/types/
 - `TrainingPlan` - Plan completo
 - `TrainingPlanCreate` - Payload para crear
 - `TrainingPlanUpdate` - Payload para actualizar
-- `TrainingPlanTemplate` - Plantilla reutilizable
+- `TrainingPlanTemplate` - Plantilla reutilizable (con campos genéricos: is_generic, folder_name, level, training_days_per_week, duration_value, duration_unit)
 - `TrainingPlanTemplateCreate` - Payload para crear plantilla
 - `TrainingPlanTemplateUpdate` - Payload para actualizar plantilla
 - `TrainingPlanInstance` - Instancia de plan desde plantilla
 - `TrainingPlanInstanceCreate` - Payload para crear instancia
 - `TrainingPlanInstanceUpdate` - Payload para actualizar instancia
+- `TrainingSession` - Sesión de entrenamiento (con campos genéricos: is_generic_session, training_day_number, session_date nullable)
 - `Macrocycle` - Macrociclo
 - `MacrocycleCreate` - Payload para crear macrociclo
 - `Mesocycle` - Mesociclo
@@ -131,6 +146,8 @@ packages/shared/src/types/
 - `IntensityLevel` - Enum: 'low' | 'medium' | 'high'
 - `MilestoneType` - Enum: 'start_date' | 'end_date' | 'competition' | 'test' | 'other'
 - `MilestoneImportance` - Enum: 'low' | 'medium' | 'high'
+- `TEMPLATE_LEVEL` - Enum: 'beginner' | 'intermediate' | 'advanced'
+- `DURATION_UNIT` - Enum: 'days' | 'weeks' | 'months'
 
 ### API y Endpoints
 
@@ -176,6 +193,9 @@ packages/shared/src/hooks/training/
 ├── useTrainingPlanTemplates.ts    # Hook para plantillas
 ├── useAssignTemplate.ts            # Hook para asignar plantillas
 └── useConvertPlanToTemplate.ts    # Hook para convertir plan a plantilla
+
+packages/shared/src/hooks/common/
+└── usePagination.ts                # Hook reutilizable para paginación
 ```
 
 **Rutas completas:**
@@ -184,6 +204,7 @@ packages/shared/src/hooks/training/
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useTrainingPlanTemplates.ts`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useAssignTemplate.ts`
 - `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\training\useConvertPlanToTemplate.ts`
+- `C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared\src\hooks\common\usePagination.ts`
 
 **Exports:**
 - `useMilestones` - Hook principal para gestión de milestones
@@ -191,6 +212,7 @@ packages/shared/src/hooks/training/
 - `useTrainingPlanTemplates` - Hook para gestión de plantillas
 - `useAssignTemplate` - Hook para asignar plantillas a clientes
 - `useConvertPlanToTemplate` - Hook para convertir plan a plantilla
+- `usePagination` - Hook reutilizable para paginación client-side
 
 **Archivo de exports:**
 - `packages/shared/src/hooks/training/index.ts`
@@ -221,7 +243,7 @@ packages/shared/src/api/
 
 **Archivo de rutas:** `apps/web/src/App.tsx`
 
-#### Lista de Planes
+#### Lista de Planes y Templates
 ```typescript
 <Route
     path="/dashboard/training-plans"
@@ -234,7 +256,29 @@ packages/shared/src/api/
 ```
 
 **Componente:** `TrainingPlansPage.tsx`  
-**Ruta completa:** `apps/web/src/pages/trainingPlans/TrainingPlansPage.tsx`
+**Ruta completa:** `apps/web/src/pages/trainingPlans/TrainingPlansPage.tsx`  
+**Funcionalidad:**
+- **Sección 1: Programas Activos** - Planes activos asignados a clientes (paginación: 6 por página)
+- **Sección 2: Biblioteca de Templates** - Templates reutilizables en grid (2x2)
+
+#### Crear Template
+```typescript
+<Route
+    path="/dashboard/training-plans/create-template"
+    element={
+        <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]}>
+            <CreateTrainingPlanTemplate />
+        </RoleProtectedRoute>
+    }
+/>
+```
+
+**Componente:** `CreateTrainingPlanTemplate.tsx`  
+**Ruta completa:** `apps/web/src/pages/trainingPlans/CreateTrainingPlanTemplate.tsx`  
+**Funcionalidad:**
+- Formulario completo para crear template genérico
+- 3 secciones: Basic Information, Generic Plan Settings, Public Settings
+- Campos: is_generic, folder_name, level, training_days_per_week, duration_value, duration_unit
 
 #### Detalle de Plan
 ```typescript
@@ -255,8 +299,10 @@ packages/shared/src/api/
 
 **Puntos de entrada:**
 1. `TrainerDashboard` → Botón "Training Planning" → `/dashboard/training-plans`
-2. `ClientDetail` → Botón "Nuevo Plan de Entrenamiento" → `/dashboard/training-plans` (futuro)
+2. `TrainingPlansPage` → Botón "+ Crear New Template" → `/dashboard/training-plans/create-template`
 3. `TrainingPlansPage` → Click en "Editar" → `/dashboard/training-plans/:id`
+4. `TrainingPlansPage` → Click en "Vista Previa" de template → Modal `TemplatePreviewModal`
+5. `TrainingPlansPage` → Click en "Usar Template" → Modal `AssignTemplateModal`
 
 **Puntos de salida:**
 1. `TrainingPlanDetail` → Botón "Volver a Planes" → `/dashboard/training-plans`
@@ -1140,7 +1186,7 @@ const {
 
 ## 📊 Estado Actual
 
-### ✅ Implementado (v4.7.0)
+### ✅ Implementado (v6.0.0)
 
 #### Training Plans
 - [x] Lista de planes (`TrainingPlansPage`)
@@ -1190,16 +1236,23 @@ const {
 - [x] Controles de vista (weekly/monthly/annual)
 - [x] Gráficos de volumen/intensidad
 
-#### Templates e Instances
-- [x] Tipos TypeScript para Templates e Instances
+#### Templates Genéricos e Instances
+- [x] Tipos TypeScript para Templates con campos genéricos (is_generic, folder_name, level, training_days_per_week, duration_value, duration_unit)
+- [x] Tipos TypeScript para TrainingSession con campos genéricos (is_generic_session, training_day_number, session_date nullable)
 - [x] Endpoints RTK Query para Templates (CRUD completo)
 - [x] Endpoints RTK Query para Instances (CRUD completo)
 - [x] Hook `useTrainingPlanTemplates` para gestión de plantillas
 - [x] Hook `useAssignTemplate` para asignar plantillas a clientes
 - [x] Hook `useConvertPlanToTemplate` para convertir plan a plantilla
 - [x] Duplicar plantillas
-- [ ] UI para gestión de templates (TODO: Fase 3)
-- [ ] UI para asignar templates a clientes (TODO: Fase 3)
+- [x] **Página `CreateTrainingPlanTemplate`** para crear templates genéricos
+- [x] **Componente `TemplatePreviewModal`** para previsualizar templates
+- [x] **Componente `AssignTemplateModal`** para asignar templates a clientes
+- [x] **UI `TrainingPlansPage`** con dos secciones: Programas Activos y Biblioteca de Templates
+- [x] **Componente `TrainingPlanCard`** con layouts diferenciados (horizontal para activos, vertical para templates)
+- [x] **Componente `TrainingPlansSection`** reutilizable
+- [x] **Paginación** para programas activos (6 por página) con hook `usePagination`
+- [x] **Componentes reutilizables:** `Avatar`, `ClientAvatarsGroup`, `Pagination`
 
 #### Internacionalización
 - [x] Todos los textos traducidos al español
@@ -1211,8 +1264,10 @@ const {
 
 - [ ] Edición inline de planes
 - [ ] Edición inline de ciclos
-- [ ] UI para gestión de templates
-- [ ] UI para asignar templates a clientes
+- [ ] Edición de templates existentes
+- [ ] Filtros y búsqueda en biblioteca de templates (por nivel, carpeta, categoría)
+- [ ] Organización por carpetas en biblioteca de templates
+- [ ] Menú de opciones (ellipsis) con acciones contextuales (duplicar, eliminar, editar)
 - [ ] Drag & drop para reordenar ciclos
 - [ ] Exportar plan a PDF
 - [ ] Compartir plan entre entrenadores
@@ -1383,6 +1438,6 @@ pnpm lint
 ---
 
 **Última actualización:** 2025-01-XX  
-**Versión del documento:** 1.0.0  
-**Módulo:** Training Plans v4.7.0
+**Versión del documento:** 2.0.0  
+**Módulo:** Training Plans v6.0.0
 

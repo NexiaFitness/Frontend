@@ -1,7 +1,7 @@
 # Documentación Técnica: Training Plans
 
 **Módulo:** Frontend - Planificación de Entrenamiento  
-**Versión:** v4.7.0  
+**Versión:** v6.0.0  
 **Fecha:** 2025-01-XX  
 **Autor:** Frontend Team - NEXIA Fitness
 
@@ -12,6 +12,7 @@
 El módulo **Training Plans** permite a los entrenadores crear, gestionar y visualizar planes de entrenamiento estructurados jerárquicamente para sus clientes, incluyendo:
 
 - **Planes de Entrenamiento** (nivel superior: nombre, fechas, objetivo, cliente asignado)
+- **Templates Genéricos** (plantillas reutilizables con campos específicos: is_generic, folder_name, level, training_days_per_week)
 - **Macrociclos** (fases de entrenamiento: preparación, competición, transición)
 - **Mesociclos** (bloques de 4-6 semanas: hipertrofia, fuerza, potencia)
 - **Microciclos** (semanas individuales: volumen, intensidad, frecuencia)
@@ -30,7 +31,7 @@ El sistema está diseñado para:
 
 ### Rutas Principales
 
-#### Lista de Planes
+#### Lista de Planes y Templates
 ```
 /dashboard/training-plans
 ```
@@ -40,10 +41,43 @@ El sistema está diseñado para:
 **Componente:** `TrainingPlansPage.tsx`
 
 **Funcionalidad:**
-- Lista todos los planes del entrenador
-- Formulario inline para crear nuevos planes
-- Botones de editar y eliminar por plan
-- Estados: loading, error, empty
+- **Sección 1: Programas Activos**
+  - Lista planes activos asignados a clientes
+  - Layout horizontal (cards full-width)
+  - Paginación: 6 planes por página
+  - Muestra: título, badge "Active", descripción, duración, frecuencia, avatares de clientes, dropdown "Progreso"
+  - Botones: "Ver Detalles", "Agregar Cliente"
+  - Menú de opciones (ellipsis) con acciones contextuales
+  
+- **Sección 2: Biblioteca de Templates**
+  - Lista templates reutilizables
+  - Layout grid (2x2 o 3 columnas según breakpoint)
+  - Muestra: título, badge de nivel (Beginner/Intermediate/Advanced), descripción, duración, frecuencia, tags
+  - Botones: "Vista Previa", "Usar Template"
+  - Menú de opciones (ellipsis) con acciones contextuales
+
+#### Crear Template Genérico
+```
+/dashboard/training-plans/create-template
+```
+
+**Protección:** Requiere autenticación y rol `trainer` o `admin`.
+
+**Componente:** `CreateTrainingPlanTemplate.tsx`
+
+**Funcionalidad:**
+- Formulario completo para crear template genérico
+- **Sección 1: Basic Information**
+  - Nombre, descripción, objetivo, categoría, tags
+- **Sección 2: Generic Plan Settings** (condicional si is_generic = true)
+  - is_generic (checkbox)
+  - folder_name (input)
+  - level (select: beginner/intermediate/advanced)
+  - training_days_per_week (number: 1-7)
+  - duration_value (number)
+  - duration_unit (select: days/weeks/months)
+- **Sección 3: Public Settings**
+  - is_public (checkbox)
 
 #### Detalle de Plan
 ```
@@ -82,12 +116,17 @@ El sistema está diseñado para:
 ```
 apps/web/src/
 ├── pages/trainingPlans/
-│   ├── TrainingPlansPage.tsx          # Lista principal de planes
+│   ├── TrainingPlansPage.tsx          # Lista principal: Programas Activos + Biblioteca de Templates
 │   ├── TrainingPlanDetail.tsx         # Página de detalle con tabs
+│   ├── CreateTrainingPlanTemplate.tsx # Página para crear template genérico
 │   └── index.ts
 │
 └── components/trainingPlans/
     ├── TrainingPlanHeader.tsx         # Header con info y acciones
+    ├── TrainingPlansSection.tsx      # Sección reutilizable (activos/templates)
+    ├── TrainingPlanCard.tsx          # Card individual (horizontal/vertical según tipo)
+    ├── TemplatePreviewModal.tsx      # Modal para previsualizar template
+    ├── AssignTemplateModal.tsx        # Modal para asignar template a cliente
     ├── OverviewTab.tsx                # Tab de resumen
     ├── MacrocyclesTab.tsx             # Tab de macrociclos
     ├── MesocyclesTab.tsx              # Tab de mesociclos
@@ -98,6 +137,18 @@ apps/web/src/
     │   ├── VolumeIntensityChart.tsx   # Gráfico de volumen/intensidad
     │   └── ChartControls.tsx         # Controles de vista (weekly/monthly/annual)
     └── index.ts
+
+apps/web/src/components/ui/
+├── avatar/
+│   ├── Avatar.tsx                    # Componente reutilizable de avatar
+│   ├── ClientAvatarsGroup.tsx        # Grupo de avatares de clientes
+│   └── index.ts
+└── pagination/
+    ├── Pagination.tsx                # Componente reutilizable de paginación
+    └── index.ts
+
+packages/shared/src/hooks/common/
+└── usePagination.ts                  # Hook reutilizable para paginación client-side
 ```
 
 ### Tipos TypeScript
@@ -106,6 +157,10 @@ apps/web/src/
 
 **Interfaces principales:**
 - `TrainingPlan` - Plan completo
+- `TrainingPlanTemplate` - Plantilla reutilizable (con campos genéricos)
+- `TrainingPlanTemplateCreate` - Payload para crear template
+- `TrainingPlanTemplateUpdate` - Payload para actualizar template
+- `TrainingSession` - Sesión de entrenamiento (con campos genéricos: is_generic_session, training_day_number, session_date nullable)
 - `Macrocycle` - Macrociclo
 - `Mesocycle` - Mesociclo
 - `Microcycle` - Microciclo
@@ -118,6 +173,8 @@ apps/web/src/
 - `IntensityLevel` - Niveles de intensidad (low, medium, high)
 - `MilestoneType` - Tipos de milestone (start_date, end_date, competition, test, custom)
 - `MilestoneImportance` - Importancia (low, medium, high)
+- `TEMPLATE_LEVEL` - Niveles de template ('beginner' | 'intermediate' | 'advanced')
+- `DURATION_UNIT` - Unidades de duración ('days' | 'weeks' | 'months')
 
 ---
 
@@ -242,23 +299,32 @@ useGetAllCyclesQuery(planId: number)
 **Ubicación:** `apps/web/src/pages/trainingPlans/TrainingPlansPage.tsx`
 
 **Responsabilidades:**
-- Listar todos los planes del entrenador
-- Formulario inline expandible para crear planes
-- Botones de editar y eliminar
+- Listar programas activos con paginación (6 por página)
+- Listar biblioteca de templates en grid
+- Gestionar modales de preview y asignación
 - Estados: loading, error, empty
 
 **Props:** Ninguna (usa hooks para obtener datos)
 
 **Estados:**
-- `showCreateForm` - Controla visibilidad del formulario
-- `formData` - Datos del formulario de creación
-- `formErrors` - Errores de validación
+- `assignModalOpen` - Controla visibilidad del modal de asignación
+- `selectedTemplateId` - ID del template seleccionado para asignar
+- `previewModalOpen` - Controla visibilidad del modal de preview
+- `previewTemplateId` - ID del template seleccionado para previsualizar
+- `successMessage` / `errorMessage` - Mensajes de feedback
 
-**Validaciones:**
-- Nombre obligatorio
-- Fechas válidas (start < end)
-- Cliente asignado obligatorio
-- Objetivo obligatorio
+**Hooks utilizados:**
+- `useGetTrainingPlansQuery()` - Obtener planes activos
+- `useGetTrainingPlanTemplatesQuery()` - Obtener templates
+- `usePagination()` - Paginación para programas activos
+- `useGetTrainerClientsQuery()` - Obtener clientes para agrupar
+
+**Componentes utilizados:**
+- `TrainingPlansSection` - Sección reutilizable para activos y templates
+- `TrainingPlanCard` - Card individual con layouts diferenciados
+- `TemplatePreviewModal` - Modal de preview
+- `AssignTemplateModal` - Modal de asignación
+- `Pagination` - Componente de paginación
 
 ### TrainingPlanDetail
 
@@ -452,6 +518,76 @@ interface ChartsTabProps {
 - Gráficos con Recharts
 - Controles de vista (weekly/monthly/annual)
 
+### Componentes Reutilizables
+
+#### Avatar
+
+**Ubicación:** `apps/web/src/components/ui/avatar/Avatar.tsx`
+
+**Propósito:** Componente reutilizable para mostrar avatares con iniciales.
+
+**Props:**
+```typescript
+interface AvatarProps {
+    nombre: string;
+    apellidos?: string;
+    size?: "sm" | "md" | "lg";
+    variant?: "default" | "primary" | "custom";
+    className?: string;
+}
+```
+
+**Características:**
+- Calcula iniciales automáticamente desde nombre y apellidos
+- Tamaños: sm, md, lg
+- Variantes: default, primary, custom
+- Usado en: ClientList, ClientDetail, TrainingPlanCard
+
+#### ClientAvatarsGroup
+
+**Ubicación:** `apps/web/src/components/ui/avatar/ClientAvatarsGroup.tsx`
+
+**Propósito:** Mostrar grupo de avatares de clientes con indicador "+N" si excede máximo visible.
+
+**Props:**
+```typescript
+interface ClientAvatarsGroupProps {
+    clients: Client[];
+    maxVisible?: number; // default: 3
+    size?: "sm" | "md" | "lg";
+}
+```
+
+**Características:**
+- Muestra hasta `maxVisible` avatares
+- Si hay más, muestra "+N" indicador
+- Usado en: TrainingPlanCard (programas activos)
+
+#### Pagination
+
+**Ubicación:** `apps/web/src/components/ui/pagination/Pagination.tsx`
+
+**Propósito:** Componente reutilizable para controles de paginación.
+
+**Props:**
+```typescript
+interface PaginationProps {
+    currentPage: number;
+    totalPages: number;
+    totalItems: number;
+    startItem: number;
+    endItem: number;
+    onPageChange: (page: number) => void;
+}
+```
+
+**Características:**
+- Botones "Anterior" y "Siguiente"
+- Texto "Mostrando X - Y de Z"
+- Indicador "Página X de Y"
+- Se oculta automáticamente si totalPages <= 1
+- Usado en: TrainingPlansPage (programas activos)
+
 ---
 
 ## 🎯 Hooks Personalizados
@@ -487,6 +623,37 @@ const {
 - Lógica de negocio pura (sin UI)
 - Cross-platform (funciona en web y React Native futuro)
 - Manejo automático de cache con RTK Query
+
+### usePagination
+
+**Ubicación:** `packages/shared/src/hooks/common/usePagination.ts`
+
+**Propósito:** Hook reutilizable para paginación client-side.
+
+**Uso:**
+```typescript
+const {
+    currentPage,
+    totalPages,
+    paginatedItems,
+    totalItems,
+    startItem,
+    endItem,
+    setPage,
+    nextPage,
+    prevPage,
+} = usePagination({
+    items: activePlans,
+    itemsPerPage: 6,
+    resetOnItemsChange: true,
+});
+```
+
+**Características:**
+- Paginación client-side (sin llamadas al backend)
+- Reset automático cuando cambian los items
+- Cálculos automáticos (totalPages, startItem, endItem)
+- Navegación (nextPage, prevPage, setPage)
 
 ---
 
@@ -747,5 +914,6 @@ const {
 ---
 
 **Última actualización:** 2025-01-XX  
-**Versión del documento:** 1.0.0
+**Versión del documento:** 2.0.0  
+**Módulo:** Training Plans v6.0.0
 
