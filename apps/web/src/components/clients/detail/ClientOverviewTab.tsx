@@ -124,10 +124,13 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
         if (!isValidClientId || !sessions || sessions.length === 0) return null;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const filtered = sessions.filter(s => new Date(s.session_date) >= today);
+        const filtered = sessions.filter(s => s.session_date && new Date(s.session_date) >= today);
         if (filtered.length === 0) return null;
         const sorted = [...filtered].sort(
-            (a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime()
+            (a, b) => {
+                if (!a.session_date || !b.session_date) return 0;
+                return new Date(a.session_date).getTime() - new Date(b.session_date).getTime();
+            }
         );
         return sorted[0] || null;
     }, [isValidClientId, sessions]);
@@ -137,10 +140,13 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
         if (!isValidClientId || !sessions || sessions.length === 0) return null;
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const filtered = sessions.filter(s => s.status === "completed" && new Date(s.session_date) < today);
+        const filtered = sessions.filter(s => s.status === "completed" && s.session_date && new Date(s.session_date) < today);
         if (filtered.length === 0) return null;
         const sorted = [...filtered].sort(
-            (a, b) => new Date(b.session_date).getTime() - new Date(a.session_date).getTime()
+            (a, b) => {
+                if (!a.session_date || !b.session_date) return 0;
+                return new Date(b.session_date).getTime() - new Date(a.session_date).getTime();
+            }
         );
         return sorted[0] || null;
     }, [isValidClientId, sessions]);
@@ -238,7 +244,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
                 />
                 <MetricCard
                     title="Próxima Sesión"
-                    value={upcomingSession ? formatDate(upcomingSession.session_date) : "No programada"}
+                    value={upcomingSession && upcomingSession.session_date ? formatDate(upcomingSession.session_date) : "No programada"}
                     subtitle={upcomingSession?.session_type || upcomingSession?.session_name || ""}
                     color="blue"
                 />
@@ -318,7 +324,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
                 <div className="bg-white rounded-lg shadow p-6">
                     <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Actividad Reciente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        {lastCompletedSession && (
+                        {lastCompletedSession && lastCompletedSession.session_date && (
                             <ActivityCard
                                 title="Última Sesión"
                                 date={formatDate(lastCompletedSession.session_date)}

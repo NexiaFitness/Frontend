@@ -22,6 +22,8 @@ export const createMockTrainingSession = (overrides: Partial<TrainingSession> = 
         session_date: tomorrow.toISOString().split('T')[0], // Próxima sesión
         session_name: "Entrenamiento de Fuerza",
         session_type: "strength",
+        training_day_number: null,
+        is_generic_session: false,
         planned_duration: 60,
         actual_duration: null,
         planned_intensity: 7,

@@ -422,7 +422,7 @@ const TrainingSessionCard: React.FC<TrainingSessionCardProps> = ({ session }) =>
                         </span>
                     </div>
                     <p className="text-sm text-gray-500">
-                        📅 {new Date(session.session_date).toLocaleDateString()} • {session.session_type}
+                        📅 {session.session_date ? new Date(session.session_date).toLocaleDateString() : "Sin fecha"} • {session.session_type}
                     </p>
                 </div>
             </div>

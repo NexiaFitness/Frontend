@@ -59,8 +59,11 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
         today.setHours(0, 0, 0, 0);
         
         return sessions
-            .filter(s => new Date(s.session_date) >= today)
-            .sort((a, b) => new Date(a.session_date).getTime() - new Date(b.session_date).getTime())[0] || null;
+            .filter(s => s.session_date && new Date(s.session_date) >= today)
+            .sort((a, b) => {
+                if (!a.session_date || !b.session_date) return 0;
+                return new Date(a.session_date).getTime() - new Date(b.session_date).getTime();
+            })[0] || null;
     }, [sessions]);
 
     const isLoading = isLoadingTemplates || isLoadingSessions;
@@ -190,7 +193,7 @@ const UpcomingSessionCard: React.FC<UpcomingSessionCardProps> = ({ session }) =>
             {session ? (
                 <div>
                     <p className="text-2xl font-bold text-slate-800 mb-1">
-                        {formatDate(session.session_date)}
+                        {session.session_date ? formatDate(session.session_date) : "Sin fecha"}
                     </p>
                     <p className="text-sm text-slate-600">
                         {session.session_type || session.session_name}

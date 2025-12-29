@@ -16,6 +16,7 @@
  * @since v3.1.0
  * @updated v3.2.0 - Agregados tipos para CRUD Training Plans (Fase 1)
  * @updated v3.3.0 - Agregados tipos para Cycles System (Fase 2)
+ * @updated v6.0.0 - Agregados campos para Templates Genéricos (is_generic, folder_name, level, etc.)
  */
 
 // ========================================
@@ -365,14 +366,21 @@ export interface DeleteCycleResponse {
 // TRAINING SESSION
 // ========================================
 
+/**
+ * TrainingSession - Sesión de entrenamiento
+ * @updated v6.0.0 - Agregados campos para sesiones genéricas (is_generic_session, training_day_number)
+ */
 export interface TrainingSession {
     id: number;
     microcycle_id: number;
     client_id: number;
     trainer_id: number;
-    session_date: string; // ISO date
+    session_date: string | null; // ISO date, nullable for generic plans
     session_name: string;
     session_type: string;
+    // Generic plan support
+    training_day_number?: number | null; // ge=1, for generic plans
+    is_generic_session: boolean; // default=False
     planned_duration: number | null;
     actual_duration: number | null;
     planned_intensity: number | null;
@@ -600,6 +608,30 @@ export const MILESTONE_IMPORTANCE = {
 
 export type MilestoneImportance = (typeof MILESTONE_IMPORTANCE)[keyof typeof MILESTONE_IMPORTANCE];
 
+/**
+ * Constantes para template level
+ * Backend: "beginner" | "intermediate" | "advanced"
+ */
+export const TEMPLATE_LEVEL = {
+    BEGINNER: "beginner",
+    INTERMEDIATE: "intermediate",
+    ADVANCED: "advanced",
+} as const;
+
+export type TemplateLevel = (typeof TEMPLATE_LEVEL)[keyof typeof TEMPLATE_LEVEL];
+
+/**
+ * Constantes para duration unit
+ * Backend: "days" | "weeks" | "months"
+ */
+export const DURATION_UNIT = {
+    DAYS: "days",
+    WEEKS: "weeks",
+    MONTHS: "months",
+} as const;
+
+export type DurationUnit = (typeof DURATION_UNIT)[keyof typeof DURATION_UNIT];
+
 // ========================================
 // TRAINING PLAN TEMPLATE
 // ========================================
@@ -607,6 +639,7 @@ export type MilestoneImportance = (typeof MILESTONE_IMPORTANCE)[keyof typeof MIL
 /**
  * TrainingPlanTemplate - Plantilla reutilizable de plan de entrenamiento
  * Alineado con TrainingPlanTemplateOut schema de Swagger
+ * @updated v6.0.0 - Agregados campos para templates genéricos (is_generic, folder_name, level, etc.)
  */
 export interface TrainingPlanTemplate {
     id: number;
@@ -617,6 +650,13 @@ export interface TrainingPlanTemplate {
     category: string | null;
     tags: string[] | null;
     estimated_duration_weeks: number | null;
+    // Generic plan support
+    duration_value?: number | null;
+    duration_unit?: DurationUnit | null;
+    folder_name?: string | null;
+    level?: TemplateLevel | null;
+    training_days_per_week?: number | null; // 1-7
+    is_generic: boolean; // default=False
     usage_count: number;
     success_rate: number | null;
     is_template: boolean;
@@ -628,6 +668,7 @@ export interface TrainingPlanTemplate {
 
 /**
  * TrainingPlanTemplateCreate - POST /training-plans/templates/
+ * @updated v6.0.0 - Agregados campos para templates genéricos
  */
 export interface TrainingPlanTemplateCreate {
     trainer_id: number;
@@ -637,10 +678,18 @@ export interface TrainingPlanTemplateCreate {
     category?: string | null;
     tags?: string[] | null;
     estimated_duration_weeks?: number | null;
+    // Generic plan support
+    duration_value?: number | null;
+    duration_unit?: DurationUnit | null;
+    folder_name?: string | null;
+    level?: TemplateLevel | null;
+    training_days_per_week?: number | null; // 1-7
+    is_generic?: boolean; // default=False
 }
 
 /**
  * TrainingPlanTemplateUpdate - PUT /training-plans/templates/{id}
+ * @updated v6.0.0 - Agregados campos para templates genéricos
  */
 export interface TrainingPlanTemplateUpdate {
     name?: string;
@@ -650,6 +699,13 @@ export interface TrainingPlanTemplateUpdate {
     tags?: string[] | null;
     estimated_duration_weeks?: number | null;
     is_public?: boolean;
+    // Generic plan support
+    duration_value?: number | null;
+    duration_unit?: DurationUnit | null;
+    folder_name?: string | null;
+    level?: TemplateLevel | null;
+    training_days_per_week?: number | null; // 1-7
+    is_generic?: boolean | null;
 }
 
 // ========================================

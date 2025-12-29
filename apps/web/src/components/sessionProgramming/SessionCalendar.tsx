@@ -59,6 +59,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     // Filtrar sesiones del mes actual
     const sessionsInMonth = useMemo(() => {
         return sessions.filter((session) => {
+            if (!session.session_date) return false;
             const sessionDate = new Date(session.session_date);
             return (
                 sessionDate.getFullYear() === year &&
@@ -71,6 +72,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     const sessionsByDay = useMemo(() => {
         const map = new Map<number, TrainingSession[]>();
         sessionsInMonth.forEach((session) => {
+            if (!session.session_date) return;
             const day = new Date(session.session_date).getDate();
             if (!map.has(day)) {
                 map.set(day, []);
