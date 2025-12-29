@@ -36,6 +36,7 @@ import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProf
 // UI
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Avatar } from "@/components/ui/avatar";
 
 // Utils
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -365,11 +366,12 @@ export const ClientList: React.FC = () => {
                                                 >
                                                     {/* Name */}
                                                     <div className="flex items-center gap-3 min-w-0">
-                                                        <div className="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center flex-shrink-0">
-                                                            <span className="text-primary-600 font-semibold text-sm">
-                                                                {client.nombre.charAt(0)}{client.apellidos.charAt(0)}
-                                                            </span>
-                                                        </div>
+                                                        <Avatar
+                                                            nombre={client.nombre}
+                                                            apellidos={client.apellidos}
+                                                            size="sm"
+                                                            variant="primary"
+                                                        />
                                                         <div className="min-w-0">
                                                             <div className="font-medium text-gray-900 truncate">
                                                                 {client.nombre} {client.apellidos}

@@ -18,6 +18,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import { calculateBMI, useClientPreview } from "@nexia/shared";
 import { SomatotipoChart } from "../charts/SomatotipoChart";
 import { Button } from "@/components/ui/buttons";
+import { Avatar } from "@/components/ui/avatar";
 
 interface ExtendedReviewProps extends ReviewStepProps {
     onBack?: () => void;
@@ -134,12 +135,6 @@ export const Review: React.FC<ExtendedReviewProps> = ({
         return formData.edad ?? null;
     }, [formData.birthdate, formData.edad]);
 
-    // Obtener iniciales para avatar
-    const initials = useMemo(() => {
-        const first = formData.nombre?.charAt(0)?.toUpperCase() || "";
-        const last = formData.apellidos?.charAt(0)?.toUpperCase() || "";
-        return `${first}${last}` || "—";
-    }, [formData.nombre, formData.apellidos]);
 
     // Extraer notas de los campos de notas
     const notes = useMemo(() => {
@@ -183,15 +178,12 @@ export const Review: React.FC<ExtendedReviewProps> = ({
                         <div className="flex flex-col md:flex-row gap-6 items-start">
                             {/* Avatar */}
                             <div className="flex-shrink-0">
-                                <div
-                                    className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md"
-                                    style={{
-                                        background:
-                                            "linear-gradient(135deg, rgb(74, 103, 179) 0%, rgb(58, 93, 179) 50%, rgb(45, 74, 158) 100%)",
-                                    }}
-                                >
-                                    {initials}
-                                </div>
+                                <Avatar
+                                    nombre={formData.nombre}
+                                    apellidos={formData.apellidos}
+                                    size="lg"
+                                    variant="default"
+                                />
                             </div>
 
                             {/* Datos personales en 4 columnas */}

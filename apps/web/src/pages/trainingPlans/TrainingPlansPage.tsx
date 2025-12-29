@@ -25,6 +25,7 @@ import {
     useGetTrainingPlanTemplatesQuery,
     useDeleteTrainingPlanMutation,
     useDeleteTrainingPlanTemplateMutation,
+    useUpdateTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -32,6 +33,7 @@ import {
     useTrainingPlanTemplates,
     useConvertPlanToTemplate,
 } from "@nexia/shared/hooks/training";
+import { usePagination } from "@nexia/shared/hooks/common";
 import type { RootState } from "@nexia/shared/store";
 
 // Layouts
@@ -40,8 +42,9 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 
 // Components
-import { TrainingPlansSection, AssignTemplateModal } from "@/components/trainingPlans";
+import { TrainingPlansSection, AssignTemplateModal, TemplatePreviewModal } from "@/components/trainingPlans";
 import { Alert } from "@/components/ui/feedback";
+import { Pagination } from "@/components/ui/pagination";
 
 // Utils
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -60,6 +63,10 @@ export const TrainingPlansPage: React.FC = () => {
     const [assignModalOpen, setAssignModalOpen] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
+
+    // Estado del modal de preview
+    const [previewModalOpen, setPreviewModalOpen] = useState(false);
+    const [previewTemplateId, setPreviewTemplateId] = useState<number | null>(null);
 
     // Estados de feedback
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -132,15 +139,74 @@ export const TrainingPlansPage: React.FC = () => {
     const { convertPlan } = useConvertPlanToTemplate();
     const [deletePlan] = useDeleteTrainingPlanMutation();
     const [deleteTemplateMutation] = useDeleteTrainingPlanTemplateMutation();
+    const [updatePlan] = useUpdateTrainingPlanMutation();
 
     // Filtrar planes por estado
     const activePlans = useMemo(() => {
         return plans.filter((plan) => plan.status === "active" && plan.is_active);
     }, [plans]);
 
-    const archivedPlans = useMemo(() => {
-        return plans.filter((plan) => plan.status === "completed" || plan.status === "cancelled" || !plan.is_active);
-    }, [plans]);
+    // Paginación para programas activos
+    const ACTIVE_PLANS_PER_PAGE = 6;
+    const {
+        currentPage: activePlansPage,
+        totalPages: totalActivePlansPages,
+        paginatedItems: paginatedActivePlans,
+        totalItems: totalActivePlans,
+        setPage: setActivePlansPage,
+    } = usePagination({
+        items: activePlans,
+        itemsPerPage: ACTIVE_PLANS_PER_PAGE,
+        resetOnItemsChange: true,
+    });
+
+    const handleActivePlansPageChange = (page: number): void => {
+        setActivePlansPage(page);
+        // Scroll suave hacia arriba de la sección
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+
+
+    // Map de plan_id -> array de clientes (para mostrar múltiples avatares)
+    // Agrupa planes con el mismo nombre o template_id para mostrar múltiples clientes
+    const clientsMap = useMemo(() => {
+        const clients = clientsData?.items ?? [];
+        const map: Record<number, typeof clients> = {};
+        
+        // Primero, crear un mapa de nombre/template_id -> array de planes
+        const plansByKey = new Map<string, typeof activePlans>();
+        
+        activePlans.forEach((plan) => {
+            // Usar template_id si existe, sino usar nombre
+            const key = plan.template_id ? `template_${plan.template_id}` : `name_${plan.name}`;
+            if (!plansByKey.has(key)) {
+                plansByKey.set(key, []);
+            }
+            plansByKey.get(key)!.push(plan);
+        });
+        
+        // Para cada grupo de planes, agregar todos los clientes únicos
+        plansByKey.forEach((planGroup) => {
+            const uniqueClients = new Map<number, typeof clients[0]>();
+            
+            planGroup.forEach((plan) => {
+                if (plan.client_id) {
+                    const client = clients.find((c) => c.id === plan.client_id);
+                    if (client && !uniqueClients.has(client.id)) {
+                        uniqueClients.set(client.id, client);
+                    }
+                }
+            });
+            
+            // Asignar los clientes a todos los planes del grupo
+            const clientsArray = Array.from(uniqueClients.values());
+            planGroup.forEach((plan) => {
+                map[plan.id] = clientsArray;
+            });
+        });
+        
+        return map;
+    }, [activePlans, clientsData?.items]);
 
     // Handlers
     const handleAssignTemplate = (templateId: number) => {
@@ -263,6 +329,40 @@ export const TrainingPlansPage: React.FC = () => {
         navigate(`/dashboard/training-plans/${planId}`);
     };
 
+    const handlePreviewTemplate = (templateId: number) => {
+        setPreviewTemplateId(templateId);
+        setPreviewModalOpen(true);
+    };
+
+    const handleUseTemplateFromPreview = () => {
+        if (previewTemplateId) {
+            setPreviewModalOpen(false);
+            handleAssignTemplate(previewTemplateId);
+        }
+    };
+
+    const handleAddClientToPlan = (_planId: number): void => {
+        // TODO: Abrir modal para agregar cliente al plan
+        // Implementación pendiente
+    };
+
+    const handleStatusChange = async (planId: number, status: string) => {
+        addProcessingId(planId);
+        try {
+            await updatePlan({
+                id: planId,
+                data: { status },
+            }).unwrap();
+            setSuccessMessage("Estado del plan actualizado exitosamente");
+            refetchPlans();
+        } catch (err) {
+            console.error("Error updating plan status:", err);
+            setErrorMessage("Error al actualizar el estado del plan");
+        } finally {
+            removeProcessingId(planId);
+        }
+    };
+
     const handleCreateTemplate = () => {
         // TODO: Navegar a página de crear template o abrir modal
         navigate("/dashboard/training-plans/templates/create");
@@ -295,10 +395,10 @@ export const TrainingPlansPage: React.FC = () => {
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
-                        Training Plans
+                        Planificación de Entrenamiento
                     </h2>
                     <p className="text-white/80 text-sm md:text-base">
-                        Gestiona tus plantillas y planes activos de forma centralizada
+                        Crea y gestiona programas de entrenamiento y plantillas de sesiones
                     </p>
                 </div>
 
@@ -328,9 +428,41 @@ export const TrainingPlansPage: React.FC = () => {
                         </div>
                     )}
 
-                {/* Sección 1: Modelos Base (Plantillas) */}
+                {/* Sección 1: Programas Activos */}
                 <TrainingPlansSection
-                    title="Biblioteca de Modelos Base"
+                    title="Programas Activos"
+                    description="Programas de entrenamiento asignados a clientes actualmente"
+                    items={paginatedActivePlans}
+                    type="active"
+                    clientNames={clientNamesMap}
+                    clientsMap={clientsMap}
+                    onCreate={handleCreatePlan}
+                    onConvert={handleConvertToTemplate}
+                    onDelete={handleDeletePlan}
+                    onEdit={handleEditPlan}
+                    onView={handleViewPlan}
+                    onAddClient={handleAddClientToPlan}
+                    onStatusChange={handleStatusChange}
+                    isLoading={isLoadingPlans}
+                    processingIds={processingIds}
+                />
+
+                {/* Paginación para Programas Activos */}
+                {totalActivePlansPages > 1 && (
+                    <div className="px-4 lg:px-8 mb-8">
+                        <Pagination
+                            currentPage={activePlansPage}
+                            totalPages={totalActivePlansPages}
+                            totalItems={totalActivePlans}
+                            itemsPerPage={ACTIVE_PLANS_PER_PAGE}
+                            onPageChange={handleActivePlansPageChange}
+                        />
+                    </div>
+                )}
+
+                {/* Sección 2: Biblioteca de Templates */}
+                <TrainingPlansSection
+                    title="Biblioteca de Templates"
                     description="Plantillas reutilizables que puedes asignar a múltiples clientes"
                     items={templates}
                     type="template"
@@ -338,37 +470,9 @@ export const TrainingPlansPage: React.FC = () => {
                     onAssign={handleAssignTemplate}
                     onDuplicate={handleDuplicateTemplate}
                     onDelete={handleDeleteTemplate}
-                    onEdit={handleViewPlan}
+                    onView={handleViewPlan}
+                    onPreview={handlePreviewTemplate}
                     isLoading={isLoadingTemplates}
-                    processingIds={processingIds}
-                />
-
-                {/* Sección 2: Planes Activos */}
-                <TrainingPlansSection
-                    title="Planes Activos"
-                    description="Planes de entrenamiento asignados a clientes actualmente"
-                    items={activePlans}
-                    type="active"
-                    clientNames={clientNamesMap}
-                    onCreate={handleCreatePlan}
-                    onConvert={handleConvertToTemplate}
-                    onDelete={handleDeletePlan}
-                    onEdit={handleEditPlan}
-                    onView={handleViewPlan}
-                    isLoading={isLoadingPlans}
-                    processingIds={processingIds}
-                />
-
-                {/* Sección 3: Archivados */}
-                <TrainingPlansSection
-                    title="Archivados"
-                    description="Planes completados o inactivos"
-                    items={archivedPlans}
-                    type="archived"
-                    clientNames={clientNamesMap}
-                    onView={handleViewPlan}
-                    onDelete={handleDeletePlan}
-                    isLoading={isLoadingPlans}
                     processingIds={processingIds}
                 />
 
@@ -383,6 +487,17 @@ export const TrainingPlansPage: React.FC = () => {
                     templateId={selectedTemplateId}
                     templateName={selectedTemplateName}
                     onSuccess={handleAssignSuccess}
+                />
+
+                {/* Modal de Preview de Template */}
+                <TemplatePreviewModal
+                    isOpen={previewModalOpen}
+                    onClose={() => {
+                        setPreviewModalOpen(false);
+                        setPreviewTemplateId(null);
+                    }}
+                    templateId={previewTemplateId}
+                    onUseTemplate={handleUseTemplateFromPreview}
                 />
             </DashboardLayout>
         </>

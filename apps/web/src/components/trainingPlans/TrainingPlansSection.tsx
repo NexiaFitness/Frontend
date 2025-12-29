@@ -13,8 +13,8 @@
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { TrainingPlanCard } from "./TrainingPlanCard";
-import { TYPOGRAPHY } from "@/utils/typography";
 import type { TrainingPlan, TrainingPlanTemplate } from "@nexia/shared/types/training";
+import type { Client } from "@nexia/shared/types/client";
 
 interface TrainingPlansSectionProps {
     title: string;
@@ -22,6 +22,7 @@ interface TrainingPlansSectionProps {
     items: (TrainingPlan | TrainingPlanTemplate)[];
     type: "template" | "active" | "archived";
     clientNames?: Record<number, string>; // Map de client_id -> nombre
+    clientsMap?: Record<number, Client[]>; // Map de plan_id -> array de clientes
     onCreate?: () => void;
     onAssign?: (id: number) => void;
     onDuplicate?: (id: number) => void;
@@ -29,6 +30,9 @@ interface TrainingPlansSectionProps {
     onDelete?: (id: number) => void;
     onEdit?: (id: number) => void;
     onView?: (id: number) => void;
+    onPreview?: (id: number) => void; // Para templates
+    onAddClient?: (id: number) => void; // Para programas activos
+    onStatusChange?: (id: number, status: string) => void; // Para dropdown de progreso
     isLoading?: boolean;
     processingIds?: Set<number>; // IDs de items que están siendo procesados
 }
@@ -39,6 +43,7 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
     items,
     type,
     clientNames = {},
+    clientsMap = {},
     onCreate,
     onAssign,
     onDuplicate,
@@ -46,6 +51,9 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
     onDelete,
     onEdit,
     onView,
+    onPreview,
+    onAddClient,
+    onStatusChange,
     isLoading = false,
     processingIds = new Set(),
 }) => {
@@ -58,11 +66,11 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
             <div className="mb-6 px-4 lg:px-8">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="flex-1">
-                        <h2 className={`${TYPOGRAPHY.sectionTitle} text-white mb-2`}>
+                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
                             {title}
                         </h2>
                         {description && (
-                            <p className="text-white/80 text-sm md:text-base">
+                            <p className="text-gray-600 text-sm md:text-base">
                                 {description}
                             </p>
                         )}
@@ -74,7 +82,7 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
                             onClick={onCreate}
                             className="w-full sm:w-auto"
                         >
-                            + Crear {isTemplate ? "Modelo Base" : "Plan"}
+                            {type === "active" ? "+ Nuevo Programa" : "+ Crear New Template"}
                         </Button>
                     )}
                 </div>
@@ -127,11 +135,17 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
                 </div>
             ) : (
                 <div className="px-4 lg:px-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className={type === "active" 
+                        ? "space-y-4" 
+                        : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
+                    }>
                         {items.map((item) => {
-                            // Obtener nombre del cliente si es plan activo
+                            // Obtener nombre del cliente si es plan activo (legacy, para compatibilidad)
                             const clientId = !isTemplate && "client_id" in item ? item.client_id : null;
                             const clientName = clientId && clientId !== null ? clientNames[clientId] : undefined;
+
+                            // Obtener array de clientes para este plan (nuevo)
+                            const clients = clientsMap[item.id] || [];
 
                             // Determinar si este item está siendo procesado
                             const isProcessing = processingIds.has(item.id);
@@ -142,12 +156,16 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
                                     item={item}
                                     type={type}
                                     clientName={clientName}
+                                    clients={clients}
                                     onEdit={onEdit ? () => onEdit(item.id) : undefined}
                                     onAssign={onAssign ? () => onAssign(item.id) : undefined}
                                     onDuplicate={onDuplicate ? () => onDuplicate(item.id) : undefined}
                                     onConvert={onConvert ? () => onConvert(item.id) : undefined}
                                     onDelete={onDelete ? () => onDelete(item.id) : undefined}
                                     onView={onView ? () => onView(item.id) : undefined}
+                                    onPreview={onPreview ? () => onPreview(item.id) : undefined}
+                                    onAddClient={onAddClient ? () => onAddClient(item.id) : undefined}
+                                    onStatusChange={onStatusChange ? (status: string) => onStatusChange(item.id, status) : undefined}
                                     isProcessing={isProcessing}
                                 />
                             );

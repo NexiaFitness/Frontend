@@ -25,6 +25,7 @@
 import React from "react";
 import type { Client } from "@nexia/shared/types/client";
 import { Button } from "@/components/ui/buttons";
+import { Avatar } from "@/components/ui/avatar";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ClientHeaderProps {
@@ -113,15 +114,12 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     <div className="flex items-start gap-4 flex-1">
                         {/* Profile Photo */}
                         <div className="flex-shrink-0">
-                            <div 
-                                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md"
-                                style={{
-                                    background: 'linear-gradient(135deg, #4A67B3 0%, #3a5db3 50%, #2d4a9e 100%)',
-                                }}
-                            >
-                                {client.nombre.charAt(0).toUpperCase()}
-                                {client.apellidos.charAt(0).toUpperCase()}
-                            </div>
+                            <Avatar
+                                nombre={client.nombre}
+                                apellidos={client.apellidos}
+                                size="lg"
+                                variant="default"
+                            />
                         </div>
 
                         {/* Client Info */}

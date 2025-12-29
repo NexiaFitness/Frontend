@@ -685,6 +685,7 @@ export interface TrainingPlanTemplateCreate {
     level?: TemplateLevel | null;
     training_days_per_week?: number | null; // 1-7
     is_generic?: boolean; // default=False
+    is_public?: boolean; // default=False
 }
 
 /**

@@ -45,7 +45,7 @@ import { ClientEdit } from "./pages/clients/ClientEdit";
 import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
 import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
 import { TrainingPlanEdit } from "./pages/trainingPlans/TrainingPlanEdit";
-import { CreateTrainingPlan } from "./pages/trainingPlans/CreateTrainingPlan";
+import { CreateTrainingPlan, CreateTrainingPlanTemplate } from "./pages/trainingPlans";
 
 // Exercises Management (trainers only)
 import { ExerciseList } from "./pages/exercises/ExerciseList";
@@ -152,6 +152,18 @@ function App() {
       {/* ============================================ */}
       {/* TRAINING PLANS MANAGEMENT - Trainers only */}
       {/* ============================================ */}
+
+      {/* Create Training Plan Template - Ruta específica PRIMERO (antes de create) */}
+      <Route
+        path="/dashboard/training-plans/templates/create"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <CreateTrainingPlanTemplate />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Create Training Plan - Ruta específica PRIMERO (antes de :id) */}
       <Route

@@ -9,6 +9,7 @@
 export { TrainingPlanCard } from "./TrainingPlanCard";
 export { TrainingPlansSection } from "./TrainingPlansSection";
 export { AssignTemplateModal } from "./AssignTemplateModal";
+export { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 // Componentes existentes (Fase 1-2)
 export { TrainingPlanHeader } from "./TrainingPlanHeader";
