@@ -181,12 +181,22 @@ const exercisesListApi = baseApi.injectEndpoints({
                     ]
                     : [{ type: "Exercise", id: "LIST" }],
         }),
+        getExerciseById: builder.query<Exercise, number>({
+            query: (id) => ({
+                url: `/exercises/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "Exercise" as const, id }],
+        }),
     }),
     overrideExisting: false,
 });
 
-// Export hook
-export const { useGetExercisesQuery } = exercisesListApi;
+// Export hooks
+export const {
+    useGetExercisesQuery,
+    useGetExerciseByIdQuery,
+} = exercisesListApi;
 
 // ========================================
 // HOOK PRINCIPAL

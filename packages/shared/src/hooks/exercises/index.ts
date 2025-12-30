@@ -20,3 +20,9 @@ export {
     useGetActionsQuery,
     useGetActionQuery,
 } from '../../api/exercisesApi';
+
+// Legacy exercises module hooks (GET /exercises/)
+export {
+    useGetExercisesQuery,
+    useGetExerciseByIdQuery,
+} from './useExercises';
