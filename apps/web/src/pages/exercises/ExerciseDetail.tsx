@@ -18,7 +18,6 @@
 import React, { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
 import {
     getMuscleLabel,
     getEquipmentLabel,
