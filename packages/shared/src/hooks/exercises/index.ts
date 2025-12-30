@@ -25,4 +25,10 @@ export {
 export {
     useGetExercisesQuery,
     useGetExerciseByIdQuery,
+    useExercises,
+    // Types
+    type Exercise,
+    type ExerciseFilters,
+    type ExerciseListResponse,
+    type UseExercisesResult,
 } from './useExercises';

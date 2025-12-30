@@ -135,12 +135,12 @@ export const ExerciseList: React.FC = () => {
                                     </svg>
                                 </div>
                                 <h3 className="text-xl font-bold text-gray-800 mb-2">
-                                    {filters.search || filters.muscle_group || filters.equipment || filters.level
+                                    {filters.search || filters.equipo || filters.nivel
                                         ? "No se encontraron ejercicios"
                                         : "Aún no hay ejercicios"}
                                 </h3>
                                 <p className="text-gray-600 mb-6">
-                                    {filters.search || filters.muscle_group || filters.equipment || filters.level
+                                    {filters.search || filters.equipo || filters.nivel
                                         ? "Intenta ajustar los filtros de búsqueda"
                                         : "Los ejercicios aparecerán aquí cuando estén disponibles"}
                                 </p>
