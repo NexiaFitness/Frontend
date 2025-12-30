@@ -1,6 +1,22 @@
 /**
  * Exercises hooks exports
+ * 
+ * Exercise Catalog - Phase 1: GET Endpoints
+ * Exporta los 10 hooks RTK Query para Reference Tables
+ * 
+ * @author Nelson / NEXIA Team
+ * @since v5.0.0
  */
 
-export { useExercises, type UseExercisesResult } from './useExercises';
-
+export {
+    useGetMovementPatternsQuery,
+    useGetMovementPatternQuery,
+    useGetMuscleGroupsQuery,
+    useGetMuscleGroupQuery,
+    useGetEquipmentQuery,
+    useGetEquipmentByIdQuery,
+    useGetTagsQuery,
+    useGetTagQuery,
+    useGetActionsQuery,
+    useGetActionQuery,
+} from '../../api/exercisesApi';

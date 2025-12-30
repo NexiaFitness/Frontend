@@ -8,7 +8,7 @@
  * @updated v3.2.0 - Agregado tagType "TrainingPlan"
  * @updated v3.3.0 - Agregados tagTypes "Macrocycle", "Mesocycle", "Microcycle"
  * @updated v4.7.0 - Agregado tagType "Milestone"
- * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance"
+ * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance", "MovementPattern", "MuscleGroup", "Equipment", "Tag", "Action"
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -204,6 +204,11 @@ export const baseApi = createApi({
         "Client",
         "Trainer",
         "Exercise",
+        "MovementPattern",
+        "MuscleGroup",
+        "Equipment",
+        "Tag",
+        "Action",
         "TrainingPlan",
         "TrainingPlanTemplate",
         "TrainingPlanInstance",

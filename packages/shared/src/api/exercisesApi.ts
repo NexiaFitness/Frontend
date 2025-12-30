@@ -1,156 +1,225 @@
 /**
- * API de gestión de ejercicios usando RTK Query
- * Define endpoints para obtener ejercicios: getExercises, getExerciseById, filtros por músculo/equipamiento/nivel
- * 
- * @author Frontend Team
- * @since v4.8.0
+ * exercisesApi.ts — API RTK Query para Exercise Catalog
+ *
+ * PROPÓSITO:
+ * - Endpoints GET para Reference Tables del Exercise Catalog
+ * - Movement Patterns, Muscle Groups, Equipment, Tags, Actions
+ * - Integración con backend /api/v1/exercise-catalog/*
+ *
+ * CONTEXTO:
+ * - Backend: ~90 endpoints implementados en /exercise-catalog/*
+ * - Fase 1: Solo endpoints GET (10 hooks)
+ * - Fase 2: Variants (opcional, skip por ahora)
+ * - Fase 3: POST/PUT/DELETE mutations (futuro)
+ * - Fase 4: Mappings endpoints (futuro)
+ *
+ * NOTAS DE MANTENIMIENTO:
+ * - Query params default: skip=0, limit=100
+ * - is_active es opcional (boolean | undefined)
+ * - URLs exactas del backend: /exercise-catalog/movement-patterns/, etc.
+ * - providesTags para cache invalidation correcto
+ * - Sin usar `any`, strict TypeScript
+ *
+ * @author Nelson / NEXIA Team
+ * @since v5.0.0 (Exercise Catalog - Phase 1: GET Endpoints)
  */
 
 import { baseApi } from "./baseApi";
 import type {
-    Exercise,
-    ExerciseListResponse,
-    ExerciseFilters,
-    ExerciseStats,
+    MovementPattern,
+    MuscleGroup,
+    Equipment,
+    Tag,
+    Action,
+    CatalogQueryParams,
 } from "../types/exercise";
 
 export const exercisesApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
+        // ========================================
+        // MOVEMENT PATTERNS
+        // ========================================
+
         /**
-         * Obtener lista de ejercicios con filtros y paginación
-         * Backend: GET /exercises/
-         * Query params: skip, limit, muscle_group?, equipment?, level?
+         * Obtener lista de patrones de movimiento
+         * Backend: GET /exercise-catalog/movement-patterns/
+         * Query params: skip, limit, is_active?
          */
-        getExercises: builder.query<ExerciseListResponse, { skip?: number; limit?: number; filters?: ExerciseFilters }>({
-            query: ({ skip = 0, limit = 100, filters = {} }) => {
+        getMovementPatterns: builder.query<MovementPattern[], CatalogQueryParams>({
+            query: ({ skip = 0, limit = 100, is_active } = {}) => {
                 const params = new URLSearchParams();
                 params.append('skip', skip.toString());
                 params.append('limit', limit.toString());
-                
-                // Agregar filtros si están presentes
-                if (filters.muscle_group) {
-                    params.append('muscle_group', filters.muscle_group);
+                if (is_active !== undefined) {
+                    params.append('is_active', is_active.toString());
                 }
-                if (filters.equipment) {
-                    params.append('equipment', filters.equipment);
-                }
-                if (filters.level) {
-                    params.append('level', filters.level);
-                }
-                if (filters.search) {
-                    params.append('search', filters.search);
-                }
-
                 return {
-                    url: `/exercises/?${params.toString()}`,
+                    url: `/exercise-catalog/movement-patterns/?${params.toString()}`,
                     method: "GET",
                 };
             },
-            providesTags: (result) =>
-                result?.items
-                    ? [
-                        ...result.items.map(({ id }) => ({ type: "Exercise" as const, id })),
-                        { type: "Exercise", id: "LIST" },
-                    ]
-                    : [{ type: "Exercise", id: "LIST" }],
+            providesTags: [{ type: "MovementPattern", id: "LIST" }],
         }),
 
         /**
-         * Obtener ejercicio específico por ID
-         * Backend: GET /exercises/{id}
+         * Obtener patrón de movimiento específico por ID
+         * Backend: GET /exercise-catalog/movement-patterns/{id}
          */
-        getExerciseById: builder.query<Exercise, number>({
+        getMovementPattern: builder.query<MovementPattern, number>({
             query: (id) => ({
-                url: `/exercises/${id}`,
+                url: `/exercise-catalog/movement-patterns/${id}`,
                 method: "GET",
             }),
-            providesTags: (result, error, id) => [{ type: "Exercise", id }],
+            providesTags: (result, error, id) => [{ type: "MovementPattern", id }],
         }),
 
+        // ========================================
+        // MUSCLE GROUPS
+        // ========================================
+
         /**
-         * Obtener ejercicios por grupo muscular
-         * Backend: GET /exercises/by-muscle-group/{id}
+         * Obtener lista de grupos musculares
+         * Backend: GET /exercise-catalog/muscle-groups/
+         * Query params: skip, limit, is_active?
          */
-        getExercisesByMuscle: builder.query<ExerciseListResponse, { muscleGroupId: string; skip?: number; limit?: number }>({
-            query: ({ muscleGroupId, skip = 0, limit = 100 }) => {
+        getMuscleGroups: builder.query<MuscleGroup[], CatalogQueryParams>({
+            query: ({ skip = 0, limit = 100, is_active } = {}) => {
                 const params = new URLSearchParams();
                 params.append('skip', skip.toString());
                 params.append('limit', limit.toString());
-
+                if (is_active !== undefined) {
+                    params.append('is_active', is_active.toString());
+                }
                 return {
-                    url: `/exercises/by-muscle-group/${muscleGroupId}?${params.toString()}`,
+                    url: `/exercise-catalog/muscle-groups/?${params.toString()}`,
                     method: "GET",
                 };
             },
-            providesTags: (result, error, { muscleGroupId }) =>
-                result?.items
-                    ? [
-                        ...result.items.map(({ id }) => ({ type: "Exercise" as const, id })),
-                        { type: "Exercise", id: `MUSCLE-${muscleGroupId}` },
-                    ]
-                    : [{ type: "Exercise", id: `MUSCLE-${muscleGroupId}` }],
+            providesTags: [{ type: "MuscleGroup", id: "LIST" }],
         }),
 
         /**
-         * Obtener ejercicios por equipamiento
-         * Backend: GET /exercises/by-equipment/{id}
+         * Obtener grupo muscular específico por ID
+         * Backend: GET /exercise-catalog/muscle-groups/{id}
          */
-        getExercisesByEquipment: builder.query<ExerciseListResponse, { equipmentId: string; skip?: number; limit?: number }>({
-            query: ({ equipmentId, skip = 0, limit = 100 }) => {
-                const params = new URLSearchParams();
-                params.append('skip', skip.toString());
-                params.append('limit', limit.toString());
-
-                return {
-                    url: `/exercises/by-equipment/${equipmentId}?${params.toString()}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { equipmentId }) =>
-                result?.items
-                    ? [
-                        ...result.items.map(({ id }) => ({ type: "Exercise" as const, id })),
-                        { type: "Exercise", id: `EQUIPMENT-${equipmentId}` },
-                    ]
-                    : [{ type: "Exercise", id: `EQUIPMENT-${equipmentId}` }],
-        }),
-
-        /**
-         * Obtener ejercicios por nivel
-         * Backend: GET /exercises/by-level/{id}
-         */
-        getExercisesByLevel: builder.query<ExerciseListResponse, { levelId: string; skip?: number; limit?: number }>({
-            query: ({ levelId, skip = 0, limit = 100 }) => {
-                const params = new URLSearchParams();
-                params.append('skip', skip.toString());
-                params.append('limit', limit.toString());
-
-                return {
-                    url: `/exercises/by-level/${levelId}?${params.toString()}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { levelId }) =>
-                result?.items
-                    ? [
-                        ...result.items.map(({ id }) => ({ type: "Exercise" as const, id })),
-                        { type: "Exercise", id: `LEVEL-${levelId}` },
-                    ]
-                    : [{ type: "Exercise", id: `LEVEL-${levelId}` }],
-        }),
-
-        /**
-         * Obtener estadísticas de ejercicios
-         * Backend: GET /exercises/stats/summary
-         */
-        getExerciseStats: builder.query<ExerciseStats, void>({
-            query: () => ({
-                url: "/exercises/stats/summary",
+        getMuscleGroup: builder.query<MuscleGroup, number>({
+            query: (id) => ({
+                url: `/exercise-catalog/muscle-groups/${id}`,
                 method: "GET",
             }),
-            providesTags: [{ type: "Exercise", id: "STATS" }],
+            providesTags: (result, error, id) => [{ type: "MuscleGroup", id }],
         }),
 
+        // ========================================
+        // EQUIPMENT
+        // ========================================
+
+        /**
+         * Obtener lista de equipamiento
+         * Backend: GET /exercise-catalog/equipment/
+         * Query params: skip, limit, is_active?
+         */
+        getEquipment: builder.query<Equipment[], CatalogQueryParams>({
+            query: ({ skip = 0, limit = 100, is_active } = {}) => {
+                const params = new URLSearchParams();
+                params.append('skip', skip.toString());
+                params.append('limit', limit.toString());
+                if (is_active !== undefined) {
+                    params.append('is_active', is_active.toString());
+                }
+                return {
+                    url: `/exercise-catalog/equipment/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "Equipment", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener equipamiento específico por ID
+         * Backend: GET /exercise-catalog/equipment/{id}
+         */
+        getEquipmentById: builder.query<Equipment, number>({
+            query: (id) => ({
+                url: `/exercise-catalog/equipment/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "Equipment", id }],
+        }),
+
+        // ========================================
+        // TAGS
+        // ========================================
+
+        /**
+         * Obtener lista de etiquetas
+         * Backend: GET /exercise-catalog/tags/
+         * Query params: skip, limit, is_active?
+         */
+        getTags: builder.query<Tag[], CatalogQueryParams>({
+            query: ({ skip = 0, limit = 100, is_active } = {}) => {
+                const params = new URLSearchParams();
+                params.append('skip', skip.toString());
+                params.append('limit', limit.toString());
+                if (is_active !== undefined) {
+                    params.append('is_active', is_active.toString());
+                }
+                return {
+                    url: `/exercise-catalog/tags/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "Tag", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener etiqueta específica por ID
+         * Backend: GET /exercise-catalog/tags/{id}
+         */
+        getTag: builder.query<Tag, number>({
+            query: (id) => ({
+                url: `/exercise-catalog/tags/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "Tag", id }],
+        }),
+
+        // ========================================
+        // ACTIONS (Joint Movements)
+        // ========================================
+
+        /**
+         * Obtener lista de acciones articulares (Joint Movements)
+         * Backend: GET /exercise-catalog/actions/
+         * Query params: skip, limit, is_active?
+         */
+        getActions: builder.query<Action[], CatalogQueryParams>({
+            query: ({ skip = 0, limit = 100, is_active } = {}) => {
+                const params = new URLSearchParams();
+                params.append('skip', skip.toString());
+                params.append('limit', limit.toString());
+                if (is_active !== undefined) {
+                    params.append('is_active', is_active.toString());
+                }
+                return {
+                    url: `/exercise-catalog/actions/?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: [{ type: "Action", id: "LIST" }],
+        }),
+
+        /**
+         * Obtener acción articular específica por ID
+         * Backend: GET /exercise-catalog/actions/{id}
+         */
+        getAction: builder.query<Action, number>({
+            query: (id) => ({
+                url: `/exercise-catalog/actions/${id}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, id) => [{ type: "Action", id }],
+        }),
     }),
     overrideExisting: false,
 });
@@ -159,11 +228,14 @@ export const exercisesApi = baseApi.injectEndpoints({
 // Hooks auto-generados por RTK Query
 // ========================================
 export const {
-    useGetExercisesQuery,
-    useGetExerciseByIdQuery,
-    useGetExercisesByMuscleQuery,
-    useGetExercisesByEquipmentQuery,
-    useGetExercisesByLevelQuery,
-    useGetExerciseStatsQuery,
+    useGetMovementPatternsQuery,
+    useGetMovementPatternQuery,
+    useGetMuscleGroupsQuery,
+    useGetMuscleGroupQuery,
+    useGetEquipmentQuery,
+    useGetEquipmentByIdQuery,
+    useGetTagsQuery,
+    useGetTagQuery,
+    useGetActionsQuery,
+    useGetActionQuery,
 } = exercisesApi;
-
