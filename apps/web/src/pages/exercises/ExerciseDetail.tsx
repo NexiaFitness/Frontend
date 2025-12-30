@@ -1,22 +1,31 @@
 /**
  * ExerciseDetail.tsx — Página de detalle de ejercicio individual
- * 
- * Propósito: Mostrar información completa de un ejercicio (nombre, descripción, instrucciones, etc.).
- * Contexto: módulo Exercise Database Browser de NEXIA Fitness.
+ *
+ * Propósito: Mostrar información completa de un ejercicio (nombre, descripción, instrucciones, etc.)
+ * Contexto: módulo Exercise Database Browser de NEXIA Fitness
  * Notas de mantenimiento: mantener coherencia con ClientDetail y otras vistas
- * 
+ *
+ * Arquitectura:
+ * - Usa backend /exercises/{id} (funcional, legacy pero correcto)
+ * - Exercise Catalog solo para Reference Tables
+ * - Tipos desde useExercises (alineados con backend)
+ *
  * @author Frontend Team
  * @since v4.8.0
+ * @updated v5.0.0 - Sub-Fase 2.6: tipos correctos, helpers compartidos, campos alineados con backend
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGetExerciseByIdQuery } from "@nexia/shared/api/exercisesApi";
+import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
+import type { Exercise } from "@nexia/shared/hooks/exercises";
 import {
-    MUSCLE_GROUP_ENUM,
-    EQUIPMENT_ENUM,
-    LEVEL_ENUM,
-} from "@nexia/shared/types/exercise";
+    getMuscleLabel,
+    getEquipmentLabel,
+    getLevelLabel,
+    getLevelBadgeColor,
+    getMuscleGradient,
+} from "@/utils/exercises";
 
 // Layouts
 import { DashboardLayout } from "@/components/dashboard/layout";
@@ -29,79 +38,6 @@ import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 
 // Utils
 import { TYPOGRAPHY } from "@/utils/typography";
-
-/**
- * Helper para traducir grupo muscular
- */
-const getMuscleLabel = (muscle: string): string => {
-    const labels: Record<string, string> = {
-        [MUSCLE_GROUP_ENUM.CHEST]: "Pecho",
-        [MUSCLE_GROUP_ENUM.BACK]: "Espalda",
-        [MUSCLE_GROUP_ENUM.LEGS]: "Piernas",
-        [MUSCLE_GROUP_ENUM.SHOULDERS]: "Hombros",
-        [MUSCLE_GROUP_ENUM.ARMS]: "Brazos",
-        [MUSCLE_GROUP_ENUM.CORE]: "Core",
-        [MUSCLE_GROUP_ENUM.FULL_BODY]: "Cuerpo Completo",
-    };
-    return labels[muscle] || muscle;
-};
-
-/**
- * Helper para traducir equipamiento
- */
-const getEquipmentLabel = (equipment: string): string => {
-    const labels: Record<string, string> = {
-        [EQUIPMENT_ENUM.BARBELL]: "Barra",
-        [EQUIPMENT_ENUM.DUMBBELL]: "Mancuernas",
-        [EQUIPMENT_ENUM.KETTLEBELL]: "Kettlebell",
-        [EQUIPMENT_ENUM.RESISTANCE_BAND]: "Banda de Resistencia",
-        [EQUIPMENT_ENUM.BODYWEIGHT]: "Peso Corporal",
-        [EQUIPMENT_ENUM.MACHINE]: "Máquina",
-        [EQUIPMENT_ENUM.CABLE]: "Cable",
-        [EQUIPMENT_ENUM.OTHER]: "Otro",
-    };
-    return labels[equipment] || equipment;
-};
-
-/**
- * Helper para traducir nivel
- */
-const getLevelLabel = (level: string): string => {
-    const labels: Record<string, string> = {
-        [LEVEL_ENUM.BEGINNER]: "Principiante",
-        [LEVEL_ENUM.INTERMEDIATE]: "Intermedio",
-        [LEVEL_ENUM.ADVANCED]: "Avanzado",
-    };
-    return labels[level] || level;
-};
-
-/**
- * Helper para color de badge de nivel
- */
-const getLevelBadgeColor = (level: string): string => {
-    const colors: Record<string, string> = {
-        [LEVEL_ENUM.BEGINNER]: "bg-green-100 text-green-700",
-        [LEVEL_ENUM.INTERMEDIATE]: "bg-yellow-100 text-yellow-700",
-        [LEVEL_ENUM.ADVANCED]: "bg-red-100 text-red-700",
-    };
-    return colors[level] || "bg-gray-100 text-gray-700";
-};
-
-/**
- * Helper para gradiente por grupo muscular
- */
-const getMuscleGradient = (muscle: string): string => {
-    const gradients: Record<string, string> = {
-        [MUSCLE_GROUP_ENUM.CHEST]: "from-red-400 to-red-600",
-        [MUSCLE_GROUP_ENUM.BACK]: "from-blue-400 to-blue-600",
-        [MUSCLE_GROUP_ENUM.LEGS]: "from-green-400 to-green-600",
-        [MUSCLE_GROUP_ENUM.SHOULDERS]: "from-purple-400 to-purple-600",
-        [MUSCLE_GROUP_ENUM.ARMS]: "from-orange-400 to-orange-600",
-        [MUSCLE_GROUP_ENUM.CORE]: "from-yellow-400 to-yellow-600",
-        [MUSCLE_GROUP_ENUM.FULL_BODY]: "from-indigo-400 to-indigo-600",
-    };
-    return gradients[muscle] || "from-gray-400 to-gray-600";
-};
 
 export const ExerciseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -126,6 +62,20 @@ export const ExerciseDetail: React.FC = () => {
     const handleBack = () => {
         navigate("/dashboard/exercises");
     };
+
+    // Parsear músculos (comma-separated strings)
+    const primaryMuscle = useMemo(() => {
+        if (!exercise?.musculatura_principal) return "";
+        return exercise.musculatura_principal.split(',')[0].trim();
+    }, [exercise?.musculatura_principal]);
+
+    const secondaryMuscles = useMemo(() => {
+        if (!exercise?.musculatura_secundaria) return [];
+        return exercise.musculatura_secundaria
+            .split(',')
+            .map((m) => m.trim())
+            .filter((m) => m.length > 0);
+    }, [exercise?.musculatura_secundaria]);
 
     if (!exerciseId) {
         return (
@@ -200,62 +150,64 @@ export const ExerciseDetail: React.FC = () => {
                         ← Volver a Ejercicios
                     </Button>
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
-                        {exercise.name}
+                        {exercise.nombre}
                     </h2>
                 </div>
 
                 {/* Contenido principal */}
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                        {/* Imagen o placeholder */}
-                        <div className={`aspect-video rounded-xl mb-6 bg-gradient-to-br ${getMuscleGradient(exercise.primary_muscle)} flex items-center justify-center`}>
-                            {exercise.image_url ? (
-                                <img
-                                    src={exercise.image_url}
-                                    alt={exercise.name}
-                                    className="w-full h-full object-cover rounded-xl"
-                                />
-                            ) : (
-                                <div className="text-white text-6xl font-bold opacity-50">
-                                    💪
-                                </div>
-                            )}
+                        {/* Imagen placeholder con gradiente */}
+                        <div
+                            className={`aspect-video rounded-xl mb-6 bg-gradient-to-br ${getMuscleGradient(primaryMuscle)} flex items-center justify-center`}
+                        >
+                            <div className="text-white text-6xl font-bold opacity-50">
+                                💪
+                            </div>
                         </div>
 
                         {/* Información básica */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-1">
                                     Grupo Muscular Principal
                                 </p>
-                                <p className="text-base font-semibold text-gray-900">
-                                    {getMuscleLabel(exercise.primary_muscle)}
-                                </p>
+                                {primaryMuscle ? (
+                                    <p className="text-base font-semibold text-slate-900">
+                                        {getMuscleLabel(primaryMuscle)}
+                                    </p>
+                                ) : (
+                                    <p className="text-base text-slate-400">No especificado</p>
+                                )}
                             </div>
 
                             <div>
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-1">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-1">
                                     Nivel
                                 </p>
-                                <span
-                                    className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getLevelBadgeColor(exercise.level)}`}
-                                >
-                                    {getLevelLabel(exercise.level)}
-                                </span>
+                                {exercise.nivel ? (
+                                    <span
+                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${getLevelBadgeColor(exercise.nivel)}`}
+                                    >
+                                        {getLevelLabel(exercise.nivel)}
+                                    </span>
+                                ) : (
+                                    <p className="text-base text-slate-400">No especificado</p>
+                                )}
                             </div>
                         </div>
 
                         {/* Músculos secundarios */}
-                        {exercise.secondary_muscles && exercise.secondary_muscles.length > 0 && (
+                        {secondaryMuscles.length > 0 && (
                             <div className="mb-6">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
                                     Músculos Secundarios
                                 </p>
                                 <div className="flex flex-wrap gap-2">
-                                    {exercise.secondary_muscles.map((muscle) => (
+                                    {secondaryMuscles.map((muscle, index) => (
                                         <span
-                                            key={muscle}
-                                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700"
+                                            key={`${muscle}-${index}`}
+                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-slate-100 text-slate-700"
                                         >
                                             {getMuscleLabel(muscle)}
                                         </span>
@@ -265,75 +217,52 @@ export const ExerciseDetail: React.FC = () => {
                         )}
 
                         {/* Equipamiento */}
-                        {exercise.equipment && exercise.equipment.length > 0 && (
+                        {exercise.equipo && (
                             <div className="mb-6">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
                                     Equipamiento
                                 </p>
                                 <div className="flex flex-wrap gap-2">
-                                    {exercise.equipment.map((equip) => (
-                                        <span
-                                            key={equip}
-                                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-700"
-                                        >
-                                            {getEquipmentLabel(equip)}
-                                        </span>
-                                    ))}
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                                        {getEquipmentLabel(exercise.equipo)}
+                                    </span>
                                 </div>
                             </div>
                         )}
 
                         {/* Descripción */}
-                        {exercise.description && (
+                        {exercise.descripcion && (
                             <div className="mb-6">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
                                     Descripción
                                 </p>
-                                <p className="text-base text-gray-700 leading-relaxed">
-                                    {exercise.description}
+                                <p className="text-base text-slate-700 leading-relaxed">
+                                    {exercise.descripcion}
                                 </p>
                             </div>
                         )}
 
                         {/* Instrucciones */}
-                        {exercise.instructions && (
+                        {exercise.instrucciones && (
                             <div className="mb-6">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
                                     Instrucciones
                                 </p>
-                                <p className="text-base text-gray-700 leading-relaxed whitespace-pre-line">
-                                    {exercise.instructions}
+                                <p className="text-base text-slate-700 leading-relaxed whitespace-pre-line">
+                                    {exercise.instrucciones}
                                 </p>
                             </div>
                         )}
 
                         {/* Notas */}
-                        {exercise.notes && (
+                        {exercise.notas && (
                             <div className="mb-6">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
                                     Notas
                                 </p>
-                                <p className="text-base text-gray-700 leading-relaxed">
-                                    {exercise.notes}
+                                <p className="text-base text-slate-700 leading-relaxed">
+                                    {exercise.notas}
                                 </p>
-                            </div>
-                        )}
-
-                        {/* Video (si existe) */}
-                        {exercise.video_url && (
-                            <div className="mb-6">
-                                <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">
-                                    Video
-                                </p>
-                                <div className="aspect-video rounded-xl overflow-hidden">
-                                    <iframe
-                                        src={exercise.video_url}
-                                        title={exercise.name}
-                                        className="w-full h-full"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                    />
-                                </div>
                             </div>
                         )}
                     </div>
