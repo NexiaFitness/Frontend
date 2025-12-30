@@ -161,14 +161,33 @@ export {
     type SessionDuration,
 } from "./types/client";
 
-// Enums explícitos de exercise (para uso directo en componentes)
+// Exercise Catalog types
 export {
-    MUSCLE_GROUP_ENUM,
-    EQUIPMENT_ENUM,
-    LEVEL_ENUM,
+    // Reference Tables
+    type MovementPattern,
     type MuscleGroup,
     type Equipment,
-    type Level,
+    type Tag,
+    type Action,
+    type Variant,
+    // Mapping Tables
+    type ExerciseMovementPattern,
+    type ExerciseMuscle,
+    type ExerciseEquipment,
+    type ExerciseTag,
+    // Variant Mappings
+    type VariantMovementPattern,
+    type VariantMuscle,
+    type VariantEquipment,
+    type VariantTag,
+    type VariantJointAction,
+    // Role Enums
+    type MovementPatternRole,
+    type MuscleRole,
+    type EquipmentRole,
+    // Query Params
+    type CatalogQueryParams,
+    type MappingQueryParams,
 } from "./types/exercise";
 
 // Enums explícitos de training (para uso directo en componentes)
