@@ -25,6 +25,7 @@ import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
 
 // UI
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Pagination } from "@/components/ui/pagination";
 
 // Utils
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -52,6 +53,19 @@ export const ExerciseList: React.FC = () => {
 
     const handleCardClick = (exerciseId: number) => {
         navigate(`/dashboard/exercises/${exerciseId}`);
+    };
+
+    // Calcular paginación para componente Pagination
+    const currentPage = Math.floor(pagination.skip / pagination.limit) + 1;
+    const totalPages = Math.ceil(total / pagination.limit);
+    const itemsPerPage = pagination.limit;
+
+    // Handler para cambio de página
+    const handlePageChange = (page: number) => {
+        const newSkip = (page - 1) * pagination.limit;
+        setPagination(newSkip, pagination.limit);
+        // Scroll suave hacia arriba
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     // Items del menú superior
@@ -169,26 +183,16 @@ export const ExerciseList: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Paginación simple (si hay más de limit) */}
-                            {total > pagination.limit && (
-                                <div className="flex justify-center items-center gap-4 mt-8">
-                                    <button
-                                        onClick={() => setPagination(Math.max(0, pagination.skip - pagination.limit), pagination.limit)}
-                                        disabled={pagination.skip === 0}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        ← Anterior
-                                    </button>
-                                    <span className="text-sm text-white/80">
-                                        Página {Math.floor(pagination.skip / pagination.limit) + 1} de {Math.ceil(total / pagination.limit)}
-                                    </span>
-                                    <button
-                                        onClick={() => setPagination(pagination.skip + pagination.limit, pagination.limit)}
-                                        disabled={pagination.skip + pagination.limit >= total}
-                                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                                    >
-                                        Siguiente →
-                                    </button>
+                            {/* Paginación reutilizable */}
+                            {totalPages > 1 && (
+                                <div className="mt-8">
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalPages={totalPages}
+                                        totalItems={total}
+                                        itemsPerPage={itemsPerPage}
+                                        onPageChange={handlePageChange}
+                                    />
                                 </div>
                             )}
                         </>

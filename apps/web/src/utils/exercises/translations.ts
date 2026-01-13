@@ -127,3 +127,4 @@ export const getMuscleGradient = (muscle: string): string => {
     return gradients[muscle.toLowerCase()] || "from-gray-400 to-gray-600";
 };
 
+
