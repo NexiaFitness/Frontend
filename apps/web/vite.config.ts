@@ -29,26 +29,30 @@ export default defineConfig({
         
         manualChunks: (id) => {
           // Recharts - biblioteca pesada de gráficos (267 KB)
+          // Separada porque solo se usa en páginas específicas (charts)
           if (id.includes("node_modules/recharts")) {
             return "recharts-vendor";
           }
 
           // Redux Toolkit y React-Redux - state management
+          // Separado pero cargado early porque lo usa toda la app
           if (id.includes("node_modules/@reduxjs/toolkit") || id.includes("node_modules/react-redux")) {
             return "redux-vendor";
           }
 
           // React Router - routing
+          // Separado pero cargado early porque lo usa toda la app
           if (id.includes("node_modules/react-router")) {
             return "router-vendor";
           }
 
-          // React y React DOM - core de React
-          if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/")) {
-            return "react-vendor";
-          }
+          // React y React DOM - CRÍTICO: NO separar
+          // Debe estar en el mismo chunk vendor que otras dependencias
+          // para evitar condiciones de carrera en inicialización
+          // React ahora va al chunk "vendor" principal
 
-          // Otros node_modules grandes
+          // Otros node_modules (INCLUYENDO React)
+          // React DEBE estar aquí para estar disponible cuando vendor.js lo necesite
           if (id.includes("node_modules")) {
             return "vendor";
           }
@@ -60,7 +64,7 @@ export default defineConfig({
         },
       },
     },
-    chunkSizeWarningLimit: 600, // Aumentado temporalmente, pero optimizamos con code-splitting
+    chunkSizeWarningLimit: 600,
   },
   test: {
     environment: 'jsdom',
