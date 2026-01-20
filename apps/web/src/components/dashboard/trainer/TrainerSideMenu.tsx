@@ -35,6 +35,7 @@ export const TrainerSideMenu: React.FC = () => {
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
         { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
+        { label: "Ejercicios", path: "/dashboard/exercises" },
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 

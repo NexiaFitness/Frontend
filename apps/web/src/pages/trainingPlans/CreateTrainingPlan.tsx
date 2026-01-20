@@ -234,11 +234,10 @@ export const CreateTrainingPlan: React.FC = () => {
 
             showSuccess("Plan creado exitosamente. Redirigiendo...", 2000);
             setTimeout(() => {
-                if (clientId) {
-                    navigate(`/dashboard/clients/${clientId}`);
-                } else {
-                    navigate(`/dashboard/training-plans/${result.id}`);
-                }
+                // Siempre redirigir al detalle del plan para continuar programando
+                // (macrociclos, mesociclos, microciclos, sesiones)
+                // TrainingPlanDetail maneja correctamente planes con o sin clientId
+                navigate(`/dashboard/training-plans/${result.id}`);
             }, 1500);
         } catch (err) {
             console.error("Error creando plan:", err);

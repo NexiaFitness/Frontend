@@ -2,7 +2,8 @@
 
 **Módulo:** Frontend - Base de Datos de Ejercicios  
 **Versión:** v4.8.0  
-**Fecha:** 2025-01-XX  
+**Fecha:** 2025-01-26  
+**Última Actualización:** 2025-01-26  
 **Autor:** Frontend Team - NEXIA Fitness
 
 ---
@@ -39,7 +40,8 @@ El módulo **Exercises** es un sistema de base de datos de ejercicios que permit
 - ✅ TypeScript estricto
 - ✅ Alineado 100% con Swagger backend
 
-**Estado actual:** FASE 1 - Tipos y API implementados. UI pendiente.
+**Estado actual:** ✅ FASE 1 y FASE 2 completadas - Tipos, API y UI implementados.  
+⚠️ **Nota importante:** Los tipos TypeScript tienen discrepancias con el backend real (ver sección "Discrepancias con Backend").
 
 ---
 
@@ -443,6 +445,8 @@ const { data: stats, isLoading } = useGetExerciseStatsQuery();
 
 ### Hooks Disponibles
 
+#### Hooks RTK Query (API)
+
 Todos los hooks están exportados desde `packages/shared/src/api/exercisesApi.ts`:
 
 ```typescript
@@ -459,6 +463,28 @@ useGetExercisesByLevelQuery({ levelId, skip?, limit? })
 
 // Estadísticas
 useGetExerciseStatsQuery()
+```
+
+#### Hook Personalizado
+
+**Ubicación:** `packages/shared/src/hooks/exercises/useExercises.ts`
+
+Hook personalizado que encapsula lógica de filtros y paginación:
+
+```typescript
+import { useExercises } from '@nexia/shared/hooks/exercises';
+
+const {
+    exercises,        // Array de ejercicios
+    total,           // Total de ejercicios
+    filters,         // Filtros actuales
+    setFilters,      // Función para actualizar filtros
+    pagination,      // Estado de paginación
+    setPagination,   // Función para actualizar paginación
+    isLoading,       // Estado de carga
+    isError,         // Estado de error
+    refetch,         // Función para refetch
+} = useExercises();
 ```
 
 ### Estados de los Hooks
@@ -564,6 +590,8 @@ Todos los hooks RTK Query retornan:
 - [x] Interface: `ExerciseStats`
 - [x] Tipos de request: `CreateExerciseData`, `UpdateExerciseData` (reservados)
 
+⚠️ **Discrepancia:** Los tipos TypeScript no coinciden 100% con el backend real (ver sección "Discrepancias con Backend").
+
 #### API y Endpoints
 - [x] `getExercises` - Lista con filtros y paginación
 - [x] `getExerciseById` - Detalle individual
@@ -572,28 +600,51 @@ Todos los hooks RTK Query retornan:
 - [x] `getExercisesByLevel` - Filtro por nivel
 - [x] `getExerciseStats` - Estadísticas agregadas
 
+#### Hooks Personalizados
+- [x] `useExercises` - Hook personalizado con lógica de filtros y paginación
+
+#### UI Components ✅
+- [x] Página de lista de ejercicios (`ExerciseList.tsx`)
+- [x] Componente de card de ejercicio (`ExerciseCard.tsx`)
+- [x] Componente de detalle de ejercicio (`ExerciseDetail.tsx`)
+- [x] Componente de filtros (`ExerciseFilters.tsx`)
+- [x] Componente de búsqueda (`ExerciseSearch.tsx`)
+
+#### Funcionalidades UI ✅
+- [x] Búsqueda en tiempo real (con debounce)
+- [x] Filtros combinados (músculo + equipamiento + nivel)
+- [x] Paginación en UI
+- [x] Vista de detalle
+- [x] Rutas configuradas en `App.tsx`
+
 #### Integración
 - [x] Tag `Exercise` en `baseApi.ts`
 - [x] Exports en `packages/shared/src/index.ts`
 - [x] Build exitoso sin errores
 - [x] TypeScript estricto
 
-### 🚧 Pendiente (Fase 2)
+### 🚧 Pendiente (Fase 3)
 
-#### UI Components
-- [ ] Página de lista de ejercicios (`ExercisesPage.tsx`)
-- [ ] Componente de card de ejercicio (`ExerciseCard.tsx`)
-- [ ] Componente de detalle de ejercicio (`ExerciseDetail.tsx`)
-- [ ] Componente de filtros (`ExerciseFilters.tsx`)
-- [ ] Componente de búsqueda (`ExerciseSearch.tsx`)
-- [ ] Componente de estadísticas (`ExerciseStats.tsx`)
+#### CRUD Completo
+- [ ] `useCreateExerciseMutation` - Crear ejercicio
+- [ ] `useUpdateExerciseMutation` - Actualizar ejercicio
+- [ ] `useDeleteExerciseMutation` - Eliminar ejercicio
+- [ ] Componente `ExerciseForm.tsx` - Formulario crear/editar
 
-#### Funcionalidades
-- [ ] Búsqueda en tiempo real
-- [ ] Filtros combinados (músculo + equipamiento + nivel)
-- [ ] Paginación en UI
-- [ ] Vista de detalle con video/imagen
-- [ ] Integración con Training Plans (seleccionar ejercicios)
+#### Exercise Catalog Integration
+- [ ] Integrar con Exercise Catalog (Movement Patterns, Muscle Groups, Equipment, Tags)
+- [ ] Usar datos del catálogo para filtros y selectores
+- [ ] Mostrar mappings en ExerciseDetail
+
+#### Exercise Alternatives
+- [ ] Implementar hooks de Exercise Alternatives
+- [ ] UI para gestionar alternativas
+
+### 🔮 Futuro (Fase 4)
+- [ ] Favoritos de ejercicios
+- [ ] Historial de ejercicios usados
+- [ ] Recomendaciones basadas en objetivos
+- [ ] Integración completa con Training Plans (seleccionar ejercicios)
 
 ### 🔮 Futuro (Fase 3)
 
@@ -792,6 +843,11 @@ function ExerciseSearch() {
 - [Arquitectura Cross-Platform](../CROSS_PLATFORM_GUIDE.md)
 - [Arquitectura del Proyecto](../ARCHITECTURE.md)
 
+### Documentación Técnica
+- `AUDITORIA_MODULO_EXERCISES.md` - Auditoría completa del módulo
+- `PLAN_IMPLEMENTACION_EXERCISE_CATALOG.md` - Plan de integración con Exercise Catalog
+- `AUDITORIA_ENDPOINTS_BACKEND.md` - Auditoría de endpoints backend
+
 ---
 
 ## 📋 Checklist de Implementación
@@ -808,15 +864,19 @@ function ExerciseSearch() {
 - [x] Exports en index.ts
 - [x] Build exitoso
 
-### FASE 2: UI Components 🚧
-- [ ] Página de lista (`ExercisesPage.tsx`)
-- [ ] Componente de card (`ExerciseCard.tsx`)
-- [ ] Componente de detalle (`ExerciseDetail.tsx`)
-- [ ] Componente de filtros (`ExerciseFilters.tsx`)
-- [ ] Componente de búsqueda (`ExerciseSearch.tsx`)
-- [ ] Componente de estadísticas (`ExerciseStats.tsx`)
-- [ ] Rutas en App.tsx
-- [ ] Integración con Training Plans
+### FASE 2: UI Components ✅
+- [x] Página de lista (`ExerciseList.tsx`)
+- [x] Componente de card (`ExerciseCard.tsx`)
+- [x] Componente de detalle (`ExerciseDetail.tsx`)
+- [x] Componente de filtros (`ExerciseFilters.tsx`)
+- [x] Componente de búsqueda (`ExerciseSearch.tsx`)
+- [x] Rutas en App.tsx
+- [x] Hook personalizado `useExercises`
+
+### FASE 3: CRUD y Exercise Catalog 🚧
+- [ ] CRUD completo (CREATE/UPDATE/DELETE)
+- [ ] Integración con Exercise Catalog
+- [ ] Exercise Alternatives
 
 ### FASE 3: Funcionalidades Avanzadas 🔮
 - [ ] CRUD completo (si backend lo permite)
@@ -857,9 +917,39 @@ pnpm lint
 - Refetch automático en focus
 
 ### Backend Alignment
-- Todos los tipos están alineados 100% con Swagger
-- Nombres de campos exactos como backend
-- Enums según backend
+
+⚠️ **IMPORTANTE - Discrepancias con Backend Real:**
+
+Los tipos TypeScript actuales **NO coinciden** con el backend real:
+
+**Frontend espera:**
+```typescript
+interface Exercise {
+    exercise_id: number;  // ❌ Backend es String
+    name: string;  // ❌ Backend es "nombre"
+    primary_muscle: MuscleGroup;  // ❌ Backend es string (comma-separated)
+    equipment: Equipment[];  // ❌ Backend es string único
+}
+```
+
+**Backend devuelve:**
+```python
+{
+    "exercise_id": "back_squat",  # String
+    "nombre": "Sentadilla trasera",  # No "name"
+    "musculatura_principal": "quadriceps, glutes",  # String comma-separated
+    "equipo": "barbell",  # String único, no array
+    "nivel": "intermediate",  # String, no enum
+    # ... más campos
+}
+```
+
+**Acción requerida:** Actualizar tipos TypeScript para alinearlos con el backend real o crear adaptadores.
+
+**Referencias:**
+- Ver `AUDITORIA_MODULO_EXERCISES.md` para detalles completos
+- Backend real: `backend/app/api/exercises.py`
+- Backend schemas: `backend/app/schemas.py`
 
 ### Arquitectura
 - Lógica de negocio en `packages/shared`
@@ -874,7 +964,49 @@ pnpm lint
 
 ---
 
-**Última actualización:** 2025-01-XX  
-**Versión del documento:** 1.0.0  
+**Última actualización:** 2025-01-26  
+**Versión del documento:** 1.1.0  
 **Módulo:** Exercises v4.8.0
+
+---
+
+## ⚠️ Discrepancias con Backend
+
+### Problema Identificado
+
+Los tipos TypeScript definidos en `packages/shared/src/types/exercise.ts` **no coinciden** con la estructura real del backend.
+
+### Discrepancias Principales
+
+| Campo Frontend | Tipo Frontend | Backend Real | Tipo Backend |
+|----------------|---------------|--------------|--------------|
+| `exercise_id` | `number` | `exercise_id` | `string` |
+| `name` | `string` | `nombre` | `string` |
+| `primary_muscle` | `MuscleGroup` (enum) | `musculatura_principal` | `string` (comma-separated) |
+| `equipment` | `Equipment[]` (array) | `equipo` | `string` (único) |
+| `level` | `Level` (enum) | `nivel` | `string` (libre) |
+| `video_url` | `string \| null` | ❌ No existe | - |
+| `image_url` | `string \| null` | ❌ No existe | - |
+
+### Campos Adicionales del Backend
+
+El backend incluye campos que no están en los tipos frontend:
+- `nombre_ingles` - Nombre en inglés
+- `tipo` - Tipo de ejercicio (Multiarticular, Monoarticular)
+- `categoria` - Categoría (Básico, Intermedio, Avanzado)
+- `patron_movimiento` - Patrón de movimiento
+- `tipo_carga` - Tipo de carga (external, bodyweight, resistance)
+- `musculatura_secundaria` - Músculos secundarios (string comma-separated)
+- `descripcion` - Descripción
+- `instrucciones` - Instrucciones
+- `notas` - Notas
+- `is_active` - Flag de activo
+
+### Soluciones Propuestas
+
+1. **Actualizar tipos TypeScript** para alinearlos con backend real
+2. **Crear adaptadores** para transformar datos backend → frontend
+3. **Usar Exercise Catalog** para normalizar datos (futuro)
+
+Ver `AUDITORIA_MODULO_EXERCISES.md` para más detalles y plan de migración.
 

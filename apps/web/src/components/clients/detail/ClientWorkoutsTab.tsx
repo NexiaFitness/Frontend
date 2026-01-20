@@ -341,6 +341,12 @@ interface TrainingPlanCardProps {
 }
 
 const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({ plan }) => {
+    const navigate = useNavigate();
+
+    const handleViewPlanDetails = () => {
+        navigate(`/dashboard/training-plans/${plan.id}`);
+    };
+
     const getStatusColor = (status: string) => {
         if (status === "active") return "bg-green-100 text-green-800";
         if (status === "completed") return "bg-blue-100 text-blue-800";
@@ -383,7 +389,7 @@ const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({ plan }) => {
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => alert(`Ver plan ${plan.id} - TODO`)}
+                    onClick={handleViewPlanDetails}
                 >
                     Ver Detalles
                 </Button>

@@ -253,11 +253,12 @@ export type { IStorage } from './storage/IStorage';
 // Utils
 export * from "./utils/charts/chartParsers";
 export * from "./utils/charts/chartAggregators";
+export * from "./utils/validations";
+export * from "./utils/calculations";
+export * from "./utils/sessionProgramming";
 
 // Components
 export * from "./components/SmartNavigation";
-export * from "./utils/validations";
-export * from "./utils/calculations";
 
 // Dashboard hooks
 export * from "./hooks/dashboard";

@@ -252,3 +252,36 @@ export interface TrainingSessionCreate {
     notes?: string | null;
 }
 
+// ========================================
+// FORM TYPES (Frontend only)
+// ========================================
+
+/**
+ * CreateSessionFormData - Datos del formulario para crear sesión
+ * Usado en componentes de UI para capturar datos del usuario
+ */
+export interface CreateSessionFormData {
+    sessionName: string;
+    sessionDate: string; // ISO date YYYY-MM-DD
+    sessionType: string;
+    plannedDuration: string; // String del input, puede estar vacío
+    plannedIntensity: string; // String del input, puede estar vacío
+    plannedVolume: string; // String del input, puede estar vacío
+    microcycleId: string; // String del select, debe convertirse a number
+    notes: string; // Puede estar vacío
+}
+
+/**
+ * CreateSessionFormErrors - Errores de validación del formulario
+ */
+export interface CreateSessionFormErrors {
+    sessionName?: string;
+    sessionDate?: string;
+    sessionType?: string;
+    microcycleId?: string;
+    plannedDuration?: string;
+    plannedIntensity?: string;
+    plannedVolume?: string;
+    notes?: string;
+}
+
