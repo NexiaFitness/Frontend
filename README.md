@@ -32,7 +32,9 @@ pnpm -F web dev
 ## Project Structure
 ```
 frontend/
+├── .env
 ├── .env.example
+├── .env.local
 ├── .github
 │   └── workflows
 │       └── deploy.yml
@@ -40,6 +42,12 @@ frontend/
 ├── .vercel
 │   ├── README.txt
 │   └── project.json
+├── ANALISIS_EXHAUSTIVO_FLUJO_PROGRAMACION_ENTRENAMIENTO.md
+├── ANALISIS_PATRON_UI_NEXIA.md
+├── ANALISIS_TECNICO_MODULO_METRICS.md
+├── ANALISIS_USO_HOOKS_TYPES_METRICS.md
+├── AUDITORIA_MODULO_METRICS.md
+├── DIAGNOSTICO_ERROR_REACT_PRODUCTION.md
 ├── LICENSE
 ├── README.md
 ├── docs
@@ -169,6 +177,7 @@ frontend/
 │   │   │   │   │   ├── CreateFatigueAlertModal.tsx # Modal para crear alertas de fatiga
 │   │   │   │   │   ├── FatigueAlertCard.tsx     # Tarjeta de alerta individual
 │   │   │   │   │   ├── FatigueAlertsSection.tsx # Sección completa de alertas
+│   │   │   │   │   ├── ResolveAlertModal.tsx    # Modal para resolver alertas
 │   │   │   │   │   └── index.ts
 │   │   │   │   ├── forms/                       # Client forms
 │   │   │   │   │   └── ClientEditForm.tsx       # Formulario de edición de cliente
@@ -297,25 +306,29 @@ frontend/
 │   │   │       │   ├── Button.tsx
 │   │   │       │   ├── index.ts
 │   │   │       │   └── LogoutButton.tsx
-│       │   │       ├── cards
-│       │   │       │   ├── ChartCard.tsx
-│       │   │       │   ├── CompactChartCard.tsx
-│       │   │       │   ├── MetricCard.tsx
-│       │   │       │   └── index.ts
+│   │   │       ├── avatar/
+│   │   │       │   ├── Avatar.tsx
+│   │   │       │   ├── ClientAvatarsGroup.tsx
+│   │   │       │   └── index.ts
+│   │   │       ├── cards/
+│   │   │       │   ├── ChartCard.tsx
+│   │   │       │   ├── CompactChartCard.tsx
+│   │   │       │   ├── MetricCard.tsx
+│   │   │       │   └── index.ts
 │   │   │       ├── charts/
 │   │   │       │   ├── ProgressLineChart.tsx
 │   │   │       │   └── RadarChart.tsx
-│       │   │       ├── feedback
-│       │   │       │   ├── Alert.tsx
-│       │   │       │   ├── LoadingSpinner.tsx
-│       │   │       │   ├── ServerErrorBanner.tsx
-│       │   │       │   ├── Toast.tsx
-│       │   │       │   ├── ToastContext.tsx
-│       │   │       │   ├── ToastProvider.tsx
-│       │   │       │   ├── __tests__
-│       │   │       │   │   └── ServerErrorBanner.test.tsx
-│       │   │       │   ├── index.ts
-│       │   │       │   └── useToast.ts
+│   │   │       ├── feedback/
+│   │   │       │   ├── Alert.tsx
+│   │   │       │   ├── LoadingSpinner.tsx
+│   │   │       │   ├── ServerErrorBanner.tsx
+│   │   │       │   ├── Toast.tsx
+│   │   │       │   ├── ToastContext.tsx
+│   │   │       │   ├── ToastProvider.tsx
+│   │   │       │   ├── __tests__/
+│   │   │       │   │   └── ServerErrorBanner.test.tsx
+│   │   │       │   ├── index.ts
+│   │   │       │   └── useToast.ts
 │   │   │       ├── forms/
 │   │   │       │   ├── __tests__/
 │   │   │       │   │   ├── FormSelect.test.tsx
@@ -331,14 +344,18 @@ frontend/
 │   │   │       │   │   ├── NexiaSideMenu.tsx
 │   │   │       │   │   └── PublicNavbar.tsx
 │   │   │       │   └── PublicLayout.tsx
-│   │   │       └── modals/
-│   │   │           ├── __tests__/
-│   │   │           │   └── BaseModal.test.tsx
-│   │   │           ├── BaseModal.tsx
+│   │   │       ├── modals/
+│   │   │       │   ├── __tests__/
+│   │   │       │   │   └── BaseModal.test.tsx
+│   │   │       │   ├── BaseModal.tsx
+│   │   │       │   └── index.ts
+│   │   │       └── pagination/
+│   │   │           ├── Pagination.tsx
 │   │   │           └── index.ts
-│   │   ├── mocks/                                # Mock data for development
-│   │   │   └── dashboard/
-│   │   │       └── (carpeta eliminada - desmockeado 2025-01-20)
+│   │   ├── hooks/
+│   │   │   ├── useReturnToOrigin.ts
+│   │   │   ├── useSubTabNavigation.ts
+│   │   │   └── useTabNavigation.ts
 │   │   ├── pages/
 │   │   │   ├── account/
 │   │   │   │   └── Account.tsx
@@ -384,12 +401,13 @@ frontend/
 │   │   │   ├── testing/                         # Testing pages
 │   │   │   │   ├── CreateTestResult.tsx         # Crear resultado de test
 │   │   │   │   └── index.ts
-│       │   │   └── trainingPlans
-│       │   │       ├── CreateTrainingPlan.tsx
-│       │   │       ├── TrainingPlanDetail.tsx
-│       │   │       ├── TrainingPlanEdit.tsx
-│       │   │       ├── TrainingPlansPage.tsx
-│       │   │       └── index.ts
+│   │   │   └── trainingPlans/
+│   │   │       ├── CreateTrainingPlan.tsx
+│   │   │       ├── CreateTrainingPlanTemplate.tsx
+│   │   │       ├── TrainingPlanDetail.tsx
+│   │   │       ├── TrainingPlanEdit.tsx
+│   │   │       ├── TrainingPlansPage.tsx
+│   │   │       └── index.ts
 │   │   ├── storage/
 │   │   │   └── webStorage.ts
 │   │   ├── test-utils/
@@ -439,37 +457,53 @@ frontend/
 │       │   │   └── utils
 │       │   │       ├── msw.ts
 │       │   │       └── store.ts
-│       │   ├── utils
-│       │   │   ├── backgrounds.ts
-│       │   │   ├── buttonStyles.ts
-│       │   │   └── typography.ts
-│       │   └── vite-env.d.ts
-│       ├── tailwind.config.js
-│       ├── tsconfig.json
-│       ├── tsconfig.vitest.json
-│       ├── vite.config.ts
-│       └── vitest.config.ts
+│   │   ├── utils/
+│   │   │   ├── backgrounds.ts
+│   │   │   ├── buttonStyles.ts
+│   │   │   ├── exercises/
+│   │   │   │   ├── index.ts
+│   │   │   │   └── translations.ts
+│   │   │   └── typography.ts
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   ├── NexiaFull.code-workspace
+│   │   └── vite-env.d.ts
+│   ├── .env.development
+│   ├── .env.production
+│   ├── tailwind.config.js
+│   ├── tsconfig.json
+│   ├── tsconfig.vitest.json
+│   ├── vite.config.ts
+│   └── vitest.config.ts
+├── docs/
+│   ├── injuries/
+│   │   └── README.md
+│   └── metrics/
+│       └── README.md
 ├── openapi_local.json
 ├── openapi_produccion.json
 ├── package.json
 ├── packages
 │   └── shared
 │       ├── package.json
-│       ├── src
-│       │   ├── api
-│       │   │   ├── accountApi.ts
-│       │   │   ├── authApi.ts
-│       │   │   ├── baseApi.ts
-│       │   │   ├── billingApi.ts
-│       │   │   ├── clientsApi.ts
-│       │   │   ├── exercisesApi.ts
-│       │   │   ├── fatigueApi.ts
-│       │   │   ├── index.ts
-│       │   │   ├── reportsApi.ts
-│       │   │   ├── schedulingApi.ts
-│       │   │   ├── sessionProgrammingApi.ts
-│       │   │   ├── trainerApi.ts
-│       │   │   └── trainingPlansApi.ts
+│   ├── src
+│   │   ├── api/
+│   │   │   ├── accountApi.ts
+│   │   │   ├── authApi.ts
+│   │   │   ├── baseApi.ts
+│   │   │   ├── billingApi.ts
+│   │   │   ├── clientsApi.ts
+│   │   │   ├── exercisesApi.ts
+│   │   │   ├── fatigueApi.ts
+│   │   │   ├── index.ts
+│   │   │   ├── injuriesApi.ts
+│   │   │   ├── metricsApi.ts
+│   │   │   ├── metricsApiV2.ts
+│   │   │   ├── reportsApi.ts
+│   │   │   ├── schedulingApi.ts
+│   │   │   ├── sessionProgrammingApi.ts
+│   │   │   ├── trainerApi.ts
+│   │   │   └── trainingPlansApi.ts
 │       │   ├── components
 │       │   │   └── SmartNavigation.tsx
 │       │   ├── config
@@ -478,115 +512,144 @@ frontend/
 │       │   │   └── navigationConfig.ts
 │       │   ├── examples
 │       │   │   └── RegisterFormExample.tsx
-│       │   ├── hooks
-│       │   │   ├── clients
-│       │   │   │   ├── useClientDetail.ts
-│       │   │   │   ├── useClientFatigue.ts
-│       │   │   │   ├── useClientForm.ts
-│       │   │   │   ├── useClientOnboarding.ts
-│       │   │   │   ├── useClientProgress.ts
-│       │   │   │   ├── useClientStats.ts
-│       │   │   │   ├── useClientTests.ts
-│       │   │   │   ├── useCoherence.ts
-│       │   │   │   ├── useCreateClientProgress.ts
-│       │   │   │   ├── useCreateTestResult.ts
-│       │   │   │   ├── useFatigueAlerts.ts
-│       │   │   │   ├── useUpdateClient.ts
-│       │   │   │   └── useUpdateClientProgress.ts
-│       │   │   ├── dashboard
-│       │   │   │   ├── index.ts
-│       │   │   │   ├── useBillingStats.ts
-│       │   │   │   ├── useClientProgressCategories.ts
-│       │   │   │   └── useKPIs.ts
-│       │   │   ├── exercises
-│       │   │   │   ├── index.ts
-│       │   │   │   └── useExercises.ts
-│       │   │   ├── index.ts
-│       │   │   ├── modals
-│       │   │   │   ├── useBillingInfoModal.ts
-│       │   │   │   ├── useCompleteProfileModal.ts
-│       │   │   │   ├── useEmailVerificationGuard.ts
-│       │   │   │   └── useEmailVerificationModal.ts
-│       │   │   ├── reports
-│       │   │   │   ├── index.ts
-│       │   │   │   └── useGenerateReport.ts
-│       │   │   ├── scheduling
-│       │   │   │   ├── index.ts
-│       │   │   │   ├── useDeleteScheduledSession.ts
-│       │   │   │   ├── useGetScheduledSessions.ts
-│       │   │   │   ├── useScheduleSession.ts
-│       │   │   │   ├── useUpcomingScheduledSession.ts
-│       │   │   │   └── useUpdateScheduledSession.ts
-│       │   │   ├── sessionProgramming
-│       │   │   │   ├── index.ts
-│       │   │   │   ├── useCreateSession.ts
-│       │   │   │   ├── useCreateSessionFromTemplate.ts
-│       │   │   │   └── useCreateTemplate.ts
-│       │   │   ├── training
-│       │   │   │   ├── index.ts
-│       │   │   │   ├── useAssignTemplate.ts
-│       │   │   │   ├── useClientMicrocycles.ts
-│       │   │   │   ├── useConvertPlanToTemplate.ts
-│       │   │   │   ├── useMilestones.ts
-│       │   │   │   ├── useTrainingPlanTemplates.ts
-│       │   │   │   └── useTrainingPlans.ts
-│       │   │   ├── useAuth.ts
-│       │   │   ├── useAuthForm.ts
-│       │   │   ├── useCompleteProfile.ts
-│       │   │   ├── useLogout.ts
-│       │   │   ├── useNavigation.ts
-│       │   │   ├── usePublicNavigation.ts
-│       │   │   ├── useRoleGuard.ts
-│       │   │   ├── useRoleNavigation.ts
-│       │   │   ├── useSmartRouting.ts
-│       │   │   ├── useTrainerProfile.ts
-│       │   │   └── useUserRole.ts
-│       │   ├── index.ts
-│       │   ├── services
-│       │   │   └── authService.ts
-│       │   ├── storage
-│       │   │   └── IStorage.ts
-│       │   ├── store
-│       │   │   ├── authSlice.ts
-│       │   │   ├── clientsSlice.ts
-│       │   │   ├── index.ts
-│       │   │   └── trainingPlansSlice.ts
-│       │   ├── types
-│       │   │   ├── account.ts
-│       │   │   ├── auth.ts
-│       │   │   ├── charts.ts
-│       │   │   ├── client.ts
-│       │   │   ├── clientOnboarding.ts
-│       │   │   ├── clientStats.ts
-│       │   │   ├── coherence.ts
-│       │   │   ├── dashboard.ts
-│       │   │   ├── exercise.ts
-│       │   │   ├── forms.ts
-│       │   │   ├── progress.ts
-│       │   │   ├── reports.ts
-│       │   │   ├── scheduling.ts
-│       │   │   ├── sessionProgramming.ts
-│       │   │   ├── testing.ts
-│       │   │   ├── trainer.ts
-│       │   │   ├── training.ts
-│       │   │   └── trainingAnalytics.ts
-│       │   └── utils
-│       │       ├── calculations
-│       │       │   ├── clients
-│       │       │   │   ├── calculations.ts
-│       │       │   │   └── index.ts
-│       │       │   └── index.ts
-│       │       ├── charts
-│       │       │   ├── chartAggregators.ts
-│       │       │   └── chartParsers.ts
-│       │       ├── roles.ts
-│       │       └── validations
-│       │           ├── auth
-│       │           │   └── validation.ts
-│       │           ├── clients
-│       │           │   └── clientValidation.ts
-│       │           └── index.ts
-│       └── tsconfig.json
+│   │   ├── hooks/
+│   │   │   ├── clients/
+│   │   │   │   ├── useClientDetail.ts
+│   │   │   │   ├── useClientFatigue.ts
+│   │   │   │   ├── useClientForm.ts
+│   │   │   │   ├── useClientOnboarding.ts
+│   │   │   │   ├── useClientPreview.ts
+│   │   │   │   ├── useClientProgress.ts
+│   │   │   │   ├── useClientStats.ts
+│   │   │   │   ├── useClientTests.ts
+│   │   │   │   ├── useCoherence.ts
+│   │   │   │   ├── useCreateClientProgress.ts
+│   │   │   │   ├── useCreateTestResult.ts
+│   │   │   │   ├── useFatigueAlerts.ts
+│   │   │   │   ├── useUpdateClient.ts
+│   │   │   │   └── useUpdateClientProgress.ts
+│   │   │   ├── common/
+│   │   │   │   ├── index.ts
+│   │   │   │   └── usePagination.ts
+│   │   │   ├── dashboard/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useBillingStats.ts
+│   │   │   │   ├── useClientProgressCategories.ts
+│   │   │   │   ├── useDashboardAlerts.ts
+│   │   │   │   └── useKPIs.ts
+│   │   │   ├── exercises/
+│   │   │   │   ├── index.ts
+│   │   │   │   └── useExercises.ts
+│   │   │   ├── injuries/
+│   │   │   │   ├── index.ts
+│   │   │   │   └── useClientInjuries.ts
+│   │   │   ├── index.ts
+│   │   │   ├── metrics/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useCalculateCID.ts
+│   │   │   │   ├── useClientSessionsByDateRange.ts
+│   │   │   │   ├── useDailyMetricsV2.ts
+│   │   │   │   ├── useMetricsAlerts.ts
+│   │   │   │   ├── useMetricsAlertsV2.ts
+│   │   │   │   ├── useMonthlyMetricsV2.ts
+│   │   │   │   ├── useWeeklyMetrics.ts
+│   │   │   │   └── useWeeklyMetricsV2.ts
+│   │   │   ├── modals/
+│   │   │   │   ├── useBillingInfoModal.ts
+│   │   │   │   ├── useCompleteProfileModal.ts
+│   │   │   │   ├── useEmailVerificationGuard.ts
+│   │   │   │   └── useEmailVerificationModal.ts
+│   │   │   ├── reports/
+│   │   │   │   ├── index.ts
+│   │   │   │   └── useGenerateReport.ts
+│   │   │   ├── scheduling/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useDeleteScheduledSession.ts
+│   │   │   │   ├── useGetScheduledSessions.ts
+│   │   │   │   ├── useScheduleSession.ts
+│   │   │   │   ├── useUpcomingScheduledSession.ts
+│   │   │   │   └── useUpdateScheduledSession.ts
+│   │   │   ├── sessionProgramming/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useCreateSession.ts
+│   │   │   │   ├── useCreateSessionFromTemplate.ts
+│   │   │   │   └── useCreateTemplate.ts
+│   │   │   ├── training/
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── useAssignTemplate.ts
+│   │   │   │   ├── useClientMicrocycles.ts
+│   │   │   │   ├── useConvertPlanToTemplate.ts
+│   │   │   │   ├── useMilestones.ts
+│   │   │   │   ├── useTrainingPlanTemplates.ts
+│   │   │   │   └── useTrainingPlans.ts
+│   │   │   ├── useAuth.ts
+│   │   │   ├── useAuthForm.ts
+│   │   │   ├── useCompleteProfile.ts
+│   │   │   ├── useLogout.ts
+│   │   │   ├── useNavigation.ts
+│   │   │   ├── usePublicNavigation.ts
+│   │   │   ├── useRoleGuard.ts
+│   │   │   ├── useRoleNavigation.ts
+│   │   │   ├── useSmartRouting.ts
+│   │   │   ├── useTrainerProfile.ts
+│   │   │   └── useUserRole.ts
+│   │   ├── index.ts
+│   │   ├── mocks/
+│   │   ├── services/
+│   │   │   └── authService.ts
+│   │   ├── storage/
+│   │   │   └── IStorage.ts
+│   │   ├── store/
+│   │   │   ├── authSlice.ts
+│   │   │   ├── clientsSlice.ts
+│   │   │   ├── index.ts
+│   │   │   └── trainingPlansSlice.ts
+│   │   ├── types/
+│   │   │   ├── account.ts
+│   │   │   ├── auth.ts
+│   │   │   ├── charts.ts
+│   │   │   ├── client.ts
+│   │   │   ├── clientOnboarding.ts
+│   │   │   ├── clientStats.ts
+│   │   │   ├── coherence.ts
+│   │   │   ├── dashboard.ts
+│   │   │   ├── exercise.ts
+│   │   │   ├── forms.ts
+│   │   │   ├── index.ts
+│   │   │   ├── injuries.ts
+│   │   │   ├── metrics.ts
+│   │   │   ├── metricsV2.ts
+│   │   │   ├── progress.ts
+│   │   │   ├── reports.ts
+│   │   │   ├── scheduling.ts
+│   │   │   ├── sessionProgramming.ts
+│   │   │   ├── testing.ts
+│   │   │   ├── trainer.ts
+│   │   │   ├── training.ts
+│   │   │   └── trainingAnalytics.ts
+│   │   └── utils/
+│   │       ├── calculations/
+│   │       │   ├── clients/
+│   │       │   │   ├── calculations.ts
+│   │       │   │   └── index.ts
+│   │       │   └── index.ts
+│   │       ├── charts/
+│   │       │   ├── chartAggregators.ts
+│   │       │   └── chartParsers.ts
+│   │       ├── metrics/
+│   │       │   ├── README.md
+│   │       │   └── transformSessionsToCIDCalcIn.ts
+│   │       ├── roles.ts
+│   │       ├── sessionProgramming/
+│   │       │   ├── buildTrainingSessionCreate.ts
+│   │       │   └── index.ts
+│   │       └── validations/
+│   │           ├── auth/
+│   │           │   └── validation.ts
+│   │           ├── clients/
+│   │           │   └── clientValidation.ts
+│   │           └── index.ts
+│   └── tsconfig.json
 ├── pnpm-lock.yaml
 ├── pnpm-workspace.yaml
 ├── react-vendor-production.js
@@ -599,8 +662,12 @@ frontend/
 ```bash
 # Development
 pnpm -F web dev              # Start dev server
-Objetivos
 pnpm -F web preview          # Preview build
+
+# Building
+pnpm build                   # Build all packages (shared + web)
+pnpm -F shared build         # Build shared package only
+pnpm -F web build            # Build web app only
 
 # Testing
 pnpm -F web test             # Single run
@@ -617,7 +684,7 @@ pnpm -F shared add <pkg>     # Add to shared package
 pnpm install                 # Install all deps
 
 # After shared changes
-pnpm -F shared build         # Required step
+pnpm -F shared build         # Required step before using in web
 ```
 
 ## Architecture
