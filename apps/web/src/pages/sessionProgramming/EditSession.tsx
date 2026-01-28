@@ -12,7 +12,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
@@ -22,12 +21,10 @@ import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
-import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { 
     useGetTrainingSessionQuery, 
     useUpdateTrainingSessionMutation 
 } from "@nexia/shared/api/trainingSessionsApi";
-import type { RootState } from "@nexia/shared/store";
 import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
 
 const SESSION_TYPES = [
@@ -43,13 +40,7 @@ export const EditSession: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
-    const { user } = useSelector((state: RootState) => state.auth);
     const { showSuccess, showError } = useToast();
-
-    // Obtener perfil del trainer
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
-        skip: !user || user.role !== "trainer",
-    });
 
     // Cargar sesión
     const { 

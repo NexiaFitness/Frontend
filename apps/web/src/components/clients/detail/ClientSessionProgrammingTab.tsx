@@ -21,7 +21,8 @@ import { Alert } from "@/components/ui/feedback/Alert";
 import { Button } from "@/components/ui/buttons";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { SessionCalendar } from "@/components/sessionProgramming";
-import type { TrainingSession, SessionTemplate } from "@nexia/shared";
+import type { TrainingSession, SessionTemplate, PlanTrainingSession } from "@nexia/shared";
+import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
 
 interface ClientSessionProgrammingTabProps {
     clientId: number;
@@ -87,8 +88,13 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
         navigate("/dashboard/session-programming/create-template");
     };
 
-    const handleDateClick = (_date: Date) => {
-        // TODO: Mostrar modal con sesiones del día o crear nueva
+    const handleDateClick = (_date: Date, sessionsForDay: (PlanTrainingSession | LegacyTrainingSession)[]) => {
+        // Si hay sesiones en el día, navegar a la primera sesión
+        if (sessionsForDay.length > 0 && sessionsForDay[0]?.id) {
+            navigate(`/dashboard/session-programming/sessions/${sessionsForDay[0].id}`);
+        }
+        // Si no hay sesiones, podría abrir modal para crear una nueva sesión en esa fecha
+        // Por ahora, solo navegamos si hay sesiones existentes
     };
 
     if (isLoading) {

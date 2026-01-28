@@ -64,6 +64,24 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * GET /training-sessions/{session_id}/exercises
+         * Obtener ejercicios asociados a una sesión
+         */
+        getSessionExercises: builder.query<SessionExercise[], number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/exercises`,
+            providesTags: (result, _error, sessionId) => {
+                const tags: Array<{ type: 'SessionExercise' | 'TrainingSession'; id: string | number }> = [
+                    { type: 'TrainingSession', id: sessionId },
+                    { type: 'SessionExercise', id: 'LIST' },
+                ];
+                if (result) {
+                    tags.push(...result.map(({ id }) => ({ type: 'SessionExercise' as const, id })));
+                }
+                return tags;
+            },
+        }),
+
+        /**
          * POST /training-sessions/
          * Crear nueva sesión de entrenamiento
          */
@@ -176,6 +194,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
 export const {
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
+    useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,

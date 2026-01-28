@@ -3,39 +3,47 @@
  *
  * Contexto:
  * - Header con info básica del plan y actions principales
- * - Patrón similar a ClientHeader
- * - Actions: Edit Plan, Delete Plan, Add Macrocycle
+ * - Alineado visualmente con ClientHeader (Figma)
+ * - Proporciona contexto del atleta y link de retorno
+ * - Incluye breadcrumbs integrados para evitar filtraciones del fondo azul del layout
  *
  * Responsabilidades:
  * - Mostrar info básica del plan (nombre, fechas, goal, status)
- * - Cliente asignado (si aplica)
- * - Botones de acción rápida
+ * - Vínculo al perfil del cliente (rompe el bucle de navegación)
+ * - Botones de acción rápida (Editar/Eliminar)
+ * - Navegación jerárquica integrada
  *
  * @author Frontend Team
  * @since v3.3.0
+ * @updated v6.1.0 - Eliminación de duplicidad: métricas movidas al header. Mejora de intuitividad en link de cliente.
  */
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import type { TrainingPlan } from "@nexia/shared/types/training";
 import { useDeleteTrainingPlanMutation } from "@nexia/shared/api/trainingPlansApi";
 import { Button } from "@/components/ui/buttons";
+import { Avatar } from "@/components/ui/avatar";
+import { TYPOGRAPHY } from "@/utils/typography";
+import { DeleteTrainingPlanModal } from "./DeleteTrainingPlanModal";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 interface TrainingPlanHeaderProps {
     plan: TrainingPlan;
-    clientName?: string; // Nombre del cliente asignado (si aplica)
+    clientName?: string;
+    breadcrumbItems: BreadcrumbItem[];
     onRefresh: () => void;
-    onAddMacrocycle: () => void;
 }
 
 export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     plan,
     clientName,
+    breadcrumbItems,
     onRefresh: _onRefresh,
-    onAddMacrocycle,
 }) => {
     const navigate = useNavigate();
     const [deletePlan, { isLoading: isDeleting }] = useDeleteTrainingPlanMutation();
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
     // Formatear fechas
     const formatDate = (dateStr: string): string => {
@@ -88,146 +96,139 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
         navigate(`/dashboard/training-plans/${plan.id}/edit`);
     };
 
-    const handleDelete = async () => {
-        if (!window.confirm(`¿Estás seguro de eliminar el plan "${plan.name}"?`)) return;
-
+    const handleDeleteConfirm = async () => {
         try {
             await deletePlan(plan.id).unwrap();
-            navigate("/dashboard/training-plans");
+            if (plan.client_id) {
+                navigate(`/dashboard/clients/${plan.client_id}?tab=workouts`);
+            } else {
+                navigate("/dashboard/training-plans");
+            }
         } catch (error) {
             console.error("Error deleting plan:", error);
-            alert("Error al eliminar el plan. Intenta de nuevo.");
+        } finally {
+            setIsDeleteModalOpen(false);
         }
     };
 
     return (
         <div className="bg-white border-b border-gray-200">
-            <div className="px-4 sm:px-6 lg:px-8 pt-10 pb-6">
-                {/* Fila 1: Icono + Nombre + Métricas + Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
-                    {/* Left: Icono + Info */}
-                    <div className="flex items-start gap-4 flex-1">
-                        {/* Plan Icon */}
-                        <div className="flex-shrink-0">
-                            <div 
-                                className="w-16 h-16 rounded-full flex items-center justify-center text-white font-bold text-xl shadow-md"
-                                style={{
-                                    background: 'linear-gradient(135deg, #4A67B3 0%, #3a5db3 50%, #2d4a9e 100%)',
-                                }}
-                            >
-                                <svg
-                                    className="w-8 h-8"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                            </div>
-                        </div>
+            {/* Breadcrumbs integrados al fondo blanco para evitar franja azul */}
+            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
+                <Breadcrumbs items={breadcrumbItems} />
+            </div>
 
-                        {/* Plan Info */}
-                        <div className="flex-1">
-                            {/* Nombre */}
-                            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
+            <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">
+                {/* Fila 1: Nombre + Métricas + Actions */}
+                <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
+                    <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                            <h1 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
                                 {plan.name}
                             </h1>
-
-                            {/* Metrics Grid - Similar a ClientHeader */}
-                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-1 text-sm">
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Objetivo</span>
-                                    <p className="text-gray-900 font-medium">{plan.goal}</p>
-                                </div>
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Duración</span>
-                                    <p className="text-gray-900 font-medium">{getDuration()}</p>
-                                </div>
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Inicio</span>
-                                    <p className="text-gray-900 font-medium">{formatDate(plan.start_date)}</p>
-                                </div>
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Fin</span>
-                                    <p className="text-gray-900 font-medium">{formatDate(plan.end_date)}</p>
-                                </div>
-                                {clientName ? (
-                                    <div>
-                                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Cliente</span>
-                                        <p className="text-gray-900 font-medium">{clientName}</p>
-                                    </div>
-                                ) : (
-                                    <div>
-                                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Estado</span>
-                                        <div className="mt-0.5">
-                                            {getStatusBadge()}
-                                        </div>
-                                    </div>
-                                )}
+                            {getStatusBadge()}
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
+                            <div>
+                                <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Inicio</span>
+                                <p className="text-gray-900 font-medium">{formatDate(plan.start_date)}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Fin</span>
+                                <p className="text-gray-900 font-medium">{formatDate(plan.end_date)}</p>
+                            </div>
+                            <div>
+                                <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Duración Total</span>
+                                <p className="text-gray-900 font-medium">{getDuration()}</p>
                             </div>
                         </div>
                     </div>
 
-                    {/* Right: Actions - Botones en columna */}
-                    <div className="flex flex-col gap-2">
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={onAddMacrocycle}
-                        >
-                            + Añadir Macrociclo
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleEdit}
-                        >
+                    {/* Actions */}
+                    <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                        <Button variant="outline" size="sm" onClick={handleEdit}>
                             Editar Plan
                         </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleDelete}
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={() => setIsDeleteModalOpen(true)}
                             disabled={isDeleting}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                         >
-                            {isDeleting ? "Eliminando..." : "Eliminar Plan"}
+                            Eliminar Plan
                         </Button>
                     </div>
                 </div>
 
-                {/* Línea azul debajo de Fila 1 */}
+                {/* Línea azul separadora */}
                 <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
 
-                {/* Fila 2: Estado y Descripción */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
-                    {/* Estado */}
-                    <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Estado</span>
-                        <div className="mt-0.5">
-                            {getStatusBadge()}
+                {/* Fila 2: Contexto del Atleta y Objetivo */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
+                    {/* Atleta - EL VÍNCULO DE RETORNO MEJORADO */}
+                    {plan.client_id && (
+                        <div className="flex items-center gap-3">
+                            <Link 
+                                to={`/dashboard/clients/${plan.client_id}`}
+                                className="flex items-center gap-3 group"
+                            >
+                                <Avatar 
+                                    nombre={clientName?.split(' ')[0]} 
+                                    apellidos={clientName?.split(' ').slice(1).join(' ')} 
+                                    size="sm" 
+                                    className="group-hover:ring-2 group-hover:ring-[#4A67B3] transition-all"
+                                />
+                                <div>
+                                    <span className="text-xs uppercase tracking-wide block" style={{ color: '#4A67B3' }}>Atleta</span>
+                                    <span className="text-blue-600 group-hover:text-blue-800 font-bold group-hover:underline transition-colors">
+                                        {clientName || "Ver Perfil"}
+                                    </span>
+                                </div>
+                            </Link>
                         </div>
+                    )}
+
+                    <div>
+                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Objetivo del Plan</span>
+                        <p className="text-gray-900 font-medium">{plan.goal}</p>
                     </div>
 
-                    {/* Descripción (si existe) */}
-                    {plan.description && (
-                        <div className="md:col-span-2 lg:col-span-3">
-                            <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Descripción</span>
-                            <p className="text-gray-900 font-medium text-sm mt-0.5">{plan.description}</p>
+                    {plan.tags && plan.tags.length > 0 && (
+                        <div className="lg:col-span-2">
+                            <span className="text-xs uppercase tracking-wide block mb-1" style={{ color: '#4A67B3' }}>Etiquetas</span>
+                            <div className="flex flex-wrap gap-1">
+                                {plan.tags.map((tag, i) => (
+                                    <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
+                                        {tag}
+                                    </span>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Línea azul debajo de Fila 2 (si hay descripción) */}
+                {/* Fila 3: Descripción (si existe) */}
                 {plan.description && (
-                    <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                    <>
+                        <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                        <div>
+                            <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Descripción / Notas del Entrenador</span>
+                            <p className="text-gray-700 text-sm mt-1 leading-relaxed">{plan.description}</p>
+                        </div>
+                    </>
                 )}
             </div>
+
+            {/* Modal de confirmación de eliminación */}
+            <DeleteTrainingPlanModal
+                isOpen={isDeleteModalOpen}
+                onClose={() => setIsDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                plan={plan}
+                isLoading={isDeleting}
+            />
         </div>
     );
 };

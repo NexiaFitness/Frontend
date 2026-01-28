@@ -79,11 +79,8 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
         }
     };
 
-    const handleViewDetail = (_session: PlanTrainingSession | { id: number }) => {
-        // TODO: Navegar a detalle de sesión cuando se implemente
-        // Por ahora, expandir inline o mostrar información adicional
-        // eslint-disable-next-line no-console
-        console.log('Ver detalle de sesión:', _session);
+    const handleViewDetail = (session: PlanTrainingSession | { id: number }) => {
+        navigate(`/dashboard/session-programming/sessions/${session.id}`);
     };
 
     // Determinar qué sesiones mostrar según filtro

@@ -57,7 +57,7 @@ import { SchedulingPage } from "./pages/scheduling/SchedulingPage";
 import { ScheduleSession } from "./pages/scheduling/ScheduleSession";
 
 // Session Programming (trainers only)
-import { CreateSessionFromTemplate, CreateSession, EditSession, CreateTemplate } from "./pages/sessionProgramming";
+import { CreateSessionFromTemplate, CreateSession, EditSession, CreateTemplate, SessionDetail } from "./pages/sessionProgramming";
 
 // Testing (trainers only)
 import { CreateTestResult } from "./pages/testing";
@@ -380,6 +380,18 @@ function App() {
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
               <EditSession />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Session Detail */}
+      <Route
+        path="/dashboard/session-programming/sessions/:id"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+              <SessionDetail />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }

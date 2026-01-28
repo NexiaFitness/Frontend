@@ -23,7 +23,7 @@ export interface SessionCalendarProps {
     sessions: SessionCalendarSession[];
     currentMonth: Date;
     onMonthChange: (date: Date) => void;
-    onDateClick?: (date: Date) => void;
+    onDateClick?: (date: Date, sessionsForDay: SessionCalendarSession[]) => void;
 }
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -112,7 +112,8 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     const handleDateClick = (day: number) => {
         if (onDateClick) {
             const date = new Date(year, month, day);
-            onDateClick(date);
+            const sessionsForDay = sessionsByDay.get(day) || [];
+            onDateClick(date, sessionsForDay);
         }
     };
 

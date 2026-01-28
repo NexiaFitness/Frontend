@@ -4,22 +4,10 @@
  * Contexto:
  * - Header consistente en TODOS los tabs del cliente
  * - Layout basado en Figma Profile Page (Laura Refoyo López)
- * - Foto + Nombre + Métricas básicas en fila superior
- * - Objetivo + Experience + Training Frequency + Session Duration en fila 2
- * - Notas (observaciones) en fila 3 si existen
- * - Botones: Edit Profile, Anthropometric Data
- *
- * Cambios v5.1.0:
- * - Reorganización completa del layout según Figma
- * - Métricas: Age, Weight, Height, BMI, Joined
- * - Segunda fila: Objective, Experience Level, Training Frequency, Session Durations
- * - Tercera fila: Notes (solo si client.observaciones existe)
- * - Eliminados botones: New Training Plan, Edit Training Plan, New Session
- * - Simplificado: Solo Edit Profile y Anthropometric Data
  *
  * @author Frontend Team
  * @since v3.1.0
- * @updated v5.1.0 - Alineación total con Figma
+ * @updated v6.0.0 - Integración de Breadcrumbs para navegación profesional.
  */
 
 import React from "react";
@@ -27,17 +15,20 @@ import type { Client } from "@nexia/shared/types/client";
 import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 interface ClientHeaderProps {
     client: Client;
     onEditProfile?: () => void;
     onAnthropometricData?: () => void;
+    breadcrumbItems?: BreadcrumbItem[];
 }
 
 export const ClientHeader: React.FC<ClientHeaderProps> = ({ 
     client, 
     onEditProfile,
     onAnthropometricData,
+    breadcrumbItems,
 }) => {
     // Calcular edad desde birthdate si no está disponible directamente
     const calculateAge = (birthdate: string | undefined | null): number | null => {
@@ -72,14 +63,12 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     // Traducir objetivo de entrenamiento
     const translateObjective = (objetivo?: string | null): string => {
         if (!objetivo) return "No definido";
-        // Mantener el valor original si ya está en español
         return objetivo;
     };
 
     // Traducir experiencia
     const translateExperience = (exp?: string | null): string => {
         if (!exp) return "No especificada";
-        // Mantener el valor original si ya está en español
         return exp;
     };
 
@@ -107,7 +96,14 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
 
     return (
         <div className="bg-white border-b border-gray-200">
-            <div className="px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+            {/* Breadcrumbs integrados */}
+            {breadcrumbItems && breadcrumbItems.length > 0 && (
+                <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
+                    <Breadcrumbs items={breadcrumbItems} />
+                </div>
+            )}
+
+            <div className={`px-4 sm:px-6 lg:px-8 pb-6 ${breadcrumbItems ? 'pt-4' : 'pt-10'}`}>
                 {/* Fila 1: Foto + Nombre + Métricas + Actions */}
                 <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
                     {/* Left: Foto + Info */}
@@ -238,7 +234,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                 {/* Línea azul debajo de Fila 2 */}
                 <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
 
-                {/* Fila 3: Notas (onboarding + observaciones) */}
+                {/* Fila 3: Notas */}
                 {(client.notes_1 || client.notes_2 || client.notes_3 || client.observaciones || onEditProfile) && (
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-3">
@@ -255,42 +251,26 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         <div className="space-y-2">
                             {client.notes_1 && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">
-                                        Nota 1
-                                    </span>
-                                    <p className="text-gray-900 font-medium text-sm">
-                                        {client.notes_1}
-                                    </p>
+                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Nota 1</span>
+                                    <p className="text-gray-900 font-medium text-sm">{client.notes_1}</p>
                                 </div>
                             )}
                             {client.notes_2 && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">
-                                        Nota 2
-                                    </span>
-                                    <p className="text-gray-900 font-medium text-sm">
-                                        {client.notes_2}
-                                    </p>
+                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Nota 2</span>
+                                    <p className="text-gray-900 font-medium text-sm">{client.notes_2}</p>
                                 </div>
                             )}
                             {client.notes_3 && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">
-                                        Nota 3
-                                    </span>
-                                    <p className="text-gray-900 font-medium text-sm">
-                                        {client.notes_3}
-                                    </p>
+                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Nota 3</span>
+                                    <p className="text-gray-900 font-medium text-sm">{client.notes_3}</p>
                                 </div>
                             )}
                             {client.observaciones && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">
-                                        Observaciones
-                                    </span>
-                                    <p className="text-gray-900 font-medium text-sm">
-                                        {client.observaciones}
-                                    </p>
+                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Observaciones</span>
+                                    <p className="text-gray-900 font-medium text-sm">{client.observaciones}</p>
                                 </div>
                             )}
                         </div>

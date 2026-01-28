@@ -7,14 +7,9 @@
  * - Layout: Header + Tabs + Content
  * - Diseño basado en Figma Profile Page V2
  *
- * Responsabilidades:
- * - Cargar datos del cliente con useClientDetail
- * - Gestionar navegación entre tabs
- * - Mostrar loading/error states
- * - Actions: Edit, New Training Plan, New Session
- *
  * @author Frontend Team
  * @since v3.1.0
+ * @updated v6.0.0 - Integración de Breadcrumbs jerárquicos.
  */
 
 import React, { Suspense, lazy } from "react";
@@ -100,6 +95,16 @@ export const ClientDetail: React.FC = () => {
         { label: "Mi cuenta", path: "/dashboard/account" },
     ];
 
+    // Breadcrumbs jerárquicos
+    const breadcrumbItems = [
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Clientes", path: "/dashboard/clients" },
+        { 
+            label: client ? `${client.nombre} ${client.apellidos}` : "Detalle de Cliente", 
+            active: true 
+        },
+    ];
+
     // Validación de ID
     if (!id || isNaN(clientId)) {
         return (
@@ -134,7 +139,6 @@ export const ClientDetail: React.FC = () => {
 
     // Error state
     if (hasError || !client) {
-        // Detectar si es error 403 (Forbidden) - acceso denegado
         const isForbiddenError = clientError && 
             typeof clientError === "object" && 
             clientError !== null &&
@@ -158,25 +162,15 @@ export const ClientDetail: React.FC = () => {
                         <Alert variant="error">
                             {isForbiddenError ? (
                                 <>
-                                    <p className="font-semibold mb-2">
-                                        No tienes acceso a este cliente
-                                    </p>
-                                    <p className="text-sm">
-                                        Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
-                                    </p>
+                                    <p className="font-semibold mb-2">No tienes acceso a este cliente</p>
+                                    <p className="text-sm">Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.</p>
                                 </>
                             ) : (
                                 <>
-                                    <p className="font-semibold mb-2">
-                                        Error al cargar los datos del cliente
-                                    </p>
-                                    <p className="text-sm mb-2">
-                                        Por favor, intenta de nuevo.
-                                    </p>
+                                    <p className="font-semibold mb-2">Error al cargar los datos del cliente</p>
+                                    <p className="text-sm mb-2">Por favor, intenta de nuevo.</p>
                                     {errorMessage && (
-                                        <div className="mt-2 text-sm text-red-800 font-mono text-xs">
-                                            {errorMessage}
-                                        </div>
+                                        <div className="mt-2 text-sm text-red-800 font-mono text-xs">{errorMessage}</div>
                                     )}
                                 </>
                             )}
@@ -249,42 +243,31 @@ export const ClientDetail: React.FC = () => {
 
     return (
         <>
-            {/* Navbar móvil/tablet */}
             <DashboardNavbar menuItems={menuItems} />
-
-            {/* Sidebar escritorio */}
             <TrainerSideMenu />
 
             <DashboardLayout>
                 <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
-                    {/* Header con foto, nombre y actions */}
+                    {/* Header con breadcrumbs integrados */}
                     <ClientHeader 
                         client={client} 
                         onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                         onAnthropometricData={() => setActiveTab("progress")}
+                        breadcrumbItems={breadcrumbItems}
                     />
 
-                    {/* Tabs Navigation - Separado del header */}
+                    {/* Tabs Navigation */}
                     <div className="mt-6 px-4 sm:px-6 lg:px-8">
                         <div className="bg-white rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
                             <nav 
                                 className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#4A67B3]/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
                                 aria-label="Tabs" 
-                                style={{ 
-                                    WebkitOverflowScrolling: 'touch',
-                                }}
+                                style={{ WebkitOverflowScrolling: 'touch' }}
                             >
                                 <style>{`
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar {
-                                        height: 4px;
-                                    }
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar-track {
-                                        background: transparent;
-                                    }
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar-thumb {
-                                        background-color: #4A67B3 !important;
-                                        border-radius: 2px;
-                                    }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar { height: 4px; }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-track { background: transparent; }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-thumb { background-color: #4A67B3 !important; border-radius: 2px; }
                                 `}</style>
                                 {TABS.map((tab) => {
                                     const isActive = activeTab === tab.id;
@@ -295,10 +278,7 @@ export const ClientDetail: React.FC = () => {
                                             disabled={tab.disabled}
                                             className={`
                                                 relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center
-                                                ${isActive
-                                                    ? "text-[#4A67B3]"
-                                                    : "text-gray-500 hover:text-gray-700"
-                                                }
+                                                ${isActive ? "text-[#4A67B3]" : "text-gray-500 hover:text-gray-700"}
                                                 ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                                             `}
                                             aria-current={isActive ? "page" : undefined}

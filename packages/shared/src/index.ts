@@ -9,6 +9,7 @@ export * from "./api/trainingPlansApi";
 export {
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
+    useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,

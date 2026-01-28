@@ -55,8 +55,6 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
     trainingPlans = [],
     trainingSessions = [],
 }) => {
-    const navigate = useNavigate();
-    
     // Sub-tab navigation con query parameters
     const { activeSubTab, setActiveSubTab } = useSubTabNavigation<EntrenamientosSubTab>({
         validSubTabs: ENTRENAMIENTOS_SUBTABS.map((t) => t.id),
@@ -229,9 +227,7 @@ const SessionsSubTab: React.FC<SessionsSubTabProps> = ({
     const navigate = useNavigate();
     
     const handleViewDetail = (session: PlanTrainingSession | TrainingSession) => {
-        // TODO: Navegar a detalle de sesión cuando se implemente
-        // eslint-disable-next-line no-console
-        console.log("Ver detalle de sesión:", session);
+        navigate(`/dashboard/session-programming/sessions/${session.id}`);
     };
 
     return (
