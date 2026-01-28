@@ -105,4 +105,3 @@ export const createProgressRecordErrorHandler = http.post("*/progress/", async (
         { status: 500 }
     );
 });
-

@@ -29,14 +29,12 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubTabNavigation } from "@/hooks/useSubTabNavigation";
 import type { TrainingPlan, TrainingSession } from "@nexia/shared/types/training";
+import type { PlanTrainingSession } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { TYPOGRAPHY } from "@/utils/typography";
-import {
-    YearlyPlanningDashboard,
-    MonthlyPlanningDashboard,
-    WeeklyPlanningDashboard,
-} from "@/components/trainingPlans/planning";
+import { SessionCard } from "@/components/trainingSessions";
+// Planning dashboards removed - will be reimplemented with sessions-based architecture
 
 interface ClientWorkoutsTabProps {
     clientId: number;
@@ -45,14 +43,11 @@ interface ClientWorkoutsTabProps {
 }
 
 type SessionFilter = "all" | "completed" | "planned" | "cancelled";
-type EntrenamientosSubTab = "plans" | "sessions" | "yearly" | "monthly" | "weekly";
+type EntrenamientosSubTab = "plans" | "sessions";
 
 const ENTRENAMIENTOS_SUBTABS: Array<{ id: EntrenamientosSubTab; label: string }> = [
     { id: "plans", label: "Planes" },
     { id: "sessions", label: "Sesiones" },
-    { id: "yearly", label: "Planning Anual" },
-    { id: "monthly", label: "Planning Mensual" },
-    { id: "weekly", label: "Planning Semanal" },
 ];
 
 export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
@@ -60,10 +55,12 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
     trainingPlans = [],
     trainingSessions = [],
 }) => {
+    const navigate = useNavigate();
+    
     // Sub-tab navigation con query parameters
     const { activeSubTab, setActiveSubTab } = useSubTabNavigation<EntrenamientosSubTab>({
         validSubTabs: ENTRENAMIENTOS_SUBTABS.map((t) => t.id),
-        defaultSubTab: "yearly",
+        defaultSubTab: "plans",
     });
     const [sessionFilter, setSessionFilter] = useState<SessionFilter>("all");
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -115,12 +112,6 @@ export const ClientWorkoutsTab: React.FC<ClientWorkoutsTabProps> = ({
                         sessionCounts={sessionCounts}
                     />
                 );
-            case "yearly":
-                return <YearlyPlanningSubTab clientId={clientId} />;
-            case "monthly":
-                return <MonthlyPlanningSubTab clientId={clientId} />;
-            case "weekly":
-                return <WeeklyPlanningSubTab clientId={clientId} />;
             default:
                 return null;
         }
@@ -235,6 +226,14 @@ const SessionsSubTab: React.FC<SessionsSubTabProps> = ({
     filteredSessions,
     sessionCounts,
 }) => {
+    const navigate = useNavigate();
+    
+    const handleViewDetail = (session: PlanTrainingSession | TrainingSession) => {
+        // TODO: Navegar a detalle de sesión cuando se implemente
+        // eslint-disable-next-line no-console
+        console.log("Ver detalle de sesión:", session);
+    };
+
     return (
         <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center justify-between mb-4">
@@ -244,7 +243,7 @@ const SessionsSubTab: React.FC<SessionsSubTabProps> = ({
                 <Button
                     variant="primary"
                     size="sm"
-                    onClick={() => alert(`Crear Sesión para cliente ${clientId}`)}
+                    onClick={() => navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`)}
                 >
                     + Nueva Sesión
                 </Button>
@@ -297,7 +296,11 @@ const SessionsSubTab: React.FC<SessionsSubTabProps> = ({
             ) : (
                 <div className="space-y-3">
                     {filteredSessions.map((session) => (
-                        <TrainingSessionCard key={session.id} session={session} />
+                        <SessionCard
+                            key={session.id}
+                            session={session}
+                            onViewDetail={handleViewDetail}
+                        />
                     ))}
                 </div>
             )}
@@ -305,32 +308,7 @@ const SessionsSubTab: React.FC<SessionsSubTabProps> = ({
     );
 };
 
-// Sub-tab: Planning Anual
-interface YearlyPlanningSubTabProps {
-    clientId: number;
-}
-
-const YearlyPlanningSubTab: React.FC<YearlyPlanningSubTabProps> = ({ clientId }) => {
-    return <YearlyPlanningDashboard clientId={clientId} />;
-};
-
-// Sub-tab: Planning Mensual
-interface MonthlyPlanningSubTabProps {
-    clientId: number;
-}
-
-const MonthlyPlanningSubTab: React.FC<MonthlyPlanningSubTabProps> = ({ clientId }) => {
-    return <MonthlyPlanningDashboard clientId={clientId} />;
-};
-
-// Sub-tab: Planning Semanal
-interface WeeklyPlanningSubTabProps {
-    clientId: number;
-}
-
-const WeeklyPlanningSubTab: React.FC<WeeklyPlanningSubTabProps> = ({ clientId }) => {
-    return <WeeklyPlanningDashboard clientId={clientId} />;
-};
+// Planning sub-tabs removed - will be reimplemented with sessions-based architecture
 
 // ========================================
 // HELPER COMPONENTS
@@ -398,112 +376,7 @@ const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({ plan }) => {
     );
 };
 
-interface TrainingSessionCardProps {
-    session: TrainingSession;
-}
-
-const TrainingSessionCard: React.FC<TrainingSessionCardProps> = ({ session }) => {
-    const getStatusBadge = (status: string) => {
-        const badges = {
-            completed: { bg: "bg-green-100", text: "text-green-800", label: "Completada" },
-            planned: { bg: "bg-blue-100", text: "text-blue-800", label: "Planificada" },
-            cancelled: { bg: "bg-red-100", text: "text-red-800", label: "Cancelada" },
-            in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", label: "En progreso" },
-        };
-        return badges[status as keyof typeof badges] || badges.planned;
-    };
-
-    const badge = getStatusBadge(session.status);
-
-    return (
-        <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
-            <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-base font-semibold text-gray-900">
-                            {session.session_name}
-                        </h4>
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${badge.bg} ${badge.text}`}>
-                            {badge.label}
-                        </span>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                        📅 {session.session_date ? new Date(session.session_date).toLocaleDateString() : "Sin fecha"} • {session.session_type}
-                    </p>
-                </div>
-            </div>
-
-            {/* Metrics Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-                {session.planned_duration && (
-                    <MetricItem
-                        label="Duración plan."
-                        value={`${session.planned_duration} min`}
-                    />
-                )}
-                {session.actual_duration && (
-                    <MetricItem
-                        label="Duración real"
-                        value={`${session.actual_duration} min`}
-                    />
-                )}
-                {session.planned_intensity && (
-                    <MetricItem
-                        label="Intensidad plan."
-                        value={session.planned_intensity.toFixed(1)}
-                    />
-                )}
-                {session.actual_intensity && (
-                    <MetricItem
-                        label="Intensidad real"
-                        value={session.actual_intensity.toFixed(1)}
-                    />
-                )}
-                {session.planned_volume && (
-                    <MetricItem
-                        label="Volumen plan."
-                        value={session.planned_volume.toString()}
-                    />
-                )}
-                {session.actual_volume && (
-                    <MetricItem
-                        label="Volumen real"
-                        value={session.actual_volume.toString()}
-                    />
-                )}
-            </div>
-
-            {session.notes && (
-                <div className="bg-gray-50 rounded p-2 mb-3">
-                    <p className="text-xs text-gray-600">{session.notes}</p>
-                </div>
-            )}
-
-            <Button
-                variant="outline"
-                size="sm"
-                onClick={() => alert(`Ver sesión ${session.id} - TODO`)}
-                className="w-full md:w-auto"
-            >
-                Ver Detalles
-            </Button>
-        </div>
-    );
-};
-
-interface MetricItemProps {
-    label: string;
-    value: string;
-}
-
-const MetricItem: React.FC<MetricItemProps> = ({ label, value }) => {
-    return (
-        <div className="bg-gray-50 rounded p-2">
-            <p className="text-xs text-gray-500">{label}</p>
-            <p className="text-sm font-semibold text-gray-900">{value}</p>
-        </div>
-    );
-};
+// TrainingSessionCard eliminado - ahora se usa SessionCard de @/components/trainingSessions
 
 interface EmptyStateProps {
     icon: string;

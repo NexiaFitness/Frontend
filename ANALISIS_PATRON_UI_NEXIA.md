@@ -364,3 +364,7 @@ const [currentExercise, setCurrentExercise] = useState<SessionExerciseFormData>(
 **Última actualización:** 2025-01-27
 
 
+
+
+
+

@@ -5,6 +5,15 @@ export * from "./api/clientsApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
+// Training Sessions API - exported separately to avoid conflicts
+export {
+    useGetTrainingSessionsQuery,
+    useGetTrainingSessionQuery,
+    useCreateTrainingSessionMutation,
+    useUpdateTrainingSessionMutation,
+    useDeleteTrainingSessionMutation,
+    useCreateSessionExerciseMutation,
+} from "./api/trainingSessionsApi";
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
@@ -107,6 +116,22 @@ export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
 export * from "./types/trainingAnalytics";
+// Training Sessions Types - exported separately to avoid conflicts with training.ts
+export type {
+    TrainingSession as PlanTrainingSession,
+    TrainingSessionCreate as PlanTrainingSessionCreate,
+    TrainingSessionUpdate as PlanTrainingSessionUpdate,
+    TrainingSessionType,
+    IntensityLevel,
+    TrainingSessionStatus,
+    SessionExercise,
+    SessionExerciseCreate,
+} from "./types/trainingSessions";
+export {
+    SESSION_TYPE_LABELS,
+    INTENSITY_LABELS,
+    TRAINING_SESSION_STATUS_LABELS,
+} from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
 export * from "./types/coherence";
 export * from "./types/dashboard";
@@ -236,6 +261,7 @@ export * from "./hooks/exercises";
 
 // Hooks - Training
 export * from "./hooks/training";
+export { useTrainingSessions } from "./hooks/training/useTrainingSessions";
 
 // Hooks - Modals
 export { useCompleteProfileModal } from './hooks/modals/useCompleteProfileModal';

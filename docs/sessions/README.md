@@ -255,8 +255,8 @@ export interface TrainingSession {
 - Notas y observaciones
 
 **Hooks utilizados:**
-- `useCreateSession()` - Crear sesión
-- `useClientMicrocycles()` - Microciclos del cliente
+- `useCreateTrainingSessionMutation()` - Crear sesión (v6.0.0)
+- `useTrainingSessions()` - Gestión de sesiones de un plan (v6.0.0)
 
 ---
 

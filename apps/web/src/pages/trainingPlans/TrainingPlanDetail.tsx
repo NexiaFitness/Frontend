@@ -35,10 +35,8 @@ import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import {
     TrainingPlanHeader,
     OverviewTab,
-    MacrocyclesTab,
-    MesocyclesTab,
-    MicrocyclesTab,
     MilestonesTab,
+    SessionsTab,
 } from "@/components/trainingPlans";
 
 // Lazy loading para tabs pesados (carga bajo demanda)
@@ -48,14 +46,7 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-// PlanningTab con componentes editables pesados (gráficos, dashboards)
-const PlanningTab = lazy(() => 
-    import("@/components/trainingPlans/planning").then(module => ({
-        default: module.PlanningTab
-    }))
-);
-
-type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "milestones" | "charts" | "planning";
+type TabId = "overview" | "sessions" | "milestones" | "charts";
 
 interface Tab {
     id: TabId;
@@ -64,11 +55,8 @@ interface Tab {
 
 const TABS: Tab[] = [
     { id: "overview", label: "Resumen" },
-    { id: "macrocycles", label: "Macrociclos" },
-    { id: "mesocycles", label: "Mesociclos" },
-    { id: "microcycles", label: "Microciclos" },
+    { id: "sessions", label: "Sesiones" },
     { id: "milestones", label: "Hitos" },
-    { id: "planning", label: "Planificación" },
     { id: "charts", label: "Gráficos" },
 ];
 
@@ -187,10 +175,10 @@ export const TrainingPlanDetail: React.FC = () => {
         );
     }
 
-    // Handler para abrir formulario de macrocycle desde header
+    // Handler para abrir formulario de sesión desde header (placeholder)
     const handleAddMacrocycle = () => {
-        setActiveTab("macrocycles");
-        // El tab de macrocycles tiene su propio botón + que expande el formulario
+        setActiveTab("sessions");
+        // TODO: Implementar creación de sesión en Fase 4
     };
 
     // Render tab content
@@ -198,26 +186,10 @@ export const TrainingPlanDetail: React.FC = () => {
         switch (activeTab) {
             case "overview":
                 return <OverviewTab plan={plan} clientName={clientName} />;
-            case "macrocycles":
-                return (
-                    <MacrocyclesTab
-                        planId={planId}
-                        planStartDate={plan.start_date}
-                        planEndDate={plan.end_date}
-                    />
-                );
-            case "mesocycles":
-                return <MesocyclesTab planId={planId} />;
-            case "microcycles":
-                return <MicrocyclesTab planId={planId} />;
+            case "sessions":
+                return <SessionsTab planId={planId} />;
             case "milestones":
                 return <MilestonesTab planId={planId} />;
-            case "planning":
-                return (
-                    <Suspense fallback={<LoadingSpinner size="lg" />}>
-                        <PlanningTab planId={planId} plan={plan} />
-                    </Suspense>
-                );
             case "charts":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>

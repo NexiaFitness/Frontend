@@ -12,10 +12,15 @@
  */
 
 import React, { useMemo } from "react";
-import type { TrainingSession } from "@nexia/shared/types/training";
+import type { PlanTrainingSession } from "@nexia/shared";
+import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
+
+// Union type para compatibilidad durante transición
+// Ambos tipos tienen campos compatibles para visualización (session_date, session_name, etc.)
+type SessionCalendarSession = PlanTrainingSession | LegacyTrainingSession;
 
 export interface SessionCalendarProps {
-    sessions: TrainingSession[];
+    sessions: SessionCalendarSession[];
     currentMonth: Date;
     onMonthChange: (date: Date) => void;
     onDateClick?: (date: Date) => void;
@@ -70,7 +75,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
     // Crear mapa de sesiones por día
     const sessionsByDay = useMemo(() => {
-        const map = new Map<number, TrainingSession[]>();
+        const map = new Map<number, SessionCalendarSession[]>();
         sessionsInMonth.forEach((session) => {
             if (!session.session_date) return;
             const day = new Date(session.session_date).getDate();

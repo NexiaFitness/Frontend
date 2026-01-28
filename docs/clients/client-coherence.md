@@ -475,3 +475,7 @@ Los valores originales se guardan en `rawLoad` y `rawStrain` para tooltips.
 
 
 
+
+
+
+

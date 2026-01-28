@@ -198,3 +198,7 @@ Los valores por defecto (`k_fase=1.0`, `k_experiencia=1.0`, `p=1.0`) son conserv
 
 
 
+
+
+
+

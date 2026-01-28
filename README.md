@@ -577,11 +577,11 @@ frontend/
 │   │   │   ├── training/
 │   │   │   │   ├── index.ts
 │   │   │   │   ├── useAssignTemplate.ts
-│   │   │   │   ├── useClientMicrocycles.ts
 │   │   │   │   ├── useConvertPlanToTemplate.ts
 │   │   │   │   ├── useMilestones.ts
 │   │   │   │   ├── useTrainingPlanTemplates.ts
-│   │   │   │   └── useTrainingPlans.ts
+│   │   │   │   ├── useTrainingPlans.ts
+│   │   │   │   └── useTrainingSessions.ts
 │   │   │   ├── useAuth.ts
 │   │   │   ├── useAuthForm.ts
 │   │   │   ├── useCompleteProfile.ts

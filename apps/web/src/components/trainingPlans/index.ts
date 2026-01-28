@@ -14,8 +14,6 @@ export { TemplatePreviewModal } from "./TemplatePreviewModal";
 // Componentes existentes (Fase 1-2)
 export { TrainingPlanHeader } from "./TrainingPlanHeader";
 export { OverviewTab } from "./OverviewTab";
-export { MacrocyclesTab } from "./MacrocyclesTab";
-export { MesocyclesTab } from "./MesocyclesTab";
-export { MicrocyclesTab } from "./MicrocyclesTab";
 export { MilestonesTab } from "./MilestonesTab";
 export { ChartsTab } from "./ChartsTab";
+export { SessionsTab } from "./SessionsTab";
