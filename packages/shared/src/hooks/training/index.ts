@@ -12,4 +12,5 @@ export { useAssignTemplate } from './useAssignTemplate';
 export { useConvertPlanToTemplate } from './useConvertPlanToTemplate';
 export { useTrainingPlanTemplates } from './useTrainingPlanTemplates';
 export { useTrainingSessions } from './useTrainingSessions';
+export { useMonthlyPlan } from './useMonthlyPlan';
 

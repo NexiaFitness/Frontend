@@ -36,6 +36,7 @@ import {
     TrainingPlanHeader,
     MilestonesTab,
     SessionsTab,
+    PlanningTab,
 } from "@/components/trainingPlans";
 
 // Lazy loading para tabs pesados (carga bajo demanda)
@@ -45,7 +46,7 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-type TabId = "back" | "sessions" | "milestones" | "charts";
+type TabId = "back" | "sessions" | "planning" | "milestones" | "charts";
 
 interface Tab {
     id: TabId;
@@ -64,6 +65,7 @@ const TABS: Tab[] = [
         )
     },
     { id: "sessions", label: "Sesiones" },
+    { id: "planning", label: "Planificación" },
     { id: "milestones", label: "Hitos" },
     { id: "charts", label: "Gráficos" },
 ];
@@ -225,6 +227,13 @@ export const TrainingPlanDetail: React.FC = () => {
         switch (activeTab) {
             case "sessions":
                 return <SessionsTab planId={planId} />;
+            case "planning":
+                return (
+                    <PlanningTab
+                        planId={planId}
+                        clientId={plan?.client_id ?? null}
+                    />
+                );
             case "milestones":
                 return <MilestonesTab planId={planId} />;
             case "charts":

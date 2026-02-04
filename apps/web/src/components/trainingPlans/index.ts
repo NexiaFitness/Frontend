@@ -17,3 +17,4 @@ export { OverviewTab } from "./OverviewTab";
 export { MilestonesTab } from "./MilestonesTab";
 export { ChartsTab } from "./ChartsTab";
 export { SessionsTab } from "./SessionsTab";
+export { PlanningTab } from "./PlanningTab";

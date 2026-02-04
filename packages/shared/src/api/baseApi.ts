@@ -216,6 +216,7 @@ export const baseApi = createApi({
         "Mesocycle",
         "Microcycle",
         "Milestone",
+        "MonthlyPlan",
         "FatigueAlert",
         "SessionTemplate",
         "TrainingBlockType",

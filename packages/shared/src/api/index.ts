@@ -7,4 +7,4 @@ export * from "./metricsApi";
 // V2 API (Fase 1: Preparación - no interfiere con legacy)
 export * from "./metricsApiV2";
 export * from "./exercisesApi";
-
+export * from "./planningApi";

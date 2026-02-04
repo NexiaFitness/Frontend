@@ -51,6 +51,9 @@ export * from "./injuries";
 export * from "./metrics";
 export * from "./metricsV2";
 
+// Planning cargas (period-based) — Plan de cargas Fase 0
+export * from "./planningCargas";
+
 // Progress types
 export * from "./progress";
 
