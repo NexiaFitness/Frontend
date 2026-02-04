@@ -13,4 +13,9 @@ export { useConvertPlanToTemplate } from './useConvertPlanToTemplate';
 export { useTrainingPlanTemplates } from './useTrainingPlanTemplates';
 export { useTrainingSessions } from './useTrainingSessions';
 export { useMonthlyPlan } from './useMonthlyPlan';
+export { useResolvedDay } from './useResolvedDay';
+export {
+    useWeeklyOverrides,
+    useDailyOverrides,
+} from './usePlanningOverrides';
 
