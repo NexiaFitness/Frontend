@@ -6,6 +6,7 @@
  * - Muestra mes actual con navegación
  * - Badge "Session" en días con sesiones
  * - Grid responsive 7 columnas (Lun-Dom)
+ * - Fase 3: opcional planningDays para mostrar origen (M/S/D) e is_trainable
  *
  * @author Frontend Team
  * @since v5.2.0
@@ -14,6 +15,7 @@
 import React, { useMemo } from "react";
 import type { PlanTrainingSession } from "@nexia/shared";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
+import type { ResolvedDayPlan } from "@nexia/shared/types/planningCargas";
 
 // Union type para compatibilidad durante transición
 // Ambos tipos tienen campos compatibles para visualización (session_date, session_name, etc.)
@@ -24,6 +26,8 @@ export interface SessionCalendarProps {
     currentMonth: Date;
     onMonthChange: (date: Date) => void;
     onDateClick?: (date: Date, sessionsForDay: SessionCalendarSession[]) => void;
+    /** Fase 3: datos de planificación del mes (un elemento por día). Si está definido, se muestra origen M/S/D e is_trainable. */
+    planningDays?: ResolvedDayPlan[];
 }
 
 const DAYS_OF_WEEK = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
@@ -43,11 +47,18 @@ const MONTHS = [
     "Diciembre",
 ];
 
+const SOURCE_LABEL: Record<string, string> = {
+    month: "M",
+    week: "S",
+    day: "D",
+};
+
 export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     sessions,
     currentMonth,
     onMonthChange,
     onDateClick,
+    planningDays,
 }) => {
     // Obtener año y mes actual
     const year = currentMonth.getFullYear();
@@ -60,6 +71,19 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
     // Obtener día de la semana del primer día (0 = Domingo, ajustamos a Lunes = 0)
     const firstDayWeekday = (firstDayOfMonth.getDay() + 6) % 7; // Convierte Dom=0 a Lun=0
+
+    // Mapa planning por día del mes (solo si planningDays está definido)
+    const planningByDay = useMemo(() => {
+        if (!planningDays || planningDays.length === 0) return new Map<number, ResolvedDayPlan>();
+        const map = new Map<number, ResolvedDayPlan>();
+        const monthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
+        planningDays.forEach((plan) => {
+            if (!plan.date || !plan.date.startsWith(monthStr)) return;
+            const day = parseInt(plan.date.slice(8, 10), 10);
+            if (day >= 1 && day <= 31) map.set(day, plan);
+        });
+        return map;
+    }, [planningDays, year, month]);
 
     // Filtrar sesiones del mes actual
     const sessionsInMonth = useMemo(() => {
@@ -194,7 +218,10 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 {/* Días del mes */}
                 {days.map((day) => {
                     const hasSessions = sessionsByDay.has(day);
+                    const plan = planningByDay.get(day);
                     const isCurrentDay = isToday(day);
+                    const sourceLabel = plan?.source ? SOURCE_LABEL[plan.source] ?? plan.source : null;
+                    const isTrainable = plan?.is_trainable ?? true;
 
                     return (
                         <div
@@ -218,6 +245,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                                     ? "border-blue-500 ring-2 ring-blue-200"
                                     : ""
                                 }
+                                ${plan && !isTrainable ? "opacity-75" : ""}
                             `}
                         >
                             {/* Número del día */}
@@ -243,6 +271,16 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                                     Sesión
                                 </span>
                             )}
+
+                            {/* Fase 3: origen planificación M/S/D */}
+                            {sourceLabel && (
+                                <span
+                                    className="text-[10px] font-medium px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300"
+                                    title={plan?.source === "month" ? "Mes" : plan?.source === "week" ? "Semana" : "Día"}
+                                >
+                                    {sourceLabel}
+                                </span>
+                            )}
                         </div>
                     );
                 })}
@@ -257,6 +295,22 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                     <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-400" />
                     <span>Completada</span>
                 </div>
+                {planningDays && planningDays.length > 0 && (
+                    <>
+                        <div className="flex items-center gap-2">
+                            <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-medium">M</span>
+                            <span>Mes</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-medium">S</span>
+                            <span>Semana</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-medium">D</span>
+                            <span>Día</span>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
     );

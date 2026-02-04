@@ -126,6 +126,20 @@ export const planningApi = baseApi.injectEndpoints({
             ],
         }),
 
+        // ----- Fase 3: calendar month -----
+        getPlanningCalendar: builder.query<
+            ResolvedDayPlan[],
+            { client_id: number; month: string }
+        >({
+            query: ({ client_id, month }) => ({
+                url: `/planning/calendar/${client_id}/${month}`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, { client_id, month }) => [
+                { type: "MonthlyPlan", id: `CALENDAR-${client_id}-${month}` },
+            ],
+        }),
+
         // ----- Fase 2: weekly overrides -----
         getWeeklyOverrides: builder.query<
             WeeklyOverride[],
@@ -221,6 +235,7 @@ export const {
     useUpdateMonthlyPlanMutation,
     useDeleteMonthlyPlanMutation,
     useGetResolvedDayQuery,
+    useGetPlanningCalendarQuery,
     useGetWeeklyOverridesQuery,
     useCreateWeeklyOverrideMutation,
     useDeleteWeeklyOverrideMutation,

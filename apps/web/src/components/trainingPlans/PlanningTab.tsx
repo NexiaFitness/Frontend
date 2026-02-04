@@ -1,23 +1,26 @@
 /**
- * PlanningTab.tsx — Baseline mensual + overrides + plan resuelto (Fase 1+2)
+ * PlanningTab.tsx — Baseline mensual + overrides + plan resuelto + calendario (Fase 1+2+3)
  *
- * UI: monthly baselines, overrides semanales/diarios, vista plan resuelto por día.
+ * UI: monthly baselines, overrides semanales/diarios, vista plan resuelto por día,
+ * calendario del mes con origen M/S/D (Fase 3).
  * Lógica en shared (hooks); solo presentación aquí.
  *
  * @author Frontend Team
  * @since Plan de cargas Fase 1
- * @updated Fase 2 - overrides y resolve_day_plan
+ * @updated Fase 2 - overrides y resolve_day_plan; Fase 3 - calendario period-based
  */
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useMonthlyPlan } from "@nexia/shared/hooks/training/useMonthlyPlan";
 import { useResolvedDay } from "@nexia/shared/hooks/training/useResolvedDay";
+import { usePlanningCalendar } from "@nexia/shared/hooks/training/usePlanningCalendar";
 import {
     useWeeklyOverrides,
     useDailyOverrides,
 } from "@nexia/shared/hooks/training/usePlanningOverrides";
 import type { QualityConfig } from "@nexia/shared/types/planningCargas";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { SessionCalendar } from "@/components/sessionProgramming";
 
 interface PlanningTabProps {
     planId: number;
@@ -42,6 +45,21 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
     const [dailyDateText, setDailyDateText] = useState("");
     const [dailyQualitiesText, setDailyQualitiesText] = useState("");
     const [resolvedDate, setResolvedDate] = useState("");
+    const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+
+    const calendarMonthStr = useMemo(
+        () =>
+            `${calendarMonth.getFullYear()}-${String(calendarMonth.getMonth() + 1).padStart(2, "0")}`,
+        [calendarMonth]
+    );
+
+    const {
+        data: planningCalendarData,
+        isLoading: calendarLoading,
+    } = usePlanningCalendar({
+        clientId: clientId ?? null,
+        month: clientId != null ? calendarMonthStr : null,
+    });
 
     const {
         monthlyPlans,
@@ -153,6 +171,27 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
 
     return (
         <div className="space-y-6">
+            {/* Fase 3: Calendario del mes (solo si hay cliente asignado) */}
+            {clientId != null && (
+                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <h3 className="mb-3 text-lg font-semibold text-gray-800">
+                        Calendario de planificación
+                    </h3>
+                    {calendarLoading ? (
+                        <div className="flex justify-center py-8">
+                            <LoadingSpinner size="md" />
+                        </div>
+                    ) : (
+                        <SessionCalendar
+                            sessions={[]}
+                            currentMonth={calendarMonth}
+                            onMonthChange={setCalendarMonth}
+                            planningDays={planningCalendarData}
+                        />
+                    )}
+                </section>
+            )}
+
             <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                 <h3 className="mb-3 text-lg font-semibold text-gray-800">
                     Nuevo baseline mensual
