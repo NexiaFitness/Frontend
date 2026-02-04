@@ -65,6 +65,8 @@ import type {
     TrainingPlanWeeklyPlanning,
     UpdatePlanningDistributionRequest,
     UpdatePlanningLoadRequest,
+    PlanCoherenceResponse,
+    TrainingPlanAlignmentResponse,
 } from "../types/trainingAnalytics";
 
 export const trainingPlansApi = baseApi.injectEndpoints({
@@ -557,6 +559,57 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, id) => [
                 { type: "Milestone", id },
+            ],
+        }),
+
+        // ========================================
+        // COHERENCE & ALIGNMENT (Fase 5 — period-based)
+        // ========================================
+
+        /**
+         * Coherencia del plan (MonthlyPlan + WeeklyOverride + DailyOverride).
+         * GET /api/v1/training-plans/{plan_id}/coherence
+         */
+        getTrainingPlanCoherence: builder.query<
+            PlanCoherenceResponse,
+            { planId: number; deviationThreshold?: number }
+        >({
+            query: ({ planId, deviationThreshold = 20 }) => {
+                const params = new URLSearchParams();
+                params.append("deviation_threshold", deviationThreshold.toString());
+                return {
+                    url: `/training-plans/${planId}/coherence?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `COHERENCE-${planId}` },
+            ],
+        }),
+
+        /**
+         * Alignment del plan (graph + yearly_values/monthly_values).
+         * GET /api/v1/training-plans/{plan_id}/alignment
+         * Query opcionales: mesocycle_id (= weekly_override_id), microcycle_id (= daily_override_id)
+         */
+        getTrainingPlanAlignment: builder.query<
+            TrainingPlanAlignmentResponse,
+            { planId: number; mesocycleId?: number; microcycleId?: number }
+        >({
+            query: ({ planId, mesocycleId, microcycleId }) => {
+                const params = new URLSearchParams();
+                if (mesocycleId != null) params.append("mesocycle_id", mesocycleId.toString());
+                if (microcycleId != null) params.append("microcycle_id", microcycleId.toString());
+                const qs = params.toString();
+                return {
+                    url: `/training-plans/${planId}/alignment${qs ? `?${qs}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { planId }) => [
+                { type: "TrainingPlan", id: planId },
+                { type: "TrainingPlan", id: `ALIGNMENT-${planId}` },
             ],
         }),
 
@@ -1092,6 +1145,10 @@ export const {
     useCreateMilestoneMutation,
     useUpdateMilestoneMutation,
     useDeleteMilestoneMutation,
+    
+    // Coherence & Alignment (Fase 5)
+    useGetTrainingPlanCoherenceQuery,
+    useGetTrainingPlanAlignmentQuery,
     
     // Dashboard KPI hooks
     useGetPlanAdherenceStatsQuery,

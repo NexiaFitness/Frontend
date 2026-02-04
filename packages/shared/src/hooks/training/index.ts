@@ -19,4 +19,6 @@ export {
     useWeeklyOverrides,
     useDailyOverrides,
 } from './usePlanningOverrides';
+export { useTrainingPlanCoherence } from './useTrainingPlanCoherence';
+export { useTrainingPlanAlignment } from './useTrainingPlanAlignment';
 

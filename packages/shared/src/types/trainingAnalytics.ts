@@ -400,3 +400,88 @@ export interface UpdatePlanningLoadRequest {
     cascade: boolean;  // If True, update child cycles too
 }
 
+// ============================================================================
+// PLAN COHERENCE (Fase 5 — period-based)
+// GET /api/v1/training-plans/{plan_id}/coherence?deviation_threshold=20
+// ============================================================================
+
+export interface PlanCoherenceMonthItem {
+    macrocycle_id: number;
+    macrocycle_name: string;
+    physical_quality: string | null;
+    planned_volume: number;
+    planned_intensity: number;
+    coherence_percentage: number;
+    deviation_warning: boolean;
+}
+
+export interface PlanCoherenceWeekItem {
+    mesocycle_id: number;
+    mesocycle_name: string;
+    macrocycle_id: number;
+    physical_quality: string | null;
+    planned_volume: number;
+    planned_intensity: number;
+    month_volume: number;
+    month_intensity: number;
+    coherence_percentage: number;
+    deviation_warning: boolean;
+    inherited: boolean;
+}
+
+export interface PlanCoherenceDayItem {
+    microcycle_id: number;
+    microcycle_name: string;
+    mesocycle_id: number | null;
+    physical_quality: string | null;
+    planned_volume: number;
+    planned_intensity: number;
+    week_volume: number;
+    week_intensity: number;
+    coherence_percentage: number;
+    deviation_warning: boolean;
+    inherited: boolean;
+}
+
+export interface PlanCoherenceResponse {
+    plan_id: number;
+    month_coherence: PlanCoherenceMonthItem[];
+    week_coherence: PlanCoherenceWeekItem[];
+    day_coherence: PlanCoherenceDayItem[];
+    overall_coherence: number;
+    deviation_threshold: number;
+}
+
+// ============================================================================
+// PLAN ALIGNMENT (Fase 5 — period-based)
+// GET /api/v1/training-plans/{plan_id}/alignment?mesocycle_id=&microcycle_id=
+// Semántica backend: mesocycle_id = weekly_override_id, microcycle_id = daily_override_id
+// ============================================================================
+
+export interface CycleAlignmentPoint {
+    cycle_id: number;
+    cycle_type: string;  // "macrocycle" | "mesocycle" | "microcycle"
+    cycle_name: string;
+    date: string;  // ISO date
+    physical_quality: string | null;
+    volume: number | null;  // 1-10
+    intensity: number | null;  // 1-10
+}
+
+export interface ParentCycleValues {
+    physical_quality: string | null;
+    volume: number | null;
+    intensity: number | null;
+    cycle_name: string;
+    start_date: string;  // ISO date
+    end_date: string;  // ISO date
+}
+
+export interface TrainingPlanAlignmentResponse {
+    plan_id: number;
+    plan_name: string;
+    yearly_values: ParentCycleValues | null;
+    monthly_values: ParentCycleValues | null;
+    alignment_graph: CycleAlignmentPoint[];
+}
+

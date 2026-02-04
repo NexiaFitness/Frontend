@@ -1,102 +1,177 @@
 /**
- * ChartsTab.tsx — Tab de gráficos en TrainingPlanDetail
- * 
+ * ChartsTab.tsx — Tab de coherencia y alignment en TrainingPlanDetail (Fase 5)
+ *
  * Contexto:
- * - Tab dedicado a visualización de volumen/intensidad
- * - En transición: gráficos basados en cycles → gráficos basados en sessions
- * 
- * Responsabilidades:
- * - Mostrar placeholder mientras se reimplementa con sessions
- * - Mantener estructura del componente para compatibilidad
- * 
- * Notas de mantenimiento:
- * - Requiere planId, planStartDate, planEndDate del padre
- * - Los gráficos se reimplementarán usando Training Sessions directas
- * - Nueva arquitectura: Plan → Sessions (sin cycles)
- * 
+ * - Consume getTrainingPlanCoherence y getTrainingPlanAlignment (period-based).
+ * - Muestra overall_coherence y alignment_graph; reutiliza MetricCard y layout existente.
+ *
  * @author Frontend Team
  * @since v3.3.0
- * @updated v6.0.0 - Refactorizado para nueva arquitectura de sessions
+ * @updated Plan de cargas Fase 5 — Coherencia y alignment
  */
 
-import React from 'react';
+import React from "react";
+import { useTrainingPlanCoherence, useTrainingPlanAlignment } from "@nexia/shared/hooks/training";
+import { MetricCard } from "@/components/ui/cards";
+import { LoadingSpinner } from "@/components/ui/feedback";
 
 interface ChartsTabProps {
     planId: number;
-    planStartDate: string; // ISO date
-    planEndDate: string; // ISO date
+    planStartDate: string;
+    planEndDate: string;
 }
 
 export const ChartsTab: React.FC<ChartsTabProps> = ({
-    planId: _planId,
-    planStartDate: _planStartDate,
-    planEndDate: _planEndDate,
+    planId,
 }) => {
-    return (
-        <div className="flex flex-col items-center justify-center py-12 px-6">
-            <div className="text-center max-w-md">
-                {/* Icon */}
-                <div className="mb-6 flex justify-center">
-                    <svg
-                        className="w-20 h-20 text-gray-400"
-                        fill="none"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.5"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                    >
-                        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                    </svg>
-                </div>
+    const {
+        data: coherenceData,
+        isLoading: coherenceLoading,
+        isError: coherenceError,
+        error: coherenceErr,
+    } = useTrainingPlanCoherence({ planId });
 
-                {/* Title */}
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">
-                    Gráficos de Entrenamiento
-                </h3>
+    const {
+        data: alignmentData,
+        isLoading: alignmentLoading,
+        isError: alignmentError,
+        error: alignmentErr,
+    } = useTrainingPlanAlignment({ planId });
 
-                {/* Description */}
-                <p className="text-sm text-gray-600 mb-6 leading-relaxed">
-                    Los gráficos de volumen e intensidad se reimplementarán con la nueva arquitectura de sesiones flexibles.
-                </p>
+    const isLoading = coherenceLoading || alignmentLoading;
+    const hasError = coherenceError || alignmentError;
+    const errorMessage =
+        (coherenceErr as { data?: { detail?: string } })?.data?.detail ||
+        (alignmentErr as { data?: { detail?: string } })?.data?.detail ||
+        (coherenceErr as Error)?.message ||
+        (alignmentErr as Error)?.message;
 
-                {/* Info Box */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                    <div className="flex items-start gap-3">
-                        <svg
-                            className="w-5 h-5 text-yellow-600 mt-0.5 flex-shrink-0"
-                            fill="currentColor"
-                            viewBox="0 0 20 20"
-                        >
-                            <path
-                                fillRule="evenodd"
-                                d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
-                                clipRule="evenodd"
-                            />
-                        </svg>
-                        <div className="text-sm text-yellow-800">
-                            <p className="font-medium mb-1">🚧 En desarrollo</p>
-                            <p className="text-yellow-700">
-                                Los gráficos se basarán en Training Sessions directas (sin jerarquía de cycles).
-                                Esta funcionalidad estará disponible próximamente.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Future Features */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-xs font-medium text-blue-800 mb-2">
-                        📊 Funcionalidades futuras:
-                    </p>
-                    <ul className="text-xs text-blue-700 space-y-1 text-left list-disc list-inside">
-                        <li>Visualización de volumen e intensidad por sesión</li>
-                        <li>Gráficos semanales, mensuales y anuales</li>
-                        <li>Análisis de progresión y tendencias</li>
-                        <li>Comparación de planificado vs ejecutado</li>
-                    </ul>
-                </div>
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center py-12">
+                <LoadingSpinner size="lg" />
             </div>
+        );
+    }
+
+    if (hasError) {
+        return (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">
+                <p className="font-medium">Error al cargar datos</p>
+                <p>{String(errorMessage || "Error desconocido")}</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="space-y-6">
+            <h2 className="text-lg font-semibold text-gray-900">
+                Coherencia y alignment
+            </h2>
+
+            {/* Coherencia */}
+            <section>
+                <h3 className="text-md font-medium text-gray-700 mb-3">
+                    Coherencia del plan
+                </h3>
+                {coherenceData ? (
+                    <div className="flex flex-wrap gap-4">
+                        <MetricCard
+                            title="Coherencia global"
+                            value={`${coherenceData.overall_coherence.toFixed(1)}%`}
+                            subtitle={`Umbral desviación: ${coherenceData.deviation_threshold}%`}
+                            color="green"
+                        />
+                        <MetricCard
+                            title="Meses"
+                            value={coherenceData.month_coherence.length}
+                            color="blue"
+                        />
+                        <MetricCard
+                            title="Semanas"
+                            value={coherenceData.week_coherence.length}
+                            color="blue"
+                        />
+                        <MetricCard
+                            title="Días"
+                            value={coherenceData.day_coherence.length}
+                            color="blue"
+                        />
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">
+                        Sin datos de coherencia. Añade baseline mensual y overrides en el tab Planificación.
+                    </p>
+                )}
+            </section>
+
+            {/* Alignment */}
+            <section>
+                <h3 className="text-md font-medium text-gray-700 mb-3">
+                    Alignment
+                    {alignmentData?.plan_name ? (
+                        <span className="font-normal text-gray-600 ml-2">
+                            — {alignmentData.plan_name}
+                        </span>
+                    ) : null}
+                </h3>
+                {alignmentData?.alignment_graph?.length ? (
+                    <div className="overflow-x-auto rounded-lg border border-gray-200">
+                        <table className="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead className="bg-gray-50">
+                                <tr>
+                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                        Nivel
+                                    </th>
+                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                        Nombre
+                                    </th>
+                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                        Fecha
+                                    </th>
+                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                        Calidad
+                                    </th>
+                                    <th className="px-3 py-2 text-right font-medium text-gray-700">
+                                        Volumen
+                                    </th>
+                                    <th className="px-3 py-2 text-right font-medium text-gray-700">
+                                        Intensidad
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-200 bg-white">
+                                {alignmentData.alignment_graph.map((point) => (
+                                    <tr key={`${point.cycle_type}-${point.cycle_id}`}>
+                                        <td className="px-3 py-2 text-gray-600">
+                                            {point.cycle_type}
+                                        </td>
+                                        <td className="px-3 py-2 text-gray-900">
+                                            {point.cycle_name}
+                                        </td>
+                                        <td className="px-3 py-2 text-gray-600">
+                                            {point.date}
+                                        </td>
+                                        <td className="px-3 py-2 text-gray-600">
+                                            {point.physical_quality ?? "—"}
+                                        </td>
+                                        <td className="px-3 py-2 text-right text-gray-900">
+                                            {point.volume != null ? point.volume.toFixed(1) : "—"}
+                                        </td>
+                                        <td className="px-3 py-2 text-right text-gray-900">
+                                            {point.intensity != null ? point.intensity.toFixed(1) : "—"}
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                ) : (
+                    <p className="text-sm text-gray-500">
+                        Sin datos de alignment. Añade baseline mensual en el tab Planificación.
+                    </p>
+                )}
+            </section>
         </div>
     );
 };
