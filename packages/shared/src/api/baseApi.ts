@@ -6,7 +6,7 @@
  * @author Frontend Team
  * @since v1.0.0
  * @updated v3.2.0 - Agregado tagType "TrainingPlan"
- * @updated v3.3.0 - Agregados tagTypes "Macrocycle", "Mesocycle", "Microcycle"
+ * @updated v3.3.0 - tagTypes planning (Fase 6: Macrocycle/Mesocycle/Microcycle removidos)
  * @updated v4.7.0 - Agregado tagType "Milestone"
  * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance", "MovementPattern", "MuscleGroup", "Equipment", "Tag", "Action"
  */
@@ -212,9 +212,6 @@ export const baseApi = createApi({
         "TrainingPlan",
         "TrainingPlanTemplate",
         "TrainingPlanInstance",
-        "Macrocycle",
-        "Mesocycle",
-        "Microcycle",
         "Milestone",
         "MonthlyPlan",
         "FatigueAlert",

@@ -17,14 +17,12 @@ describe("ServerErrorBanner", () => {
     describe("Conditional Rendering", () => {
         it("renders nothing when error is null", () => {
             const { container } = render(<ServerErrorBanner error={null} />)
-
-            expect(container.firstChild).toBeNull()
+            expect(container.querySelector(".bg-red-50")).toBeNull()
         })
 
         it("renders nothing when error is empty string", () => {
             const { container } = render(<ServerErrorBanner error="" />)
-
-            expect(container.firstChild).toBeNull()
+            expect(container.querySelector(".bg-red-50")).toBeNull()
         })
 
         it("renders banner when error is provided", () => {
@@ -204,8 +202,7 @@ describe("ServerErrorBanner", () => {
     describe("Edge Cases", () => {
         it("handles undefined error gracefully", () => {
             const { container } = render(<ServerErrorBanner error={undefined} />)
-
-            expect(container.firstChild).toBeNull()
+            expect(container.querySelector(".bg-red-50")).toBeNull()
         })
 
         it("handles whitespace-only error", () => {

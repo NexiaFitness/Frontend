@@ -21,7 +21,7 @@ interface UseCreateSessionFromTemplateParams {
 }
 
 interface UseCreateSessionFromTemplateResult {
-    createSession: (data: { sessionDate: string; microcycleId?: number }) => Promise<void>;
+    createSession: (data: { sessionDate: string; trainingPlanId: number }) => Promise<void>;
     isCreating: boolean;
     isError: boolean;
     error: unknown;
@@ -39,22 +39,21 @@ export const useCreateSessionFromTemplate = ({
     const { data: template, isLoading: isLoadingTemplate } = useGetSessionTemplateQuery(templateId);
 
     const createSession = useCallback(
-        async (data: { sessionDate: string; microcycleId?: number }) => {
+        async (data: { sessionDate: string; trainingPlanId: number }) => {
             if (!template) {
                 throw new Error("Template no encontrado");
             }
 
-            // Crear sesión con datos del template
             const sessionData: TrainingSessionCreate = {
-                microcycle_id: data.microcycleId || 0, // Si no hay microcycle, usar 0 (backend puede requerirlo)
+                training_plan_id: data.trainingPlanId,
                 client_id: clientId,
                 trainer_id: trainerId,
                 session_date: data.sessionDate,
                 session_name: template.name,
                 session_type: template.session_type,
-                planned_duration: template.estimated_duration,
-                planned_intensity: null,
-                planned_volume: null,
+                planned_duration: template.estimated_duration ?? undefined,
+                planned_intensity: undefined,
+                planned_volume: undefined,
                 status: "planned",
                 notes: `Creada desde template: ${template.name}`,
             };

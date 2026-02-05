@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión desde template
- * - Permite seleccionar fecha y microcycle opcional
+ * - Permite seleccionar fecha y plan de entrenamiento (Fase 6: training_plan_id)
  * - Cliente viene pre-rellenado desde query params
  *
  * @author Frontend Team
@@ -48,19 +48,9 @@ export const CreateSessionFromTemplate: React.FC = () => {
         { skip: !clientId }
     );
 
-    // Obtener microcycles de los planes activos
-    const microcycles = React.useMemo(() => {
-        if (!trainingPlans) return [];
-        const allMicrocycles: Array<{ id: number; name: string; planName: string }> = [];
-        trainingPlans.forEach((_plan) => {
-            // TODO: Obtener microcycles de cada plan si hay endpoint
-        });
-        return allMicrocycles;
-    }, [trainingPlans]);
-
     const [formData, setFormData] = useState({
         sessionDate: new Date().toISOString().split("T")[0],
-        microcycleId: "",
+        trainingPlanId: "",
     });
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -90,7 +80,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
         try {
             await createSession({
                 sessionDate: formData.sessionDate,
-                microcycleId: formData.microcycleId ? Number(formData.microcycleId) : undefined,
+                trainingPlanId: Number(formData.trainingPlanId),
             });
             setSuccess(true);
             setTimeout(() => {
@@ -235,27 +225,29 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Microcycle (opcional) */}
-                            {microcycles.length > 0 && (
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Microciclo (Opcional)
-                                    </label>
-                                    <FormSelect
-                                        value={formData.microcycleId}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, microcycleId: e.target.value })
-                                        }
-                                        options={[
-                                            { value: "", label: "Sin microciclo" },
-                                            ...microcycles.map((mc) => ({
-                                                value: mc.id.toString(),
-                                                label: `${mc.name} (${mc.planName})`,
-                                            })),
-                                        ]}
-                                    />
-                                </div>
-                            )}
+                            {/* Plan de entrenamiento (Fase 6: requerido) */}
+                            <div>
+                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    Plan de entrenamiento
+                                </label>
+                                <FormSelect
+                                    value={formData.trainingPlanId}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, trainingPlanId: e.target.value })
+                                    }
+                                    options={[
+                                        { value: "", label: "Seleccione un plan" },
+                                        ...(trainingPlans || []).map((plan) => ({
+                                            value: plan.id.toString(),
+                                            label: plan.name || `Plan #${plan.id}`,
+                                        })),
+                                    ]}
+                                    required
+                                />
+                                {formErrors.trainingPlanId && (
+                                    <p className="text-red-600 text-xs mt-1">{formErrors.trainingPlanId}</p>
+                                )}
+                            </div>
 
                             {/* Botones */}
                             <div className="flex flex-col sm:flex-row gap-3 pt-4">

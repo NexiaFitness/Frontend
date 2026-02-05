@@ -235,20 +235,21 @@ export interface SessionSummary {
 // TRAINING SESSION CREATE (for session programming)
 // ========================================
 
+/** Fase 6: sessions use training_plan_id only; microcycle_id no longer sent. */
 export interface TrainingSessionCreate {
-    microcycle_id: number;
+    training_plan_id: number;
     client_id: number;
     trainer_id: number;
     session_date: string; // ISO date YYYY-MM-DD
     session_name: string;
     session_type: string;
-    planned_duration?: number | null; // in minutes
-    actual_duration?: number | null; // in minutes
-    planned_intensity?: number | null; // 1-10
-    planned_volume?: number | null; // 1-10
+    planned_duration?: number | null;
+    actual_duration?: number | null;
+    planned_intensity?: number | null;
+    planned_volume?: number | null;
     actual_intensity?: number | null;
     actual_volume?: number | null;
-    status?: string; // Default: "planned"
+    status?: string;
     notes?: string | null;
 }
 
@@ -267,7 +268,7 @@ export interface CreateSessionFormData {
     plannedDuration: string; // String del input, puede estar vacío
     plannedIntensity: string; // String del input, puede estar vacío
     plannedVolume: string; // String del input, puede estar vacío
-    microcycleId: string; // String del select, debe convertirse a number
+    trainingPlanId: string; // Fase 6: plan ID (required)
     notes: string; // Puede estar vacío
 }
 
@@ -278,7 +279,7 @@ export interface CreateSessionFormErrors {
     sessionName?: string;
     sessionDate?: string;
     sessionType?: string;
-    microcycleId?: string;
+    trainingPlanId?: string;
     plannedDuration?: string;
     plannedIntensity?: string;
     plannedVolume?: string;

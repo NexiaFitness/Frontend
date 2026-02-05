@@ -36,10 +36,8 @@ describe("DeleteAccountModal", () => {
 
     describe("Rendering & Basic UI", () => {
         it("renders nothing when isOpen is false", () => {
-            const { container } = render(
-                <DeleteAccountModal {...defaultProps} isOpen={false} />
-            );
-            expect(container.firstChild).toBeNull();
+            render(<DeleteAccountModal {...defaultProps} isOpen={false} />);
+            expect(screen.queryByRole("heading", { name: "Eliminar cuenta" })).not.toBeInTheDocument();
         });
 
         it("renders modal when isOpen is true", () => {

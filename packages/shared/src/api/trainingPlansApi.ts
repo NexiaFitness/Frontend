@@ -8,7 +8,7 @@
  *
  * Endpoints implementados:
  * - FASE 1: Training Plans CRUD
- * - FASE 2: Macrocycles, Mesocycles, Microcycles CRUD
+ * - Fase 6: macro/meso/micro CRUD and planning/yearly|monthly|weekly removed (legacy)
  *
  * @author Frontend Team
  * @since v3.2.0
@@ -34,25 +34,7 @@ import type {
     AssignTemplateToClientParams,
     AssignPlanToClientParams,
     ConvertPlanToTemplateParams,
-    // Macrocycles
-    Macrocycle,
-    MacrocyclesListResponse,
-    MacrocycleCreate,
-    MacrocycleUpdate,
-    // Mesocycles
-    Mesocycle,
-    MesocyclesListResponse,
-    MesocycleCreate,
-    MesocycleUpdate,
-    // Microcycles
-    Microcycle,
-    MicrocyclesListResponse,
-    MicrocycleCreate,
-    MicrocycleUpdate,
     DeleteCycleResponse,
-    AllCyclesResponse,
-    BatchCyclesRequest,
-    BatchCyclesResponse,
     // Milestones
     Milestone,
     MilestoneCreate,
@@ -60,11 +42,6 @@ import type {
 } from "../types/training";
 import type { PlanAdherenceResponse } from "../types/dashboard";
 import type {
-    TrainingPlanYearlyPlanning,
-    TrainingPlanMonthlyPlanning,
-    TrainingPlanWeeklyPlanning,
-    UpdatePlanningDistributionRequest,
-    UpdatePlanningLoadRequest,
     PlanCoherenceResponse,
     TrainingPlanAlignmentResponse,
 } from "../types/trainingAnalytics";
@@ -175,306 +152,6 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             invalidatesTags: (result, error, id) => [
                 { type: "TrainingPlan", id },
                 { type: "TrainingPlan", id: "LIST" },
-            ],
-        }),
-
-        /**
-         * Obtener todos los cycles (macro, meso, micro) de un training plan
-         * Optimizado para vistas de gráficos que necesitan la estructura completa
-         */
-        getAllCycles: builder.query<AllCyclesResponse, number>({
-            query: (planId) => ({
-                url: `/training-plans/${planId}/all-cycles`,
-                method: "GET",
-            }),
-            providesTags: (result, error, planId) => [
-                { type: "Macrocycle" as const, id: "LIST" },
-                { type: "Mesocycle" as const, id: "LIST" },
-                { type: "Microcycle" as const, id: "LIST" },
-            ],
-        }),
-
-        /**
-         * Obtener cycles de múltiples training plans en un solo request (batch)
-         * Optimizado para evitar múltiples queries individuales
-         */
-        getBatchCycles: builder.query<BatchCyclesResponse, BatchCyclesRequest>({
-            query: (request) => ({
-                url: "/training-plans/batch-cycles",
-                method: "POST",
-                body: request,
-            }),
-            providesTags: (result) =>
-                result
-                    ? [
-                          ...Object.keys(result.cycles).map((id) => ({
-                              type: "TrainingPlan" as const,
-                              id: Number(id),
-                          })),
-                          { type: "Macrocycle" as const, id: "LIST" },
-                          { type: "Mesocycle" as const, id: "LIST" },
-                          { type: "Microcycle" as const, id: "LIST" },
-                      ]
-                    : [
-                          { type: "TrainingPlan" as const, id: "LIST" },
-                          { type: "Macrocycle" as const, id: "LIST" },
-                          { type: "Mesocycle" as const, id: "LIST" },
-                          { type: "Microcycle" as const, id: "LIST" },
-                      ],
-        }),
-
-        // ========================================
-        // MACROCYCLES
-        // ========================================
-
-        /**
-         * Obtener macrocycles de un training plan
-         */
-        getMacrocycles: builder.query<MacrocyclesListResponse, { planId: number; skip?: number; limit?: number }>({
-            query: ({ planId, skip = 0, limit = 100 }) => {
-                const params = new URLSearchParams();
-                params.append('skip', skip.toString());
-                params.append('limit', limit.toString());
-
-                return {
-                    url: `/training-plans/${planId}/macrocycles?${params.toString()}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { planId }) =>
-                result
-                    ? [
-                        ...result.map(({ id }) => ({ type: "Macrocycle" as const, id })),
-                        { type: "Macrocycle", id: `PLAN-${planId}` },
-                    ]
-                    : [{ type: "Macrocycle", id: `PLAN-${planId}` }],
-        }),
-
-        /**
-         * Obtener macrocycle específico por ID
-         */
-        getMacrocycle: builder.query<Macrocycle, number>({
-            query: (id) => ({
-                url: `/training-plans/macrocycles/${id}`,
-                method: "GET",
-            }),
-            providesTags: (result, error, id) => [{ type: "Macrocycle", id }],
-        }),
-
-        /**
-         * Crear nuevo macrocycle
-         */
-        createMacrocycle: builder.mutation<Macrocycle, { planId: number; data: Omit<MacrocycleCreate, 'training_plan_id'> }>({
-            query: ({ planId, data }) => ({
-                url: `/training-plans/${planId}/macrocycles`,
-                method: "POST",
-                body: { ...data, training_plan_id: planId },
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { planId }) => [
-                { type: "Macrocycle", id: `PLAN-${planId}` },
-            ],
-        }),
-
-        /**
-         * Actualizar macrocycle
-         */
-        updateMacrocycle: builder.mutation<Macrocycle, { id: number; data: MacrocycleUpdate }>({
-            query: ({ id, data }) => ({
-                url: `/training-plans/macrocycles/${id}`,
-                method: "PUT",
-                body: data,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { id }) => [
-                { type: "Macrocycle", id },
-            ],
-        }),
-
-        /**
-         * Eliminar macrocycle
-         */
-        deleteMacrocycle: builder.mutation<DeleteCycleResponse, number>({
-            query: (id) => ({
-                url: `/training-plans/macrocycles/${id}`,
-                method: "DELETE",
-            }),
-            invalidatesTags: (result, error, id) => [
-                { type: "Macrocycle", id },
-            ],
-        }),
-
-        // ========================================
-        // MESOCYCLES
-        // ========================================
-
-        /**
-         * Obtener mesocycles de un macrocycle
-         */
-        getMesocycles: builder.query<MesocyclesListResponse, { macrocycleId: number; skip?: number; limit?: number }>({
-            query: ({ macrocycleId, skip = 0, limit = 100 }) => {
-                const params = new URLSearchParams();
-                params.append('skip', skip.toString());
-                params.append('limit', limit.toString());
-
-                return {
-                    url: `/training-plans/macrocycles/${macrocycleId}/mesocycles?${params.toString()}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { macrocycleId }) =>
-                result
-                    ? [
-                        ...result.map(({ id }) => ({ type: "Mesocycle" as const, id })),
-                        { type: "Mesocycle", id: `MACRO-${macrocycleId}` },
-                    ]
-                    : [{ type: "Mesocycle", id: `MACRO-${macrocycleId}` }],
-        }),
-
-        /**
-         * Obtener mesocycle específico por ID
-         */
-        getMesocycle: builder.query<Mesocycle, number>({
-            query: (id) => ({
-                url: `/training-plans/mesocycles/${id}`,
-                method: "GET",
-            }),
-            providesTags: (result, error, id) => [{ type: "Mesocycle", id }],
-        }),
-
-        /**
-         * Crear nuevo mesocycle
-         */
-        createMesocycle: builder.mutation<Mesocycle, { macrocycleId: number; data: Omit<MesocycleCreate, 'macrocycle_id'> }>({
-            query: ({ macrocycleId, data }) => ({
-                url: `/training-plans/macrocycles/${macrocycleId}/mesocycles`,
-                method: "POST",
-                body: { ...data, macrocycle_id: macrocycleId },
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { macrocycleId }) => [
-                { type: "Mesocycle", id: `MACRO-${macrocycleId}` },
-            ],
-        }),
-
-        /**
-         * Actualizar mesocycle
-         */
-        updateMesocycle: builder.mutation<Mesocycle, { id: number; data: MesocycleUpdate }>({
-            query: ({ id, data }) => ({
-                url: `/training-plans/mesocycles/${id}`,
-                method: "PUT",
-                body: data,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { id }) => [
-                { type: "Mesocycle", id },
-            ],
-        }),
-
-        /**
-         * Eliminar mesocycle
-         */
-        deleteMesocycle: builder.mutation<DeleteCycleResponse, number>({
-            query: (id) => ({
-                url: `/training-plans/mesocycles/${id}`,
-                method: "DELETE",
-            }),
-            invalidatesTags: (result, error, id) => [
-                { type: "Mesocycle", id },
-            ],
-        }),
-
-        // ========================================
-        // MICROCYCLES
-        // ========================================
-
-        /**
-         * Obtener microcycles de un mesocycle
-         */
-        getMicrocycles: builder.query<MicrocyclesListResponse, { mesocycleId: number; skip?: number; limit?: number }>({
-            query: ({ mesocycleId, skip = 0, limit = 100 }) => {
-                const params = new URLSearchParams();
-                params.append('skip', skip.toString());
-                params.append('limit', limit.toString());
-
-                return {
-                    url: `/training-plans/mesocycles/${mesocycleId}/microcycles?${params.toString()}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { mesocycleId }) =>
-                result
-                    ? [
-                        ...result.map(({ id }) => ({ type: "Microcycle" as const, id })),
-                        { type: "Microcycle", id: `MESO-${mesocycleId}` },
-                    ]
-                    : [{ type: "Microcycle", id: `MESO-${mesocycleId}` }],
-        }),
-
-        /**
-         * Obtener microcycle específico por ID
-         */
-        getMicrocycle: builder.query<Microcycle, number>({
-            query: (id) => ({
-                url: `/training-plans/microcycles/${id}`,
-                method: "GET",
-            }),
-            providesTags: (result, error, id) => [{ type: "Microcycle", id }],
-        }),
-
-        /**
-         * Crear nuevo microcycle
-         */
-        createMicrocycle: builder.mutation<Microcycle, { mesocycleId: number; data: Omit<MicrocycleCreate, 'mesocycle_id'> }>({
-            query: ({ mesocycleId, data }) => ({
-                url: `/training-plans/mesocycles/${mesocycleId}/microcycles`,
-                method: "POST",
-                body: { ...data, mesocycle_id: mesocycleId },
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { mesocycleId }) => [
-                { type: "Microcycle", id: `MESO-${mesocycleId}` },
-            ],
-        }),
-
-        /**
-         * Actualizar microcycle
-         */
-        updateMicrocycle: builder.mutation<Microcycle, { id: number; data: MicrocycleUpdate }>({
-            query: ({ id, data }) => ({
-                url: `/training-plans/microcycles/${id}`,
-                method: "PUT",
-                body: data,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { id }) => [
-                { type: "Microcycle", id },
-            ],
-        }),
-
-        /**
-         * Eliminar microcycle
-         */
-        deleteMicrocycle: builder.mutation<DeleteCycleResponse, number>({
-            query: (id) => ({
-                url: `/training-plans/microcycles/${id}`,
-                method: "DELETE",
-            }),
-            invalidatesTags: (result, error, id) => [
-                { type: "Microcycle", id },
             ],
         }),
 
@@ -948,157 +625,19 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             ],
         }),
 
-        // ========================================
-        // PLANNING ENDPOINTS (Training Plan-based, Editable)
-        // ========================================
-
-        /**
-         * Get yearly planning view for a training plan
-         * Endpoint: GET /training-plans/{plan_id}/planning/yearly?year={year}
-         */
-        getTrainingPlanYearlyPlanning: builder.query<
-            TrainingPlanYearlyPlanning,
-            { planId: number; year?: number }
-        >({
-            query: ({ planId, year }) => {
-                const params = new URLSearchParams();
-                if (year !== undefined) {
-                    params.append("year", year.toString());
-                }
-                const queryString = params.toString();
-                return {
-                    url: `/training-plans/${planId}/planning/yearly${queryString ? `?${queryString}` : ""}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { planId }) => [
-                { type: "TrainingPlan", id: planId },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-YEARLY` },
-            ],
-        }),
-
-        /**
-         * Get monthly planning view for a training plan
-         * Endpoint: GET /training-plans/{plan_id}/planning/monthly?year={year}&month={month}
-         */
-        getTrainingPlanMonthlyPlanning: builder.query<
-            TrainingPlanMonthlyPlanning,
-            { planId: number; year?: number; month?: number }
-        >({
-            query: ({ planId, year, month }) => {
-                const params = new URLSearchParams();
-                if (year !== undefined) {
-                    params.append("year", year.toString());
-                }
-                if (month !== undefined) {
-                    params.append("month", month.toString());
-                }
-                const queryString = params.toString();
-                return {
-                    url: `/training-plans/${planId}/planning/monthly${queryString ? `?${queryString}` : ""}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { planId }) => [
-                { type: "TrainingPlan", id: planId },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-MONTHLY` },
-            ],
-        }),
-
-        /**
-         * Get weekly planning view for a training plan
-         * Endpoint: GET /training-plans/{plan_id}/planning/weekly?week_start={date}
-         */
-        getTrainingPlanWeeklyPlanning: builder.query<
-            TrainingPlanWeeklyPlanning,
-            { planId: number; weekStart?: string }
-        >({
-            query: ({ planId, weekStart }) => {
-                const params = new URLSearchParams();
-                if (weekStart) {
-                    params.append("week_start", weekStart);
-                }
-                const queryString = params.toString();
-                return {
-                    url: `/training-plans/${planId}/planning/weekly${queryString ? `?${queryString}` : ""}`,
-                    method: "GET",
-                };
-            },
-            providesTags: (result, error, { planId }) => [
-                { type: "TrainingPlan", id: planId },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-WEEKLY` },
-            ],
-        }),
-
-        /**
-         * Update physical qualities distribution for multiple cycles
-         * Endpoint: PUT /training-plans/{plan_id}/planning/distribution
-         */
-        updatePlanningDistribution: builder.mutation<
-            { message: string; updated_cycles: number },
-            { planId: number; data: UpdatePlanningDistributionRequest }
-        >({
-            query: ({ planId, data }) => ({
-                url: `/training-plans/${planId}/planning/distribution`,
-                method: "PUT",
-                body: data,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { planId }) => [
-                { type: "TrainingPlan", id: planId },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-YEARLY` },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-MONTHLY` },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-WEEKLY` },
-                { type: "Macrocycle", id: "LIST" },
-                { type: "Mesocycle", id: "LIST" },
-                { type: "Microcycle", id: "LIST" },
-            ],
-        }),
-
-        /**
-         * Update volume/intensity for multiple cycles
-         * Endpoint: PUT /training-plans/{plan_id}/planning/load
-         */
-        updatePlanningLoad: builder.mutation<
-            { message: string; updated_cycles: number },
-            { planId: number; data: UpdatePlanningLoadRequest }
-        >({
-            query: ({ planId, data }) => ({
-                url: `/training-plans/${planId}/planning/load`,
-                method: "PUT",
-                body: data,
-                headers: {
-                    "Content-Type": "application/json",
-                },
-            }),
-            invalidatesTags: (result, error, { planId }) => [
-                { type: "TrainingPlan", id: planId },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-YEARLY` },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-MONTHLY` },
-                { type: "TrainingPlan", id: `${planId}-PLANNING-WEEKLY` },
-                { type: "Macrocycle", id: "LIST" },
-                { type: "Mesocycle", id: "LIST" },
-                { type: "Microcycle", id: "LIST" },
-            ],
-        }),
+        // Removed Fase 6 (legacy): getTrainingPlanYearlyPlanning, getTrainingPlanMonthlyPlanning,
+        // getTrainingPlanWeeklyPlanning, updatePlanningDistribution, updatePlanningLoad
     }),
     overrideExisting: false,
 });
 
-// Hooks auto-generados por RTK Query
+// Hooks auto-generados por RTK Query (Fase 6: removed macro/meso/micro and planning/yearly|monthly|weekly)
 export const {
-    // Training Plans
     useGetTrainingPlansQuery,
     useGetTrainingPlanQuery,
     useCreateTrainingPlanMutation,
     useUpdateTrainingPlanMutation,
     useDeleteTrainingPlanMutation,
-    useGetAllCyclesQuery,
-    useGetBatchCyclesQuery,
-    
-    // Templates
     useGetTrainingPlanTemplatesQuery,
     useGetTrainingPlanTemplateQuery,
     useCreateTrainingPlanTemplateMutation,
@@ -1106,57 +645,19 @@ export const {
     useDeleteTrainingPlanTemplateMutation,
     useDuplicateTrainingPlanTemplateMutation,
     useAssignTemplateToClientMutation,
-    
-    // Instances
     useGetTrainingPlanInstancesQuery,
     useGetTrainingPlanInstanceQuery,
     useCreateTrainingPlanInstanceMutation,
     useUpdateTrainingPlanInstanceMutation,
     useDeleteTrainingPlanInstanceMutation,
-    
-    // Utility
     useAssignPlanToClientMutation,
     useConvertPlanToTemplateMutation,
-    
-    // Macrocycles
-    useGetMacrocyclesQuery,
-    useGetMacrocycleQuery,
-    useCreateMacrocycleMutation,
-    useUpdateMacrocycleMutation,
-    useDeleteMacrocycleMutation,
-    
-    // Mesocycles
-    useGetMesocyclesQuery,
-    useGetMesocycleQuery,
-    useCreateMesocycleMutation,
-    useUpdateMesocycleMutation,
-    useDeleteMesocycleMutation,
-    
-    // Microcycles
-    useGetMicrocyclesQuery,
-    useGetMicrocycleQuery,
-    useCreateMicrocycleMutation,
-    useUpdateMicrocycleMutation,
-    useDeleteMicrocycleMutation,
-    
-    // Milestones
     useGetMilestonesQuery,
     useGetMilestoneQuery,
     useCreateMilestoneMutation,
     useUpdateMilestoneMutation,
     useDeleteMilestoneMutation,
-    
-    // Coherence & Alignment (Fase 5)
     useGetTrainingPlanCoherenceQuery,
     useGetTrainingPlanAlignmentQuery,
-    
-    // Dashboard KPI hooks
     useGetPlanAdherenceStatsQuery,
-    
-    // Planning hooks (Training Plan-based, Editable)
-    useGetTrainingPlanYearlyPlanningQuery,
-    useGetTrainingPlanMonthlyPlanningQuery,
-    useGetTrainingPlanWeeklyPlanningQuery,
-    useUpdatePlanningDistributionMutation,
-    useUpdatePlanningLoadMutation,
 } = trainingPlansApi;

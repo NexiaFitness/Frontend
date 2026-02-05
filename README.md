@@ -673,6 +673,7 @@ pnpm -F web build            # Build web app only
 pnpm -F web test             # Single run
 pnpm -F web test:watch       # Watch mode
 pnpm -F web test:coverage    # With coverage
+pnpm -F web test:e2e         # E2E (Playwright); see E2E section below
 
 # Linting
 pnpm -F web lint             # Check code
@@ -770,7 +771,25 @@ import { USER_ROLES } from "@nexia/shared/config/constants";
 - **Component Testing**: Isolated unit tests
 - **Integration Testing**: Full user flows
 - **Coverage**: 90%+ across all modules
-- **E2E Ready**: Cypress setup available
+- **E2E (Playwright)**: See below
+
+## E2E (Playwright) — Fase 7.3
+Requisitos para ejecutar E2E contra backend y frontend reales:
+
+- **Backend**: Levantado en `http://127.0.0.1:8000` (o la URL que use `VITE_API_BASE_URL` en el frontend).
+- **Frontend**: Por defecto Playwright usa `http://localhost:5173`; puede arrancar el dev server automáticamente si no está corriendo (ver `playwright.config.ts`).
+- **Cuenta de prueba**: El test usa la cuenta de demo (ver `frontend/.env.example`): `nexiafitness.demo@gmail.com` / `Nexia.1234`. No hace falta ningún .env ni variables de entorno para E2E.
+- **Opcional**: Al menos un plan de entrenamiento asignado al trainer para cubrir el flujo completo hasta el tab Planificación.
+
+Comandos:
+```bash
+cd frontend
+pnpm install
+pnpm -F web test:e2e        # Ejecuta E2E (Chromium)
+pnpm -F web test:e2e:ui    # Modo UI de Playwright
+```
+
+El test falla de forma clara si la pantalla no existe, el endpoint cambió o el flujo de datos se rompe.
 
 ## Deployment
 - **Production**: Vercel with automatic deployments

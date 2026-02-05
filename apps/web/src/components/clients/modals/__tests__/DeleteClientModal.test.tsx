@@ -52,10 +52,8 @@ describe("DeleteClientModal", () => {
     });
 
     it("no renderiza nada si isOpen=false", () => {
-        const { container } = render(
-            <DeleteClientModal {...defaultProps} isOpen={false} />
-        );
-        expect(container.firstChild).toBeNull();
+        render(<DeleteClientModal {...defaultProps} isOpen={false} />);
+        expect(screen.queryByRole("heading", { name: "Desvincular Cliente" })).not.toBeInTheDocument();
     });
 
     it("renderiza título y descripción", () => {

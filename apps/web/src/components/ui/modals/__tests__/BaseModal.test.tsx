@@ -31,8 +31,8 @@ describe("BaseModal", () => {
 
     describe("Rendering", () => {
         it("no renderiza nada si isOpen es false", () => {
-            const { container } = render(<BaseModal {...defaultProps} isOpen={false} />);
-            expect(container.firstChild).toBeNull();
+            render(<BaseModal {...defaultProps} isOpen={false} />);
+            expect(screen.queryByRole("heading", { name: "Título de prueba" })).not.toBeInTheDocument();
         });
 
         it("renderiza título y descripción cuando está abierto", () => {

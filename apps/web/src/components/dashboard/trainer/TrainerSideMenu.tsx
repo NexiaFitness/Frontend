@@ -18,14 +18,13 @@
 
 import React from "react";
 import { useSelector } from "react-redux";
-import { useNavigate, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { LogoutButton } from "@/components/ui/buttons";
 import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerSideMenu: React.FC = () => {
-    const navigate = useNavigate();
     const location = useLocation();
     const { user } = useSelector((state: RootState) => state.auth);
 
@@ -54,29 +53,18 @@ export const TrainerSideMenu: React.FC = () => {
                 {/* Navegación - SOLO ESTA PARTE SCROLLEA */}
                 <nav className="flex-1 overflow-y-auto p-8 px-8 border-b-2 border-white/60 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {menuItems.map((item) => (
-                        <div
+                        <Link
                             key={item.path}
+                            to={item.path}
                             className={clsx(
-                                "rounded-lg px-6 py-4 cursor-pointer transition",
+                                "block rounded-lg px-6 py-4 cursor-pointer transition",
                                 isActive(item.path)
-                                    ? "text-white font-semibold"
-                                    : "text-white/80 hover:text-white"
+                                    ? "text-white font-semibold bg-[rgba(4,21,32,1)]"
+                                    : "text-white/80 hover:text-white hover:bg-[rgba(74,103,179,0.3)]"
                             )}
-                            style={isActive(item.path) ? { backgroundColor: 'rgba(4, 21, 32, 1)' } : {}}
-                            onMouseEnter={(e) => {
-                                if (!isActive(item.path)) {
-                                    e.currentTarget.style.backgroundColor = 'rgba(74, 103, 179, 0.3)';
-                                }
-                            }}
-                            onMouseLeave={(e) => {
-                                if (!isActive(item.path)) {
-                                    e.currentTarget.style.backgroundColor = 'transparent';
-                                }
-                            }}
-                            onClick={() => navigate(item.path)}
                         >
                             {item.label}
-                        </div>
+                        </Link>
                     ))}
                 </nav>
 

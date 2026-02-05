@@ -11,12 +11,14 @@
 import { getClientsHandler } from "./list"
 import { createClientHandler } from "./create"
 import { deleteClientHandler } from "./delete"
+import { createClientPreviewHandler } from "./preview"
 
 // ===== EXPORTAR HANDLERS INDIVIDUALES =====
 
 export * from "./list"
 export * from "./create"
 export * from "./delete"
+export * from "./preview"
 export * from "./coherence"
 export * from "./progress"
 export * from "./fatigue"
@@ -29,5 +31,6 @@ export const clientsHandlers = [
     getClientsHandler,
     createClientHandler,
     deleteClientHandler,
+    createClientPreviewHandler,
 ]
 

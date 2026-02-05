@@ -1,24 +1,14 @@
 /**
  * chartAggregators.ts — Agregación de datos de cycles por periodo temporal
- * 
+ *
  * Contexto:
- * - Recibe Macrocycles, Mesocycles, Microcycles del backend
- * - Agrega datos por semana, mes o año para gráficos
- * - Usa chartParsers para convertir strings a números
- * 
- * Responsabilidades:
- * - Agregar datos por semana (7 días, Mon-Sun)
- * - Agregar datos por mes (4-5 semanas)
- * - Agregar datos por año (12 meses)
- * - Llenar fechas faltantes con interpolación
- * - Calcular promedios cuando múltiples cycles en mismo periodo
- * 
- * Notas de mantenimiento:
- * - Fechas en formato ISO (YYYY-MM-DD)
- * - Usar date-fns para manipulación de fechas si es necesario
- * - Prioridad: Microcycles > Mesocycles > Macrocycles
- * - Si no hay datos para un periodo, usar null (no 0)
- * 
+ * - Funciones que agregan por semana, mes o año para gráficos.
+ * - Fase 6: Los endpoints GET macro/meso/micro fueron eliminados; los tipos
+ *   Macrocycle, Mesocycle, Microcycle se mantienen para compatibilidad (p. ej.
+ *   template duplication). Cuando ChartsTab use datos reales, alimentar con
+ *   coherence/alignment o sesiones agregadas (ver PROMPT_FASE6_ELIMINAR_LEGACY).
+ * - Usa chartParsers para convertir strings a números.
+ *
  * @author Frontend Team
  * @since v3.3.0
  */

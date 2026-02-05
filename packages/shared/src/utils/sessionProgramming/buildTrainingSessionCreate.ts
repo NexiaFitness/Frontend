@@ -27,19 +27,19 @@ export interface BuildTrainingSessionCreateParams {
  * @param params - Parámetros con datos del formulario y IDs requeridos
  * @returns TrainingSessionCreate listo para enviar al backend
  */
+/** Fase 6: builds payload with training_plan_id only (no microcycle_id). */
 export const buildTrainingSessionCreate = ({
     formData,
     clientId,
     trainerId,
 }: BuildTrainingSessionCreateParams): TrainingSessionCreate => {
-    const microcycleId = Number(formData.microcycleId);
-    
-    if (isNaN(microcycleId) || microcycleId <= 0) {
-        throw new Error("El microciclo seleccionado no es válido");
+    const trainingPlanId = Number(formData.trainingPlanId);
+    if (isNaN(trainingPlanId) || trainingPlanId <= 0) {
+        throw new Error("El plan de entrenamiento seleccionado no es válido");
     }
 
     const sessionData: TrainingSessionCreate = {
-        microcycle_id: microcycleId,
+        training_plan_id: trainingPlanId,
         client_id: clientId,
         trainer_id: trainerId,
         session_date: formData.sessionDate,
