@@ -16,7 +16,7 @@
  * @updated v6.2.1 - Corregido bucle de navegación al usar el tab 'Volver'.
  */
 
-import React, { Suspense, lazy } from "react";
+import React, { useState, Suspense, lazy } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -37,6 +37,7 @@ import {
     MilestonesTab,
     SessionsTab,
     PlanningTab,
+    AssignPlanModal,
 } from "@/components/trainingPlans";
 
 // Lazy loading para tabs pesados (carga bajo demanda)
@@ -82,6 +83,7 @@ export const TrainingPlanDetail: React.FC = () => {
     });
 
     const planId = parseInt(id || "0", 10);
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
 
     // Obtener perfil del trainer para obtener trainer_id correcto
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
@@ -257,13 +259,29 @@ export const TrainingPlanDetail: React.FC = () => {
             <TrainerSideMenu />
 
             <DashboardLayout>
-                <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
+                <div
+                    className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20"
+                    data-testid="training-plan-detail"
+                >
                     {/* Header con info del plan y contexto del atleta */}
                     <TrainingPlanHeader
                         plan={plan}
                         clientName={clientName}
                         breadcrumbItems={breadcrumbItems}
                         onRefresh={refetch}
+                        onAssignPlan={() => setAssignModalOpen(true)}
+                    />
+
+                    {/* Modal asignar plan a cliente (desde detalle) */}
+                    <AssignPlanModal
+                        open={assignModalOpen}
+                        onClose={() => setAssignModalOpen(false)}
+                        planId={planId}
+                        planName={plan.name}
+                        onSuccess={() => {
+                            setAssignModalOpen(false);
+                            refetch();
+                        }}
                     />
 
                     {/* Tabs Navigation */}

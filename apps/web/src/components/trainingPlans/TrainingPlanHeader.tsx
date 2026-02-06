@@ -25,6 +25,7 @@ import { useDeleteTrainingPlanMutation } from "@nexia/shared/api/trainingPlansAp
 import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { useToast } from "@/components/ui/feedback";
 import { DeleteTrainingPlanModal } from "./DeleteTrainingPlanModal";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
@@ -33,6 +34,8 @@ interface TrainingPlanHeaderProps {
     clientName?: string;
     breadcrumbItems: BreadcrumbItem[];
     onRefresh: () => void;
+    /** Abre el modal de asignar plan a cliente (desde detalle) */
+    onAssignPlan?: () => void;
 }
 
 export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
@@ -40,8 +43,10 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     clientName,
     breadcrumbItems,
     onRefresh: _onRefresh,
+    onAssignPlan,
 }) => {
     const navigate = useNavigate();
+    const { showError } = useToast();
     const [deletePlan, { isLoading: isDeleting }] = useDeleteTrainingPlanMutation();
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
@@ -104,8 +109,13 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             } else {
                 navigate("/dashboard/training-plans");
             }
-        } catch (error) {
+        } catch (error: unknown) {
             console.error("Error deleting plan:", error);
+            const message =
+                error && typeof error === "object" && "data" in error
+                    ? String((error as { data?: { detail?: string } }).data?.detail ?? "No se pudo eliminar el plan.")
+                    : "No se pudo eliminar el plan. Intenta de nuevo.";
+            showError(message);
         } finally {
             setIsDeleteModalOpen(false);
         }
@@ -147,6 +157,11 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
 
                     {/* Actions */}
                     <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
+                        {onAssignPlan && (
+                            <Button variant="primary" size="sm" onClick={onAssignPlan}>
+                                Asignar a cliente
+                            </Button>
+                        )}
                         <Button variant="outline" size="sm" onClick={handleEdit}>
                             Editar Plan
                         </Button>

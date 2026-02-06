@@ -17,6 +17,8 @@ import { GENDER_ENUM } from "@nexia/shared";
 
 interface PersonalInfoProps extends PersonalInfoStepProps {
     isEditMode?: boolean;
+    /** En modo edit, el padre (ClientFormBase) puede renderizar el heading de la sección; ocultar el interno para evitar duplicado. */
+    hideHeading?: boolean;
 }
 
 export const PersonalInfo: React.FC<PersonalInfoProps> = ({
@@ -24,15 +26,18 @@ export const PersonalInfo: React.FC<PersonalInfoProps> = ({
     errors,
     updateField,
     isEditMode: _isEditMode = false,
+    hideHeading = false,
 }) => {
     return (
         <div>
-            {/* Sección: Información Personal */}
+            {/* Sección: Información Personal (heading opcional cuando el padre usa role="region") */}
             <div>
-                <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
-                    <div className="flex-1 h-0.5 bg-gray-900"></div>
-                </div>
+                {!hideHeading && (
+                    <div className="flex items-center gap-3 mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900">Información Personal</h3>
+                        <div className="flex-1 h-0.5 bg-gray-900"></div>
+                    </div>
+                )}
                 
                 {/* Primera fila: Foto a la izquierda, grid de 2 columnas a la derecha */}
                 <div className="flex flex-col md:flex-row gap-6 items-start mb-4">

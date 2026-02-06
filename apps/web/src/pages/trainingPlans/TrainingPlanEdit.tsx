@@ -215,12 +215,16 @@ export const TrainingPlanEdit: React.FC = () => {
                     {/* Form */}
                     <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow p-6">
                             <div className="space-y-6">
-                                {/* Nombre */}
+                                {/* Nombre — label con htmlFor para accesibilidad y getByLabel E2E */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label
+                                        htmlFor="edit-plan-name"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
                                         Nombre del Plan <span className="text-red-500">*</span>
                                     </label>
                                     <Input
+                                        id="edit-plan-name"
                                         type="text"
                                         value={formData.name || ""}
                                         onChange={(e) => {
@@ -234,10 +238,14 @@ export const TrainingPlanEdit: React.FC = () => {
 
                                 {/* Objetivo */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label
+                                        htmlFor="edit-plan-goal"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
                                         Objetivo <span className="text-red-500">*</span>
                                     </label>
                                     <Input
+                                        id="edit-plan-goal"
                                         type="text"
                                         value={formData.goal || ""}
                                         onChange={(e) => {
@@ -252,10 +260,14 @@ export const TrainingPlanEdit: React.FC = () => {
                                 {/* Fechas */}
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            htmlFor="edit-plan-start-date"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
                                             Fecha de Inicio <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            id="edit-plan-start-date"
                                             type="date"
                                             value={formData.start_date || ""}
                                             onChange={(e) => {
@@ -267,10 +279,14 @@ export const TrainingPlanEdit: React.FC = () => {
                                     </div>
 
                                     <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        <label
+                                            htmlFor="edit-plan-end-date"
+                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                        >
                                             Fecha de Fin <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            id="edit-plan-end-date"
                                             type="date"
                                             value={formData.end_date || ""}
                                             onChange={(e) => {
@@ -285,10 +301,14 @@ export const TrainingPlanEdit: React.FC = () => {
 
                                 {/* Estado */}
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    <label
+                                        htmlFor="edit-plan-status"
+                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                    >
                                         Estado
                                     </label>
                                     <FormSelect
+                                        id="edit-plan-status"
                                         options={PLAN_STATUS_OPTIONS}
                                         value={formData.status || "active"}
                                         onChange={(e) => {

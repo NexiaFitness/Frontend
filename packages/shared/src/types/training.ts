@@ -783,10 +783,12 @@ export interface AssignTemplateToClientParams {
 
 /**
  * AssignPlanToClientParams - POST /training-plans/{plan_id}/assign
+ * Backend requires trainer_id as query param.
  */
 export interface AssignPlanToClientParams {
     plan_id: number;
     client_id: number;
+    trainer_id: number;
     start_date: string; // ISO date YYYY-MM-DD
     end_date: string; // ISO date YYYY-MM-DD
     name?: string; // Optional custom name

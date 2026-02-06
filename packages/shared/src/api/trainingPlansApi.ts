@@ -585,9 +585,10 @@ export const trainingPlansApi = baseApi.injectEndpoints({
             TrainingPlanInstance,
             AssignPlanToClientParams
         >({
-            query: ({ plan_id, client_id, start_date, end_date, name }) => {
+            query: ({ plan_id, client_id, trainer_id, start_date, end_date, name }) => {
                 const params = new URLSearchParams();
                 params.append("client_id", client_id.toString());
+                params.append("trainer_id", trainer_id.toString());
                 params.append("start_date", start_date);
                 params.append("end_date", end_date);
                 if (name) params.append("name", name);

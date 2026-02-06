@@ -42,7 +42,7 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 
 // Components
-import { TrainingPlansSection, AssignTemplateModal, TemplatePreviewModal } from "@/components/trainingPlans";
+import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePreviewModal } from "@/components/trainingPlans";
 import { Alert } from "@/components/ui/feedback";
 import { Pagination } from "@/components/ui/pagination";
 
@@ -67,6 +67,9 @@ export const TrainingPlansPage: React.FC = () => {
     // Estado del modal de preview
     const [previewModalOpen, setPreviewModalOpen] = useState(false);
     const [previewTemplateId, setPreviewTemplateId] = useState<number | null>(null);
+
+    // Modal asignar plan a cliente (desde lista o detalle)
+    const [planIdForAssignModal, setPlanIdForAssignModal] = useState<number | null>(null);
 
     // Estados de feedback
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -341,9 +344,8 @@ export const TrainingPlansPage: React.FC = () => {
         }
     };
 
-    const handleAddClientToPlan = (_planId: number): void => {
-        // TODO: Abrir modal para agregar cliente al plan
-        // Implementación pendiente
+    const handleAddClientToPlan = (planId: number): void => {
+        setPlanIdForAssignModal(planId);
     };
 
     const handleStatusChange = async (planId: number, status: string) => {
@@ -487,6 +489,18 @@ export const TrainingPlansPage: React.FC = () => {
                     templateId={selectedTemplateId}
                     templateName={selectedTemplateName}
                     onSuccess={handleAssignSuccess}
+                />
+
+                {/* Modal de Asignar plan a cliente */}
+                <AssignPlanModal
+                    open={!!planIdForAssignModal}
+                    onClose={() => setPlanIdForAssignModal(null)}
+                    planId={planIdForAssignModal ?? 0}
+                    planName={activePlans.find((p) => p.id === planIdForAssignModal)?.name ?? ""}
+                    onSuccess={() => {
+                        setPlanIdForAssignModal(null);
+                        refetchPlans();
+                    }}
                 />
 
                 {/* Modal de Preview de Template */}

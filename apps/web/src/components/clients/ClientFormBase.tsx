@@ -143,16 +143,28 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
         );
     }
 
-    // En modo edit, cada sección tiene su propio botón de guardar
+    // En modo edit, cada sección tiene su propio botón de guardar.
+    // Estructura semántica: <section role="region" aria-labelledby> para accesibilidad y tests E2E.
+    const sectionClass = "bg-white rounded-lg shadow p-6";
+    const headingClass = "text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4";
+
     return (
         <div className="space-y-10">
-            {/* Datos personales */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* Información Personal */}
+            <section
+                role="region"
+                aria-labelledby="personal-info-heading"
+                className={sectionClass}
+            >
+                <h3 id="personal-info-heading" className={headingClass}>
+                    Información Personal
+                </h3>
                 <PersonalInfo
                     formData={formData}
                     errors={errors}
                     updateField={updateField}
                     isEditMode={true}
+                    hideHeading
                 />
                 <div className="flex justify-end pt-4 mt-6 border-t border-gray-200">
                     <Button
@@ -166,10 +178,17 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                         {isSubmitting ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
-            </div>
+            </section>
 
-            {/* Datos Antropométricos (PhysicalMetrics + AnthropometricMetrics) */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* Datos Antropométricos */}
+            <section
+                role="region"
+                aria-labelledby="anthropometric-heading"
+                className={sectionClass}
+            >
+                <h3 id="anthropometric-heading" className={headingClass}>
+                    Datos Antropométricos
+                </h3>
                 <PhysicalMetrics
                     formData={formData}
                     errors={errors}
@@ -193,10 +212,17 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                         {isSubmitting ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
-            </div>
+            </section>
 
-            {/* Parámetros de Entrenamiento (Objetivos + Experiencia) */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* Parámetros de Entrenamiento */}
+            <section
+                role="region"
+                aria-labelledby="training-params-heading"
+                className={sectionClass}
+            >
+                <h3 id="training-params-heading" className={headingClass}>
+                    Parámetros de Entrenamiento
+                </h3>
                 <TrainingGoals
                     formData={formData}
                     errors={errors}
@@ -219,10 +245,17 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                         {isSubmitting ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
-            </div>
+            </section>
 
-            {/* Información de salud */}
-            <div className="bg-white rounded-lg shadow p-6">
+            {/* Información de Salud */}
+            <section
+                role="region"
+                aria-labelledby="health-info-heading"
+                className={sectionClass}
+            >
+                <h3 id="health-info-heading" className={headingClass}>
+                    Información de Salud
+                </h3>
                 <HealthInfo
                     formData={formData}
                     errors={errors}
@@ -240,7 +273,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                         {isSubmitting ? "Guardando..." : "Guardar cambios"}
                     </Button>
                 </div>
-            </div>
+            </section>
         </div>
     );
 };

@@ -198,10 +198,14 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                 </h3>
                 <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3">
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                        <label
+                            htmlFor="planning-baseline-month"
+                            className="mb-1 block text-sm font-medium text-gray-700"
+                        >
                             Mes (YYYY-MM)
                         </label>
                         <input
+                            id="planning-baseline-month"
                             type="month"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
@@ -210,10 +214,14 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         />
                     </div>
                     <div className="min-w-[200px] flex-1">
-                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                        <label
+                            htmlFor="planning-baseline-qualities"
+                            className="mb-1 block text-sm font-medium text-gray-700"
+                        >
                             Cualidades (ej: Fuerza: 60, Resistencia: 40)
                         </label>
                         <input
+                            id="planning-baseline-qualities"
                             type="text"
                             value={qualitiesText}
                             onChange={(e) => setQualitiesText(e.target.value)}

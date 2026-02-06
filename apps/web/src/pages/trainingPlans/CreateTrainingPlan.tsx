@@ -50,7 +50,7 @@ export const CreateTrainingPlan: React.FC = () => {
     const { goBack } = useReturnToOrigin({ fallbackPath });
 
     // Obtener perfil del trainer actual
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
+    const { data: trainerProfile, isLoading: isLoadingTrainer } = useGetCurrentTrainerProfileQuery();
     const trainerId = trainerProfile?.id || 0;
 
     // Obtener cliente si hay clientId
@@ -88,10 +88,11 @@ export const CreateTrainingPlan: React.FC = () => {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
+        if (isLoadingTrainer) return;
         if (!trainerId) {
             navigate("/dashboard");
         }
-    }, [trainerId, navigate]);
+    }, [isLoadingTrainer, trainerId, navigate]);
 
     // Validar formulario
     const validateForm = (): boolean => {
@@ -332,12 +333,16 @@ export const CreateTrainingPlan: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* Category */}
+                                {/* Category — label asociado por accesibilidad y getByLabel E2E */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label
+                                        htmlFor="plan-form-goal"
+                                        className="block text-sm font-semibold text-slate-700 mb-2"
+                                    >
                                         Categoría *
                                     </label>
                                     <FormSelect
+                                        id="plan-form-goal"
                                         value={formData.goal || ""}
                                         onChange={(e) =>
                                             setFormData({ ...formData, goal: e.target.value })
@@ -430,12 +435,16 @@ export const CreateTrainingPlan: React.FC = () => {
                             </h3>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {/* Start Date */}
+                                {/* Start Date — label asociado por accesibilidad y getByLabel E2E */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label
+                                        htmlFor="plan-form-start-date"
+                                        className="block text-sm font-semibold text-slate-700 mb-2"
+                                    >
                                         Fecha de Inicio *
                                     </label>
                                     <Input
+                                        id="plan-form-start-date"
                                         type="date"
                                         value={formData.start_date || ""}
                                         onChange={(e) =>
@@ -453,12 +462,16 @@ export const CreateTrainingPlan: React.FC = () => {
                                     )}
                                 </div>
 
-                                {/* End Date */}
+                                {/* End Date — label asociado por accesibilidad y getByLabel E2E */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label
+                                        htmlFor="plan-form-end-date"
+                                        className="block text-sm font-semibold text-slate-700 mb-2"
+                                    >
                                         Fecha de Fin *
                                     </label>
                                     <Input
+                                        id="plan-form-end-date"
                                         type="date"
                                         value={formData.end_date || ""}
                                         onChange={(e) =>

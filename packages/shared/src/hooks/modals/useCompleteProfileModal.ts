@@ -65,7 +65,9 @@ export function useCompleteProfileModal(): CompleteProfileModalResult {
     );
 
     const isProfileComplete = missingFields.length === 0 && !!trainer;
-    const shouldBlock = !isProfileComplete;
+    // Solo bloquear cuando hayamos cargado y el perfil esté incompleto.
+    // Mientras isLoading, no bloquear (evita bloqueo al cargar con perfil completo).
+    const shouldBlock = !isLoading && !isProfileComplete;
 
     return {
         shouldBlock,

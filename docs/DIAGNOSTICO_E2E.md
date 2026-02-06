@@ -4,6 +4,13 @@ Documento de causa raíz y soluciones aplicadas para fallos E2E (Playwright). Se
 
 ---
 
+## Principio: bug de app → corregir app; sin fix sin validación
+
+- **Si el fallo es por un bug de la aplicación:** se corrige la **app**, no se adapta el test al comportamiento erróneo. Los tests deben servir para **detectar** errores y flujos rotos, no para ocultarlos.
+- **Ningún fix (ni en app ni en test) se aplica sin validación explícita del responsable.** En este documento se documenta causa raíz y solución propuesta; la decisión de implementar corresponde al usuario/equipo.
+
+---
+
 ## Error 1: Persistencia de token y guard de rutas (resuelto)
 
 ### 1.1 Flujo de autenticación
@@ -123,8 +130,233 @@ Tras el fix de §2.8, sidebar y drawer tienen ambos links semánticos con el mis
 
 ---
 
+## Error 3: Mensaje de login fallido en inglés (test login-failure)
+
+### 3.1 Síntoma
+
+- **Spec:** `e2e/auth/login-failure.spec.ts`
+- **Error Playwright:** `getByText(/correo o contraseña incorrectos|incorrectos|error/i)` → element(s) not found, timeout 10s.
+- El test comprueba que, con credenciales inválidas, se muestra un mensaje de error y se permanece en `/auth/login`. La URL sí se cumple; el mensaje visible no coincide con el regex.
+
+### 3.2 Causa raíz
+
+- **Backend:** `backend/app/api/auth.py` en el endpoint de login devuelve ante credenciales incorrectas `HTTPException(status_code=400, detail="Incorrect email or password")` (línea 295). Es decir: **400** (no 401) y mensaje en **inglés**.
+- **Frontend:** `useAuthForm.handleServerError` usa primero `data.detail` si existe, así que muestra "Incorrect email or password" en el `ServerErrorBanner`. El fallback "Correo o contraseña incorrectos" solo se usa cuando el backend devuelve 401 sin `detail`.
+- **Test:** El locator solo contemplaba variantes en español ("correo o contraseña incorrectos", "incorrectos", "error"); no el texto real mostrado por la app.
+
+### 3.3 ¿Bug de app o del test?
+
+- **Test:** El assertion no incluía el mensaje que la aplicación muestra realmente. No es bug de la app: el error sí se muestra.
+
+### 3.4 Solución aplicada
+
+- En `login-failure.spec.ts` se amplió el regex para aceptar el mensaje real del backend: `incorrect email or password` además de las variantes en español. Así el test valida el comportamiento real sin cambiar backend ni frontend.
+
+---
+
+## Error 4: clients-create.spec.ts — strict mode con getByText(/E2E/i)
+
+### Síntoma
+
+- **Spec:** `e2e/clients/clients-create.spec.ts`
+- **Error:** `expect(locator).toBeVisible()` failed — strict mode violation: `getByText(/E2E/i)` resolvió a **4 elementos** (breadcrumb, h1, email, toast de éxito).
+
+### Causa raíz
+
+- El test comprueba que el nombre del cliente creado es visible con `page.getByText(new RegExp(data.nombre, "i"))`, donde `data.nombre` es `"E2E"`. En la página de detalle ese texto aparece en: breadcrumb, heading del cliente, email (e2e.xxx@example.com) y mensaje toast "Cliente E2E Client xxx creado exitosamente". **Selector ambiguo:** no se acota a un único ámbito (p. ej. contenido principal del detalle).
+
+### Bug de
+
+- **Test:** el locator es demasiado genérico; la UI es correcta.
+
+### Fix propuesto (sin parches)
+
+- Acotar al contenido principal del detalle: usar el **heading** que muestra el nombre del cliente (único en la vista de detalle). Por ejemplo:
+  - `page.getByRole("main").getByRole("heading", { name: new RegExp(data.nombre, "i") })` si el detalle está en `<main>`, o
+  - `page.getByRole("heading", { level: 1 }).filter({ hasText: data.nombre })` para el h1 del nombre del cliente.
+- Así se valida que el nombre aparece en el título del detalle sin depender de breadcrumb/toast.
+
+---
+
+## Error 5: clients-detail-tabs.spec.ts — tab "Resumen" no encontrado
+
+### Síntoma
+
+- **Spec:** `e2e/clients/clients-detail-tabs.spec.ts`
+- **Error:** `getByRole('tab', { name: /resumen/i })` — element(s) not found, timeout 5s.
+
+### Causa raíz
+
+- En `ClientDetail.tsx` la navegación por pestañas se implementa con **`<button>`** dentro de `<nav aria-label="Tabs">` (líneas 276-290). Los botones no tienen `role="tab"` ni `aria-selected`/`aria-controls`; son botones con el texto del label ("Resumen", "Programación de Sesiones", etc.). Playwright solo encuentra elementos con rol `tab` si están marcados con ese rol; aquí no lo están. **UI real diferente al esperado:** el test asumía `role="tab"` y la app usa botones en un `<nav>`.
+
+### Bug de
+
+- **Test:** se usó un rol que la app no expone. Opcionalmente la app podría mejorar accesibilidad añadiendo `role="tablist"`/`role="tab"` en el nav, pero no es obligatorio para el fix del test.
+
+### Fix propuesto (sin parches)
+
+- Acotar al `<nav aria-label="Tabs">` y buscar el **botón** con el texto del tab:
+  - `page.getByRole("navigation", { name: /tabs/i }).getByRole("button", { name: /resumen/i })` para verificar que el tab "Resumen" existe y es visible.
+  - Para hacer click en "Progreso": `page.getByRole("navigation", { name: /tabs/i }).getByRole("button", { name: /progreso/i }).click()`.
+- No usar `.first()`; el contexto es el nav de tabs.
+
+---
+
+## Error 6: clients-edit.spec.ts — strict mode con "Guardar cambios" y timeout con .locator('..')
+
+### Síntoma
+
+- **Spec:** `e2e/clients/clients-edit.spec.ts`
+- **Error (inicial):** `locator.click` — strict mode violation: `getByRole('button', { name: /guardar cambios/i })` resolvió a **4 elementos**.
+- **Error (tras fix con ..):** timeout en `.locator("..")`: en modo edit no existía heading "Datos personales" en el DOM; el locator que partía de ese heading fallaba.
+
+### Causa raíz (y bug de accesibilidad)
+
+- **Test:** locator incorrecto (heading inexistente en edit) y uso de `..` no deseado.
+- **App:** Las secciones del formulario de edición en `ClientFormBase.tsx` eran `<div>` sin roles ARIA, lo que hacía las secciones inaccesibles para lectores de pantalla y obligaba a los tests a depender de clases CSS (`div.rounded-lg` + `filter(hasText)`).
+
+### Fix aplicado (accesibilidad + tests semánticos)
+
+1. **Cambio en la app (`ClientFormBase.tsx`):** Cada una de las 4 secciones del modo edit es ahora un `<section role="region" aria-labelledby="...">` con un `<h3 id="...">` que proporciona el nombre accesible de la región:
+   - Información Personal (`personal-info-heading`)
+   - Datos Antropométricos (`anthropometric-heading`)
+   - Parámetros de Entrenamiento (`training-params-heading`)
+   - Información de Salud (`health-info-heading`)
+   En la primera sección, `PersonalInfo` recibe `hideHeading` para no duplicar el título (el heading lo aporta la sección).
+2. **Test (`clients-edit.spec.ts`):** Locator semántico y estable:
+   - `page.getByRole("region", { name: /información personal/i }).getByRole("button", { name: /guardar cambios/i }).click()`
+3. **Beneficios:** Accesibilidad (lectores de pantalla pueden anunciar las regiones), tests que no dependen de clases CSS y alineados con ARIA.
+
+---
+
+## Error 7: clients-search-filter.spec.ts — strict mode con getByText(regex)
+
+### Síntoma
+
+- **Spec:** `e2e/clients/clients-search-filter.spec.ts`
+- **Error:** `expect(locator).toBeVisible()` failed — strict mode violation: `getByText(/no se encontraron clientes|nombre|fatiga|adherencia/i)` resolvió a **4 elementos** (Nombre, Fatiga, Adherencia como cabeceras de tabla, y "No se encontraron clientes" como mensaje).
+
+### Causa raíz
+
+- El test quiere comprobar que tras buscar "E2E_NOMBRE_QUE_NO_EXISTE" se ve **o** el mensaje vacío **o** las cabeceras de la tabla. El regex coincide con varios nodos a la vez: las cabeceras "Nombre", "Fatiga", "Adherencia" y el párrafo "No se encontraron clientes". **Selector ambiguo:** `toBeVisible()` con un locator que resuelve a más de un elemento provoca strict mode en Playwright.
+
+### Bug de
+
+- **Test:** el locator es demasiado genérico; la UI es correcta (muestra cabeceras + filas o mensaje vacío).
+
+### Fix propuesto (sin parches)
+
+- Acotar a un único elemento representativo del estado de la lista:
+  - Si se busca un texto que no existe, el mensaje vacío es el indicador claro: `page.getByText("No se encontraron clientes")` (texto exacto) dentro del área de la tabla, p. ej. `page.getByRole("region", { name: /clientes/i }).getByText("No se encontraron clientes")` si hubiera región, o simplemente `page.getByText("No se encontraron clientes")` si en esa vista solo aparece una vez.
+  - O comprobar que la tabla (cabeceras o filas) está presente acotando al contenedor: `page.locator('[class*="rounded-xl"]').filter({ hasText: /no se encontraron clientes|nombre/i }).first()` evita strict mode pero usa `.first()`; mejor: comprobar solo el mensaje vacío con un locator que no sea ambiguo. Si con el texto "E2E_NOMBRE_QUE_NO_EXISTE" siempre debería mostrarse "No se encontraron clientes", usar únicamente `expect(page.getByText("No se encontraron clientes")).toBeVisible()` (asumiendo que ese texto solo aparece una vez en la lista). Si puede haber varias instancias, acotar al contenedor de la tabla (p. ej. el div que envuelve la tabla de clientes) y dentro de él el texto "No se encontraron clientes".
+- En resumen: **assertion sobre un único elemento.** Tras buscar un texto inexistente, el mensaje de estado vacío es único en la tabla; usar `page.getByText("No se encontraron clientes")` como assertion. Si ese texto apareciera en más de un sitio, acotar al contenedor de la tabla (p. ej. el div con la clase del bloque de la tabla que en ClientList envuelve la lista) y dentro de él `getByText("No se encontraron clientes")`. No usar regex que coincida con varios textos (Nombre, Fatiga, Adherencia, No se encontraron…) en un solo locator.
+
+---
+
+## Error 8: getByLabel(/categoría/i) timeout en creación de planes
+
+### Tests afectados
+
+- `e2e/plans/plans-create.spec.ts` — can create a new plan and reach detail
+- `e2e/plans/plans-delete.spec.ts` — delete plan from detail and redirect
+
+### Análisis (screenshots y código)
+
+1. **¿Existe el campo Categoría en la UI?** Sí. El formulario "Crear Plan de Entrenamiento" (Información Básica) muestra el campo "Categoría *" con placeholder "Selecciona una categoría" y aspecto de dropdown.
+2. **¿Tiene `<label>` asociado?** El texto "Categoría *" está en un `<label>`, pero **sin atributo `htmlFor`**. El control es un `<FormSelect>` que renderiza un `<select>` con un `id` interno (useId) solo cuando se usa la prop `label` del componente. En `CreateTrainingPlan.tsx` el label se renderiza **fuera** de `FormSelect`, por lo que no hay asociación programática label → select.
+3. **¿Es un `<select>`?** Sí. `FormSelect` renderiza un `<select>` nativo. Playwright `getByLabel(/categoría/i)` busca un elemento con un label asociado (por `for`/`id` o por contenedor); al no existir esa asociación, el locator hace timeout.
+
+### Causa raíz
+
+- **Bug de la aplicación:** Los campos del formulario de creación de planes (Categoría, Fecha de Inicio, Fecha de Fin) tienen `<label>` visual pero **sin `htmlFor`** y los controles (`FormSelect`, `Input`) se usan **sin `id`** explícito cuando el label está fuera del componente. La asociación accesible label–control no existe, por lo que `getByLabel` no resuelve.
+
+### Fix aplicado (app, sin cambiar el test)
+
+- En `CreateTrainingPlan.tsx`:
+  - **Categoría:** `<label htmlFor="plan-form-goal">` y `<FormSelect id="plan-form-goal" ...>`.
+  - **Fecha de Inicio:** `<label htmlFor="plan-form-start-date">` y `<Input id="plan-form-start-date" ...>`.
+  - **Fecha de Fin:** `<label htmlFor="plan-form-end-date">` y `<Input id="plan-form-end-date" ...>`.
+- Los tests siguen usando `getByLabel(/categoría/i)`, `getByLabel(/fecha de inicio/i)` y `getByLabel(/fecha de fin/i)`; al corregir la app, los locators semánticos pasan.
+
+### Beneficio
+
+- Accesibilidad: asociación correcta label–control para lectores de pantalla y navegación por teclado.
+- E2E estable con locators por rol/label, sin depender de clases CSS ni de adaptar el test al bug.
+
+---
+
+## Error 9: Tabla `monthly_plans` ausente en PostgreSQL (borrado de plan)
+
+### Síntoma
+
+- Al borrar un plan desde el detalle: **500 Internal Server Error**.
+- Backend: `psycopg2.errors.UndefinedTable: no existe la relación «monthly_plans»`.
+
+### Verificación de migraciones
+
+1. **¿Existe migración para `monthly_plans`?** Sí.
+   - Archivo: `backend/alembic/versions/2026_02_04_add_monthly_plans_weekly_daily_overrides.py`.
+   - Crea la tabla `monthly_plans` y tablas relacionadas (`weekly_overrides`, `daily_overrides`).
+   - La cadena de revisiones está correcta (depende de la revisión anterior y es referenciada por la siguiente).
+
+2. **Acción requerida:** Aplicar migraciones en el entorno donde falla (p. ej. PostgreSQL de desarrollo/staging):
+   ```bash
+   cd backend && python -m alembic upgrade head
+   ```
+
+### Fix en frontend (toast de error)
+
+- En `TrainingPlanHeader.tsx`, en el `catch` del `deletePlan`, se añadió `showError(toast)` para mostrar un toast cuando el borrado falle (p. ej. por 500 o red). El usuario ve feedback claro en lugar de silencio.
+
+### Resumen
+
+- **monthly_plans no es legacy:** forma parte del modelo actual (planes por mes/semana/día). Macro/meso/micro se eliminaron; la jerarquía actual usa `monthly_plans` y overrides.
+- Si la BD no tiene la tabla, ejecutar `alembic upgrade head` en el backend; tras eso, re-ejecutar los tests E2E de planes (p. ej. `plans-delete.spec.ts`).
+
+---
+
+## Error N: Login form not found (getByRole textbox email/correo — timeout 60s)
+
+### Síntoma
+
+```
+Error: locator.fill: Test timeout of 60000ms exceeded.
+Call log: waiting for getByRole('textbox', { name: /email|correo/i })
+at fixtures\auth.ts (loginAsTrainer)
+```
+
+El test falla en el primer paso (login): no encuentra el campo de email en la página.
+
+### Causa raíz (análisis en profundidad)
+
+1. **¿Depende el formulario de login del backend?** No. La ruta `/auth/login` renderiza `Login` → `LoginForm` dentro de `PublicLayout`. No hay peticiones al backend para mostrar el formulario. `hydrateAuth` solo lee de `localStorage`; no llama a la API. Por tanto, **el backend caído no impide que se muestre el formulario de login**.
+
+2. **¿Por qué no se encuentra el textbox?** Porque la página cargada **no es** la de login con el formulario. Posibles causas:
+   - **Frontend no servido en baseURL:** El `webServer` de Playwright arranca `pnpm exec vite` (desde `apps/web`). Si el servidor no llega a responder en `baseURL` (puerto ocupado, comando incorrecto, timeout 30s), `page.goto("/")` puede cargar una página de error del navegador ("This site can't be reached") o quedar en blanco. No hay formulario.
+   - **Navegación a `/auth/login` no efectiva:** El fixture hace `goto("/")`, luego si la URL no es dashboard ni `/auth/login`, hace `goto("/auth/login")`. Si la primera carga falló, la segunda también puede fallar (mismo origen).
+   - **`waitForLoadState("networkidle")`:** Si el frontend hace peticiones repetidas (p. ej. reintentos a una API caída), "networkidle" puede tardar mucho o no llegar. El fixture usa `.catch(() => {})`, así que no falla ahí, pero la URL podría seguir siendo "/" y la página en estado de carga o error, y luego `goto("/auth/login")` podría ejecutarse sobre una página inestable.
+
+3. **Conclusión:** El fallo no es "el backend no responde" en el sentido de ocultar el formulario. Es **no estar viendo la app en la URL correcta** (frontend no disponible, navegación fallida o timeout antes de ver el form). Si el backend no está levantado, el login **fallará al enviar** (tras rellenar y pulsar "Iniciar sesión"), no al buscar el textbox.
+
+### Solución (fixture + requisitos)
+
+- **Requisitos E2E (README / playwright.config):** Dejar explícito: (1) Frontend debe servirse en `baseURL` (Playwright puede arrancarlo con `webServer`). (2) Backend debe estar levantado para que el login tenga éxito (POST login); si el backend no está, el formulario puede mostrarse pero el test fallará tras enviar.
+- **Fixture `auth.ts`:** (1) Tras decidir ir a login, hacer `goto("/auth/login")` y esperar a que la URL sea `/auth/login` con timeout. (2) Esperar a que el formulario esté visible (p. ej. campo de correo o título "Bienvenido de vuelta") con timeout y mensaje de error claro: "E2E: formulario de login no visible. Comprueba que el frontend está servido en baseURL y que la ruta /auth/login carga." (3) Usar selectores alineados con la UI: `getByLabel(/correo electrónico/i)` y `getByLabel(/contraseña/i)` (igual que en `LoginForm.tsx` y en los unit tests), en lugar de solo `getByRole("textbox", { name: /email|correo/i })`, para evitar desajustes de rol/nombre accesible.
+
+### Implementación
+
+- En `e2e/fixtures/auth.ts`: asegurar navegación a `/auth/login`, esperar visibilidad del campo de correo (o del encabezado del login) con mensaje claro, y usar `getByLabel` para correo y contraseña.
+- En `playwright.config.ts` o README § E2E: documentar que el backend debe estar levantado para que el flujo post-login funcione; el formulario debe mostrarse igualmente.
+
+### Causa adicional: pantalla blanca (screenshot totalmente blanco)
+
+Si la captura `e2e-login-page-captured.png` sale **en blanco**, la causa es que el test usaba `waitUntil: "domcontentloaded"` en `page.goto()`. Ese evento se dispara cuando el HTML está parseado pero **antes** de que terminen de cargar recursos (p. ej. el bundle JS) y de que React monte la app. El test buscaba el formulario cuando el DOM solo tenía el root vacío. **Fix:** usar `waitUntil: "load"` en los `goto("/")` y `goto("/auth/login")` para esperar a que el documento y los scripts hayan cargado antes de buscar el formulario.
+
+---
+
 ## Referencias rápidas
 
 - **Base API / token:** `packages/shared/src/api/baseApi.ts` (prepareHeaders, 401).
 - **MSW:** Solo en Vitest; no activo en E2E (`main.tsx` no inicia MSW).
 - **Playwright:** Sin `storageState`; sesión vía login en el test.
+- **Sprint 1 (Auth & Edge):** Specs en `e2e/auth/*.spec.ts` y `e2e/edge/unauthorized-redirect.spec.ts`; fixtures en `e2e/fixtures/` (test-data, auth, navigation). Fallos de esos specs: documentar causa raíz aquí (nuevo Error N) o en `AUDITORIA_E2E_SUITE.md` §3.5; no parchear sin decisión.
