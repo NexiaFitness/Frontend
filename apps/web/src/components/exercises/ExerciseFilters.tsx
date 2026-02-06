@@ -122,10 +122,14 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {/* Grupo Muscular */}
                 <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-2">
+                    <label
+                        htmlFor="exercise-filter-muscle-group"
+                        className="block text-xs font-medium text-slate-700 mb-2"
+                    >
                         Grupo Muscular
                     </label>
                     <select
+                        id="exercise-filter-muscle-group"
                         value={selectedMuscleGroupId}
                         onChange={handleMuscleGroupChange}
                         disabled={isLoadingMuscleGroups}
@@ -144,10 +148,14 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
 
                 {/* Equipamiento */}
                 <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-2">
+                    <label
+                        htmlFor="exercise-filter-equipment"
+                        className="block text-xs font-medium text-slate-700 mb-2"
+                    >
                         Equipamiento
                     </label>
                     <select
+                        id="exercise-filter-equipment"
                         value={selectedEquipmentId}
                         onChange={handleEquipmentChange}
                         disabled={isLoadingEquipment}
@@ -166,10 +174,14 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
 
                 {/* Nivel */}
                 <div>
-                    <label className="block text-xs font-medium text-slate-700 mb-2">
+                    <label
+                        htmlFor="exercise-filter-level"
+                        className="block text-xs font-medium text-slate-700 mb-2"
+                    >
                         Nivel
                     </label>
                     <select
+                        id="exercise-filter-level"
                         value={filters.nivel || ""}
                         onChange={handleLevelChange}
                         className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

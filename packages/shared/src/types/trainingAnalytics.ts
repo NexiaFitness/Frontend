@@ -484,4 +484,3 @@ export interface TrainingPlanAlignmentResponse {
     monthly_values: ParentCycleValues | null;
     alignment_graph: CycleAlignmentPoint[];
 }
-

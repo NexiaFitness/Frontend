@@ -205,15 +205,15 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 | Categoría | Propuestos | Existen (specs) | Falta |
 |-----------|------------|------------------|-------|
 | **A) Auth** | 8 | 8 (login-success, login-failure, logout, session-persistence, register, forgot-password, verify-email, session-expiry) | — (Sprint 1 cerrado) |
-| **B) Clients** | 8 | 7 (list, create, validations, edit, delete, search-filter, detail-tabs) | clients-onboarding-complete-profile |
+| **B) Clients** | 8 | 8 (list, create, validations, edit, delete, search-filter, detail-tabs, onboarding-complete-profile) | — (Sprint 2 cerrado) |
 | **C) Plans** | 10 | 10 (planning-flow, list, create, edit, delete, assign, detail-tabs, calendar-baseline, overrides, templates-create) | — (Sprint 3 cerrado) |
-| **D) Exercises** | 3 | 0 | exercises-browse, exercises-search-filter, exercises-detail |
+| **D) Exercises** | 3 | 3 (exercises-browse, exercises-search-filter, exercises-detail) | — (Sprint 4 implementado) |
 | **E) Journeys** | 4 | 0 | journey-onboard-client, journey-weekly-planning, journey-session-create, journey-schedule-session |
-| **F) Edge** | 6 | 1 (unauthorized-redirect) | network-error, empty-states, form-validation, account-delete, conflict-data |
+| **F) Edge** | 6 | 6 (unauthorized-redirect, account-page, network-error, empty-states, form-validation, account-delete) | conflict-data (setup específico, opcional) |
 
 **Siguiente paso recomendado (por orden de sprints):**
 
-1. **Sprint 4:** Crear carpeta `e2e/exercises/` e implementar los 3 specs de ejercicios (browse, search-filter, detail).
+1. **Sprint 5:** User Journeys (journey-onboard-client, journey-weekly-planning, journey-session-create, journey-schedule-session). Ver §Sprint 5 en plan de implementación. Sprint 6 (Edge) cerrado con 5/6 specs; conflict-data pendiente por setup específico.
 
 Los cambios recientes en los .md fueron solo **documentar** que plans-detail-tabs y plans-calendar-baseline ya pasan y cumplen la auto-auditoría; no cambian qué tests toca hacer a continuación.
 
@@ -583,6 +583,67 @@ npx playwright test e2e/plans --reporter=list
 - **Resultado:** ✅ Cumplen todos los estándares de la auditoría.
 
 - **Ejecución:** Resto de specs ejecutar localmente. Fallos documentar en §3.5 o `DIAGNOSTICO_E2E.md`.
+
+---
+
+## 3.8 Sprint 4 — Implementación realizada (Exercise Database + Account)
+
+### Alcance implementado
+
+- **Specs en `e2e/exercises/`:**
+  - **exercises-browse.spec.ts:** Login → Sidebar "Ejercicios" → heading "Base de Datos de Ejercicios"; assertion "Mostrando X de Y ejercicios" o "Aún no hay ejercicios" / "No se encontraron ejercicios". Segundo test: loading desaparece y se muestra contenido o empty.
+  - **exercises-search-filter.spec.ts:** Panel "Filtros" y placeholder "Buscar ejercicios" visibles; aplicar filtro Nivel (Principiante) → resultados o empty.
+  - **exercises-detail.spec.ts:** Si hay ejercicios, click en primera card (role="button" con aria-label "Nombre - Grupo") → URL /dashboard/exercises/:id, botón "Volver a Ejercicios", heading con nombre. Si lista vacía, test se salta.
+- **Spec en `e2e/edge/`:**
+  - **account-page.spec.ts:** Login → "Mi cuenta" → heading "Mi Cuenta" y al menos una de: Información personal, Seguridad, Zona de peligro, Cambiar contraseña, Eliminar cuenta. No ejecuta eliminación real.
+- **Fixtures:** Se reutilizan `loginAsTrainer`, `navigateToExercises`, `navigateToAccount` (ya existentes en `navigation.ts`).
+- **Política:** Si al ejecutar localmente algún test falla por **bug de la app** (ej. lista de ejercicios no carga, paginación no funciona, filtros no aplican), se documenta causa raíz en §3.5 o `DIAGNOSTICO_E2E.md` y se corrige la app; no se adapta el test al error.
+
+### Cómo ejecutar Sprint 4
+
+```bash
+# Desde frontend (backend y frontend levantados)
+pnpm -F web test:e2e -- exercises edge/account-page
+
+# Solo ejercicios
+npx playwright test e2e/exercises --reporter=list
+
+# Solo account
+npx playwright test e2e/edge/account-page.spec.ts --reporter=list
+```
+
+### Resultados y hallazgos Sprint 4
+
+- **Ejecución local:** 6/6 passed (exercises-browse, exercises-search-filter, exercises-detail, edge/account-page).
+- **Hallazgos corregidos:**
+  1. **App — ExerciseFilters:** Timeout en `getByLabel(/nivel/i)`. Causa: labels sin `htmlFor`, selects sin `id`. Fix: añadidos `htmlFor`/`id` a los tres pares (exercise-filter-muscle-group, exercise-filter-equipment, exercise-filter-level) en `ExerciseFilters.tsx`.
+  2. **Test — exercises-search-filter.spec.ts:** `selectOption: options[0].label: expected string, got object`. Causa: se pasaba RegExp en `label`; la API de Playwright exige string. Fix en test: usar `selectOption({ value: "beginner" })` (estable, no depende de traducción).
+
+---
+
+## 3.9 Sprint 6 — Implementación realizada (Edge Cases)
+
+### Alcance implementado
+
+- **Specs en `e2e/edge/`:**
+  - **network-error.spec.ts:** Intercept GET clients/with-metrics o recent-activity con 500 → login → Clientes → mensaje "Error al cargar" o similar visible.
+  - **empty-states.spec.ts:** (1) Intercept clients/with-metrics y recent-activity con respuesta vacía → Clientes → "No se encontraron clientes". (2) Intercept training-plans (lista y templates) con [] → Planes → heading y texto empty o secciones.
+  - **form-validation.spec.ts:** (1) Login con campos vacíos → click Iniciar sesión → permanece en login, mensaje obligatorio/error. (2) Register con email inválido → mensaje "correo válido" o similar.
+  - **account-delete.spec.ts:** Intercept DELETE /auth/me con 200 → login → Mi cuenta → Eliminar Cuenta → modal → confirmar Eliminar cuenta → redirect a /auth/login (no se borra la cuenta real).
+- **Ya existían:** unauthorized-redirect.spec.ts, account-page.spec.ts.
+- **No implementado:** conflict-data.spec.ts (requiere setup de conflicto optimista vs servidor; prioridad baja).
+
+### Cómo ejecutar Sprint 6
+
+```bash
+pnpm -F web test:e2e -- edge
+npx playwright test e2e/edge --reporter=list
+```
+
+### Resultados y hallazgos Sprint 6
+
+- **Ejecución local:** 8/8 passed (account-delete, account-page, empty-states x2, form-validation x2, network-error, unauthorized-redirect).
+- **Hallazgos (fix en test — strict mode):** Tres locators matcheaban varios elementos; Playwright exige uno. Ajustes aplicados: (1) empty-states clientes: `getByText("No se encontraron clientes")` en lugar de regex que matcheaba también el subtítulo; (2) empty-states planes: `getByRole("heading", { name: /planificación de entrenamiento/i })` en lugar de regex con 3 headings; (3) form-validation login: `getByText("El correo es obligatorio")` en lugar de regex que matcheaba labels y enlace. Sin cambios en la app.
 
 ---
 
