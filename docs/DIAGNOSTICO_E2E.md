@@ -354,6 +354,30 @@ Si la captura `e2e-login-page-captured.png` sale **en blanco**, la causa es que 
 
 ---
 
+## Patrón aplicado: espera a training-plan-detail (plans-detail-tabs, plans-calendar-baseline)
+
+- **Contexto:** Tras `ensureOnPlanDetail(page)`, el detalle del plan puede tardar en montarse (fetch + render). Si el test busca el `nav` de tabs de inmediato, puede fallar por condición de carrera (página en blanco o sin tabs).
+- **Solución:** Esperar a que el contenedor del detalle esté visible: `await expect(page.getByTestId("training-plan-detail")).toBeVisible({ timeout: 15_000 });` antes de localizar `getByRole("navigation", { name: /tabs/i })`. Mismo criterio que en plans-assign.
+- **Resultado:** plans-detail-tabs y plans-calendar-baseline pasan (2 passed, ~18s). No es corrección de bug de app; es alineación del test con el contrato de UI (TrainingPlanDetail expone `data-testid="training-plan-detail"`).
+
+---
+
+## Error 9: plans-overrides — getByLabel no encontraba el campo week_id (resuelto)
+
+- **Síntoma:** E2E `plans-overrides.spec.ts` hacía timeout (60s) en `getByLabel(/week_id \(ej\./i)`.
+- **Causa raíz:** En `PlanningTab.tsx`, el formulario de overrides semanales tenía `<label>` y `<input>` como hermanos sin asociación: el label no tenía `htmlFor` ni el input `id`. Playwright resuelve `getByLabel` por asociación explícita (label[for]=id del control) o por encapsulado; al no existir, no encontraba el control.
+- **Solución (app):** Se añadió `htmlFor="planning-weekly-week-id"` al label "week_id (ej. 2026-02-W1)" e `id="planning-weekly-week-id"` al input. Igual para el campo Cualidades del mismo formulario: `htmlFor="planning-weekly-qualities"` e `id="planning-weekly-qualities"`. Sin cambios en el test.
+
+---
+
+## Error 10: plans-templates-create — selectOption "Strength" no encontrado (resuelto)
+
+- **Síntoma:** E2E `plans-templates-create.spec.ts` fallaba en `selectOption({ label: "Strength" })` con "did not find some options".
+- **Causa raíz:** En `CreateTrainingPlanTemplate.tsx`, las opciones del goal se muestran en **español** (goalOptions mapean "Strength" → "Fuerza", "Muscle Gain" → "Ganancia de Músculo", etc.). El test asumía el label en inglés.
+- **Solución (test):** Ajustar el locator al contrato real de la UI: `selectOption({ label: "Fuerza" })`. No es bug de la app; la app muestra correctamente las etiquetas traducidas.
+
+---
+
 ## Referencias rápidas
 
 - **Base API / token:** `packages/shared/src/api/baseApi.ts` (prepareHeaders, 401).

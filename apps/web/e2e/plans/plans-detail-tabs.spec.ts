@@ -20,12 +20,17 @@ test.describe("Plans — Detail tabs", () => {
     await navigateToPlans(page);
     await ensureOnPlanDetail(page);
 
+    await expect(
+      page.getByTestId("training-plan-detail")
+    ).toBeVisible({ timeout: 15_000 });
+
     const nav = page.getByRole("navigation", { name: /tabs/i });
-    await expect(nav).toBeVisible({ timeout: 8_000 });
+    await expect(nav).toBeVisible({ timeout: 5_000 });
     await expect(nav.getByRole("button", { name: /sesiones/i })).toBeVisible();
     await expect(nav.getByRole("button", { name: /planificación/i })).toBeVisible();
 
     await nav.getByRole("button", { name: /planificación/i }).click();
+    // Varios nodos pueden mostrar este texto en el tab; acotamos al primero visible.
     await expect(
       page
         .getByText(/nuevo baseline mensual|calendario de planificación|baselines mensuales/i)

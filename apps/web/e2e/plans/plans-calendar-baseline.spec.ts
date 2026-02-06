@@ -19,10 +19,15 @@ test.describe("Plans — Calendar / Baseline", () => {
     await navigateToPlans(page);
     await ensureOnPlanDetail(page);
 
+    await expect(
+      page.getByTestId("training-plan-detail")
+    ).toBeVisible({ timeout: 15_000 });
+
     const nav = page.getByRole("navigation", { name: /tabs/i });
-    await expect(nav).toBeVisible({ timeout: 8_000 });
+    await expect(nav).toBeVisible({ timeout: 5_000 });
     await nav.getByRole("button", { name: /planificación/i }).click();
 
+    // Varios nodos pueden mostrar este texto; acotamos al primero visible.
     await expect(
       page.getByText(/nuevo baseline mensual/i).first()
     ).toBeVisible({ timeout: 10_000 });
@@ -37,6 +42,7 @@ test.describe("Plans — Calendar / Baseline", () => {
 
     await page.getByRole("button", { name: /^crear$/i }).click();
 
+    // Varios nodos pueden mostrar estos textos; acotamos al primero visible.
     await expect(
       page.getByText(/baselines mensuales/i).first()
     ).toBeVisible({ timeout: 5_000 });

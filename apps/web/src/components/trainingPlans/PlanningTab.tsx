@@ -375,10 +375,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         className="mb-3 flex flex-wrap items-end gap-3"
                     >
                         <div>
-                            <label className="mb-1 block text-sm text-gray-700">
+                            <label htmlFor="planning-weekly-week-id" className="mb-1 block text-sm text-gray-700">
                                 week_id (ej. 2026-02-W1)
                             </label>
                             <input
+                                id="planning-weekly-week-id"
                                 type="text"
                                 value={weekIdText}
                                 onChange={(e) => setWeekIdText(e.target.value)}
@@ -387,10 +388,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                             />
                         </div>
                         <div className="min-w-[180px]">
-                            <label className="mb-1 block text-sm text-gray-700">
+                            <label htmlFor="planning-weekly-qualities" className="mb-1 block text-sm text-gray-700">
                                 Cualidades
                             </label>
                             <input
+                                id="planning-weekly-qualities"
                                 type="text"
                                 value={weeklyQualitiesText}
                                 onChange={(e) => setWeeklyQualitiesText(e.target.value)}
@@ -400,6 +402,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         </div>
                         <button
                             type="submit"
+                            aria-label="Añadir override semanal"
                             disabled={isCreatingWeekly || !weekIdText.trim()}
                             className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm text-white disabled:opacity-50"
                         >
@@ -492,6 +495,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         </div>
                         <button
                             type="submit"
+                            aria-label="Añadir override diario"
                             disabled={isCreatingDaily || !dailyDateText}
                             className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm text-white disabled:opacity-50"
                         >
