@@ -26,6 +26,7 @@ import {
     useUpdateTrainingSessionMutation 
 } from "@nexia/shared/api/trainingSessionsApi";
 import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
+import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 
 const SESSION_TYPES = [
     { value: "training", label: "Entrenamiento" },
@@ -225,6 +226,13 @@ export const EditSession: React.FC = () => {
                         </h3>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Bloque "Hoy toca" — recomendaciones del plan del día */}
+                            <SessionDayPlan
+                                clientId={session.client_id ?? null}
+                                sessionDate={formData.sessionDate}
+                                trainerId={session.trainer_id ?? 0}
+                            />
+
                             {/* Nombre de la Sesión */}
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">

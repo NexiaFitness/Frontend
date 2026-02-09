@@ -11,7 +11,12 @@
  */
 
 import { useCallback } from "react";
-import { useCreateTrainingSessionMutation, useGetSessionTemplateQuery, useUseSessionTemplateMutation } from "../../api/sessionProgrammingApi";
+import {
+    useCreateTrainingSessionMutation,
+    useGetSessionTemplateQuery,
+    useUseSessionTemplateMutation,
+    useApplyTemplateToSessionMutation,
+} from "../../api/sessionProgrammingApi";
 import type { TrainingSessionCreate } from "../../types/sessionProgramming";
 
 interface UseCreateSessionFromTemplateParams {
@@ -35,6 +40,7 @@ export const useCreateSessionFromTemplate = ({
     trainerId,
 }: UseCreateSessionFromTemplateParams): UseCreateSessionFromTemplateResult => {
     const [createMutation, { isLoading, isError, error }] = useCreateTrainingSessionMutation();
+    const [applyTemplateMutation] = useApplyTemplateToSessionMutation();
     const [useTemplateMutation] = useUseSessionTemplateMutation();
     const { data: template, isLoading: isLoadingTemplate } = useGetSessionTemplateQuery(templateId);
 
@@ -58,12 +64,26 @@ export const useCreateSessionFromTemplate = ({
                 notes: `Creada desde template: ${template.name}`,
             };
 
-            await createMutation(sessionData).unwrap();
+            const created = await createMutation(sessionData).unwrap();
+
+            // Copiar ejercicios del template a la sesión (para que aparezcan en "Ejercicios de la sesión")
+            await applyTemplateMutation({
+                templateId,
+                sessionId: created.id,
+            }).unwrap();
 
             // Incrementar contador de uso del template
             await useTemplateMutation(templateId).unwrap();
         },
-        [createMutation, useTemplateMutation, clientId, trainerId, templateId, template]
+        [
+            createMutation,
+            applyTemplateMutation,
+            useTemplateMutation,
+            clientId,
+            trainerId,
+            templateId,
+            template,
+        ]
     );
 
     return {

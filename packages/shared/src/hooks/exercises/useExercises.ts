@@ -68,6 +68,10 @@ export interface ExerciseFilters {
     patron_movimiento?: string;
     tipo_carga?: string;
     search?: string;
+    /** Filtro por IDs de grupo muscular (usa mapping tables, mas preciso que search) */
+    muscle_group_ids?: number[];
+    /** Filtro por IDs de equipamiento (usa mapping tables) */
+    equipment_ids?: number[];
 }
 
 /**
@@ -127,6 +131,8 @@ interface GetExercisesParams {
     patron_movimiento?: string;
     tipo_carga?: string;
     search?: string;
+    muscle_group_ids?: number[];
+    equipment_ids?: number[];
 }
 
 // ========================================
@@ -145,7 +151,6 @@ const exercisesListApi = baseApi.injectEndpoints({
                 params.append('skip', skip.toString());
                 params.append('limit', limit.toString());
                 
-                // Agregar filtros si están presentes
                 if (filters.tipo) {
                     params.append('tipo', filters.tipo);
                 }
@@ -166,6 +171,17 @@ const exercisesListApi = baseApi.injectEndpoints({
                 }
                 if (filters.search) {
                     params.append('search', filters.search);
+                }
+                // Filtros por mapping tables (IDs)
+                if (filters.muscle_group_ids?.length) {
+                    for (const id of filters.muscle_group_ids) {
+                        params.append('muscle_group_ids', id.toString());
+                    }
+                }
+                if (filters.equipment_ids?.length) {
+                    for (const id of filters.equipment_ids) {
+                        params.append('equipment_ids', id.toString());
+                    }
                 }
 
                 return {
@@ -237,17 +253,22 @@ export function useExercises(): UseExercisesResult {
         limit: 20,
     });
 
-    // Query RTK Query con filtros y paginación
+    // Argumentos estables: evita bucle de re-renders (RTK Query recibe nueva referencia cada vez si no)
+    const queryArgs = useMemo(
+        () => ({
+            skip: pagination.skip,
+            limit: pagination.limit,
+            ...filters,
+        }),
+        [pagination.skip, pagination.limit, filters]
+    );
+
     const {
         data,
         isLoading,
         isError,
         refetch,
-    } = useGetExercisesQuery({
-        skip: pagination.skip,
-        limit: pagination.limit,
-        ...filters,
-    });
+    } = useGetExercisesQuery(queryArgs);
 
     // Memoizar lista de ejercicios
     const exercises = useMemo(() => {
@@ -260,20 +281,17 @@ export function useExercises(): UseExercisesResult {
     }, [data]);
 
     /**
-     * Actualizar filtros (merge parcial)
-     * Resetea paginación a la primera página cuando cambian los filtros
+     * Actualizar filtros (merge parcial).
+     * Resetea paginación a la primera página cuando cambian los filtros.
+     * Sin side-effects dentro del updater de setState.
      */
     const updateFilters = useCallback((newFilters: Partial<ExerciseFilters>) => {
-        setFiltersState((prev: ExerciseFilters) => {
-            const updated = { ...prev, ...newFilters };
-            // Resetear paginación cuando cambian los filtros
-            setPaginationState({ skip: 0, limit: pagination.limit });
-            return updated;
-        });
-    }, [pagination.limit]);
+        setFiltersState((prev) => ({ ...prev, ...newFilters }));
+        setPaginationState((prev) => ({ ...prev, skip: 0 }));
+    }, []);
 
     /**
-     * Actualizar paginación
+     * Actualizar paginación (skip y limit).
      */
     const updatePagination = useCallback((skip: number, limit: number) => {
         setPaginationState({ skip, limit });

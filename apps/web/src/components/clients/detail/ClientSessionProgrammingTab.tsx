@@ -12,8 +12,8 @@
  * @updated v5.3.0 - Alineado con Figma
  */
 
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetSessionTemplatesQuery } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -32,7 +32,18 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
     clientId,
 }) => {
     const navigate = useNavigate();
-    const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
+    const [searchParams] = useSearchParams();
+    const monthParam = searchParams.get("month"); // YYYY-MM
+    const initialMonth = useMemo(() => {
+        if (!monthParam || !/^\d{4}-\d{2}$/.test(monthParam)) return new Date();
+        const [y, m] = monthParam.split("-").map(Number);
+        return new Date(y, m - 1, 1);
+    }, [monthParam]);
+    const [currentMonth, setCurrentMonth] = useState<Date>(initialMonth);
+
+    useEffect(() => {
+        setCurrentMonth(initialMonth);
+    }, [initialMonth]);
 
     const { 
         data: templates, 
@@ -48,11 +59,10 @@ export const ClientSessionProgrammingTab: React.FC<ClientSessionProgrammingTabPr
         data: sessions = [], 
         isLoading: isLoadingSessions, 
         isError: isErrorSessions 
-    } = useGetClientTrainingSessionsQuery({
-        clientId,
-        skip: 0,
-        limit: 1000,
-    });
+    } = useGetClientTrainingSessionsQuery(
+        { clientId, skip: 0, limit: 1000 },
+        { refetchOnMountOrArgChange: true }
+    );
 
     // Calcular próxima sesión (fecha > hoy)
     const upcomingSession = useMemo(() => {

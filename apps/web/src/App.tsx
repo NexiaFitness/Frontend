@@ -54,7 +54,8 @@ import { ExerciseDetail } from "./pages/exercises/ExerciseDetail";
 // Reports & Scheduling (trainers only)
 import { GenerateReports } from "./pages/reports/GenerateReports";
 import { SchedulingPage } from "./pages/scheduling/SchedulingPage";
-import { ScheduleSession } from "./pages/scheduling/ScheduleSession";
+import { NewScheduledSessionPage } from "./pages/scheduling/NewScheduledSessionPage";
+import { EditScheduledSessionPage } from "./pages/scheduling/EditScheduledSessionPage";
 
 // Session Programming (trainers only)
 import { CreateSessionFromTemplate, CreateSession, EditSession, CreateTemplate, SessionDetail } from "./pages/sessionProgramming";
@@ -333,16 +334,34 @@ function App() {
         }
       />
 
-      {/* Schedule Session (legacy form page) */}
+      {/* New scheduled session (dedicated page) */}
       <Route
-        path="/dashboard/scheduling/schedule"
+        path="/dashboard/scheduling/new"
         element={
           <ProtectedRoute>
             <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ScheduleSession />
+              <NewScheduledSessionPage />
             </RoleProtectedRoute>
           </ProtectedRoute>
         }
+      />
+
+      {/* Edit scheduled session */}
+      <Route
+        path="/dashboard/scheduling/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <EditScheduledSessionPage />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Legacy: redirect old schedule URL to new */}
+      <Route
+        path="/dashboard/scheduling/schedule"
+        element={<Navigate to="/dashboard/scheduling/new" replace />}
       />
 
       {/* ============================================ */}

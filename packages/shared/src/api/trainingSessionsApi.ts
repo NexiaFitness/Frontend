@@ -16,9 +16,31 @@ import type {
     SessionExercise,
     SessionExerciseCreate,
 } from '../types/trainingSessions';
+import type {
+    SessionRecommendationsResponse,
+    SessionRecommendationsParams,
+} from '../types/sessionRecommendations';
 
 export const trainingSessionsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
+        /**
+         * GET /training-sessions/recommendations
+         * Obtener recomendaciones ("Hoy toca") para una fecha y cliente
+         * Query params: client_id, session_date (YYYY-MM-DD), trainer_id
+         */
+        getSessionRecommendations: builder.query<
+            SessionRecommendationsResponse,
+            SessionRecommendationsParams
+        >({
+            query: ({ client_id, session_date, trainer_id }) => ({
+                url: '/training-sessions/recommendations',
+                params: { client_id, session_date, trainer_id },
+            }),
+            providesTags: (_result, _error, { client_id, session_date }) => [
+                { type: 'TrainingSession', id: `REC_${client_id}_${session_date}` },
+            ],
+        }),
+
         /**
          * GET /training-sessions/?training_plan_id={id}
          * Obtener todas las sesiones de un Training Plan
@@ -192,6 +214,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
 });
 
 export const {
+    useGetSessionRecommendationsQuery,
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
     useGetSessionExercisesQuery,

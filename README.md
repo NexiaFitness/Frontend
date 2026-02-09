@@ -391,8 +391,9 @@ frontend/
 │   │   │   ├── reports/                         # Reports pages
 │   │   │   │   └── GenerateReports.tsx          # Generación de reportes
 │   │   │   ├── scheduling/                      # Scheduling pages
-│   │   │   │   ├── ScheduleSession.tsx          # Programar sesión
-│   │   │   │   └── SchedulingPage.tsx           # Página principal de scheduling
+│   │   │   │   ├── NewScheduledSessionPage.tsx  # Crear sesión agendada
+│   │   │   │   ├── EditScheduledSessionPage.tsx # Editar sesión agendada
+│   │   │   │   └── SchedulingPage.tsx          # Página principal (calendario)
 │   │   │   ├── sessionProgramming/              # Session Programming pages
 │   │   │   │   ├── CreateSession.tsx            # Crear sesión
 │   │   │   │   ├── CreateSessionFromTemplate.tsx # Crear sesión desde plantilla

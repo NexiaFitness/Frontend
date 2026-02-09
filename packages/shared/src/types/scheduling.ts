@@ -132,6 +132,15 @@ export interface AvailableSlotsResponse {
 // UI TYPES
 // ========================================
 
+/** Estado mostrado tras verificar disponibilidad (conflicto o disponible). */
+export interface ConflictCheckState {
+    hasConflict: boolean;
+    message: string;
+}
+
+/** Errores de validación por campo (nombre de campo → mensaje). */
+export type FormFieldErrors = Record<string, string>;
+
 export interface ScheduleSessionFormData {
     trainerId: number;
     clientId: number;

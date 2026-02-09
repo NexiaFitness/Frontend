@@ -15,7 +15,7 @@
 import React, { useMemo } from "react";
 import type { ReviewStepProps } from "@nexia/shared/types/clientOnboarding";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { calculateBMI, useClientPreview } from "@nexia/shared";
+import { calculateBMI, useClientPreview, TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { SomatotipoChart } from "../charts/SomatotipoChart";
 import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
@@ -111,6 +111,14 @@ export const Review: React.FC<ExtendedReviewProps> = ({
             long_gt_1h30: "1 hr 30 min+",
         };
         return durationMap[duration] || duration;
+    };
+
+    // Helper para formatear días concretos (training_days)
+    const formatTrainingDays = (days: string[] | undefined | null): string => {
+        if (!days || days.length === 0) return "—";
+        return days
+            .map((d) => TRAINING_DAY_LABELS[d as TrainingDayValue] ?? d)
+            .join(", ");
     };
 
     // Calcular BMI: usar valor del preview del backend si está disponible, sino calcular en frontend
@@ -345,6 +353,24 @@ export const Review: React.FC<ExtendedReviewProps> = ({
                                         </span>
                                         <p className="text-gray-900 font-medium">
                                             {formatSessionDuration(formData.session_duration)}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs uppercase tracking-wide text-primary-600 block mb-1">
+                                            Días/semana (exacto)
+                                        </span>
+                                        <p className="text-gray-900 font-medium">
+                                            {formData.exact_training_frequency != null
+                                                ? `${formData.exact_training_frequency} día${formData.exact_training_frequency === 1 ? "" : "s"}/semana`
+                                                : "—"}
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span className="text-xs uppercase tracking-wide text-primary-600 block mb-1">
+                                            Días concretos
+                                        </span>
+                                        <p className="text-gray-900 font-medium">
+                                            {formatTrainingDays(formData.training_days ?? null)}
                                         </p>
                                     </div>
                                 </div>

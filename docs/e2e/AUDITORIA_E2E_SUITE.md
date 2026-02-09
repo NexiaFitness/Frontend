@@ -1,6 +1,6 @@
 # Auditoría E2E - NEXIA Fitness Platform
 
-Documento de análisis de la aplicación y propuesta de suite E2E completa para Playwright. Referencia: infraestructura existente en `apps/web/e2e/`, `playwright.config.ts`, cuenta demo y `frontend/docs/DIAGNOSTICO_E2E.md`.
+Documento de análisis de la aplicación y propuesta de suite E2E completa para Playwright. Referencia: infraestructura existente en `apps/web/e2e/`, `playwright.config.ts`, cuenta demo y [DIAGNOSTICO_E2E.md](./DIAGNOSTICO_E2E.md) (esta carpeta).
 
 ---
 
@@ -41,7 +41,9 @@ Documento de análisis de la aplicación y propuesta de suite E2E completa para 
 | `/dashboard/trainer/complete-profile` | CompleteProfile | Completar perfil trainer | Trainer | Medio |
 | `/dashboard/reports/generate` | GenerateReports | Generar reportes | Trainer | Bajo |
 | `/dashboard/scheduling` | SchedulingPage | Vista calendario sesiones | Trainer | Medio |
-| `/dashboard/scheduling/schedule` | ScheduleSession | Form programar sesión | Trainer | Medio |
+| `/dashboard/scheduling/new` | NewScheduledSessionPage | Crear sesión agendada (query: date, templateId) | Trainer | Medio |
+| `/dashboard/scheduling/:id/edit` | EditScheduledSessionPage | Editar sesión agendada | Trainer | Medio |
+| `/dashboard/scheduling/schedule` | (redirige a /dashboard/scheduling/new) | Legacy | Trainer | — |
 | `/dashboard/session-programming/create-from-template/:templateId` | CreateSessionFromTemplate | Crear sesión desde template | Trainer, Admin | Medio |
 | `/dashboard/session-programming/create-session` | CreateSession | Crear sesión (cliente, plan, ejercicios) | Trainer, Admin | Medio |
 | `/dashboard/session-programming/edit-session/:id` | EditSession | Editar sesión | Trainer, Admin | Medio |
@@ -64,7 +66,7 @@ Documento de análisis de la aplicación y propuesta de suite E2E completa para 
 - **Exercise Database:** ExerciseList vía useExercises (getExercises + filtros/paginación); ExerciseDetail; filtros por categoría/equipo; solo lectura para trainers (catalog GET).
 - **User Profile / Account:** Account (edición perfil); CompleteProfile para trainers; changePassword, deleteAccount vía accountApi.
 - **Session Programming:** Templates, blocks, sessions, block exercises (sessionProgrammingApi). CreateSession, EditSession, CreateSessionFromTemplate, CreateTemplate, SessionDetail.
-- **Scheduling:** SchedulingPage (calendario), ScheduleSession (form); schedulingApi: create/get/update/delete scheduled sessions, check-conflict, available-slots.
+- **Scheduling:** SchedulingPage (calendario), NewScheduledSessionPage (crear), EditScheduledSessionPage (editar); sin modal; schedulingApi: create/get/update/delete scheduled sessions, check-conflict, available-slots.
 - **Reports:** GenerateReports (reportsApi: POST /reports/generate).
 - **Testing (físico):** CreateTestResult; clientsApi: createTestResult, getClientTestResults, getPhysicalTests.
 
@@ -84,7 +86,7 @@ Resumen por API (RTK Query en `packages/shared/src/api/`):
 | **planningApi** | getMonthlyPlans, createMonthlyPlan, getPlanningCalendar, getWeeklyOverrides, createWeeklyOverride, getDailyOverrides, createDailyOverride, getResolvedDay | Planificación tab: cargar mes → crear/editar baseline → overrides |
 | **exercisesApi** (catalog) | getMovementPatterns, getMuscleGroups, getEquipment, getTags, getExercises (vía useExercises) | ExerciseList: list + filters |
 | **sessionProgrammingApi** | Session templates, block types, sessions, block exercises (CRUD) | CreateSession (client + plan + session + exercises) |
-| **schedulingApi** | createScheduledSession, getScheduledSessions, checkConflict, getAvailableSlots | ScheduleSession (check conflict + create) |
+| **schedulingApi** | createScheduledSession, getScheduledSessions, getScheduledSession, checkConflict, getAvailableSlots | NewScheduledSessionPage (check conflict + create), EditScheduledSessionPage (update) |
 | **reportsApi** | generateReport | GenerateReports |
 
 Endpoints que pueden fallar o ser complejos: createClient (validaciones backend), assignPlanToClient (estado plan/cliente), createMonthlyPlan/createOverride (planificación), createScheduledSession + checkConflict (reglas negocio), createTestResult (payload grande).
@@ -168,7 +170,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 | **journeys/journey-onboard-client.spec.ts** | Alta | Login → Clientes → Onboarding completo → Detalle → (opcional) asignar plan | Cliente creado, en detalle, datos correctos | createClient, getClient, opc. assignPlanToClient | Wizard steps, validaciones | 50 min + 30 fix | — |
 | **journeys/journey-weekly-planning.spec.ts** | Alta | Login → Planes → detalle → Planificación → baseline → override (semanal) | Baseline y override visibles en UI | getMonthlyPlans, createMonthlyPlan, createWeeklyOverride | Orden y dependencias | 45 min | 1 plan |
 | **journeys/journey-session-create.spec.ts** | Media | Cliente → plan → Session Programming → crear sesión → ejercicios → guardar | Sesión creada o listada | getClient, getTrainingPlan, createSession, createSessionExercise | Flujo largo, errores parciales | 50 min | Cliente + plan |
-| **journeys/journey-schedule-session.spec.ts** | Media | Scheduling → programar sesión → cliente/fecha → check conflict → crear | Sesión en calendario o lista | getScheduledSessions, checkConflict, createScheduledSession | Conflictos, slots | 40 min | Cliente, trainer |
+| **journeys/journey-schedule-session.spec.ts** | Media | Scheduling → clic día → vista /new → cliente/fecha → check conflict → crear → vuelta a calendario | URL /dashboard/scheduling, heading calendario | getScheduledSessions, checkConflict, createScheduledSession | Conflictos, slots | 40 min | Cliente, trainer |
 
 #### Categoría F: Edge Cases & Error Handling (6 tests)
 
@@ -200,7 +202,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 
 ### 3.0 Estado actual de la suite (resumen)
 
-**¿Está todo el E2E hecho?** No. La auditoría propone ~40 tests; hoy hay **20 specs implementados**. Resumen:
+**¿Está todo el E2E hecho?** Sí. Suite cerrada (Sprints 1–6). La auditoría proponía ~40 tests; hay **24 specs implementados** (incl. los 4 User Journeys). Resumen:
 
 | Categoría | Propuestos | Existen (specs) | Falta |
 |-----------|------------|------------------|-------|
@@ -208,14 +210,13 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 | **B) Clients** | 8 | 8 (list, create, validations, edit, delete, search-filter, detail-tabs, onboarding-complete-profile) | — (Sprint 2 cerrado) |
 | **C) Plans** | 10 | 10 (planning-flow, list, create, edit, delete, assign, detail-tabs, calendar-baseline, overrides, templates-create) | — (Sprint 3 cerrado) |
 | **D) Exercises** | 3 | 3 (exercises-browse, exercises-search-filter, exercises-detail) | — (Sprint 4 implementado) |
-| **E) Journeys** | 4 | 0 | journey-onboard-client, journey-weekly-planning, journey-session-create, journey-schedule-session |
-| **F) Edge** | 6 | 6 (unauthorized-redirect, account-page, network-error, empty-states, form-validation, account-delete) | conflict-data (setup específico, opcional) |
+| **E) Journeys** | 4 | 4 (journey-onboard-client, journey-weekly-planning, journey-session-create, journey-schedule-session) | — (Sprint 5 cerrado; journey-schedule-session: búsqueda por email único para ser determinista con muchos clientes E2E) |
+| **F) Edge** | 6 | 6 (unauthorized-redirect, account-page, network-error, empty-states, form-validation, account-delete) | — (Sprint 6 cerrado; conflict-data no implementado, no necesario) |
 
-**Siguiente paso recomendado (por orden de sprints):**
+**Siguiente paso recomendado:**
 
-1. **Sprint 5:** User Journeys (journey-onboard-client, journey-weekly-planning, journey-session-create, journey-schedule-session). Ver §Sprint 5 en plan de implementación. Sprint 6 (Edge) cerrado con 5/6 specs; conflict-data pendiente por setup específico.
-
-Los cambios recientes en los .md fueron solo **documentar** que plans-detail-tabs y plans-calendar-baseline ya pasan y cumplen la auto-auditoría; no cambian qué tests toca hacer a continuación.
+- **Sprints 1–6:** Cerrados. Suite E2E completa (45 tests) implementada y validada. conflict-data.spec.ts no implementado por decisión de producto (no necesario).
+- **A partir de aquí:** Mantenimiento. Ejecutar `pnpm -F web test:e2e` en CI o antes de merge; corregir tests solo si el fallo es bug de app (regla de oro §1); añadir specs nuevos cuando se añadan flujos críticos.
 
 ---
 
@@ -452,7 +453,7 @@ Requisitos: backend en `VITE_API_BASE_URL`, cuenta demo con perfil trainer (`bac
 
 Cuando un test E2E falle:
 
-1. **Documentar** en `frontend/docs/DIAGNOSTICO_E2E.md` (nuevo Error N) o en esta subsección:
+1. **Documentar** en [DIAGNOSTICO_E2E.md](./DIAGNOSTICO_E2E.md) (nuevo Error N) o en esta subsección:
    - **Síntoma:** mensaje de Playwright, screenshot si aplica.
    - **Causa raíz:** componente, flujo o API implicada; por qué falla.
    - **¿Bug de app o del test?** Si es **de la app**: corregir la app (no adaptar el test al error). No aplicar ningún fix sin validación explícita del responsable.
@@ -631,7 +632,7 @@ npx playwright test e2e/edge/account-page.spec.ts --reporter=list
   - **form-validation.spec.ts:** (1) Login con campos vacíos → click Iniciar sesión → permanece en login, mensaje obligatorio/error. (2) Register con email inválido → mensaje "correo válido" o similar.
   - **account-delete.spec.ts:** Intercept DELETE /auth/me con 200 → login → Mi cuenta → Eliminar Cuenta → modal → confirmar Eliminar cuenta → redirect a /auth/login (no se borra la cuenta real).
 - **Ya existían:** unauthorized-redirect.spec.ts, account-page.spec.ts.
-- **No implementado:** conflict-data.spec.ts (requiere setup de conflicto optimista vs servidor; prioridad baja).
+- **No implementado (y no necesario):** conflict-data.spec.ts. Sprint 6 se da por cerrado con los 6 specs edge actuales.
 
 ### Cómo ejecutar Sprint 6
 

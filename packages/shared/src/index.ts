@@ -117,6 +117,8 @@ export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
 export * from "./types/trainingAnalytics";
+export * from "./types/trainingRecommendations";
+export * from "./types/sessionRecommendations";
 // Training Sessions Types - exported separately to avoid conflicts with training.ts
 export type {
     TrainingSession as PlanTrainingSession,
@@ -152,6 +154,8 @@ export type {
     ScheduledSessionUpdate,
     ConflictCheckRequest,
     ConflictCheckResponse,
+    ConflictCheckState,
+    FormFieldErrors,
     AvailableSlotsRequest,
     AvailableSlot,
     AvailableSlotsResponse,
@@ -180,11 +184,14 @@ export {
     EXPERIENCE_ENUM,
     WEEKLY_FREQUENCY_ENUM,
     SESSION_DURATION_ENUM,
+    TRAINING_DAY_VALUES,
+    TRAINING_DAY_LABELS,
     type Gender,
     type TrainingGoal,
     type Experience,
     type WeeklyFrequency,
     type SessionDuration,
+    type TrainingDayValue,
 } from "./types/client";
 
 // Exercise Catalog types
@@ -283,6 +290,7 @@ export * from "./utils/charts/chartAggregators";
 export * from "./utils/validations";
 export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
+export { getMutationErrorMessage } from "./utils/errorMessage";
 
 // Components
 export * from "./components/SmartNavigation";

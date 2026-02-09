@@ -34,6 +34,7 @@ import {
 } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetExercisesQuery, type Exercise } from "@nexia/shared/hooks/exercises";
 import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
+import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -389,6 +390,13 @@ export const CreateSession: React.FC = () => {
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Bloque "Hoy toca" — recomendaciones del plan del día */}
+                            <SessionDayPlan
+                                clientId={effectiveClientId ?? null}
+                                sessionDate={formData.sessionDate}
+                                trainerId={trainerId}
+                            />
+
                             {/* Nombre de la Sesión */}
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -445,10 +453,11 @@ export const CreateSession: React.FC = () => {
                             {/* Fecha y Tipo */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label htmlFor="create-session-date" className="block text-sm font-semibold text-slate-700 mb-2">
                                         Fecha de la Sesión *
                                     </label>
                                     <Input
+                                        id="create-session-date"
                                         type="date"
                                         value={formData.sessionDate}
                                         onChange={(e) => setFormData({ ...formData, sessionDate: e.target.value })}
@@ -456,10 +465,11 @@ export const CreateSession: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label htmlFor="create-session-type" className="block text-sm font-semibold text-slate-700 mb-2">
                                         Tipo de Sesión *
                                     </label>
                                     <FormSelect
+                                        id="create-session-type"
                                         value={formData.sessionType}
                                         onChange={(e) => setFormData({ ...formData, sessionType: e.target.value })}
                                         required

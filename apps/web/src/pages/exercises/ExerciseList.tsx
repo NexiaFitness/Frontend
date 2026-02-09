@@ -1,15 +1,15 @@
 /**
  * ExerciseList.tsx — Lista principal de ejercicios (Exercise Database Browser)
- * 
- * Propósito: Vista protegida con lista de ejercicios, búsqueda y filtros.
- * Contexto: módulo Exercise Database Browser de NEXIA Fitness.
+ *
+ * Propósito: Vista protegida con lista de ejercicios, busqueda y filtros.
+ * Contexto: modulo Exercise Database Browser de NEXIA Fitness.
  * Notas de mantenimiento: mantener coherencia con ClientList y TrainingPlansPage y otras vistas
- * 
+ *
  * @author Frontend Team
  * @since v4.8.0
  */
 
-import React from "react";
+import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useExercises } from "@nexia/shared/hooks/exercises";
 
@@ -33,7 +33,6 @@ import { TYPOGRAPHY } from "@/utils/typography";
 export const ExerciseList: React.FC = () => {
     const navigate = useNavigate();
 
-    // Hook de ejercicios con filtros y paginación
     const {
         exercises,
         total,
@@ -46,29 +45,34 @@ export const ExerciseList: React.FC = () => {
         refetch,
     } = useExercises();
 
-    // Handlers
-    const handleSearch = (searchTerm: string) => {
-        setFilters({ search: searchTerm || undefined });
-    };
+    // Memoizado para evitar que ExerciseSearch reprograme su debounce en cada render
+    const handleSearch = useCallback(
+        (searchTerm: string) => {
+            setFilters({ search: searchTerm || undefined });
+        },
+        [setFilters]
+    );
 
-    const handleCardClick = (exerciseId: number) => {
-        navigate(`/dashboard/exercises/${exerciseId}`);
-    };
+    const handleCardClick = useCallback(
+        (exerciseId: number) => {
+            navigate(`/dashboard/exercises/${exerciseId}`);
+        },
+        [navigate]
+    );
 
-    // Calcular paginación para componente Pagination
     const currentPage = Math.floor(pagination.skip / pagination.limit) + 1;
     const totalPages = Math.ceil(total / pagination.limit);
     const itemsPerPage = pagination.limit;
 
-    // Handler para cambio de página
-    const handlePageChange = (page: number) => {
-        const newSkip = (page - 1) * pagination.limit;
-        setPagination(newSkip, pagination.limit);
-        // Scroll suave hacia arriba
-        window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+    const handlePageChange = useCallback(
+        (page: number) => {
+            const newSkip = (page - 1) * pagination.limit;
+            setPagination(newSkip, pagination.limit);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        [pagination.limit, setPagination]
+    );
 
-    // Items del menú superior
     const menuItems = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
@@ -79,10 +83,7 @@ export const ExerciseList: React.FC = () => {
 
     return (
         <>
-            {/* Navbar móvil/tablet */}
             <DashboardNavbar menuItems={menuItems} />
-
-            {/* Sidebar escritorio */}
             <TrainerSideMenu />
 
             <DashboardLayout>
@@ -96,9 +97,12 @@ export const ExerciseList: React.FC = () => {
                     </p>
                 </div>
 
-                {/* Búsqueda */}
+                {/* Busqueda */}
                 <div className="px-4 lg:px-8 mb-4">
-                    <ExerciseSearch onSearch={handleSearch} />
+                    <ExerciseSearch
+                        value={filters.search ?? ""}
+                        onSearch={handleSearch}
+                    />
                 </div>
 
                 {/* Filtros */}
@@ -108,7 +112,6 @@ export const ExerciseList: React.FC = () => {
 
                 {/* Lista de ejercicios */}
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    {/* Loading State */}
                     {isLoading && (
                         <div className="flex justify-center items-center py-16">
                             <LoadingSpinner size="lg" />
@@ -116,7 +119,6 @@ export const ExerciseList: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Error State */}
                     {isError && (
                         <Alert variant="error" className="mb-6">
                             Error al cargar ejercicios. Por favor, intenta de nuevo.
@@ -129,7 +131,6 @@ export const ExerciseList: React.FC = () => {
                         </Alert>
                     )}
 
-                    {/* Empty State */}
                     {!isLoading && !isError && exercises.length === 0 && (
                         <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8 lg:p-12 text-center">
                             <div className="max-w-md mx-auto">
@@ -151,28 +152,25 @@ export const ExerciseList: React.FC = () => {
                                 <h3 className="text-xl font-bold text-gray-800 mb-2">
                                     {filters.search || filters.equipo || filters.nivel
                                         ? "No se encontraron ejercicios"
-                                        : "Aún no hay ejercicios"}
+                                        : "Aun no hay ejercicios"}
                                 </h3>
                                 <p className="text-gray-600 mb-6">
                                     {filters.search || filters.equipo || filters.nivel
-                                        ? "Intenta ajustar los filtros de búsqueda"
-                                        : "Los ejercicios aparecerán aquí cuando estén disponibles"}
+                                        ? "Intenta ajustar los filtros de busqueda"
+                                        : "Los ejercicios apareceran aqui cuando esten disponibles"}
                                 </p>
                             </div>
                         </div>
                     )}
 
-                    {/* Grid de ejercicios */}
                     {!isLoading && !isError && exercises.length > 0 && (
                         <>
-                            {/* Info de resultados */}
                             <div className="mb-4">
                                 <p className="text-sm text-white/80">
                                     Mostrando {exercises.length} de {total} ejercicios
                                 </p>
                             </div>
 
-                            {/* Grid responsive */}
                             <div className="grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
                                 {exercises.map((exercise) => (
                                     <ExerciseCard
@@ -183,7 +181,6 @@ export const ExerciseList: React.FC = () => {
                                 ))}
                             </div>
 
-                            {/* Paginación reutilizable */}
                             {totalPages > 1 && (
                                 <div className="mt-8">
                                     <Pagination

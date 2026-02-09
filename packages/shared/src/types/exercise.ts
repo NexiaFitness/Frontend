@@ -566,6 +566,8 @@ export interface CatalogQueryParams {
     skip?: number;
     limit?: number;
     is_active?: boolean;
+    /** Para muscle-groups: 1=body region, 2=muscle group */
+    level?: number;
 }
 
 /**

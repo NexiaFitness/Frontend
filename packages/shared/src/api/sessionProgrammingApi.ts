@@ -477,6 +477,24 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
                 { type: "Client", id: `SESSIONS-${data.client_id}` },
             ],
         }),
+
+        /**
+         * Aplicar plantilla a una sesión: copia los ejercicios del template a la sesión
+         * Backend: POST /api/v1/session-programming/session-templates/{template_id}/apply-to-session/{session_id}
+         */
+        applyTemplateToSession: builder.mutation<
+            { message: string; exercises_added: number },
+            { templateId: number; sessionId: number }
+        >({
+            query: ({ templateId, sessionId }) => ({
+                url: `/session-programming/session-templates/${templateId}/apply-to-session/${sessionId}`,
+                method: "POST",
+            }),
+            invalidatesTags: (_result, _error, { sessionId }) => [
+                { type: "TrainingSession", id: sessionId },
+                { type: "SessionExercise", id: "LIST" },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -517,5 +535,6 @@ export const {
 
     // Training Session
     useCreateTrainingSessionMutation,
+    useApplyTemplateToSessionMutation,
 } = sessionProgrammingApi;
 

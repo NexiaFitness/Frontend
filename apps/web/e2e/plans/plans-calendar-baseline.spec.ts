@@ -37,7 +37,7 @@ test.describe("Plans — Calendar / Baseline", () => {
       `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
     );
 
-    const qualitiesInput = page.getByLabel(/cualidades/i);
+    const qualitiesInput = page.locator("#planning-baseline-qualities");
     await qualitiesInput.fill("Fuerza: 60, Resistencia: 40");
 
     await page.getByRole("button", { name: /^crear$/i }).click();

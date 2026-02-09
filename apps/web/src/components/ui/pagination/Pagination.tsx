@@ -48,14 +48,11 @@ export const Pagination: React.FC<PaginationProps> = ({
 
     return (
         <div className="flex items-center justify-between px-4 lg:px-8 py-4 border-t border-slate-200 bg-white rounded-b-xl">
-            {/* Contador */}
             <div className="text-sm text-slate-600">
                 Mostrando <span className="font-semibold">{startItem}</span> - <span className="font-semibold">{endItem}</span> de <span className="font-semibold">{totalItems}</span>
             </div>
 
-            {/* Controles de navegación */}
             <div className="flex items-center gap-2">
-                {/* Botón Anterior */}
                 <button
                     type="button"
                     onClick={handlePrevious}
@@ -89,7 +86,6 @@ export const Pagination: React.FC<PaginationProps> = ({
                     Página <span className="font-semibold">{currentPage}</span> de <span className="font-semibold">{totalPages}</span>
                 </span>
 
-                {/* Botón Siguiente */}
                 <button
                     type="button"
                     onClick={handleNext}

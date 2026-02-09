@@ -12,6 +12,7 @@
 
 import React from "react";
 import type { Client } from "@nexia/shared/types/client";
+import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -92,6 +93,14 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             "long_gt_1h30": "Más de 1h30'",
         };
         return translations[duration] || duration;
+    };
+
+    // Días concretos (training_days) como "L, X, V"
+    const formatTrainingDays = (days?: string[] | null): string => {
+        if (!days || days.length === 0) return "—";
+        return days
+            .map((d) => TRAINING_DAY_LABELS[d as TrainingDayValue] ?? d)
+            .join(", ");
     };
 
     return (
@@ -196,8 +205,8 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                 {/* Línea azul debajo de Fila 1 */}
                 <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
 
-                {/* Fila 2: Objective + Experience + Frequency + Duration */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+                {/* Fila 2: Objective + Experience + Frequency + Duration + Días/semana + Días concretos */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
                     {/* Objective */}
                     <div>
                         <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Objetivo</span>
@@ -227,6 +236,24 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Duración de Sesiones</span>
                         <p className="text-gray-900 font-medium">
                             {translateSessionDuration(client.session_duration)}
+                        </p>
+                    </div>
+
+                    {/* Días/semana exactos */}
+                    <div>
+                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Días/semana</span>
+                        <p className="text-gray-900 font-medium">
+                            {client.exact_training_frequency != null
+                                ? `${client.exact_training_frequency} día${client.exact_training_frequency === 1 ? "" : "s"}/semana`
+                                : "—"}
+                        </p>
+                    </div>
+
+                    {/* Días concretos */}
+                    <div>
+                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Días concretos</span>
+                        <p className="text-gray-900 font-medium">
+                            {formatTrainingDays(client.training_days)}
                         </p>
                     </div>
                 </div>

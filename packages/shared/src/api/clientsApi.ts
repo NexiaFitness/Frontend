@@ -157,6 +157,8 @@ export const clientsApi = baseApi.injectEndpoints({
 
         /**
          * Crear nuevo cliente
+         * Invalida listas de clientes (incl. getTrainerClients) para que modales/desplegables
+         * muestren el nuevo cliente sin depender de refetch manual.
          */
         createClient: builder.mutation<Client, CreateClientData>({
             query: (clientData) => ({
@@ -170,6 +172,8 @@ export const clientsApi = baseApi.injectEndpoints({
             invalidatesTags: [
                 { type: "Client", id: "LIST" },
                 { type: "Client", id: "STATS" },
+                { type: "Client", id: "LIST_WITH_METRICS" },
+                { type: "Client", id: "RECENT_ACTIVITY" },
             ],
         }),
 
@@ -703,19 +707,28 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * Obtener lista de clientes con métricas de fatiga y adherencia
+         * Obtener lista de clientes con métricas de fatiga y adherencia.
+         * Búsqueda es server-side (todas las páginas).
          * Endpoint: GET /api/v1/clients/with-metrics
          */
         getClientsWithMetrics: builder.query<
             ClientListWithMetricsResponse,
-            { page?: number; page_size?: number; trainer_id?: number }
+            {
+                page?: number;
+                page_size?: number;
+                search?: string | null;
+                trainer_id?: number;
+            }
         >({
-            query: ({ page = 1, page_size = 20, trainer_id }) => {
+            query: ({ page = 1, page_size = 15, search, trainer_id }) => {
                 const params = new URLSearchParams();
-                params.append('page', page.toString());
-                params.append('page_size', page_size.toString());
+                params.append("page", page.toString());
+                params.append("page_size", page_size.toString());
+                if (search != null && search.trim() !== "") {
+                    params.append("search", search.trim());
+                }
                 if (trainer_id) {
-                    params.append('trainer_id', trainer_id.toString());
+                    params.append("trainer_id", trainer_id.toString());
                 }
                 return {
                     url: `/clients/with-metrics?${params.toString()}`,

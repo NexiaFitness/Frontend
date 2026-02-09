@@ -23,6 +23,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateSessionFromTemplate } from "@nexia/shared";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlansQuery } from "@nexia/shared/api/trainingPlansApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
 
 export const CreateSessionFromTemplate: React.FC = () => {
@@ -31,9 +32,12 @@ export const CreateSessionFromTemplate: React.FC = () => {
     const [searchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
 
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: user?.role !== "trainer",
+    });
     const clientIdFromQuery = searchParams.get("clientId");
     const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
-    const trainerId = user?.id && user.role === "trainer" ? Number(user.id) : 0;
+    const trainerId = trainerProfile?.id ?? 0;
 
     const { createSession, isCreating, isError, error, template, isLoadingTemplate } =
         useCreateSessionFromTemplate({
@@ -71,6 +75,10 @@ export const CreateSessionFromTemplate: React.FC = () => {
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
         }
+        const planId = Number(formData.trainingPlanId);
+        if (!planId || planId <= 0) {
+            errors.trainingPlanId = "Seleccione un plan de entrenamiento";
+        }
 
         if (Object.keys(errors).length > 0) {
             setFormErrors(errors);
@@ -80,12 +88,18 @@ export const CreateSessionFromTemplate: React.FC = () => {
         try {
             await createSession({
                 sessionDate: formData.sessionDate,
-                trainingPlanId: Number(formData.trainingPlanId),
+                trainingPlanId: planId,
             });
             setSuccess(true);
+            const sessionDateStr = formData.sessionDate; // YYYY-MM-DD
             setTimeout(() => {
-                navigate(clientId ? `/dashboard/clients/${clientId}` : "/dashboard");
-            }, 2000);
+                if (clientId) {
+                    const monthParam = sessionDateStr ? `&month=${sessionDateStr.slice(0, 7)}` : "";
+                    navigate(`/dashboard/clients/${clientId}?tab=session-programming${monthParam}`);
+                } else {
+                    navigate("/dashboard");
+                }
+            }, 1500);
         } catch (err) {
             console.error("Error creando sesión:", err);
         }
@@ -264,7 +278,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                     type="submit"
                                     variant="primary"
                                     size="lg"
-                                    disabled={isCreating}
+                                    disabled={isCreating || !trainerId}
                                     className="w-full sm:w-auto sm:ml-auto"
                                 >
                                     {isCreating ? "Creando..." : "Crear Sesión"}

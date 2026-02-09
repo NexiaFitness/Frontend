@@ -18,7 +18,7 @@
  * @updated v5.0.0 - Rediseño completo basado en Figma
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { useGetClientsWithMetricsQuery, useGetRecentActivityQuery } from "@nexia/shared/api/clientsApi";
@@ -37,6 +37,7 @@ import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProf
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Avatar } from "@/components/ui/avatar";
+import { Pagination } from "@/components/ui/pagination";
 
 // Utils
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -191,8 +192,19 @@ export const ClientList: React.FC = () => {
     const { shouldBlock } = useCompleteProfileModal();
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
 
-    // State de búsqueda
-    const [searchQuery, setSearchQuery] = useState("");
+    const PAGE_SIZE = 15;
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchInput, setSearchInput] = useState("");
+    const [searchDebounced, setSearchDebounced] = useState("");
+
+    // Debounce búsqueda (300 ms) y reset a página 1 al buscar
+    useEffect(() => {
+        setCurrentPage(1);
+        const timer = setTimeout(() => {
+            setSearchDebounced(searchInput);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
 
     // Obtener trainer_id si es trainer
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
@@ -201,12 +213,13 @@ export const ClientList: React.FC = () => {
 
     const trainerId = trainerProfile?.id;
 
-    // Query RTK - obtener clientes con métricas
+    // Query RTK - clientes con métricas (búsqueda server-side en todas las páginas)
     const { data: clientsData, isLoading, isError, error } = useGetClientsWithMetricsQuery(
-        { 
-            page: 1, 
-            page_size: 50, 
-            trainer_id: trainerId 
+        {
+            page: currentPage,
+            page_size: PAGE_SIZE,
+            search: searchDebounced.trim() || undefined,
+            trainer_id: trainerId,
         },
         { skip: !trainerId }
     );
@@ -218,19 +231,17 @@ export const ClientList: React.FC = () => {
     );
 
     const activities: RecentActivityItem[] = activityData?.items ?? [];
+    const items: ClientListItem[] = clientsData?.items ?? [];
+    const total = clientsData?.total ?? 0;
+    const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
 
-    // Filtrar clientes por búsqueda
-    const filteredClients = useMemo(() => {
-        const clients: ClientListItem[] = clientsData?.items ?? [];
-        if (!searchQuery.trim()) return clients;
-        const query = searchQuery.toLowerCase();
-        return clients.filter(
-            (client) =>
-                client.nombre.toLowerCase().includes(query) ||
-                client.apellidos.toLowerCase().includes(query) ||
-                client.mail.toLowerCase().includes(query)
-        );
-    }, [clientsData?.items, searchQuery]);
+    const handlePageChange = useCallback(
+        (page: number) => {
+            setCurrentPage(page);
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        },
+        []
+    );
 
     // Handlers
     const handleClientClick = (clientId: number) => {
@@ -250,8 +261,7 @@ export const ClientList: React.FC = () => {
     };
 
     const handleScheduleSession = () => {
-        // TODO: Navegar a calendario o crear sesión
-        navigate("/dashboard");
+        navigate("/dashboard/scheduling/new");
     };
 
     const handleManageTemplates = () => {
@@ -300,10 +310,11 @@ export const ClientList: React.FC = () => {
                                     </div>
                                     <input
                                         type="text"
-                                        placeholder="Q Buscar cliente..."
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Buscar por nombre, apellidos o email..."
+                                        value={searchInput}
+                                        onChange={(e) => setSearchInput(e.target.value)}
                                         className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-800"
+                                        aria-label="Buscar cliente"
                                     />
                                 </div>
                             </div>
@@ -349,14 +360,25 @@ export const ClientList: React.FC = () => {
                                         <div className="w-8 flex-shrink-0"></div>
                                     </div>
 
-                                    {/* Filas */}
-                                    {filteredClients.length === 0 ? (
+                                    {/* Resumen y filas */}
+                                    {!isLoading && !isError && items.length > 0 && (
+                                        <div className="px-6 py-2 bg-gray-50 border-b border-gray-200">
+                                            <p className="text-sm text-gray-600">
+                                                Mostrando {items.length} de {total} clientes
+                                            </p>
+                                        </div>
+                                    )}
+                                    {items.length === 0 ? (
                                         <div className="p-12 text-center">
-                                            <p className="text-gray-500">No se encontraron clientes</p>
+                                            <p className="text-gray-500">
+                                                {searchDebounced.trim()
+                                                    ? "No se encontraron clientes con ese criterio"
+                                                    : "No hay clientes"}
+                                            </p>
                                         </div>
                                     ) : (
                                         <div>
-                                            {filteredClients.map((client, index) => (
+                                            {items.map((client, index) => (
                                                 <div
                                                     key={client.id}
                                                     onClick={() => handleClientClick(client.id)}
@@ -423,6 +445,19 @@ export const ClientList: React.FC = () => {
                                                     </div>
                                                 </div>
                                             ))}
+                                        </div>
+                                    )}
+
+                                    {/* Paginación */}
+                                    {!isLoading && !isError && totalPages > 1 && (
+                                        <div className="mt-0">
+                                            <Pagination
+                                                currentPage={currentPage}
+                                                totalPages={totalPages}
+                                                totalItems={total}
+                                                itemsPerPage={PAGE_SIZE}
+                                                onPageChange={handlePageChange}
+                                            />
                                         </div>
                                     )}
                                 </>

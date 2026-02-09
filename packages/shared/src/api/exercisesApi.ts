@@ -83,12 +83,15 @@ export const exercisesApi = baseApi.injectEndpoints({
          * Query params: skip, limit, is_active?
          */
         getMuscleGroups: builder.query<MuscleGroup[], CatalogQueryParams>({
-            query: ({ skip = 0, limit = 100, is_active } = {}) => {
+            query: ({ skip = 0, limit = 100, is_active, level } = {}) => {
                 const params = new URLSearchParams();
                 params.append('skip', skip.toString());
                 params.append('limit', limit.toString());
                 if (is_active !== undefined) {
                     params.append('is_active', is_active.toString());
+                }
+                if (level !== undefined) {
+                    params.append('level', level.toString());
                 }
                 return {
                     url: `/exercise-catalog/muscle-groups/?${params.toString()}`,

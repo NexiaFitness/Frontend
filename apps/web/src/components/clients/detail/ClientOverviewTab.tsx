@@ -36,6 +36,7 @@ import { useGetClientTestResultsQuery } from "@nexia/shared/api/clientsApi";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { ClientAlertsSection } from "./ClientAlertsSection";
 import { ClientStatusSection } from "./ClientStatusSection";
+import { RecommendationsCards } from "./RecommendationsCards";
 
 interface ClientOverviewTabProps {
     client: Client;
@@ -249,6 +250,9 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
                     color="blue"
                 />
             </div>
+
+            {/* Recomendaciones 3-card (Volume, Intensidad, Selección de ejercicios) */}
+            <RecommendationsCards clientId={clientId} />
 
             {/* SECCIÓN DE ALERTAS PERSISTENTES */}
             {/* Estas son las MISMAS alertas que aparecen en el dashboard del trainer */}

@@ -45,6 +45,7 @@ import type {
     PlanCoherenceResponse,
     TrainingPlanAlignmentResponse,
 } from "../types/trainingAnalytics";
+import type { TrainingPlanRecommendationsResponse } from "../types/trainingRecommendations";
 
 export const trainingPlansApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -105,6 +106,23 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 method: "GET",
             }),
             providesTags: (result, error, id) => [{ type: "TrainingPlan", id }],
+        }),
+
+        /**
+         * Obtener recomendaciones 3-card para un cliente (Volume, Intensidad, Selección de ejercicios)
+         * Backend: GET /api/v1/training-plans/recommendations/{client_id}
+         */
+        getTrainingPlanRecommendations: builder.query<
+            TrainingPlanRecommendationsResponse,
+            number
+        >({
+            query: (clientId) => ({
+                url: `/training-plans/recommendations/${clientId}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, clientId) => [
+                { type: "TrainingPlan", id: `RECOMMENDATIONS_${clientId}` },
+            ],
         }),
 
         /**
@@ -636,6 +654,7 @@ export const trainingPlansApi = baseApi.injectEndpoints({
 export const {
     useGetTrainingPlansQuery,
     useGetTrainingPlanQuery,
+    useGetTrainingPlanRecommendationsQuery,
     useCreateTrainingPlanMutation,
     useUpdateTrainingPlanMutation,
     useDeleteTrainingPlanMutation,

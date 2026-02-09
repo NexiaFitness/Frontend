@@ -1,35 +1,50 @@
 /**
  * ExerciseSearch.tsx — Barra de búsqueda con debounce para ejercicios
- * 
+ *
  * Propósito: Input de búsqueda que emite eventos con debounce para evitar requests excesivos.
  * Contexto: módulo Exercise Database Browser de NEXIA Fitness.
  * Notas de mantenimiento: mantener coherencia con ClientList y otras vistas
- * 
+ *
  * @author Frontend Team
  * @since v4.8.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 interface ExerciseSearchProps {
     onSearch: (value: string) => void;
+    /** Valor controlado desde fuera (p. ej. filters.search); al cambiar, el input se sincroniza */
+    value?: string;
     placeholder?: string;
 }
 
 export const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
     onSearch,
+    value: controlledValue,
     placeholder = "Buscar ejercicios...",
 }) => {
-    const [searchInput, setSearchInput] = useState("");
+    const [localValue, setLocalValue] = useState(controlledValue ?? "");
 
-    // Debounce de búsqueda (300ms)
+    // Ref estable para onSearch: evita que el efecto de debounce se reprograme
+    // cada vez que el padre re-renderiza con una nueva referencia de callback.
+    const onSearchRef = useRef(onSearch);
+    onSearchRef.current = onSearch;
+
+    // Sincronizar con valor externo (p. ej. al pulsar "Limpiar")
+    useEffect(() => {
+        if (controlledValue !== undefined) {
+            setLocalValue(controlledValue);
+        }
+    }, [controlledValue]);
+
+    // Debounce: solo depende de localValue (no de onSearch)
     useEffect(() => {
         const timer = setTimeout(() => {
-            onSearch(searchInput);
+            onSearchRef.current(localValue);
         }, 300);
 
         return () => clearTimeout(timer);
-    }, [searchInput, onSearch]);
+    }, [localValue]);
 
     return (
         <div className="relative">
@@ -50,8 +65,8 @@ export const ExerciseSearch: React.FC<ExerciseSearchProps> = ({
             </div>
             <input
                 type="text"
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
+                value={localValue}
+                onChange={(e) => setLocalValue(e.target.value)}
                 placeholder={placeholder}
                 className="w-full pl-10 pr-4 py-3 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />

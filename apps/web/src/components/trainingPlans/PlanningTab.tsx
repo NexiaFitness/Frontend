@@ -560,32 +560,58 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                     {resolvedLoading && resolvedDate ? (
                         <p className="text-gray-500">Cargando…</p>
                     ) : resolvedDay && resolvedDate ? (
-                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
-                            <p>
-                                <strong>Origen:</strong>{" "}
-                                {resolvedDay.source ?? "—"}
-                            </p>
-                            <p>
-                                <strong>Entrenable:</strong>{" "}
-                                {resolvedDay.is_trainable ? "Sí" : "No"}
-                            </p>
+                        <div className={`rounded-lg border p-3 text-sm ${
+                            !resolvedDay.is_trainable
+                                ? "border-red-200 bg-red-50"
+                                : resolvedDay.source === "day" || resolvedDay.source === "week"
+                                    ? "border-violet-200 bg-violet-50"
+                                    : "border-gray-200 bg-gray-50"
+                        }`}>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                    resolvedDay.source === "month"
+                                        ? "bg-slate-200 text-slate-700"
+                                        : resolvedDay.source === "week"
+                                            ? "bg-violet-200 text-violet-700"
+                                            : resolvedDay.source === "day"
+                                                ? "bg-emerald-200 text-emerald-700"
+                                                : "bg-gray-200 text-gray-600"
+                                }`}>
+                                    {resolvedDay.source === "month" ? "Heredado (Mes)"
+                                        : resolvedDay.source === "week" ? "Override (Semana)"
+                                        : resolvedDay.source === "day" ? "Override (Día)"
+                                        : "Sin origen"}
+                                </span>
+                                {!resolvedDay.is_trainable && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-200 text-red-700">
+                                        No entrenable
+                                    </span>
+                                )}
+                            </div>
                             <p>
                                 <strong>Cualidades:</strong>{" "}
                                 {qualitiesToDisplayString(resolvedDay.qualities)}
                             </p>
                             {(resolvedDay.resolved_volume != null ||
                                 resolvedDay.resolved_intensity != null) && (
-                                <p>
-                                    Volumen:{" "}
-                                    {resolvedDay.resolved_volume != null
-                                        ? `${Math.round(resolvedDay.resolved_volume * 100)}%`
-                                        : "—"}
-                                    {" · "}
-                                    Intensidad:{" "}
-                                    {resolvedDay.resolved_intensity != null
-                                        ? `${Math.round(resolvedDay.resolved_intensity * 100)}%`
-                                        : "—"}
-                                </p>
+                                <div className="mt-2 flex gap-4">
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-gray-500">Volumen:</span>
+                                        <span className="font-semibold">
+                                            {resolvedDay.resolved_volume != null
+                                                ? `${Math.round(resolvedDay.resolved_volume * 100)}%`
+                                                : "—"}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-gray-500">Intensidad:</span>
+                                        <span className="font-semibold">
+                                            {resolvedDay.resolved_intensity != null
+                                                ? `${Math.round(resolvedDay.resolved_intensity * 100)}%`
+                                                : "—"}
+                                        </span>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     ) : (

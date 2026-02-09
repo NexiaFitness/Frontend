@@ -27,10 +27,17 @@ interface ExerciseFiltersProps {
 const levelOptions = ["beginner", "intermediate", "advanced"];
 
 export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onChange }) => {
-    // Cargar opciones dinámicamente desde Exercise Catalog
-    const { data: muscleGroups = [], isLoading: isLoadingMuscleGroups } = useGetMuscleGroupsQuery({
+    // Cargar solo grupos musculares de nivel 2 (no body regions de nivel 1)
+    const { data: rawMuscleGroups = [], isLoading: isLoadingMuscleGroups } = useGetMuscleGroupsQuery({
         limit: 100,
         is_active: true,
+        level: 2,
+    });
+
+    // Filtrar entradas corruptas: descartar items con name_en numerico o sin nombre legible
+    const muscleGroups = rawMuscleGroups.filter((mg) => {
+        const displayName = mg.name_es || mg.name_en;
+        return displayName && isNaN(Number(displayName));
     });
 
     const { data: equipment = [], isLoading: isLoadingEquipment } = useGetEquipmentQuery({
@@ -38,37 +45,23 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
         is_active: true,
     });
 
-    // Handler para cambio de muscle group
-    // Nota: Backend no tiene filtro directo por muscle_group, usamos search
+    // Handler para cambio de muscle group (usa muscle_group_ids via mapping tables)
     const handleMuscleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value || undefined;
-        // Si se selecciona un muscle group, usar search con el nombre del muscle group
+        const value = e.target.value;
         if (value) {
-            const selectedMuscleGroup = muscleGroups.find((mg) => mg.id.toString() === value);
-            if (selectedMuscleGroup) {
-                // Usar name_en para búsqueda (el backend busca en musculatura_principal)
-                onChange({ search: selectedMuscleGroup.name_en || undefined });
-            } else {
-                onChange({ search: undefined });
-            }
+            onChange({ muscle_group_ids: [Number(value)] });
         } else {
-            onChange({ search: undefined });
+            onChange({ muscle_group_ids: undefined });
         }
     };
 
-    // Handler para cambio de equipment
+    // Handler para cambio de equipment (usa equipment_ids via mapping tables)
     const handleEquipmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const value = e.target.value || undefined;
+        const value = e.target.value;
         if (value) {
-            const selectedEquipment = equipment.find((eq) => eq.id.toString() === value);
-            if (selectedEquipment) {
-                // Backend espera el valor exacto del campo equipo (usar name_en)
-                onChange({ equipo: selectedEquipment.name_en || undefined });
-            } else {
-                onChange({ equipo: undefined });
-            }
+            onChange({ equipment_ids: [Number(value)] });
         } else {
-            onChange({ equipo: undefined });
+            onChange({ equipment_ids: undefined });
         }
     };
 
@@ -81,29 +74,26 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
     // Handler para reset
     const handleReset = () => {
         onChange({
-            equipo: undefined,
+            muscle_group_ids: undefined,
+            equipment_ids: undefined,
             nivel: undefined,
             search: undefined,
         });
     };
 
     // Verificar si hay filtros activos
-    // Nota: muscle_group se mapea a search, así que verificamos search
     const hasActiveFilters = !!(
-        filters.equipo ||
+        filters.muscle_group_ids?.length ||
+        filters.equipment_ids?.length ||
         filters.nivel ||
         filters.search
     );
 
-    // Obtener valor seleccionado de muscle group (si search coincide con algún muscle group)
-    const selectedMuscleGroupId = filters.search
-        ? muscleGroups.find((mg) => mg.name_en === filters.search)?.id.toString() || ""
-        : "";
+    // Obtener valor seleccionado de muscle group
+    const selectedMuscleGroupId = filters.muscle_group_ids?.[0]?.toString() ?? "";
 
     // Obtener valor seleccionado de equipment
-    const selectedEquipmentId = filters.equipo
-        ? equipment.find((eq) => eq.name_en === filters.equipo)?.id.toString() || ""
-        : "";
+    const selectedEquipmentId = filters.equipment_ids?.[0]?.toString() ?? "";
 
     return (
         <div className="bg-white rounded-lg border border-slate-200 p-4">

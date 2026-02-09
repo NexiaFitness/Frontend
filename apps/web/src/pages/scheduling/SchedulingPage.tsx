@@ -31,7 +31,6 @@ import {
     ScheduledSessionCalendar,
     UpcomingScheduledSessionCard,
     SessionTemplatesList,
-    ScheduledSessionModal,
 } from "@/components/scheduling";
 
 export const SchedulingPage: React.FC = () => {
@@ -43,12 +42,7 @@ export const SchedulingPage: React.FC = () => {
 
     const trainerId = trainerProfile?.id ?? 0;
 
-    // Estado local
     const [currentMonth, setCurrentMonth] = useState<Date>(new Date());
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [selectedSession, setSelectedSession] = useState<ScheduledSession | null>(null);
-    const [prefilledDate, setPrefilledDate] = useState<string | null>(null);
-    const [prefilledTemplate, setPrefilledTemplate] = useState<number | null>(null);
 
     // Calcular rango de fechas del mes actual
     const monthRange = useMemo(() => {
@@ -68,7 +62,6 @@ export const SchedulingPage: React.FC = () => {
         isLoading: isLoadingSessions,
         isError: isErrorSessions,
         error: sessionsError,
-        refetch: refetchSessions,
     } = useGetScheduledSessions({
         trainer_id: trainerId,
         start_date: monthRange.start_date,
@@ -92,41 +85,21 @@ export const SchedulingPage: React.FC = () => {
         limit: 100,
     });
 
-    // Handlers
     const handleDateClick = (date: Date) => {
-        setPrefilledDate(date.toISOString().split("T")[0]);
-        setSelectedSession(null);
-        setPrefilledTemplate(null);
-        setIsModalOpen(true);
+        const dateStr = date.toISOString().split("T")[0];
+        navigate(`/dashboard/scheduling/new?date=${dateStr}`);
     };
 
     const handleSessionClick = (session: ScheduledSession) => {
-        setSelectedSession(session);
-        setPrefilledDate(null);
-        setPrefilledTemplate(null);
-        setIsModalOpen(true);
+        navigate(`/dashboard/scheduling/${session.id}/edit`);
     };
 
     const handleUseTemplate = (templateId: number) => {
-        setSelectedSession(null);
-        setPrefilledDate(null);
-        setPrefilledTemplate(templateId);
-        setIsModalOpen(true);
+        navigate(`/dashboard/scheduling/new?templateId=${templateId}`);
     };
 
     const handleCreateTemplate = () => {
         navigate("/dashboard/session-programming/create-template");
-    };
-
-    const handleModalClose = () => {
-        setIsModalOpen(false);
-        setSelectedSession(null);
-        setPrefilledDate(null);
-        setPrefilledTemplate(null);
-    };
-
-    const handleModalSuccess = () => {
-        refetchSessions();
     };
 
     const handleMonthChange = (date: Date) => {
@@ -205,17 +178,6 @@ export const SchedulingPage: React.FC = () => {
                     )}
                 </div>
             </DashboardLayout>
-
-            {/* Modal para crear/editar sesión */}
-            <ScheduledSessionModal
-                isOpen={isModalOpen}
-                onClose={handleModalClose}
-                trainerId={trainerId}
-                session={selectedSession}
-                prefilledDate={prefilledDate}
-                prefilledTemplate={prefilledTemplate}
-                onSuccess={handleModalSuccess}
-            />
         </>
     );
 };

@@ -53,6 +53,29 @@ const SOURCE_LABEL: Record<string, string> = {
     day: "D",
 };
 
+/** Etiqueta semántica para el documento canónico §17 */
+const SOURCE_SEMANTIC_LABEL: Record<string, string> = {
+    month: "Heredado",
+    week: "Override",
+    day: "Override",
+};
+
+/** Color de la etiqueta según origen */
+const SOURCE_BADGE_CLASSES: Record<string, string> = {
+    month: "bg-slate-100 text-slate-600 border-slate-300",
+    week: "bg-violet-100 text-violet-700 border-violet-300",
+    day: "bg-emerald-100 text-emerald-700 border-emerald-300",
+};
+
+/** Parsea session_date (YYYY-MM-DD) como fecha local para evitar desfase por timezone */
+function parseSessionDateLocal(sessionDate: string | null | undefined): Date | null {
+    if (!sessionDate) return null;
+    const match = String(sessionDate).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (!match) return new Date(sessionDate);
+    const [, y, m, d] = match;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+}
+
 export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     sessions,
     currentMonth,
@@ -85,11 +108,11 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
         return map;
     }, [planningDays, year, month]);
 
-    // Filtrar sesiones del mes actual
+    // Filtrar sesiones del mes actual (usar fecha local para evitar desfase por timezone)
     const sessionsInMonth = useMemo(() => {
         return sessions.filter((session) => {
-            if (!session.session_date) return false;
-            const sessionDate = new Date(session.session_date);
+            const sessionDate = parseSessionDateLocal(session.session_date);
+            if (!sessionDate) return false;
             return (
                 sessionDate.getFullYear() === year &&
                 sessionDate.getMonth() === month
@@ -101,8 +124,9 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     const sessionsByDay = useMemo(() => {
         const map = new Map<number, SessionCalendarSession[]>();
         sessionsInMonth.forEach((session) => {
-            if (!session.session_date) return;
-            const day = new Date(session.session_date).getDate();
+            const sessionDate = parseSessionDateLocal(session.session_date);
+            if (!sessionDate) return;
+            const day = sessionDate.getDate();
             if (!map.has(day)) {
                 map.set(day, []);
             }
@@ -272,13 +296,29 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                                 </span>
                             )}
 
-                            {/* Fase 3: origen planificación M/S/D */}
-                            {sourceLabel && (
+                            {/* Origen planificación: M/S/D + Heredado/Override */}
+                            {sourceLabel && plan?.source && (
                                 <span
-                                    className="text-[10px] font-medium px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300"
-                                    title={plan?.source === "month" ? "Mes" : plan?.source === "week" ? "Semana" : "Día"}
+                                    className={`text-[10px] font-medium px-1 py-0.5 rounded border ${SOURCE_BADGE_CLASSES[plan.source] ?? "bg-amber-100 text-amber-800 border-amber-300"}`}
+                                    title={`${SOURCE_SEMANTIC_LABEL[plan.source] ?? plan.source} (${plan.source === "month" ? "Mes" : plan.source === "week" ? "Semana" : "Día"})`}
                                 >
                                     {sourceLabel}
+                                </span>
+                            )}
+
+                            {/* Volumen/Intensidad compactos */}
+                            {plan && (plan.resolved_volume != null || plan.resolved_intensity != null) && (
+                                <span className="text-[9px] text-gray-500 leading-tight">
+                                    {plan.resolved_volume != null ? `V${Math.round(plan.resolved_volume * 100)}` : ""}
+                                    {plan.resolved_volume != null && plan.resolved_intensity != null ? "/" : ""}
+                                    {plan.resolved_intensity != null ? `I${Math.round(plan.resolved_intensity * 100)}` : ""}
+                                </span>
+                            )}
+
+                            {/* Día no entrenable */}
+                            {plan && !isTrainable && (
+                                <span className="text-[9px] font-medium text-red-500">
+                                    No ent.
                                 </span>
                             )}
                         </div>
@@ -298,16 +338,20 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 {planningDays && planningDays.length > 0 && (
                     <>
                         <div className="flex items-center gap-2">
-                            <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-medium">M</span>
-                            <span>Mes</span>
+                            <span className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-300 font-medium">M</span>
+                            <span>Heredado (Mes)</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-medium">S</span>
-                            <span>Semana</span>
+                            <span className="px-1 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-300 font-medium">S</span>
+                            <span>Override (Semana)</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-300 font-medium">D</span>
-                            <span>Día</span>
+                            <span className="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300 font-medium">D</span>
+                            <span>Override (Día)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className="text-red-500 font-medium text-xs">No ent.</span>
+                            <span>No entrenable</span>
                         </div>
                     </>
                 )}

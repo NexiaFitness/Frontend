@@ -63,6 +63,29 @@ export const SESSION_DURATION_ENUM = {
 
 export type SessionDuration = (typeof SESSION_DURATION_ENUM)[keyof typeof SESSION_DURATION_ENUM];
 
+/** Días de la semana aceptados por el backend (training_days). Usar estos valores en formularios. */
+export const TRAINING_DAY_VALUES = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+] as const;
+export type TrainingDayValue = (typeof TRAINING_DAY_VALUES)[number];
+
+/** Etiquetas cortas para UI (L, M, X, J, V, S, D) */
+export const TRAINING_DAY_LABELS: Record<TrainingDayValue, string> = {
+    Monday: "L",
+    Tuesday: "M",
+    Wednesday: "X",
+    Thursday: "J",
+    Friday: "V",
+    Saturday: "S",
+    Sunday: "D",
+};
+
 // ========================================
 // CLIENT ENTITY (Response de GET/POST/PUT)
 // ========================================
@@ -102,7 +125,11 @@ export interface Client {
     // Campos adicionales del backend
     objective?: string | null;  // ¿Duplicado? Mantener por compatibilidad
     session_duration?: string | null;
-    
+    /** Número exacto de días de entrenamiento por semana (1-7). Backend: exact_training_frequency */
+    exact_training_frequency?: number | null;
+    /** Días concretos de la semana en que entrena (ej. ["Monday","Wednesday","Friday"]). Backend: training_days */
+    training_days?: string[] | null;
+
     // ========================================
     // ANTROPOMETRÍA (nomenclatura backend exacta)
     // ========================================
@@ -173,7 +200,9 @@ export interface CreateClientData {
     birthdate?: string | null;
     objective?: string | null;
     session_duration?: string | null;
-    
+    exact_training_frequency?: number | null;
+    training_days?: string[] | null;
+
     // Antropometría
     skinfold_triceps?: number | null;
     skinfold_subscapular?: number | null;
@@ -336,7 +365,9 @@ export interface ClientFormErrors {
     birthdate?: string;
     objective?: string;
     session_duration?: string;
-    
+    exact_training_frequency?: string;
+    training_days?: string;
+
     // Antropometría
     skinfold_triceps?: string;
     skinfold_subscapular?: string;
