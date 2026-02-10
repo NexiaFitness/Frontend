@@ -14,6 +14,7 @@ import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -32,19 +33,11 @@ export const ClientEdit: React.FC = () => {
         skip: !id || isNaN(clientId),
     });
 
-    // Menu items para navbar
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     // Validación de ID
     if (!id || isNaN(clientId)) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -61,7 +54,7 @@ export const ClientEdit: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex items-center justify-center min-h-screen">
@@ -76,7 +69,7 @@ export const ClientEdit: React.FC = () => {
     if (error || !client) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -109,7 +102,7 @@ export const ClientEdit: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

@@ -161,3 +161,11 @@ export interface TotalLoadResponseV2 {
     };
 }
 
+/**
+ * Response for POST /metrics/cid (single CID calculation)
+ * Backend: CIDCalcOut
+ */
+export interface CidCalcOutV2 {
+    cid_0_100: number;
+}
+

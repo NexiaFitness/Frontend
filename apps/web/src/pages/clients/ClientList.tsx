@@ -30,6 +30,7 @@ import type { RootState } from "@nexia/shared/store";
 // Layouts
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 
@@ -269,19 +270,10 @@ export const ClientList: React.FC = () => {
         navigate("/dashboard/training-plans");
     };
 
-    // Items del menú superior
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     return (
         <>
             {/* Navbar móvil/tablet */}
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
 
             {/* Sidebar escritorio */}
             <TrainerSideMenu />

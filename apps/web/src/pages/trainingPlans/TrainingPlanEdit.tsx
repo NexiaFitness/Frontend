@@ -17,6 +17,7 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea, FormSelect } from "@/components/ui/forms";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -68,15 +69,6 @@ export const TrainingPlanEdit: React.FC = () => {
             });
         }
     }, [plan]);
-
-    // Menu items para navbar
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
 
     // Validación
     const validate = (): boolean => {
@@ -130,7 +122,7 @@ export const TrainingPlanEdit: React.FC = () => {
     if (!id || isNaN(planId)) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -145,7 +137,7 @@ export const TrainingPlanEdit: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex items-center justify-center min-h-screen">
@@ -160,7 +152,7 @@ export const TrainingPlanEdit: React.FC = () => {
     if (error || !plan) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -183,7 +175,7 @@ export const TrainingPlanEdit: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
             <DashboardLayout>
                 {/* Encabezado responsive igual a dashboards */}

@@ -27,6 +27,9 @@ export * from "./auth";
 // Charts types
 export * from "./charts";
 
+// Catalogs types (countries, cities, trainer options)
+export * from "./catalogs";
+
 // Client types
 export * from "./client";
 export * from "./clientOnboarding";
@@ -37,6 +40,9 @@ export * from "./coherence";
 
 // Dashboard types
 export * from "./dashboard";
+
+// Exercise alternatives types
+export * from "./exerciseAlternatives";
 
 // Exercise types (Exercise Catalog completo)
 export * from "./exercise";
@@ -50,6 +56,9 @@ export * from "./injuries";
 // Metrics types
 export * from "./metrics";
 export * from "./metricsV2";
+
+// Navigation state (return-to context)
+export * from "./navigation";
 
 // Planning cargas (period-based) — Plan de cargas Fase 0
 export * from "./planningCargas";

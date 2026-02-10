@@ -20,6 +20,7 @@
  */
 
 import { baseApi } from "./baseApi";
+import type { CIDCalcIn } from "../types/metrics";
 import type {
     WeeklyMetricsRequestV2,
     WeeklyMetricsResponseV2,
@@ -31,6 +32,7 @@ import type {
     CheckThresholdsResponseV2,
     TotalLoadRequestV2,
     TotalLoadResponseV2,
+    CidCalcOutV2,
 } from "../types/metricsV2";
 
 /**
@@ -97,6 +99,16 @@ export const metricsApiV2 = baseApi.injectEndpoints({
             }),
             invalidatesTags: ["Metrics"],
         }),
+
+        // POST /metrics/cid - Cálculo CID único (idempotente, query para uso con lazy)
+        calculateCidV2: builder.query<CidCalcOutV2, CIDCalcIn>({
+            query: (data) => ({
+                url: "/metrics/cid",
+                method: "POST",
+                body: data,
+            }),
+            providesTags: ["Metrics"],
+        }),
     }),
 });
 
@@ -117,6 +129,9 @@ export const {
     useGetDailyMetricsV2Query,
     useGetMonthlyMetricsV2Query,
     useCheckThresholdsV2Query,
+    useLazyCheckThresholdsV2Query,
     useGetTotalLoadV2Mutation,
+    useCalculateCidV2Query,
+    useLazyCalculateCidV2Query,
 } = metricsApiV2;
 

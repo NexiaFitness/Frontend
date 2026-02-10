@@ -12,6 +12,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { CompleteProfileForm } from "@/components/dashboard/trainer";
 import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { useCompleteProfile } from "@nexia/shared";
@@ -27,13 +28,6 @@ export const CompleteProfile: React.FC = () => {
         onRedirect: (path: string) => navigate(path, { replace: true }) 
     });
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     // Loading state
     if (isLoadingTrainer) {
         return (
@@ -45,7 +39,7 @@ export const CompleteProfile: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
             
             <DashboardLayout>

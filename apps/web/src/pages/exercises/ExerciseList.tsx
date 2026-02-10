@@ -16,6 +16,7 @@ import { useExercises } from "@nexia/shared/hooks/exercises";
 // Layouts
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 
 // Components
@@ -73,17 +74,9 @@ export const ExerciseList: React.FC = () => {
         [pagination.limit, setPagination]
     );
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

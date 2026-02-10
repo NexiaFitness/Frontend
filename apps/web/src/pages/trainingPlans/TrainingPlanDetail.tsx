@@ -29,6 +29,7 @@ import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import type { BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 // Tabs components - estáticos (carga inmediata)
@@ -128,15 +129,6 @@ export const TrainingPlanDetail: React.FC = () => {
         setActiveTab(tabId);
     };
 
-    // Items del menú superior
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     // Breadcrumbs jerárquicos
     const breadcrumbItems: BreadcrumbItem[] = [
         { label: "Dashboard", path: "/dashboard" },
@@ -161,7 +153,7 @@ export const TrainingPlanDetail: React.FC = () => {
     if (!id || isNaN(planId)) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -176,7 +168,7 @@ export const TrainingPlanDetail: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex items-center justify-center min-h-screen">
@@ -193,7 +185,7 @@ export const TrainingPlanDetail: React.FC = () => {
 
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -255,7 +247,7 @@ export const TrainingPlanDetail: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

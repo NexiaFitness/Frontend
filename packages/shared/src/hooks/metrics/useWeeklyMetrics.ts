@@ -1,19 +1,20 @@
 /**
  * hooks/metrics/useWeeklyMetrics.ts - Hook para métricas semanales
- * Obtiene y formatea datos de CID semanal para gráficos
+ * Obtiene y formatea datos de CID semanal para gráficos.
+ * Migrado a V2: usa useGetWeeklyMetricsV2Query (POST /metrics/weekly).
  *
  * @author Nelson Valero
  * @since v5.6.0
  */
 
-import React from "react";
 import { useMemo } from "react";
-import { useGetWeeklyMetricsMutation } from "../../api/metricsApi";
-import type { WeeklyMetricsRequest, CIDCalcIn } from "../../types/metrics";
+import { skipToken } from "@reduxjs/toolkit/query";
+import { useGetWeeklyMetricsV2Query } from "../../api/metricsApiV2";
+import type { CIDCalcIn } from "../../types/metrics";
 
 interface UseWeeklyMetricsParams {
-    items: CIDCalcIn[]; // Array de items para calcular CID
-    startDate: string; // ISO date - fecha de inicio
+    items: CIDCalcIn[];
+    startDate: string; // ISO date
 }
 
 interface WeeklyMetricsChartData {
@@ -34,36 +35,22 @@ type UseWeeklyMetricsReturn = {
     refetch: () => void;
 };
 
-const buildRequest = (params: UseWeeklyMetricsParams): WeeklyMetricsRequest => ({
-    items: params.items,
-    start_date: params.startDate,
-});
-
 export const useWeeklyMetrics = ({ items, startDate }: UseWeeklyMetricsParams): UseWeeklyMetricsReturn => {
-    const [getWeeklyMetrics, { data, isLoading, error }] = useGetWeeklyMetricsMutation();
+    const queryArg = items.length > 0 && startDate ? { items, start_date: startDate } : skipToken;
+    const { data, isLoading, error, refetch: refetchQuery } = useGetWeeklyMetricsV2Query(queryArg);
 
-    // Efecto para cargar datos automáticamente
-    React.useEffect(() => {
-        if (items.length > 0 && startDate) {
-            getWeeklyMetrics(buildRequest({ items, startDate }));
-        }
-    }, [items, startDate, getWeeklyMetrics]);
-
-    // Formatear datos para Recharts desde la respuesta del backend
     const chartData = useMemo<WeeklyMetricsChartData[]>(() => {
         if (!data?.buckets) return [];
-
         return data.buckets.map((bucket) => ({
             week: bucket.week_start,
-            cid: bucket.cid_sum, // Usamos cid_sum como el CID total de la semana
-            volume: 0, // No disponible en la respuesta actual
-            intensity: 0, // No disponible en la respuesta actual
+            cid: bucket.cid_sum,
+            volume: 0,
+            intensity: 0,
             monotony: undefined,
             strain: undefined,
         }));
     }, [data]);
 
-    // Calcular tendencia
     const trend: UseWeeklyMetricsReturn["trend"] = useMemo(() => {
         if (chartData.length < 2) return "stable";
         const lastWeek = chartData[chartData.length - 1];
@@ -76,9 +63,7 @@ export const useWeeklyMetrics = ({ items, startDate }: UseWeeklyMetricsParams): 
     }, [chartData]);
 
     const refetch = () => {
-        if (items.length > 0 && startDate) {
-            getWeeklyMetrics(buildRequest({ items, startDate }));
-        }
+        refetchQuery();
     };
 
     return {

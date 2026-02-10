@@ -29,6 +29,7 @@ import {
 // Layouts
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 
 // UI
@@ -48,15 +49,6 @@ export const ExerciseDetail: React.FC = () => {
         exerciseId!,
         { skip: !exerciseId }
     );
-
-    // Items del menú superior
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
 
     const handleBack = () => {
         navigate("/dashboard/exercises");
@@ -79,7 +71,7 @@ export const ExerciseDetail: React.FC = () => {
     if (!exerciseId) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="px-4 lg:px-8">
@@ -96,7 +88,7 @@ export const ExerciseDetail: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex justify-center items-center py-16">
@@ -111,7 +103,7 @@ export const ExerciseDetail: React.FC = () => {
     if (isError || !exercise) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="px-4 lg:px-8">
@@ -134,7 +126,7 @@ export const ExerciseDetail: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

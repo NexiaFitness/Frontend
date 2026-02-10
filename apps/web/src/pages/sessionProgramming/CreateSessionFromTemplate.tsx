@@ -15,6 +15,7 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -105,18 +106,10 @@ export const CreateSessionFromTemplate: React.FC = () => {
         }
     };
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     if (isLoadingTemplate) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex items-center justify-center min-h-[400px]">
@@ -130,7 +123,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
     if (!template) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="px-4 lg:px-8 py-6 lg:py-8">
@@ -143,7 +136,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

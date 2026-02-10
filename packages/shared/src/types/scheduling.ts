@@ -163,3 +163,47 @@ export interface ScheduledSessionsFilters {
     limit?: number;
 }
 
+// ========================================
+// TRAINER AVAILABILITY (Backend: scheduling/availability)
+// ========================================
+
+/** POST /scheduling/availability — Backend: TrainerAvailabilityCreate */
+export interface TrainerAvailabilityCreate {
+    trainer_id: number;
+    day_of_week: number; // 0=Monday, ..., 6=Sunday
+    start_time: string; // HH:mm
+    end_time: string; // HH:mm
+    is_recurring: boolean;
+    specific_date?: string | null; // ISO date when not recurring
+}
+
+/** PUT /scheduling/availability/{id} — Backend: TrainerAvailabilityUpdate */
+export interface TrainerAvailabilityUpdate {
+    day_of_week?: number | null;
+    start_time?: string | null;
+    end_time?: string | null;
+    is_recurring?: boolean | null;
+    specific_date?: string | null;
+    is_active?: boolean | null;
+}
+
+/** Response: TrainerAvailabilityOut */
+export interface TrainerAvailabilityOut {
+    id: number;
+    trainer_id: number;
+    day_of_week: number;
+    start_time: string;
+    end_time: string;
+    is_recurring: boolean;
+    specific_date: string | null;
+    is_active: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+/** Query params for GET /scheduling/availability */
+export interface TrainerAvailabilityFilters {
+    trainer_id: number;
+    skip?: number;
+    limit?: number;
+}

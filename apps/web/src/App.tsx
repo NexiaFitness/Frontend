@@ -358,12 +358,6 @@ function App() {
         }
       />
 
-      {/* Legacy: redirect old schedule URL to new */}
-      <Route
-        path="/dashboard/scheduling/schedule"
-        element={<Navigate to="/dashboard/scheduling/new" replace />}
-      />
-
       {/* ============================================ */}
       {/* SESSION PROGRAMMING - Trainers only */}
       {/* ============================================ */}

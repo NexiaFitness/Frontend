@@ -1,14 +1,15 @@
 /**
  * hooks/metrics/useCalculateCID.ts - Hook para cálculo de CID
- * Calcula Carga Interna Diaria de una sesión
+ * Calcula Carga Interna Diaria de una sesión.
+ * Migrado a V2: usa useLazyCalculateCidV2Query (POST /metrics/cid).
  *
  * @author Nelson Valero
  * @since v5.6.0
  */
 
 import { useCallback } from "react";
-import { useCalculateCIDMutation } from "../../api/metricsApi";
-import type { CalculateCIDRequest, LOAD_TYPE, CIDCalculation } from "../../types/metrics";
+import { useLazyCalculateCidV2Query } from "../../api/metricsApiV2";
+import type { LOAD_TYPE, CIDCalculation, CIDCalcIn } from "../../types/metrics";
 
 interface CalculateCIDParams {
     volume: number;
@@ -18,7 +19,7 @@ interface CalculateCIDParams {
     experiencia?: "Baja" | "Media" | "Alta";
     clientId: number;
     trainerId?: number;
-    sessionDate: string; // ISO date - required by SessionContext
+    sessionDate: string; // ISO date
 }
 
 interface CalculateCIDSuccessResult {
@@ -33,28 +34,38 @@ interface CalculateCIDErrorResult {
 
 type CalculateCIDResultType = CalculateCIDSuccessResult | CalculateCIDErrorResult;
 
+function kExperienciaFrom(experiencia?: "Baja" | "Media" | "Alta"): number {
+    if (experiencia === "Baja") return 0.8;
+    if (experiencia === "Alta") return 1.1;
+    return 1.0;
+}
+
 export const useCalculateCID = () => {
-    const [calculateCIDMutation, { isLoading, error }] = useCalculateCIDMutation();
+    const [calculateCidTrigger, { isLoading, error }] = useLazyCalculateCidV2Query();
 
     const calculateCID = useCallback(
         async (params: CalculateCIDParams): Promise<CalculateCIDResultType> => {
             try {
-                const payload: CalculateCIDRequest = {
-                    client_id: params.clientId,
-                    trainer_id: params.trainerId,
-                    session_date: params.sessionDate,
-                    load_type: params.loadType,
-                    intensity: params.intensity,
-                    volume: params.volume,
-                    duration_minutes: params.durationMinutes,
-                    experiencia: params.experiencia,
+                const payload: CIDCalcIn = {
+                    volumen_level: Math.min(10, Math.max(1, params.volume)),
+                    intensidad_level: Math.min(10, Math.max(1, params.intensity)),
+                    k_fase: 1.0,
+                    k_experiencia: kExperienciaFrom(params.experiencia),
+                    p: 1.0,
                 };
 
-                const result = await calculateCIDMutation(payload).unwrap();
+                const result = await calculateCidTrigger(payload).unwrap();
+
+                const data: CIDCalculation = {
+                    load_type: params.loadType,
+                    cid_score: result.cid_0_100,
+                    status: "info",
+                    alerts: [],
+                };
 
                 return {
                     success: true,
-                    data: result,
+                    data,
                 };
             } catch (err) {
                 console.error("Error calculating CID:", err);
@@ -64,7 +75,7 @@ export const useCalculateCID = () => {
                 };
             }
         },
-        [calculateCIDMutation]
+        [calculateCidTrigger]
     );
 
     return {

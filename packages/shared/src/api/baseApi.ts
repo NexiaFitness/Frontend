@@ -223,6 +223,7 @@ export const baseApi = createApi({
         "SessionExercise",
         "Report",
         "ScheduledSession",
+        "TrainerAvailability",
         "PhysicalTest",
         "TrainingPlanSummary",
         "TrainingPlanMonthlySummary",

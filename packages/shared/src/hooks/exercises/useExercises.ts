@@ -87,6 +87,54 @@ export interface ExerciseListResponse {
 }
 
 /**
+ * ExerciseCreate - POST /exercises/
+ * Backend schema: ExerciseCreate (ExerciseBase)
+ */
+export interface ExerciseCreate {
+    exercise_id: string;
+    nombre: string;
+    nombre_ingles?: string | null;
+    tipo: string;
+    categoria: string;
+    nivel: string;
+    equipo: string;
+    patron_movimiento: string;
+    tipo_carga: string;
+    musculatura_principal: string;
+    musculatura_secundaria?: string | null;
+    laterality?: string | null;
+    training_intent?: string | null;
+    cardio_type?: string | null;
+    descripcion?: string | null;
+    instrucciones?: string | null;
+    notas?: string | null;
+}
+
+/**
+ * ExerciseUpdate - PUT /exercises/{id}
+ * Backend schema: ExerciseUpdate (all optional)
+ */
+export interface ExerciseUpdate {
+    exercise_id?: string;
+    nombre?: string;
+    nombre_ingles?: string | null;
+    tipo?: string;
+    categoria?: string;
+    nivel?: string;
+    equipo?: string;
+    patron_movimiento?: string;
+    tipo_carga?: string;
+    musculatura_principal?: string;
+    musculatura_secundaria?: string | null;
+    laterality?: string | null;
+    training_intent?: string | null;
+    cardio_type?: string | null;
+    descripcion?: string | null;
+    instrucciones?: string | null;
+    notas?: string | null;
+}
+
+/**
  * Estado de paginación
  */
 interface PaginationState {
@@ -204,6 +252,37 @@ const exercisesListApi = baseApi.injectEndpoints({
             }),
             providesTags: (result, error, id) => [{ type: "Exercise" as const, id }],
         }),
+        createExercise: builder.mutation<Exercise, ExerciseCreate>({
+            query: (body) => ({
+                url: "/exercises/",
+                method: "POST",
+                body,
+                headers: { "Content-Type": "application/json" },
+            }),
+            invalidatesTags: [{ type: "Exercise", id: "LIST" }],
+        }),
+        updateExercise: builder.mutation<Exercise, { exerciseId: number; data: ExerciseUpdate }>({
+            query: ({ exerciseId, data }) => ({
+                url: `/exercises/${exerciseId}`,
+                method: "PUT",
+                body: data,
+                headers: { "Content-Type": "application/json" },
+            }),
+            invalidatesTags: (result, error, { exerciseId }) => [
+                { type: "Exercise", id: exerciseId },
+                { type: "Exercise", id: "LIST" },
+            ],
+        }),
+        deleteExercise: builder.mutation<void, number>({
+            query: (exerciseId) => ({
+                url: `/exercises/${exerciseId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (result, error, exerciseId) => [
+                { type: "Exercise", id: exerciseId },
+                { type: "Exercise", id: "LIST" },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -212,6 +291,9 @@ const exercisesListApi = baseApi.injectEndpoints({
 export const {
     useGetExercisesQuery,
     useGetExerciseByIdQuery,
+    useCreateExerciseMutation,
+    useUpdateExerciseMutation,
+    useDeleteExerciseMutation,
 } = exercisesListApi;
 
 // ========================================

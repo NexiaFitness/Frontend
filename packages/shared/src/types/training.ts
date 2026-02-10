@@ -424,6 +424,52 @@ export interface ClientFeedback {
 export type RiskLevel = 'low' | 'medium' | 'high';
 export type SessionType = 'training' | 'standalone';
 
+/** Respuesta de GET /fatigue/clients/{id}/fatigue-analytics/ (agregados por periodo) */
+export interface ClientFatigueAnalytics {
+    total_sessions: number;
+    average_pre_fatigue: number;
+    average_post_fatigue: number;
+    average_fatigue_delta: number;
+    high_risk_sessions: number;
+    medium_risk_sessions: number;
+    low_risk_sessions: number;
+    trends: {
+        fatigue_trend: Array<{
+            date: string;
+            pre_fatigue: number | null;
+            post_fatigue: number | null;
+            fatigue_delta: number | null;
+        }>;
+        energy_trend: Array<{
+            date: string;
+            pre_energy: number | null;
+            post_energy: number | null;
+            energy_delta: number | null;
+        }>;
+        risk_trend: Array<{ date: string; risk_level: string | null }>;
+    };
+}
+
+/** Workload tracking por cliente. Backend: WorkloadTrackingOut */
+export interface WorkloadTrackingOut {
+    id: number;
+    client_id: number;
+    tracking_date: string;
+    total_volume: number | null;
+    total_duration: number | null;
+    intensity_score: number | null;
+    perceived_exertion_avg: number | null;
+    weekly_volume: number | null;
+    weekly_intensity: number | null;
+    weekly_fatigue: number | null;
+    acute_workload: number | null;
+    chronic_workload: number | null;
+    training_stress_balance: number | null;
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+}
+
 export interface FatigueAnalysis {
     id: number;
     client_id: number;

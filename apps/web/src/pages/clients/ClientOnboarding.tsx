@@ -43,6 +43,7 @@ import { useNavigate } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { ClientOnboardingForm } from "@/components/clients/onboarding/ClientOnboardingForm";
 import type { ClientFormData } from "@nexia/shared/types/client";
 
@@ -56,21 +57,13 @@ const initialFormData: ClientFormData = {
 export const ClientOnboarding: React.FC = () => {
     const navigate = useNavigate();
 
-    // Menu items para navbar
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     const handleSuccess = (clientId: number) => {
         navigate(`/dashboard/clients/${clientId}`, { replace: true });
     };
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

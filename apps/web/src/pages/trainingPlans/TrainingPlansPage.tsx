@@ -44,6 +44,7 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 // Components
 import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePreviewModal } from "@/components/trainingPlans";
 import { Alert } from "@/components/ui/feedback";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { Pagination } from "@/components/ui/pagination";
 
 // Utils
@@ -374,21 +375,12 @@ export const TrainingPlansPage: React.FC = () => {
         navigate("/dashboard/training-plans/create");
     };
 
-    // Items del menú superior
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     const isLoading = isLoadingTemplates || isLoadingPlans;
 
     return (
         <>
             {/* Navbar móvil/tablet */}
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
 
             {/* Sidebar escritorio */}
             <TrainerSideMenu />

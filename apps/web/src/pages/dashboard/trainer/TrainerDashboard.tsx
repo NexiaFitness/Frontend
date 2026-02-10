@@ -41,6 +41,7 @@ import {
 } from "@nexia/shared";
 import { baseApi } from "@nexia/shared/api/baseApi";
 import type { RootState, AppDispatch } from "@nexia/shared/store";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -79,15 +80,6 @@ export const TrainerDashboard: React.FC = () => {
         return null;
     }
 
-    // Items del menú superior
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     // Formatear fecha en español
     const currentDate = new Date().toLocaleDateString("es-ES", {
         weekday: "long",
@@ -99,7 +91,7 @@ export const TrainerDashboard: React.FC = () => {
     return (
         <>
             {/* Navbar móvil / tablet */}
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
 
             {/* Sidebar escritorio */}
             <TrainerSideMenu />

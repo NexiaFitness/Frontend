@@ -24,6 +24,7 @@ import { AthleteSideMenu } from "@/components/dashboard/athlete";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { TYPOGRAPHY } from "@/utils/typography";
 import type { RootState } from "@nexia/shared/store";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 export const Account: React.FC = () => {
     const { user } = useSelector((state: RootState) => state.auth);
@@ -39,12 +40,7 @@ export const Account: React.FC = () => {
                     { label: "Mi cuenta", path: "/dashboard/account" },
                 ];
             case "trainer":
-                return [
-                    { label: "Dashboard", path: "/dashboard" },
-                    { label: "Clientes", path: "/dashboard/clients" },
-                    { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-                    { label: "Mi cuenta", path: "/dashboard/account" },
-                ];
+                return TRAINER_MENU_ITEMS;
             case "athlete":
                 return [
                     { label: "Dashboard", path: "/dashboard" },

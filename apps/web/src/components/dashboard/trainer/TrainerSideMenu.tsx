@@ -22,6 +22,7 @@ import { Link, useLocation } from "react-router-dom";
 import clsx from "clsx";
 import { LogoutButton } from "@/components/ui/buttons";
 import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import type { RootState } from "@nexia/shared/store";
 
 export const TrainerSideMenu: React.FC = () => {
@@ -29,14 +30,6 @@ export const TrainerSideMenu: React.FC = () => {
     const { user } = useSelector((state: RootState) => state.auth);
 
     const isActive = (path: string) => location.pathname === path;
-
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
 
     return (
         <aside className="hidden lg:flex fixed left-0 top-0 h-full w-80 flex-col z-10 bg-sidebar-nav" style={{ height: '100vh' }}>
@@ -52,7 +45,7 @@ export const TrainerSideMenu: React.FC = () => {
             <div className="flex-1 flex flex-col min-h-0">
                 {/* Navegación - SOLO ESTA PARTE SCROLLEA */}
                 <nav className="flex-1 overflow-y-auto p-8 px-8 border-b-2 border-white/60 space-y-4 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                    {menuItems.map((item) => (
+                    {TRAINER_MENU_ITEMS.map((item) => (
                         <Link
                             key={item.path}
                             to={item.path}

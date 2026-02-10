@@ -186,7 +186,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                         onClick={handleAddTest}
                         className="w-full sm:w-auto"
                     >
-                        + Añadir Test
+                        Crear Test
                     </Button>
                     <Button
                         variant="primary"

@@ -18,6 +18,7 @@ import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
@@ -276,17 +277,9 @@ export const CreateTrainingPlan: React.FC = () => {
         { value: MILESTONE_TYPES.CUSTOM, label: "Personalizado" },
     ];
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

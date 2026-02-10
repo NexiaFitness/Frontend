@@ -1,14 +1,30 @@
 /**
  * hooks/metrics/useMetricsAlerts.ts - Hook para alertas de métricas
- * Gestiona alertas de sobrecarga, monotonía y strain
+ * Gestiona alertas de sobrecarga, monotonía y strain.
+ * Migrado a V2: usa useLazyCheckThresholdsV2Query (POST /metrics/check-thresholds).
  *
  * @author Nelson Valero
  * @since v5.6.0
  */
 
 import { useCallback, useMemo } from "react";
-import { useCheckThresholdsMutation } from "../../api/metricsApi";
-import type { CheckThresholdsRequest, MetricsAlert, LOAD_TYPE } from "../../types/metrics";
+import { useLazyCheckThresholdsV2Query } from "../../api/metricsApiV2";
+import type { MetricsAlert, LOAD_TYPE, CIDCalcIn } from "../../types/metrics";
+import type { ThresholdAlertV2 } from "../../types/metricsV2";
+
+function kExperienciaFrom(experiencia?: "Baja" | "Media" | "Alta"): number {
+    if (experiencia === "Baja") return 0.8;
+    if (experiencia === "Alta") return 1.1;
+    return 1.0;
+}
+
+function thresholdAlertToMetricsAlert(a: ThresholdAlertV2): MetricsAlert {
+    return {
+        type: a.severity === "critical" ? "critical" : a.severity === "high" ? "warning" : "info",
+        message: a.message,
+        severity: a.severity === "critical" ? "critical" : a.severity === "high" ? "warning" : "info",
+    };
+}
 
 interface UseMetricsAlertsParams {
     clientId: number;
@@ -21,34 +37,37 @@ interface CheckAlertsParams {
     volume: number;
     durationMinutes?: number;
     experiencia?: "Baja" | "Media" | "Alta";
-    sessionDate: string; // ISO date - required by SessionContext
+    sessionDate: string; // ISO date
 }
 
 export const useMetricsAlerts = ({ clientId, trainerId }: UseMetricsAlertsParams) => {
-    const [checkThresholds, { data, isLoading, error }] = useCheckThresholdsMutation();
+    const [triggerCheck, { data, isLoading, error }] = useLazyCheckThresholdsV2Query();
 
-    // Verificar umbrales
     const checkAlerts = useCallback(
-        async ({ loadType, intensity, volume, durationMinutes, experiencia, sessionDate }: CheckAlertsParams) => {
-            const payload: CheckThresholdsRequest = {
+        async ({ intensity, volume, experiencia, sessionDate }: CheckAlertsParams) => {
+            const item: CIDCalcIn = {
+                volumen_level: Math.min(10, Math.max(1, volume)),
+                intensidad_level: Math.min(10, Math.max(1, intensity)),
+                k_fase: 1.0,
+                k_experiencia: kExperienciaFrom(experiencia),
+                p: 1.0,
+            };
+            const result = await triggerCheck({
+                items: [item],
+                start_date: sessionDate,
                 client_id: clientId,
                 trainer_id: trainerId,
-                session_date: sessionDate,
-                load_type: loadType,
-                intensity,
-                volume,
-                duration_minutes: durationMinutes,
-                experiencia,
-            };
-
-            return await checkThresholds(payload).unwrap();
+            }).unwrap();
+            return result;
         },
-        [checkThresholds, clientId, trainerId]
+        [triggerCheck, clientId, trainerId]
     );
 
-    const alerts: MetricsAlert[] = useMemo(() => data?.alerts ?? [], [data]);
+    const alerts: MetricsAlert[] = useMemo(
+        () => (data?.alerts ?? []).map(thresholdAlertToMetricsAlert),
+        [data]
+    );
 
-    // En ausencia de flag is_active en el schema, consideramos todas activas.
     const activeAlerts = useMemo(() => alerts, [alerts]);
 
     const criticalAlerts = useMemo(

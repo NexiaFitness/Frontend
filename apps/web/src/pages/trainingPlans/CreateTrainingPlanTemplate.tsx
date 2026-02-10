@@ -33,11 +33,7 @@ import {
     type DurationUnit,
 } from "@nexia/shared/types/training";
 import type { TrainingPlanTemplateCreate } from "@nexia/shared/types/training";
-
-interface MenuItem {
-    label: string;
-    path: string;
-}
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 export const CreateTrainingPlanTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -214,17 +210,9 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
         { value: DURATION_UNIT.MONTHS, label: "Meses" },
     ];
 
-    const menuItems: MenuItem[] = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

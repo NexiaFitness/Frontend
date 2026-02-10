@@ -14,6 +14,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
@@ -169,15 +170,6 @@ export const NewScheduledSessionPage: React.FC = () => {
         }
     };
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Programación", path: "/dashboard/scheduling" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     const clientOptions = [
         { value: "0", label: "Seleccionar cliente" },
         ...(clientsData?.items?.map((c) => ({
@@ -188,7 +180,7 @@ export const NewScheduledSessionPage: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
             <DashboardLayout>
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">

@@ -18,6 +18,9 @@ import type {
     ClientListWithMetricsResponse,
     RecentActivityResponse,
     ClientPreviewResponse,
+    ClientRatingCreate,
+    ClientRatingUpdate,
+    ClientRatingOut,
 } from "../types/client";
 import type { ClientStatsResponse } from "../types/clientStats";
 
@@ -224,6 +227,87 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
                 { type: "Client", id: "STATS" },
+            ],
+        }),
+
+        /**
+         * Crear valoración de satisfacción de un cliente
+         * Backend: POST /clients/{client_id}/ratings
+         */
+        createClientRating: builder.mutation<ClientRatingOut, { clientId: number; data: ClientRatingCreate }>({
+            query: ({ clientId, data }) => ({
+                url: `/clients/${clientId}/ratings`,
+                method: "POST",
+                body: data,
+                headers: { "Content-Type": "application/json" },
+            }),
+            invalidatesTags: (result, error, { clientId }) => [
+                { type: "Client", id: clientId },
+            ],
+        }),
+
+        /**
+         * Obtener valoraciones de un cliente
+         * Backend: GET /clients/{client_id}/ratings?skip=&limit=
+         */
+        getClientRatings: builder.query<ClientRatingOut[], { clientId: number; skip?: number; limit?: number }>({
+            query: ({ clientId, skip = 0, limit = 100 }) => {
+                const params = new URLSearchParams();
+                params.append("skip", skip.toString());
+                params.append("limit", limit.toString());
+                return {
+                    url: `/clients/${clientId}/ratings?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, { clientId }) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: "Client" as const, id: `Rating-${id}` })),
+                        { type: "Client", id: `Ratings-${clientId}` },
+                    ]
+                    : [{ type: "Client", id: "Ratings" }],
+        }),
+
+        /**
+         * Obtener una valoración por ID
+         * Backend: GET /clients/ratings/{rating_id}
+         */
+        getClientRating: builder.query<ClientRatingOut, number>({
+            query: (ratingId) => ({
+                url: `/clients/ratings/${ratingId}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, ratingId) => [{ type: "Client", id: `Rating-${ratingId}` }],
+        }),
+
+        /**
+         * Actualizar una valoración
+         * Backend: PUT /clients/ratings/{rating_id}
+         */
+        updateClientRating: builder.mutation<ClientRatingOut, { ratingId: number; data: ClientRatingUpdate }>({
+            query: ({ ratingId, data }) => ({
+                url: `/clients/ratings/${ratingId}`,
+                method: "PUT",
+                body: data,
+                headers: { "Content-Type": "application/json" },
+            }),
+            invalidatesTags: (result, error, { ratingId }) => [
+                { type: "Client", id: `Rating-${ratingId}` },
+            ],
+        }),
+
+        /**
+         * Eliminar (desactivar) una valoración
+         * Backend: DELETE /clients/ratings/{rating_id}
+         */
+        deleteClientRating: builder.mutation<{ message: string }, number>({
+            query: (ratingId) => ({
+                url: `/clients/ratings/${ratingId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (result, error, ratingId) => [
+                { type: "Client", id: `Rating-${ratingId}` },
             ],
         }),
 
@@ -775,6 +859,11 @@ export const {
     usePreviewClientCalculationsMutation,
     useUpdateClientMutation,
     useDeleteClientMutation,
+    useCreateClientRatingMutation,
+    useGetClientRatingsQuery,
+    useGetClientRatingQuery,
+    useUpdateClientRatingMutation,
+    useDeleteClientRatingMutation,
     useGetClientStatsQuery,
     // Progress hooks
     useGetClientProgressHistoryQuery,

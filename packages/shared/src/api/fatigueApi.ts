@@ -1,5 +1,10 @@
 import { baseApi } from "./baseApi";
-import type { FatigueAlert, FatigueAlertCreate } from "../types/training";
+import type {
+    FatigueAlert,
+    FatigueAlertCreate,
+    ClientFatigueAnalytics,
+    WorkloadTrackingOut,
+} from "../types/training";
 
 export const fatigueApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -62,6 +67,40 @@ export const fatigueApi = baseApi.injectEndpoints({
                 "FatigueAlert",
             ],
         }),
+
+        /**
+         * Analytics agregados de fatiga por cliente
+         * Backend: GET /fatigue/clients/{client_id}/fatigue-analytics/?days=
+         */
+        getClientFatigueAnalytics: builder.query<
+            ClientFatigueAnalytics,
+            { clientId: number; days?: number }
+        >({
+            query: ({ clientId, days = 30 }) => ({
+                url: `/fatigue/clients/${clientId}/fatigue-analytics/?days=${days}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `FATIGUE-ANALYTICS-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Workload tracking por cliente
+         * Backend: GET /fatigue/clients/{client_id}/workload-tracking/?skip=&limit=
+         */
+        getClientWorkloadTracking: builder.query<
+            WorkloadTrackingOut[],
+            { clientId: number; skip?: number; limit?: number }
+        >({
+            query: ({ clientId, skip = 0, limit = 100 }) => ({
+                url: `/fatigue/clients/${clientId}/workload-tracking/?skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `WORKLOAD-${clientId}` },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -72,5 +111,7 @@ export const {
     useCreateFatigueAlertMutation,
     useMarkFatigueAlertAsReadMutation,
     useResolveFatigueAlertMutation,
+    useGetClientFatigueAnalyticsQuery,
+    useGetClientWorkloadTrackingQuery,
 } = fatigueApi;
 

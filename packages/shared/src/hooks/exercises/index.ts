@@ -21,14 +21,19 @@ export {
     useGetActionQuery,
 } from '../../api/exercisesApi';
 
-// Legacy exercises module hooks (GET /exercises/)
+// Legacy exercises module hooks (GET/POST/PUT/DELETE /exercises/)
 export {
     useGetExercisesQuery,
     useGetExerciseByIdQuery,
+    useCreateExerciseMutation,
+    useUpdateExerciseMutation,
+    useDeleteExerciseMutation,
     useExercises,
     // Types
     type Exercise,
     type ExerciseFilters,
     type ExerciseListResponse,
+    type ExerciseCreate,
+    type ExerciseUpdate,
     type UseExercisesResult,
 } from './useExercises';

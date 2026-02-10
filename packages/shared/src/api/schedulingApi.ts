@@ -1,7 +1,8 @@
 /**
  * schedulingApi.ts — API de agendamiento de sesiones usando RTK Query
- * 
+ *
  * Endpoints:
+ * - POST/GET/PUT/DELETE /api/v1/scheduling/availability (trainer availability CRUD)
  * - POST /api/v1/scheduling/sessions
  * - GET /api/v1/scheduling/sessions
  * - GET /api/v1/scheduling/sessions/{id}
@@ -9,7 +10,7 @@
  * - DELETE /api/v1/scheduling/sessions/{id}
  * - POST /api/v1/scheduling/check-conflict
  * - POST /api/v1/scheduling/available-slots
- * 
+ *
  * @author Frontend Team
  * @since v5.1.0
  */
@@ -24,10 +25,64 @@ import type {
     ConflictCheckResponse,
     AvailableSlotsRequest,
     AvailableSlotsResponse,
+    TrainerAvailabilityCreate,
+    TrainerAvailabilityUpdate,
+    TrainerAvailabilityOut,
+    TrainerAvailabilityFilters,
 } from "../types/scheduling";
 
 export const schedulingApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
+        // ---------- Trainer Availability CRUD ----------
+        createTrainerAvailability: builder.mutation<TrainerAvailabilityOut, TrainerAvailabilityCreate>({
+            query: (body) => ({
+                url: "/scheduling/availability",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: [{ type: "TrainerAvailability", id: "LIST" }],
+        }),
+        getTrainerAvailability: builder.query<TrainerAvailabilityOut[], TrainerAvailabilityFilters>({
+            query: ({ trainer_id, skip = 0, limit = 100 }) => {
+                const params = new URLSearchParams();
+                params.set("trainer_id", trainer_id.toString());
+                params.set("skip", skip.toString());
+                params.set("limit", limit.toString());
+                return { url: `/scheduling/availability?${params.toString()}`, method: "GET" };
+            },
+            providesTags: (result) =>
+                result
+                    ? [
+                        ...result.map(({ id }) => ({ type: "TrainerAvailability" as const, id })),
+                        { type: "TrainerAvailability", id: "LIST" },
+                    ]
+                    : [{ type: "TrainerAvailability", id: "LIST" }],
+        }),
+        updateTrainerAvailability: builder.mutation<
+            TrainerAvailabilityOut,
+            { availabilityId: number; data: TrainerAvailabilityUpdate }
+        >({
+            query: ({ availabilityId, data }) => ({
+                url: `/scheduling/availability/${availabilityId}`,
+                method: "PUT",
+                body: data,
+            }),
+            invalidatesTags: (_r, _e, { availabilityId }) => [
+                { type: "TrainerAvailability", id: availabilityId },
+                { type: "TrainerAvailability", id: "LIST" },
+            ],
+        }),
+        deleteTrainerAvailability: builder.mutation<{ message: string }, number>({
+            query: (availabilityId) => ({
+                url: `/scheduling/availability/${availabilityId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (_r, _e, id) => [
+                { type: "TrainerAvailability", id },
+                { type: "TrainerAvailability", id: "LIST" },
+            ],
+        }),
+
         /**
          * Crear una sesión agendada
          * Backend: POST /api/v1/scheduling/sessions
@@ -152,6 +207,10 @@ export const schedulingApi = baseApi.injectEndpoints({
 });
 
 export const {
+    useCreateTrainerAvailabilityMutation,
+    useGetTrainerAvailabilityQuery,
+    useUpdateTrainerAvailabilityMutation,
+    useDeleteTrainerAvailabilityMutation,
     useCreateScheduledSessionMutation,
     useGetScheduledSessionsQuery,
     useGetScheduledSessionQuery,

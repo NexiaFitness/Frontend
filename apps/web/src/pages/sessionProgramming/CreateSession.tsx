@@ -16,10 +16,11 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner } from "@/components/ui/feedback";
@@ -43,6 +44,7 @@ import type {
     TrainingSessionCreate,
     SessionExerciseCreate,
 } from "@nexia/shared/types/trainingSessions";
+import type { LocationStateReturnTo } from "@nexia/shared";
 
 const SESSION_TYPES = [
     { value: "training", label: "Entrenamiento" },
@@ -55,6 +57,7 @@ const SESSION_TYPES = [
 
 export const CreateSession: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
     const { showSuccess, showError } = useToast();
@@ -349,14 +352,6 @@ export const CreateSession: React.FC = () => {
         }
     };
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     if (isLoadingClient || isLoadingPlan || isLoadingPlans) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -367,7 +362,7 @@ export const CreateSession: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>
@@ -381,7 +376,18 @@ export const CreateSession: React.FC = () => {
                                 Crear una nueva sesión de entrenamiento para {displayClient ? `${displayClient.nombre} ${displayClient.apellidos}` : "atleta"}
                             </p>
                         </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                                const state = location.state as LocationStateReturnTo | null;
+                                if (state?.from) {
+                                    navigate(state.from);
+                                } else {
+                                    navigate(-1);
+                                }
+                            }}
+                        >
                             Volver
                         </Button>
                     </div>

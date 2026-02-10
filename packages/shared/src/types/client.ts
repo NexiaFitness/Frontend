@@ -436,6 +436,41 @@ export interface ClientState {
 }
 
 // ========================================
+// CLIENT RATINGS (satisfacción / valoraciones)
+// Backend: POST/GET /clients/{id}/ratings, GET/PUT/DELETE /clients/ratings/{id}
+// ========================================
+
+export type ClientRatingType = "general" | "session" | "program" | "trainer";
+
+export interface ClientRatingCreate {
+    client_id: number;
+    trainer_id?: number | null;
+    rating: number; // 1-5
+    comment?: string | null;
+    rating_type?: ClientRatingType;
+    session_id?: number | null;
+}
+
+export interface ClientRatingUpdate {
+    rating?: number; // 1-5
+    comment?: string | null;
+}
+
+export interface ClientRatingOut {
+    id: number;
+    client_id: number;
+    trainer_id: number | null;
+    rating: number;
+    comment: string | null;
+    rating_type: ClientRatingType;
+    session_id: number | null;
+    rating_date: string; // ISO datetime
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
+}
+
+// ========================================
 // LEGACY EXPORTS (mantener compatibilidad transitoria)
 // ========================================
 

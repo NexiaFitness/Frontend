@@ -21,6 +21,7 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
@@ -86,15 +87,6 @@ export const ClientDetail: React.FC = () => {
         includeSessions: true,
     });
 
-    // Menu items para navbar
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     // Breadcrumbs jerárquicos
     const breadcrumbItems = [
         { label: "Dashboard", path: "/dashboard" },
@@ -109,7 +101,7 @@ export const ClientDetail: React.FC = () => {
     if (!id || isNaN(clientId)) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -126,7 +118,7 @@ export const ClientDetail: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex items-center justify-center min-h-screen">
@@ -155,7 +147,7 @@ export const ClientDetail: React.FC = () => {
 
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -243,7 +235,7 @@ export const ClientDetail: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

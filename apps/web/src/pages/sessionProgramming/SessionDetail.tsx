@@ -19,6 +19,7 @@ import { useGetTrainingSessionQuery, useGetSessionExercisesQuery } from "@nexia/
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { SessionExercise } from "@nexia/shared/types/trainingSessions";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
@@ -93,18 +94,10 @@ export const SessionDetail: React.FC = () => {
         return items;
     }, [client, plan, session]);
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     if (!sessionId || Number.isNaN(sessionId)) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -118,7 +111,7 @@ export const SessionDetail: React.FC = () => {
     if (isLoading) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="flex items-center justify-center min-h-screen">
@@ -137,7 +130,7 @@ export const SessionDetail: React.FC = () => {
 
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="p-6">
@@ -175,7 +168,7 @@ export const SessionDetail: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
 
             <DashboardLayout>

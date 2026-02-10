@@ -12,6 +12,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/dashboard/layout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
+import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
@@ -138,19 +139,10 @@ export const EditScheduledSessionPage: React.FC = () => {
         }
     };
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Ejercicios", path: "/dashboard/exercises" },
-        { label: "Programación", path: "/dashboard/scheduling" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     if (isLoadingSession) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="px-4 lg:px-8 py-12 text-white">Cargando sesión...</div>
@@ -162,7 +154,7 @@ export const EditScheduledSessionPage: React.FC = () => {
     if (isErrorSession || !session) {
         return (
             <>
-                <DashboardNavbar menuItems={menuItems} />
+                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
                 <TrainerSideMenu />
                 <DashboardLayout>
                     <div className="px-4 lg:px-8 py-12">
@@ -180,7 +172,7 @@ export const EditScheduledSessionPage: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
+            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
             <TrainerSideMenu />
             <DashboardLayout>
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">

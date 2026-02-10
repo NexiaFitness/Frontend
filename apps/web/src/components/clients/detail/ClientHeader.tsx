@@ -11,6 +11,7 @@
  */
 
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
@@ -25,12 +26,14 @@ interface ClientHeaderProps {
     breadcrumbItems?: BreadcrumbItem[];
 }
 
-export const ClientHeader: React.FC<ClientHeaderProps> = ({ 
-    client, 
+export const ClientHeader: React.FC<ClientHeaderProps> = ({
+    client,
     onEditProfile,
     onAnthropometricData,
     breadcrumbItems,
 }) => {
+    const navigate = useNavigate();
+
     // Calcular edad desde birthdate si no está disponible directamente
     const calculateAge = (birthdate: string | undefined | null): number | null => {
         if (!birthdate) return null;
@@ -181,6 +184,13 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
 
                     {/* Right: Actions - Botones en columna */}
                     <div className="flex flex-col gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/dashboard/reports/generate?clientId=${client.id}`)}
+                        >
+                            Generar Reporte
+                        </Button>
                         {onEditProfile && (
                             <Button
                                 variant="outline"
