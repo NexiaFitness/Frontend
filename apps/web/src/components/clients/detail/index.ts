@@ -9,5 +9,6 @@ export { ClientHeader } from "./ClientHeader";
 export { ClientOverviewTab } from "./ClientOverviewTab";
 export { ClientProgressTab } from "./ClientProgressTab";
 export { ClientWorkoutsTab } from "./ClientWorkoutsTab";
+export { ClientSessionsTab } from "./ClientSessionsTab";
 export { ClientNutritionTab } from "./ClientNutritionTab";
 export { ClientSettingsTab } from "./ClientSettingsTab";
