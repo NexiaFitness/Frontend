@@ -243,6 +243,7 @@ export const clientsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { clientId }) => [
                 { type: "Client", id: clientId },
+                { type: "Client", id: `Ratings-${clientId}` },
             ],
         }),
 

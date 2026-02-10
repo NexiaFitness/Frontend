@@ -237,7 +237,7 @@ export const SessionDetail: React.FC = () => {
                                             variant="outline"
                                             size="sm"
                                             onClick={() =>
-                                                navigate(`/dashboard/clients/${session.client_id}?tab=workouts`)
+                                                navigate(`/dashboard/clients/${session.client_id}?tab=sessions`)
                                             }
                                         >
                                             Volver al cliente

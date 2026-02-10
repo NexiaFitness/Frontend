@@ -96,7 +96,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
             setTimeout(() => {
                 if (clientId) {
                     const monthParam = sessionDateStr ? `&month=${sessionDateStr.slice(0, 7)}` : "";
-                    navigate(`/dashboard/clients/${clientId}?tab=session-programming${monthParam}`);
+                    navigate(`/dashboard/clients/${clientId}?tab=sessions${monthParam}`);
                 } else {
                     navigate("/dashboard");
                 }

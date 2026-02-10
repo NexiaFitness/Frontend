@@ -338,7 +338,7 @@ export const CreateSession: React.FC = () => {
                 if (selectedPlanId) {
                     navigate(`/dashboard/training-plans/${selectedPlanId}?tab=sessions`);
                 } else {
-                    navigate(`/dashboard/clients/${effectiveClientId}?tab=workouts`);
+                    navigate(`/dashboard/clients/${effectiveClientId}?tab=sessions`);
                 }
             }, 1500);
         } catch (err) {

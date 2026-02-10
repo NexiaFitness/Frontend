@@ -18,7 +18,7 @@
  * @updated v6.0.0 - Convertido en dashboard ejecutivo
  */
 
-import React, { useMemo, useEffect, useRef } from "react";
+import React, { useMemo, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import type { TrainingSession } from "@nexia/shared/types/training";
@@ -31,9 +31,15 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import { useCoherence } from "@nexia/shared/hooks/clients/useCoherence";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
-import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
-import { useGetClientTestResultsQuery } from "@nexia/shared/api/clientsApi";
+import {
+    useGetClientTrainingSessionsQuery,
+    useGetClientTestResultsQuery,
+    useGetClientRatingsQuery,
+    useCreateClientRatingMutation,
+} from "@nexia/shared/api/clientsApi";
+import type { ClientRatingOut, ClientRatingCreate } from "@nexia/shared/types/client";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
+import { Button } from "@/components/ui/buttons";
 import { ClientAlertsSection } from "./ClientAlertsSection";
 import { ClientStatusSection } from "./ClientStatusSection";
 import { RecommendationsCards } from "./RecommendationsCards";
@@ -120,6 +126,18 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
         includeHistory: false,
     });
 
+    // Valoraciones de satisfacción del cliente
+    const { data: ratings = [], isLoading: isLoadingRatings } = useGetClientRatingsQuery(
+        { clientId: isValidClientId ? clientId : 0, skip: 0, limit: 50 },
+        { skip: !isValidClientId }
+    );
+    const [createRating, { isLoading: isCreatingRating }] = useCreateClientRatingMutation();
+
+    // Estado del formulario de valoración
+    const [showRatingForm, setShowRatingForm] = useState(false);
+    const [ratingValue, setRatingValue] = useState<number>(5);
+    const [ratingComment, setRatingComment] = useState("");
+
     // Calcular próxima sesión (antes de cualquier return)
     const upcomingSession = useMemo((): TrainingSession | null => {
         if (!isValidClientId || !sessions || sessions.length === 0) return null;
@@ -169,6 +187,15 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
         );
         return sorted[0] || null;
     }, [isValidClientId, progressHistory]);
+
+    // Última valoración de satisfacción (más reciente por rating_date)
+    const lastRating = useMemo((): ClientRatingOut | null => {
+        if (!ratings || ratings.length === 0) return null;
+        const sorted = [...ratings].sort(
+            (a, b) => new Date(b.rating_date).getTime() - new Date(a.rating_date).getTime()
+        );
+        return sorted[0] || null;
+    }, [ratings]);
 
     // Determinar color de adherencia (antes de cualquier return)
     const adherenceColor = useMemo((): MetricCardColor => {
@@ -264,6 +291,129 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
             {/* NO son alertas persistentes, solo información de contexto */}
             <ClientStatusSection client={client} clientId={clientId} />
 
+            {/* SATISFACCIÓN — último rating y registrar valoración */}
+            {isLoadingRatings ? (
+                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                    <LoadingSpinner size="md" />
+                </div>
+            ) : (
+                <div className="bg-white rounded-lg shadow p-6">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <div>
+                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>Satisfacción</h3>
+                            <p className="text-slate-600 text-sm">
+                                Última valoración del cliente y registro de nuevas valoraciones.
+                            </p>
+                        </div>
+                        {!showRatingForm && (
+                            <Button
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setShowRatingForm(true)}
+                            >
+                                Registrar valoración
+                            </Button>
+                        )}
+                    </div>
+                    {lastRating ? (
+                        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                            <div className="flex items-center gap-2 flex-wrap">
+                                <span className="text-sm font-semibold text-gray-900">
+                                    {lastRating.rating}/5
+                                </span>
+                                <span className="text-sm text-slate-500">
+                                    {new Date(lastRating.rating_date).toLocaleDateString("es-ES", {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric",
+                                    })}
+                                </span>
+                            </div>
+                            {lastRating.comment && (
+                                <p className="text-sm text-slate-600 mt-2">{lastRating.comment}</p>
+                            )}
+                        </div>
+                    ) : (
+                        !showRatingForm && (
+                            <p className="mt-4 text-sm text-slate-500">Sin valoraciones</p>
+                        )
+                    )}
+                    {showRatingForm && (
+                        <form
+                            className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4"
+                            onSubmit={async (e) => {
+                                e.preventDefault();
+                                const data: ClientRatingCreate = {
+                                    client_id: clientId,
+                                    rating: ratingValue,
+                                    comment: ratingComment.trim() || null,
+                                    rating_type: "general",
+                                };
+                                try {
+                                    await createRating({ clientId, data }).unwrap();
+                                    setShowRatingForm(false);
+                                    setRatingValue(5);
+                                    setRatingComment("");
+                                } catch {
+                                    // Error ya manejado por RTK Query / baseApi
+                                }
+                            }}
+                        >
+                            <div>
+                                <label htmlFor="rating-select" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Valoración (1-5)
+                                </label>
+                                <select
+                                    id="rating-select"
+                                    value={ratingValue}
+                                    onChange={(e) => setRatingValue(Number(e.target.value))}
+                                    className="block w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    required
+                                >
+                                    {[1, 2, 3, 4, 5].map((n) => (
+                                        <option key={n} value={n}>
+                                            {n} {n === 5 ? "— Muy satisfecho" : n === 1 ? "— Muy insatisfecho" : ""}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label htmlFor="rating-comment" className="block text-sm font-medium text-gray-700 mb-1">
+                                    Comentario (opcional)
+                                </label>
+                                <textarea
+                                    id="rating-comment"
+                                    value={ratingComment}
+                                    onChange={(e) => setRatingComment(e.target.value)}
+                                    rows={2}
+                                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                />
+                            </div>
+                            <div className="flex gap-2">
+                                <Button
+                                    type="submit"
+                                    disabled={isCreatingRating}
+                                >
+                                    {isCreatingRating ? "Guardando…" : "Guardar valoración"}
+                                </Button>
+                                <Button
+                                    type="button"
+                                    variant="secondary"
+                                    onClick={() => {
+                                        setShowRatingForm(false);
+                                        setRatingValue(5);
+                                        setRatingComment("");
+                                    }}
+                                    disabled={isCreatingRating}
+                                >
+                                    Cancelar
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+                </div>
+            )}
+
             {/* LESIONES ACTIVAS (widget compacto) */}
             {isLoadingInjuries ? (
                 <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
@@ -333,7 +483,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
                                 title="Última Sesión"
                                 date={formatDate(lastCompletedSession.session_date)}
                                 detail={lastCompletedSession.session_type || lastCompletedSession.session_name || "Sesión"}
-                                onClick={() => navigate(`/dashboard/clients/${clientId}?tab=session-programming`)}
+                                onClick={() => navigate(`/dashboard/clients/${clientId}?tab=sessions`)}
                             />
                         )}
                         {lastTest && (

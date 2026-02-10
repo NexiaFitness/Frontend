@@ -2,18 +2,18 @@
  * ClientDetail.tsx — Página de detalle del cliente
  *
  * Contexto:
- * - Vista completa del cliente con tabs
- * - Tabs: Overview, Session Programming, Daily Coherence, Testing, Progress, Workouts
- * - Layout: Header + Tabs + Content
- * - Diseño basado en Figma Profile Page V2
+ * - Vista completa del cliente con 6 tabs (Ola 2 S03: tab unificado "Sesiones").
+ * - Tabs: Resumen, Sesiones, Coherencia Diaria, Tests, Progreso, Lesiones.
+ * - Layout: Header + Tabs + Content.
  *
  * @author Frontend Team
  * @since v3.1.0
  * @updated v6.0.0 - Integración de Breadcrumbs jerárquicos.
+ * @updated v6.2.0 - Ola 2 S03: swap a 6 tabs; "Sesiones" reemplaza Programación de Sesiones + Entrenamientos.
  */
 
 import React, { Suspense, lazy } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
 import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
@@ -24,12 +24,11 @@ import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
 import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 // Tabs components - estáticos (carga inmediata)
+// Ola 2 S03: tab unificado "Sesiones" (ClientSessionsTab); ClientSessionProgrammingTab y ClientWorkoutsTab ya no se usan como tabs
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
 import { ClientOverviewTab } from "@/components/clients/detail/ClientOverviewTab";
-import { ClientSessionProgrammingTab } from "@/components/clients/detail/ClientSessionProgrammingTab";
 import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDailyCoherenceTab";
 import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
-import { ClientWorkoutsTab } from "@/components/clients/detail/ClientWorkoutsTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 
@@ -40,7 +39,7 @@ const ClientProgressTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "session-programming" | "daily-coherence" | "testing" | "progress" | "workouts" | "injuries" | "sessions";
+type TabId = "overview" | "sessions" | "daily-coherence" | "testing" | "progress" | "injuries";
 
 interface Tab {
     id: TabId;
@@ -50,13 +49,11 @@ interface Tab {
 
 const TABS: Tab[] = [
     { id: "overview", label: "Resumen" },
-    { id: "session-programming", label: "Programación de Sesiones" },
+    { id: "sessions", label: "Sesiones" },
     { id: "daily-coherence", label: "Coherencia Diaria" },
     { id: "testing", label: "Tests" },
     { id: "progress", label: "Progreso" },
     { id: "injuries", label: "Lesiones" },
-    { id: "workouts", label: "Entrenamientos" },
-    { id: "sessions", label: "Sesiones" },
 ];
 
 export const ClientDetail: React.FC = () => {
@@ -69,6 +66,15 @@ export const ClientDetail: React.FC = () => {
         defaultTab: "overview",
     });
 
+    // S03: si la URL trae tab legacy, abrir "sessions" (enlaces antiguos)
+    const [searchParams] = useSearchParams();
+    React.useEffect(() => {
+        const tab = searchParams.get("tab");
+        if (tab === "workouts" || tab === "session-programming") {
+            setActiveTab("sessions");
+        }
+    }, [searchParams, setActiveTab]);
+
     const clientId = parseInt(id || "0", 10);
 
     // Cargar todos los datos del cliente
@@ -76,8 +82,6 @@ export const ClientDetail: React.FC = () => {
         client,
         progressHistory,
         progressAnalytics,
-        trainingPlans,
-        trainingSessions,
         isLoading,
         hasError,
         clientError,
@@ -198,13 +202,13 @@ export const ClientDetail: React.FC = () => {
         );
     }
 
-    // Render tab content
+    // Render tab content (6 tabs tras S03)
     const renderTabContent = () => {
         switch (activeTab) {
             case "overview":
                 return <ClientOverviewTab client={client} clientId={clientId} />;
-            case "session-programming":
-                return <ClientSessionProgrammingTab clientId={clientId} />;
+            case "sessions":
+                return <ClientSessionsTab clientId={clientId} />;
             case "daily-coherence":
                 return <ClientDailyCoherenceTab clientId={clientId} />;
             case "testing":
@@ -222,16 +226,6 @@ export const ClientDetail: React.FC = () => {
                 );
             case "injuries":
                 return <ClientInjuriesTab clientId={clientId} />;
-            case "workouts":
-                return (
-                    <ClientWorkoutsTab
-                        clientId={clientId}
-                        trainingPlans={trainingPlans}
-                        trainingSessions={trainingSessions}
-                    />
-                );
-            case "sessions":
-                return <ClientSessionsTab clientId={clientId} />;
             default:
                 return null;
         }

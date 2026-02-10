@@ -105,7 +105,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
         try {
             await deletePlan(plan.id).unwrap();
             if (plan.client_id) {
-                navigate(`/dashboard/clients/${plan.client_id}?tab=workouts`);
+                navigate(`/dashboard/clients/${plan.client_id}?tab=sessions`);
             } else {
                 navigate("/dashboard/training-plans");
             }

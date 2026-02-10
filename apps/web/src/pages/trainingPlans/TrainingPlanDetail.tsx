@@ -120,7 +120,7 @@ export const TrainingPlanDetail: React.FC = () => {
     const handleTabChange = (tabId: TabId) => {
         if (tabId === "back") {
             if (assignedClient) {
-                navigate(`/dashboard/clients/${assignedClient.id}?tab=workouts`);
+                navigate(`/dashboard/clients/${assignedClient.id}?tab=sessions`);
             } else {
                 navigate("/dashboard/clients");
             }

@@ -8,6 +8,7 @@ Professional fitness training management platform with React + TypeScript monore
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
 - **Testing**: ✅ Comprehensive MSW integration (224/224 passing)
 - **Version**: v5.5.0
+- **Client Detail (Resumen)**: Tab Overview incluye sección **Satisfacción** — último rating del cliente y acción "Registrar valoración" (UX refactor Ola 2, TICK-C02).
 
 ## Tech Stack
 - **React** 18.3.1 + **TypeScript** 5.8.3 + **Vite** 7.1.2

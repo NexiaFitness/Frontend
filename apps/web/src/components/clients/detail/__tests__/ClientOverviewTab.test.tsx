@@ -516,7 +516,7 @@ describe("ClientOverviewTab", () => {
             const sessionCard = screen.getByText(/última sesión/i).closest("button");
             if (sessionCard) {
                 await user.click(sessionCard);
-                expect(mockNavigate).toHaveBeenCalledWith("/dashboard/clients/1?tab=session-programming");
+                expect(mockNavigate).toHaveBeenCalledWith("/dashboard/clients/1?tab=sessions");
             }
         });
     });
