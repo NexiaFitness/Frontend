@@ -117,7 +117,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
     };
 
     const handleAddPhysicalQuality = () => {
-        // TODO: Implementar modal para crear test personalizado
+        // CTA: ir a crear test con custom=true; modal de test personalizado en backlog si se prioriza
         navigate(`/dashboard/testing/create-test?clientId=${clientId}&custom=true`, {
             state: originState,
         });
@@ -228,9 +228,19 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             {latestTestsInCategory.length === 0 ? (
                 <div className="bg-white rounded-lg shadow p-8 text-center">
                     <p className="text-slate-500 text-lg mb-2">No hay tests registrados</p>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-slate-400 text-sm mb-4">
                         No se han registrado tests en la categoría &quot;{TEST_CATEGORIES[activeCategory].label}&quot;
                     </p>
+                    <Button
+                        variant="primary"
+                        onClick={() =>
+                            navigate(`/dashboard/testing/create-test?clientId=${clientId}`, {
+                                state: originState,
+                            })
+                        }
+                    >
+                        Registrar primer test
+                    </Button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

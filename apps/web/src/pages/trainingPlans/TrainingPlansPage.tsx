@@ -367,7 +367,6 @@ export const TrainingPlansPage: React.FC = () => {
     };
 
     const handleCreateTemplate = () => {
-        // TODO: Navegar a página de crear template o abrir modal
         navigate("/dashboard/training-plans/templates/create");
     };
 

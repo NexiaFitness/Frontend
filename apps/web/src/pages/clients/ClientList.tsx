@@ -266,7 +266,6 @@ export const ClientList: React.FC = () => {
     };
 
     const handleManageTemplates = () => {
-        // TODO: Navegar a templates
         navigate("/dashboard/training-plans");
     };
 
@@ -362,11 +361,19 @@ export const ClientList: React.FC = () => {
                                     )}
                                     {items.length === 0 ? (
                                         <div className="p-12 text-center">
-                                            <p className="text-gray-500">
+                                            <p className="text-gray-500 mb-4">
                                                 {searchDebounced.trim()
                                                     ? "No se encontraron clientes con ese criterio"
                                                     : "No hay clientes"}
                                             </p>
+                                            {!searchDebounced.trim() && (
+                                                <Button
+                                                    variant="primary"
+                                                    onClick={() => navigate("/dashboard/clients/onboarding")}
+                                                >
+                                                    Añadir cliente
+                                                </Button>
+                                            )}
                                         </div>
                                     ) : (
                                         <div>
