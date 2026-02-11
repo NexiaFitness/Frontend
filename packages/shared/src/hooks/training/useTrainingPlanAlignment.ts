@@ -1,8 +1,8 @@
 /**
- * useTrainingPlanAlignment.ts — Hook para alignment del plan (Fase 5)
+ * useTrainingPlanAlignment.ts — Hook para alignment del plan (period-based)
  *
- * Expone GET /training-plans/{plan_id}/alignment (period-based).
- * Query opcionales: mesocycle_id (semántica: weekly_override_id), microcycle_id (daily_override_id).
+ * Expone GET /training-plans/{plan_id}/alignment.
+ * Query opcionales: weeklyOverrideId, dailyOverrideId.
  * Usado por ChartsTab en TrainingPlanDetail.
  *
  * @author Frontend Team
@@ -13,10 +13,10 @@ import { useGetTrainingPlanAlignmentQuery } from "../../api/trainingPlansApi";
 
 interface UseTrainingPlanAlignmentParams {
     planId: number | null | undefined;
-    /** Semántica backend: ID de WeeklyOverride para mostrar parent yearly values */
-    mesocycleId?: number | null;
-    /** Semántica backend: ID de DailyOverride para mostrar parent monthly values */
-    microcycleId?: number | null;
+    /** ID de WeeklyOverride para mostrar parent month (yearly) values */
+    weeklyOverrideId?: number | null;
+    /** ID de DailyOverride para mostrar parent week (monthly) values */
+    dailyOverrideId?: number | null;
 }
 
 /**
@@ -24,14 +24,14 @@ interface UseTrainingPlanAlignmentParams {
  */
 export function useTrainingPlanAlignment({
     planId,
-    mesocycleId,
-    microcycleId,
+    weeklyOverrideId,
+    dailyOverrideId,
 }: UseTrainingPlanAlignmentParams) {
     const result = useGetTrainingPlanAlignmentQuery(
         {
             planId: planId!,
-            mesocycleId: mesocycleId ?? undefined,
-            microcycleId: microcycleId ?? undefined,
+            weeklyOverrideId: weeklyOverrideId ?? undefined,
+            dailyOverrideId: dailyOverrideId ?? undefined,
         },
         { skip: planId == null || planId === 0 }
     );

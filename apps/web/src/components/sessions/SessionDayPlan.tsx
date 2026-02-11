@@ -53,28 +53,53 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
     const response = data as SessionRecommendationsResponse;
 
+    const warnings = response.coherence_warnings ?? [];
+
     if (!response.has_active_plan) {
         return (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-sm text-gray-600">
-                    Sin plan activo para esta fecha. La sesión se creará sin referencia de planificación.
-                </p>
+            <div className="space-y-3">
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                        Sin plan activo para esta fecha. La sesión se creará sin referencia de planificación.
+                    </p>
+                </div>
+                {warnings.length > 0 && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <h4 className="text-sm font-semibold text-amber-900 mb-1">Avisos de coherencia</h4>
+                        <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
+                            {warnings.map((w, i) => (
+                                <li key={i}>{w}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
         );
     }
 
     if (!("has_planned_values" in response) || !response.has_planned_values || !response.recommendations) {
         return (
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                <p className="text-sm text-gray-600">
-                    Plan activo sin valores planificados para este día.
-                </p>
+            <div className="space-y-3">
+                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                        Plan activo sin valores planificados para este día.
+                    </p>
+                </div>
+                {warnings.length > 0 && (
+                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
+                        <h4 className="text-sm font-semibold text-amber-900 mb-1">Avisos de coherencia</h4>
+                        <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
+                            {warnings.map((w, i) => (
+                                <li key={i}>{w}</li>
+                            ))}
+                        </ul>
+                    </div>
+                )}
             </div>
         );
     }
 
     const rec = response.recommendations;
-    const warnings = response.coherence_warnings ?? [];
 
     return (
         <div className="space-y-3">

@@ -9,6 +9,7 @@
  * @updated v3.3.0 - tagTypes planning (Fase 6: Macrocycle/Mesocycle/Microcycle removidos)
  * @updated v4.7.0 - Agregado tagType "Milestone"
  * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance", "MovementPattern", "MuscleGroup", "Equipment", "Tag", "Action"
+ * @updated UX Sprint 1 - TICK-D04: interceptor refresh token en 401 (mutex, un reintento)
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -43,6 +44,46 @@ const getTokenSafely = (key: string): string | null => {
             console.warn('[baseApi] Failed to read token from localStorage:', error);
         }
         return null;
+    }
+};
+
+/** Escribe en localStorage de forma segura (solo browser). Usado tras refresh token. */
+const setStorageSafely = (key: string, value: string): void => {
+    if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
+    try {
+        window.localStorage.setItem(key, value);
+    } catch {
+        // silenciar
+    }
+};
+
+/** Mutex: solo una petición de refresh a la vez (TICK-D04). */
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * Llama a POST /auth/refresh con el refresh_token, persiste nuevos tokens y user.
+ * No usa authApi para evitar dependencia circular (authApi extiende baseApi).
+ */
+const doRefresh = async (refreshToken: string): Promise<boolean> => {
+    const url = `${API_CONFIG.BASE_URL}/auth/refresh`;
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (!res.ok) return false;
+        const data = (await res.json()) as {
+            access_token?: string;
+            refresh_token?: string;
+            user?: unknown;
+        };
+        if (data.access_token) setStorageSafely(AUTH_CONFIG.TOKEN_KEY, data.access_token);
+        if (data.refresh_token) setStorageSafely(AUTH_CONFIG.REFRESH_KEY, data.refresh_token);
+        if (data.user) setStorageSafely(AUTH_CONFIG.USER_KEY, JSON.stringify(data.user));
+        return true;
+    } catch {
+        return false;
     }
 };
 
@@ -167,19 +208,35 @@ const baseQueryWithReauth: BaseQueryFn<
     try {
         const result = await baseQuery(args, api, extraOptions);
         
-        // Manejo de errores 401 (Unauthorized) - silencioso después de logout
+        // Manejo de errores 401 (Unauthorized) - TICK-D04: intentar refresh y reintentar una vez
         if (result.error && result.error.status === 401) {
             const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
-            // Obtener isAuthenticated del estado Redux
             const state = api.getState() as RootState;
             const isAuthenticated = state.auth?.isAuthenticated ?? false;
-            
-            // Si no hay token O no está autenticado, retornar silenciosamente
-            // Esto previene errores en consola después de logout
+
             if (!token || !isAuthenticated) {
                 restoreConsole();
                 return { data: undefined };
             }
+
+            const refreshToken = getTokenSafely(AUTH_CONFIG.REFRESH_KEY);
+            if (!refreshToken) {
+                restoreConsole();
+                return { data: undefined };
+            }
+
+            if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
+            const refreshed = await refreshPromise;
+            refreshPromise = null;
+
+            if (!refreshed) {
+                restoreConsole();
+                return { data: undefined };
+            }
+
+            const retryResult = await baseQuery(args, api, extraOptions);
+            restoreConsole();
+            return retryResult;
         }
         
         // Errores 403 (Forbidden) se propagan para que los componentes los manejen

@@ -9,4 +9,5 @@ export * from "./ScheduledSessionCalendar";
 export * from "./ScheduledSessionCard";
 export * from "./UpcomingScheduledSessionCard";
 export * from "./SessionTemplatesList";
+export * from "./TrainerAvailabilitySection";
 

@@ -164,10 +164,9 @@ frontend/
 │       │   │   │   │   ├── ClientNutritionTab.tsx
 │       │   │   │   │   ├── ClientOverviewTab.tsx
 │       │   │   │   │   ├── ClientProgressTab.tsx
-│       │   │   │   │   ├── ClientSessionProgrammingTab.tsx
+│       │   │   │   │   ├── ClientSessionsTab.tsx
 │       │   │   │   │   ├── ClientSettingsTab.tsx
 │       │   │   │   │   ├── ClientTestingTab.tsx
-│       │   │   │   │   ├── ClientWorkoutsTab.tsx
 │       │   │   │   │   ├── ProgressForm.tsx
 │       │   │   │   │   ├── __tests__
 │       │   │   │   │   │   ├── ClientOverviewTab.test.tsx

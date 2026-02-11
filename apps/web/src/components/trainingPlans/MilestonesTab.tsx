@@ -1,9 +1,11 @@
 /**
  * MilestonesTab.tsx — Gestión de milestones del training plan
- * 
+ *
  * UI: Header + Formulario colapsable + Lista ordenada por fecha
  * Estructura: Siguiendo Figma pero con paleta azul del proyecto
- * 
+ *
+ * TICK-P06: Se mantiene como tab independiente en TrainingPlanDetail (Sesiones, Planificación, Hitos, Gráficos).
+ *
  * @author Nelson Valero
  * @since v4.7.0 - Training Planning FASE 3A
  */

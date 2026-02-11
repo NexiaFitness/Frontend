@@ -284,18 +284,18 @@ export const trainingPlansApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * Alignment del plan (graph + yearly_values/monthly_values).
+         * Alignment del plan (graph + yearly_values/monthly_values). Period-based.
          * GET /api/v1/training-plans/{plan_id}/alignment
-         * Query opcionales: mesocycle_id (= weekly_override_id), microcycle_id (= daily_override_id)
+         * Query opcionales: weekly_override_id, daily_override_id
          */
         getTrainingPlanAlignment: builder.query<
             TrainingPlanAlignmentResponse,
-            { planId: number; mesocycleId?: number; microcycleId?: number }
+            { planId: number; weeklyOverrideId?: number; dailyOverrideId?: number }
         >({
-            query: ({ planId, mesocycleId, microcycleId }) => {
+            query: ({ planId, weeklyOverrideId, dailyOverrideId }) => {
                 const params = new URLSearchParams();
-                if (mesocycleId != null) params.append("mesocycle_id", mesocycleId.toString());
-                if (microcycleId != null) params.append("microcycle_id", microcycleId.toString());
+                if (weeklyOverrideId != null) params.append("weekly_override_id", weeklyOverrideId.toString());
+                if (dailyOverrideId != null) params.append("daily_override_id", dailyOverrideId.toString());
                 const qs = params.toString();
                 return {
                     url: `/training-plans/${planId}/alignment${qs ? `?${qs}` : ""}`,

@@ -18,7 +18,13 @@ import {
     useWeeklyOverrides,
     useDailyOverrides,
 } from "@nexia/shared/hooks/training/usePlanningOverrides";
+import { useTrainingPlanCoherence } from "@nexia/shared/hooks/training/useTrainingPlanCoherence";
 import type { QualityConfig } from "@nexia/shared/types/planningCargas";
+import type {
+    PlanCoherenceMonthItem,
+    PlanCoherenceWeekItem,
+    PlanCoherenceDayItem,
+} from "@nexia/shared/types/trainingAnalytics";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { SessionCalendar } from "@/components/sessionProgramming";
 
@@ -32,6 +38,31 @@ function qualitiesToDisplayString(qualities: QualityConfig | null): string {
     return Object.entries(qualities)
         .map(([k, v]) => `${k}: ${Math.round((v as number) * 100)}%`)
         .join(", ");
+}
+
+/** Verde ≥80%, amarillo ≥60%, rojo <60% (TICK-P02) */
+function coherenceBadgeColor(percentage: number): "green" | "amber" | "red" {
+    if (percentage >= 80) return "green";
+    if (percentage >= 60) return "amber";
+    return "red";
+}
+
+function CoherenceBadge({ percentage }: { percentage: number }) {
+    const color = coherenceBadgeColor(percentage);
+    const classes =
+        color === "green"
+            ? "bg-green-100 text-green-800 border-green-200"
+            : color === "amber"
+              ? "bg-amber-100 text-amber-800 border-amber-200"
+              : "bg-red-100 text-red-800 border-red-200";
+    return (
+        <span
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${classes}`}
+            title={`Coherencia: ${percentage}%`}
+        >
+            {percentage}%
+        </span>
+    );
 }
 
 export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) => {
@@ -95,6 +126,38 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
         clientId: clientId ?? null,
         date: resolvedDate || null,
     });
+
+    const { data: coherenceData } = useTrainingPlanCoherence({ planId });
+
+    const monthCoherenceByMonth = useMemo(() => {
+        if (!coherenceData?.month_coherence) return new Map<string, PlanCoherenceMonthItem>();
+        const m = new Map<string, PlanCoherenceMonthItem>();
+        for (const item of coherenceData.month_coherence) {
+            m.set(item.month, item);
+            m.set(String(item.month_plan_id), item);
+        }
+        return m;
+    }, [coherenceData?.month_coherence]);
+
+    const weekCoherenceByWeekId = useMemo(() => {
+        if (!coherenceData?.week_coherence) return new Map<string, PlanCoherenceWeekItem>();
+        const m = new Map<string, PlanCoherenceWeekItem>();
+        for (const item of coherenceData.week_coherence) {
+            m.set(item.week_id, item);
+            m.set(String(item.weekly_override_id), item);
+        }
+        return m;
+    }, [coherenceData?.week_coherence]);
+
+    const dayCoherenceByDate = useMemo(() => {
+        if (!coherenceData?.day_coherence) return new Map<string, PlanCoherenceDayItem>();
+        const m = new Map<string, PlanCoherenceDayItem>();
+        for (const item of coherenceData.day_coherence) {
+            m.set(item.date, item);
+            m.set(String(item.daily_override_id), item);
+        }
+        return m;
+    }, [coherenceData?.day_coherence]);
 
     const parseQualities = (text: string): QualityConfig | null => {
         const trimmed = text.trim();
@@ -239,6 +302,39 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                 </form>
             </section>
 
+            {/* TICK-P02: Badge de coherencia global del plan */}
+            {coherenceData != null && (
+                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                    <h3 className="mb-2 text-lg font-semibold text-gray-800">
+                        Coherencia del plan
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <CoherenceBadge percentage={Math.round(coherenceData.overall_coherence)} />
+                        <span className="text-sm text-gray-600">
+                            Global (umbral desviación: {coherenceData.deviation_threshold}%)
+                        </span>
+                    </div>
+                </section>
+            )}
+
+            {/* TICK-P05: Botón Sincronizar planificación. Endpoint sync bottom-up no disponible en backend (removido en Fase 6); UI preparada para cuando exista. */}
+            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+                <h3 className="mb-2 text-lg font-semibold text-gray-800">
+                    Sincronizar planificación
+                </h3>
+                <p className="mb-3 text-sm text-gray-600">
+                    Actualizar la planificación desde sesiones realizadas (sync bottom-up). En desarrollo.
+                </p>
+                <button
+                    type="button"
+                    disabled
+                    title="Endpoint de sincronización no disponible aún"
+                    className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
+                >
+                    Sincronizar planificación
+                </button>
+            </section>
+
             <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
                 <h3 className="mb-3 text-lg font-semibold text-gray-800">
                     Baselines mensuales
@@ -252,13 +348,17 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                                 key={mp.id}
                                 className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3"
                             >
-                                <div>
+                                <div className="flex flex-wrap items-center gap-2">
                                     <span className="font-medium text-gray-800">
                                         {mp.month}
                                     </span>
-                                    <span className="ml-2 text-sm text-gray-600">
+                                    <span className="text-sm text-gray-600">
                                         {qualitiesToDisplayString(mp.qualities)}
                                     </span>
+                                    {(() => {
+                                        const item = monthCoherenceByMonth.get(mp.month) ?? monthCoherenceByMonth.get(String(mp.id));
+                                        return item ? <CoherenceBadge percentage={Math.round(item.coherence_percentage)} /> : null;
+                                    })()}
                                 </div>
                                 <div className="flex gap-2">
                                     {editingId === mp.id ? (
@@ -415,11 +515,15 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                                 key={wo.id}
                                 className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
                             >
-                                <span>
+                                <span className="flex flex-wrap items-center gap-2">
                                     {wo.week_id}{" "}
                                     <span className="text-gray-600">
                                         {qualitiesToDisplayString(wo.qualities)}
                                     </span>
+                                    {(() => {
+                                        const item = weekCoherenceByWeekId.get(wo.week_id) ?? weekCoherenceByWeekId.get(String(wo.id));
+                                        return item ? <CoherenceBadge percentage={Math.round(item.coherence_percentage)} /> : null;
+                                    })()}
                                 </span>
                                 <button
                                     type="button"
@@ -508,11 +612,15 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                                 key={do_.id}
                                 className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
                             >
-                                <span>
+                                <span className="flex flex-wrap items-center gap-2">
                                     {do_.date}{" "}
                                     <span className="text-gray-600">
                                         {qualitiesToDisplayString(do_.qualities)}
                                     </span>
+                                    {(() => {
+                                        const item = dayCoherenceByDate.get(do_.date) ?? dayCoherenceByDate.get(String(do_.id));
+                                        return item ? <CoherenceBadge percentage={Math.round(item.coherence_percentage)} /> : null;
+                                    })()}
                                 </span>
                                 <button
                                     type="button"

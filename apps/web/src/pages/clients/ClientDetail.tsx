@@ -24,7 +24,6 @@ import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
 import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 // Tabs components - estáticos (carga inmediata)
-// Ola 2 S03: tab unificado "Sesiones" (ClientSessionsTab); ClientSessionProgrammingTab y ClientWorkoutsTab ya no se usan como tabs
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
 import { ClientOverviewTab } from "@/components/clients/detail/ClientOverviewTab";
 import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDailyCoherenceTab";

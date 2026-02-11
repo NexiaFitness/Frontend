@@ -28,6 +28,7 @@ import {
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
+import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import {
     TRAINING_PLAN_GOAL,
     MILESTONE_TYPES,
@@ -236,9 +237,6 @@ export const CreateTrainingPlan: React.FC = () => {
 
             showSuccess("Plan creado exitosamente. Redirigiendo...", 2000);
             setTimeout(() => {
-                // Siempre redirigir al detalle del plan para continuar programando
-                // (macrociclos, mesociclos, microciclos, sesiones)
-                // TrainingPlanDetail maneja correctamente planes con o sin clientId
                 navigate(`/dashboard/training-plans/${result.id}`);
             }, 1500);
         } catch (err) {
@@ -297,6 +295,13 @@ export const CreateTrainingPlan: React.FC = () => {
 
                 {/* Contenido principal con ancho completo */}
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
+                    {/* TICK-P04: Panel de recomendaciones cuando hay client_id */}
+                    {clientId != null && clientId > 0 && (
+                        <div className="mb-6">
+                            <RecommendationsCards clientId={clientId} />
+                        </div>
+                    )}
+
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Card 1: Basic Information */}
                         <div className="bg-white rounded-lg shadow p-6">

@@ -79,6 +79,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                     <InjuriesActiveSection
                         injuries={activeInjuries}
                         isLoading={isLoadingActive}
+                        clientId={clientId}
                         onAddClick={() => {
                             setSelectedInjury(null);
                             setIsModalOpen(true);

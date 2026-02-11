@@ -7,6 +7,7 @@ export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
 // Training Sessions API - exported separately to avoid conflicts
 export {
+    useGetExerciseSelectionSuggestionsQuery,
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
     useGetSessionExercisesQuery,
@@ -230,9 +231,6 @@ export {
     TRAINING_PLAN_GOAL,
     type TrainingPlanStatus,
     type TrainingPlanGoal,
-    type AllCyclesResponse,
-    type BatchCyclesRequest,
-    type BatchCyclesResponse,
 } from "./types/training";
 
 // Config

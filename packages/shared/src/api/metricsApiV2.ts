@@ -3,7 +3,7 @@
  * 
  * Contexto:
  * - API V2 alineada 100% con contratos reales del backend
- * - NO reemplaza metricsApi.ts legacy
+ * - V1 (metricsApi.ts) eliminado en Sprint 1 - TICK-D03
  * - Usa tipos V2 de metricsV2.ts
  * - Endpoints: /metrics/daily, /metrics/monthly, /metrics/check-thresholds, /metrics/total-load
  * 

@@ -113,9 +113,9 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                                     {coherenceData.month_coherence
                                         .filter((m) => m.deviation_warning)
                                         .map((m) => (
-                                            <li key={m.macrocycle_id} className="flex items-center gap-2">
+                                            <li key={m.month_plan_id} className="flex items-center gap-2">
                                                 <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
-                                                <span className="font-medium">{m.macrocycle_name}</span>
+                                                <span className="font-medium">{m.month}</span>
                                                 {m.physical_quality && <span className="text-amber-600">({m.physical_quality})</span>}
                                                 <span>— coherencia {m.coherence_percentage.toFixed(1)}%</span>
                                                 <span className="text-amber-600">
@@ -137,9 +137,9 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                                     {coherenceData.week_coherence
                                         .filter((w) => w.deviation_warning)
                                         .map((w) => (
-                                            <li key={w.mesocycle_id} className="flex flex-wrap items-center gap-2">
+                                            <li key={w.weekly_override_id} className="flex flex-wrap items-center gap-2">
                                                 <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
-                                                <span className="font-medium">{w.mesocycle_name}</span>
+                                                <span className="font-medium">{w.week_id}</span>
                                                 {w.physical_quality && <span className="text-amber-600">({w.physical_quality})</span>}
                                                 <span>— coherencia {w.coherence_percentage.toFixed(1)}%</span>
                                                 {w.inherited && (
@@ -166,9 +166,9 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                                     {coherenceData.day_coherence
                                         .filter((d) => d.deviation_warning)
                                         .map((d) => (
-                                            <li key={d.microcycle_id} className="flex flex-wrap items-center gap-2">
+                                            <li key={d.daily_override_id} className="flex flex-wrap items-center gap-2">
                                                 <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
-                                                <span className="font-medium">{d.microcycle_name ?? `Día #${d.microcycle_id}`}</span>
+                                                <span className="font-medium">{d.date ?? `Día #${d.daily_override_id}`}</span>
                                                 {d.physical_quality && <span className="text-red-600">({d.physical_quality})</span>}
                                                 <span>— coherencia {d.coherence_percentage.toFixed(1)}%</span>
                                                 {d.inherited && (
@@ -242,11 +242,11 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                             </thead>
                             <tbody className="divide-y divide-gray-200 bg-white">
                                 {alignmentData.alignment_graph.map((point) => {
-                                    // Determinar si es override (mesocycle/microcycle) o heredado (macrocycle)
-                                    const isOverride = point.cycle_type === "mesocycle" || point.cycle_type === "microcycle";
-                                    const typeLabel = point.cycle_type === "macrocycle"
-                                        ? "Mes" : point.cycle_type === "mesocycle"
-                                        ? "Semana" : point.cycle_type === "microcycle"
+                                    // Determinar si es override (week/day) o heredado (month)
+                                    const isOverride = point.cycle_type === "week" || point.cycle_type === "day";
+                                    const typeLabel = point.cycle_type === "month"
+                                        ? "Mes" : point.cycle_type === "week"
+                                        ? "Semana" : point.cycle_type === "day"
                                         ? "Día" : point.cycle_type;
 
                                     return (

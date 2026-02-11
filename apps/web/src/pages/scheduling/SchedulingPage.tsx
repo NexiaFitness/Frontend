@@ -32,6 +32,7 @@ import {
     ScheduledSessionCalendar,
     UpcomingScheduledSessionCard,
     SessionTemplatesList,
+    TrainerAvailabilitySection,
 } from "@/components/scheduling";
 
 export const SchedulingPage: React.FC = () => {
@@ -153,6 +154,11 @@ export const SchedulingPage: React.FC = () => {
 
                             {/* Columna Derecha: Sidebar (1 de 3 columnas) */}
                             <div className="space-y-6">
+                                {/* Mi Disponibilidad */}
+                                {trainerId > 0 && (
+                                    <TrainerAvailabilitySection trainerId={trainerId} />
+                                )}
+
                                 {/* Próxima Sesión */}
                                 <UpcomingScheduledSessionCard
                                     session={upcomingSession}

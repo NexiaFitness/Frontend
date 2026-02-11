@@ -268,7 +268,8 @@ export interface PlanAdherenceStats {
  */
 export interface PlanningCycleItem {
     cycle_id: number;
-    cycle_type: "macrocycle" | "mesocycle" | "microcycle";
+    /** Period-based: "month" | "week" | "day" or legacy cycle_type from API */
+    cycle_type: string;
     name: string;
     start_date: string;  // ISO date YYYY-MM-DD
     end_date: string;    // ISO date YYYY-MM-DD
@@ -316,7 +317,7 @@ export interface TrainingPlanYearlyPlanning {
     year: number;
     distribution: PlanningDistributionItem[];
     training_load: PlanningLoadSummary;
-    cycles: PlanningCycleItem[];  // All macrocycles for the year
+    cycles: PlanningCycleItem[];  // Period-based: month-level items for the year
     monthly_progression: Record<string, unknown>[];  // Month-by-month breakdown (Dict from backend)
 }
 
@@ -334,7 +335,7 @@ export interface TrainingPlanMonthlyPlanning {
     month: number;  // 1-12
     distribution: PlanningDistributionItem[];
     training_load: PlanningLoadSummary;
-    cycles: PlanningCycleItem[];  // All mesocycles for the month
+    cycles: PlanningCycleItem[];  // Period-based: week-level items for the month
     weekly_progression: Record<string, unknown>[];  // Week-by-week breakdown (Dict from backend)
 }
 
@@ -352,7 +353,7 @@ export interface TrainingPlanWeeklyPlanning {
     week_end: string;    // ISO date YYYY-MM-DD
     distribution: PlanningDistributionItem[];
     training_load: PlanningLoadSummary;
-    cycles: PlanningCycleItem[];  // All microcycles for the week
+    cycles: PlanningCycleItem[];  // Period-based: day-level items for the week
     daily_progression: Record<string, unknown>[];  // Day-by-day breakdown (Dict from backend)
 }
 
@@ -401,13 +402,13 @@ export interface UpdatePlanningLoadRequest {
 }
 
 // ============================================================================
-// PLAN COHERENCE (Fase 5 — period-based)
+// PLAN COHERENCE (period-based: month / week / day)
 // GET /api/v1/training-plans/{plan_id}/coherence?deviation_threshold=20
 // ============================================================================
 
 export interface PlanCoherenceMonthItem {
-    macrocycle_id: number;
-    macrocycle_name: string;
+    month_plan_id: number;
+    month: string;  // "YYYY-MM"
     physical_quality: string | null;
     planned_volume: number;
     planned_intensity: number;
@@ -416,9 +417,9 @@ export interface PlanCoherenceMonthItem {
 }
 
 export interface PlanCoherenceWeekItem {
-    mesocycle_id: number;
-    mesocycle_name: string;
-    macrocycle_id: number;
+    weekly_override_id: number;
+    week_id: string;
+    month_plan_id: number;
     physical_quality: string | null;
     planned_volume: number;
     planned_intensity: number;
@@ -430,9 +431,8 @@ export interface PlanCoherenceWeekItem {
 }
 
 export interface PlanCoherenceDayItem {
-    microcycle_id: number;
-    microcycle_name: string;
-    mesocycle_id: number | null;
+    daily_override_id: number;
+    date: string;  // ISO date
     physical_quality: string | null;
     planned_volume: number;
     planned_intensity: number;
@@ -453,19 +453,25 @@ export interface PlanCoherenceResponse {
 }
 
 // ============================================================================
-// PLAN ALIGNMENT (Fase 5 — period-based)
-// GET /api/v1/training-plans/{plan_id}/alignment?mesocycle_id=&microcycle_id=
-// Semántica backend: mesocycle_id = weekly_override_id, microcycle_id = daily_override_id
+// PLAN ALIGNMENT (period-based: month / week / day)
+// GET /api/v1/training-plans/{plan_id}/alignment?weekly_override_id=&daily_override_id=
 // ============================================================================
+
+export type AlignmentCycleType = "month" | "week" | "day";
 
 export interface CycleAlignmentPoint {
     cycle_id: number;
-    cycle_type: string;  // "macrocycle" | "mesocycle" | "microcycle"
+    cycle_type: AlignmentCycleType;
     cycle_name: string;
     date: string;  // ISO date
     physical_quality: string | null;
     volume: number | null;  // 1-10
     intensity: number | null;  // 1-10
+    month_plan_id?: number | null;
+    month?: string | null;
+    weekly_override_id?: number | null;
+    week_id?: string | null;
+    daily_override_id?: number | null;
 }
 
 export interface ParentCycleValues {

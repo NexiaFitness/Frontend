@@ -2,7 +2,7 @@
  * SessionCard Component
  * Card para mostrar una sesión de entrenamiento con métricas y estado
  * 
- * Reutilizable en: TrainingPlanDetail, ClientWorkoutsTab
+ * Reutilizable en: TrainingPlanDetail, ClientSessionsTab
  * 
  * @author Frontend Team - NEXIA
  * @since v6.0.0

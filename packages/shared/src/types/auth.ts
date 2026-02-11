@@ -52,6 +52,11 @@ export interface LogoutRequest {
     refresh_token: string;
 }
 
+/** Request body for POST /auth/refresh (backend RefreshRequest). */
+export interface RefreshRequest {
+    refresh_token: string;
+}
+
 export interface LogoutResponse {
     message: string;
 }

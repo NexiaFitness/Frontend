@@ -13,6 +13,7 @@
  * @updated v6.0.0 - Soporte para training_plan_id (Fase 4)
  * @updated v6.1.0 - Implementado guardado de ejercicios directamente en sesión
  * @updated v6.2.2 - Corregido error 422: Selección automática de plan si solo hay uno activo.
+ * @updated v6.2.3 - TICK-S06: Sugerencias de ejercicios por tipo (exercise-selection/suggestions).
  */
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -35,7 +36,9 @@ import {
 } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetExercisesQuery, type Exercise } from "@nexia/shared/hooks/exercises";
 import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
+import { ExerciseSuggestionsPanel } from "@/components/sessions/ExerciseSuggestionsPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
+import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -232,6 +235,22 @@ export const CreateSession: React.FC = () => {
         setExerciseSearch(value);
     };
 
+    // Handler para agregar ejercicio desde sugerencias (TICK-S06)
+    const handleAddFromSuggestion = (exerciseId: number, exerciseName: string) => {
+        const newExercise: ExerciseFormData = {
+            exercise_id: exerciseId,
+            exercise_name: exerciseName,
+            order_in_block: exercises.length + 1,
+            planned_sets: 3,
+            planned_reps: "10",
+            planned_weight: null,
+            planned_rest: 60,
+            notes: null,
+        };
+        setExercises([...exercises, newExercise]);
+        showSuccess(`${exerciseName} agregado con 3×10`, 1500);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormErrors({});
@@ -396,6 +415,10 @@ export const CreateSession: React.FC = () => {
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
+                            {/* Panel de recomendaciones de carga (volumen/intensidad) para el cliente — TICK-S05 */}
+                            {effectiveClientId != null && effectiveClientId > 0 && (
+                                <RecommendationsCards clientId={effectiveClientId} />
+                            )}
                             {/* Bloque "Hoy toca" — recomendaciones del plan del día */}
                             <SessionDayPlan
                                 clientId={effectiveClientId ?? null}
@@ -564,6 +587,7 @@ export const CreateSession: React.FC = () => {
                                 {/* Formulario de Ejercicio */}
                                 {showExerciseForm ? (
                                     <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <ExerciseSuggestionsPanel onAddSuggestion={handleAddFromSuggestion} />
                                         <ExerciseSearch onSearch={handleExerciseSearch} placeholder="Buscar ejercicio..." />
                                         {availableExercises.length > 0 && (
                                             <FormSelect

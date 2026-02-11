@@ -81,13 +81,21 @@ export const ExerciseList: React.FC = () => {
 
             <DashboardLayout>
                 {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
-                        Base de Datos de Ejercicios
-                    </h2>
-                    <p className="text-white/80 text-sm md:text-base">
-                        Explora y busca ejercicios para tus planes de entrenamiento
-                    </p>
+                <div className="mb-6 lg:mb-8 px-4 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                        <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            Base de Datos de Ejercicios
+                        </h2>
+                        <p className="text-white/80 text-sm md:text-base">
+                            Explora y busca ejercicios para tus planes de entrenamiento
+                        </p>
+                    </div>
+                    <button
+                        onClick={() => navigate("/dashboard/exercises/create")}
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
+                    >
+                        ➕ Crear Ejercicio
+                    </button>
                 </div>
 
                 {/* Busqueda */}

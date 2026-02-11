@@ -8,8 +8,8 @@
  * - Botones de acción: Crear sesión, Agendar cita.
  *
  * Contexto:
- * - Ola 1 TICK-S01/S02: reúne datos que antes mostraban ClientWorkoutsTab y ClientSessionProgrammingTab.
- * - Consume useGetClientTrainingSessionsQuery (mismo que ClientSessionProgrammingTab) y useGetScheduledSessionsQuery.
+ * - Ola 1 TICK-S01/S02: reúne datos de sesiones y entrenamientos del cliente.
+ * - Consume useGetClientTrainingSessionsQuery y useGetScheduledSessionsQuery.
  * - No reemplaza los tabs existentes hasta TICK-S03; este componente existe para validar datos y UX.
  *
  * Mantenimiento:

@@ -15,9 +15,12 @@
  * @updated v5.0.0 - Sub-Fase 2.6: tipos correctos, helpers compartidos, campos alineados con backend
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
+import {
+    useGetExerciseByIdQuery,
+    useDeleteExerciseMutation,
+} from "@nexia/shared/hooks/exercises";
 import {
     getMuscleLabel,
     getEquipmentLabel,
@@ -35,6 +38,8 @@ import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu"
 // UI
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlternativesSection";
 
 // Utils
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -42,6 +47,7 @@ import { TYPOGRAPHY } from "@/utils/typography";
 export const ExerciseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
 
     const exerciseId = id ? parseInt(id, 10) : null;
 
@@ -50,8 +56,20 @@ export const ExerciseDetail: React.FC = () => {
         { skip: !exerciseId }
     );
 
+    const [deleteExercise, { isLoading: isDeleting }] = useDeleteExerciseMutation();
+
     const handleBack = () => {
         navigate("/dashboard/exercises");
+    };
+
+    const handleDelete = async () => {
+        if (!exerciseId) return;
+        try {
+            await deleteExercise(exerciseId).unwrap();
+            navigate("/dashboard/exercises", { replace: true });
+        } catch {
+            setDeleteModalOpen(false);
+        }
     };
 
     // Parsear músculos (comma-separated strings)
@@ -256,8 +274,43 @@ export const ExerciseDetail: React.FC = () => {
                                 </p>
                             </div>
                         )}
+
+                        {/* Alternativas (TICK-E05) */}
+                        <ExerciseAlternativesSection exerciseId={exerciseId} />
                     </div>
                 </div>
+
+                {/* Modal confirmar eliminar */}
+                {deleteModalOpen && (
+                    <BaseModal
+                        isOpen={true}
+                        onClose={() => setDeleteModalOpen(false)}
+                        title="¿Eliminar este ejercicio?"
+                        description="Esta acción no se puede deshacer."
+                        iconType="danger"
+                    >
+                        <div className="space-y-4">
+                            <p className="text-gray-700">
+                                Se eliminará "{exercise.nombre}" permanentemente de la base de datos.
+                            </p>
+                            <div className="flex flex-col sm:flex-row gap-3 justify-end">
+                                <button
+                                    onClick={() => setDeleteModalOpen(false)}
+                                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    onClick={handleDelete}
+                                    disabled={isDeleting}
+                                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50"
+                                >
+                                    {isDeleting ? "Eliminando..." : "Eliminar"}
+                                </button>
+                            </div>
+                        </div>
+                    </BaseModal>
+                )}
             </DashboardLayout>
         </>
     );

@@ -48,8 +48,7 @@ import { TrainingPlanEdit } from "./pages/trainingPlans/TrainingPlanEdit";
 import { CreateTrainingPlan, CreateTrainingPlanTemplate } from "./pages/trainingPlans";
 
 // Exercises Management (trainers only)
-import { ExerciseList } from "./pages/exercises/ExerciseList";
-import { ExerciseDetail } from "./pages/exercises/ExerciseDetail";
+import { ExerciseList, ExerciseDetail, ExerciseForm } from "./pages/exercises";
 
 // Reports & Scheduling (trainers only)
 import { GenerateReports } from "./pages/reports/GenerateReports";
@@ -217,6 +216,30 @@ function App() {
       {/* ============================================ */}
       {/* EXERCISES MANAGEMENT - Trainers only */}
       {/* ============================================ */}
+
+      {/* Exercise Create */}
+      <Route
+        path="/dashboard/exercises/create"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ExerciseForm />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Exercise Edit */}
+      <Route
+        path="/dashboard/exercises/:id/edit"
+        element={
+          <ProtectedRoute>
+            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+              <ExerciseForm />
+            </RoleProtectedRoute>
+          </ProtectedRoute>
+        }
+      />
 
       {/* Exercise Detail */}
       <Route

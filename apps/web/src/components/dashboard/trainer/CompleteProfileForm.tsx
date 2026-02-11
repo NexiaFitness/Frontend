@@ -7,12 +7,16 @@
  * - Este componente solo presenta la UI y delega la lógica.
  * - El flujo de datos está controlado desde el hook compartido.
  *
+ * TICK-I02: Dropdowns dinámicos desde GET /catalogs/* (países, ciudades,
+ * ocupaciones, modalidades, especialidades).
+ *
  * @author Frontend Team
  * @since v2.2.0
  * @updated v2.3.0 - Limpieza de logs y manejo profesional de feedback
+ * @updated v6.2.0 - Catálogos dinámicos (TICK-I02)
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Input } from "@/components/ui/forms/Input";
@@ -22,14 +26,21 @@ import { ServerErrorBanner } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { useTrainerProfile, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
 import {
-    TRAINING_MODALITY_LABELS,
-    OCCUPATION_TYPE_LABELS,
-    SPECIALTY_TYPE_LABELS,
-    TRAINING_MODALITY,
-    OCCUPATION_TYPES,
-    SPECIALTY_TYPES,
-} from "@nexia/shared/types/trainer";
+    useGetCountriesQuery,
+    useGetCitiesQuery,
+    useGetTrainerOccupationsQuery,
+    useGetTrainingModalitiesQuery,
+    useGetTrainerSpecialtiesQuery,
+} from "@nexia/shared/api/catalogsApi";
 import type { RootState } from "@nexia/shared/store";
+
+/** Humaniza valores del catálogo (e.g. "personal_trainer" → "Personal trainer") */
+function humanizeCatalogValue(str: string): string {
+    return str
+        .split("_")
+        .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
+        .join(" ");
+}
 
 export const CompleteProfileForm: React.FC = () => {
     const navigate = useNavigate();
@@ -52,6 +63,28 @@ export const CompleteProfileForm: React.FC = () => {
         isLoading: isLoadingTrainer,
     });
 
+    // Catálogos dinámicos (GET /catalogs/*)
+    const { data: countries = [] } = useGetCountriesQuery(undefined, {
+        skip: !user,
+    });
+    const countryCode = useMemo(() => {
+        const v = formData.location_country ?? "";
+        const c = countries.find((x) => x.code === v || x.name === v);
+        return c ? c.code : v || "";
+    }, [formData.location_country, countries]);
+    const { data: citiesData } = useGetCitiesQuery(countryCode, {
+        skip: !countryCode || countryCode.length !== 2,
+    });
+    const { data: occupations = [] } = useGetTrainerOccupationsQuery(undefined, {
+        skip: !user,
+    });
+    const { data: modalities = [] } = useGetTrainingModalitiesQuery(undefined, {
+        skip: !user,
+    });
+    const { data: specialties = [] } = useGetTrainerSpecialtiesQuery(undefined, {
+        skip: !user,
+    });
+
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -60,37 +93,78 @@ export const CompleteProfileForm: React.FC = () => {
         if (result.success) {
             navigate("/dashboard", { replace: true });
         } else {
-            // Scroll top para mostrar el ServerErrorBanner
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
     };
 
-    // Options para selects
-    const occupationOptions = [
-        { value: "", label: "Selecciona tu ocupación" },
-        ...Object.entries(OCCUPATION_TYPES).map(([_, value]) => ({
-            value,
-            label:
-                OCCUPATION_TYPE_LABELS[value as keyof typeof OCCUPATION_TYPE_LABELS],
-        })),
-    ];
+    // Resolver código de país para select (compat con datos legacy "España" vs "ES")
+    const countrySelectValue = useMemo(() => {
+        const v = formData.location_country ?? "";
+        const c = countries.find((x) => x.code === v || x.name === v);
+        return c ? c.code : v || "";
+    }, [formData.location_country, countries]);
 
-    const modalityOptions = [
-        { value: "", label: "Selecciona modalidad" },
-        ...Object.entries(TRAINING_MODALITY).map(([_, value]) => ({
-            value,
-            label:
-                TRAINING_MODALITY_LABELS[value as keyof typeof TRAINING_MODALITY_LABELS],
-        })),
-    ];
+    const occupationOptions = useMemo(
+        () => [
+            { value: "", label: "Selecciona tu ocupación" },
+            ...occupations.map((val) => ({
+                value: val,
+                label: humanizeCatalogValue(val),
+            })),
+        ],
+        [occupations]
+    );
 
-    const specialtyOptions = [
-        { value: "", label: "Sin especialidad específica" },
-        ...Object.entries(SPECIALTY_TYPES).map(([_, value]) => ({
-            value,
-            label: SPECIALTY_TYPE_LABELS[value as keyof typeof SPECIALTY_TYPE_LABELS],
-        })),
-    ];
+    const modalityOptions = useMemo(
+        () => [
+            { value: "", label: "Selecciona modalidad" },
+            ...modalities.map((val) => ({
+                value: val,
+                label: humanizeCatalogValue(val),
+            })),
+        ],
+        [modalities]
+    );
+
+    const specialtyOptions = useMemo(
+        () => [
+            { value: "", label: "Sin especialidad específica" },
+            ...specialties.map((val) => ({
+                value: val,
+                label: humanizeCatalogValue(val),
+            })),
+        ],
+        [specialties]
+    );
+
+    const countryOptions = useMemo(() => {
+        const opts = [
+            { value: "", label: "Selecciona país" },
+            ...countries.map((c) => ({ value: c.code, label: c.name })),
+        ];
+        const current = formData.location_country?.trim();
+        const inCatalog = countries.some(
+            (c) => c.code === current || c.name === current
+        );
+        if (current && !inCatalog) {
+            opts.push({ value: current, label: current });
+        }
+        return opts;
+    }, [countries, formData.location_country]);
+
+    const cityOptions = useMemo(() => {
+        const cities = citiesData?.cities ?? [];
+        const currentCity = formData.location_city?.trim();
+        const needsLegacyOption =
+            currentCity && !cities.some((c) => c === currentCity);
+        return [
+            { value: "", label: "Selecciona ciudad" },
+            ...(needsLegacyOption
+                ? [{ value: currentCity, label: currentCity }]
+                : []),
+            ...cities.map((city) => ({ value: city, label: city })),
+        ];
+    }, [citiesData, formData.location_city]);
 
     if (isLoadingTrainer) {
         return (
@@ -173,28 +247,34 @@ export const CompleteProfileForm: React.FC = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    <Input
+                    <FormSelect
                         id="location_country"
                         label="País"
-                        type="text"
-                        value={formData.location_country}
-                        onChange={handleInputChange("location_country")}
+                        value={countrySelectValue}
+                        onChange={(e) => {
+                            const code = e.target.value;
+                            handleInputChange("location_country")(e);
+                            if (code !== countrySelectValue) {
+                                handleInputChange("location_city")({
+                                    target: { value: "" },
+                                });
+                            }
+                        }}
+                        options={countryOptions}
                         error={errors.location_country}
-                        placeholder="España"
-                        isRequired
+                        required
                         disabled={isSubmitting}
                     />
 
-                    <Input
+                    <FormSelect
                         id="location_city"
                         label="Ciudad"
-                        type="text"
-                        value={formData.location_city}
+                        value={formData.location_city || ""}
                         onChange={handleInputChange("location_city")}
+                        options={cityOptions}
                         error={errors.location_city}
-                        placeholder="Madrid"
-                        isRequired
-                        disabled={isSubmitting}
+                        required
+                        disabled={isSubmitting || !countryCode}
                     />
                 </div>
             </div>

@@ -171,192 +171,8 @@ export interface TrainingPlanFormErrors {
 }
 
 // ========================================
-// MACROCYCLE (Fase Macro)
+// COMMON RESPONSES
 // ========================================
-
-/**
- * Macrocycle - Fase macro del plan (ej. "Preparación General - 12 semanas")
- * Alineado con MacrocycleOut schema de Swagger
- */
-export interface Macrocycle {
-    id: number;
-    training_plan_id: number;
-    name: string;
-    description: string | null;
-    start_date: string; // ISO date
-    end_date: string; // ISO date
-    focus: string;
-    volume_intensity_ratio: string | null;
-    created_at: string; // ISO datetime
-    updated_at: string; // ISO datetime
-    is_active: boolean;
-}
-
-/**
- * MacrocycleCreate - POST /training-plans/{plan_id}/macrocycles
- */
-export interface MacrocycleCreate {
-    training_plan_id: number; // Se sobrescribe desde URL path param
-    name: string;
-    description?: string | null;
-    start_date: string; // ISO date YYYY-MM-DD
-    end_date: string; // ISO date YYYY-MM-DD
-    focus: string;
-    volume_intensity_ratio?: string | null;
-}
-
-/**
- * MacrocycleUpdate - PUT /training-plans/macrocycles/{id}
- */
-export interface MacrocycleUpdate {
-    name?: string;
-    description?: string | null;
-    start_date?: string;
-    end_date?: string;
-    focus?: string;
-    volume_intensity_ratio?: string | null;
-}
-
-// ========================================
-// MESOCYCLE (Fase Meso)
-// ========================================
-
-/**
- * Mesocycle - Fase meso del macrociclo (ej. "Hipertrofia - 4 semanas")
- * Alineado con MesocycleOut schema de Swagger
- */
-export interface Mesocycle {
-    id: number;
-    macrocycle_id: number;
-    name: string;
-    description: string | null;
-    start_date: string; // ISO date
-    end_date: string; // ISO date
-    duration_weeks: number;
-    // Coherence system fields (Adrián's requirement)
-    physical_quality: string | null; // e.g., "Fuerza", "Power", "Aerobic", "Mobility"
-    volume: number | null; // Float 1-10 for coherence calculation
-    intensity: number | null; // Float 1-10 for coherence calculation
-    primary_focus: string;
-    secondary_focus: string | null;
-    target_volume: string | null; // Legacy field (kept for backward compatibility)
-    target_intensity: string | null; // Legacy field (kept for backward compatibility)
-    created_at: string; // ISO datetime
-    updated_at: string; // ISO datetime
-    is_active: boolean;
-}
-
-/**
- * MesocycleCreate - POST /training-plans/macrocycles/{macrocycle_id}/mesocycles
- */
-export interface MesocycleCreate {
-    macrocycle_id: number; // Se sobrescribe desde URL path param
-    name: string;
-    description?: string | null;
-    start_date: string; // ISO date YYYY-MM-DD
-    end_date: string; // ISO date YYYY-MM-DD
-    duration_weeks: number;
-    // Coherence system fields (optional)
-    physical_quality?: string | null;
-    volume?: number | null; // Float 1-10
-    intensity?: number | null; // Float 1-10
-    primary_focus: string;
-    secondary_focus?: string | null;
-    target_volume?: string | null; // Legacy field
-    target_intensity?: string | null; // Legacy field
-}
-
-/**
- * MesocycleUpdate - PUT /training-plans/mesocycles/{id}
- */
-export interface MesocycleUpdate {
-    name?: string;
-    description?: string | null;
-    start_date?: string;
-    end_date?: string;
-    duration_weeks?: number;
-    // Coherence system fields (optional)
-    physical_quality?: string | null;
-    volume?: number | null; // Float 1-10
-    intensity?: number | null; // Float 1-10
-    primary_focus?: string;
-    secondary_focus?: string | null;
-    target_volume?: string | null; // Legacy field
-    target_intensity?: string | null; // Legacy field
-}
-
-// ========================================
-// MICROCYCLE (Fase Micro)
-// ========================================
-
-/**
- * Microcycle - Fase micro del mesociclo (ej. "Semana 1 - Alta intensidad")
- * Alineado con MicrocycleOut schema de Swagger
- */
-export interface Microcycle {
-    id: number;
-    mesocycle_id: number;
-    name: string;
-    description: string | null;
-    start_date: string; // ISO date
-    end_date: string; // ISO date
-    duration_days: number; // Default: 7
-    training_frequency: number; // Default: 3
-    // Coherence system fields (Adrián's requirement)
-    physical_quality: string | null; // e.g., "Fuerza", "Power", "Aerobic", "Mobility"
-    volume: number | null; // Float 1-10 for coherence calculation
-    intensity: number | null; // Float 1-10 for coherence calculation
-    deload_week: boolean; // Default: false
-    notes: string | null;
-    created_at: string; // ISO datetime
-    updated_at: string; // ISO datetime
-    is_active: boolean;
-}
-
-/**
- * MicrocycleCreate - POST /training-plans/mesocycles/{mesocycle_id}/microcycles
- */
-export interface MicrocycleCreate {
-    mesocycle_id: number; // Se sobrescribe desde URL path param
-    name: string;
-    description?: string | null;
-    start_date: string; // ISO date YYYY-MM-DD
-    end_date: string; // ISO date YYYY-MM-DD
-    duration_days?: number; // Default: 7
-    training_frequency?: number; // Default: 3
-    // Coherence system fields (optional)
-    physical_quality?: string | null;
-    volume?: number | null; // Float 1-10
-    intensity?: number | null; // Float 1-10
-    deload_week?: boolean; // Default: false
-    notes?: string | null;
-}
-
-/**
- * MicrocycleUpdate - PUT /training-plans/microcycles/{id}
- */
-export interface MicrocycleUpdate {
-    name?: string;
-    description?: string | null;
-    start_date?: string;
-    end_date?: string;
-    duration_days?: number;
-    training_frequency?: number;
-    // Coherence system fields (optional)
-    physical_quality?: string | null;
-    volume?: number | null; // Float 1-10
-    intensity?: number | null; // Float 1-10
-    deload_week?: boolean;
-    notes?: string | null;
-}
-
-// ========================================
-// CYCLES API RESPONSES
-// ========================================
-
-export type MacrocyclesListResponse = Macrocycle[];
-export type MesocyclesListResponse = Mesocycle[];
-export type MicrocyclesListResponse = Microcycle[];
 
 export interface DeleteCycleResponse {
     message: string;
@@ -372,7 +188,8 @@ export interface DeleteCycleResponse {
  */
 export interface TrainingSession {
     id: number;
-    microcycle_id: number;
+    /** @deprecated Backend removed microcycle_id (Fase 4 period-based). Kept for type compatibility. */
+    microcycle_id?: number | null;
     client_id: number;
     trainer_id: number;
     session_date: string | null; // ISO date, nullable for generic plans
@@ -503,21 +320,6 @@ export interface FatigueAnalysis {
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
-}
-
-export interface AllCyclesResponse {
-    macrocycles: Macrocycle[];
-    mesocycles: Mesocycle[];
-    microcycles: Microcycle[];
-}
-
-export interface BatchCyclesRequest {
-    plan_ids: number[];
-}
-
-export interface BatchCyclesResponse {
-    cycles: Record<number, AllCyclesResponse>;
-    errors: Record<number, string>;
 }
 
 // ========================================

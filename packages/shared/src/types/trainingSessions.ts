@@ -7,6 +7,33 @@
  * @since v6.0.0
  */
 
+/** Item de sugerencia de ejercicio (GET /training-sessions/exercise-selection/suggestions) */
+export interface ExerciseSelectionSuggestionItem {
+    id: number;
+    exercise_id: number;
+    nombre: string;
+    nombre_ingles: string | null;
+    tipo: string;
+    equipo: string | null;
+    musculatura_principal: string | null;
+    nivel: string | null;
+}
+
+/** Parámetros para GET exercise-selection/suggestions */
+export interface ExerciseSelectionSuggestionsParams {
+    exercise_type: "multi_joint" | "single_joint";
+    equipment?: string | null;
+    level?: string | null;
+    limit?: number;
+}
+
+/** Respuesta de GET exercise-selection/suggestions */
+export interface ExerciseSelectionSuggestionsResponse {
+    exercise_type: string;
+    count: number;
+    suggestions: ExerciseSelectionSuggestionItem[];
+}
+
 /**
  * Training Session - Sesión individual de entrenamiento
  * Vinculada directamente a un Training Plan (puede tener o no microcycle_id)

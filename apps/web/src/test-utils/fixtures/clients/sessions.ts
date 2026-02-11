@@ -16,7 +16,7 @@ export const createMockTrainingSession = (overrides: Partial<TrainingSession> = 
 
     return {
         id: 1,
-        microcycle_id: 1,
+        microcycle_id: null,
         client_id: 1,
         trainer_id: 1,
         session_date: tomorrow.toISOString().split('T')[0], // Próxima sesión

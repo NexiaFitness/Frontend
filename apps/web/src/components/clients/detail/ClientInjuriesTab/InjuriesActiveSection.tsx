@@ -11,6 +11,7 @@
 import React, { useState } from "react";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { InjuryAlternativesModal } from "./InjuryAlternativesModal";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import {
     useUpdateInjuryMutation,
@@ -20,6 +21,7 @@ import {
 interface InjuriesActiveSectionProps {
     injuries: InjuryWithDetails[];
     isLoading: boolean;
+    clientId: number;
     onAddClick: () => void;
     onEditClick: (injury: InjuryWithDetails) => void;
 }
@@ -44,11 +46,13 @@ const statusColor = (status: string) => {
 export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
     injuries,
     isLoading,
+    clientId,
     onAddClick,
     onEditClick,
 }) => {
     const [resolveModal, setResolveModal] = useState<number | null>(null);
     const [deleteModal, setDeleteModal] = useState<number | null>(null);
+    const [alternativesInjury, setAlternativesInjury] = useState<InjuryWithDetails | null>(null);
 
     const [updateInjury, { isLoading: isResolving }] = useUpdateInjuryMutation();
     const [deleteInjury, { isLoading: isDeleting }] = useDeleteInjuryMutation();
@@ -265,6 +269,16 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                         </div>
                     </div>
                 </BaseModal>
+            )}
+
+            {/* Modal Buscar alternativas (TICK-C04) */}
+            {alternativesInjury && (
+                <InjuryAlternativesModal
+                    isOpen={true}
+                    onClose={() => setAlternativesInjury(null)}
+                    injury={alternativesInjury}
+                    clientId={clientId}
+                />
             )}
         </>
     );
