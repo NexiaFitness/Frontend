@@ -74,6 +74,7 @@ export interface ClientInjury {
     painful_movement_id: number; // ⚠️ CRÍTICO: es painful_movement_id, no movement_id
     affected_muscle_id?: number | null;
     pain_level: PainLevel;
+    severity?: "mild" | "moderate" | "severe"; // Backend ClientInjuryOut
     status: InjuryStatus;
     restrictions?: string | null;
     notes?: string | null;
@@ -102,6 +103,7 @@ export interface CreateInjuryRequest {
 
 export interface UpdateInjuryRequest {
     pain_level?: PainLevel;
+    severity?: "mild" | "moderate" | "severe";
     status?: InjuryStatus;
     restrictions?: string | null;
     notes?: string | null;

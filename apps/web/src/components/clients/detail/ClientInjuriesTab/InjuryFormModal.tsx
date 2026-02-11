@@ -89,12 +89,15 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 ? injury.restrictions.join("\n")
                 : injury.restrictions || "";
             
+            const severity = injury.severity && ["mild", "moderate", "severe"].includes(injury.severity)
+                ? injury.severity
+                : "moderate";
             setForm({
                 joint_id: injury.joint_id,
                 painful_movement_id: injury.painful_movement_id,
                 affected_muscle_id: injury.affected_muscle_id ?? null,
                 pain_level: injury.pain_level as PainLevel,
-                severity: "moderate", // TODO: obtener del backend si está disponible
+                severity,
                 status: injury.status,
                 restrictions: restrictionsStr,
                 notes: injury.notes || "",
@@ -176,6 +179,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 injuryId: injury!.id,
                 data: {
                     pain_level: Number(form.pain_level) as PainLevel,
+                    severity: form.severity,
                     status: form.status,
                     restrictions: form.restrictions || undefined,
                     notes: form.notes || undefined,
