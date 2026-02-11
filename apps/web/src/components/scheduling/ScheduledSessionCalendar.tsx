@@ -127,7 +127,7 @@ export const ScheduledSessionCalendar: React.FC<ScheduledSessionCalendarProps> =
     const emptyDays = Array.from({ length: firstDayWeekday }, (_, i) => i);
 
     return (
-        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        <div className="bg-white rounded-lg shadow p-4 md:p-6" data-testid="scheduling-calendar">
             {/* Header con mes y navegación */}
             <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl md:text-2xl font-bold text-slate-800">

@@ -272,8 +272,14 @@ export const NewScheduledSessionPage: React.FC = () => {
                                 </div>
 
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha *</label>
+                                    <label
+                                        htmlFor="new-schedule-date"
+                                        className="block text-sm font-semibold text-slate-700 mb-2"
+                                    >
+                                        Fecha *
+                                    </label>
                                     <Input
+                                        id="new-schedule-date"
                                         type="date"
                                         value={formData.scheduledDate}
                                         onChange={(e) => {
@@ -282,6 +288,7 @@ export const NewScheduledSessionPage: React.FC = () => {
                                         }}
                                         required
                                         min={new Date().toISOString().split("T")[0]}
+                                        aria-label="Fecha de la sesión"
                                     />
                                     {formErrors.scheduledDate && (
                                         <p className="text-red-600 text-xs mt-1">{formErrors.scheduledDate}</p>

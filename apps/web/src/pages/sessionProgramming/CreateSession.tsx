@@ -3,20 +3,15 @@
  *
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión manualmente
- * - Permite configurar todos los detalles de la sesión
- * - Soporta dos flujos:
- *   1. Desde cliente: ?clientId=X (legacy, mantiene compatibilidad)
- *   2. Desde plan: ?planId=X (nuevo modelo, Fase 4)
+ * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
+ * - Añadir ejercicio: botón abre ExercisePickerModal (catálogo con filtros, fuente única)
  *
  * @author Frontend Team
  * @since v5.3.0
- * @updated v6.0.0 - Soporte para training_plan_id (Fase 4)
- * @updated v6.1.0 - Implementado guardado de ejercicios directamente en sesión
- * @updated v6.2.2 - Corregido error 422: Selección automática de plan si solo hay uno activo.
- * @updated v6.2.3 - TICK-S06: Sugerencias de ejercicios por tipo (exercise-selection/suggestions).
+ * @updated v6.3.0 - Ejercicios desde catálogo unificado (ExercisePickerModal)
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
@@ -34,9 +29,8 @@ import {
     useCreateTrainingSessionMutation,
     useCreateSessionExerciseMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
-import { useGetExercisesQuery, type Exercise } from "@nexia/shared/hooks/exercises";
-import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
-import { ExerciseSuggestionsPanel } from "@/components/sessions/ExerciseSuggestionsPanel";
+import type { Exercise } from "@nexia/shared/hooks/exercises";
+import { ExercisePickerModal } from "@/components/exercises/ExercisePickerModal";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import type { RootState } from "@nexia/shared/store";
@@ -143,7 +137,7 @@ export const CreateSession: React.FC = () => {
 
     const [exercises, setExercises] = useState<ExerciseFormData[]>([]);
     const [showExerciseForm, setShowExerciseForm] = useState(false);
-    const [exerciseSearch, setExerciseSearch] = useState("");
+    const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
     const [currentExercise, setCurrentExercise] = useState<Partial<ExerciseFormData>>({
         planned_sets: 3,
@@ -153,17 +147,6 @@ export const CreateSession: React.FC = () => {
         notes: null,
     });
 
-    // Query de ejercicios con búsqueda
-    const { data: exercisesData } = useGetExercisesQuery({
-        search: exerciseSearch,
-        limit: 20,
-        skip: 0,
-    });
-
-    const availableExercises = useMemo(() => {
-        return exercisesData?.exercises || [];
-    }, [exercisesData]);
-
     // Validar que haya al menos clientId o planId
     useEffect(() => {
         if (!clientId && !planId) {
@@ -172,10 +155,26 @@ export const CreateSession: React.FC = () => {
         }
     }, [clientId, planId, navigate, showError]);
 
-    // Handler para añadir ejercicio a la lista
+    // Handler cuando el usuario selecciona un ejercicio del catálogo (modal)
+    const handleSelectFromPicker = (exercise: Exercise) => {
+        setCurrentExercise({
+            exercise_id: exercise.id,
+            exercise_name: exercise.nombre,
+            order_in_block: exercises.length + 1,
+            planned_sets: 3,
+            planned_reps: "10",
+            planned_weight: null,
+            planned_rest: 60,
+            notes: null,
+        });
+        setShowExerciseForm(true);
+        setShowExercisePickerModal(false);
+    };
+
+    // Handler para añadir ejercicio a la lista (tras configurar series/reps)
     const handleAddExercise = () => {
-        if (!currentExercise.exercise_id) {
-            showError("Selecciona un ejercicio");
+        if (!currentExercise.exercise_id || !currentExercise.exercise_name) {
+            showError("Selecciona un ejercicio desde el catálogo");
             return;
         }
         if (!currentExercise.planned_sets || currentExercise.planned_sets <= 0) {
@@ -187,18 +186,9 @@ export const CreateSession: React.FC = () => {
             return;
         }
 
-        const selectedExercise = availableExercises.find(
-            (ex: Exercise) => ex.id === currentExercise.exercise_id
-        );
-
-        if (!selectedExercise) {
-            showError("Ejercicio no encontrado");
-            return;
-        }
-
         const newExercise: ExerciseFormData = {
             exercise_id: currentExercise.exercise_id,
-            exercise_name: selectedExercise.nombre,
+            exercise_name: currentExercise.exercise_name,
             order_in_block: exercises.length + 1,
             planned_sets: currentExercise.planned_sets,
             planned_reps: currentExercise.planned_reps,
@@ -216,7 +206,17 @@ export const CreateSession: React.FC = () => {
             notes: null,
         });
         setShowExerciseForm(false);
-        setExerciseSearch("");
+    };
+
+    const handleCancelExerciseForm = () => {
+        setCurrentExercise({
+            planned_sets: 3,
+            planned_reps: "10",
+            planned_weight: null,
+            planned_rest: 60,
+            notes: null,
+        });
+        setShowExerciseForm(false);
     };
 
     // Handler para eliminar ejercicio de la lista
@@ -228,27 +228,6 @@ export const CreateSession: React.FC = () => {
                 order_in_block: i + 1,
             }));
         setExercises(updatedExercises);
-    };
-
-    // Handler para búsqueda de ejercicios
-    const handleExerciseSearch = (value: string) => {
-        setExerciseSearch(value);
-    };
-
-    // Handler para agregar ejercicio desde sugerencias (TICK-S06)
-    const handleAddFromSuggestion = (exerciseId: number, exerciseName: string) => {
-        const newExercise: ExerciseFormData = {
-            exercise_id: exerciseId,
-            exercise_name: exerciseName,
-            order_in_block: exercises.length + 1,
-            planned_sets: 3,
-            planned_reps: "10",
-            planned_weight: null,
-            planned_rest: 60,
-            notes: null,
-        };
-        setExercises([...exercises, newExercise]);
-        showSuccess(`${exerciseName} agregado con 3×10`, 1500);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -584,18 +563,19 @@ export const CreateSession: React.FC = () => {
                                     ))}
                                 </div>
 
-                                {/* Formulario de Ejercicio */}
+                                {/* Añadir ejercicio: catálogo unificado (solo monta modal cuando abierto) */}
+                                {showExercisePickerModal && (
+                                    <ExercisePickerModal
+                                        isOpen={true}
+                                        onClose={() => setShowExercisePickerModal(false)}
+                                        onSelect={handleSelectFromPicker}
+                                    />
+                                )}
                                 {showExerciseForm ? (
                                     <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                        <ExerciseSuggestionsPanel onAddSuggestion={handleAddFromSuggestion} />
-                                        <ExerciseSearch onSearch={handleExerciseSearch} placeholder="Buscar ejercicio..." />
-                                        {availableExercises.length > 0 && (
-                                            <FormSelect
-                                                value={currentExercise.exercise_id?.toString() || ""}
-                                                onChange={(e) => setCurrentExercise({ ...currentExercise, exercise_id: Number(e.target.value) })}
-                                                options={[{ value: "", label: "Selecciona un ejercicio" }, ...availableExercises.map(ex => ({ value: ex.id.toString(), label: ex.nombre }))]}
-                                            />
-                                        )}
+                                        <p className="text-sm font-medium text-slate-700">
+                                            Ejercicio seleccionado: <span className="font-semibold">{currentExercise.exercise_name}</span>
+                                        </p>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div>
                                                 <label className="block text-sm font-semibold text-slate-700 mb-2">
@@ -629,12 +609,27 @@ export const CreateSession: React.FC = () => {
                                             </div>
                                         </div>
                                         <div className="flex gap-3">
-                                            <Button type="button" variant="primary" onClick={handleAddExercise}>Agregar</Button>
-                                            <Button type="button" variant="outline" onClick={() => setShowExerciseForm(false)}>Cancelar</Button>
+                                            <Button type="button" variant="primary" onClick={handleAddExercise}>
+                                                Agregar
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                onClick={handleCancelExerciseForm}
+                                            >
+                                                Cancelar
+                                            </Button>
                                         </div>
                                     </div>
                                 ) : (
-                                    <Button type="button" variant="outline" onClick={() => setShowExerciseForm(true)} className="w-full">+ Agregar Ejercicio</Button>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={() => setShowExercisePickerModal(true)}
+                                        className="w-full"
+                                    >
+                                        + Añadir Ejercicio
+                                    </Button>
                                 )}
                             </div>
 

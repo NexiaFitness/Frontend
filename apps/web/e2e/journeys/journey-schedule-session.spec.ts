@@ -25,6 +25,14 @@ const TOKEN_KEY = "nexia_token";
 const FIXED_START_TIME = "14:00";
 const FIXED_END_TIME = "15:00";
 
+/** Fecha en YYYY-MM-DD según zona local (evita desfase con calendario y formulario). */
+function formatLocalDate(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 /** Base URL del backend; por defecto desarrollo local. En CI/otro host configurar en playwright o env. */
 const API_BASE = "http://127.0.0.1:8000/api/v1";
 
@@ -82,7 +90,7 @@ test.describe("Journey — Schedule session (scheduling → create scheduled ses
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    const tomorrowStr = formatLocalDate(tomorrow);
     await clearTrainerSessionsForDate(page, tomorrowStr);
 
     // 1) Crear cliente (onboarding mínimo) para no depender de seed
@@ -118,7 +126,10 @@ test.describe("Journey — Schedule session (scheduling → create scheduled ses
     ).toBeVisible({ timeout: 10_000 });
 
     const dayNum = tomorrow.getDate();
-    await page.getByText(String(dayNum), { exact: true }).click();
+    await page
+      .getByTestId("scheduling-calendar")
+      .getByText(String(dayNum), { exact: true })
+      .click();
 
     // Navegación a vista dedicada (no modal)
     await expect(page).toHaveURL(/\/dashboard\/scheduling\/new\?date=/, {
@@ -152,6 +163,8 @@ test.describe("Journey — Schedule session (scheduling → create scheduled ses
     ).toBeAttached({ timeout: 10_000 });
     await clientSelect.selectOption({ value: String(clientId) });
 
+    // Fuerza la misma fecha que se limpió (evita desfase por timezone entre calendario y clear)
+    await page.getByLabel(/fecha/i).fill(tomorrowStr);
     await page.getByLabel(/hora de inicio/i).fill(FIXED_START_TIME);
     await page.getByLabel(/hora de fin/i).fill(FIXED_END_TIME);
 

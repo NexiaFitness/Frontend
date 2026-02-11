@@ -18,7 +18,7 @@ test.describe("Edge — Empty states", () => {
   }) => {
     await loginAsTrainer(page);
 
-    await page.route("**/api/v1/clients/with-metrics*", (route) => {
+    await page.route("**/clients/with-metrics*", (route) => {
       route.fulfill({
         status: 200,
         contentType: "application/json",
@@ -34,8 +34,9 @@ test.describe("Edge — Empty states", () => {
 
     await navigateToClients(page);
 
+    // ClientList muestra "No hay clientes" cuando la API devuelve lista vacía (sin búsqueda)
     await expect(
-      page.getByText("No se encontraron clientes")
+      page.getByText(/no hay clientes/i)
     ).toBeVisible({ timeout: 15_000 });
   });
 

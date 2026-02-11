@@ -9,7 +9,7 @@
 
 import { store } from "../store";
 import { loginSuccess, loginFailure, logout } from "../store/authSlice";
-import { API_CONFIG } from "../config/constants";
+import { API_CONFIG, AUTH_CONFIG } from "../config/constants";
 import type { 
     LoginCredentials, 
     RegisterCredentials, 
@@ -112,10 +112,10 @@ export class AuthService {
      */
     async logout(): Promise<void> {
         try {
-            // Limpiar storage
-            storage.removeItem('access_token');
-            storage.removeItem('refresh_token');
-            
+            // Limpiar storage (usar claves unificadas de AUTH_CONFIG)
+            storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            storage.removeItem(AUTH_CONFIG.REFRESH_KEY);
+
             // Dispatch logout action
             store.dispatch(logout());
         } catch (error) {
@@ -129,16 +129,17 @@ export class AuthService {
      * @param authData - Datos de autenticación
      */
     private handleAuthSuccess(authData: AuthResponse): void {
-        // Guardar tokens en storage
-        storage.setItem('access_token', authData.access_token);
+        // Guardar tokens en storage (claves unificadas de AUTH_CONFIG)
+        storage.setItem(AUTH_CONFIG.TOKEN_KEY, authData.access_token);
         if (authData.refresh_token) {
-            storage.setItem('refresh_token', authData.refresh_token);
+            storage.setItem(AUTH_CONFIG.REFRESH_KEY, authData.refresh_token);
         }
 
         // Dispatch success action
         store.dispatch(loginSuccess({
             user: authData.user,
-            token: authData.access_token
+            token: authData.access_token,
+            refreshToken: authData.refresh_token,
         }));
     }
 
@@ -155,7 +156,7 @@ export class AuthService {
      * @returns string | null
      */
     getCurrentToken(): string | null {
-        return storage.getItem('access_token');
+        return storage.getItem(AUTH_CONFIG.TOKEN_KEY);
     }
 
     /**

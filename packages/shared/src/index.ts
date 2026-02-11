@@ -7,7 +7,6 @@ export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
 // Training Sessions API - exported separately to avoid conflicts
 export {
-    useGetExerciseSelectionSuggestionsQuery,
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
     useGetSessionExercisesQuery,

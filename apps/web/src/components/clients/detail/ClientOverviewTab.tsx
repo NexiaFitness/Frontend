@@ -42,14 +42,23 @@ import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjurie
 import { Button } from "@/components/ui/buttons";
 import { ClientAlertsSection } from "./ClientAlertsSection";
 import { ClientStatusSection } from "./ClientStatusSection";
+import { ClientPlansSection } from "./ClientPlansSection";
 import { RecommendationsCards } from "./RecommendationsCards";
+import type { TrainingPlan } from "@nexia/shared/types/training";
 
 interface ClientOverviewTabProps {
     client: Client;
     clientId: number;
+    trainingPlans?: TrainingPlan[];
+    isLoadingPlans?: boolean;
 }
 
-export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, clientId }) => {
+export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
+    client,
+    clientId,
+    trainingPlans = [],
+    isLoadingPlans = false,
+}) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const alertsSectionRef = useRef<HTMLDivElement>(null);
@@ -280,6 +289,13 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({ client, cl
 
             {/* Recomendaciones 3-card (Volume, Intensidad, Selección de ejercicios) */}
             <RecommendationsCards clientId={clientId} />
+
+            {/* Planes de entrenamiento asignados + CTA Crear plan */}
+            <ClientPlansSection
+                clientId={clientId}
+                trainingPlans={trainingPlans}
+                isLoading={isLoadingPlans}
+            />
 
             {/* SECCIÓN DE ALERTAS PERSISTENTES */}
             {/* Estas son las MISMAS alertas que aparecen en el dashboard del trainer */}

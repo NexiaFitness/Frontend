@@ -212,6 +212,8 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
                 { type: "Client", id: "STATS" },
+                // Recomendaciones de plan dependen del perfil del cliente
+                { type: "TrainingPlan", id: `RECOMMENDATIONS_${id}` },
             ],
         }),
 

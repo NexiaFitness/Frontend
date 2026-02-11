@@ -102,7 +102,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                 {selectedExerciseId && (
                     <div className="pt-2 border-t border-slate-200">
                         <p className="text-sm font-semibold text-slate-700 mb-2">
-                            Alternativas para "{selectedExercise?.nombre ?? "..."}"
+                            Alternativas para &quot;{selectedExercise?.nombre ?? "..."}&quot;
                         </p>
                         {isLoadingAlternatives ? (
                             <div className="flex justify-center py-6">

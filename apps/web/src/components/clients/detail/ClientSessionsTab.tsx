@@ -2,19 +2,18 @@
  * ClientSessionsTab.tsx — Tab unificado "Sesiones" del cliente
  *
  * Propósito:
- * - Vista única que combina sesiones de entrenamiento y citas agendadas.
- * - Calendario mensual con dos capas: sesiones de entrenamiento + citas (scheduled sessions).
- * - Lista cronológica filtrable debajo del calendario.
- * - Botones de acción: Crear sesión, Agendar cita.
+ * - Vista única: sesiones de entrenamiento + citas agendadas.
+ * - Calendario mensual para sesiones de entrenamiento.
+ * - Sección "Citas agendadas" como lista ordenada de cards (sin calendario).
+ * - Lista cronológica unificada con filtros.
+ * - Botones: Crear sesión, Agendar cita.
  *
  * Contexto:
  * - Ola 1 TICK-S01/S02: reúne datos de sesiones y entrenamientos del cliente.
  * - Consume useGetClientTrainingSessionsQuery y useGetScheduledSessionsQuery.
- * - No reemplaza los tabs existentes hasta TICK-S03; este componente existe para validar datos y UX.
  *
  * Mantenimiento:
  * - Tipos desde @nexia/shared (TrainingSession, ScheduledSession).
- * - No añadir lógica de negocio aquí; solo presentación y navegación.
  *
  * @author Frontend Team
  * @since v6.2.0 - Ola 1 Sesiones unificadas
@@ -26,9 +25,12 @@ import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi"
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
+import {
+    SCHEDULED_SESSION_TYPE,
+    SESSION_STATUS,
+} from "@nexia/shared/types/scheduling";
 import type { PlanTrainingSession } from "@nexia/shared";
 import { SessionCalendar } from "@/components/sessionProgramming";
-import { ScheduledSessionCalendar } from "@/components/scheduling";
 import { SessionCard } from "@/components/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -41,6 +43,26 @@ interface ClientSessionsTabProps {
 
 type ListFilterType = "all" | "session" | "appointment";
 type SessionStatusFilter = "all" | "planned" | "completed" | "cancelled";
+
+const SESSION_TYPE_LABELS: Record<string, string> = {
+    [SCHEDULED_SESSION_TYPE.TRAINING]: "Entrenamiento",
+    [SCHEDULED_SESSION_TYPE.CONSULTATION]: "Consulta",
+    [SCHEDULED_SESSION_TYPE.ASSESSMENT]: "Evaluación",
+};
+
+const SESSION_STATUS_LABELS: Record<string, string> = {
+    [SESSION_STATUS.SCHEDULED]: "Agendada",
+    [SESSION_STATUS.CONFIRMED]: "Confirmada",
+    [SESSION_STATUS.COMPLETED]: "Completada",
+    [SESSION_STATUS.CANCELLED]: "Cancelada",
+};
+
+const SESSION_STATUS_STYLES: Record<string, string> = {
+    [SESSION_STATUS.SCHEDULED]: "bg-blue-100 text-blue-700 border-blue-200",
+    [SESSION_STATUS.CONFIRMED]: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    [SESSION_STATUS.COMPLETED]: "bg-slate-100 text-slate-600 border-slate-200",
+    [SESSION_STATUS.CANCELLED]: "bg-red-50 text-red-600 border-red-200",
+};
 
 /** Fecha del mes en formato YYYY-MM-DD para el rango de scheduled */
 function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
@@ -185,34 +207,74 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 </Button>
             </div>
 
-            {/* Calendario dual: dos capas (sesiones + citas) para el mismo mes */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div>
-                    <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-3`}>
-                        Sesiones de entrenamiento
-                    </h2>
-                    <SessionCalendar
-                        sessions={trainingSessions}
-                        currentMonth={currentMonth}
-                        onMonthChange={setCurrentMonth}
-                        onDateClick={handleDateClickSession}
-                    />
-                </div>
-                <div>
-                    <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-3`}>
-                        Citas agendadas
-                    </h2>
-                    <ScheduledSessionCalendar
-                        sessions={scheduledSessions}
-                        currentMonth={currentMonth}
-                        onMonthChange={setCurrentMonth}
-                        onSessionClick={handleSessionClickScheduled}
-                    />
-                </div>
-            </div>
+            {/* Calendario de sesiones de entrenamiento */}
+            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+                    Sesiones de entrenamiento
+                </h2>
+                <SessionCalendar
+                    sessions={trainingSessions}
+                    currentMonth={currentMonth}
+                    onMonthChange={setCurrentMonth}
+                    onDateClick={handleDateClickSession}
+                />
+            </section>
+
+            {/* Citas agendadas — lista ordenada por fecha, sin calendario */}
+            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
+                <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+                    Citas agendadas
+                </h2>
+                {scheduledSessions.length === 0 ? (
+                    <p className="text-sm text-gray-500 italic py-4">
+                        No hay citas agendadas para este mes.
+                    </p>
+                ) : (
+                    <ul
+                        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+                        role="list"
+                        aria-label="Lista de citas agendadas"
+                    >
+                        {[...scheduledSessions]
+                            .sort(
+                                (a, b) =>
+                                    a.scheduled_date.localeCompare(b.scheduled_date) ||
+                                    a.start_time.localeCompare(b.start_time)
+                            )
+                            .map((s) => (
+                                <li key={s.id}>
+                                    <button
+                                        type="button"
+                                        onClick={() => handleSessionClickScheduled(s)}
+                                        className="w-full text-left border border-gray-200 rounded-lg p-4 hover:border-[#4A67B3] hover:bg-[#4A67B3]/5 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#4A67B3] focus:ring-offset-2"
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                                <p className="font-semibold text-gray-900 truncate">
+                                                    {s.scheduled_date} · {s.start_time}–{s.end_time}
+                                                </p>
+                                                <p className="text-sm text-gray-600 mt-0.5">
+                                                    {SESSION_TYPE_LABELS[s.session_type] ?? s.session_type}
+                                                </p>
+                                            </div>
+                                            <span
+                                                className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-md border ${SESSION_STATUS_STYLES[s.status] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}
+                                            >
+                                                {SESSION_STATUS_LABELS[s.status] ?? s.status}
+                                            </span>
+                                        </div>
+                                        <span className="inline-block mt-2 text-xs text-gray-500">
+                                            Ver / Editar →
+                                        </span>
+                                    </button>
+                                </li>
+                            ))}
+                    </ul>
+                )}
+            </section>
 
             {/* Lista cronológica con filtros */}
-            <div className="bg-white rounded-lg shadow p-6">
+            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
                 <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
                     Lista cronológica
                 </h2>
@@ -317,7 +379,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                         })}
                     </ul>
                 )}
-            </div>
+            </section>
         </div>
     );
 };

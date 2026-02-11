@@ -291,7 +291,7 @@ export const ExerciseDetail: React.FC = () => {
                     >
                         <div className="space-y-4">
                             <p className="text-gray-700">
-                                Se eliminará "{exercise.nombre}" permanentemente de la base de datos.
+                                Se eliminará &quot;{exercise.nombre}&quot; permanentemente de la base de datos.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 justify-end">
                                 <button

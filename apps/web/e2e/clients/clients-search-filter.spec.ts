@@ -19,12 +19,12 @@ test.describe("Clients — Search", () => {
       page.getByRole("heading", { name: /clientes/i })
     ).toBeVisible({ timeout: 10_000 });
 
-    const searchInput = page.getByPlaceholder(/buscar cliente/i);
+    const searchInput = page.getByRole("textbox", { name: /buscar cliente/i });
     await searchInput.fill("E2E_NOMBRE_QUE_NO_EXISTE");
 
-    // Error 7: un único elemento (evita strict mode con cabeceras Nombre/Fatiga/Adherencia)
+    // ClientList muestra "No se encontraron clientes con ese criterio" cuando hay búsqueda sin resultados
     await expect(
-      page.getByText("No se encontraron clientes")
+      page.getByText(/no se encontraron clientes con ese criterio/i)
     ).toBeVisible({ timeout: 5_000 });
   });
 });

@@ -15,8 +15,6 @@ import type {
     TrainingSessionUpdate,
     SessionExercise,
     SessionExerciseCreate,
-    ExerciseSelectionSuggestionsParams,
-    ExerciseSelectionSuggestionsResponse,
 } from '../types/trainingSessions';
 import type {
     SessionRecommendationsResponse,
@@ -25,25 +23,6 @@ import type {
 
 export const trainingSessionsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
-        /**
-         * GET /training-sessions/exercise-selection/suggestions
-         * Sugerencias de ejercicios por tipo (multi_joint / single_joint) — TICK-S06
-         */
-        getExerciseSelectionSuggestions: builder.query<
-            ExerciseSelectionSuggestionsResponse,
-            ExerciseSelectionSuggestionsParams
-        >({
-            query: ({ exercise_type, equipment, level, limit }) => ({
-                url: '/training-sessions/exercise-selection/suggestions',
-                params: {
-                    exercise_type,
-                    ...(equipment && { equipment }),
-                    ...(level && { level }),
-                    ...(limit != null && { limit }),
-                },
-            }),
-        }),
-
         /**
          * GET /training-sessions/recommendations
          * Obtener recomendaciones ("Hoy toca") para una fecha y cliente
@@ -235,7 +214,6 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
 });
 
 export const {
-    useGetExerciseSelectionSuggestionsQuery,
     useGetSessionRecommendationsQuery,
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,

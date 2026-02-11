@@ -21,6 +21,7 @@ import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 interface ClientHeaderProps {
     client: Client;
+    clientId?: number;
     onEditProfile?: () => void;
     onAnthropometricData?: () => void;
     breadcrumbItems?: BreadcrumbItem[];
@@ -28,11 +29,13 @@ interface ClientHeaderProps {
 
 export const ClientHeader: React.FC<ClientHeaderProps> = ({
     client,
+    clientId: clientIdProp,
     onEditProfile,
     onAnthropometricData,
     breadcrumbItems,
 }) => {
     const navigate = useNavigate();
+    const clientId = clientIdProp ?? client.id;
 
     // Calcular edad desde birthdate si no está disponible directamente
     const calculateAge = (birthdate: string | undefined | null): number | null => {
@@ -187,7 +190,23 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => navigate(`/dashboard/reports/generate?clientId=${client.id}`)}
+                            onClick={() =>
+                                navigate(
+                                    `/dashboard/training-plans/create?clientId=${clientId}`
+                                )
+                            }
+                            aria-label="Crear plan de entrenamiento"
+                        >
+                            Crear plan
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                                navigate(
+                                    `/dashboard/reports/generate?clientId=${clientId}`
+                                )
+                            }
                         >
                             Generar Reporte
                         </Button>

@@ -81,6 +81,8 @@ export const ClientDetail: React.FC = () => {
         client,
         progressHistory,
         progressAnalytics,
+        trainingPlans,
+        isLoadingPlans,
         isLoading,
         hasError,
         clientError,
@@ -205,7 +207,14 @@ export const ClientDetail: React.FC = () => {
     const renderTabContent = () => {
         switch (activeTab) {
             case "overview":
-                return <ClientOverviewTab client={client} clientId={clientId} />;
+                return (
+                    <ClientOverviewTab
+                        client={client}
+                        clientId={clientId}
+                        trainingPlans={trainingPlans ?? []}
+                        isLoadingPlans={isLoadingPlans}
+                    />
+                );
             case "sessions":
                 return <ClientSessionsTab clientId={clientId} />;
             case "daily-coherence":
@@ -238,8 +247,9 @@ export const ClientDetail: React.FC = () => {
             <DashboardLayout>
                 <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     {/* Header con breadcrumbs integrados */}
-                    <ClientHeader 
-                        client={client} 
+                    <ClientHeader
+                        client={client}
+                        clientId={clientId}
                         onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                         onAnthropometricData={() => setActiveTab("progress")}
                         breadcrumbItems={breadcrumbItems}

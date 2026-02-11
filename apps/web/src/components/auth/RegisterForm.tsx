@@ -122,6 +122,7 @@ export const RegisterForm: React.FC = () => {
                 loginSuccess({
                     user: response.user,
                     token: response.access_token,
+                    refreshToken: response.refresh_token,
                 })
             );
 

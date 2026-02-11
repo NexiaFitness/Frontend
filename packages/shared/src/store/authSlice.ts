@@ -123,7 +123,7 @@ export const authSlice: Slice<AuthState> = createSlice({
         // Acción cuando login es exitoso
         loginSuccess: (
             state: AuthState,
-            action: PayloadAction<{ user: User; token: string }>
+            action: PayloadAction<{ user: User; token: string; refreshToken?: string }>
         ) => {
             state.user = action.payload.user;
             state.token = action.payload.token;
@@ -131,15 +131,17 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
 
-            // Persistencia async
             storage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
             storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(action.payload.user));
+            if (action.payload.refreshToken) {
+                storage.setItem(AUTH_CONFIG.REFRESH_KEY, action.payload.refreshToken);
+            }
         },
 
         // Acción cuando registro es exitoso (autologin)
         registerSuccess: (
             state: AuthState,
-            action: PayloadAction<{ user: User; token: string }>
+            action: PayloadAction<{ user: User; token: string; refreshToken?: string }>
         ) => {
             state.user = action.payload.user;
             state.token = action.payload.token;
@@ -147,9 +149,11 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
 
-            // Persistencia async
             storage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
             storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(action.payload.user));
+            if (action.payload.refreshToken) {
+                storage.setItem(AUTH_CONFIG.REFRESH_KEY, action.payload.refreshToken);
+            }
         },
 
         // Acción cuando login falla
@@ -160,9 +164,9 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = action.payload;
 
-            // Limpiar storage async
             storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
             storage.removeItem(AUTH_CONFIG.USER_KEY);
+            storage.removeItem(AUTH_CONFIG.REFRESH_KEY);
         },
 
         // Acción para limpiar errores

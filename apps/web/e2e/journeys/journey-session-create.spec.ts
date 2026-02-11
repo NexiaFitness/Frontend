@@ -47,12 +47,10 @@ test.describe("Journey — Create session (client → plan → create session)",
       timeout: 20_000,
     });
 
-    // 2) Tab Entrenamientos → + Nuevo Plan
+    // 2) En Resumen (tab por defecto): sección Planes → Crear plan
     await page
-      .getByRole("button", { name: /^entrenamientos$/i })
-      .click();
-    await page
-      .getByRole("button", { name: /\+ nuevo plan/i })
+      .getByRole("button", { name: /crear plan/i })
+      .first()
       .click();
     await expect(page).toHaveURL(/\/dashboard\/training-plans\/create\?clientId=\d+/, {
       timeout: 10_000,
