@@ -32,6 +32,7 @@ export * from "./catalogs";
 
 // Client types
 export * from "./client";
+export * from "./clientEquipment";
 export * from "./clientOnboarding";
 export * from "./clientStats";
 
@@ -49,6 +50,9 @@ export * from "./exercise";
 
 // Forms types
 export * from "./forms";
+
+// Habits types (insights for Resumen tab)
+export * from "./habits";
 
 // Injuries types
 export * from "./injuries";

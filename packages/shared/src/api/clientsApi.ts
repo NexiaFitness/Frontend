@@ -22,6 +22,11 @@ import type {
     ClientRatingUpdate,
     ClientRatingOut,
 } from "../types/client";
+import type {
+    ClientEquipment,
+    ClientEquipmentCreate,
+    ClientEquipmentUpdate,
+} from "../types/clientEquipment";
 import type { ClientStatsResponse } from "../types/clientStats";
 
 import type {
@@ -229,6 +234,75 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id },
                 { type: "Client", id: "LIST" },
                 { type: "Client", id: "STATS" },
+            ],
+        }),
+
+        /**
+         * Listar equipo del cliente
+         * Backend: GET /clients/{client_id}/equipment
+         */
+        getClientEquipment: builder.query<ClientEquipment[], number>({
+            query: (clientId) => ({
+                url: `/clients/${clientId}/equipment`,
+                method: "GET",
+            }),
+            providesTags: (result, error, clientId) => [
+                { type: "Client", id: `Equipment-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Añadir equipo al cliente
+         * Backend: POST /clients/{client_id}/equipment
+         */
+        createClientEquipment: builder.mutation<
+            ClientEquipment,
+            { clientId: number; data: ClientEquipmentCreate }
+        >({
+            query: ({ clientId, data }) => ({
+                url: `/clients/${clientId}/equipment`,
+                method: "POST",
+                body: data,
+                headers: { "Content-Type": "application/json" },
+            }),
+            invalidatesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `Equipment-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Actualizar equipo del cliente
+         * Backend: PUT /clients/{client_id}/equipment/{equipment_id}
+         */
+        updateClientEquipment: builder.mutation<
+            ClientEquipment,
+            { clientId: number; equipmentId: number; data: ClientEquipmentUpdate }
+        >({
+            query: ({ clientId, equipmentId, data }) => ({
+                url: `/clients/${clientId}/equipment/${equipmentId}`,
+                method: "PUT",
+                body: data,
+                headers: { "Content-Type": "application/json" },
+            }),
+            invalidatesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `Equipment-${clientId}` },
+            ],
+        }),
+
+        /**
+         * Eliminar (soft) equipo del cliente
+         * Backend: DELETE /clients/{client_id}/equipment/{equipment_id}
+         */
+        deleteClientEquipment: builder.mutation<
+            { message: string },
+            { clientId: number; equipmentId: number }
+        >({
+            query: ({ clientId, equipmentId }) => ({
+                url: `/clients/${clientId}/equipment/${equipmentId}`,
+                method: "DELETE",
+            }),
+            invalidatesTags: (result, error, { clientId }) => [
+                { type: "Client", id: `Equipment-${clientId}` },
             ],
         }),
 
@@ -862,6 +936,10 @@ export const {
     usePreviewClientCalculationsMutation,
     useUpdateClientMutation,
     useDeleteClientMutation,
+    useGetClientEquipmentQuery,
+    useCreateClientEquipmentMutation,
+    useUpdateClientEquipmentMutation,
+    useDeleteClientEquipmentMutation,
     useCreateClientRatingMutation,
     useGetClientRatingsQuery,
     useGetClientRatingQuery,

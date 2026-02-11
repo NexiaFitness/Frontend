@@ -20,6 +20,7 @@ import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { ClientEditForm } from "@/components/clients/forms/ClientEditForm";
+import { ClientEquipmentSection } from "@/components/clients/ClientEquipmentSection";
 import { Button } from "@/components/ui/buttons";
 import { DeleteClientModal } from "@/components/clients/modals/DeleteClientModal";
 
@@ -119,6 +120,8 @@ export const ClientEdit: React.FC = () => {
                 {/* Contenido principal con ancho completo */}
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <ClientEditForm client={client} onSuccess={handleSuccess} />
+
+                    <ClientEquipmentSection clientId={clientId} />
 
                     {/* Zona de Peligro - Desvincular Cliente */}
                     <div className="mt-8 bg-red-50 border-2 border-red-200 rounded-lg p-6">
