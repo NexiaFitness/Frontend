@@ -9,7 +9,7 @@
  * @since v1.0.0 (refactor desde modal)
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardLayout } from "@/components/dashboard/layout";
@@ -31,6 +31,7 @@ import type {
     SessionLocation,
     ConflictCheckState,
     FormFieldErrors,
+    AvailableSlot,
 } from "@nexia/shared/types/scheduling";
 import { SCHEDULED_SESSION_TYPE, SESSION_LOCATION } from "@nexia/shared/types/scheduling";
 
@@ -50,8 +51,14 @@ export const NewScheduledSessionPage: React.FC = () => {
     });
     const trainerId = trainerProfile?.id ?? 0;
 
-    const { createSession, checkConflict, isLoading: isCreating, isError: isCreateError, error: createError } =
-        useScheduleSession();
+    const {
+        createSession,
+        checkConflict,
+        getAvailableSlots,
+        isLoading: isCreating,
+        isError: isCreateError,
+        error: createError,
+    } = useScheduleSession();
     const { data: template } = useGetSessionTemplateQuery(templateId, { skip: !templateId });
     const [clientSearchInput, setClientSearchInput] = useState("");
     const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
@@ -88,6 +95,8 @@ export const NewScheduledSessionPage: React.FC = () => {
 
     const [formErrors, setFormErrors] = useState<FormFieldErrors>({});
     const [conflictCheck, setConflictCheck] = useState<ConflictCheckState | null>(null);
+    const [availableSlots, setAvailableSlots] = useState<AvailableSlot[]>([]);
+    const [isLoadingSlots, setIsLoadingSlots] = useState(false);
 
     useEffect(() => {
         if (trainerId) {
@@ -100,6 +109,32 @@ export const NewScheduledSessionPage: React.FC = () => {
             setFormData((prev) => ({ ...prev, scheduledDate: dateParam }));
         }
     }, [dateParam]);
+
+    const fetchAvailableSlots = useCallback(async () => {
+        if (!trainerId || !formData.scheduledDate) {
+            setAvailableSlots([]);
+            return;
+        }
+        setIsLoadingSlots(true);
+        setAvailableSlots([]);
+        try {
+            const res = await getAvailableSlots(trainerId, formData.scheduledDate);
+            const slots = (res.available_slots ?? []).map((s: AvailableSlot) => ({
+                ...s,
+                start_time: s.start_time.length > 5 ? s.start_time.slice(0, 5) : s.start_time,
+                end_time: s.end_time.length > 5 ? s.end_time.slice(0, 5) : s.end_time,
+            }));
+            setAvailableSlots(slots);
+        } catch {
+            setAvailableSlots([]);
+        } finally {
+            setIsLoadingSlots(false);
+        }
+    }, [trainerId, formData.scheduledDate, getAvailableSlots]);
+
+    useEffect(() => {
+        fetchAvailableSlots();
+    }, [fetchAvailableSlots]);
 
     useEffect(() => {
         if (template) {
@@ -252,6 +287,45 @@ export const NewScheduledSessionPage: React.FC = () => {
                                         <p className="text-red-600 text-xs mt-1">{formErrors.scheduledDate}</p>
                                     )}
                                 </div>
+
+                                {formData.scheduledDate && trainerId > 0 && (
+                                    <div>
+                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            Slots disponibles
+                                        </label>
+                                        {isLoadingSlots ? (
+                                            <p className="text-slate-500 text-sm italic">
+                                                Cargando slots según tu disponibilidad...
+                                            </p>
+                                        ) : availableSlots.length === 0 ? (
+                                            <p className="text-slate-500 text-sm italic">
+                                                No hay slots configurados. Añade tu disponibilidad en el calendario.
+                                            </p>
+                                        ) : (
+                                            <div className="flex flex-wrap gap-2">
+                                                {availableSlots.map((slot, idx) => (
+                                                    <Button
+                                                        key={`${slot.start_time}-${slot.end_time}-${idx}`}
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        onClick={() => {
+                                                            setFormData((prev) => ({
+                                                                ...prev,
+                                                                startTime: slot.start_time,
+                                                                endTime: slot.end_time,
+                                                                durationMinutes: slot.duration_minutes ?? 60,
+                                                            }));
+                                                            setConflictCheck(null);
+                                                        }}
+                                                    >
+                                                        {slot.start_time} – {slot.end_time}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div>
