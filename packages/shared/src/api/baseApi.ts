@@ -288,5 +288,6 @@ export const baseApi = createApi({
         "TrainingPlanAdherenceStats",
         "Metrics",
         "Injuries",
+        "HabitInsights",
     ],
 });

@@ -72,6 +72,8 @@ export interface ExerciseFilters {
     muscle_group_ids?: number[];
     /** Filtro por IDs de equipamiento (usa mapping tables) */
     equipment_ids?: number[];
+    /** Filtro por IDs de patrón de movimiento (Exercise Catalog) */
+    movement_pattern_ids?: number[];
 }
 
 /**
@@ -181,6 +183,7 @@ interface GetExercisesParams {
     search?: string;
     muscle_group_ids?: number[];
     equipment_ids?: number[];
+    movement_pattern_ids?: number[];
 }
 
 // ========================================
@@ -229,6 +232,11 @@ const exercisesListApi = baseApi.injectEndpoints({
                 if (filters.equipment_ids?.length) {
                     for (const id of filters.equipment_ids) {
                         params.append('equipment_ids', id.toString());
+                    }
+                }
+                if (filters.movement_pattern_ids?.length) {
+                    for (const id of filters.movement_pattern_ids) {
+                        params.append('movement_pattern_ids', id.toString());
                     }
                 }
 

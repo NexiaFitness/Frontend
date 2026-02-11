@@ -289,6 +289,10 @@ export * from "./utils/validations";
 export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
+export {
+    getFatigueAlertContextualAction,
+    type FatigueAlertContextualAction,
+} from "./utils/fatigueAlertActions";
 
 // Components
 export * from "./components/SmartNavigation";

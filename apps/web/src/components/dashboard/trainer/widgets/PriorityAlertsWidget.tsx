@@ -2,6 +2,7 @@ import React, { useMemo, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useDashboardAlerts, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
+import { getFatigueAlertContextualAction } from "@nexia/shared";
 import type { FatigueAlertSeverity, FatigueAlertType } from "@nexia/shared/types/training";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import type { RootState } from "@nexia/shared/store";
@@ -133,6 +134,23 @@ export const PriorityAlertsWidget: React.FC = () => {
                             <p className="text-sm font-semibold mb-1">{alert.title}</p>
                             <p className="text-sm">{alert.message}</p>
                             <p className="text-xs mt-1 opacity-75">Cliente: {getClientName(alert.client_id)}</p>
+                            <div className="mt-2" onClick={(e) => e.stopPropagation()}>
+                                {(() => {
+                                    const action = getFatigueAlertContextualAction(alert.alert_type);
+                                    const path = action.tab
+                                        ? `/dashboard/clients/${alert.client_id}?tab=${action.tab}`
+                                        : `/dashboard/clients/${alert.client_id}`;
+                                    return (
+                                        <button
+                                            type="button"
+                                            className="text-xs font-medium text-blue-600 hover:text-blue-800 underline"
+                                            onClick={() => navigate(path)}
+                                        >
+                                            {action.label} →
+                                        </button>
+                                    );
+                                })()}
+                            </div>
                         </div>
                     ))
                 )}

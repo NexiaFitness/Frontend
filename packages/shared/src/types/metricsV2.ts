@@ -168,4 +168,3 @@ export interface TotalLoadResponseV2 {
 export interface CidCalcOutV2 {
     cid_0_100: number;
 }
-

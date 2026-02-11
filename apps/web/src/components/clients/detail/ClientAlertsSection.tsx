@@ -20,12 +20,16 @@
  */
 
 import React, { useState, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useFatigueAlerts } from "@nexia/shared/hooks/clients/useFatigueAlerts";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useToast } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { Button } from "@/components/ui/buttons";
 import { FatigueAlertCard } from "../fatigue/FatigueAlertCard";
+import { CreateFatigueAlertModal } from "../fatigue/CreateFatigueAlertModal";
+import { getFatigueAlertContextualAction } from "@nexia/shared";
 import type { FatigueAlert } from "@nexia/shared/types/training";
 
 type AlertsTab = "active" | "history";
@@ -42,9 +46,11 @@ interface ClientAlertsSectionProps {
  * Estas alertas son las mismas que aparecen en el dashboard.
  */
 export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ clientId, sectionRef }) => {
+    const navigate = useNavigate();
     const [markingAsReadId, setMarkingAsReadId] = useState<number | null>(null);
     const [resolvingId, setResolvingId] = useState<number | null>(null);
     const [activeTab, setActiveTab] = useState<AlertsTab>("active");
+    const [showCreateModal, setShowCreateModal] = useState(false);
 
     const { showSuccess, showError } = useToast();
 
@@ -54,10 +60,33 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
         isLoadingTrainer,
         markAsRead,
         resolveAlert,
+        createAlert,
         isLoading,
+        isCreating,
         isError,
         refetch,
     } = useFatigueAlerts(clientId);
+
+    const handleCreateAlert = useCallback(
+        async (data: {
+            alert_type: "overtraining" | "recovery_needed" | "session_adjustment";
+            severity: "low" | "medium" | "high" | "critical";
+            title: string;
+            message: string;
+            recommendations?: string;
+        }) => {
+            try {
+                await createAlert(data);
+                showSuccess("Alerta creada correctamente");
+                setShowCreateModal(false);
+                refetch();
+            } catch (err) {
+                console.error("Error creating alert:", err);
+                throw err;
+            }
+        },
+        [createAlert, refetch, showSuccess]
+    );
 
     /**
      * Filtrar alertas activas (no resueltas)
@@ -166,15 +195,31 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
             return (
                 <div className="space-y-3">
                     {unresolvedAlerts.map((alert) => (
-                        <FatigueAlertCard
-                            key={alert.id}
-                            alert={alert}
-                            onMarkAsRead={handleMarkAsRead}
-                            onResolve={handleResolve}
-                            isMarkingAsRead={markingAsReadId === alert.id}
-                            isResolving={resolvingId === alert.id}
-                            readOnly={false}
-                        />
+                        <div key={alert.id}>
+                            <FatigueAlertCard
+                                alert={alert}
+                                onMarkAsRead={handleMarkAsRead}
+                                onResolve={handleResolve}
+                                isMarkingAsRead={markingAsReadId === alert.id}
+                                isResolving={resolvingId === alert.id}
+                                readOnly={false}
+                            />
+                            {(() => {
+                                const action = getFatigueAlertContextualAction(alert.alert_type);
+                                const path = action.tab
+                                    ? `/dashboard/clients/${clientId}?tab=${action.tab}`
+                                    : `/dashboard/clients/${clientId}`;
+                                return (
+                                    <button
+                                        type="button"
+                                        onClick={() => navigate(path)}
+                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium mt-1"
+                                    >
+                                        {action.label} →
+                                    </button>
+                                );
+                            })()}
+                        </div>
                     ))}
                 </div>
             );
@@ -211,13 +256,18 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
             className="bg-white rounded-lg shadow p-6" 
             id="client-alerts-section"
         >
-            <div className="mb-4">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
-                    Alertas
-                </h3>
-                <p className="text-sm text-gray-600">
-                    Alertas persistentes que requieren tu atención. Al resolverlas, desaparecerán del dashboard.
-                </p>
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+                        Alertas
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                        Alertas persistentes que requieren tu atención. Al resolverlas, desaparecerán del dashboard.
+                    </p>
+                </div>
+                <Button variant="secondary" size="sm" onClick={() => setShowCreateModal(true)}>
+                    Crear alerta
+                </Button>
             </div>
 
             {/* Tabs: Activas / Historial */}
@@ -262,6 +312,13 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
 
             {/* Contenido del tab activo */}
             {renderTabContent()}
+
+            <CreateFatigueAlertModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSubmit={handleCreateAlert}
+                isSubmitting={isCreating}
+            />
         </div>
     );
 };

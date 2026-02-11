@@ -15,6 +15,7 @@ import type { ExerciseFilters as ExerciseFiltersType } from "@nexia/shared/hooks
 import {
     useGetMuscleGroupsQuery,
     useGetEquipmentQuery,
+    useGetMovementPatternsQuery,
 } from "@nexia/shared/hooks/exercises";
 import { getLevelLabel } from "@/utils/exercises";
 
@@ -45,6 +46,11 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
         is_active: true,
     });
 
+    const { data: movementPatterns = [], isLoading: isLoadingMovementPatterns } = useGetMovementPatternsQuery({
+        limit: 100,
+        is_active: true,
+    });
+
     // Handler para cambio de muscle group (usa muscle_group_ids via mapping tables)
     const handleMuscleGroupChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value;
@@ -71,11 +77,22 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
         onChange({ nivel: value });
     };
 
+    // Handler para cambio de patrón de movimiento
+    const handleMovementPatternChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value;
+        if (value) {
+            onChange({ movement_pattern_ids: [Number(value)] });
+        } else {
+            onChange({ movement_pattern_ids: undefined });
+        }
+    };
+
     // Handler para reset
     const handleReset = () => {
         onChange({
             muscle_group_ids: undefined,
             equipment_ids: undefined,
+            movement_pattern_ids: undefined,
             nivel: undefined,
             search: undefined,
         });
@@ -85,6 +102,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
     const hasActiveFilters = !!(
         filters.muscle_group_ids?.length ||
         filters.equipment_ids?.length ||
+        filters.movement_pattern_ids?.length ||
         filters.nivel ||
         filters.search
     );
@@ -94,6 +112,9 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
 
     // Obtener valor seleccionado de equipment
     const selectedEquipmentId = filters.equipment_ids?.[0]?.toString() ?? "";
+
+    // Obtener valor seleccionado de movement pattern
+    const selectedMovementPatternId = filters.movement_pattern_ids?.[0]?.toString() ?? "";
 
     return (
         <div className="bg-white rounded-lg border border-slate-200 p-4">
@@ -109,7 +130,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                 )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Grupo Muscular */}
                 <div>
                     <label
@@ -180,6 +201,32 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                         {levelOptions.map((level) => (
                             <option key={level} value={level}>
                                 {getLevelLabel(level)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Patrón de movimiento */}
+                <div>
+                    <label
+                        htmlFor="exercise-filter-movement-pattern"
+                        className="block text-xs font-medium text-slate-700 mb-2"
+                    >
+                        Patrón de movimiento
+                    </label>
+                    <select
+                        id="exercise-filter-movement-pattern"
+                        value={selectedMovementPatternId}
+                        onChange={handleMovementPatternChange}
+                        disabled={isLoadingMovementPatterns}
+                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <option value="">
+                            {isLoadingMovementPatterns ? "Cargando..." : "Todos"}
+                        </option>
+                        {movementPatterns.map((mp) => (
+                            <option key={mp.id} value={mp.id.toString()}>
+                                {mp.name_es || mp.name_en}
                             </option>
                         ))}
                     </select>

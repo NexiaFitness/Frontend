@@ -37,6 +37,7 @@ import {
     useGetClientRatingsQuery,
     useCreateClientRatingMutation,
 } from "@nexia/shared/api/clientsApi";
+import { useGetClientHabitInsightsQuery } from "@nexia/shared/api/habitsApi";
 import type { ClientRatingOut, ClientRatingCreate } from "@nexia/shared/types/client";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { Button } from "@/components/ui/buttons";
@@ -134,6 +135,12 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
         clientId: isValidClientId ? clientId : 0,
         includeHistory: false,
     });
+
+    // Insights de hábitos (MVP: sección en Resumen — DEC-02)
+    const { data: habitInsights, isLoading: isLoadingHabits } = useGetClientHabitInsightsQuery(
+        { clientId: isValidClientId ? clientId : 0 },
+        { skip: !isValidClientId }
+    );
 
     // Valoraciones de satisfacción del cliente
     const { data: ratings = [], isLoading: isLoadingRatings } = useGetClientRatingsQuery(
@@ -296,6 +303,41 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 trainingPlans={trainingPlans}
                 isLoading={isLoadingPlans}
             />
+
+            {/* SECCIÓN HÁBITOS (MVP DEC-02 — resumen en Resumen) */}
+            {isLoadingHabits ? (
+                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                    <LoadingSpinner size="md" />
+                </div>
+            ) : habitInsights && habitInsights.active_habits > 0 ? (
+                <div className="bg-white rounded-lg shadow p-6">
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Hábitos</h3>
+                    <p className="text-slate-600 text-sm mb-4">
+                        Resumen de cumplimiento de hábitos del cliente.
+                    </p>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-xs font-medium text-gray-500">Hábitos activos</p>
+                            <p className="text-xl font-semibold text-gray-900">{habitInsights.active_habits}</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-xs font-medium text-gray-500">Cumplimiento medio</p>
+                            <p className="text-xl font-semibold text-gray-900">
+                                {habitInsights.average_completion.toFixed(0)}%
+                            </p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-xs font-medium text-gray-500">Mejor racha</p>
+                            <p className="text-xl font-semibold text-gray-900">{habitInsights.best_streak} días</p>
+                        </div>
+                    </div>
+                    {habitInsights.most_skipped && (
+                        <p className="text-sm text-slate-600 mt-3">
+                            Más saltado: {habitInsights.most_skipped}
+                        </p>
+                    )}
+                </div>
+            ) : null}
 
             {/* SECCIÓN DE ALERTAS PERSISTENTES */}
             {/* Estas son las MISMAS alertas que aparecen en el dashboard del trainer */}
