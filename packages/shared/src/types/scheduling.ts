@@ -199,9 +199,7 @@ export interface TrainerAvailabilityOut {
     is_active: boolean;
     created_at: string;
     updated_at: string;
-}
-
-/** Query params for GET /scheduling/availability */
+}/** Query params for GET /scheduling/availability */
 export interface TrainerAvailabilityFilters {
     trainer_id: number;
     skip?: number;
