@@ -17,8 +17,8 @@
  * @updated v5.0.0 - Rediseño completo con templates e instances
  */
 
-import React, { useState, useMemo, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import {
     useGetTrainingPlansQuery,
@@ -52,7 +52,10 @@ import { TYPOGRAPHY } from "@/utils/typography";
 
 export const TrainingPlansPage: React.FC = () => {
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const tabFromUrl = searchParams.get("tab");
     const user = useSelector((state: RootState) => state.auth.user);
+    const templatesSectionRef = useRef<HTMLDivElement>(null);
     
     // Obtener perfil del trainer
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
@@ -90,6 +93,13 @@ export const TrainingPlansPage: React.FC = () => {
             return () => clearTimeout(timer);
         }
     }, [errorMessage]);
+
+    // Scroll a la sección de templates cuando ?tab=templates (p. ej. desde ClientList "Gestionar Plantillas")
+    useEffect(() => {
+        if (tabFromUrl === "templates" && templatesSectionRef.current) {
+            templatesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    }, [tabFromUrl]);
 
     // Hooks de datos con refetch
     // IMPORTANTE: No usar non-null assertion (!) cuando el valor puede ser undefined
@@ -453,21 +463,23 @@ export const TrainingPlansPage: React.FC = () => {
                     </div>
                 )}
 
-                {/* Sección 2: Biblioteca de Templates */}
-                <TrainingPlansSection
-                    title="Biblioteca de Templates"
-                    description="Plantillas reutilizables que puedes asignar a múltiples clientes"
-                    items={templates}
-                    type="template"
-                    onCreate={handleCreateTemplate}
-                    onAssign={handleAssignTemplate}
-                    onDuplicate={handleDuplicateTemplate}
-                    onDelete={handleDeleteTemplate}
-                    onView={handleViewPlan}
-                    onPreview={handlePreviewTemplate}
-                    isLoading={isLoadingTemplates}
-                    processingIds={processingIds}
-                />
+                {/* Sección 2: Biblioteca de Templates (destino de ?tab=templates) */}
+                <div id="section-templates" ref={templatesSectionRef}>
+                    <TrainingPlansSection
+                        title="Biblioteca de Templates"
+                        description="Plantillas reutilizables que puedes asignar a múltiples clientes"
+                        items={templates}
+                        type="template"
+                        onCreate={handleCreateTemplate}
+                        onAssign={handleAssignTemplate}
+                        onDuplicate={handleDuplicateTemplate}
+                        onDelete={handleDeleteTemplate}
+                        onView={handleViewPlan}
+                        onPreview={handlePreviewTemplate}
+                        isLoading={isLoadingTemplates}
+                        processingIds={processingIds}
+                    />
+                </div>
 
                 {/* Modal de Asignar Plantilla */}
                 <AssignTemplateModal
