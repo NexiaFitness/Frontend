@@ -258,7 +258,7 @@ export const ClientList: React.FC = () => {
     };
 
     const handleCreateTrainingPlan = () => {
-        navigate("/dashboard/training-plans");
+        navigate("/dashboard/training-plans/create");
     };
 
     const handleScheduleSession = () => {
@@ -266,7 +266,7 @@ export const ClientList: React.FC = () => {
     };
 
     const handleManageTemplates = () => {
-        navigate("/dashboard/training-plans");
+        navigate("/dashboard/training-plans?tab=templates");
     };
 
     return (
