@@ -76,15 +76,58 @@ describe("ClientOverviewTab", () => {
     beforeEach(() => {
         clearRouterMocks();
         setAuthenticatedUser(validTrainerUser);
-        
-        // Configurar handlers por defecto para todos los endpoints
+
+        // Handlers para endpoints que ClientOverviewTab consume (habits, ratings, recommendations)
+        const getClientHabitInsightsHandler = http.get(
+            "*/habits/clients/:clientId/insights",
+            () =>
+                HttpResponse.json(
+                    {
+                        average_completion: 80,
+                        best_streak: 7,
+                        active_habits: 0,
+                        most_skipped: null,
+                        completion_by_category: {},
+                        streak_by_habit: {},
+                    },
+                    { status: 200 }
+                )
+        );
+        const getClientRatingsHandler = http.get(
+            "*/clients/:clientId/ratings",
+            () => HttpResponse.json([], { status: 200 })
+        );
+        const getTrainingPlanRecommendationsHandler = http.get(
+            "*/training-plans/recommendations/:clientId",
+            () =>
+                HttpResponse.json(
+                    {
+                        client_id: 1,
+                        status: "incomplete",
+                        message: "Ficha incompleta",
+                        missing_fields: [],
+                        recommendations: null,
+                        based_on: {
+                            experience: null,
+                            training_frequency: null,
+                            session_duration: null,
+                            objective: null,
+                        },
+                    },
+                    { status: 200 }
+                )
+        );
+
         server.use(
             getClientCoherenceHandler,
             getClientProgressHistoryHandler,
             getProgressAnalyticsHandler,
             getClientFatigueAnalysisHandler,
             getClientTrainingSessionsHandler,
-            getClientTestResultsHandler
+            getClientTestResultsHandler,
+            getClientHabitInsightsHandler,
+            getClientRatingsHandler,
+            getTrainingPlanRecommendationsHandler
         );
     });
 
@@ -105,8 +148,9 @@ describe("ClientOverviewTab", () => {
         it("renders all metric cards after loading", async () => {
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
+            // Esperar al contenido real (el componente tiene loaders en varias secciones; evitar flakiness)
             await waitFor(() => {
-                expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
+                expect(screen.getByText(/último peso/i)).toBeInTheDocument();
             });
 
             // Varias secciones pueden mostrar "Adherencia"; comprobar que al menos una métrica de cada tipo está
@@ -120,10 +164,9 @@ describe("ClientOverviewTab", () => {
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
             await waitFor(() => {
-                expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
+                expect(screen.getByText(/información personal/i)).toBeInTheDocument();
             });
 
-            expect(screen.getByText(/información personal/i)).toBeInTheDocument();
             expect(screen.getByText(mockClient.mail!)).toBeInTheDocument();
         });
     });
@@ -527,11 +570,10 @@ describe("ClientOverviewTab", () => {
 
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            // El componente debe seguir funcionando aunque haya error en coherence
-            // (otros datos pueden cargar correctamente)
-            await waitFor(() => {
-                expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
-            }, { timeout: 3000 });
+            await waitFor(
+                () => expect(screen.getByText(/último peso/i)).toBeInTheDocument(),
+                { timeout: 5000 }
+            );
         });
 
         it("handles progress API error gracefully", async () => {
@@ -539,9 +581,10 @@ describe("ClientOverviewTab", () => {
 
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
-            }, { timeout: 3000 });
+            await waitFor(
+                () => expect(screen.getByText(/último peso/i)).toBeInTheDocument(),
+                { timeout: 5000 }
+            );
         });
 
         it("handles fatigue API error gracefully", async () => {
@@ -549,9 +592,10 @@ describe("ClientOverviewTab", () => {
 
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
-            }, { timeout: 3000 });
+            await waitFor(
+                () => expect(screen.getByText(/último peso/i)).toBeInTheDocument(),
+                { timeout: 5000 }
+            );
         });
     });
 

@@ -1,12 +1,13 @@
 /**
- * planningApi.ts — API de planificación period-based (Plan de cargas Fase 1+2)
+ * planningApi.ts — API de planificación period-based (Plan de cargas Fase 1+2+4)
  *
  * Endpoints: monthly, weekly, daily overrides, resolve-day
  * Backend: app/api/planning.py
+ * Fase 4+5: soporte client-only (client_id sin training_plan_id)
  *
  * @author Frontend Team
  * @since Plan de cargas Fase 1
- * @updated Fase 2 - overrides y resolve_day_plan
+ * @updated Fase 4+5 - GetMonthlyPlansParams con client_id opcional
  */
 
 import { baseApi } from "./baseApi";
@@ -22,7 +23,8 @@ import type {
 } from "../types/planningCargas";
 
 export interface GetMonthlyPlansParams {
-    training_plan_id: number;
+    training_plan_id?: number | null;
+    client_id?: number | null;
     month?: string;
     skip?: number;
     limit?: number;
@@ -31,13 +33,17 @@ export interface GetMonthlyPlansParams {
 export const planningApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         /**
-         * List monthly plans for a training plan. If month is provided, returns at most one.
-         * Backend: GET /api/v1/planning/monthly?training_plan_id=&month=
+         * List monthly plans. Use training_plan_id (plan mode) or client_id (client-only mode).
+         * Backend: GET /api/v1/planning/monthly?training_plan_id=|client_id=
          */
         getMonthlyPlans: builder.query<MonthlyPlan[], GetMonthlyPlansParams>({
-            query: ({ training_plan_id, month, skip = 0, limit = 100 }) => {
+            query: ({ training_plan_id, client_id, month, skip = 0, limit = 100 }) => {
                 const params = new URLSearchParams();
-                params.append("training_plan_id", training_plan_id.toString());
+                if (training_plan_id != null) {
+                    params.append("training_plan_id", training_plan_id.toString());
+                } else if (client_id != null) {
+                    params.append("client_id", client_id.toString());
+                }
                 if (month) params.append("month", month);
                 params.append("skip", skip.toString());
                 params.append("limit", limit.toString());
@@ -46,13 +52,20 @@ export const planningApi = baseApi.injectEndpoints({
                     method: "GET",
                 };
             },
-            providesTags: (result, _error, { training_plan_id }) =>
-                result
+            providesTags: (result, _error, { training_plan_id, client_id }) => {
+                const tagId =
+                    training_plan_id != null
+                        ? `PLAN-${training_plan_id}`
+                        : client_id != null
+                          ? `CLIENT-${client_id}`
+                          : "MonthlyPlan";
+                return result
                     ? [
                         ...result.map(({ id }) => ({ type: "MonthlyPlan" as const, id })),
-                        { type: "MonthlyPlan", id: `PLAN-${training_plan_id}` },
+                        { type: "MonthlyPlan", id: tagId },
                     ]
-                    : [{ type: "MonthlyPlan", id: `PLAN-${training_plan_id}` }],
+                    : [{ type: "MonthlyPlan", id: tagId }];
+            },
         }),
 
         /**
@@ -78,9 +91,15 @@ export const planningApi = baseApi.injectEndpoints({
                 body,
                 headers: { "Content-Type": "application/json" },
             }),
-            invalidatesTags: (_result, _error, body) => [
-                { type: "MonthlyPlan", id: `PLAN-${body.training_plan_id}` },
-            ],
+            invalidatesTags: (_result, _error, body) => {
+                if (body.training_plan_id != null) {
+                    return [{ type: "MonthlyPlan", id: `PLAN-${body.training_plan_id}` }];
+                }
+                if (body.client_id != null) {
+                    return [{ type: "MonthlyPlan", id: `CLIENT-${body.client_id}` }];
+                }
+                return [{ type: "MonthlyPlan" }];
+            },
         }),
 
         /**

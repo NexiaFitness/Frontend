@@ -20,13 +20,19 @@ import {
 export const getMonthlyPlansHandler = http.get("*/planning/monthly", async ({ request }) => {
     const url = new URL(request.url);
     const training_plan_id = url.searchParams.get("training_plan_id");
-    if (!training_plan_id) {
-        return HttpResponse.json({ detail: "training_plan_id required" }, { status: 400 });
+    const client_id = url.searchParams.get("client_id");
+    if (!training_plan_id && !client_id) {
+        return HttpResponse.json(
+            { detail: "Either training_plan_id or client_id must be provided" },
+            { status: 400 }
+        );
     }
     const month = url.searchParams.get("month");
+    const planId = training_plan_id ? Number(training_plan_id) : null;
+    const clientId = client_id ? Number(client_id) : null;
     const list = month
-        ? [createMockMonthlyPlan({ id: 1, training_plan_id: Number(training_plan_id), month })]
-        : [createMockMonthlyPlan({ id: 1, training_plan_id: Number(training_plan_id) })];
+        ? [createMockMonthlyPlan({ id: 1, training_plan_id: planId, client_id: clientId, month })]
+        : [createMockMonthlyPlan({ id: 1, training_plan_id: planId, client_id: clientId })];
     return HttpResponse.json(list, { status: 200 });
 });
 
@@ -40,11 +46,16 @@ export const getMonthlyPlanHandler = http.get(
 );
 
 export const createMonthlyPlanHandler = http.post("*/planning/monthly", async ({ request }) => {
-    const body = (await request.json()) as { training_plan_id: number; month: string };
+    const body = (await request.json()) as {
+        training_plan_id?: number | null;
+        client_id?: number | null;
+        month: string;
+    };
     return HttpResponse.json(
         createMockMonthlyPlan({
             id: 2,
-            training_plan_id: body.training_plan_id,
+            training_plan_id: body.training_plan_id ?? null,
+            client_id: body.client_id ?? null,
             month: body.month,
         }),
         { status: 201 }

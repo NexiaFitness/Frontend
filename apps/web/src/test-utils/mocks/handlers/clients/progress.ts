@@ -36,13 +36,27 @@ export const getClientProgressHistoryEmptyHandler = http.get("*/progress/", asyn
     return HttpResponse.json([], { status: 200 });
 });
 
-export const getClientProgressHistoryErrorHandler = http.get("*/progress/", async () => {
-    await new Promise((res) => setTimeout(res, 100));
-    return HttpResponse.json(
-        { detail: "Error fetching progress history" },
-        { status: 500 }
-    );
-});
+/**
+ * Solo hace match en GET /progress/?client_id= (historial).
+ * No afecta a GET /progress/analytics/:id para que tests de error progreso
+ * tengan analytics OK y el componente pueda renderizar.
+ */
+export const getClientProgressHistoryErrorHandler = http.get(
+    ({ request }) => {
+        const url = new URL(request.url);
+        return (
+            !url.pathname.includes("/analytics") &&
+            url.searchParams.has("client_id")
+        );
+    },
+    async () => {
+        await new Promise((res) => setTimeout(res, 100));
+        return HttpResponse.json(
+            { detail: "Error fetching progress history" },
+            { status: 500 }
+        );
+    }
+);
 
 // GET /progress/analytics/:id
 export const getProgressAnalyticsHandler = http.get("*/progress/analytics/:id", async ({ params }) => {

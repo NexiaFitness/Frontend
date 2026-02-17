@@ -14,6 +14,9 @@ import path from 'path'
 export default defineConfig({
     plugins: [react()],
     test: {
+        // Exclude E2E specs (run with Playwright: pnpm -F web test:e2e)
+        exclude: ['**/node_modules/**', '**/dist/**', '**/e2e/**'],
+
         // Environment configuration
         environment: 'jsdom',
         globals: true,

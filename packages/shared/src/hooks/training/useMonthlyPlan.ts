@@ -1,11 +1,13 @@
 /**
- * useMonthlyPlan.ts — Hook para baseline mensual (Plan de cargas Fase 1)
+ * useMonthlyPlan.ts — Hook para baseline mensual (Plan de cargas Fase 1+4+5)
  *
- * Encapsula get/create/update/delete de monthly plans por training plan.
+ * Encapsula get/create/update/delete de monthly plans.
+ * Modos: planId (training plan) o clientId (client-only sin plan).
  * Lógica en shared; UI en web.
  *
  * @author Frontend Team
  * @since Plan de cargas Fase 1
+ * @updated Fase 4+5 - planId/clientId opcionales, modo client-only
  */
 
 import { useCallback } from "react";
@@ -22,7 +24,8 @@ import type {
 } from "../../types/planningCargas";
 
 interface UseMonthlyPlanParams {
-    planId: number;
+    planId?: number | null;
+    clientId?: number | null;
     month?: string;
 }
 
@@ -40,16 +43,28 @@ interface UseMonthlyPlanReturn {
     isDeleting: boolean;
 }
 
+const hasValidParams = (planId?: number | null, clientId?: number | null): boolean =>
+    (planId != null && planId > 0) || (clientId != null && clientId > 0);
+
 /**
- * Hook para gestionar baseline mensual de un training plan.
+ * Hook para gestionar baseline mensual. Usa planId (modo plan) o clientId (modo client-only).
  */
 export function useMonthlyPlan({
     planId,
+    clientId,
     month,
 }: UseMonthlyPlanParams): UseMonthlyPlanReturn {
+    const queryParams =
+        planId != null && planId > 0
+            ? { training_plan_id: planId, month, skip: 0, limit: 100 }
+            : clientId != null && clientId > 0
+              ? { client_id: clientId, month, skip: 0, limit: 500 }
+              : null;
+
+    const shouldSkip = !hasValidParams(planId, clientId);
     const { data: monthlyPlans = [], isLoading, isError, error } = useGetMonthlyPlansQuery(
-        { training_plan_id: planId, month, skip: 0, limit: 100 },
-        { skip: !planId }
+        queryParams ?? {},
+        { skip: shouldSkip }
     );
 
     const [createMutation, { isLoading: isCreating }] = useCreateMonthlyPlanMutation();

@@ -19,12 +19,14 @@ export interface QualityConfig {
 
 // ---------------------------------------------------------------------------
 // Baseline mensual (monthly_plan)
-// month: "YYYY-MM". training_plan_id obligatorio; client_id opcional (índices).
+// month: "YYYY-MM".
+// training_plan_id: opcional (client-only mode); si null, client_id requerido.
+// client_id: opcional cuando hay plan; requerido cuando training_plan_id es null.
 // ---------------------------------------------------------------------------
 
 export interface MonthlyPlan {
   id: number;
-  training_plan_id: number;
+  training_plan_id: number | null;
   client_id: number | null;
   month: string; // "YYYY-MM"
   qualities: QualityConfig | null;
@@ -34,7 +36,7 @@ export interface MonthlyPlan {
 }
 
 export interface MonthlyPlanCreate {
-  training_plan_id: number;
+  training_plan_id?: number | null;
   client_id?: number | null;
   month: string;
   qualities?: QualityConfig | null;

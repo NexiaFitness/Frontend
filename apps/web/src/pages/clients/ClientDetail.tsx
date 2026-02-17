@@ -10,6 +10,7 @@
  * @since v3.1.0
  * @updated v6.0.0 - Integración de Breadcrumbs jerárquicos.
  * @updated v6.2.0 - Ola 2 S03: swap a 6 tabs; "Sesiones" reemplaza Programación de Sesiones + Entrenamientos.
+ * @updated Fase 6 - Tab Planificación (planificación client-only o por plan asociado).
  */
 
 import React, { Suspense, lazy } from "react";
@@ -30,6 +31,7 @@ import { ClientDailyCoherenceTab } from "@/components/clients/detail/ClientDaily
 import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
+import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
 const ClientProgressTab = lazy(() => 
@@ -38,7 +40,7 @@ const ClientProgressTab = lazy(() =>
     }))
 );
 
-type TabId = "overview" | "sessions" | "daily-coherence" | "testing" | "progress" | "injuries";
+type TabId = "overview" | "sessions" | "daily-coherence" | "testing" | "progress" | "planning" | "injuries";
 
 interface Tab {
     id: TabId;
@@ -52,6 +54,7 @@ const TABS: Tab[] = [
     { id: "daily-coherence", label: "Coherencia Diaria" },
     { id: "testing", label: "Tests" },
     { id: "progress", label: "Progreso" },
+    { id: "planning", label: "Planificación" },
     { id: "injuries", label: "Lesiones" },
 ];
 
@@ -231,6 +234,14 @@ export const ClientDetail: React.FC = () => {
                             progressAnalytics={progressAnalytics}
                         />
                     </Suspense>
+                );
+            case "planning":
+                return (
+                    <ClientPlanningTab
+                        clientId={clientId}
+                        trainingPlans={trainingPlans ?? []}
+                        isLoadingPlans={isLoadingPlans}
+                    />
                 );
             case "injuries":
                 return <ClientInjuriesTab clientId={clientId} />;
