@@ -1,21 +1,15 @@
 /**
  * Dashboard específico para atletas/clientes.
- * Renderiza AthleteSideMenu + contenido específico utilizando DashboardLayout.
- * 
- * RESPONSIVE BEHAVIOR:
- * - Desktop: AthleteSideMenu visible + DashboardLayout offset
- * - Mobile/Tablet: DashboardNavbar + AthleteSideMenu hidden
+ * Chrome (sidebar, navbar) provisto por DashboardShell en Fase 2a.
  *
  * @author Frontend Team
- * @since v4.1.0 - Unified responsive behavior with DashboardNavbar
+ * @since v4.1.0
+ * @updated v5.0.0 - Nexia Sparkle Flow Fase 2a: chrome centralizado en DashboardShell
  */
 
 import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { AthleteSideMenu } from "@/components/dashboard/athlete/AthleteSideMenu";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
 import { TYPOGRAPHY } from "@/utils/typography";
 import type { RootState } from "@nexia/shared/store";
@@ -24,25 +18,9 @@ export const AthleteDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    // Menu items para mobile navbar - Athlete específico
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Mi Plan", path: "/dashboard/my-plan" },
-        { label: "Mis Sesiones", path: "/dashboard/sessions" },
-        { label: "Progreso", path: "/dashboard/progress" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     return (
         <>
-            {/* Mobile/Tablet Navbar - visible cuando sidebar desaparece */}
-            <DashboardNavbar menuItems={menuItems} />
-
-            {/* Desktop Sidebar - oculto en mobile/tablet */}
-            <AthleteSideMenu />
-
-            <DashboardLayout>
-                {/* Header */}
+            {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Bienvenido {user?.nombre}, a tu Panel de Entrenamiento
@@ -153,7 +131,6 @@ export const AthleteDashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

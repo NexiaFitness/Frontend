@@ -19,9 +19,10 @@ import type { RootState } from "@nexia/shared/store";
 
 interface DashboardNavbarProps {
     menuItems: Array<{ label: string; path: string }>;
+    footerSubtitle?: string;
 }
 
-export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) => {
+export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems, footerSubtitle = "Professional Trainer" }) => {
     const { user } = useSelector((state: RootState) => state.auth);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -31,7 +32,7 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) =
     return (
         <>
             {/* Navbar visible solo en mobile/tablet */}
-            <nav className="lg:hidden bg-sidebar-header border-b border-gray-800 sticky top-0 z-50">
+            <nav className="sticky top-0 z-50 border-b border-border bg-sidebar lg:hidden">
                 <div className="px-4 sm:px-6 lg:px-8 w-full">
                     <div className="flex justify-between items-center h-navbar-mobile lg:h-navbar-desktop">
                         {/* Logo a la izquierda */}
@@ -40,15 +41,15 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) =
                         {/* User info + botón hamburguesa */}
                         <div className="flex items-center space-x-4">
                             <div className="hidden sm:block text-right">
-                                <span className="text-white font-semibold text-lg block">Dashboard</span>
-                                <p className="text-slate-300 text-sm">
+                                <span className="block text-lg font-semibold text-sidebar-foreground">Dashboard</span>
+                                <p className="text-sm text-sidebar-foreground/80">
                                     {user?.nombre} {user?.apellidos}
                                 </p>
                             </div>
 
                             <button
                                 onClick={toggleMobileMenu}
-                                className="text-white hover:text-blue-400 focus:outline-none focus:text-blue-400 transition-colors duration-200 p-3 -mr-3 rounded-lg hover:bg-white/10 flex items-center justify-center min-h-[48px] min-w-[48px]"
+                                className="-mr-3 flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg p-3 text-sidebar-foreground transition-colors hover:bg-sidebar-accent/50 hover:text-sidebar-foreground focus:outline-none focus:text-primary"
                                 aria-label="Abrir menú"
                             >
                                 <svg
@@ -78,6 +79,7 @@ export const DashboardNavbar: React.FC<DashboardNavbarProps> = ({ menuItems }) =
                 onClose={closeMobileMenu}
                 menuItems={menuItems}
                 user={user}
+                footerSubtitle={footerSubtitle}
             />
         </>
     );
@@ -90,6 +92,7 @@ interface DashboardSideMenuProps {
     isOpen: boolean;
     onClose: () => void;
     menuItems: Array<{ label: string; path: string }>;
+    footerSubtitle?: string;
     user: {
         nombre?: string;
         apellidos?: string;
@@ -102,6 +105,7 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
     onClose,
     menuItems,
     user,
+    footerSubtitle = "Professional Trainer",
 }) => {
     const location = useLocation();
     const isActiveLink = (href: string) => location.pathname === href;
@@ -110,10 +114,9 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
         <>
             {/* Overlay */}
             <div
-                className={`fixed inset-0 z-40 transition-opacity duration-300 ${
+                className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-300 ${
                     isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
-                style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
                 onClick={onClose}
             />
 
@@ -127,7 +130,7 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
                     h-[calc(100vh-theme(space.navbar-mobile))] 
                     lg:h-[calc(100vh-theme(space.navbar-desktop))] 
                     z-50 transform transition-transform duration-500 ease-in-out 
-                    bg-sidebar-nav 
+                    bg-sidebar 
                     ${isOpen ? "translate-x-0" : "translate-x-full"}
                 `}
             >
@@ -140,22 +143,11 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
                                     <Link
                                         to={path}
                                         onClick={onClose}
-                                        className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                                        className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
                                             isActiveLink(path)
-                                                ? "text-white font-semibold"
-                                                : "text-white/80 hover:text-white"
+                                                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
                                         }`}
-                                        style={isActiveLink(path) ? { backgroundColor: 'rgba(4, 21, 32, 1)' } : {}}
-                                        onMouseEnter={(e) => {
-                                            if (!isActiveLink(path)) {
-                                                e.currentTarget.style.backgroundColor = 'rgba(74, 103, 179, 0.3)';
-                                            }
-                                        }}
-                                        onMouseLeave={(e) => {
-                                            if (!isActiveLink(path)) {
-                                                e.currentTarget.style.backgroundColor = 'transparent';
-                                            }
-                                        }}
                                     >
                                         <span className="text-lg">{label}</span>
                                     </Link>
@@ -166,18 +158,18 @@ const DashboardSideMenu: React.FC<DashboardSideMenuProps> = ({
 
                   {/* Bottom Section: User Actions */}
 <div className="px-6 pb-6">
-    <div className="mb-6 pt-6 border-t border-white/60">
+    <div className="mb-6 pt-6 border-t border-sidebar-border">
         <div className="mb-4 text-center">
-            <p className="text-white font-medium">
+            <p className="font-medium text-sidebar-foreground">
                 {user?.nombre} {user?.apellidos}
             </p>
-            <p className="text-slate-300 text-sm">Professional Trainer</p>
+            <p className="text-sm text-sidebar-foreground/70">{footerSubtitle}</p>
         </div>
         <LogoutButton
             variant="secondary"
             confirmationRequired={true}
             showUserName={false}
-            className="w-full text-sm bg-slate-700 hover:bg-slate-600 text-white"
+            className="w-full bg-surface-2 text-sm hover:bg-surface-2/80"
         />
     </div>
 </div>

@@ -21,9 +21,6 @@
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileBanner, EmailVerificationBanner } from "@/components/dashboard/shared";
 import { CompleteProfileModal } from "@/components/dashboard/modals";
 import {
@@ -41,7 +38,6 @@ import {
 } from "@nexia/shared";
 import { baseApi } from "@nexia/shared/api/baseApi";
 import type { RootState, AppDispatch } from "@nexia/shared/store";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 export const TrainerDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -90,14 +86,7 @@ export const TrainerDashboard: React.FC = () => {
 
     return (
         <>
-            {/* Navbar móvil / tablet */}
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-
-            {/* Sidebar escritorio */}
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* Header con nombre y fecha */}
+            {/* Header con nombre y fecha */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-2">
                         ¡Bienvenido de vuelta, {user?.nombre}!
@@ -253,7 +242,6 @@ export const TrainerDashboard: React.FC = () => {
                         <ClientProgressWidget />
                     </div>
                 </div>
-            </DashboardLayout>
 
             {/* Modal de Complete Profile */}
             <CompleteProfileModal

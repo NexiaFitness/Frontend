@@ -13,9 +13,6 @@
 import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { AdminSideMenu } from "@/components/dashboard/admin/AdminSideMenu";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { Button } from "@/components/ui/buttons";
 import { TYPOGRAPHY } from "@/utils/typography";
 import type { RootState } from "@nexia/shared/store";
@@ -24,25 +21,9 @@ export const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
 
-    // Menu items para mobile navbar - Admin específico
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Usuarios", path: "/dashboard/users" },
-        { label: "Entrenadores", path: "/dashboard/trainers" },
-        { label: "Sistema", path: "/dashboard/system" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     return (
         <>
-            {/* Mobile/Tablet Navbar - visible cuando sidebar desaparece */}
-            <DashboardNavbar menuItems={menuItems} />
-
-            {/* Desktop Sidebar - oculto en mobile/tablet */}
-            <AdminSideMenu />
-
-            <DashboardLayout>
-                {/* Header */}
+            {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Bienvenido {user?.nombre}, Panel de Administración
@@ -153,7 +134,6 @@ export const AdminDashboard: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

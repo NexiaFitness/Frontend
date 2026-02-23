@@ -67,6 +67,7 @@ import Account from "./pages/account/Account";
 
 // Layouts
 import { PublicLayout } from "./components/ui/layout/PublicLayout";
+import { DashboardShell } from "./components/dashboard/DashboardShell";
 
 // UI Components
 import { ToastProvider } from "./components/ui/feedback";
@@ -139,15 +140,17 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
       </Route>
 
-      {/* Dashboard principal */}
+      {/* Dashboard principal - DashboardShell solo para index; páginas secundarias conservan chrome hasta Fase 2b */}
       <Route
         path="/dashboard"
         element={
           <ProtectedRoute>
-            <DashboardRouter />
+            <DashboardShell />
           </ProtectedRoute>
         }
-      />
+      >
+        <Route index element={<DashboardRouter />} />
+      </Route>
 
       {/* ============================================ */}
       {/* TRAINING PLANS MANAGEMENT - Trainers only */}

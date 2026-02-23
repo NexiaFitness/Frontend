@@ -12,6 +12,9 @@
  */
 
 export * from "./layout";
+export { DashboardShell } from "./DashboardShell";
+export { DashboardSidebar } from "./DashboardSidebar";
+export { DashboardNavbar } from "./DashboardNavbar";
 export { TrainerSideMenu } from "./trainer";
 export { AdminSideMenu } from "./admin";
 export { AthleteSideMenu } from "./athlete";

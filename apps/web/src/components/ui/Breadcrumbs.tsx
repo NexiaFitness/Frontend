@@ -15,6 +15,7 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 
 export interface BreadcrumbItem {
     label: string;
@@ -40,19 +41,10 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
                 {safeItems.map((item, index) => (
                     <li key={index} className="flex items-center">
                         {index > 0 && (
-                            <svg
+                            <ChevronRight
                                 className="mx-1 size-3.5 shrink-0 text-muted-foreground"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 20 20"
-                                fill="currentColor"
                                 aria-hidden
-                            >
-                                <path
-                                    fillRule="evenodd"
-                                    d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                                    clipRule="evenodd"
-                                />
-                            </svg>
+                            />
                         )}
                         {item && item.path && !item.active ? (
                             <Link
