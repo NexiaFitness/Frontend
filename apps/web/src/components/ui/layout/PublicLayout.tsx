@@ -20,7 +20,7 @@ import { PublicNavbar } from "./navbar/PublicNavbar";
 
 export const PublicLayout: React.FC = () => {
     return (
-        <div className="min-h-screen flex flex-col bg-sidebar-header">
+        <div className="min-h-screen flex flex-col bg-background">
             {/* Navbar pública */}
             <PublicNavbar />
 

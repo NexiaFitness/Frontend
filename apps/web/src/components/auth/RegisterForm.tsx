@@ -23,8 +23,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { TYPOGRAPHY } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useRegisterMutation, loginSuccess, loginFailure } from "@nexia/shared";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
 import { USER_ROLES } from "@nexia/shared/config/constants";
@@ -188,10 +186,10 @@ export const RegisterForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2`} style={{ color: '#4A67B3' }}>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-primary">
                     Únete a NEXIA
                 </h1>
-                <p className={`${TYPOGRAPHY.body} text-gray-600`}>
+                <p className="text-sm sm:text-base text-muted-foreground">
                     Crea tu cuenta para empezar a entrenar de forma profesional
                 </p>
             </div>
@@ -273,20 +271,17 @@ export const RegisterForm: React.FC = () => {
                     size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className={BUTTON_PRESETS.formPrimary}
+                    className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3"
                 >
                     {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
 
-                <div className="text-center text-sm text-gray-600">
+                <div className="text-center text-sm text-muted-foreground">
                     ¿Ya tienes cuenta?{" "}
                     <button
                         type="button"
                         onClick={handleLogin}
-                        className={`${TYPOGRAPHY.linkText} underline disabled:opacity-50`}
-                        style={{ color: '#4A67B3' }}
-                        onMouseEnter={(e) => e.currentTarget.style.color = '#3a5db3'}
-                        onMouseLeave={(e) => e.currentTarget.style.color = '#4A67B3'}
+                        className="text-sm sm:text-base font-medium text-primary underline underline-offset-4 hover:text-primary/90 disabled:opacity-50"
                         disabled={isLoading}
                     >
                         Inicia sesión

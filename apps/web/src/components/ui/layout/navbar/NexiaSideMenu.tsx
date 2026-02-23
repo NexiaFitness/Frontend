@@ -27,10 +27,9 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
         <>
             {/* Overlay */}
             <div
-                className={`fixed inset-0 z-40 transition-opacity duration-300 ${
+                className={`fixed inset-0 z-40 transition-opacity duration-300 bg-black/60 ${
                     isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
-                style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
                 onClick={onClose}
             />
 
@@ -44,7 +43,7 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
                     h-[calc(100vh-theme(space.navbar-mobile))] 
                     lg:h-[calc(100vh-theme(space.navbar-desktop))] 
                     z-50 transform transition-transform duration-500 ease-in-out 
-                    bg-sidebar-nav 
+                    bg-surface 
                     ${isOpen ? "translate-x-0" : "translate-x-full"}
                 `}
             >

@@ -31,7 +31,7 @@ export const PublicNavbar: React.FC = () => {
 
     return (
         <>
-            <nav className="bg-sidebar-header border-b border-gray-800 sticky top-0 z-50">
+            <nav className="bg-surface border-b border-border sticky top-0 z-50">
                 <div className="px-4 sm:px-6 lg:px-8 w-full">
                     <div className="flex justify-between items-center h-navbar-mobile lg:h-navbar-desktop">
                         <Link
@@ -58,8 +58,8 @@ export const PublicNavbar: React.FC = () => {
                             <button
                                 onClick={toggleMobileMenu}
                                 className="
-                  text-white hover:text-blue-400 focus:outline-none focus:text-blue-400 
-                  transition-colors duration-200 p-3 -mr-3 rounded-lg hover:bg-white/10 
+                  text-foreground hover:text-primary focus:outline-none focus:text-primary 
+                  transition-colors duration-200 p-3 -mr-3 rounded-lg hover:bg-accent 
                   flex items-center justify-center min-h-[48px] min-w-[48px]
                 "
                                 aria-label="Abrir menú"

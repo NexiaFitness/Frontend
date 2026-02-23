@@ -1,16 +1,15 @@
 /**
  * NexiaLogo — Componente de logotipo NEXIA.
- * 
- * Escalable y responsive:
- * - Permite pasar `className` para controlar tamaño y estilos desde fuera.
- * - Fallback seguro si no se pasa ninguna clase.
  *
- * @autor Frontend Team
+ * Escalable y responsive. Usa cn() para consistencia con tokens.
+ * En tema oscuro el logo debe tener contraste adecuado (img con filter si necesario).
+ *
+ * @author Frontend Team
  * @since v1.0.0
- * @updated v1.1.0 - Soporte para prop className
+ * @updated v5.0.0 - Nexia Sparkle Flow (Fase 3)
  */
 import React from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 
 interface NexiaLogoProps {
   className?: string;
@@ -21,7 +20,7 @@ export const NexiaLogo: React.FC<NexiaLogoProps> = ({ className }) => {
     <img
       src="/NEXIA-2.png"
       alt="NEXIA Fitness"
-      className={clsx("mx-auto h-auto", className || "w-96")}
+      className={cn("mx-auto h-auto", className || "w-96")}
     />
   );
 };
