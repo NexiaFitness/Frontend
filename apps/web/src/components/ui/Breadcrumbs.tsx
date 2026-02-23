@@ -5,8 +5,12 @@
  * - Proporciona contexto de ubicación al usuario
  * - Permite volver a niveles superiores (ej. Clientes > Atleta > Plan)
  *
+ * Notas de mantenimiento:
+ * - Tokens: text-muted-foreground, hover:text-primary, text-foreground.
+ *
  * @author Frontend Team
  * @since v6.0.0
+ * @updated v5.0.0 - Nexia Sparkle Flow: tokens
  */
 
 import React from "react";
@@ -37,11 +41,11 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
                     <li key={index} className="flex items-center">
                         {index > 0 && (
                             <svg
-                                className="flex-shrink-0 h-4 w-4 text-gray-400 mx-1"
+                                className="mx-1 size-3.5 shrink-0 text-muted-foreground"
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 20 20"
                                 fill="currentColor"
-                                aria-hidden="true"
+                                aria-hidden
                             >
                                 <path
                                     fillRule="evenodd"
@@ -53,15 +57,17 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ items = [], className 
                         {item && item.path && !item.active ? (
                             <Link
                                 to={item.path}
-                                className="text-gray-400 hover:text-[#4A67B3] transition-colors"
+                                className="text-muted-foreground transition-colors hover:text-primary"
                             >
                                 {item.label}
                             </Link>
                         ) : (
                             <span
-                                className={`${
-                                    item?.active ? "text-[#4A67B3] font-semibold" : "text-gray-400"
-                                }`}
+                                className={
+                                    item?.active
+                                        ? "font-semibold text-foreground"
+                                        : "text-muted-foreground"
+                                }
                                 aria-current={item?.active ? "page" : undefined}
                             >
                                 {item?.label || ""}

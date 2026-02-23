@@ -14,13 +14,21 @@
  *
  * @author Frontend Team
  * @since v1.0.0
- * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
+ * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn(), variantes default/destructive/ghost/link
  */
 
 import React, { forwardRef } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "outline";
+export type ButtonVariant =
+    | "default"
+    | "primary"
+    | "destructive"
+    | "danger"
+    | "outline"
+    | "secondary"
+    | "ghost"
+    | "link";
 export type ButtonSize = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -30,16 +38,25 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-    "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
 
-const variantStyles: Record<ButtonVariant, string> = {
+const variantStyles: Record<string, string> = {
+    default:
+        "bg-primary text-primary-foreground hover:bg-primary/90",
     primary:
-        "bg-primary-600 text-white border-2 border-transparent hover:bg-white hover:text-primary-600 hover:border-primary-600 focus:ring-primary-500",
-    secondary:
-        "bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30 focus:ring-white/50",
-    danger: "bg-red-600 text-white border-2 border-transparent hover:bg-red-700 hover:border-red-700 focus:ring-red-500",
+        "bg-primary text-primary-foreground hover:bg-primary/90",
+    destructive:
+        "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    danger:
+        "bg-destructive text-destructive-foreground hover:bg-destructive/90",
     outline:
-        "bg-transparent border-2 border-sidebar-header text-sidebar-header hover:bg-sidebar-header hover:text-white focus:ring-sidebar-header",
+        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+    secondary:
+        "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    ghost:
+        "hover:bg-accent hover:text-accent-foreground",
+    link:
+        "text-primary underline-offset-4 hover:underline",
 };
 
 // Mobile-first → escalado en sm/md
@@ -70,7 +87,7 @@ export const Button = forwardRef<
         return (
             <button
                 ref={ref}
-                className={clsx(
+                className={cn(
                     baseStyles,
                     variantStyles[variant],
                     sizeStyles[size],
@@ -81,7 +98,7 @@ export const Button = forwardRef<
             >
                 {isLoading && (
                     <span
-                        className="mr-2 inline-block animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                        className="mr-2 inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
                         aria-hidden="true"
                     />
                 )}

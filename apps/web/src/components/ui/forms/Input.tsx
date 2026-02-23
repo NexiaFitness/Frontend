@@ -10,11 +10,11 @@
  *
  * @author Frontend Team
  * @since v2.0.0
- * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
+ * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn()
  */
 
 import React, { forwardRef, useId, useState } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 
 export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
 export type InputSize = "sm" | "md" | "lg";
@@ -28,7 +28,8 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
     helperText?: string;
 }
 
-const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-400 text-gray-900 caret-primary-600`;
+const baseStyles =
+    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
 
 // Mobile-first responsive sizes
 const sizeStyles: Record<InputSize, string> = {
@@ -45,13 +46,13 @@ const passwordSizeStyles: Record<InputSize, string> = {
 };
 
 const stateStyles = {
-    default: "border-gray-300 focus:border-primary-500 focus:ring-primary-500",
-    error: "border-red-500 focus:border-red-500 focus:ring-red-500",
+    default: "border-input focus-visible:border-ring",
+    error: "border-destructive focus-visible:ring-destructive",
 };
 
-const labelStyles = "block text-sm font-medium text-gray-600 mb-1";
-const errorStyles = "mt-1 text-sm text-red-600 dark:text-red-400";
-const helperStyles = "mt-1 text-sm text-gray-500 dark:text-gray-400";
+const labelStyles = "block text-sm font-medium text-foreground mb-1";
+const errorStyles = "mt-1 text-sm text-destructive";
+const helperStyles = "mt-1 text-sm text-muted-foreground";
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
@@ -84,7 +85,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 {label && (
                     <label htmlFor={inputId} className={labelStyles}>
                         {label}
-                        {isRequired && <span className="text-white ml-1">*</span>}
+                        {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
                 )}
 
@@ -93,7 +94,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         ref={ref}
                         id={inputId}
                         type={currentInputType}
-                        className={clsx(
+                        className={cn(
                             baseStyles,
                             inputSizeStyles,
                             error ? stateStyles.error : stateStyles.default,
@@ -106,7 +107,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         <button
                             type="button"
                             onClick={togglePasswordVisibility}
-                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-primary-600 transition-colors"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:text-primary transition-colors"
                             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                             tabIndex={0}
                         >

@@ -8,11 +8,11 @@
  *
  * Responsabilidades:
  * - Mostrar título, valor y subtítulo opcional
- * - Aplicar colores según tipo de métrica
- * - Diseño responsive
+ * - Aplicar colores según tipo de métrica (tokens Sparkle)
  *
  * @author Frontend Team
  * @since v5.0.0
+ * @updated v5.0.0 - Nexia Sparkle Flow: tokens (blue→primary, green→success, etc.)
  */
 
 import React from "react";
@@ -25,10 +25,10 @@ export interface MetricCardProps {
 }
 
 const colorClasses: Record<NonNullable<MetricCardProps["color"]>, string> = {
-    blue: "bg-blue-50 border-blue-200 text-blue-800",
-    green: "bg-green-50 border-green-200 text-green-800",
-    orange: "bg-orange-50 border-orange-200 text-orange-800",
-    red: "bg-red-50 border-red-200 text-red-800",
+    blue: "bg-primary/20 border-primary/30 text-primary",
+    green: "bg-success/20 border-success/30 text-success",
+    orange: "bg-warning/20 border-warning/30 text-warning",
+    red: "bg-destructive/20 border-destructive/30 text-destructive",
 };
 
 export const MetricCard: React.FC<MetricCardProps> = ({

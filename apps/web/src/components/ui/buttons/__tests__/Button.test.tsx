@@ -21,7 +21,7 @@ describe("Button", () => {
 
             const button = screen.getByRole("button", { name: "Test Button" })
             expect(button).toBeInTheDocument()
-            expect(button).toHaveClass("bg-primary-600") // default primary variant
+            expect(button).toHaveClass("bg-primary")
             // Mobile-first: md size = px-3 py-2 text-sm en mobile
             expect(button).toHaveClass("px-3", "py-2", "text-sm")
             expect(button).toHaveClass("sm:px-4", "sm:py-2.5", "sm:text-base")
@@ -45,22 +45,22 @@ describe("Button", () => {
     describe("Variants", () => {
         it("renders primary variant correctly", () => {
             render(<Button variant="primary">Primary</Button>)
-            expect(screen.getByRole("button")).toHaveClass("bg-primary-600", "text-white")
+            expect(screen.getByRole("button")).toHaveClass("bg-primary", "text-primary-foreground")
         })
 
         it("renders secondary variant correctly", () => {
             render(<Button variant="secondary">Secondary</Button>)
-            expect(screen.getByRole("button")).toHaveClass("bg-white/20", "backdrop-blur-sm", "border", "border-white")
+            expect(screen.getByRole("button")).toHaveClass("bg-secondary", "text-secondary-foreground")
         })
 
         it("renders danger variant correctly", () => {
             render(<Button variant="danger">Danger</Button>)
-            expect(screen.getByRole("button")).toHaveClass("bg-red-600", "text-white")
+            expect(screen.getByRole("button")).toHaveClass("bg-destructive", "text-destructive-foreground")
         })
 
         it("renders outline variant correctly", () => {
             render(<Button variant="outline">Outline</Button>)
-            expect(screen.getByRole("button")).toHaveClass("bg-transparent", "border-2", "border-sidebar-header")
+            expect(screen.getByRole("button")).toHaveClass("border-input", "bg-background")
         })
     })
 
@@ -114,7 +114,7 @@ describe("Button", () => {
             render(<Button disabled>Disabled</Button>)
             const button = screen.getByRole("button")
             expect(button).toBeDisabled()
-            expect(button).toHaveClass("disabled:opacity-50", "disabled:cursor-not-allowed")
+            expect(button).toHaveClass("disabled:opacity-50", "disabled:pointer-events-none")
         })
 
         it("prioritizes loading over disabled prop", () => {
@@ -131,7 +131,7 @@ describe("Button", () => {
             render(<Button className="custom-class">Styled</Button>)
             const button = screen.getByRole("button")
             expect(button).toHaveClass("custom-class")
-            expect(button).toHaveClass("bg-primary-600")
+            expect(button).toHaveClass("bg-primary")
         })
 
         it("passes through HTML button attributes", () => {
@@ -185,7 +185,7 @@ describe("Button", () => {
         it("combines variant and size classes correctly", () => {
             render(<Button variant="danger" size="lg">Large Danger</Button>)
             const button = screen.getByRole("button")
-            expect(button).toHaveClass("bg-red-600")
+            expect(button).toHaveClass("bg-destructive")
             // lg size classes mobile-first
             expect(button).toHaveClass("px-4", "py-2.5", "text-base")
             expect(button).toHaveClass("sm:px-5", "sm:py-3", "sm:text-lg")
