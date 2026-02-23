@@ -12,10 +12,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
@@ -215,9 +211,6 @@ export const NewScheduledSessionPage: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-            <DashboardLayout>
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
@@ -523,7 +516,6 @@ export const NewScheduledSessionPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

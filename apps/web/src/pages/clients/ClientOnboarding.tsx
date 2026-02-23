@@ -40,10 +40,6 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { ClientOnboardingForm } from "@/components/clients/onboarding/ClientOnboardingForm";
 import type { ClientFormData } from "@nexia/shared/types/client";
 
@@ -63,11 +59,7 @@ export const ClientOnboarding: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* ClientOnboardingForm con wizard */}
+            {/* ClientOnboardingForm con wizard */}
                 <ClientOnboardingForm
                     initialData={initialFormData}
                     onSubmitSuccess={handleSuccess}
@@ -104,7 +96,6 @@ export const ClientOnboarding: React.FC = () => {
                         </p>
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

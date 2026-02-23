@@ -15,67 +15,12 @@
  */
 
 import React from "react";
-import { useSelector } from "react-redux";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer";
-import { AdminSideMenu } from "@/components/dashboard/admin";
-import { AthleteSideMenu } from "@/components/dashboard/athlete";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { TYPOGRAPHY } from "@/utils/typography";
-import type { RootState } from "@nexia/shared/store";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 
 export const Account: React.FC = () => {
-    const { user } = useSelector((state: RootState) => state.auth);
-
-    const getMenuItems = () => {
-        switch (user?.role) {
-            case "admin":
-                return [
-                    { label: "Dashboard", path: "/dashboard" },
-                    { label: "Usuarios", path: "/dashboard/users" },
-                    { label: "Entrenadores", path: "/dashboard/trainers" },
-                    { label: "Sistema", path: "/dashboard/system" },
-                    { label: "Mi cuenta", path: "/dashboard/account" },
-                ];
-            case "trainer":
-                return TRAINER_MENU_ITEMS;
-            case "athlete":
-                return [
-                    { label: "Dashboard", path: "/dashboard" },
-                    { label: "Mi Plan", path: "/dashboard/my-plan" },
-                    { label: "Mis Sesiones", path: "/dashboard/sessions" },
-                    { label: "Progreso", path: "/dashboard/progress" },
-                    { label: "Mi cuenta", path: "/dashboard/account" },
-                ];
-            default:
-                return [
-                    { label: "Dashboard", path: "/dashboard" },
-                    { label: "Mi cuenta", path: "/dashboard/account" },
-                ];
-        }
-    };
-
-    const renderSideMenu = () => {
-        switch (user?.role) {
-            case "admin":
-                return <AdminSideMenu />;
-            case "trainer":
-                return <TrainerSideMenu />;
-            case "athlete":
-                return <AthleteSideMenu />;
-            default:
-                return <TrainerSideMenu />;
-        }
-    };
-
     return (
         <>
-            <DashboardNavbar menuItems={getMenuItems()} />
-            {renderSideMenu()}
-
-            <DashboardLayout>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
@@ -90,7 +35,6 @@ export const Account: React.FC = () => {
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <ProfileForm />
                 </div>
-            </DashboardLayout>
         </>
     );
 };

@@ -12,14 +12,10 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import {
     useGetExerciseByIdQuery,
     useCreateExerciseMutation,
@@ -165,41 +161,25 @@ export const ExerciseForm: React.FC = () => {
 
     if (isEdit && exerciseId && isLoadingPage && !exercise) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex justify-center items-center py-16">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex justify-center items-center py-16">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
     if (isEdit && exerciseId && !isLoadingExercise && !exercise) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="px-4 lg:px-8">
-                        <Alert variant="error">Ejercicio no encontrado</Alert>
-                        <Button onClick={() => navigate("/dashboard/exercises")} className="mt-4">
-                            Volver a Ejercicios
-                        </Button>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="px-4 lg:px-8">
+                <Alert variant="error">Ejercicio no encontrado</Alert>
+                <Button onClick={() => navigate("/dashboard/exercises")} className="mt-4">
+                    Volver a Ejercicios
+                </Button>
+            </div>
         );
     }
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <Button
                         variant="outline"
@@ -348,7 +328,6 @@ export const ExerciseForm: React.FC = () => {
                         </div>
                     </form>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

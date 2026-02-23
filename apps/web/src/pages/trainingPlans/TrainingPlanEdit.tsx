@@ -12,12 +12,8 @@
 
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea, FormSelect } from "@/components/ui/forms";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -121,63 +117,42 @@ export const TrainingPlanEdit: React.FC = () => {
     // Validación de ID
     if (!id || isNaN(planId)) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">ID de plan inválido</Alert>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">ID de plan inválido</Alert>
+            </div>
         );
     }
 
     // Loading state
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex items-center justify-center min-h-screen">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
     // Error state
     if (error || !plan) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">
-                            Error al cargar el plan. Por favor, intenta nuevamente.
-                        </Alert>
-                        <div className="mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => navigate("/dashboard/training-plans")}
-                            >
-                                Volver a la lista
-                            </Button>
-                        </div>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">
+                    Error al cargar el plan. Por favor, intenta nuevamente.
+                </Alert>
+                <div className="mt-4">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/dashboard/training-plans")}
+                    >
+                        Volver a la lista
+                    </Button>
+                </div>
+            </div>
         );
     }
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-            <DashboardLayout>
                 {/* Encabezado responsive igual a dashboards */}
                 <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
                     <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
@@ -348,7 +323,6 @@ export const TrainingPlanEdit: React.FC = () => {
                             </div>
                         </form>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

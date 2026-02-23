@@ -25,11 +25,7 @@ import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
-import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import type { BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 // Tabs components - estáticos (carga inmediata)
@@ -152,30 +148,18 @@ export const TrainingPlanDetail: React.FC = () => {
     // Validación de ID
     if (!id || isNaN(planId)) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">ID de plan de entrenamiento inválido</Alert>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">ID de plan de entrenamiento inválido</Alert>
+            </div>
         );
     }
 
     // Loading state
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex items-center justify-center min-h-screen">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
@@ -184,11 +168,7 @@ export const TrainingPlanDetail: React.FC = () => {
         const isNotFound = error && 'status' in error && error.status === 404;
 
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
+            <div className="p-6">
                         <Alert variant="error">
                             {isNotFound 
                                 ? "El plan de entrenamiento solicitado no existe o ha sido eliminado." 
@@ -211,8 +191,6 @@ export const TrainingPlanDetail: React.FC = () => {
                             </button>
                         </div>
                     </div>
-                </DashboardLayout>
-            </>
         );
     }
 
@@ -246,12 +224,7 @@ export const TrainingPlanDetail: React.FC = () => {
     };
 
     return (
-        <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                <div
+        <div
                     className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20"
                     data-testid="training-plan-detail"
                 >
@@ -317,7 +290,5 @@ export const TrainingPlanDetail: React.FC = () => {
                         {renderTabContent()}
                     </div>
                 </div>
-            </DashboardLayout>
-        </>
     );
 };

@@ -1,18 +1,15 @@
 /**
  * App principal
- * 
+ *
  * Configura las rutas de React Router con:
  * - Layout público para homepage y páginas de autenticación
  * - Smart dashboard routing basado en rol del usuario autenticado
  * - Protección de rutas privadas con redirect automático
- * - Client Management: List, Detail, Onboarding
- * - Training Plans Management: List (FASE 1)
- * 
+ * - Dashboard unificado vía DashboardShell (Fase 2b)
+ *
  * @author Frontend Team
  * @since v1.0.0
- * @updated v3.2.0 - Role-based dashboard routing implementado
- * @updated v3.2.0 - Training Plans Management agregado (FASE 1)
- * @updated v2.6.0 - Client Management Dashboard
+ * @updated v5.0.0 - Fase 2b: todas las rutas dashboard anidadas bajo DashboardShell
  */
 
 import React, { useEffect } from "react";
@@ -82,17 +79,17 @@ import { USER_ROLES } from "@nexia/shared/utils/roles";
 import { hydrateAuth } from "@nexia/shared/store/authSlice";
 
 /**
- * DashboardRouter - Router inteligente basado en roles
+ * DashboardRouter - Router inteligente basado en roles para index /dashboard
  */
 const DashboardRouter: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   switch (user?.role) {
-    case 'admin':
+    case "admin":
       return <AdminDashboard />;
-    case 'trainer':
+    case "trainer":
       return <TrainerDashboard />;
-    case 'athlete':
+    case "athlete":
       return <AthleteDashboard />;
     default:
       console.error(`Unknown user role: ${user?.role}`);
@@ -104,20 +101,18 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, isLoading, user } = useSelector((state: RootState) => state.auth);
 
-  // Hidratar auth state al montar app
   useEffect(() => {
     dispatch(hydrateAuth());
   }, [dispatch]);
 
-  // Log estratégico de auth state
   useEffect(() => {
-    if (!isLoading) {  // Solo loguear después de hydration
+    if (!isLoading) {
       // eslint-disable-next-line no-console
       console.info("[App] Auth state:", {
         isAuthenticated,
-        user: user?.email || 'none',
-        role: user?.role || 'none',
-        verified: user?.is_verified ?? false
+        user: user?.email || "none",
+        role: user?.role || "none",
+        verified: user?.is_verified ?? false,
       });
     }
   }, [isAuthenticated, isLoading, user]);
@@ -125,357 +120,237 @@ function App() {
   return (
     <ToastProvider>
       <Routes>
-        {/* Rutas públicas */}
-      <Route element={<PublicLayout />}>
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+        </Route>
+
+        {/* Dashboard: todas las rutas anidadas bajo DashboardShell (Fase 2b) */}
         <Route
-          path="/"
+          path="/dashboard"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />
+            <ProtectedRoute>
+              <DashboardShell />
+            </ProtectedRoute>
           }
-        />
-        <Route path="/auth/login" element={<Login />} />
-        <Route path="/auth/register" element={<Register />} />
-        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-      </Route>
+        >
+          <Route index element={<DashboardRouter />} />
 
-      {/* Dashboard principal - DashboardShell solo para index; páginas secundarias conservan chrome hasta Fase 2b */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardShell />
-          </ProtectedRoute>
-        }
-      >
-        <Route index element={<DashboardRouter />} />
-      </Route>
+          {/* Training Plans - rutas específicas primero */}
+          <Route
+            path="training-plans/templates/create"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <CreateTrainingPlanTemplate />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/create"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <CreateTrainingPlan />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlanEdit />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlanDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlansPage />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* ============================================ */}
-      {/* TRAINING PLANS MANAGEMENT - Trainers only */}
-      {/* ============================================ */}
+          {/* Exercises */}
+          <Route
+            path="exercises/create"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseForm />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="exercises/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseForm />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="exercises/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="exercises"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseList />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Create Training Plan Template - Ruta específica PRIMERO (antes de create) */}
-      <Route
-        path="/dashboard/training-plans/templates/create"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <CreateTrainingPlanTemplate />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Clients */}
+          <Route
+            path="clients/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientEdit />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients/onboarding"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientOnboarding />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientList />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Create Training Plan - Ruta específica PRIMERO (antes de :id) */}
-      <Route
-        path="/dashboard/training-plans/create"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <CreateTrainingPlan />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Complete Profile */}
+          <Route
+            path="trainer/complete-profile"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <CompleteProfile />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Training Plan Edit - Ruta específica PRIMERO (antes de detail) */}
-      <Route
-        path="/dashboard/training-plans/:id/edit"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <TrainingPlanEdit />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Reports & Scheduling */}
+          <Route
+            path="reports/generate"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <GenerateReports />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="scheduling"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <SchedulingPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="scheduling/new"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <NewScheduledSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="scheduling/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <EditScheduledSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Training Plan Detail */}
-      <Route
-        path="/dashboard/training-plans/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <TrainingPlanDetail />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Session Programming */}
+          <Route
+            path="session-programming/create-from-template/:templateId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateSessionFromTemplate />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/create-session"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateSession />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/edit-session/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <EditSession />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/sessions/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <SessionDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/create-template"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateTemplate />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Training Plans List - ✅ FASE 1 IMPLEMENTADA */}
-      <Route
-        path="/dashboard/training-plans"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <TrainingPlansPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Testing */}
+          <Route
+            path="testing/create-test"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateTestResult />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* ============================================ */}
-      {/* EXERCISES MANAGEMENT - Trainers only */}
-      {/* ============================================ */}
+          {/* Account - todos los roles */}
+          <Route path="account" element={<Account />} />
+        </Route>
 
-      {/* Exercise Create */}
-      <Route
-        path="/dashboard/exercises/create"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ExerciseForm />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Exercise Edit */}
-      <Route
-        path="/dashboard/exercises/:id/edit"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ExerciseForm />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Exercise Detail */}
-      <Route
-        path="/dashboard/exercises/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ExerciseDetail />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Exercise List */}
-      <Route
-        path="/dashboard/exercises"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ExerciseList />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ============================================ */}
-      {/* CLIENT MANAGEMENT - Trainers only */}
-      {/* ============================================ */}
-
-      {/* Client Edit - Ruta específica PRIMERO (antes de /:id) */}
-      <Route
-        path="/dashboard/clients/:id/edit"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientEdit />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Client Detail */}
-      <Route
-        path="/dashboard/clients/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientDetail />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Client Onboarding (wizard de alta) */}
-      <Route
-        path="/dashboard/clients/onboarding"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientOnboarding />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Client List (lista principal) */}
-      <Route
-        path="/dashboard/clients"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientList />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Complete Profile - Solo trainers */}
-      <Route
-        path="/dashboard/trainer/complete-profile"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <CompleteProfile />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ============================================ */}
-      {/* REPORTS & SCHEDULING - Trainers only */}
-      {/* ============================================ */}
-
-      {/* Generate Reports */}
-      <Route
-        path="/dashboard/reports/generate"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <GenerateReports />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Scheduling Page (main calendar view) */}
-      <Route
-        path="/dashboard/scheduling"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <SchedulingPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* New scheduled session (dedicated page) */}
-      <Route
-        path="/dashboard/scheduling/new"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <NewScheduledSessionPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Edit scheduled session */}
-      <Route
-        path="/dashboard/scheduling/:id/edit"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <EditScheduledSessionPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ============================================ */}
-      {/* SESSION PROGRAMMING - Trainers only */}
-      {/* ============================================ */}
-
-      {/* Create Session From Template */}
-      <Route
-        path="/dashboard/session-programming/create-from-template/:templateId"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-              <CreateSessionFromTemplate />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Create Session */}
-      <Route
-        path="/dashboard/session-programming/create-session"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-              <CreateSession />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Edit Session */}
-      <Route
-        path="/dashboard/session-programming/edit-session/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-              <EditSession />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Session Detail */}
-      <Route
-        path="/dashboard/session-programming/sessions/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-              <SessionDetail />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Create Template */}
-      <Route
-        path="/dashboard/session-programming/create-template"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-              <CreateTemplate />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* ============================================ */}
-      {/* TESTING - Trainers only */}
-      {/* ============================================ */}
-
-      {/* Create Test Result */}
-      <Route
-        path="/dashboard/testing/create-test"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-              <CreateTestResult />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Account - Todos los roles */}
-      <Route
-        path="/dashboard/account"
-        element={
-          <ProtectedRoute>
-            <Account />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </ToastProvider>
   );

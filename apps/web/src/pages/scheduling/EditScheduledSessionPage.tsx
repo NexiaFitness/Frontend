@@ -10,10 +10,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
@@ -141,40 +137,25 @@ export const EditScheduledSessionPage: React.FC = () => {
 
     if (isLoadingSession) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="px-4 lg:px-8 py-12 text-white">Cargando sesión...</div>
-                </DashboardLayout>
-            </>
+            <div className="px-4 lg:px-8 py-12 text-white">Cargando sesión...</div>
         );
     }
 
     if (isErrorSession || !session) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="px-4 lg:px-8 py-12">
-                        <Alert variant="error">
-                            {sessionError ? getMutationErrorMessage(sessionError) : "Sesión no encontrada"}
-                        </Alert>
-                        <Button variant="outline" className="mt-4" onClick={() => navigate("/dashboard/scheduling")}>
-                            Volver al calendario
-                        </Button>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="px-4 lg:px-8 py-12">
+                <Alert variant="error">
+                    {sessionError ? getMutationErrorMessage(sessionError) : "Sesión no encontrada"}
+                </Alert>
+                <Button variant="outline" className="mt-4" onClick={() => navigate("/dashboard/scheduling")}>
+                    Volver al calendario
+                </Button>
+            </div>
         );
     }
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-            <DashboardLayout>
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
@@ -388,7 +369,6 @@ export const EditScheduledSessionPage: React.FC = () => {
                         </form>
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

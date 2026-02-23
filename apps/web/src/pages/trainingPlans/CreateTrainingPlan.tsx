@@ -13,12 +13,8 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
@@ -277,10 +273,6 @@ export const CreateTrainingPlan: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
@@ -624,7 +616,6 @@ export const CreateTrainingPlan: React.FC = () => {
 
                     </form>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

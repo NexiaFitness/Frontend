@@ -8,9 +8,6 @@
 
 import React, { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -19,8 +16,6 @@ import { useGetTrainingSessionQuery, useGetSessionExercisesQuery } from "@nexia/
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { SessionExercise } from "@nexia/shared/types/trainingSessions";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
@@ -96,29 +91,17 @@ export const SessionDetail: React.FC = () => {
 
     if (!sessionId || Number.isNaN(sessionId)) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">ID de sesion invalido</Alert>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">ID de sesion invalido</Alert>
+            </div>
         );
     }
 
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex items-center justify-center min-h-screen">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
@@ -129,11 +112,7 @@ export const SessionDetail: React.FC = () => {
                 : "No se pudo cargar la sesion";
 
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
+            <div className="p-6">
                         <Alert variant="error">{errorMessage}</Alert>
                         <div className="flex gap-3 mt-4">
                             <Button variant="outline" onClick={() => navigate("/dashboard/training-plans")}>
@@ -144,8 +123,6 @@ export const SessionDetail: React.FC = () => {
                             </Button>
                         </div>
                     </div>
-                </DashboardLayout>
-            </>
         );
     }
 
@@ -167,11 +144,6 @@ export const SessionDetail: React.FC = () => {
     };
 
     return (
-        <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
                 <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     <div className="bg-white border-b border-gray-200">
                         <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
@@ -361,8 +333,6 @@ export const SessionDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </DashboardLayout>
-        </>
     );
 };
 

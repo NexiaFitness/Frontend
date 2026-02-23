@@ -29,12 +29,6 @@ import {
     getMuscleGradient,
 } from "@/utils/exercises";
 
-// Layouts
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-
 // UI
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -88,67 +82,45 @@ export const ExerciseDetail: React.FC = () => {
 
     if (!exerciseId) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="px-4 lg:px-8">
-                        <Alert variant="error">ID de ejercicio inválido</Alert>
-                        <Button onClick={handleBack} className="mt-4">
-                            Volver a Ejercicios
-                        </Button>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="px-4 lg:px-8">
+                <Alert variant="error">ID de ejercicio inválido</Alert>
+                <Button onClick={handleBack} className="mt-4">
+                    Volver a Ejercicios
+                </Button>
+            </div>
         );
     }
 
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex justify-center items-center py-16">
-                        <LoadingSpinner size="lg" />
-                        <p className="ml-4 text-white">Cargando ejercicio...</p>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex justify-center items-center py-16">
+                <LoadingSpinner size="lg" />
+                <p className="ml-4 text-white">Cargando ejercicio...</p>
+            </div>
         );
     }
 
     if (isError || !exercise) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="px-4 lg:px-8">
-                        <Alert variant="error">
-                            Error al cargar el ejercicio. Por favor, intenta de nuevo.
-                            {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data && (
-                                <div className="mt-2 text-sm">
-                                    {String(error.data.detail)}
-                                </div>
-                            )}
-                        </Alert>
-                        <Button onClick={handleBack} className="mt-4">
-                            Volver a Ejercicios
-                        </Button>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="px-4 lg:px-8">
+                <Alert variant="error">
+                    Error al cargar el ejercicio. Por favor, intenta de nuevo.
+                    {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data && (
+                        <div className="mt-2 text-sm">
+                            {String(error.data.detail)}
+                        </div>
+                    )}
+                </Alert>
+                <Button onClick={handleBack} className="mt-4">
+                    Volver a Ejercicios
+                </Button>
+            </div>
         );
     }
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* Header con botón volver */}
+            {/* Header con botón volver */}
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <Button
                         variant="outline"
@@ -311,7 +283,6 @@ export const ExerciseDetail: React.FC = () => {
                         </div>
                     </BaseModal>
                 )}
-            </DashboardLayout>
         </>
     );
 };

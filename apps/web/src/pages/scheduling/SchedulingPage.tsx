@@ -14,10 +14,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
@@ -112,10 +108,6 @@ export const SchedulingPage: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
@@ -175,7 +167,6 @@ export const SchedulingPage: React.FC = () => {
                         </div>
                     )}
                 </div>
-            </DashboardLayout>
         </>
     );
 };

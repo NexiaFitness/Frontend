@@ -13,9 +13,6 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
@@ -33,8 +30,6 @@ import {
     type DurationUnit,
 } from "@nexia/shared/types/training";
 import type { TrainingPlanTemplateCreate } from "@nexia/shared/types/training";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-
 export const CreateTrainingPlanTemplate: React.FC = () => {
     const navigate = useNavigate();
     const fallbackPath = "/dashboard/training-plans";
@@ -212,10 +207,6 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
@@ -573,9 +564,8 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                 {isCreatingTemplate ? "Creando..." : "Crear Template"}
                             </Button>
                         </div>
-                    </form>
+                        </form>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

@@ -16,14 +16,9 @@
 import React, { Suspense, lazy } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
-import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
 import { ClientOverviewTab } from "@/components/clients/detail/ClientOverviewTab";
@@ -110,32 +105,20 @@ export const ClientDetail: React.FC = () => {
     // Validación de ID
     if (!id || isNaN(clientId)) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">
-                            ID de cliente inválido
-                        </Alert>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">
+                    ID de cliente inválido
+                </Alert>
+            </div>
         );
     }
 
     // Loading state
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex items-center justify-center min-h-screen">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
@@ -156,13 +139,9 @@ export const ClientDetail: React.FC = () => {
             : null;
 
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">
-                            {isForbiddenError ? (
+            <div className="p-6">
+                <Alert variant="error">
+                    {isForbiddenError ? (
                                 <>
                                     <p className="font-semibold mb-2">No tienes acceso a este cliente</p>
                                     <p className="text-sm">Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.</p>
@@ -200,9 +179,7 @@ export const ClientDetail: React.FC = () => {
                                 Ir al Dashboard
                             </button>
                         </div>
-                    </div>
-                </DashboardLayout>
-            </>
+            </div>
         );
     }
 
@@ -251,12 +228,7 @@ export const ClientDetail: React.FC = () => {
     };
 
     return (
-        <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
+        <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     {/* Header con breadcrumbs integrados */}
                     <ClientHeader
                         client={client}
@@ -306,7 +278,5 @@ export const ClientDetail: React.FC = () => {
                         {renderTabContent()}
                     </div>
                 </div>
-            </DashboardLayout>
-        </>
     );
 };

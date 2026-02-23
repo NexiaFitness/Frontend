@@ -27,11 +27,6 @@ import { useCompleteProfileModal } from "@nexia/shared";
 import type { ClientListItem, RecentActivityItem } from "@nexia/shared/types/client";
 import type { RootState } from "@nexia/shared/store";
 
-// Layouts
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 
 // UI
@@ -271,14 +266,7 @@ export const ClientList: React.FC = () => {
 
     return (
         <>
-            {/* Navbar móvil/tablet */}
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-
-            {/* Sidebar escritorio */}
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* Header */}
+            {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Clientes
@@ -532,9 +520,8 @@ export const ClientList: React.FC = () => {
                         </div>
                     </div>
                 </div>
-            </DashboardLayout>
-            
-            {/* ✅ Modal de Complete Profile */}
+
+            {/* Modal de Complete Profile */}
             <CompleteProfileModal
                 isOpen={showCompleteProfileModal}
                 onClose={() => setShowCompleteProfileModal(false)}

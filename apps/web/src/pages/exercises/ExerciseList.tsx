@@ -13,12 +13,6 @@ import React, { useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useExercises } from "@nexia/shared/hooks/exercises";
 
-// Layouts
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-
 // Components
 import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import { ExerciseFilters } from "@/components/exercises/ExerciseFilters";
@@ -76,11 +70,7 @@ export const ExerciseList: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* Header */}
+            {/* Header */}
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="text-center sm:text-left">
                         <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
@@ -196,7 +186,6 @@ export const ExerciseList: React.FC = () => {
                         </>
                     )}
                 </div>
-            </DashboardLayout>
         </>
     );
 };

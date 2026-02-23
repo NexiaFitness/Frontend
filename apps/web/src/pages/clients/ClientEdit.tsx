@@ -12,10 +12,6 @@
 
 import React, { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
@@ -37,57 +33,39 @@ export const ClientEdit: React.FC = () => {
     // Validación de ID
     if (!id || isNaN(clientId)) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">
-                            ID de cliente inválido
-                        </Alert>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">
+                    ID de cliente inválido
+                </Alert>
+            </div>
         );
     }
 
     // Loading state
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex items-center justify-center min-h-screen">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
     // Error state
     if (error || !client) {
         return (
-            <>
-                <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">
-                            Error al cargar el cliente. Por favor, intenta nuevamente.
-                        </Alert>
-                        <div className="mt-4">
-                            <Button
-                                variant="outline"
-                                onClick={() => navigate("/dashboard/clients")}
-                            >
-                                Volver a la lista
-                            </Button>
-                        </div>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">
+                    Error al cargar el cliente. Por favor, intenta nuevamente.
+                </Alert>
+                <div className="mt-4">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/dashboard/clients")}
+                    >
+                        Volver a la lista
+                    </Button>
+                </div>
+            </div>
         );
     }
 
@@ -103,10 +81,6 @@ export const ClientEdit: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-
-            <DashboardLayout>
                 {/* Encabezado responsive igual a dashboards */}
                 <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
                     <h2 className="text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-3 lg:mb-4">
@@ -149,8 +123,7 @@ export const ClientEdit: React.FC = () => {
                         client={client}
                         onDeleteSuccess={handleUnlinkSuccess}
                     />
-                </div>
-            </DashboardLayout>
+            </div>
         </>
     );
 };

@@ -36,15 +36,9 @@ import {
 import { usePagination } from "@nexia/shared/hooks/common";
 import type { RootState } from "@nexia/shared/store";
 
-// Layouts
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-
 // Components
 import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePreviewModal } from "@/components/trainingPlans";
 import { Alert } from "@/components/ui/feedback";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { Pagination } from "@/components/ui/pagination";
 
 // Utils
@@ -388,14 +382,7 @@ export const TrainingPlansPage: React.FC = () => {
 
     return (
         <>
-            {/* Navbar móvil/tablet */}
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-
-            {/* Sidebar escritorio */}
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* Header */}
+            {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
                     <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
                         Planificación de Entrenamiento
@@ -516,7 +503,6 @@ export const TrainingPlansPage: React.FC = () => {
                     templateId={previewTemplateId}
                     onUseTemplate={handleUseTemplateFromPreview}
                 />
-            </DashboardLayout>
         </>
     );
 };

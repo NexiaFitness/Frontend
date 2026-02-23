@@ -9,10 +9,6 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TRAINER_MENU_ITEMS } from "@/config/trainerNavigation";
 import { CompleteProfileForm } from "@/components/dashboard/trainer";
 import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { useCompleteProfile } from "@nexia/shared";
@@ -39,10 +35,6 @@ export const CompleteProfile: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={TRAINER_MENU_ITEMS} />
-            <TrainerSideMenu />
-            
-            <DashboardLayout>
                 {/* Encabezado responsive igual a dashboards */}
                 <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
                     <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
@@ -132,7 +124,6 @@ export const CompleteProfile: React.FC = () => {
                         </p>
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };
