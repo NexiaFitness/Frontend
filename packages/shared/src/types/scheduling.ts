@@ -185,9 +185,7 @@ export interface TrainerAvailabilityUpdate {
     is_recurring?: boolean | null;
     specific_date?: string | null;
     is_active?: boolean | null;
-}
-
-/** Response: TrainerAvailabilityOut */
+}/** Response: TrainerAvailabilityOut */
 export interface TrainerAvailabilityOut {
     id: number;
     trainer_id: number;
