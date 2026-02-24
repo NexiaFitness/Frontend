@@ -69,19 +69,19 @@ export const PriorityAlertsWidget: React.FC = () => {
 
     if (isLoadingAlerts) {
         return (
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                <div className="h-48 bg-slate-200 rounded animate-pulse" />
+            <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
+                <div className="h-48 bg-muted rounded animate-pulse" />
             </div>
         );
     }
 
     const getSeverityColor = (severity: FatigueAlertSeverity) => {
         switch (severity) {
-            case "critical": return "bg-red-100 border-red-500 text-red-800";
-            case "high": return "bg-orange-100 border-orange-500 text-orange-800";
-            case "medium": return "bg-yellow-100 border-yellow-500 text-yellow-800";
-            case "low": return "bg-blue-100 border-blue-500 text-blue-800";
-            default: return "bg-gray-100 border-gray-500 text-gray-800";
+            case "critical": return "bg-destructive/10 border-destructive/50 text-destructive";
+            case "high": return "bg-warning/10 border-warning/50 text-warning";
+            case "medium": return "bg-warning/10 border-warning/30 text-warning";
+            case "low": return "bg-info/10 border-info/50 text-info";
+            default: return "bg-muted border-border text-muted-foreground";
         }
     };
 
@@ -95,18 +95,18 @@ export const PriorityAlertsWidget: React.FC = () => {
     };
 
     return (
-        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
             <div className="flex justify-between items-center mb-6">
-                <h3 className="text-xl lg:text-2xl font-bold text-slate-800">
+                <h3 className="text-xl lg:text-2xl font-bold text-foreground">
                     Alertas Prioritarias
                 </h3>
-                <span className="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 rounded-full">
+                <span className="bg-destructive/10 text-destructive text-xs font-semibold px-3 py-1 rounded-full">
                     {validAlerts.length} activas
                 </span>
             </div>
             <div className="space-y-3">
                 {validAlerts.length === 0 ? (
-                    <p className="text-slate-600 text-center py-4">No hay alertas en este momento</p>
+                    <p className="text-muted-foreground text-center py-4">No hay alertas en este momento</p>
                 ) : (
                     validAlerts.slice(0, 3).map((alert) => (
                         <div
@@ -143,7 +143,7 @@ export const PriorityAlertsWidget: React.FC = () => {
                                     return (
                                         <button
                                             type="button"
-                                            className="text-xs font-medium text-blue-600 hover:text-blue-800 underline"
+                                            className="text-xs font-medium text-primary hover:text-primary/80 underline"
                                             onClick={() => navigate(path)}
                                         >
                                             {action.label} →
