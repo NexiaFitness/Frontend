@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { LoadingSpinner } from "@/components/ui/feedback";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { 
     useGetTrainingSessionQuery, 
@@ -184,7 +183,7 @@ export const EditSession: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                                 Editar Sesión
                             </h2>
                             <p className="text-white/80 text-sm md:text-base">
@@ -199,7 +198,7 @@ export const EditSession: React.FC = () => {
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     {/* Formulario */}
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-6">
                             Detalles de la Sesión
                         </h3>
@@ -214,7 +213,7 @@ export const EditSession: React.FC = () => {
 
                             {/* Nombre de la Sesión */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Nombre de la Sesión *
                                 </label>
                                 <Input
@@ -234,21 +233,21 @@ export const EditSession: React.FC = () => {
                             {/* Plan (read-only, si tiene training_plan_id) */}
                             {session.training_plan_id && plan && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Plan de Entrenamiento
                                     </label>
                                     <Input
                                         type="text"
                                         value={plan.name || "Cargando..."}
                                         disabled
-                                        className="bg-slate-50"
+                                        className="bg-muted"
                                     />
                                 </div>
                             )}
 
                             {/* Fecha */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Fecha de la Sesión *
                                 </label>
                                 <Input
@@ -266,7 +265,7 @@ export const EditSession: React.FC = () => {
 
                             {/* Tipo de Sesión */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Tipo de Sesión *
                                 </label>
                                 <FormSelect
@@ -285,7 +284,7 @@ export const EditSession: React.FC = () => {
                             {/* Duración, Intensidad, Volumen (grid 3 cols) */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Duración (minutos)
                                     </label>
                                     <Input
@@ -300,7 +299,7 @@ export const EditSession: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Intensidad (1-10)
                                     </label>
                                     <Input
@@ -315,7 +314,7 @@ export const EditSession: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Volumen (1-10)
                                     </label>
                                     <Input
@@ -333,7 +332,7 @@ export const EditSession: React.FC = () => {
 
                             {/* Notas */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Notas
                                 </label>
                                 <Textarea
@@ -347,7 +346,7 @@ export const EditSession: React.FC = () => {
                             </div>
 
                             {/* Botones de acción del formulario */}
-                            <div className="flex flex-col sm:flex-row gap-3 pt-4 mt-6 border-t border-gray-200">
+                            <div className="flex flex-col sm:flex-row gap-3 pt-4 mt-6 border-t border-border">
                                 <Button
                                     type="button"
                                     variant="outline"

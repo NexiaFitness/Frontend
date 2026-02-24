@@ -15,7 +15,6 @@ import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useScheduleSession, getMutationErrorMessage } from "@nexia/shared";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetSessionTemplateQuery } from "@nexia/shared/api/sessionProgrammingApi";
@@ -214,10 +213,10 @@ export const NewScheduledSessionPage: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                                 Nueva sesión agendada
                             </h2>
-                            <p className="text-white/80 text-sm md:text-base">
+                            <p className="text-muted-foreground text-sm md:text-base">
                                 Programa una nueva cita con tu cliente
                             </p>
                         </div>
@@ -228,9 +227,9 @@ export const NewScheduledSessionPage: React.FC = () => {
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         {isLoadingClients ? (
-                            <p className="text-slate-600">Cargando clientes...</p>
+                            <p className="text-muted-foreground">Cargando clientes...</p>
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-6">
                                 <div>
@@ -294,11 +293,11 @@ export const NewScheduledSessionPage: React.FC = () => {
                                             Slots disponibles
                                         </label>
                                         {isLoadingSlots ? (
-                                            <p className="text-slate-500 text-sm italic">
+                                            <p className="text-muted-foreground text-sm italic">
                                                 Cargando slots según tu disponibilidad...
                                             </p>
                                         ) : availableSlots.length === 0 ? (
-                                            <p className="text-slate-500 text-sm italic">
+                                            <p className="text-muted-foreground text-sm italic">
                                                 No hay slots configurados. Añade tu disponibilidad en el calendario.
                                             </p>
                                         ) : (

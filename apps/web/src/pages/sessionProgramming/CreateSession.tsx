@@ -17,7 +17,6 @@ import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useGetClientQuery, useGetClientTrainingPlansQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -359,7 +358,7 @@ export const CreateSession: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                                 Nueva Sesión
                             </h2>
                             <p className="text-white/80 text-sm md:text-base">
@@ -384,7 +383,7 @@ export const CreateSession: React.FC = () => {
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Panel de recomendaciones de carga (volumen/intensidad) para el cliente — TICK-S05 */}
                             {effectiveClientId != null && effectiveClientId > 0 && (
@@ -422,7 +421,7 @@ export const CreateSession: React.FC = () => {
                                         type="text"
                                         value={plan?.name || "Cargando..."}
                                         disabled
-                                        className="bg-slate-50"
+                                        className="bg-muted"
                                     />
                                 ) : (
                                     <>
@@ -445,7 +444,7 @@ export const CreateSession: React.FC = () => {
                                         )}
                                     </>
                                 )}
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="text-xs text-muted-foreground mt-1">
                                     La sesión debe estar vinculada a un plan para el seguimiento de carga.
                                 </p>
                             </div>
@@ -529,9 +528,9 @@ export const CreateSession: React.FC = () => {
                             </div>
 
                             {/* Sección de Ejercicios */}
-                            <div className="mt-8 pt-8 border-t border-gray-200">
+                            <div className="mt-8 pt-8 border-t border-border">
                                 <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-bold text-slate-800">Ejercicios</h3>
+                                    <h3 className="text-lg font-bold text-foreground">Ejercicios</h3>
                                     {exercises.length > 0 && (
                                         <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
                                             {exercises.length} ejercicio{exercises.length !== 1 ? 's' : ''}
@@ -544,8 +543,8 @@ export const CreateSession: React.FC = () => {
                                     {exercises.map((exercise, index) => (
                                         <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
                                             <div className="flex-1">
-                                                <p className="font-semibold text-gray-900">{exercise.exercise_name}</p>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="font-semibold text-foreground">{exercise.exercise_name}</p>
+                                                <p className="text-sm text-muted-foreground">
                                                     {exercise.planned_sets} series × {exercise.planned_reps} reps
                                                     {exercise.planned_weight && ` @ ${exercise.planned_weight}kg`}
                                                 </p>
@@ -626,7 +625,7 @@ export const CreateSession: React.FC = () => {
                             </div>
 
                             {/* Botones finales */}
-                            <div className="flex justify-end gap-3 pt-6 border-t border-gray-200">
+                            <div className="flex justify-end gap-3 pt-6 border-t border-border">
                                 <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
                                 <Button type="submit" variant="primary" disabled={isCreatingSession || isSavingExercises} isLoading={isCreatingSession || isSavingExercises}>
                                     Crear Sesión

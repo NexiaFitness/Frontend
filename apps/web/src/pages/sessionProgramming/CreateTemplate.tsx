@@ -15,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateTemplate } from "@nexia/shared";
 
 const SESSION_TYPES = [
@@ -96,10 +95,10 @@ export const CreateTemplate: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                                 Nuevo Template
                             </h2>
-                            <p className="text-white/80 text-sm md:text-base">
+                            <p className="text-muted-foreground text-sm md:text-base">
                                 Crear un nuevo template de sesión de entrenamiento
                             </p>
                         </div>
@@ -111,7 +110,7 @@ export const CreateTemplate: React.FC = () => {
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     {/* Formulario */}
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-6">
                             Detalles del Template
                         </h3>
@@ -119,7 +118,7 @@ export const CreateTemplate: React.FC = () => {
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Nombre */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Nombre del Template *
                                 </label>
                                 <Input
@@ -138,7 +137,7 @@ export const CreateTemplate: React.FC = () => {
 
                             {/* Descripción */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Descripción
                                 </label>
                                 <Textarea
@@ -153,7 +152,7 @@ export const CreateTemplate: React.FC = () => {
 
                             {/* Tipo de Sesión */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Tipo de Sesión *
                                 </label>
                                 <FormSelect
@@ -172,7 +171,7 @@ export const CreateTemplate: React.FC = () => {
                             {/* Duración y Dificultad */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Duración Estimada (min)
                                     </label>
                                     <Input
@@ -186,7 +185,7 @@ export const CreateTemplate: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Nivel de Dificultad
                                     </label>
                                     <FormSelect
@@ -205,7 +204,7 @@ export const CreateTemplate: React.FC = () => {
                             {/* Músculos Objetivo y Equipamiento */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Músculos Objetivo
                                     </label>
                                     <Input
@@ -218,7 +217,7 @@ export const CreateTemplate: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Equipamiento Necesario
                                     </label>
                                     <Input

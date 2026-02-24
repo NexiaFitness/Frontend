@@ -16,7 +16,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import {
     useCreateTrainingPlanTemplateMutation,
 } from "@nexia/shared/api/trainingPlansApi";
@@ -209,7 +208,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
         <>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                         Crear Template de Plan de Entrenamiento
                     </h2>
                     <p className="text-white/80 text-sm md:text-base">
@@ -221,15 +220,15 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Card 1: Basic Information */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+                        <div className="bg-card border border-border rounded-lg shadow p-6">
+                            <h3 className="text-lg font-semibold text-foreground mb-6">
                                 Información Básica
                             </h3>
 
                             <div className="space-y-6">
                                 {/* Template Name */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Nombre del Template *
                                     </label>
                                     <Input
@@ -265,7 +264,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                         ]}
                                     />
                                     {formErrors.goal && (
-                                        <p className="text-red-600 text-sm mt-1">
+                                        <p className="text-destructive text-sm mt-1">
                                             {formErrors.goal}
                                         </p>
                                     )}
@@ -273,7 +272,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
                                 {/* Description */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Descripción
                                     </label>
                                     <Textarea
@@ -291,7 +290,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
                                 {/* Category (text field) */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Categoría Personalizada
                                     </label>
                                     <Input
@@ -306,7 +305,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
                                 {/* Tags */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Etiquetas
                                     </label>
                                     <div className="flex gap-2">
@@ -336,13 +335,13 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                             {formData.tags.map((tag, index) => (
                                                 <span
                                                     key={index}
-                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                                                 >
                                                     {tag}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveTag(tag)}
-                                                        className="hover:text-blue-900"
+                                                        className="hover:text-primary hover:opacity-80"
                                                     >
                                                         ×
                                                     </button>
@@ -355,8 +354,8 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                         </div>
 
                         {/* Card 2: Generic Plan Settings */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+                        <div className="bg-card border border-border rounded-lg shadow p-6">
+                            <h3 className="text-lg font-semibold text-foreground mb-6">
                                 Configuración de Plan Genérico
                             </h3>
 
@@ -373,7 +372,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                         }
                                         label="Template genérico (se puede asignar a múltiples clientes)"
                                     />
-                                    <p className="text-sm text-gray-500 mt-2">
+                                    <p className="text-sm text-muted-foreground mt-2">
                                         Los templates genéricos permiten crear sesiones automáticamente al asignarlos
                                     </p>
                                 </div>
@@ -383,7 +382,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                     <>
                                         {/* Folder Name */}
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            <label className="block text-sm font-semibold text-foreground mb-2">
                                                 Nombre de Carpeta
                                             </label>
                                             <Input
@@ -397,14 +396,14 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                                 }
                                                 placeholder="Ej: Fuerza Básica"
                                             />
-                                            <p className="text-sm text-gray-500 mt-1">
+                                            <p className="text-sm text-muted-foreground mt-1">
                                                 Organiza tus templates en carpetas
                                             </p>
                                         </div>
 
                                         {/* Level */}
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            <label className="block text-sm font-semibold text-foreground mb-2">
                                                 Nivel
                                             </label>
                                             <FormSelect
@@ -421,7 +420,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
                                         {/* Training Days Per Week */}
                                         <div>
-                                            <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                            <label className="block text-sm font-semibold text-foreground mb-2">
                                                 Días de Entrenamiento por Semana *
                                             </label>
                                             <Input
@@ -440,7 +439,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                                 required={formData.is_generic}
                                             />
                                             {formErrors.training_days_per_week && (
-                                                <p className="text-red-600 text-sm mt-1">
+                                                <p className="text-destructive text-sm mt-1">
                                                     {formErrors.training_days_per_week}
                                                 </p>
                                             )}
@@ -449,7 +448,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                         {/* Duration Value and Unit */}
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div>
-                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                <label className="block text-sm font-semibold text-foreground mb-2">
                                                     Duración
                                                 </label>
                                                 <Input
@@ -466,13 +465,13 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                                     placeholder="Ej: 12"
                                                 />
                                                 {formErrors.duration_value && (
-                                                    <p className="text-red-600 text-sm mt-1">
+                                                    <p className="text-destructive text-sm mt-1">
                                                         {formErrors.duration_value}
                                                     </p>
                                                 )}
                                             </div>
                                             <div>
-                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                                <label className="block text-sm font-semibold text-foreground mb-2">
                                                     Unidad de Duración
                                                 </label>
                                                 <FormSelect
@@ -486,7 +485,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                                     options={durationUnitOptions}
                                                 />
                                                 {formErrors.duration_unit && (
-                                                    <p className="text-red-600 text-sm mt-1">
+                                                    <p className="text-destructive text-sm mt-1">
                                                         {formErrors.duration_unit}
                                                     </p>
                                                 )}
@@ -498,7 +497,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                 {/* Estimated Duration Weeks (for non-generic templates) */}
                                 {!formData.is_generic && (
                                     <div>
-                                        <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                        <label className="block text-sm font-semibold text-foreground mb-2">
                                             Duración Estimada (semanas)
                                         </label>
                                         <Input
@@ -520,8 +519,8 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                         </div>
 
                         {/* Card 3: Public Settings */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+                        <div className="bg-card border border-border rounded-lg shadow p-6">
+                            <h3 className="text-lg font-semibold text-foreground mb-6">
                                 Configuración de Visibilidad
                             </h3>
 
@@ -536,7 +535,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                     }
                                     label="Template público (visible para otros entrenadores)"
                                 />
-                                <p className="text-sm text-gray-500 mt-2">
+                                <p className="text-sm text-muted-foreground mt-2">
                                     Los templates públicos pueden ser utilizados por otros entrenadores de la plataforma
                                 </p>
                             </div>

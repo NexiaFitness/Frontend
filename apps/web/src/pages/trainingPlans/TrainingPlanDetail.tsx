@@ -178,14 +178,14 @@ export const TrainingPlanDetail: React.FC = () => {
                             {!isNotFound && (
                                 <button
                                     onClick={() => refetch()}
-                                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                                 >
                                     Reintentar
                                 </button>
                             )}
                             <button
                                 onClick={() => navigate("/dashboard/training-plans")}
-                                className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                className="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors"
                             >
                                 Volver a Planes
                             </button>
@@ -251,7 +251,7 @@ export const TrainingPlanDetail: React.FC = () => {
 
                     {/* Tabs Navigation */}
                     <div className="mt-6 px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
+                        <div className="bg-card border border-border rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
                             <nav 
                                 className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
                                 aria-label="Tabs"
@@ -259,7 +259,6 @@ export const TrainingPlanDetail: React.FC = () => {
                                 {TABS.map((tab) => {
                                     const isActive = activeTab === tab.id;
                                     const isBack = tab.id === "back";
-                                    
                                     return (
                                         <button
                                             key={tab.id}
@@ -267,10 +266,10 @@ export const TrainingPlanDetail: React.FC = () => {
                                             className={`
                                                 relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex items-center justify-center flex-none min-w-[140px] text-center
                                                 ${isActive
-                                                    ? "text-[#4A67B3] border-b-2 border-[#4A67B3]"
-                                                    : isBack 
-                                                        ? "text-gray-400 hover:text-gray-600 border-b-2 border-transparent"
-                                                        : "text-gray-500 hover:text-gray-700 border-b-2 border-transparent"
+                                                    ? "text-primary border-b-2 border-primary"
+                                                    : isBack
+                                                        ? "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                                                        : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
                                                 }
                                                 cursor-pointer
                                             `}

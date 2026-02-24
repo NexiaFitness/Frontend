@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/buttons";
 import { Input, Textarea, FormSelect } from "@/components/ui/forms";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useTrainingPlans } from "@nexia/shared/hooks/training";
-import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import type { TrainingPlanUpdate } from "@nexia/shared/types/training";
 
 const PLAN_STATUS_OPTIONS = [
@@ -155,10 +154,10 @@ export const TrainingPlanEdit: React.FC = () => {
         <>
                 {/* Encabezado responsive igual a dashboards */}
                 <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground">
                         Editar Plan de Entrenamiento
                     </h2>
-                    <p className={TYPOGRAPHY_COMBINATIONS.dashboardHeroSubtitle}>
+                    <p className="text-muted-foreground text-sm md:text-base mt-1">
                         Modifica los datos básicos del plan de entrenamiento
                     </p>
                 </div>
@@ -207,9 +206,9 @@ export const TrainingPlanEdit: React.FC = () => {
                                 <div>
                                     <label
                                         htmlFor="edit-plan-goal"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-sm font-medium text-foreground mb-2"
                                     >
-                                        Objetivo <span className="text-red-500">*</span>
+                                        Objetivo <span className="text-destructive">*</span>
                                     </label>
                                     <Input
                                         id="edit-plan-goal"
@@ -248,9 +247,9 @@ export const TrainingPlanEdit: React.FC = () => {
                                     <div>
                                         <label
                                             htmlFor="edit-plan-end-date"
-                                            className="block text-sm font-medium text-gray-700 mb-2"
+                                            className="block text-sm font-medium text-foreground mb-2"
                                         >
-                                            Fecha de Fin <span className="text-red-500">*</span>
+                                            Fecha de Fin <span className="text-destructive">*</span>
                                         </label>
                                         <Input
                                             id="edit-plan-end-date"
@@ -270,7 +269,7 @@ export const TrainingPlanEdit: React.FC = () => {
                                 <div>
                                     <label
                                         htmlFor="edit-plan-status"
-                                        className="block text-sm font-medium text-gray-700 mb-2"
+                                        className="block text-sm font-medium text-foreground mb-2"
                                     >
                                         Estado
                                     </label>
@@ -300,7 +299,7 @@ export const TrainingPlanEdit: React.FC = () => {
                                 </div>
 
                                 {/* Botones */}
-                                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4 border-t border-border">
                                     <Button
                                         type="button"
                                         variant="outline"

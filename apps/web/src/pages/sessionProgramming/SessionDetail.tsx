@@ -11,7 +11,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useGetTrainingSessionQuery, useGetSessionExercisesQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
@@ -26,12 +25,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-    planned: "bg-blue-100 text-blue-800",
-    completed: "bg-green-100 text-green-800",
-    cancelled: "bg-red-100 text-red-800",
-    skipped: "bg-gray-100 text-gray-800",
-    modified: "bg-orange-100 text-orange-800",
-    in_progress: "bg-yellow-100 text-yellow-800",
+    planned: "bg-primary/10 text-primary border border-primary/30",
+    completed: "bg-success/10 text-success border border-success/30",
+    cancelled: "bg-destructive/10 text-destructive border border-destructive/30",
+    skipped: "bg-muted text-muted-foreground border border-border",
+    modified: "bg-warning/10 text-warning border border-warning/30",
+    in_progress: "bg-warning/10 text-warning border border-warning/30",
 };
 
 export const SessionDetail: React.FC = () => {
@@ -127,7 +126,7 @@ export const SessionDetail: React.FC = () => {
     }
 
     const statusLabel = STATUS_LABELS[session.status] || session.status;
-    const statusColor = STATUS_COLORS[session.status] || "bg-gray-100 text-gray-800";
+    const statusColor = STATUS_COLORS[session.status] || "bg-muted text-muted-foreground border border-border";
 
     const formatDate = (dateStr: string | null | undefined): string => {
         if (!dateStr) return "Sin fecha";
@@ -154,7 +153,7 @@ export const SessionDetail: React.FC = () => {
                             <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-4">
-                                        <h1 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                                        <h1 className="text-lg font-semibold text-foreground">
                                             {session.session_name}
                                         </h1>
                                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
@@ -218,38 +217,38 @@ export const SessionDetail: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="border-b mb-4" style={{ borderColor: "#4A67B3" }}></div>
+                            <div className="border-b border-primary/30 mb-4" />
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                    <span className="text-xs uppercase tracking-wide text-primary">
                                         Duracion planificada
                                     </span>
-                                    <p className="text-gray-900 font-medium">
+                                    <p className="text-foreground font-medium">
                                         {session.planned_duration ? `${session.planned_duration} min` : "—"}
                                     </p>
                                 </div>
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                    <span className="text-xs uppercase tracking-wide text-primary">
                                         Intensidad planificada
                                     </span>
-                                    <p className="text-gray-900 font-medium">
+                                    <p className="text-foreground font-medium">
                                         {session.planned_intensity ?? "—"}
                                     </p>
                                 </div>
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                    <span className="text-xs uppercase tracking-wide text-primary">
                                         Volumen planificado
                                     </span>
-                                    <p className="text-gray-900 font-medium">
+                                    <p className="text-foreground font-medium">
                                         {session.planned_volume ?? "—"}
                                     </p>
                                 </div>
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                    <span className="text-xs uppercase tracking-wide text-primary">
                                         Cliente
                                     </span>
-                                    <p className="text-gray-900 font-medium">
+                                    <p className="text-foreground font-medium">
                                         {client ? `${client.nombre} ${client.apellidos}` : "—"}
                                     </p>
                                 </div>
@@ -259,8 +258,8 @@ export const SessionDetail: React.FC = () => {
 
                     <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         <div className="grid grid-cols-1 gap-6">
-                            <div className="bg-white rounded-xl border border-gray-200 p-6">
-                                <h2 className="text-lg font-semibold text-gray-900 mb-4">Ejercicios de la sesion</h2>
+                            <div className="bg-card rounded-xl border border-border p-6">
+                                <h2 className="text-lg font-semibold text-foreground mb-4">Ejercicios de la sesion</h2>
 
                                 {isLoadingExercises && (
                                     <div className="flex items-center justify-center py-8">
@@ -314,7 +313,7 @@ export const SessionDetail: React.FC = () => {
                                                     </div>
                                                 </div>
                                                 {exercise.notes && (
-                                                    <div className="text-xs text-gray-500 md:text-right">
+                                                    <div className="text-xs text-muted-foreground md:text-right">
                                                         {exercise.notes}
                                                     </div>
                                                 )}
@@ -325,9 +324,9 @@ export const SessionDetail: React.FC = () => {
                             </div>
 
                             {session.notes && (
-                                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                                    <h2 className="text-lg font-semibold text-gray-900 mb-3">Notas</h2>
-                                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{session.notes}</p>
+                                <div className="bg-card rounded-xl border border-border p-6">
+                                    <h2 className="text-lg font-semibold text-foreground mb-3">Notas</h2>
+                                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{session.notes}</p>
                                 </div>
                             )}
                         </div>

@@ -56,7 +56,7 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
     if (hasError) {
         return (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 text-sm">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive text-sm">
                 <p className="font-medium">Error al cargar datos</p>
                 <p>{String(errorMessage || "Error desconocido")}</p>
             </div>
@@ -65,13 +65,13 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
     return (
         <div className="space-y-6">
-            <h2 className="text-lg font-semibold text-gray-900">
+            <h2 className="text-lg font-semibold text-foreground">
                 Coherencia y alignment
             </h2>
 
             {/* Coherencia */}
             <section>
-                <h3 className="text-md font-medium text-gray-700 mb-3">
+                <h3 className="text-md font-medium text-foreground mb-3">
                     Coherencia del plan
                 </h3>
                 {coherenceData ? (
@@ -105,20 +105,20 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
                         {/* Detalle de desviaciones — meses */}
                         {coherenceData.month_coherence.some((m) => m.deviation_warning) && (
-                            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                                <p className="text-sm font-medium text-amber-800 mb-2">
+                            <div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                                <p className="text-sm font-medium text-warning mb-2">
                                     Desviaciones mensuales (umbral {coherenceData.deviation_threshold}%)
                                 </p>
-                                <ul className="text-sm text-amber-700 space-y-1">
+                                <ul className="text-sm text-warning space-y-1">
                                     {coherenceData.month_coherence
                                         .filter((m) => m.deviation_warning)
                                         .map((m) => (
                                             <li key={m.month_plan_id} className="flex items-center gap-2">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                                                <span className="inline-block w-2 h-2 rounded-full bg-warning" />
                                                 <span className="font-medium">{m.month}</span>
-                                                {m.physical_quality && <span className="text-amber-600">({m.physical_quality})</span>}
+                                                {m.physical_quality && <span className="text-warning/90">({m.physical_quality})</span>}
                                                 <span>— coherencia {m.coherence_percentage.toFixed(1)}%</span>
-                                                <span className="text-amber-600">
+                                                <span className="text-warning/90">
                                                     (vol: {m.planned_volume.toFixed(1)}, int: {m.planned_intensity.toFixed(1)})
                                                 </span>
                                             </li>
@@ -129,25 +129,25 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
                         {/* Detalle de desviaciones — semanas */}
                         {coherenceData.week_coherence.some((w) => w.deviation_warning) && (
-                            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                                <p className="text-sm font-medium text-amber-800 mb-2">
+                            <div className="mb-4 rounded-lg border border-warning/30 bg-warning/10 p-3">
+                                <p className="text-sm font-medium text-warning mb-2">
                                     Desviaciones semanales
                                 </p>
-                                <ul className="text-sm text-amber-700 space-y-1">
+                                <ul className="text-sm text-warning space-y-1">
                                     {coherenceData.week_coherence
                                         .filter((w) => w.deviation_warning)
                                         .map((w) => (
                                             <li key={w.weekly_override_id} className="flex flex-wrap items-center gap-2">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                                                <span className="inline-block w-2 h-2 rounded-full bg-warning" />
                                                 <span className="font-medium">{w.week_id}</span>
-                                                {w.physical_quality && <span className="text-amber-600">({w.physical_quality})</span>}
+                                                {w.physical_quality && <span className="text-warning/90">({w.physical_quality})</span>}
                                                 <span>— coherencia {w.coherence_percentage.toFixed(1)}%</span>
                                                 {w.inherited && (
-                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
+                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                                                         Heredado
                                                     </span>
                                                 )}
-                                                <span className="text-amber-600 text-xs">
+                                                <span className="text-warning/90 text-xs">
                                                     plan: V{w.planned_volume.toFixed(1)}/I{w.planned_intensity.toFixed(1)} · mes: V{w.month_volume.toFixed(1)}/I{w.month_intensity.toFixed(1)}
                                                 </span>
                                             </li>
@@ -158,25 +158,25 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
                         {/* Detalle de desviaciones — días */}
                         {coherenceData.day_coherence.some((d) => d.deviation_warning) && (
-                            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
-                                <p className="text-sm font-medium text-red-800 mb-2">
+                            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 p-3">
+                                <p className="text-sm font-medium text-destructive mb-2">
                                     Desviaciones diarias
                                 </p>
-                                <ul className="text-sm text-red-700 space-y-1">
+                                <ul className="text-sm text-destructive space-y-1">
                                     {coherenceData.day_coherence
                                         .filter((d) => d.deviation_warning)
                                         .map((d) => (
                                             <li key={d.daily_override_id} className="flex flex-wrap items-center gap-2">
-                                                <span className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                                                <span className="inline-block w-2 h-2 rounded-full bg-destructive" />
                                                 <span className="font-medium">{d.date ?? `Día #${d.daily_override_id}`}</span>
-                                                {d.physical_quality && <span className="text-red-600">({d.physical_quality})</span>}
+                                                {d.physical_quality && <span className="text-destructive/90">({d.physical_quality})</span>}
                                                 <span>— coherencia {d.coherence_percentage.toFixed(1)}%</span>
                                                 {d.inherited && (
-                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
+                                                    <span className="text-xs px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
                                                         Heredado
                                                     </span>
                                                 )}
-                                                <span className="text-red-600 text-xs">
+                                                <span className="text-destructive/90 text-xs">
                                                     plan: V{d.planned_volume.toFixed(1)}/I{d.planned_intensity.toFixed(1)} · sem: V{d.week_volume.toFixed(1)}/I{d.week_intensity.toFixed(1)}
                                                 </span>
                                             </li>
@@ -190,13 +190,13 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                          !coherenceData.week_coherence.some((w) => w.deviation_warning) &&
                          !coherenceData.day_coherence.some((d) => d.deviation_warning) &&
                          coherenceData.month_coherence.length > 0 && (
-                            <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-800">
+                            <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success">
                                 Sin desviaciones. Todas las escalas de volumen e intensidad están dentro del umbral del {coherenceData.deviation_threshold}%.
                             </div>
                         )}
                     </>
                 ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                         Sin datos de coherencia. Añade baseline mensual y overrides en el tab Planificación.
                     </p>
                 )}
@@ -204,45 +204,44 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
             {/* Alignment */}
             <section>
-                <h3 className="text-md font-medium text-gray-700 mb-3">
+                <h3 className="text-md font-medium text-foreground mb-3">
                     Alignment
                     {alignmentData?.plan_name ? (
-                        <span className="font-normal text-gray-600 ml-2">
+                        <span className="font-normal text-muted-foreground ml-2">
                             — {alignmentData.plan_name}
                         </span>
                     ) : null}
                 </h3>
                 {alignmentData?.alignment_graph?.length ? (
-                    <div className="overflow-x-auto rounded-lg border border-gray-200">
-                        <table className="min-w-full divide-y divide-gray-200 text-sm">
-                            <thead className="bg-gray-50">
+                    <div className="overflow-x-auto rounded-lg border border-border">
+                        <table className="min-w-full divide-y divide-border text-sm">
+                            <thead className="bg-muted">
                                 <tr>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-left font-medium text-foreground">
                                         Nivel
                                     </th>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-left font-medium text-foreground">
                                         Nombre
                                     </th>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-left font-medium text-foreground">
                                         Fecha
                                     </th>
-                                    <th className="px-3 py-2 text-left font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-left font-medium text-foreground">
                                         Calidad
                                     </th>
-                                    <th className="px-3 py-2 text-right font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-right font-medium text-foreground">
                                         Volumen
                                     </th>
-                                    <th className="px-3 py-2 text-right font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-right font-medium text-foreground">
                                         Intensidad
                                     </th>
-                                    <th className="px-3 py-2 text-center font-medium text-gray-700">
+                                    <th className="px-3 py-2 text-center font-medium text-foreground">
                                         Estado
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-gray-200 bg-white">
+                            <tbody className="divide-y divide-border bg-card">
                                 {alignmentData.alignment_graph.map((point) => {
-                                    // Determinar si es override (week/day) o heredado (month)
                                     const isOverride = point.cycle_type === "week" || point.cycle_type === "day";
                                     const typeLabel = point.cycle_type === "month"
                                         ? "Mes" : point.cycle_type === "week"
@@ -252,31 +251,31 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                                     return (
                                         <tr
                                             key={`${point.cycle_type}-${point.cycle_id}`}
-                                            className={isOverride ? "bg-violet-50/50" : ""}
+                                            className={isOverride ? "bg-primary/5" : ""}
                                         >
-                                            <td className="px-3 py-2 text-gray-600">
+                                            <td className="px-3 py-2 text-muted-foreground">
                                                 {typeLabel}
                                             </td>
-                                            <td className="px-3 py-2 text-gray-900">
+                                            <td className="px-3 py-2 text-foreground">
                                                 {point.cycle_name}
                                             </td>
-                                            <td className="px-3 py-2 text-gray-600">
+                                            <td className="px-3 py-2 text-muted-foreground">
                                                 {point.date}
                                             </td>
-                                            <td className="px-3 py-2 text-gray-600">
+                                            <td className="px-3 py-2 text-muted-foreground">
                                                 {point.physical_quality ?? "—"}
                                             </td>
-                                            <td className="px-3 py-2 text-right text-gray-900">
+                                            <td className="px-3 py-2 text-right text-foreground">
                                                 {point.volume != null ? point.volume.toFixed(1) : "—"}
                                             </td>
-                                            <td className="px-3 py-2 text-right text-gray-900">
+                                            <td className="px-3 py-2 text-right text-foreground">
                                                 {point.intensity != null ? point.intensity.toFixed(1) : "—"}
                                             </td>
                                             <td className="px-3 py-2 text-center">
                                                 <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                                                     isOverride
-                                                        ? "bg-violet-100 text-violet-700"
-                                                        : "bg-slate-100 text-slate-600"
+                                                        ? "bg-primary/10 text-primary"
+                                                        : "bg-muted text-muted-foreground"
                                                 }`}>
                                                     {isOverride ? "Override" : "Heredado"}
                                                 </span>
@@ -288,7 +287,7 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                         </table>
                     </div>
                 ) : (
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                         Sin datos de alignment. Añade baseline mensual en el tab Planificación.
                     </p>
                 )}

@@ -178,8 +178,8 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
 
     return (
         <div className="space-y-6">
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Calendario de planificación
                 </h3>
                 {calendarLoading ? (
@@ -196,18 +196,18 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                 )}
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Nuevo baseline mensual
                 </h3>
-                <p className="mb-3 text-sm text-gray-600">
+                <p className="mb-3 text-sm text-muted-foreground">
                     Planificacion sin plan asociado. Los baselines se vinculan al cliente.
                 </p>
                 <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3">
                     <div>
                         <label
                             htmlFor="planning-baseline-month"
-                            className="mb-1 block text-sm font-medium text-gray-700"
+                            className="mb-1 block text-sm font-medium text-foreground"
                         >
                             Mes (YYYY-MM)
                         </label>
@@ -216,14 +216,14 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                             type="month"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             required
                         />
                     </div>
                     <div className="min-w-[200px] flex-1">
                         <label
                             htmlFor="planning-baseline-qualities"
-                            className="mb-1 block text-sm font-medium text-gray-700"
+                            className="mb-1 block text-sm font-medium text-foreground"
                         >
                             Cualidades (ej: Fuerza: 60, Resistencia: 40)
                         </label>
@@ -233,35 +233,35 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                             value={qualitiesText}
                             onChange={(e) => setQualitiesText(e.target.value)}
                             placeholder="Fuerza: 60, Resistencia: 40"
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         />
                     </div>
                     <button
                         type="submit"
                         disabled={isCreating || !selectedMonth}
-                        className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm font-medium text-white hover:bg-[#3d5a9e] disabled:opacity-50"
+                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
                         {isCreating ? "Creando…" : "Crear"}
                     </button>
                 </form>
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Baselines mensuales
                 </h3>
                 {monthlyPlans.length === 0 ? (
-                    <p className="text-gray-500">Aún no hay baselines. Crea uno arriba.</p>
+                    <p className="text-muted-foreground">Aún no hay baselines. Crea uno arriba.</p>
                 ) : (
                     <ul className="space-y-2">
                         {monthlyPlans.map((mp) => (
                             <li
                                 key={mp.id}
-                                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3"
+                                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-muted p-3"
                             >
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="font-medium text-gray-800">{mp.month}</span>
-                                    <span className="text-sm text-gray-600">
+                                    <span className="font-medium text-foreground">{mp.month}</span>
+                                    <span className="text-sm text-muted-foreground">
                                         {qualitiesToDisplayString(mp.qualities)}
                                     </span>
                                 </div>
@@ -273,13 +273,13 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                                 value={editQualitiesText}
                                                 onChange={(e) => setEditQualitiesText(e.target.value)}
                                                 placeholder="Fuerza: 70, Resistencia: 30"
-                                                className="rounded border border-gray-300 px-2 py-1 text-sm"
+                                                className="rounded border border-input bg-background px-2 py-1 text-sm"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => handleUpdate(mp.id)}
                                                 disabled={isUpdating}
-                                                className="rounded bg-green-600 px-2 py-1 text-sm text-white"
+                                                className="rounded bg-success px-2 py-1 text-sm text-success-foreground"
                                             >
                                                 Guardar
                                             </button>
@@ -289,7 +289,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                                     setEditingId(null);
                                                     setEditQualitiesText("");
                                                 }}
-                                                className="rounded bg-gray-400 px-2 py-1 text-sm text-white"
+                                                className="rounded bg-muted px-2 py-1 text-sm text-muted-foreground"
                                             >
                                                 Cancelar
                                             </button>
@@ -311,7 +311,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                                             : ""
                                                     );
                                                 }}
-                                                className="rounded bg-[#4A67B3] px-2 py-1 text-sm text-white hover:bg-[#3d5a9e]"
+                                                className="rounded bg-primary px-2 py-1 text-sm text-primary-foreground hover:bg-primary/90"
                                             >
                                                 Editar
                                             </button>
@@ -319,7 +319,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                                 type="button"
                                                 onClick={() => handleDelete(mp.id)}
                                                 disabled={isDeleting}
-                                                className="rounded bg-red-600 px-2 py-1 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+                                                className="rounded bg-destructive px-2 py-1 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                                             >
                                                 Eliminar
                                             </button>
@@ -333,12 +333,12 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
             </section>
 
             {monthlyPlans.length > 0 && (
-                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-lg font-semibold text-gray-800">
+                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <h3 className="mb-3 text-lg font-semibold text-foreground">
                         Overrides semanales
                     </h3>
                     <div className="mb-3">
-                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                        <label className="mb-1 block text-sm font-medium text-foreground">
                             Baseline mensual
                         </label>
                         <select
@@ -348,7 +348,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                     e.target.value ? Number(e.target.value) : null
                                 )
                             }
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         >
                             {monthlyPlans.map((mp) => (
                                 <option key={mp.id} value={mp.id}>
@@ -377,7 +377,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                         className="mb-3 flex flex-wrap items-end gap-3"
                     >
                         <div>
-                            <label htmlFor="planning-weekly-week-id" className="mb-1 block text-sm text-gray-700">
+                            <label htmlFor="planning-weekly-week-id" className="mb-1 block text-sm text-foreground">
                                 week_id (ej. 2026-02-W1)
                             </label>
                             <input
@@ -386,11 +386,11 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                 value={weekIdText}
                                 onChange={(e) => setWeekIdText(e.target.value)}
                                 placeholder="2026-02-W1"
-                                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             />
                         </div>
                         <div className="min-w-[180px]">
-                            <label htmlFor="planning-weekly-qualities" className="mb-1 block text-sm text-gray-700">
+                            <label htmlFor="planning-weekly-qualities" className="mb-1 block text-sm text-foreground">
                                 Cualidades
                             </label>
                             <input
@@ -399,14 +399,14 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                 value={weeklyQualitiesText}
                                 onChange={(e) => setWeeklyQualitiesText(e.target.value)}
                                 placeholder="Fuerza: 80"
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                             />
                         </div>
                         <button
                             type="submit"
                             aria-label="Añadir override semanal"
                             disabled={isCreatingWeekly || !weekIdText.trim()}
-                            className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm text-white disabled:opacity-50"
+                            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
                         >
                             Añadir
                         </button>
@@ -415,11 +415,11 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                         {weeklyOverrides.map((wo) => (
                             <li
                                 key={wo.id}
-                                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
+                                className="flex items-center justify-between rounded-lg border border-border bg-muted p-2 text-sm"
                             >
                                 <span className="flex flex-wrap items-center gap-2">
                                     {wo.week_id}{" "}
-                                    <span className="text-gray-600">
+                                    <span className="text-muted-foreground">
                                         {qualitiesToDisplayString(wo.qualities)}
                                     </span>
                                 </span>
@@ -434,21 +434,21 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                         }
                                     }}
                                     disabled={isDeletingWeekly}
-                                    className="rounded bg-red-600 px-2 py-1 text-white"
+                                    className="rounded bg-destructive px-2 py-1 text-destructive-foreground"
                                 >
                                     Eliminar
                                 </button>
                             </li>
                         ))}
                         {weeklyOverrides.length === 0 && (
-                            <li className="text-gray-500">Ningun override semanal.</li>
+                            <li className="text-muted-foreground">Ningun override semanal.</li>
                         )}
                     </ul>
                 </section>
             )}
 
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Overrides diarios
                 </h3>
                 <form
@@ -471,31 +471,31 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                     className="mb-3 flex flex-wrap items-end gap-3"
                 >
                     <div>
-                        <label className="mb-1 block text-sm text-gray-700">
+                        <label className="mb-1 block text-sm text-foreground">
                             Fecha (YYYY-MM-DD)
                         </label>
                         <input
                             type="date"
                             value={dailyDateText}
                             onChange={(e) => setDailyDateText(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         />
                     </div>
                     <div className="min-w-[180px]">
-                        <label className="mb-1 block text-sm text-gray-700">Cualidades</label>
+                        <label className="mb-1 block text-sm text-foreground">Cualidades</label>
                         <input
                             type="text"
                             value={dailyQualitiesText}
                             onChange={(e) => setDailyQualitiesText(e.target.value)}
                             placeholder="Fuerza: 90"
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         />
                     </div>
                     <button
                         type="submit"
                         aria-label="Añadir override diario"
                         disabled={isCreatingDaily || !dailyDateText}
-                        className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm text-white disabled:opacity-50"
+                        className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
                     >
                         Añadir
                     </button>
@@ -504,11 +504,11 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                     {dailyOverrides.map((do_) => (
                         <li
                             key={do_.id}
-                            className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
+                            className="flex items-center justify-between rounded-lg border border-border bg-muted p-2 text-sm"
                         >
                             <span>
                                 {do_.date}{" "}
-                                <span className="text-gray-600">
+                                <span className="text-muted-foreground">
                                     {qualitiesToDisplayString(do_.qualities)}
                                 </span>
                             </span>
@@ -523,55 +523,55 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                     }
                                 }}
                                 disabled={isDeletingDaily}
-                                className="rounded bg-red-600 px-2 py-1 text-white"
+                                className="rounded bg-destructive px-2 py-1 text-destructive-foreground"
                             >
                                 Eliminar
                             </button>
                         </li>
                     ))}
                     {dailyOverrides.length === 0 && (
-                        <li className="text-gray-500">Ningún override diario.</li>
+                            <li className="text-muted-foreground">Ningún override diario.</li>
                     )}
                 </ul>
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Plan resuelto (dia)
                 </h3>
                 <div className="mb-3 flex flex-wrap items-end gap-3">
                     <div>
-                        <label className="mb-1 block text-sm text-gray-700">Fecha</label>
+                        <label className="mb-1 block text-sm text-foreground">Fecha</label>
                         <input
                             type="date"
                             value={resolvedDate}
                             onChange={(e) => setResolvedDate(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
                         />
                     </div>
                 </div>
                 {resolvedLoading && resolvedDate ? (
-                    <p className="text-gray-500">Cargando…</p>
+                    <p className="text-muted-foreground">Cargando…</p>
                 ) : resolvedDay && resolvedDate ? (
                     <div
                         className={`rounded-lg border p-3 text-sm ${
                             !resolvedDay.is_trainable
-                                ? "border-red-200 bg-red-50"
+                                ? "border-destructive/30 bg-destructive/10"
                                 : resolvedDay.source === "day" || resolvedDay.source === "week"
-                                  ? "border-violet-200 bg-violet-50"
-                                  : "border-gray-200 bg-gray-50"
+                                  ? "border-primary/30 bg-primary/10"
+                                  : "border-border bg-muted"
                         }`}
                     >
                         <div className="mb-2 flex items-center gap-2">
                             <span
                                 className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
                                     resolvedDay.source === "month"
-                                        ? "bg-slate-200 text-slate-700"
+                                        ? "bg-muted text-muted-foreground"
                                         : resolvedDay.source === "week"
-                                          ? "bg-violet-200 text-violet-700"
+                                          ? "bg-primary/20 text-primary"
                                           : resolvedDay.source === "day"
-                                            ? "bg-emerald-200 text-emerald-700"
-                                            : "bg-gray-200 text-gray-600"
+                                            ? "bg-success/20 text-success"
+                                            : "bg-muted text-muted-foreground"
                                 }`}
                             >
                                 {resolvedDay.source === "month"
@@ -583,7 +583,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                         : "Sin origen"}
                             </span>
                             {!resolvedDay.is_trainable && (
-                                <span className="inline-flex items-center rounded-full bg-red-200 px-2 py-0.5 text-xs font-medium text-red-700">
+                                <span className="inline-flex items-center rounded-full bg-destructive/20 px-2 py-0.5 text-xs font-medium text-destructive">
                                     No entrenable
                                 </span>
                             )}
@@ -596,7 +596,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                             resolvedDay.resolved_intensity != null) && (
                             <div className="mt-2 flex gap-4">
                                 <div className="flex items-center gap-1">
-                                    <span className="text-gray-500">Volumen:</span>
+                                    <span className="text-muted-foreground">Volumen:</span>
                                     <span className="font-semibold">
                                         {resolvedDay.resolved_volume != null
                                             ? `${Math.round(resolvedDay.resolved_volume * 100)}%`
@@ -604,7 +604,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <span className="text-gray-500">Intensidad:</span>
+                                    <span className="text-muted-foreground">Intensidad:</span>
                                     <span className="font-semibold">
                                         {resolvedDay.resolved_intensity != null
                                             ? `${Math.round(resolvedDay.resolved_intensity * 100)}%`
@@ -615,7 +615,7 @@ function ClientOnlyPlanningContent({ clientId }: ClientOnlyPlanningContentProps)
                         )}
                     </div>
                 ) : (
-                    <p className="text-gray-500">Elige una fecha para ver el plan resuelto.</p>
+                    <p className="text-muted-foreground">Elige una fecha para ver el plan resuelto.</p>
                 )}
             </section>
         </div>
@@ -647,16 +647,16 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
 
     return (
         <div className="space-y-6">
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-2 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-2 text-lg font-semibold text-foreground">
                     Modo de planificación
                 </h3>
                 <div className="flex flex-wrap items-center gap-3">
-                    <label className="text-sm font-medium text-gray-700">Ver/editar:</label>
+                    <label className="text-sm font-medium text-foreground">Ver/editar:</label>
                     <select
                         value={selectedPlanId}
                         onChange={(e) => setSelectedPlanId(e.target.value)}
-                        className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
                     >
                         <option value={CLIENT_ONLY_VALUE}>
                             Solo cliente (sin plan asociado)

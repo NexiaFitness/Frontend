@@ -41,9 +41,6 @@ import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePre
 import { Alert } from "@/components/ui/feedback";
 import { Pagination } from "@/components/ui/pagination";
 
-// Utils
-import { TYPOGRAPHY } from "@/utils/typography";
-
 export const TrainingPlansPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -384,10 +381,10 @@ export const TrainingPlansPage: React.FC = () => {
         <>
             {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                         Planificación de Entrenamiento
                     </h2>
-                    <p className="text-white/80 text-sm md:text-base">
+                    <p className="text-muted-foreground text-sm md:text-base">
                         Crea y gestiona programas de entrenamiento y plantillas de sesiones
                     </p>
                 </div>

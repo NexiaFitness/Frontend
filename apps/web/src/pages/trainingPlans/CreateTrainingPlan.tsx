@@ -16,7 +16,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import {
     useCreateTrainingPlanMutation,
     useCreateMilestoneMutation,
@@ -275,10 +274,10 @@ export const CreateTrainingPlan: React.FC = () => {
         <>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                         Crear Plan de Entrenamiento
                     </h2>
-                    <p className="text-white/80 text-sm md:text-base">
+                    <p className="text-muted-foreground text-sm md:text-base">
                         {client
                             ? `Plan de entrenamiento para ${client.nombre} ${client.apellidos}`
                             : "Crea un nuevo plan de entrenamiento con objetivos, duración e hitos"}
@@ -297,7 +296,7 @@ export const CreateTrainingPlan: React.FC = () => {
                     <form onSubmit={handleSubmit} className="space-y-6">
                         {/* Card 1: Basic Information */}
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+                            <h3 className="text-lg font-semibold text-foreground mb-6">
                                 Información Básica
                             </h3>
 
@@ -317,7 +316,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                         required
                                     />
                                     {formErrors.name && (
-                                        <p className="text-red-600 text-sm mt-1">
+                                        <p className="text-destructive text-sm mt-1">
                                             {formErrors.name}
                                         </p>
                                     )}
@@ -327,7 +326,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                 <div>
                                     <label
                                         htmlFor="plan-form-goal"
-                                        className="block text-sm font-semibold text-slate-700 mb-2"
+                                        className="block text-sm font-semibold text-foreground mb-2"
                                     >
                                         Categoría *
                                     </label>
@@ -370,7 +369,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
                                 {/* Tags */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Etiquetas
                                     </label>
                                     <div className="flex gap-2">
@@ -400,13 +399,13 @@ export const CreateTrainingPlan: React.FC = () => {
                                             {formData.tags.map((tag, index) => (
                                                 <span
                                                     key={index}
-                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm"
+                                                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm"
                                                 >
                                                     {tag}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveTag(tag)}
-                                                        className="hover:text-blue-900"
+                                                        className="hover:text-primary hover:opacity-80"
                                                     >
                                                         ×
                                                     </button>
@@ -420,7 +419,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
                         {/* Card 2: Duration & Schedule */}
                         <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+                            <h3 className="text-lg font-semibold text-foreground mb-6">
                                 Duración y Calendario
                             </h3>
 
@@ -446,7 +445,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                         required
                                     />
                                     {formErrors.start_date && (
-                                        <p className="text-red-600 text-sm mt-1">
+                                        <p className="text-destructive text-sm mt-1">
                                             {formErrors.start_date}
                                         </p>
                                     )}
@@ -456,7 +455,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                 <div>
                                     <label
                                         htmlFor="plan-form-end-date"
-                                        className="block text-sm font-semibold text-slate-700 mb-2"
+                                        className="block text-sm font-semibold text-foreground mb-2"
                                     >
                                         Fecha de Fin *
                                     </label>
@@ -474,7 +473,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                         required
                                     />
                                     {formErrors.end_date && (
-                                        <p className="text-red-600 text-sm mt-1">
+                                        <p className="text-destructive text-sm mt-1">
                                             {formErrors.end_date}
                                         </p>
                                     )}
@@ -483,8 +482,8 @@ export const CreateTrainingPlan: React.FC = () => {
                         </div>
 
                         {/* Card 3: Milestones */}
-                        <div className="bg-white rounded-lg shadow p-6">
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+                        <div className="bg-card border border-border rounded-lg shadow p-6">
+                            <h3 className="text-lg font-semibold text-foreground mb-6">
                                 Hitos
                             </h3>
 
@@ -494,13 +493,13 @@ export const CreateTrainingPlan: React.FC = () => {
                                     {milestones.map((milestone, index) => (
                                         <div
                                             key={index}
-                                            className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                                            className="flex items-center gap-3 p-3 bg-muted rounded-lg border border-border"
                                         >
                                             <div className="flex-1">
-                                                <p className="font-medium text-gray-900">
+                                                <p className="font-medium text-foreground">
                                                     {milestone.title}
                                                 </p>
-                                                <p className="text-sm text-gray-600">
+                                                <p className="text-sm text-muted-foreground">
                                                     {new Date(
                                                         milestone.milestone_date
                                                     ).toLocaleDateString("es-ES")}{" "}
@@ -513,7 +512,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                             <button
                                                 type="button"
                                                 onClick={() => handleRemoveMilestone(index)}
-                                                className="text-red-600 hover:text-red-800 text-lg font-bold"
+                                                className="text-destructive hover:text-destructive/90 text-lg font-bold"
                                             >
                                                 ×
                                             </button>
@@ -525,7 +524,7 @@ export const CreateTrainingPlan: React.FC = () => {
                             {/* Formulario para agregar milestone */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Nombre *
                                     </label>
                                     <Input
@@ -556,7 +555,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Fecha *
                                     </label>
                                     <Input

@@ -13,7 +13,6 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import {
     useUpdateScheduledSession,
     useScheduleSession,
@@ -137,7 +136,7 @@ export const EditScheduledSessionPage: React.FC = () => {
 
     if (isLoadingSession) {
         return (
-            <div className="px-4 lg:px-8 py-12 text-white">Cargando sesión...</div>
+            <div className="px-4 lg:px-8 py-12 text-muted-foreground">Cargando sesión...</div>
         );
     }
 
@@ -159,10 +158,10 @@ export const EditScheduledSessionPage: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                                 Editar sesión agendada
                             </h2>
-                            <p className="text-white/80 text-sm md:text-base">
+                            <p className="text-muted-foreground text-sm md:text-base">
                                 Cliente ID: {session.client_id} (no editable)
                             </p>
                         </div>
@@ -176,7 +175,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                     <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Fecha *</label>
+                                <label className="block text-sm font-semibold text-foreground mb-2">Fecha *</label>
                                 <Input
                                     type="date"
                                     value={scheduledDate}
@@ -193,7 +192,7 @@ export const EditScheduledSessionPage: React.FC = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Hora de inicio *
                                     </label>
                                     <Input
@@ -210,7 +209,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                                     )}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Hora de fin *
                                     </label>
                                     <Input
@@ -229,7 +228,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Duración (minutos)
                                 </label>
                                 <Input
@@ -246,7 +245,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Tipo de sesión *
                                 </label>
                                 <FormSelect
@@ -264,7 +263,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Estado</label>
+                                <label className="block text-sm font-semibold text-foreground mb-2">Estado</label>
                                 <FormSelect
                                     value={status}
                                     onChange={(e) => setStatus(e.target.value as SessionStatus)}
@@ -278,7 +277,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Ubicación
                                 </label>
                                 <FormSelect
@@ -300,7 +299,7 @@ export const EditScheduledSessionPage: React.FC = () => {
 
                             {location === SESSION_LOCATION.ONLINE && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Enlace de reunión
                                     </label>
                                     <Input
@@ -313,7 +312,7 @@ export const EditScheduledSessionPage: React.FC = () => {
                             )}
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Notas</label>
+                                <label className="block text-sm font-semibold text-foreground mb-2">Notas</label>
                                 <Textarea
                                     value={notes ?? ""}
                                     onChange={(e) => setNotes(e.target.value || null)}

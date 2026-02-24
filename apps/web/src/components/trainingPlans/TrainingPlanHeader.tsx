@@ -24,7 +24,6 @@ import type { TrainingPlan } from "@nexia/shared/types/training";
 import { useDeleteTrainingPlanMutation } from "@nexia/shared/api/trainingPlansApi";
 import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useToast } from "@/components/ui/feedback";
 import { DeleteTrainingPlanModal } from "./DeleteTrainingPlanModal";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
@@ -74,10 +73,10 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     // Badge de status
     const getStatusBadge = () => {
         const statusColors: Record<string, string> = {
-            active: "bg-green-100 text-green-800",
-            completed: "bg-blue-100 text-blue-800",
-            paused: "bg-yellow-100 text-yellow-800",
-            cancelled: "bg-red-100 text-red-800",
+            active: "bg-success/10 text-success border border-success/30",
+            completed: "bg-primary/10 text-primary border border-primary/30",
+            paused: "bg-warning/10 text-warning border border-warning/30",
+            cancelled: "bg-destructive/10 text-destructive border border-destructive/30",
         };
 
         const statusLabels: Record<string, string> = {
@@ -87,7 +86,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             cancelled: "Cancelado",
         };
 
-        const color = statusColors[plan.status] || "bg-gray-100 text-gray-800";
+        const color = statusColors[plan.status] || "bg-muted text-muted-foreground border border-border";
         const label = statusLabels[plan.status] || plan.status;
 
         return (
@@ -122,8 +121,8 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     };
 
     return (
-        <div className="bg-white border-b border-gray-200">
-            {/* Breadcrumbs integrados al fondo blanco para evitar franja azul */}
+        <div className="bg-card border-b border-border">
+            {/* Breadcrumbs integrados */}
             <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
                 <Breadcrumbs items={breadcrumbItems} />
             </div>
@@ -133,7 +132,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                 <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
                     <div className="flex-1">
                         <div className="flex items-center gap-3 mb-4">
-                            <h1 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                            <h1 className="text-lg font-semibold text-foreground">
                                 {plan.name}
                             </h1>
                             {getStatusBadge()}
@@ -141,16 +140,16 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                         
                         <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
                             <div>
-                                <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Inicio</span>
-                                <p className="text-gray-900 font-medium">{formatDate(plan.start_date)}</p>
+                                <span className="text-xs uppercase tracking-wide text-primary">Inicio</span>
+                                <p className="text-foreground font-medium">{formatDate(plan.start_date)}</p>
                             </div>
                             <div>
-                                <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Fin</span>
-                                <p className="text-gray-900 font-medium">{formatDate(plan.end_date)}</p>
+                                <span className="text-xs uppercase tracking-wide text-primary">Fin</span>
+                                <p className="text-foreground font-medium">{formatDate(plan.end_date)}</p>
                             </div>
                             <div>
-                                <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Duración Total</span>
-                                <p className="text-gray-900 font-medium">{getDuration()}</p>
+                                <span className="text-xs uppercase tracking-wide text-primary">Duración Total</span>
+                                <p className="text-foreground font-medium">{getDuration()}</p>
                             </div>
                         </div>
                     </div>
@@ -170,19 +169,18 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             size="sm" 
                             onClick={() => setIsDeleteModalOpen(true)}
                             disabled={isDeleting}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
                         >
                             Eliminar Plan
                         </Button>
                     </div>
                 </div>
 
-                {/* Línea azul separadora */}
-                <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                {/* Línea separadora */}
+                <div className="border-b border-primary/30 mb-4" />
 
                 {/* Fila 2: Contexto del Atleta y Objetivo */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-                    {/* Atleta - EL VÍNCULO DE RETORNO MEJORADO */}
                     {plan.client_id && (
                         <div className="flex items-center gap-3">
                             <Link 
@@ -193,11 +191,11 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                                     nombre={clientName?.split(' ')[0]} 
                                     apellidos={clientName?.split(' ').slice(1).join(' ')} 
                                     size="sm" 
-                                    className="group-hover:ring-2 group-hover:ring-[#4A67B3] transition-all"
+                                    className="group-hover:ring-2 group-hover:ring-primary transition-all"
                                 />
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide block" style={{ color: '#4A67B3' }}>Atleta</span>
-                                    <span className="text-blue-600 group-hover:text-blue-800 font-bold group-hover:underline transition-colors">
+                                    <span className="text-xs uppercase tracking-wide block text-primary">Atleta</span>
+                                    <span className="text-primary font-bold group-hover:underline transition-colors">
                                         {clientName || "Ver Perfil"}
                                     </span>
                                 </div>
@@ -206,16 +204,16 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                     )}
 
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Objetivo del Plan</span>
-                        <p className="text-gray-900 font-medium">{plan.goal}</p>
+                        <span className="text-xs uppercase tracking-wide text-primary">Objetivo del Plan</span>
+                        <p className="text-foreground font-medium">{plan.goal}</p>
                     </div>
 
                     {plan.tags && plan.tags.length > 0 && (
                         <div className="lg:col-span-2">
-                            <span className="text-xs uppercase tracking-wide block mb-1" style={{ color: '#4A67B3' }}>Etiquetas</span>
+                            <span className="text-xs uppercase tracking-wide block mb-1 text-primary">Etiquetas</span>
                             <div className="flex flex-wrap gap-1">
                                 {plan.tags.map((tag, i) => (
-                                    <span key={i} className="px-2 py-0.5 bg-slate-100 text-slate-600 rounded text-xs">
+                                    <span key={i} className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs">
                                         {tag}
                                     </span>
                                 ))}
@@ -224,13 +222,12 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                     )}
                 </div>
 
-                {/* Fila 3: Descripción (si existe) */}
                 {plan.description && (
                     <>
-                        <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                        <div className="border-b border-primary/30 mb-4" />
                         <div>
-                            <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Descripción / Notas del Entrenador</span>
-                            <p className="text-gray-700 text-sm mt-1 leading-relaxed">{plan.description}</p>
+                            <span className="text-xs uppercase tracking-wide text-primary">Descripción / Notas del Entrenador</span>
+                            <p className="text-muted-foreground text-sm mt-1 leading-relaxed">{plan.description}</p>
                         </div>
                     </>
                 )}
