@@ -19,8 +19,6 @@ import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useChangePasswordMutation, useAuthForm, validateChangePasswordForm } from "@nexia/shared";
 
 interface ChangePasswordFormData {
@@ -81,18 +79,17 @@ export const ChangePasswordForm: React.FC = () => {
         <div className="space-y-6">
             {/* Header */}
             <div className="mb-8 text-center md:text-left">
-                <h2 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-2`}>
+                <h2 className="text-xl font-bold text-foreground mb-2">
                     Seguridad
                 </h2>
-                <p className={`${TYPOGRAPHY.body} text-slate-600`}>
+                <p className="text-sm text-muted-foreground">
                     Cambia tu contraseña para mantener tu cuenta segura
                 </p>
             </div>
 
-            {/* Success message */}
             {successMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>
+                <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+                    <p className="text-sm font-medium text-success">
                         {successMessage}
                     </p>
                 </div>
@@ -143,7 +140,7 @@ export const ChangePasswordForm: React.FC = () => {
                         size="md"
                         isLoading={isLoading}
                         disabled={isLoading}
-                        className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
+                        className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3 md:w-auto md:min-w-[180px]"
                     >
                         {isLoading ? "Actualizando..." : "Actualizar"}
                     </Button>

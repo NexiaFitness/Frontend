@@ -15,7 +15,6 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useCreateTestResult } from "@nexia/shared";
 import { useGetClientQuery, useGetPhysicalTestsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -153,10 +152,10 @@ export const CreateTestResult: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                                 Nuevo Test Físico
                             </h2>
-                            <p className="text-white/80 text-sm md:text-base">
+                            <p className="text-muted-foreground text-sm md:text-base">
                                 Registrar un nuevo resultado de test físico
                             </p>
                         </div>
@@ -167,14 +166,14 @@ export const CreateTestResult: React.FC = () => {
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                        <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-6">
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                        <h3 className="text-lg lg:text-xl font-bold text-foreground mb-6">
                             Detalles del Test
                         </h3>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Cliente
                                 </label>
                                 <Input
@@ -185,12 +184,12 @@ export const CreateTestResult: React.FC = () => {
                                             : "Cargando..."
                                     }
                                     disabled
-                                    className="bg-slate-50"
+                                    className="bg-muted"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Test *
                                 </label>
                                 <FormSelect
@@ -208,12 +207,12 @@ export const CreateTestResult: React.FC = () => {
                                     ]}
                                 />
                                 {formErrors.test_id ? (
-                                    <p className="text-red-600 text-xs mt-1">{String(formErrors.test_id)}</p>
+                                    <p className="text-destructive text-xs mt-1">{String(formErrors.test_id)}</p>
                                 ) : null}
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Fecha del Test *
                                 </label>
                                 <Input
@@ -226,13 +225,13 @@ export const CreateTestResult: React.FC = () => {
                                     max={new Date().toISOString().split("T")[0]}
                                 />
                                 {formErrors.test_date ? (
-                                    <p className="text-red-600 text-xs mt-1">{String(formErrors.test_date)}</p>
+                                    <p className="text-destructive text-xs mt-1">{String(formErrors.test_date)}</p>
                                 ) : null}
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Valor *
                                     </label>
                                     <Input
@@ -246,11 +245,11 @@ export const CreateTestResult: React.FC = () => {
                                         placeholder="Ej: 80.5"
                                     />
                                     {formErrors.value ? (
-                                        <p className="text-red-600 text-xs mt-1">{String(formErrors.value)}</p>
+                                        <p className="text-destructive text-xs mt-1">{String(formErrors.value)}</p>
                                     ) : null}
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Unidad *
                                     </label>
                                     <Input
@@ -265,12 +264,12 @@ export const CreateTestResult: React.FC = () => {
                                         className={selectedTest ? "bg-slate-50" : ""}
                                     />
                                     {selectedTest ? (
-                                        <p className="text-slate-500 text-xs mt-1">
+                                        <p className="text-muted-foreground text-xs mt-1">
                                             Unidad automática del test seleccionado
                                         </p>
                                     ) : null}
                                     {formErrors.unit ? (
-                                        <p className="text-red-600 text-xs mt-1">{String(formErrors.unit)}</p>
+                                        <p className="text-destructive text-xs mt-1">{String(formErrors.unit)}</p>
                                     ) : null}
                                 </div>
                             </div>
@@ -293,7 +292,7 @@ export const CreateTestResult: React.FC = () => {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Superficie (opcional)
                                     </label>
                                     <Input
@@ -306,7 +305,7 @@ export const CreateTestResult: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Condiciones (opcional)
                                     </label>
                                     <Input
@@ -321,7 +320,7 @@ export const CreateTestResult: React.FC = () => {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Notas (opcional)
                                 </label>
                                 <Textarea

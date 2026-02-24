@@ -15,7 +15,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useGenerateReport } from "@nexia/shared";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import type { ReportFormData, ReportType, ReportFormat } from "@nexia/shared/types/reports";
@@ -94,13 +93,13 @@ export const GenerateReports: React.FC = () => {
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
 
                     {/* Formulario */}
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
-                        <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-6">Configuración del Reporte</h3>
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
+                        <h3 className="text-lg lg:text-xl font-bold text-foreground mb-6">Configuración del Reporte</h3>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Tipo de Reporte */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Tipo de Reporte *
                                 </label>
                                 <FormSelect
@@ -121,7 +120,7 @@ export const GenerateReports: React.FC = () => {
                             {/* Cliente (si aplica) */}
                             {formData.reportType === REPORT_TYPE.CLIENT_PROGRESS && (
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Cliente *
                                     </label>
                                     <FormSelect
@@ -142,7 +141,7 @@ export const GenerateReports: React.FC = () => {
                                         ]}
                                     />
                                     {formErrors.clientId && (
-                                        <p className="text-red-600 text-xs mt-1">{formErrors.clientId}</p>
+                                        <p className="text-destructive text-xs mt-1">{formErrors.clientId}</p>
                                     )}
                                 </div>
                             )}
@@ -150,7 +149,7 @@ export const GenerateReports: React.FC = () => {
                             {/* Fechas */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Fecha Inicio
                                     </label>
                                     <Input
@@ -162,7 +161,7 @@ export const GenerateReports: React.FC = () => {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                    <label className="block text-sm font-semibold text-foreground mb-2">
                                         Fecha Fin
                                     </label>
                                     <Input
@@ -177,7 +176,7 @@ export const GenerateReports: React.FC = () => {
 
                             {/* Formato */}
                             <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
+                                <label className="block text-sm font-semibold text-foreground mb-2">
                                     Formato
                                 </label>
                                 <FormSelect
@@ -225,8 +224,8 @@ export const GenerateReports: React.FC = () => {
                                 </p>
                             </div>
                             {reportResult.data && (
-                                <div className="bg-slate-50 rounded-lg p-4 overflow-auto max-h-96">
-                                    <pre className="text-xs text-slate-700 whitespace-pre-wrap">
+                                <div className="bg-muted rounded-lg p-4 overflow-auto max-h-96">
+                                    <pre className="text-xs text-foreground whitespace-pre-wrap">
                                         {JSON.stringify(reportResult.data, null, 2)}
                                     </pre>
                                 </div>

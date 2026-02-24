@@ -21,8 +21,6 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useUpdateAccountMutation, selectUser, setCurrentUser, logout } from "@nexia/shared";
 import type { AppDispatch } from "@nexia/shared/store";
 import type { UpdateAccountPayload } from "@nexia/shared/types/account";
@@ -104,8 +102,8 @@ export const ProfileForm: React.FC = () => {
         <div className="space-y-8">
             {/* Mensajes de estado */}
             {successMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>{successMessage}</p>
+                <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+                    <p className="text-sm font-medium text-success">{successMessage}</p>
                 </div>
             )}
 
@@ -165,7 +163,7 @@ export const ProfileForm: React.FC = () => {
                             size="md"
                             isLoading={isLoading}
                             disabled={isLoading}
-                            className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
+                            className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3 md:w-auto md:min-w-[180px]"
                         >
                             {isLoading ? "Guardando..." : "Guardar"}
                         </Button>
@@ -174,17 +172,16 @@ export const ProfileForm: React.FC = () => {
             </div>
 
             {/* Seguridad */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+            <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <ChangePasswordForm />
             </div>
 
-            {/* Zona de Peligro (solo no-admin) */}
             {user?.role !== "admin" && (
-                <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2 text-center lg:text-left`}>
+                <div className="bg-destructive/10 border-2 border-destructive/30 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-destructive mb-2 text-center lg:text-left">
                         Zona de Peligro
                     </h3>
-                    <p className="text-sm text-red-700 mb-4 text-center lg:text-left">
+                    <p className="text-sm text-destructive mb-4 text-center lg:text-left">
                         Eliminar tu cuenta es una acción permanente. Todos los datos asociados
                         serán eliminados.
                     </p>

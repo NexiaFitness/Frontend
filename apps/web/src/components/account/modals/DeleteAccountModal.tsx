@@ -18,8 +18,6 @@
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { BaseModal } from "@/components/ui/modals";
-import { TYPOGRAPHY } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useDeleteAccountMutation } from "@nexia/shared";
 
 interface DeleteAccountModalProps {
@@ -68,19 +66,18 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
         >
             {/* Warning message */}
             <div className="text-center mb-6 sm:mb-8">
-                <p className={`${TYPOGRAPHY.errorText} text-red-600 font-medium`}>
+                <p className="text-sm font-medium text-destructive">
                     Esta acción es irreversible.
                 </p>
             </div>
 
-            {/* Action buttons - Mobile: stacked, Desktop: fixed equal width */}
             <div className="flex flex-col md:flex-row gap-3 justify-center">
                 <Button
                     variant="outline"
                     onClick={onClose}
                     disabled={isLoading}
                     size="md"
-                    className={BUTTON_PRESETS.modalEqual}
+                    className="min-w-[140px] sm:min-w-[160px]"
                 >
                     Cancelar
                 </Button>
@@ -90,7 +87,7 @@ export const DeleteAccountModal: React.FC<DeleteAccountModalProps> = ({
                     isLoading={isLoading}
                     disabled={isLoading}
                     size="md"
-                    className={BUTTON_PRESETS.modalEqual}
+                    className="min-w-[140px] sm:min-w-[160px]"
                 >
                     Eliminar cuenta
                 </Button>

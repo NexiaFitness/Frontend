@@ -16,17 +16,16 @@
 
 import React from "react";
 import { ProfileForm } from "@/components/account/ProfileForm";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 export const Account: React.FC = () => {
     return (
         <>
                 {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                         Mi Cuenta
                     </h2>
-                    <p className="text-white/80 text-sm md:text-base">
+                    <p className="text-muted-foreground text-sm md:text-base">
                         Gestiona tu información personal y configuración de seguridad
                     </p>
                 </div>

@@ -13,7 +13,6 @@
  */
 
 import React, { useState } from "react";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface FAQItem {
     question: string;
@@ -83,24 +82,27 @@ export const FAQSection: React.FC = () => {
                     {faqData.map((faq, index) => (
                         <div 
                             key={index}
-                            className="border border-slate-200 rounded-xl overflow-hidden transition-all duration-200"
-                            style={openIndex === index ? { borderColor: '#4A67B3' } : {}}
+                            className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+                                openIndex === index ? 'border-primary' : 'border-border'
+                            }`}
                             onMouseEnter={(e) => {
                                 if (openIndex !== index) {
-                                    e.currentTarget.style.borderColor = '#4A67B3';
+                                    e.currentTarget.classList.remove('border-border');
+                                    e.currentTarget.classList.add('border-primary');
                                 }
                             }}
                             onMouseLeave={(e) => {
                                 if (openIndex !== index) {
-                                    e.currentTarget.style.borderColor = '';
+                                    e.currentTarget.classList.remove('border-primary');
+                                    e.currentTarget.classList.add('border-border');
                                 }
                             }}
                         >
                             <button
                                 onClick={() => toggleFAQ(index)}
-                                className="w-full px-6 py-5 text-left bg-slate-50 hover:bg-slate-100 transition-colors duration-200 flex justify-between items-center"
+                                className="w-full px-6 py-5 text-left bg-muted hover:bg-muted/80 transition-colors duration-200 flex justify-between items-center"
                             >
-                                <span className={`${TYPOGRAPHY.subtitle} text-slate-800 font-semibold pr-4`}>
+                                <span className="text-sm font-semibold text-foreground pr-4">
                                     {faq.question}
                                 </span>
                                 <div className={`flex-shrink-0 transition-transform duration-200 ${
@@ -127,10 +129,10 @@ export const FAQSection: React.FC = () => {
 
                 {/* Bottom Call to Action */}
                 <div className="mt-16 text-center">
-                    <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 mb-4`}>
+                    <p className="text-base text-muted-foreground mb-4">
                         ¿No encuentras la respuesta que buscas?
                     </p>
-                    <p className={`${TYPOGRAPHY.body} text-slate-500`}>
+                    <p className="text-sm text-muted-foreground/80">
                         Contacta directamente con nuestro equipo para resolver cualquier duda específica 
                         sobre tu caso de uso o necesidades particulares.
                     </p>

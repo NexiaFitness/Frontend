@@ -15,7 +15,6 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import { TYPOGRAPHY } from "@/utils/typography";
 import {
     useGetExerciseByIdQuery,
     useCreateExerciseMutation,
@@ -189,16 +188,16 @@ export const ExerciseForm: React.FC = () => {
                     >
                         ← Volver a Ejercicios
                     </Button>
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                         {isEdit ? "Editar Ejercicio" : "Crear Ejercicio"}
                     </h2>
-                    <p className="text-white/80 text-sm">
+                    <p className="text-muted-foreground text-sm">
                         {isEdit ? "Modifica los datos del ejercicio." : "Añade un nuevo ejercicio a la base de datos."}
                     </p>
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <form onSubmit={handleSubmit} className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 space-y-6">
+                    <form onSubmit={handleSubmit} className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">ID de ejercicio *</label>
@@ -209,7 +208,7 @@ export const ExerciseForm: React.FC = () => {
                                     disabled={isEdit}
                                 />
                                 {formErrors.exercise_id && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.exercise_id}</p>
+                                    <p className="text-destructive text-xs mt-1">{formErrors.exercise_id}</p>
                                 )}
                             </div>
                             <div>
@@ -219,7 +218,7 @@ export const ExerciseForm: React.FC = () => {
                                     onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                                     placeholder="Nombre del ejercicio"
                                 />
-                                {formErrors.nombre && <p className="text-red-600 text-xs mt-1">{formErrors.nombre}</p>}
+                                {formErrors.nombre && <p className="text-destructive text-xs mt-1">{formErrors.nombre}</p>}
                             </div>
                         </div>
 
@@ -285,7 +284,7 @@ export const ExerciseForm: React.FC = () => {
                                 placeholder="legs, quadriceps (separados por coma)"
                             />
                             {formErrors.musculatura_principal && (
-                                <p className="text-red-600 text-xs mt-1">{formErrors.musculatura_principal}</p>
+                                <p className="text-destructive text-xs mt-1">{formErrors.musculatura_principal}</p>
                             )}
                         </div>
 

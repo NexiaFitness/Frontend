@@ -5,6 +5,7 @@ Professional fitness training management platform with React + TypeScript monore
 ## Status
 - **Branch**: `develop`
 - **Frontend**: ✅ Complete with responsive design + unified client forms architecture
+- **UX Sparkle (Fase 7):** Ejercicios, reportes, account, testing y componentes home migrados a design tokens (`SPEC_00_DESIGN_TOKENS.md`). `utils/backgrounds.ts` eliminado; `utils/typography.ts` y `utils/buttonStyles.ts` siguen en uso en auth y clientes.
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
 - **Testing**: ✅ Comprehensive MSW integration (224/224 passing)
 - **Version**: v5.5.0

@@ -22,9 +22,6 @@ import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Pagination } from "@/components/ui/pagination";
 
-// Utils
-import { TYPOGRAPHY } from "@/utils/typography";
-
 export const ExerciseList: React.FC = () => {
     const navigate = useNavigate();
 
@@ -73,18 +70,18 @@ export const ExerciseList: React.FC = () => {
             {/* Header */}
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div className="text-center sm:text-left">
-                        <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                             Base de Datos de Ejercicios
                         </h2>
-                        <p className="text-white/80 text-sm md:text-base">
+                        <p className="text-muted-foreground text-sm md:text-base">
                             Explora y busca ejercicios para tus planes de entrenamiento
                         </p>
                     </div>
                     <button
                         onClick={() => navigate("/dashboard/exercises/create")}
-                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors shrink-0"
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shrink-0"
                     >
-                        ➕ Crear Ejercicio
+                        Crear Ejercicio
                     </button>
                 </div>
 
@@ -115,7 +112,7 @@ export const ExerciseList: React.FC = () => {
                             Error al cargar ejercicios. Por favor, intenta de nuevo.
                             <button
                                 onClick={() => refetch()}
-                                className="ml-2 text-blue-600 hover:text-blue-700 underline"
+                                className="ml-2 text-primary hover:underline"
                             >
                                 Reintentar
                             </button>
@@ -157,7 +154,7 @@ export const ExerciseList: React.FC = () => {
                     {!isLoading && !isError && exercises.length > 0 && (
                         <>
                             <div className="mb-4">
-                                <p className="text-sm text-white/80">
+                                <p className="text-sm text-muted-foreground">
                                     Mostrando {exercises.length} de {total} ejercicios
                                 </p>
                             </div>

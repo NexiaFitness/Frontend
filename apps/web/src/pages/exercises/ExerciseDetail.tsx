@@ -95,7 +95,7 @@ export const ExerciseDetail: React.FC = () => {
         return (
             <div className="flex justify-center items-center py-16">
                 <LoadingSpinner size="lg" />
-                <p className="ml-4 text-white">Cargando ejercicio...</p>
+                <p className="ml-4 text-muted-foreground">Cargando ejercicio...</p>
             </div>
         );
     }
@@ -130,14 +130,14 @@ export const ExerciseDetail: React.FC = () => {
                     >
                         ← Volver a Ejercicios
                     </Button>
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
                         {exercise.nombre}
                     </h2>
                 </div>
 
                 {/* Contenido principal */}
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
+                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
                         {/* Imagen placeholder con gradiente */}
                         <div
                             className={`aspect-video rounded-xl mb-6 bg-gradient-to-br ${getMuscleGradient(primaryMuscle)} flex items-center justify-center`}
@@ -150,20 +150,20 @@ export const ExerciseDetail: React.FC = () => {
                         {/* Información básica */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                             <div>
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
                                     Grupo Muscular Principal
                                 </p>
                                 {primaryMuscle ? (
-                                    <p className="text-base font-semibold text-slate-900">
+                                    <p className="text-base font-semibold text-foreground">
                                         {getMuscleLabel(primaryMuscle)}
                                     </p>
                                 ) : (
-                                    <p className="text-base text-slate-400">No especificado</p>
+                                    <p className="text-base text-muted-foreground">No especificado</p>
                                 )}
                             </div>
 
                             <div>
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-1">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
                                     Nivel
                                 </p>
                                 {exercise.nivel ? (
@@ -173,7 +173,7 @@ export const ExerciseDetail: React.FC = () => {
                                         {getLevelLabel(exercise.nivel)}
                                     </span>
                                 ) : (
-                                    <p className="text-base text-slate-400">No especificado</p>
+                                    <p className="text-base text-muted-foreground">No especificado</p>
                                 )}
                             </div>
                         </div>
@@ -181,14 +181,14 @@ export const ExerciseDetail: React.FC = () => {
                         {/* Músculos secundarios */}
                         {secondaryMuscles.length > 0 && (
                             <div className="mb-6">
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
                                     Músculos Secundarios
                                 </p>
                                 <div className="flex flex-wrap gap-2">
                                     {secondaryMuscles.map((muscle, index) => (
                                         <span
                                             key={`${muscle}-${index}`}
-                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-slate-100 text-slate-700"
+                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-muted text-foreground"
                                         >
                                             {getMuscleLabel(muscle)}
                                         </span>
@@ -200,11 +200,11 @@ export const ExerciseDetail: React.FC = () => {
                         {/* Equipamiento */}
                         {exercise.equipo && (
                             <div className="mb-6">
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
                                     Equipamiento
                                 </p>
                                 <div className="flex flex-wrap gap-2">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-700">
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
                                         {getEquipmentLabel(exercise.equipo)}
                                     </span>
                                 </div>
@@ -214,10 +214,10 @@ export const ExerciseDetail: React.FC = () => {
                         {/* Descripción */}
                         {exercise.descripcion && (
                             <div className="mb-6">
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
                                     Descripción
                                 </p>
-                                <p className="text-base text-slate-700 leading-relaxed">
+                                <p className="text-base text-muted-foreground leading-relaxed">
                                     {exercise.descripcion}
                                 </p>
                             </div>
@@ -226,10 +226,10 @@ export const ExerciseDetail: React.FC = () => {
                         {/* Instrucciones */}
                         {exercise.instrucciones && (
                             <div className="mb-6">
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
                                     Instrucciones
                                 </p>
-                                <p className="text-base text-slate-700 leading-relaxed whitespace-pre-line">
+                                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-line">
                                     {exercise.instrucciones}
                                 </p>
                             </div>
@@ -238,10 +238,10 @@ export const ExerciseDetail: React.FC = () => {
                         {/* Notas */}
                         {exercise.notas && (
                             <div className="mb-6">
-                                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
+                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
                                     Notas
                                 </p>
-                                <p className="text-base text-slate-700 leading-relaxed">
+                                <p className="text-base text-muted-foreground leading-relaxed">
                                     {exercise.notas}
                                 </p>
                             </div>
@@ -262,20 +262,20 @@ export const ExerciseDetail: React.FC = () => {
                         iconType="danger"
                     >
                         <div className="space-y-4">
-                            <p className="text-gray-700">
+                            <p className="text-muted-foreground">
                                 Se eliminará &quot;{exercise.nombre}&quot; permanentemente de la base de datos.
                             </p>
                             <div className="flex flex-col sm:flex-row gap-3 justify-end">
                                 <button
                                     onClick={() => setDeleteModalOpen(false)}
-                                    className="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50"
+                                    className="px-4 py-2 rounded-lg border border-border text-foreground font-semibold hover:bg-muted"
                                 >
                                     Cancelar
                                 </button>
                                 <button
                                     onClick={handleDelete}
                                     disabled={isDeleting}
-                                    className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50"
+                                    className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground font-semibold hover:bg-destructive/90 disabled:opacity-50"
                                 >
                                     {isDeleting ? "Eliminando..." : "Eliminar"}
                                 </button>

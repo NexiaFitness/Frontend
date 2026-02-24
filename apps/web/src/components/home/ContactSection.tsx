@@ -13,7 +13,6 @@
  */
 
 import React from "react";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons/Button";
 import { useAuthForm } from "@nexia/shared";
 
@@ -110,7 +109,7 @@ export const ContactSection: React.FC = () => {
                     className="w-full h-full object-cover"
                 />
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-slate-900/40"></div>
+                <div className="absolute inset-0 bg-foreground/40"></div>
             </div>
 
             {/* Content */}
@@ -155,78 +154,74 @@ export const ContactSection: React.FC = () => {
                     </div>
 
                     {/* Right: Contact Form */}
-                    <div className="bg-slate-900/15 backdrop-blur-sm border border-white/30 rounded-2xl p-8 shadow-2xl">
-                        <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-6 text-center`}>
+                    <div className="bg-card/90 backdrop-blur-sm border border-border rounded-2xl p-8 shadow-2xl">
+                        <h4 className="text-lg font-semibold text-foreground mb-6 text-center">
                             Información de contacto
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
                             {/* Nombre */}
                             <div className="w-full">
-                                <label className="block text-sm font-medium text-white mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                     Nombre completo
-                                    <span className="text-white ml-1">*</span>
+                                    <span className="text-destructive ml-1">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     placeholder="Tu nombre"
                                     value={typedFormData.name}
                                     onChange={(e) => handleInputChange("name")(e)}
-                                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 placeholder-gray-400 text-gray-900 sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-2 placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+                                    <p className="mt-1 text-sm text-destructive">{errors.name}</p>
                                 )}
                             </div>
 
-                            {/* Email */}
                             <div className="w-full">
-                                <label className="block text-sm font-medium text-white mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                     Correo electrónico
-                                    <span className="text-white ml-1">*</span>
+                                    <span className="text-destructive ml-1">*</span>
                                 </label>
                                 <input
                                     type="email"
                                     placeholder="tu@email.com"
                                     value={typedFormData.email}
                                     onChange={(e) => handleInputChange("email")(e)}
-                                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 placeholder-gray-400 text-gray-900 sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-2 placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
                                 />
                                 {errors.email && (
-                                    <p className="mt-1 text-sm text-red-600">{errors.email}</p>
+                                    <p className="mt-1 text-sm text-destructive">{errors.email}</p>
                                 )}
                             </div>
 
-                            {/* Mensaje - Usando textarea */}
                             <div className="w-full">
-                                <label className="block text-sm font-medium text-white mb-1">
+                                <label className="block text-sm font-medium text-foreground mb-1">
                                     Mensaje
-                                    <span className="text-white ml-1">*</span>
+                                    <span className="text-destructive ml-1">*</span>
                                 </label>
                                 <textarea
                                     value={typedFormData.message}
                                     onChange={(e) => handleInputChange("message")(e)}
                                     placeholder="Cuéntanos qué necesitas..."
                                     rows={4}
-                                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 placeholder-gray-400 text-gray-900 resize-none"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-2 placeholder:text-muted-foreground resize-none"
                                 />
                                 {errors.message && (
-                                    <p className="mt-1 text-sm text-red-600">
+                                    <p className="mt-1 text-sm text-destructive">
                                         {errors.message}
                                     </p>
                                 )}
                             </div>
 
-                            {/* Error del servidor */}
                             {serverError && (
-                                <div className="bg-red-50 border border-red-200 rounded-md p-3">
-                                    <p className="text-sm text-red-600">{serverError}</p>
+                                <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3">
+                                    <p className="text-sm text-destructive">{serverError}</p>
                                 </div>
                             )}
 
-                            {/* Política de privacidad */}
-                            <div className="bg-slate-50 rounded-lg p-4">
-                                <p className="text-xs text-slate-600 leading-relaxed">
+                            <div className="bg-muted rounded-lg p-4">
+                                <p className="text-xs text-muted-foreground leading-relaxed">
                                     Al enviar este formulario, aceptas que NEXIA procese tus datos
                                     para responder a tu consulta. No compartimos tu información
                                     con terceros.

@@ -15,16 +15,13 @@
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { meshGradient } from "@/utils/backgrounds";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { ROUTES } from "@nexia/shared/config/constants";
 import { Button } from "@/components/ui/buttons/Button";
 
 export const HeroSection: React.FC = () => {
     return (
         <section
-            className="min-h-[calc(100vh-128px)] overflow-hidden"
-            style={{ background: meshGradient }}
+            className="min-h-[calc(100vh-128px)] overflow-hidden bg-background"
         >
             <div className="grid grid-cols-1 lg:grid-cols-2 w-full h-full min-h-[calc(100vh-128px)]">
                 {/* Content Left */}
@@ -32,19 +29,19 @@ export const HeroSection: React.FC = () => {
                     <div className="space-y-8 max-w-xl text-center lg:text-left">
                         <div className="space-y-6">
                             {/* Main Headline */}
-                            <h1 className={`${TYPOGRAPHY.hero} text-slate-800 leading-tight`}>
+                            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground leading-tight">
                                 Profesionaliza tu{" "}
-                                <span className="block" style={{ color: '#4A67B3' }}>entrenamiento</span>
+                                <span className="block text-primary">entrenamiento</span>
                             </h1>
                             
                             {/* Subtitle */}
-                            <p className={`${TYPOGRAPHY.heroSubtitle} text-white leading-relaxed max-w-lg mx-auto lg:mx-0 [text-shadow:_2px_2px_12px_rgb(0_0_0_/_80%)] lg:[text-shadow:_1px_1px_6px_rgb(0_0_0_/_40%)]`}>
+                            <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
                                 Revoluciona la creación de programas de entrenamiento con la
                                 plataforma científica diseñada por profesionales del fitness.
                             </p>
                             
                             {/* Value Proposition */}
-                            <p className={`${TYPOGRAPHY.bodyLarge} text-slate-800 max-w-lg mx-auto lg:mx-0`}>
+                            <p className="text-base text-foreground max-w-lg mx-auto lg:mx-0">
                                 Ahorra tiempo, mejora resultados y gestiona tus clientes con
                                 herramientas inteligentes basadas en ciencia del deporte.
                             </p>
