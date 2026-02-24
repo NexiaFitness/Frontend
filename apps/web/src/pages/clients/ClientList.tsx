@@ -35,18 +35,15 @@ import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Avatar } from "@/components/ui/avatar";
 import { Pagination } from "@/components/ui/pagination";
 
-// Utils
-import { TYPOGRAPHY } from "@/utils/typography";
-
-// Helper para obtener color de fatigue
+// Helper para obtener color de fatigue (tokens Nexia Sparkle Flow)
 const getFatigueColor = (fatigue: string | null): string => {
-    if (!fatigue) return "bg-gray-100 text-gray-600";
+    if (!fatigue) return "bg-muted text-muted-foreground";
     const fatigueLower = fatigue.toLowerCase();
-    if (fatigueLower.includes("perfect")) return "bg-green-100 text-green-700";
-    if (fatigueLower.includes("slightly")) return "bg-yellow-100 text-yellow-700";
-    if (fatigueLower.includes("very")) return "bg-orange-100 text-orange-700";
-    if (fatigueLower.includes("exhausted")) return "bg-red-100 text-red-700";
-    return "bg-gray-100 text-gray-600";
+    if (fatigueLower.includes("perfect")) return "bg-success/10 text-success";
+    if (fatigueLower.includes("slightly")) return "bg-warning/10 text-warning";
+    if (fatigueLower.includes("very")) return "bg-warning/10 text-warning";
+    if (fatigueLower.includes("exhausted")) return "bg-destructive/10 text-destructive";
+    return "bg-muted text-muted-foreground";
 };
 
 // Helper para traducir fatigue
@@ -268,21 +265,21 @@ export const ClientList: React.FC = () => {
         <>
             {/* Header */}
                 <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
                         Clientes
                     </h2>
-                    <p className="text-white/80 text-sm md:text-base">
+                    <p className="text-muted-foreground text-sm md:text-base">
                         Gestiona y monitoriza el progreso de tus clientes
                     </p>
                 </div>
 
                 {/* Header con búsqueda */}
                 <div className="px-4 lg:px-8 mb-6">
-                        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4">
+                        <div className="bg-card border border-border rounded-xl shadow-lg p-4">
                             <div className="flex items-center">
                                 {/* Búsqueda */}
                                 <div className="flex-1 relative">
-                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                                         </svg>
@@ -292,7 +289,7 @@ export const ClientList: React.FC = () => {
                                         placeholder="Buscar por nombre, apellidos o email..."
                                         value={searchInput}
                                         onChange={(e) => setSearchInput(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-800"
+                                        className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-foreground placeholder:text-muted-foreground"
                                         aria-label="Buscar cliente"
                                     />
                                 </div>
@@ -329,27 +326,27 @@ export const ClientList: React.FC = () => {
                             {!isLoading && !isError && (
                                 <>
                                     {/* Headers */}
-                                    <div className="grid grid-cols-[1fr_150px_140px_40px] gap-4 px-6 py-4 bg-gray-50 border-b border-gray-200 items-center">
-                                        <div className="font-semibold text-gray-700 flex items-center gap-3">
+                                    <div className="grid grid-cols-[1fr_150px_140px_40px] gap-4 px-6 py-4 bg-muted/50 border-b border-border items-center">
+                                        <div className="font-semibold text-foreground flex items-center gap-3">
                                             <div className="w-10 flex-shrink-0"></div>
                                             <span>Nombre</span>
                                         </div>
-                                        <div className="font-semibold text-gray-700 text-center">Fatiga</div>
-                                        <div className="font-semibold text-gray-700 text-center">Adherencia</div>
+                                        <div className="font-semibold text-foreground text-center">Fatiga</div>
+                                        <div className="font-semibold text-foreground text-center">Adherencia</div>
                                         <div className="w-8 flex-shrink-0"></div>
                                     </div>
 
                                     {/* Resumen y filas */}
                                     {!isLoading && !isError && items.length > 0 && (
-                                        <div className="px-6 py-2 bg-gray-50 border-b border-gray-200">
-                                            <p className="text-sm text-gray-600">
+                                        <div className="px-6 py-2 bg-muted/50 border-b border-border">
+                                            <p className="text-sm text-muted-foreground">
                                                 Mostrando {items.length} de {total} clientes
                                             </p>
                                         </div>
                                     )}
                                     {items.length === 0 ? (
                                         <div className="p-12 text-center">
-                                            <p className="text-gray-500 mb-4">
+                                            <p className="text-muted-foreground mb-4">
                                                 {searchDebounced.trim()
                                                     ? "No se encontraron clientes con ese criterio"
                                                     : "No hay clientes"}
@@ -454,9 +451,9 @@ export const ClientList: React.FC = () => {
 
                         {/* Sidebar derecho */}
                         <div className="lg:w-80 flex-shrink-0">
-                        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
+                        <div className="bg-card border border-border rounded-xl shadow-lg p-6">
                             {/* Quick Actions */}
-                            <h3 className="font-semibold text-gray-900 mb-4">Acciones Rápidas</h3>
+                            <h3 className="font-semibold text-foreground mb-4">Acciones Rápidas</h3>
                             <div className="space-y-2">
                                 <Button
                                     variant="primary"
@@ -470,7 +467,7 @@ export const ClientList: React.FC = () => {
                                     variant="outline"
                                     size="md"
                                     onClick={handleCreateTrainingPlan}
-                                    className="w-full justify-start bg-white"
+                                    className="w-full justify-start"
                                 >
                                     Crear Plan de Entrenamiento
                                 </Button>
@@ -478,7 +475,7 @@ export const ClientList: React.FC = () => {
                                     variant="outline"
                                     size="md"
                                     onClick={handleScheduleSession}
-                                    className="w-full justify-start bg-white"
+                                    className="w-full justify-start"
                                 >
                                     Programar Sesión
                                 </Button>
@@ -486,31 +483,31 @@ export const ClientList: React.FC = () => {
                                     variant="outline"
                                     size="md"
                                     onClick={handleManageTemplates}
-                                    className="w-full justify-start bg-white"
+                                    className="w-full justify-start"
                                 >
                                     Gestionar Plantillas
                                 </Button>
                             </div>
 
-                            {/* Línea separadora azul */}
-                            <div className="border-b mb-4 mt-6" style={{ borderColor: 'rgb(74, 103, 179)' }}></div>
+                            {/* Línea separadora */}
+                            <div className="border-b border-border mb-4 mt-6"></div>
 
                             {/* Recent Activity */}
-                            <h3 className="font-semibold text-gray-900 mb-4">ACTIVIDAD RECIENTE</h3>
+                            <h3 className="font-semibold text-foreground mb-4">ACTIVIDAD RECIENTE</h3>
                             <div className="space-y-4">
                                 {activities.length === 0 ? (
-                                    <p className="text-sm text-gray-500 text-center py-4">No hay actividad reciente</p>
+                                    <p className="text-sm text-muted-foreground text-center py-4">No hay actividad reciente</p>
                                 ) : (
                                     activities.map((activity) => (
                                         <div key={activity.id} className="flex items-start gap-3">
-                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center text-primary-600">
+                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
                                                 {getActivityIcon(activity.type, activity.icon)}
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm text-gray-900">
+                                                <p className="text-sm text-foreground">
                                                     <span className="font-medium">{activity.actor_name}</span> {translateActivityDescription(activity.type, activity.description)}
                                                 </p>
-                                                <p className="text-xs text-gray-500 mt-1">{formatTimeAgo(activity.timestamp)}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">{formatTimeAgo(activity.timestamp)}</p>
                                             </div>
                                         </div>
                                     ))

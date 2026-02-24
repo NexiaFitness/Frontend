@@ -69,7 +69,7 @@ export const ClientOnboarding: React.FC = () => {
                 {/* Help Section */}
                 <div className="px-4 lg:px-8">
                     <div className="max-w-4xl mx-auto text-center space-y-3">
-                        <div className="flex items-center justify-center space-x-2 text-white/50 text-sm">
+                        <div className="flex items-center justify-center space-x-2 text-muted-foreground text-sm">
                             <svg
                                 className="w-5 h-5"
                                 fill="none"
@@ -85,11 +85,11 @@ export const ClientOnboarding: React.FC = () => {
                             </svg>
                             <span>Puedes volver atrás en cualquier momento para editar</span>
                         </div>
-                        <p className="text-white/50 text-sm">
+                        <p className="text-muted-foreground text-sm">
                             ¿Necesitas ayuda?{" "}
                             <a
                                 href="mailto:support@nexia.app"
-                                className="text-primary-400 hover:text-primary-300 underline transition-colors"
+                                className="text-primary hover:text-primary/80 underline transition-colors"
                             >
                                 Contacta con soporte
                             </a>

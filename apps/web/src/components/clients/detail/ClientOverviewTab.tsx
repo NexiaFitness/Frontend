@@ -27,7 +27,6 @@ import type { ClientProgress } from "@nexia/shared/types/progress";
 import type { MetricCardColor } from "@nexia/shared/types/coherence";
 import { MetricCard } from "@/components/ui/cards";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useCoherence } from "@nexia/shared/hooks/clients/useCoherence";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
@@ -232,7 +231,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     if (!isValidClientId) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <p className="text-gray-500">ID de cliente inválido</p>
+                <p className="text-muted-foreground">ID de cliente inválido</p>
             </div>
         );
     }
@@ -306,33 +305,33 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* SECCIÓN HÁBITOS (MVP DEC-02 — resumen en Resumen) */}
             {isLoadingHabits ? (
-                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                <div className="bg-card border border-border rounded-lg shadow p-6 flex items-center justify-center">
                     <LoadingSpinner size="md" />
                 </div>
             ) : habitInsights && habitInsights.active_habits > 0 ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Hábitos</h3>
-                    <p className="text-slate-600 text-sm mb-4">
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className={`text-lg font-semibold text-foreground mb-4`}>Hábitos</h3>
+                    <p className="text-muted-foreground text-sm mb-4">
                         Resumen de cumplimiento de hábitos del cliente.
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-xs font-medium text-gray-500">Hábitos activos</p>
-                            <p className="text-xl font-semibold text-gray-900">{habitInsights.active_habits}</p>
+                        <div className="bg-muted/50 rounded-lg p-4">
+                            <p className="text-xs font-medium text-muted-foreground">Hábitos activos</p>
+                            <p className="text-xl font-semibold text-foreground">{habitInsights.active_habits}</p>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-xs font-medium text-gray-500">Cumplimiento medio</p>
-                            <p className="text-xl font-semibold text-gray-900">
+                        <div className="bg-muted/50 rounded-lg p-4">
+                            <p className="text-xs font-medium text-muted-foreground">Cumplimiento medio</p>
+                            <p className="text-xl font-semibold text-foreground">
                                 {habitInsights.average_completion.toFixed(0)}%
                             </p>
                         </div>
-                        <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-xs font-medium text-gray-500">Mejor racha</p>
-                            <p className="text-xl font-semibold text-gray-900">{habitInsights.best_streak} días</p>
+                        <div className="bg-muted/50 rounded-lg p-4">
+                            <p className="text-xs font-medium text-muted-foreground">Mejor racha</p>
+                            <p className="text-xl font-semibold text-foreground">{habitInsights.best_streak} días</p>
                         </div>
                     </div>
                     {habitInsights.most_skipped && (
-                        <p className="text-sm text-slate-600 mt-3">
+                        <p className="text-sm text-muted-foreground mt-3">
                             Más saltado: {habitInsights.most_skipped}
                         </p>
                     )}
@@ -351,15 +350,15 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* SATISFACCIÓN — último rating y registrar valoración */}
             {isLoadingRatings ? (
-                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                <div className="bg-card border border-border rounded-lg shadow p-6 flex items-center justify-center">
                     <LoadingSpinner size="md" />
                 </div>
             ) : (
-                <div className="bg-white rounded-lg shadow p-6">
+                <div className="bg-card border border-border rounded-lg shadow p-6">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                         <div>
-                            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>Satisfacción</h3>
-                            <p className="text-slate-600 text-sm">
+                            <h3 className={`text-lg font-semibold text-foreground`}>Satisfacción</h3>
+                            <p className="text-muted-foreground text-sm">
                                 Última valoración del cliente y registro de nuevas valoraciones.
                             </p>
                         </div>
@@ -374,9 +373,9 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                         )}
                     </div>
                     {lastRating ? (
-                        <div className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
                             <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-semibold text-gray-900">
+                                <span className="text-sm font-semibold text-foreground">
                                     {lastRating.rating}/5
                                 </span>
                                 <span className="text-sm text-slate-500">
@@ -388,7 +387,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                 </span>
                             </div>
                             {lastRating.comment && (
-                                <p className="text-sm text-slate-600 mt-2">{lastRating.comment}</p>
+                                <p className="text-sm text-muted-foreground mt-2">{lastRating.comment}</p>
                             )}
                         </div>
                     ) : (
@@ -398,7 +397,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                     )}
                     {showRatingForm && (
                         <form
-                            className="mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 space-y-4"
+                            className="mt-4 p-4 bg-muted/50 rounded-lg border border-border space-y-4"
                             onSubmit={async (e) => {
                                 e.preventDefault();
                                 const data: ClientRatingCreate = {
@@ -425,7 +424,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                     id="rating-select"
                                     value={ratingValue}
                                     onChange={(e) => setRatingValue(Number(e.target.value))}
-                                    className="block w-full max-w-xs rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    className="block w-full max-w-xs rounded-md border border-input px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                     required
                                 >
                                     {[1, 2, 3, 4, 5].map((n) => (
@@ -444,7 +443,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                     value={ratingComment}
                                     onChange={(e) => setRatingComment(e.target.value)}
                                     rows={2}
-                                    className="block w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    className="block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
                                 />
                             </div>
                             <div className="flex gap-2">
@@ -474,16 +473,16 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* LESIONES ACTIVAS (widget compacto) */}
             {isLoadingInjuries ? (
-                <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center">
+                <div className="bg-card border border-border rounded-lg shadow p-6 flex items-center justify-center">
                     <LoadingSpinner size="md" />
                 </div>
             ) : (
                 activeInjuriesCompact.length > 0 && (
-                    <div className="bg-white rounded-lg shadow p-6">
+                    <div className="bg-card border border-border rounded-lg shadow p-6">
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <div>
-                                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>Lesiones Activas</h3>
-                                <p className="text-slate-600 text-sm">
+                                <h3 className={`text-lg font-semibold text-foreground`}>Lesiones Activas</h3>
+                                <p className="text-muted-foreground text-sm">
                                     Control rápido de lesiones actuales del cliente.
                                 </p>
                             </div>
@@ -512,15 +511,15 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                                 </p>
                                             )}
                                         </div>
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-destructive/10 text-destructive">
                                             Dolor {injury.pain_level}/5
                                         </span>
                                     </div>
-                                    <p className="text-sm text-slate-600 mt-2">
+                                    <p className="text-sm text-muted-foreground mt-2">
                                         Inicio: {new Date(injury.injury_date).toLocaleDateString("es-ES")}
                                     </p>
                                     {injury.notes && (
-                                        <p className="text-sm text-slate-600 mt-1 line-clamp-2">
+                                        <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                                             Notas: {injury.notes}
                                         </p>
                                     )}
@@ -533,8 +532,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* ACTIVIDAD RECIENTE */}
             {(lastCompletedSession || lastTest || lastProgressRecord) && (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Actividad Reciente</h3>
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className={`text-lg font-semibold text-foreground mb-4`}>Actividad Reciente</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {lastCompletedSession && lastCompletedSession.session_date && (
                             <ActivityCard
@@ -569,8 +568,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
             )}
 
             {/* INFORMACIÓN PERSONAL - Solo campos no visibles en header */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Información Personal</h3>
+            <div className="bg-card border border-border rounded-lg shadow p-6">
+                <h3 className={`text-lg font-semibold text-foreground mb-4`}>Información Personal</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <InfoRow label="Email" value={client.mail} />
                     <InfoRow label="Teléfono" value={client.telefono} />
@@ -581,8 +580,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* Training Goals - Solo información adicional no visible en header */}
             {client.fecha_definicion_objetivo || client.descripcion_objetivos ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Objetivos de Entrenamiento</h3>
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className={`text-lg font-semibold text-foreground mb-4`}>Objetivos de Entrenamiento</h3>
                     <div className="space-y-3">
                         <InfoRow label="Fecha definición" value={client.fecha_definicion_objetivo} />
                         <InfoRow label="Descripción" value={client.descripcion_objetivos} />
@@ -592,13 +591,13 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* Anthropometric Metrics (si existen) */}
             {hasAnthropometricData(client) && (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Métricas Antropométricas</h3>
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className={`text-lg font-semibold text-foreground mb-4`}>Métricas Antropométricas</h3>
 
                     {/* Skinfolds */}
                     {hasSkinfolds(client) && (
                         <div className="mb-6">
-                            <h4 className={`${TYPOGRAPHY.cardTitle} text-gray-800 mb-3`}>Pliegues Cutáneos (mm)</h4>
+                            <h4 className={`text-base font-semibold text-foreground mb-3`}>Pliegues Cutáneos (mm)</h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                 <AnthroMetric label="Tríceps" value={client.skinfold_triceps} />
                                 <AnthroMetric label="Subescapular" value={client.skinfold_subscapular} />
@@ -615,7 +614,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                     {/* Girths */}
                     {hasGirths(client) && (
                         <div className="mb-6">
-                            <h4 className={`${TYPOGRAPHY.cardTitle} text-gray-800 mb-3`}>Perímetros (cm)</h4>
+                            <h4 className={`text-base font-semibold text-foreground mb-3`}>Perímetros (cm)</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 <AnthroMetric label="Brazo relajado" value={client.girth_relaxed_arm} />
                                 <AnthroMetric label="Brazo contraído" value={client.girth_flexed_contracted_arm} />
@@ -630,7 +629,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                     {/* Diameters */}
                     {hasDiameters(client) && (
                         <div>
-                            <h4 className={`${TYPOGRAPHY.cardTitle} text-gray-800 mb-3`}>Diámetros Óseos (cm)</h4>
+                            <h4 className={`text-base font-semibold text-foreground mb-3`}>Diámetros Óseos (cm)</h4>
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                                 <AnthroMetric label="Húmero" value={client.diameter_humerus_biepicondylar} />
                                 <AnthroMetric label="Fémur" value={client.diameter_femur_bicondylar} />
@@ -643,8 +642,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
 
             {/* Health - Solo información no visible en header */}
             {client.lesiones_relevantes ? (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>Salud</h3>
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className={`text-lg font-semibold text-foreground mb-4`}>Salud</h3>
                     <div className="space-y-3">
                         <InfoRow label="Lesiones relevantes" value={client.lesiones_relevantes} isTextArea />
                     </div>
@@ -678,8 +677,8 @@ const InfoRow: React.FC<InfoRowProps> = ({ label, value, isTextArea = false }) =
 
     return (
         <div>
-            <dt className="text-sm font-medium text-gray-500">{label}</dt>
-            <dd className={`mt-1 text-sm text-gray-900 ${isTextArea ? "whitespace-pre-wrap" : ""}`}>{value}</dd>
+            <dt className="text-sm font-medium text-muted-foreground">{label}</dt>
+            <dd className={`mt-1 text-sm text-foreground ${isTextArea ? "whitespace-pre-wrap" : ""}`}>{value}</dd>
         </div>
     );
 };
@@ -693,9 +692,9 @@ const AnthroMetric: React.FC<AnthroMetricProps> = ({ label, value }) => {
     if (value === null || value === undefined) return null;
 
     return (
-        <div className="bg-gray-50 rounded p-2">
-            <p className="text-xs text-gray-500">{label}</p>
-            <p className="text-sm font-semibold text-gray-900">{value}</p>
+        <div className="bg-muted/50 rounded p-2">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="text-sm font-semibold text-foreground">{value}</p>
         </div>
     );
 };
@@ -707,7 +706,7 @@ interface NoteCardProps {
 
 const NoteCard: React.FC<NoteCardProps> = ({ title, content }) => {
     return (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="bg-warning/10 border border-warning/30 rounded-lg p-4">
             <h4 className="text-sm font-semibold text-yellow-900 mb-2">{title}</h4>
             <p className="text-sm text-yellow-800 whitespace-pre-wrap">{content}</p>
         </div>
@@ -725,10 +724,10 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ title, date, detail, onClic
     return (
         <button
             onClick={onClick}
-            className="text-left p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+            className="text-left p-4 bg-muted/50 rounded-lg border border-border hover:bg-gray-100 hover:border-input transition-colors"
         >
-            <p className="text-xs font-medium text-gray-500 mb-1">{title}</p>
-            <p className="text-sm font-semibold text-gray-900 mb-1">{date}</p>
+            <p className="text-xs font-medium text-muted-foreground mb-1">{title}</p>
+            <p className="text-sm font-semibold text-foreground mb-1">{date}</p>
             <p className="text-xs text-gray-600">{detail}</p>
         </button>
     );

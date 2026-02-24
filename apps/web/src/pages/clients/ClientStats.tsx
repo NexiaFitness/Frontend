@@ -36,10 +36,10 @@ export const ClientStats: React.FC = () => {
                     {[1, 2, 3].map((i) => (
                         <div
                             key={i}
-                            className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6 animate-pulse"
+                            className="bg-card border border-border rounded-xl shadow-lg p-6 animate-pulse"
                         >
-                            <div className="h-8 w-16 bg-slate-200 rounded mb-2"></div>
-                            <div className="h-4 w-24 bg-slate-200 rounded"></div>
+                            <div className="h-8 w-16 bg-muted rounded mb-2"></div>
+                            <div className="h-4 w-24 bg-muted rounded"></div>
                         </div>
                     ))}
                 </div>
@@ -90,24 +90,24 @@ export const ClientStats: React.FC = () => {
                 </div>
 
                 {/* Clientes Activos */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
+                <div className="bg-card border border-border rounded-xl shadow-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-3xl font-bold text-green-600">
+                            <p className="text-3xl font-bold text-success">
                                 {activeClients}
                             </p>
-                            <p className="text-sm font-medium text-slate-600 mt-1">
+                            <p className="text-sm font-medium text-muted-foreground mt-1">
                                 Activos
                             </p>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 {totalClients > 0 
                                     ? Math.round((activeClients / totalClients) * 100) 
                                     : 0}% del total
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-success/20 rounded-full flex items-center justify-center">
                             <svg
-                                className="w-6 h-6 text-green-600"
+                                className="w-6 h-6 text-success"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
@@ -124,24 +124,24 @@ export const ClientStats: React.FC = () => {
                 </div>
 
                 {/* Clientes Inactivos */}
-                <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
+                <div className="bg-card border border-border rounded-xl shadow-lg p-6">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-3xl font-bold text-slate-600">
+                            <p className="text-3xl font-bold text-muted-foreground">
                                 {inactiveClients}
                             </p>
-                            <p className="text-sm font-medium text-slate-600 mt-1">
+                            <p className="text-sm font-medium text-muted-foreground mt-1">
                                 Inactivos
                             </p>
-                            <p className="text-xs text-slate-500 mt-1">
+                            <p className="text-xs text-muted-foreground mt-1">
                                 {totalClients > 0 
                                     ? Math.round((inactiveClients / totalClients) * 100) 
                                     : 0}% del total
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-muted rounded-full flex items-center justify-center">
                             <svg
-                                className="w-6 h-6 text-slate-600"
+                                className="w-6 h-6 text-muted-foreground"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"

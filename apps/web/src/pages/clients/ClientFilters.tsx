@@ -85,11 +85,11 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
         filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined;
 
     return (
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="bg-card border border-border rounded-xl shadow-lg p-4 lg:p-6">
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Búsqueda */}
                 <div className="flex-1">
-                    <label htmlFor="search" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="search" className="block text-sm font-medium text-foreground mb-2">
                         Buscar cliente
                     </label>
                     <div className="relative">
@@ -99,10 +99,10 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                             placeholder="Nombre, apellidos o mail..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            className="w-full px-4 py-2.5 pl-10 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary transition-colors bg-background text-foreground placeholder:text-muted-foreground"
                         />
                         <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
+                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -119,14 +119,14 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
 
                 {/* Filtro Objetivo */}
                 <div className="w-full lg:w-48">
-                    <label htmlFor="objetivo_entrenamiento" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="objetivo_entrenamiento" className="block text-sm font-medium text-foreground mb-2">
                         Objetivo
                     </label>
                     <select
                         id="objetivo_entrenamiento"
                         value={filters.objetivo_entrenamiento || ""}
                         onChange={handleObjetivoChange}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary transition-colors bg-background text-foreground"
                     >
                         <option value="">Todos</option>
                         <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
@@ -155,14 +155,14 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
 
                 {/* Filtro Activo */}
                 <div className="w-full lg:w-40">
-                    <label htmlFor="activo" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="activo" className="block text-sm font-medium text-foreground mb-2">
                         Estado
                     </label>
                     <select
                         id="activo"
                         value={filters.activo === undefined ? "" : filters.activo.toString()}
                         onChange={handleActivoChange}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary transition-colors bg-background text-foreground"
                     >
                         <option value="">Todos</option>
                         <option value="true">Activos</option>
@@ -175,7 +175,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                     <div className="w-full lg:w-auto lg:self-end">
                         <button
                             onClick={handleReset}
-                            className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                            className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                         >
                             Limpiar filtros
                         </button>

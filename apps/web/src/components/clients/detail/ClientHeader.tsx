@@ -16,7 +16,6 @@ import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { Avatar } from "@/components/ui/avatar";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 interface ClientHeaderProps {
@@ -136,7 +135,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         {/* Client Info */}
                         <div className="flex-1">
                             {/* Nombre */}
-                            <h1 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+                            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
                                 {client.nombre} {client.apellidos}
                             </h1>
 
@@ -144,40 +143,40 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                             <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-1 text-sm">
                                 {/* Age */}
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Edad</span>
-                                    <p className="text-gray-900 font-medium">
+                                    <span className="text-xs uppercase tracking-wide text-primary">Edad</span>
+                                    <p className="text-foreground font-medium">
                                         {clientAge ? `${clientAge} años` : "—"}
                                     </p>
                                 </div>
 
                                 {/* Weight */}
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Peso</span>
-                                    <p className="text-gray-900 font-medium">
+                                    <span className="text-xs uppercase tracking-wide text-primary">Peso</span>
+                                    <p className="text-foreground font-medium">
                                         {client.peso ? `${client.peso} kg` : "—"}
                                     </p>
                                 </div>
 
                                 {/* Height */}
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Altura</span>
-                                    <p className="text-gray-900 font-medium">
+                                    <span className="text-xs uppercase tracking-wide text-primary">Altura</span>
+                                    <p className="text-foreground font-medium">
                                         {client.altura ? `${client.altura} cm` : "—"}
                                     </p>
                                 </div>
 
                                 {/* BMI */}
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>IMC</span>
-                                    <p className="text-gray-900 font-medium">
+                                    <span className="text-xs uppercase tracking-wide text-primary">IMC</span>
+                                    <p className="text-foreground font-medium">
                                         {client.imc ? client.imc.toFixed(1) : "—"}
                                     </p>
                                 </div>
 
                                 {/* Joined */}
                                 <div>
-                                    <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Fecha de Alta</span>
-                                    <p className="text-gray-900 font-medium">
+                                    <span className="text-xs uppercase tracking-wide text-primary">Fecha de Alta</span>
+                                    <p className="text-foreground font-medium">
                                         {formatJoinedDate(client.fecha_alta)}
                                     </p>
                                 </div>
@@ -231,47 +230,47 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     </div>
                 </div>
 
-                {/* Línea azul debajo de Fila 1 */}
-                <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                {/* Línea separadora */}
+                <div className="border-b border-primary mb-4"></div>
 
                 {/* Fila 2: Objective + Experience + Frequency + Duration + Días/semana + Días concretos */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
                     {/* Objective */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Objetivo</span>
-                        <p className="text-gray-900 font-medium">
+                        <span className="text-xs uppercase tracking-wide text-primary">Objetivo</span>
+                        <p className="text-foreground font-medium">
                             {translateObjective(client.objetivo_entrenamiento)}
                         </p>
                     </div>
 
                     {/* Experience Level */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Nivel de Experiencia</span>
-                        <p className="text-gray-900 font-medium">
+                        <span className="text-xs uppercase tracking-wide text-primary">Nivel de Experiencia</span>
+                        <p className="text-foreground font-medium">
                             {translateExperience(client.experiencia)}
                         </p>
                     </div>
 
                     {/* Training Frequency */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Frecuencia de Entrenamiento</span>
-                        <p className="text-gray-900 font-medium">
+                        <span className="text-xs uppercase tracking-wide text-primary">Frecuencia de Entrenamiento</span>
+                        <p className="text-foreground font-medium">
                             {translateFrequency(client.frecuencia_semanal)}
                         </p>
                     </div>
 
                     {/* Session Durations */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Duración de Sesiones</span>
-                        <p className="text-gray-900 font-medium">
+                        <span className="text-xs uppercase tracking-wide text-primary">Duración de Sesiones</span>
+                        <p className="text-foreground font-medium">
                             {translateSessionDuration(client.session_duration)}
                         </p>
                     </div>
 
                     {/* Días/semana exactos */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Días/semana</span>
-                        <p className="text-gray-900 font-medium">
+                        <span className="text-xs uppercase tracking-wide text-primary">Días/semana</span>
+                        <p className="text-foreground font-medium">
                             {client.exact_training_frequency != null
                                 ? `${client.exact_training_frequency} día${client.exact_training_frequency === 1 ? "" : "s"}/semana`
                                 : "—"}
@@ -280,25 +279,25 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
 
                     {/* Días concretos */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Días concretos</span>
-                        <p className="text-gray-900 font-medium">
+                        <span className="text-xs uppercase tracking-wide text-primary">Días concretos</span>
+                        <p className="text-foreground font-medium">
                             {formatTrainingDays(client.training_days)}
                         </p>
                     </div>
                 </div>
 
-                {/* Línea azul debajo de Fila 2 */}
-                <div className="border-b mb-4" style={{ borderColor: '#4A67B3' }}></div>
+                {/* Línea separadora */}
+                <div className="border-b border-primary mb-4"></div>
 
                 {/* Fila 3: Notas */}
                 {(client.notes_1 || client.notes_2 || client.notes_3 || client.observaciones || onEditProfile) && (
                     <div className="mb-4">
                         <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs uppercase tracking-wide" style={{ color: '#4A67B3' }}>Observaciones</span>
+                            <span className="text-xs uppercase tracking-wide text-primary">Observaciones</span>
                             {onEditProfile && (
                                 <button
                                     onClick={onEditProfile}
-                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                                    className="text-xs text-primary hover:text-primary/80 font-medium hover:underline"
                                 >
                                     + Añadir Nota
                                 </button>
@@ -307,26 +306,26 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         <div className="space-y-2">
                             {client.notes_1 && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Nota 1</span>
-                                    <p className="text-gray-900 font-medium text-sm">{client.notes_1}</p>
+                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Nota 1</span>
+                                    <p className="text-foreground font-medium text-sm">{client.notes_1}</p>
                                 </div>
                             )}
                             {client.notes_2 && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Nota 2</span>
-                                    <p className="text-gray-900 font-medium text-sm">{client.notes_2}</p>
+                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Nota 2</span>
+                                    <p className="text-foreground font-medium text-sm">{client.notes_2}</p>
                                 </div>
                             )}
                             {client.notes_3 && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Nota 3</span>
-                                    <p className="text-gray-900 font-medium text-sm">{client.notes_3}</p>
+                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Nota 3</span>
+                                    <p className="text-foreground font-medium text-sm">{client.notes_3}</p>
                                 </div>
                             )}
                             {client.observaciones && (
                                 <div>
-                                    <span className="text-gray-500 text-xs uppercase tracking-wide block mb-1">Observaciones</span>
-                                    <p className="text-gray-900 font-medium text-sm">{client.observaciones}</p>
+                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Observaciones</span>
+                                    <p className="text-foreground font-medium text-sm">{client.observaciones}</p>
                                 </div>
                             )}
                         </div>

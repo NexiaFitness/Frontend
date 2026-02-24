@@ -25,7 +25,6 @@ import { useFatigueAlerts } from "@nexia/shared/hooks/clients/useFatigueAlerts";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useToast } from "@/components/ui/feedback";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { Button } from "@/components/ui/buttons";
 import { FatigueAlertCard } from "../fatigue/FatigueAlertCard";
 import { CreateFatigueAlertModal } from "../fatigue/CreateFatigueAlertModal";
@@ -146,7 +145,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
     // Loading state
     if (isLoading || isLoadingTrainer) {
         return (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-card border border-border rounded-lg shadow p-6">
                 <div className="flex justify-center items-center py-8">
                     <LoadingSpinner size="md" />
                 </div>
@@ -157,7 +156,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
     // Error state
     if (isError) {
         return (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-card border border-border rounded-lg shadow p-6">
                 <Alert variant="error">
                     Error al cargar las alertas. Por favor, intenta de nuevo.
                 </Alert>
@@ -168,7 +167,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
     // No trainer ID
     if (!trainerId) {
         return (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-card border border-border rounded-lg shadow p-6">
                 <Alert variant="warning">
                     No se pudo obtener el ID del entrenador. Por favor, inicia sesión como trainer.
                 </Alert>
@@ -253,15 +252,15 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
     return (
         <div 
             ref={sectionRef}
-            className="bg-white rounded-lg shadow p-6" 
+            className="bg-card border border-border rounded-lg shadow p-6" 
             id="client-alerts-section"
         >
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+                    <h3 className={`text-lg font-semibold text-foreground mb-2`}>
                         Alertas
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                         Alertas persistentes que requieren tu atención. Al resolverlas, desaparecerán del dashboard.
                     </p>
                 </div>
@@ -271,13 +270,13 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
             </div>
 
             {/* Tabs: Activas / Historial */}
-            <div className="mb-4 border-b border-gray-200">
+            <div className="mb-4 border-b border-border">
                 <nav className="flex gap-4" aria-label="Tabs de alertas">
                     <button
                         onClick={() => setActiveTab("active")}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                             activeTab === "active"
-                                ? "border-[#4A67B3] text-[#4A67B3]"
+                                ? "border-primary text-primary"
                                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                         }`}
                         aria-selected={activeTab === "active"}
@@ -285,7 +284,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                     >
                         Activas
                         {unresolvedAlerts.length > 0 && (
-                            <span className="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded-full">
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-primary/10 text-primary rounded-full">
                                 {unresolvedAlerts.length}
                             </span>
                         )}
@@ -294,7 +293,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                         onClick={() => setActiveTab("history")}
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                             activeTab === "history"
-                                ? "border-[#4A67B3] text-[#4A67B3]"
+                                ? "border-primary text-primary"
                                 : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                         }`}
                         aria-selected={activeTab === "history"}
@@ -302,7 +301,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                     >
                         Historial
                         {resolvedAlerts.length > 0 && (
-                            <span className="ml-2 px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full">
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-muted text-muted-foreground rounded-full">
                                 {resolvedAlerts.length}
                             </span>
                         )}

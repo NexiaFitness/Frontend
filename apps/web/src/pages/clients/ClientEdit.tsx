@@ -98,18 +98,18 @@ export const ClientEdit: React.FC = () => {
                     <ClientEquipmentSection clientId={clientId} />
 
                     {/* Zona de Peligro - Desvincular Cliente */}
-                    <div className="mt-8 bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-red-900 mb-2 text-center lg:text-left">
+                    <div className="mt-8 bg-destructive/10 border-2 border-destructive/30 rounded-lg p-6">
+                        <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-destructive mb-2 text-center lg:text-left">
                             Zona de Peligro
                         </h3>
-                        <p className="text-sm text-red-700 mb-4 text-center lg:text-left">
+                        <p className="text-sm text-destructive mb-4 text-center lg:text-left">
                             Desvincular este cliente lo eliminará de tu lista. El cliente seguirá existiendo en el sistema.
                         </p>
                         <div className="flex justify-center lg:justify-end pt-4">
                             <button
                                 type="button"
                                 onClick={() => setShowDeleteModal(true)}
-                                className="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 text-white border-2 border-transparent hover:bg-red-700 hover:border-red-700 focus:ring-red-500 px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                className="inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed bg-destructive text-destructive-foreground border-2 border-transparent hover:bg-destructive/90 focus:ring-destructive px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
                             >
                                 Desvincular Cliente
                             </button>

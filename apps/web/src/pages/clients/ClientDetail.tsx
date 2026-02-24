@@ -240,16 +240,16 @@ export const ClientDetail: React.FC = () => {
 
                     {/* Tabs Navigation */}
                     <div className="mt-6 px-4 sm:px-6 lg:px-8">
-                        <div className="bg-white rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
+                        <div className="bg-card border border-border rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
                             <nav 
-                                className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#4A67B3]/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
+                                className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
                                 aria-label="Tabs" 
                                 style={{ WebkitOverflowScrolling: 'touch' }}
                             >
                                 <style>{`
                                     nav[aria-label="Tabs"]::-webkit-scrollbar { height: 4px; }
                                     nav[aria-label="Tabs"]::-webkit-scrollbar-track { background: transparent; }
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar-thumb { background-color: #4A67B3 !important; border-radius: 2px; }
+                                    nav[aria-label="Tabs"]::-webkit-scrollbar-thumb { background-color: hsl(var(--primary)) !important; border-radius: 2px; }
                                 `}</style>
                                 {TABS.map((tab) => {
                                     const isActive = activeTab === tab.id;
@@ -260,7 +260,7 @@ export const ClientDetail: React.FC = () => {
                                             disabled={tab.disabled}
                                             className={`
                                                 relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center
-                                                ${isActive ? "text-[#4A67B3]" : "text-gray-500 hover:text-gray-700"}
+                                                ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}
                                                 ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
                                             `}
                                             aria-current={isActive ? "page" : undefined}
