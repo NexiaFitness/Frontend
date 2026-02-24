@@ -29,7 +29,6 @@ import type {
     StrainWeekData,
 } from "@nexia/shared/types/coherence";
 import { CompactChartCard } from "@/components/ui/cards";
-import { TYPOGRAPHY } from "@/utils/typography";
 import {
     ResponsiveContainer,
     PieChart,
@@ -68,10 +67,10 @@ const MetricCardComponent: React.FC<MetricCardProps> = ({
     color = "blue",
 }) => {
     const colorClasses: Record<MetricCardColor, string> = {
-        blue: "bg-blue-50 border-blue-200 text-blue-800",
-        green: "bg-green-50 border-green-200 text-green-800",
-        orange: "bg-orange-50 border-orange-200 text-orange-800",
-        red: "bg-red-50 border-red-200 text-red-800",
+        blue: "bg-primary/10 border-primary/30 text-primary",
+        green: "bg-success/10 border-success/30 text-success",
+        orange: "bg-warning/10 border-warning/30 text-warning",
+        red: "bg-destructive/10 border-destructive/30 text-destructive",
     };
 
     const selectedColor: MetricCardColor = color || "blue";
@@ -132,10 +131,10 @@ const AdherenceChartComponent: React.FC<AdherenceChartProps> = ({
                     </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-4xl font-bold text-gray-900">
+                    <div className="text-4xl font-bold text-foreground">
                         {adherencePercentage.toFixed(0)}%
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="text-sm text-muted-foreground mt-1">
                         {sessionsCompleted}/{sessionsTotal} sesiones
                     </div>
                 </div>
@@ -200,7 +199,7 @@ const ScatterChartComponent: React.FC<ScatterChartProps> = ({
                             name="Ideal (y=x)"
                             isAnimationActive={false}
                         />
-                        <Scatter name="Sesiones" data={scatterData} fill="#4A67B3" isAnimationActive={false}>
+                        <Scatter name="Sesiones" data={scatterData} fill="hsl(var(--primary))" isAnimationActive={false}>
                             {scatterData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={colors[0]} />
                             ))}
@@ -253,10 +252,10 @@ const MonotonyChartComponent: React.FC<MonotonyChartProps> = ({
                         <Line
                             type="monotone"
                             dataKey="monotony"
-                            stroke="#4A67B3"
+                            stroke="hsl(var(--primary))"
                             strokeWidth={2}
                             name="Monotonía"
-                            dot={{ r: 4, fill: "#4A67B3" }}
+                            dot={{ r: 4, fill: "hsl(var(--primary))" }}
                             isAnimationActive={false}
                             connectNulls={true}
                         />
@@ -317,14 +316,14 @@ const StrainChartComponent: React.FC<StrainChartProps> = ({
                             formatter={onTooltipFormatter}
                         />
                         <Legend {...legendConfig} />
-                        <Bar dataKey="load" fill="#94a3b8" name="Carga" />
+                        <Bar dataKey="load" fill="hsl(var(--muted-foreground))" name="Carga" />
                         <Line
                             type="monotone"
                             dataKey="strain"
-                            stroke="#4A67B3"
+                            stroke="hsl(var(--primary))"
                             strokeWidth={2}
                             name="Strain"
-                            dot={{ r: 4, fill: "#4A67B3" }}
+                            dot={{ r: 4, fill: "hsl(var(--primary))" }}
                             isAnimationActive={false}
                             connectNulls={true}
                         />
@@ -627,19 +626,19 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
             {/* Header con botón Export PDF */}
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className={TYPOGRAPHY.sectionTitle}>Coherencia Diaria</h2>
-                    <p className="text-slate-600 mt-2">
+                    <h2 className="text-lg font-semibold text-foreground">Coherencia Diaria</h2>
+                    <p className="text-muted-foreground mt-2">
                         Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
                     </p>
                 </div>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <button className="px-4 py-2 bg-card border border-input rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors">
                     Exportar PDF
                 </button>
             </div>
 
             {/* Sub-tabs: Week, Month, Year, Training Block */}
             <div className="space-y-4">
-                <nav aria-label="Period tabs" className="flex gap-1 border-b border-gray-200">
+                <nav aria-label="Period tabs" className="flex gap-1 border-b border-border">
                     {[
                         { id: "week" as PeriodType, label: "Semana" },
                         { id: "month" as PeriodType, label: "Mes" },
@@ -654,8 +653,8 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                                 className={`
                                     relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[120px] text-center
                                     ${isActive
-                                        ? "text-[#4A67B3]"
-                                        : "text-gray-500 hover:text-gray-700"
+                                        ? "text-primary"
+                                        : "text-muted-foreground hover:text-foreground"
                                     }
                                     cursor-pointer
                                 `}
@@ -678,11 +677,11 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                             ← Anterior
                         </button>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-gray-900">{periodDisplay}</span>
+                            <span className="text-sm font-semibold text-foreground">{periodDisplay}</span>
                             {periodOffset !== 0 && (
                                 <button
                                     onClick={handleResetPeriod}
-                                    className="px-2 py-1 text-xs text-[#4A67B3] hover:text-[#3a5a9f] transition-colors"
+                                    className="px-2 py-1 text-xs text-primary hover:text-primary/80 transition-colors"
                                     aria-label="Volver al período actual"
                                 >
                                     Hoy
@@ -779,7 +778,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                         />
                     ) : (
                         <div
-                            className="flex items-center justify-center w-full min-w-0 text-gray-500"
+                            className="flex items-center justify-center w-full min-w-0 text-muted-foreground"
                             style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}
                         >
                             No hay datos de monotonía disponibles
@@ -801,7 +800,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                         />
                     ) : (
                         <div
-                            className="flex items-center justify-center w-full min-w-0 text-gray-500"
+                            className="flex items-center justify-center w-full min-w-0 text-muted-foreground"
                             style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}
                         >
                             No hay datos de carga y volumen disponibles
@@ -811,30 +810,30 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
             </div>
 
             {/* Summary interpretativo (editable) con botón Edit */}
-            <div className="bg-white rounded-lg shadow px-4 pt-4 pb-2">
+            <div className="bg-card border border-border rounded-lg shadow px-4 pt-4 pb-2">
                 <div className="flex items-center justify-between mb-6">
-                    <h3 className={`${TYPOGRAPHY.cardTitle}`}>Resumen Interpretativo</h3>
-                    <button className="px-4 py-2 text-sm font-semibold text-[#4A67B3] border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
+                    <h3 className="text-base font-semibold text-foreground">Resumen Interpretativo</h3>
+                    <button className="px-4 py-2 text-sm font-semibold text-primary border border-border rounded-lg hover:bg-muted transition-colors">
                         Editar
                     </button>
                 </div>
 
                 <div className="space-y-5">
-                    <p className="text-slate-700 leading-relaxed whitespace-pre-line">
+                    <p className="text-foreground leading-relaxed whitespace-pre-line">
                         {summary || "Sin información disponible."}
                     </p>
 
-                    <div className="bg-slate-50 border border-slate-200 rounded-xl p-5 w-full">
-                        <div className="text-xs font-semibold text-slate-500 tracking-wide mb-3">
+                    <div className="bg-muted/50 border border-border rounded-xl p-5 w-full">
+                        <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-3">
                             RECOMENDACIONES PRINCIPALES
                         </div>
                         <ul className="space-y-3">
                             {data.recommendations.map((rec, index) => (
                                 <li key={index} className="flex items-start">
-                                    <span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
+                                    <span className="flex-shrink-0 w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
                                         {index + 1}
                                     </span>
-                                    <span className="text-slate-700">{rec}</span>
+                                    <span className="text-foreground">{rec}</span>
                                 </li>
                             ))}
                         </ul>

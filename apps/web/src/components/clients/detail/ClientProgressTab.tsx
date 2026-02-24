@@ -29,7 +29,6 @@ import { useWeeklyMetricsV2, useMetricsAlertsV2, useMonthlyMetricsV2 } from "@ne
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { CompactChartCard } from "@/components/ui/cards";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
 import {
@@ -333,19 +332,19 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
         <div className="p-6 space-y-6">
             <div className="flex items-start justify-between">
                 <div>
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
                         Progreso del Cliente
                     </h2>
-                    <p className="text-slate-600 mt-2">
+                    <p className="text-muted-foreground mt-2">
                         Evolución de métricas corporales, fatiga, energía y carga de trabajo
                     </p>
                 </div>
-                <button className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                <button className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors">
                     Exportar PDF
                 </button>
             </div>
 
-            <nav aria-label="Tabs progreso" className="flex gap-1 border-b border-gray-200">
+            <nav aria-label="Tabs progreso" className="flex gap-1 border-b border-border">
                 {[
                     { id: "overview", label: "Resumen" },
                     { id: "load", label: "Carga de Entrenamiento" },
@@ -358,14 +357,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             onClick={() => setActiveTab(tab.id as ProgressSubTab)}
                             className={`relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center ${
                                 isActive
-                                    ? "text-[#4A67B3]"
-                                    : "text-gray-500 hover:text-gray-700"
+                                    ? "text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
                             }`}
                             aria-current={isActive ? "page" : undefined}
                         >
                             {tab.label}
                             {isActive && (
-                                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-[#4A67B3]" />
+                                <span className="absolute inset-x-0 bottom-0 h-0.5 bg-primary" />
                             )}
                         </button>
                     );
@@ -374,8 +373,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
             {/* Mensaje de sin datos (404) - solo si no hay datos y no hay error real */}
             {isNotFoundError && (
-                <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-500">
+                <div className="bg-card rounded-lg shadow border border-border p-8 text-center">
+                    <p className="text-muted-foreground">
                         Aún no hay datos de progreso para este cliente.
                     </p>
                 </div>
@@ -418,8 +417,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             {activeTab === "load" && (
                 <div className="space-y-6">
                     {/* Selector de período (Semanal/Mensual/Anual) */}
-                    <div className="bg-white rounded-lg shadow-sm p-4">
-                        <div className="flex items-center justify-center gap-2 bg-gray-100 p-1 rounded-lg">
+                    <div className="bg-card border border-border rounded-lg shadow-sm p-4">
+                        <div className="flex items-center justify-center gap-2 bg-muted p-1 rounded-lg">
                             {[
                                 { id: "weekly" as MetricsPeriod, label: "Semanal" },
                                 { id: "monthly" as MetricsPeriod, label: "Mensual" },
@@ -431,8 +430,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                     className={`
                                         px-4 py-2 text-sm font-medium rounded-md transition-colors
                                         ${metricsPeriod === period.id
-                                            ? 'bg-white text-indigo-600 shadow-sm'
-                                            : 'text-gray-600 hover:text-gray-900'
+                                            ? 'bg-card text-primary shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground'
                                         }
                                     `}
                                 >
@@ -451,11 +450,11 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
                     {/* Mensaje si no hay datos de CID */}
                     {!isLoading && (metricsPeriod === "weekly" ? weeklyMetrics.items.length === 0 : monthlyMetrics.items.length === 0) && (
-                        <div className="bg-white rounded-lg shadow p-8 text-center">
-                            <p className="text-gray-500">
+                        <div className="bg-card border border-border rounded-lg shadow p-8 text-center">
+                            <p className="text-muted-foreground">
                                 No hay sesiones de entrenamiento con datos de volumen/intensidad en el rango seleccionado.
                             </p>
-                            <p className="text-sm text-gray-400 mt-2">
+                            <p className="text-sm text-muted-foreground/80 mt-2">
                                 Las sesiones necesitan tener valores de volumen e intensidad (actuales o planificados) para calcular métricas.
                             </p>
                         </div>
@@ -483,7 +482,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     const monthNames = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
                                                     return `${monday.getDate()}–${sunday.getDate()} ${monthNames[sunday.getMonth()]}`;
                                                 }}
-                                                style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                 label={{ value: "Semana", position: "insideBottom", offset: -5 }}
                                             />
                                             <YAxis
@@ -494,7 +493,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     offset: -5,
                                                     style: { textAnchor: "middle" },
                                                 }}
-                                                style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                             />
                                             <Tooltip 
                                                 labelFormatter={(value) => {
@@ -518,19 +517,19 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                             <Line
                                                 type="monotone"
                                                 dataKey="cid"
-                                                stroke="#38b6ff"
+                                                stroke="hsl(var(--primary))"
                                                 name="CID Total"
                                                 strokeWidth={2}
-                                                dot={{ r: 4, fill: "#38b6ff" }}
+                                                dot={{ r: 4, fill: "hsl(var(--primary))" }}
                                                 isAnimationActive={false}
                                             />
                                             <Line
                                                 type="monotone"
                                                 dataKey="avg"
-                                                stroke="#10b981"
+                                                stroke="hsl(var(--success))"
                                                 name="CID Promedio"
                                                 strokeWidth={2}
-                                                dot={{ r: 4, fill: "#10b981" }}
+                                                dot={{ r: 4, fill: "hsl(var(--success))" }}
                                                 isAnimationActive={false}
                                             />
                                         </LineChart>
@@ -562,7 +561,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis 
                                                     dataKey="monthName" 
-                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     label={{ value: "Mes", position: "insideBottom", offset: -5 }}
                                                 />
                                                 <YAxis
@@ -573,7 +572,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                         offset: -5,
                                                         style: { textAnchor: "middle" },
                                                     }}
-                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                 />
                                                 <Tooltip 
                                                     labelFormatter={(value, payload) => {
@@ -584,8 +583,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     }}
                                                     formatter={(value: number) => [`${value.toFixed(1)}`, "CID"]}
                                                     contentStyle={{ 
-                                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                                                        border: '1px solid #e5e7eb',
+                                                        backgroundColor: 'hsl(var(--card))',
+                                                        border: '1px solid hsl(var(--border))',
                                                         borderRadius: '8px',
                                                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                                                     }}
@@ -594,19 +593,19 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <Line
                                                     type="monotone"
                                                     dataKey="cid"
-                                                    stroke="#38b6ff"
+                                                    stroke="hsl(var(--primary))"
                                                     name="CID Total"
                                                     strokeWidth={2}
-                                                    dot={{ r: 4, fill: "#38b6ff" }}
+                                                    dot={{ r: 4, fill: "hsl(var(--primary))" }}
                                                     isAnimationActive={false}
                                                 />
                                                 <Line
                                                     type="monotone"
                                                     dataKey="avg"
-                                                    stroke="#10b981"
+                                                    stroke="hsl(var(--success))"
                                                     name="CID Promedio"
                                                     strokeWidth={2}
-                                                    dot={{ r: 4, fill: "#10b981" }}
+                                                    dot={{ r: 4, fill: "hsl(var(--success))" }}
                                                     isAnimationActive={false}
                                                 />
                                             </LineChart>
@@ -688,7 +687,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis 
                                                     dataKey="year" 
-                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     label={{ value: "Año", position: "insideBottom", offset: -5 }}
                                                 />
                                                 <YAxis
@@ -699,14 +698,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                         offset: -5,
                                                         style: { textAnchor: "middle" },
                                                     }}
-                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                 />
                                                 <Tooltip 
                                                     labelFormatter={(value) => `Año ${value}`}
                                                     formatter={(value: number) => [`${value.toFixed(1)}`, "CID"]}
                                                     contentStyle={{ 
-                                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                                                        border: '1px solid #e5e7eb',
+                                                        backgroundColor: 'hsl(var(--card))',
+                                                        border: '1px solid hsl(var(--border))',
                                                         borderRadius: '8px',
                                                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                                                     }}
@@ -715,19 +714,19 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <Line
                                                     type="monotone"
                                                     dataKey="cid"
-                                                    stroke="#38b6ff"
+                                                    stroke="hsl(var(--primary))"
                                                     name="CID Total"
                                                     strokeWidth={2}
-                                                    dot={{ r: 4, fill: "#38b6ff" }}
+                                                    dot={{ r: 4, fill: "hsl(var(--primary))" }}
                                                     isAnimationActive={false}
                                                 />
                                                 <Line
                                                     type="monotone"
                                                     dataKey="avg"
-                                                    stroke="#10b981"
+                                                    stroke="hsl(var(--success))"
                                                     name="CID Promedio"
                                                     strokeWidth={2}
-                                                    dot={{ r: 4, fill: "#10b981" }}
+                                                    dot={{ r: 4, fill: "hsl(var(--success))" }}
                                                     isAnimationActive={false}
                                                 />
                                             </LineChart>
@@ -740,11 +739,11 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
                     {/* Alertas de Métricas */}
                     {!isLoading && metricsAlerts.hasAlerts && (
-                        <div className="bg-white rounded-xl shadow-sm p-6">
+                        <div className="bg-card border border-border rounded-xl shadow-sm p-6">
                             <div className="flex items-center justify-between mb-4">
-                                <h3 className="text-lg font-semibold text-gray-900">Alertas de Carga</h3>
+                                <h3 className="text-lg font-semibold text-foreground">Alertas de Carga</h3>
                                 {metricsAlerts.hasCritical && (
-                                    <span className="px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                                    <span className="px-3 py-1 bg-destructive/10 text-destructive text-xs font-semibold rounded-full">
                                         {metricsAlerts.criticalAlerts.length} Crítica{metricsAlerts.criticalAlerts.length !== 1 ? 's' : ''}
                                     </span>
                                 )}
@@ -753,21 +752,21 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                 {metricsAlerts.activeAlerts.map((alert, index) => {
                                     const severityColors = {
                                         critical: {
-                                            bg: "bg-red-50",
-                                            border: "border-red-300",
-                                            badge: "bg-red-100 text-red-800",
+                                            bg: "bg-destructive/10",
+                                            border: "border-destructive/30",
+                                            badge: "bg-destructive/10 text-destructive",
                                             label: "Crítica"
                                         },
                                         high: {
-                                            bg: "bg-orange-50",
-                                            border: "border-orange-300",
-                                            badge: "bg-orange-100 text-orange-800",
+                                            bg: "bg-warning/10",
+                                            border: "border-warning/30",
+                                            badge: "bg-warning/10 text-warning",
                                             label: "Alta"
                                         },
                                         medium: {
-                                            bg: "bg-yellow-50",
-                                            border: "border-yellow-300",
-                                            badge: "bg-yellow-100 text-yellow-800",
+                                            bg: "bg-warning/5",
+                                            border: "border-warning/20",
+                                            badge: "bg-warning/10 text-warning",
                                             label: "Media"
                                         }
                                     };
@@ -781,20 +780,20 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                             <div className="flex justify-between items-start">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">
-                                                        <p className="font-semibold text-gray-900 capitalize">
+                                                        <p className="font-semibold text-foreground capitalize">
                                                             {alert.type === "daily_high" ? "CID Diario Alto" : 
                                                              alert.type === "weekly_high" ? "CID Semanal Alto" :
                                                              alert.type === "consecutive_high" ? "Días Consecutivos Altos" :
                                                              alert.type}
                                                         </p>
                                                     </div>
-                                                    <p className="text-sm text-gray-600 mt-1">{alert.message}</p>
+                                                    <p className="text-sm text-muted-foreground mt-1">{alert.message}</p>
                                                     {alert.date && (
-                                                        <p className="text-xs text-gray-500 mt-2">
+                                                        <p className="text-xs text-muted-foreground mt-2">
                                                             Fecha: {new Date(alert.date).toLocaleDateString('es-ES')}
                                                         </p>
                                                     )}
-                                                    <div className="flex items-center gap-4 mt-2 text-xs text-gray-500">
+                                                    <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                                         <span>Valor: <strong>{alert.value.toFixed(1)}</strong></span>
                                                         <span>Umbral: <strong>{alert.threshold.toFixed(1)}</strong></span>
                                                     </div>
@@ -882,8 +881,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                     {!isLoading && (() => {
                         if (metricsPeriod === "weekly" && weeklyMetrics.items.length > 0 && weeklyMetrics.chartData.length === 0) {
                             return (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <p className="text-sm text-blue-800">
+                                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                                    <p className="text-sm text-primary">
                                         <strong>Nota:</strong> Se encontraron {weeklyMetrics.items.length} sesión{weeklyMetrics.items.length !== 1 ? 'es' : ''} con datos, 
                                         pero no se pudieron agrupar en semanas. Verifica que las fechas estén dentro del rango seleccionado.
                                     </p>
@@ -893,8 +892,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         
                         if ((metricsPeriod === "monthly" || metricsPeriod === "annual") && monthlyMetrics.items.length > 0 && (!monthlyMetrics.monthlyMetrics || monthlyMetrics.monthlyMetrics.length === 0)) {
                             return (
-                                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                    <p className="text-sm text-blue-800">
+                                <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+                                    <p className="text-sm text-primary">
                                         <strong>Nota:</strong> Se encontraron {monthlyMetrics.items.length} sesión{monthlyMetrics.items.length !== 1 ? 'es' : ''} con datos, 
                                         pero no se pudieron agrupar en {metricsPeriod === "monthly" ? "meses" : "años"}. Verifica que las fechas estén dentro del rango seleccionado.
                                     </p>
@@ -908,13 +907,13 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             )}
 
             {activeTab === "history" && !isNotFoundError && progressHistory && progressHistory.length > 0 && (
-                <div className="bg-white rounded-lg shadow px-4 pt-4 pb-4 space-y-4">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                <div className="bg-card border border-border rounded-lg shadow px-4 pt-4 pb-4 space-y-4">
+                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
                         Historial de Registros
                     </h3>
                     {progressHistory.map((record: ClientProgress) => (
-                        <div key={record.id} className="flex items-center justify-between border-b pb-2 last:border-b-0">
-                            <div className="text-gray-700">
+                        <div key={record.id} className="flex items-center justify-between border-b border-border pb-2 last:border-b-0">
+                            <div className="text-foreground">
                                 <p>
                                     <strong>Fecha:</strong>{" "}
                                     {new Date(record.fecha_registro).toLocaleDateString()}
@@ -926,7 +925,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                     {record.imc ? record.imc.toFixed(1) : "N/A"}
                                 </p>
                                 {record.notas && (
-                                    <p className="text-sm text-gray-500 mt-1">
+                                    <p className="text-sm text-muted-foreground mt-1">
                                         <strong>Notas:</strong> {record.notas}
                                     </p>
                                 )}
@@ -974,7 +973,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <XAxis 
                                                         dataKey="date" 
                                                         tickFormatter={formatDate}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                         label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
                                                     />
                                                     <YAxis
@@ -986,7 +985,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                             offset: -5,
                                                             style: { textAnchor: "middle" },
                                                         }}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     />
                                                     <Tooltip 
                                                         labelFormatter={formatDate}
@@ -1001,10 +1000,10 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <Line
                                                         type="monotone"
                                                         dataKey="weight"
-                                                        stroke="#4A67B3"
+                                                        stroke="hsl(var(--primary))"
                                                         name="Peso (kg)"
                                                         strokeWidth={2}
-                                                        dot={{ r: 4, fill: "#4A67B3" }}
+                                                        dot={{ r: 4, fill: "hsl(var(--primary))" }}
                                                         isAnimationActive={false}
                                                     />
                                                 </LineChart>
@@ -1027,7 +1026,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <XAxis 
                                                         dataKey="date" 
                                                         tickFormatter={formatDate}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                         label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
                                                     />
                                                     <YAxis
@@ -1039,7 +1038,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                             offset: -5,
                                                             style: { textAnchor: "middle" },
                                                         }}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     />
                                                     <Tooltip 
                                                         labelFormatter={formatDate}
@@ -1054,10 +1053,10 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <Line
                                                         type="monotone"
                                                         dataKey="bmi"
-                                                        stroke="#4A67B3"
+                                                        stroke="hsl(var(--primary))"
                                                         name="IMC"
                                                         strokeWidth={2}
-                                                        dot={{ r: 4, fill: "#4A67B3" }}
+                                                        dot={{ r: 4, fill: "hsl(var(--primary))" }}
                                                         isAnimationActive={false}
                                                     />
                                                 </LineChart>
@@ -1084,7 +1083,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <XAxis 
                                                         dataKey="date" 
                                                         tickFormatter={formatDate}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                         label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
                                                     />
                                                     <YAxis
@@ -1097,7 +1096,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                             offset: -5,
                                                             style: { textAnchor: "middle" },
                                                         }}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     />
                                                     <Tooltip 
                                                         labelFormatter={formatDate}
@@ -1112,8 +1111,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <Area
                                                         type="monotone"
                                                         dataKey="pre_fatigue"
-                                                        stroke="#4A67B3"
-                                                        fill="#4A67B3"
+                                                        stroke="hsl(var(--primary))"
+                                                        fill="hsl(var(--primary))"
                                                         fillOpacity={0.08}
                                                         strokeWidth={2}
                                                         name="Fatiga Pre-Sesión"
@@ -1122,8 +1121,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <Area
                                                         type="monotone"
                                                         dataKey="post_fatigue"
-                                                        stroke="#ef4444"
-                                                        fill="#ef4444"
+                                                        stroke="hsl(var(--destructive))"
+                                                        fill="hsl(var(--destructive))"
                                                         fillOpacity={0.06}
                                                         strokeWidth={2}
                                                         name="Fatiga Post-Sesión"
@@ -1149,7 +1148,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <XAxis 
                                                         dataKey="date" 
                                                         tickFormatter={formatDate}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                         label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
                                                     />
                                                     <YAxis
@@ -1162,7 +1161,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                             offset: -5,
                                                             style: { textAnchor: "middle" },
                                                         }}
-                                                        style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                        style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     />
                                                     <Tooltip 
                                                         labelFormatter={formatDate}
@@ -1177,8 +1176,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <Area
                                                         type="monotone"
                                                         dataKey="pre_energy"
-                                                        stroke="#4A67B3"
-                                                        fill="#4A67B3"
+                                                        stroke="hsl(var(--primary))"
+                                                        fill="hsl(var(--primary))"
                                                         fillOpacity={0.08}
                                                         strokeWidth={2}
                                                         name="Energía Pre-Sesión"
@@ -1187,8 +1186,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                     <Area
                                                         type="monotone"
                                                         dataKey="post_energy"
-                                                        stroke="#ef4444"
-                                                        fill="#ef4444"
+                                                        stroke="hsl(var(--destructive))"
+                                                        fill="hsl(var(--destructive))"
                                                         fillOpacity={0.06}
                                                         strokeWidth={2}
                                                         name="Energía Post-Sesión"
@@ -1217,7 +1216,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <XAxis 
                                                     dataKey="date" 
                                                     tickFormatter={formatDate}
-                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                     label={{ value: "Fecha de medición", position: "insideBottom", offset: -5 }}
                                                 />
                                                 <YAxis
@@ -1229,13 +1228,13 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                         offset: -5,
                                                         style: { textAnchor: "middle" },
                                                     }}
-                                                    style={{ fontSize: '12px', fill: '#6b7280' }}
+                                                    style={{ fontSize: '12px', fill: 'hsl(var(--muted-foreground))' }}
                                                 />
                                                 <Tooltip 
                                                     labelFormatter={formatDate}
                                                     contentStyle={{ 
-                                                        backgroundColor: 'rgba(255, 255, 255, 0.98)',
-                                                        border: '1px solid #e5e7eb',
+                                                        backgroundColor: 'hsl(var(--card))',
+                                                        border: '1px solid hsl(var(--border))',
                                                         borderRadius: '8px',
                                                         boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
                                                     }}
@@ -1259,8 +1258,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <Area
                                                     type="monotone"
                                                     dataKey="workload_score"
-                                                    stroke="#4A67B3"
-                                                    fill="#4A67B3"
+                                                    stroke="hsl(var(--primary))"
+                                                    fill="hsl(var(--primary))"
                                                     fillOpacity={0.08}
                                                     strokeWidth={2}
                                                     name="Carga de Trabajo"
@@ -1269,8 +1268,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                                                 <Area
                                                     type="monotone"
                                                     dataKey="recovery_need_score"
-                                                    stroke="#ef4444"
-                                                    fill="#ef4444"
+                                                    stroke="hsl(var(--destructive))"
+                                                    fill="hsl(var(--destructive))"
                                                     fillOpacity={0.06}
                                                     strokeWidth={2}
                                                     name="Necesidad de Recuperación"
@@ -1288,8 +1287,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
             {/* Empty state - solo si no es 404 y no hay datos en los gráficos */}
             {!isNotFoundError && weightChartData.length === 0 && bmiChartData.length === 0 && (
-                <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-gray-500">
+                <div className="bg-card rounded-lg shadow border border-border p-8 text-center">
+                    <p className="text-muted-foreground">
                         No hay datos de progreso disponibles para este cliente.
                     </p>
                 </div>
@@ -1300,12 +1299,12 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                 <button
                     type="button"
                     onClick={() => setShowProgressForm(!showProgressForm)}
-                    className="w-full flex items-center justify-between bg-white rounded-lg shadow p-4 hover:bg-gray-50 transition-colors"
+                    className="w-full flex items-center justify-between bg-card border border-border rounded-lg shadow p-4 hover:bg-muted transition-colors"
                 >
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                    <h3 className="text-lg font-semibold text-foreground">
                         {showProgressForm ? "➖" : "➕"} Añadir nuevo registro de progreso
                     </h3>
-                    <span className="text-gray-500 text-sm">
+                    <span className="text-muted-foreground text-sm">
                         {showProgressForm ? "Ocultar" : "Mostrar"}
                     </span>
                 </button>
@@ -1353,27 +1352,27 @@ const SummaryCardComponent: React.FC<SummaryCardProps> = ({
     riskLevel,
 }) => {
     const themeMap: Record<string, { bg: string; border: string; text: string }> = {
-        "Peso Actual": { bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-800" },
-        "IMC Actual": { bg: "bg-emerald-50", border: "border-emerald-200", text: "text-emerald-800" },
-        "Fatiga Promedio (Pre)": { bg: "bg-orange-50", border: "border-orange-200", text: "text-orange-800" },
-        "Fatiga Promedio (Post)": { bg: "bg-indigo-50", border: "border-indigo-200", text: "text-indigo-800" },
-        "Nivel de Riesgo": { bg: "bg-rose-50", border: "border-rose-200", text: riskLevel === "low" ? "text-emerald-700" : riskLevel === "medium" ? "text-amber-600" : "text-rose-700" },
+        "Peso Actual": { bg: "bg-primary/10", border: "border-primary/30", text: "text-primary" },
+        "IMC Actual": { bg: "bg-success/10", border: "border-success/30", text: "text-success" },
+        "Fatiga Promedio (Pre)": { bg: "bg-warning/10", border: "border-warning/30", text: "text-warning" },
+        "Fatiga Promedio (Post)": { bg: "bg-primary/10", border: "border-primary/30", text: "text-primary" },
+        "Nivel de Riesgo": { bg: "bg-destructive/10", border: "border-destructive/30", text: riskLevel === "low" ? "text-success" : riskLevel === "medium" ? "text-warning" : "text-destructive" },
     };
 
-    const theme = themeMap[label] || { bg: "bg-slate-50", border: "border-slate-200", text: "text-slate-800" };
+    const theme = themeMap[label] || { bg: "bg-muted", border: "border-border", text: "text-foreground" };
 
     return (
         <div className={`rounded-lg border ${theme.bg} ${theme.border} p-4 min-h-[136px] flex flex-col gap-1`}>
-            <p className="text-sm font-medium text-slate-600">{label}</p>
+            <p className="text-sm font-medium text-muted-foreground">{label}</p>
             <p className={`text-3xl font-bold ${theme.text}`}>{value}</p>
             {change !== null && change !== undefined && (
-                <p className={`text-sm mt-1 font-semibold ${change >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                <p className={`text-sm mt-1 font-semibold ${change >= 0 ? "text-success" : "text-destructive"}`}>
                     {change >= 0 ? "+" : ""}
                     {change.toFixed(1)}
                 </p>
             )}
             {trend && (
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                     Tendencia: {trend}
                 </p>
             )}

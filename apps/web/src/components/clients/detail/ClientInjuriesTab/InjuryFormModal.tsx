@@ -134,9 +134,9 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
     const isSubmitting = isCreating || isUpdating;
 
     const painLevelClass = (level: number): string => {
-        if (level <= 2) return "bg-emerald-100 text-emerald-700";
-        if (level === 3) return "bg-amber-100 text-amber-700";
-        return "bg-red-100 text-red-700";
+        if (level <= 2) return "bg-success/10 text-success";
+        if (level === 3) return "bg-warning/10 text-warning";
+        return "bg-destructive/10 text-destructive";
     };
 
     const handleChange = (key: keyof FormState, value: string | number | null) => {
@@ -270,7 +270,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
 
                 {/* Pain level */}
                 <div className="space-y-2">
-                    <p className="text-sm font-medium text-gray-700">Nivel de dolor (1-5)</p>
+                    <p className="text-sm font-medium text-foreground">Nivel de dolor (1-5)</p>
                     <div className="flex flex-wrap gap-2">
                         {PAIN_LEVELS.map((level) => {
                             const isSelected = form.pain_level === level;
@@ -287,7 +287,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                                     }}
                                     className={`px-3 py-2 rounded-lg text-sm font-semibold border transition-colors ${painLevelClass(
                                         level
-                                    )} ${isSelected ? "ring-2 ring-offset-1 ring-blue-500" : ""}`}
+                                    )} ${isSelected ? "ring-2 ring-offset-1 ring-primary" : ""}`}
                                     aria-pressed={isSelected}
                                     disabled={isSubmitting}
                                 >
@@ -302,7 +302,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 {isEdit && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <p className="text-sm font-medium text-gray-700">Estado</p>
+                            <p className="text-sm font-medium text-foreground">Estado</p>
                             <div className="flex gap-3">
                                 {(["active", "monitoring", "resolved"] as InjuryStatus[]).map((status) => {
                                     const labels: Record<InjuryStatus, string> = {
@@ -316,8 +316,8 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                                             key={status}
                                             className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium cursor-pointer transition-colors ${
                                                 isSelected
-                                                    ? "border-blue-500 text-blue-700 bg-blue-50"
-                                                    : "border-slate-200 text-slate-700 hover:border-slate-300"
+                                                    ? "border-primary text-primary bg-primary/10"
+                                                    : "border-border text-foreground hover:border-input"
                                             }`}
                                         >
                                             <input
@@ -326,7 +326,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                                                 value={status}
                                                 checked={isSelected}
                                                 onChange={() => handleChange("status", status)}
-                                                className="accent-blue-600"
+                                                className="accent-primary"
                                                 disabled={isSubmitting}
                                             />
                                             {labels[status]}
@@ -337,17 +337,17 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-600 mb-1">Fecha de resolución</label>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1">Fecha de resolución</label>
                             <input
                                 type="date"
                                 value={form.resolution_date || ""}
                                 onChange={(e) => handleChange("resolution_date", e.target.value)}
-                                className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-600 focus:border-primary-600"
+                                className="block w-full rounded-md border-input bg-background shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
                                 disabled={form.status !== "resolved" || isSubmitting}
                                 aria-disabled={form.status !== "resolved"}
                             />
                             {form.status === "resolved" && (
-                                <p className="text-xs text-slate-500 mt-1">
+                                <p className="text-xs text-muted-foreground mt-1">
                                     Indica la fecha en que se resolvió la lesión.
                                 </p>
                             )}
@@ -369,11 +369,11 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Notas</label>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">Notas</label>
                         <textarea
                             value={form.notes}
                             onChange={(e) => handleChange("notes", e.target.value)}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-600 focus:border-primary-600"
+                            className="block w-full rounded-md border-input bg-background shadow-sm focus:ring-2 focus:ring-primary focus:border-primary"
                             rows={3}
                             placeholder="Notas adicionales para seguimiento."
                             disabled={isSubmitting}
@@ -391,7 +391,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                     <button
                         type="button"
                         onClick={onClose}
-                        className="w-full sm:w-auto px-4 py-2 rounded-lg border border-slate-200 text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-colors"
                         disabled={isSubmitting}
                     >
                         Cancelar
@@ -399,7 +399,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                     <button
                         type="submit"
                         disabled={!canSubmit || isSubmitting}
-                        className="w-full sm:w-auto px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                        className="w-full sm:w-auto px-4 py-2 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
                     >
                         {isSubmitting ? (
                             <span className="inline-flex items-center gap-2">

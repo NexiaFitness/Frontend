@@ -35,7 +35,6 @@ import { SessionCard } from "@/components/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ClientSessionsTabProps {
     clientId: number;
@@ -58,10 +57,10 @@ const SESSION_STATUS_LABELS: Record<string, string> = {
 };
 
 const SESSION_STATUS_STYLES: Record<string, string> = {
-    [SESSION_STATUS.SCHEDULED]: "bg-blue-100 text-blue-700 border-blue-200",
-    [SESSION_STATUS.CONFIRMED]: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    [SESSION_STATUS.COMPLETED]: "bg-slate-100 text-slate-600 border-slate-200",
-    [SESSION_STATUS.CANCELLED]: "bg-red-50 text-red-600 border-red-200",
+    [SESSION_STATUS.SCHEDULED]: "bg-primary/10 text-primary border-primary/30",
+    [SESSION_STATUS.CONFIRMED]: "bg-success/10 text-success border-success/30",
+    [SESSION_STATUS.COMPLETED]: "bg-muted text-muted-foreground border-border",
+    [SESSION_STATUS.CANCELLED]: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 /** Fecha del mes en formato YYYY-MM-DD para el rango de scheduled */
@@ -190,10 +189,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     return (
         <div className="space-y-6 p-4 sm:p-6">
             <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900">
+                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
                     Sesiones
                 </h1>
-                <p className="text-sm sm:text-base text-gray-600 mt-1">
+                <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     Sesiones de entrenamiento y citas agendadas del cliente
                 </p>
             </div>
@@ -208,8 +207,8 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             </div>
 
             {/* Calendario de sesiones de entrenamiento */}
-            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+            <section className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
                     Sesiones de entrenamiento
                 </h2>
                 <SessionCalendar
@@ -221,12 +220,12 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             </section>
 
             {/* Citas agendadas — lista ordenada por fecha, sin calendario */}
-            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+            <section className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
                     Citas agendadas
                 </h2>
                 {scheduledSessions.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic py-4">
+                    <p className="text-sm text-muted-foreground italic py-4">
                         No hay citas agendadas para este mes.
                     </p>
                 ) : (
@@ -246,24 +245,24 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                     <button
                                         type="button"
                                         onClick={() => handleSessionClickScheduled(s)}
-                                        className="w-full text-left border border-gray-200 rounded-lg p-4 hover:border-[#4A67B3] hover:bg-[#4A67B3]/5 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-[#4A67B3] focus:ring-offset-2"
+                                        className="w-full text-left border border-border rounded-lg p-4 hover:border-primary hover:bg-primary/5 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                                     >
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
-                                                <p className="font-semibold text-gray-900 truncate">
+                                                <p className="font-semibold text-foreground truncate">
                                                     {s.scheduled_date} · {s.start_time}–{s.end_time}
                                                 </p>
-                                                <p className="text-sm text-gray-600 mt-0.5">
+                                                <p className="text-sm text-muted-foreground mt-0.5">
                                                     {SESSION_TYPE_LABELS[s.session_type] ?? s.session_type}
                                                 </p>
                                             </div>
                                             <span
-                                                className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-md border ${SESSION_STATUS_STYLES[s.status] ?? "bg-gray-100 text-gray-600 border-gray-200"}`}
+                                                className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-md border ${SESSION_STATUS_STYLES[s.status] ?? "bg-muted text-muted-foreground border-border"}`}
                                             >
                                                 {SESSION_STATUS_LABELS[s.status] ?? s.status}
                                             </span>
                                         </div>
-                                        <span className="inline-block mt-2 text-xs text-gray-500">
+                                        <span className="inline-block mt-2 text-xs text-muted-foreground">
                                             Ver / Editar →
                                         </span>
                                     </button>
@@ -274,13 +273,13 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             </section>
 
             {/* Lista cronológica con filtros */}
-            <section className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6">
-                <h2 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+            <section className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
                     Lista cronológica
                 </h2>
 
                 <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="text-sm font-medium text-gray-600">Tipo:</span>
+                    <span className="text-sm font-medium text-muted-foreground">Tipo:</span>
                     {(
                         [
                             { value: "all" as const, label: "Todos" },
@@ -294,7 +293,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                             className={`px-3 py-1.5 text-sm font-medium rounded-lg border-2 transition-colors ${
                                 listFilterType === value
                                     ? "border-[#4A67B3] text-[#4A67B3] bg-[#4A67B3]/5"
-                                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                    : "border-border text-muted-foreground hover:border-input"
                             }`}
                         >
                             {label}
@@ -304,7 +303,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
                 {listFilterType === "all" || listFilterType === "session" ? (
                     <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="text-sm font-medium text-gray-600">Estado sesión:</span>
+                        <span className="text-sm font-medium text-muted-foreground">Estado sesión:</span>
                         {(
                             [
                                 { value: "all" as const, label: "Todos" },
@@ -319,7 +318,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                 className={`px-3 py-1.5 text-sm font-medium rounded-lg border-2 transition-colors ${
                                     sessionStatusFilter === value
                                         ? "border-[#4A67B3] text-[#4A67B3] bg-[#4A67B3]/5"
-                                        : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                        : "border-border text-muted-foreground hover:border-input"
                                 }`}
                             >
                                 {label}
@@ -329,7 +328,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 ) : null}
 
                 {filteredList.length === 0 ? (
-                    <p className="text-sm text-gray-500 italic py-4">
+                    <p className="text-sm text-muted-foreground italic py-4">
                         No hay sesiones ni citas que coincidan con los filtros.
                     </p>
                 ) : (
@@ -349,7 +348,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                             return (
                                 <li
                                     key={`a-${s.id}`}
-                                    className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer"
+                                    className="border border-border rounded-lg p-4 hover:border-primary hover:shadow-md transition-shadow cursor-pointer"
                                     onClick={() => handleSessionClickScheduled(s)}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" || e.key === " ") {
@@ -362,17 +361,17 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                 >
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">
+                                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                                                 Cita
                                             </span>
-                                            <p className="font-semibold text-gray-900 mt-0.5">
+                                            <p className="font-semibold text-foreground mt-0.5">
                                                 {s.scheduled_date} · {s.start_time} - {s.end_time}
                                             </p>
-                                            <p className="text-sm text-gray-600">
+                                            <p className="text-sm text-muted-foreground">
                                                 {s.session_type} · {s.status}
                                             </p>
                                         </div>
-                                        <span className="text-sm text-gray-500">Ver / Editar</span>
+                                        <span className="text-sm text-muted-foreground">Ver / Editar</span>
                                     </div>
                                 </li>
                             );

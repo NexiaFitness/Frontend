@@ -23,7 +23,6 @@ import { useNavigate } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import type { MetricCardColor } from "@nexia/shared/types/coherence";
 import { MetricCard } from "@/components/ui/cards";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { useCoherence } from "@nexia/shared/hooks/clients/useCoherence";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
@@ -97,9 +96,9 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-lg shadow p-6">
+            <div className="bg-card border border-border rounded-lg shadow p-6">
                 <div className="flex justify-center items-center py-8">
-                    <p className="text-gray-500">Cargando estado del cliente...</p>
+                    <p className="text-muted-foreground">Cargando estado del cliente...</p>
                 </div>
             </div>
         );
@@ -111,12 +110,12 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
     }
 
     return (
-        <div className="bg-white rounded-lg shadow p-6" id="client-status-section">
+        <div className="bg-card border border-border rounded-lg shadow p-6" id="client-status-section">
             <div className="mb-4">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+                <h3 className="text-lg font-semibold text-foreground mb-2">
                     Estado del Cliente
                 </h3>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-muted-foreground">
                     Indicadores informativos sobre coherencia, adherencia y tendencias. Usa esta información como contexto para tomar decisiones.
                 </p>
             </div>
@@ -157,9 +156,9 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
 
             {/* Indicadores de Tendencias */}
             {trend && (
-                <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm font-semibold text-blue-900 mb-1">Tendencia de Progreso</p>
-                    <p className="text-sm text-blue-700">
+                <div className="mt-4 p-4 bg-primary/10 border border-primary/30 rounded-lg">
+                    <p className="text-sm font-semibold text-foreground mb-1">Tendencia de Progreso</p>
+                    <p className="text-sm text-primary">
                         {trend === "gaining_weight" && "📈 Ganando peso"}
                         {trend === "losing_weight" && "📉 Perdiendo peso"}
                         {trend === "stable" && "➡️ Estable"}
@@ -169,12 +168,12 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
             )}
 
             {/* Información Contextual */}
-            <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+            <div className="mt-6 pt-6 border-t border-border">
+                <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                     {coherenceData?.monotony && coherenceData.monotony > 2.0 && (
                         <button
                             onClick={() => navigate(`/dashboard/clients/${clientId}?tab=daily-coherence`)}
-                            className="text-blue-600 hover:text-blue-800 font-medium underline"
+                            className="text-primary hover:text-primary/80 font-medium underline"
                         >
                             Ver detalles de coherencia →
                         </button>
@@ -182,7 +181,7 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
                     {currentRiskLevel && currentRiskLevel !== "low" && (
                         <button
                             onClick={() => navigate(`/dashboard/clients/${clientId}?tab=progress`)}
-                            className="text-blue-600 hover:text-blue-800 font-medium underline"
+                            className="text-primary hover:text-primary/80 font-medium underline"
                         >
                             Ver análisis de fatiga →
                         </button>

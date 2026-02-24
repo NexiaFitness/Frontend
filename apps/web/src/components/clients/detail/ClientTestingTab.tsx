@@ -24,7 +24,6 @@ import { useClientTests } from "@nexia/shared/hooks/clients/useClientTests";
 import type { TestResultWithProgress, CategoryTrendData } from "@nexia/shared/types/testing";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import { TYPOGRAPHY } from "@/utils/typography";
 import { RadarChart } from "@/components/ui/charts/RadarChart";
 import { ProgressLineChart } from "@/components/ui/charts/ProgressLineChart";
 import { Button } from "@/components/ui/buttons/Button";
@@ -174,8 +173,8 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             {/* Header */}
             <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                 <div className="min-w-0">
-                    <h2 className={TYPOGRAPHY.sectionTitle}>Tests Físicos</h2>
-                    <p className="text-slate-600 mt-2">
+                    <h2 className="text-lg font-semibold text-foreground">Tests Físicos</h2>
+                    <p className="text-muted-foreground mt-2">
                         Registro y seguimiento de tests físicos por categoría
                     </p>
                 </div>
@@ -226,9 +225,9 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
 
             {/* TODOS los tests de la categoría activa (sin límite) - Debajo de tabs */}
             {latestTestsInCategory.length === 0 ? (
-                <div className="bg-white rounded-lg shadow p-8 text-center">
-                    <p className="text-slate-500 text-lg mb-2">No hay tests registrados</p>
-                    <p className="text-slate-400 text-sm mb-4">
+                <div className="bg-card border border-border rounded-lg shadow p-8 text-center">
+                    <p className="text-muted-foreground text-lg mb-2">No hay tests registrados</p>
+                    <p className="text-muted-foreground/80 text-sm mb-4">
                         No se han registrado tests en la categoría &quot;{TEST_CATEGORIES[activeCategory].label}&quot;
                     </p>
                     <Button
@@ -252,13 +251,13 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                         return (
                             <div
                                 key={test.id}
-                                className="bg-white border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow"
+                                className="bg-card border border-border rounded-lg p-5 shadow-sm hover:shadow-md transition-shadow"
                                 style={{
                                     borderLeftWidth: "4px",
                                     borderLeftColor: categoryInfo.color,
                                 }}
                             >
-                                <h3 className="font-semibold text-slate-900 mb-3">{testName}</h3>
+                                <h3 className="font-semibold text-foreground mb-3">{testName}</h3>
                                 <div className="flex items-baseline gap-2 mb-3">
                                     <span
                                         className="text-3xl font-bold"
@@ -266,17 +265,17 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                                     >
                                         {test.value}
                                     </span>
-                                    <span className="text-sm text-slate-600">{test.unit}</span>
+                                    <span className="text-sm text-muted-foreground">{test.unit}</span>
                                 </div>
                                 {test.progress_percentage !== null && (
                                     <div className="mb-2">
                                         <span
                                             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                                                 test.progress_percentage > 0
-                                                    ? "bg-green-100 text-green-800"
+                                                    ? "bg-success/10 text-success"
                                                     : test.progress_percentage < 0
-                                                      ? "bg-red-100 text-red-800"
-                                                      : "bg-gray-100 text-gray-800"
+                                                      ? "bg-destructive/10 text-destructive"
+                                                      : "bg-muted text-muted-foreground"
                                             }`}
                                         >
                                             {test.progress_percentage > 0 ? "+" : ""}
@@ -284,11 +283,11 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                                         </span>
                                     </div>
                                 )}
-                                <p className="text-xs text-slate-500 mb-2">
+                                <p className="text-xs text-muted-foreground mb-2">
                                     {formatDate(test.test_date)}
                                 </p>
                                 {test.notes && (
-                                    <p className="text-sm text-slate-700 italic mt-2 pt-2 border-t border-slate-200">
+                                    <p className="text-sm text-foreground italic mt-2 pt-2 border-t border-border">
                                         {test.notes}
                                     </p>
                                 )}
@@ -300,8 +299,8 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
 
             {/* Line Chart - Progresión de tests de la categoría activa */}
             {categoryTrendsData.length > 0 && (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4">
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">
                         Progresión - {TEST_CATEGORIES[activeCategory].label}
                     </h3>
                     <ProgressLineChart trends={categoryTrendsData} _category={activeCategory} />
@@ -310,13 +309,13 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
 
             {/* Radar Chart - Perfil de Cualidades Físicas con Profile Analysis (unidos) */}
             {summary.physical_quality_profile && (
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-lg font-semibold text-slate-800 mb-4">
+                <div className="bg-card border border-border rounded-lg shadow p-6">
+                    <h3 className="text-lg font-semibold text-foreground mb-4">
                         Perfil de Cualidades Físicas
                     </h3>
                     {summary.profile_analysis && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                            <p className="text-sm text-blue-900">{summary.profile_analysis}</p>
+                        <div className="bg-primary/10 border border-primary/30 rounded-lg p-4 mb-4">
+                            <p className="text-sm text-foreground">{summary.profile_analysis}</p>
                         </div>
                     )}
                     <RadarChart data={summary.physical_quality_profile} />
@@ -326,11 +325,11 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             {/* Sección Crear Test Personalizado */}
             <div
                 onClick={handleAddPhysicalQuality}
-                className="bg-white rounded-lg shadow p-8 text-center border-2 border-dashed border-gray-300 hover:border-blue-400 transition-colors cursor-pointer"
+                className="bg-card border border-border rounded-lg shadow p-8 text-center border-2 border-dashed border-input hover:border-primary transition-colors cursor-pointer"
             >
-                <div className="text-4xl mb-3 text-gray-400">+</div>
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">Crear Test Personalizado</h3>
-                <p className="text-sm text-slate-600">
+                <div className="text-4xl mb-3 text-muted-foreground">+</div>
+                <h3 className="text-lg font-semibold text-foreground mb-2">Crear Test Personalizado</h3>
+                <p className="text-sm text-muted-foreground">
                     Añade un test personalizado para rastrear métricas específicas del cliente
                 </p>
             </div>

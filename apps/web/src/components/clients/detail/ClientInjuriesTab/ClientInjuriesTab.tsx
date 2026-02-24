@@ -49,8 +49,8 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
             {/* Header */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-900">Lesiones del Cliente</h2>
-                    <p className="text-gray-600 mt-1">
+                    <h2 className="text-2xl font-bold text-foreground">Lesiones del Cliente</h2>
+                    <p className="text-muted-foreground mt-1">
                         Gestiona lesiones activas y consulta el historial completo.
                     </p>
                 </div>
@@ -62,7 +62,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                     )}
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
                         ➕ Registrar lesión
                     </button>

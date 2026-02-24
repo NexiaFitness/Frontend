@@ -27,19 +27,19 @@ interface InjuriesActiveSectionProps {
 }
 
 const painLevelColor = (level: number) => {
-    if (level <= 2) return "bg-emerald-50 text-emerald-700 border-emerald-200";
-    if (level === 3) return "bg-amber-50 text-amber-700 border-amber-200";
-    return "bg-red-50 text-red-700 border-red-200";
+    if (level <= 2) return "bg-success/10 text-success border-success/30";
+    if (level === 3) return "bg-warning/10 text-warning border-warning/30";
+    return "bg-destructive/10 text-destructive border-destructive/30";
 };
 
 const statusColor = (status: string) => {
     switch (status) {
         case "resolved":
-            return "bg-emerald-50 text-emerald-700 border-emerald-200";
+            return "bg-success/10 text-success border-success/30";
         case "monitoring":
-            return "bg-amber-50 text-amber-700 border-amber-200";
+            return "bg-warning/10 text-warning border-warning/30";
         default:
-            return "bg-red-50 text-red-700 border-red-200";
+            return "bg-destructive/10 text-destructive border-destructive/30";
     }
 };
 
@@ -96,14 +96,14 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
 
     if (!injuries || injuries.length === 0) {
         return (
-            <div className="bg-white rounded-lg shadow p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="bg-card border border-border rounded-lg shadow p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900">Lesiones activas</h3>
-                    <p className="text-gray-600 mt-1">Sin lesiones activas registradas.</p>
+                    <h3 className="text-lg font-semibold text-foreground">Lesiones activas</h3>
+                    <p className="text-muted-foreground mt-1">Sin lesiones activas registradas.</p>
                 </div>
                 <button
                     onClick={onAddClick}
-                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-semibold hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                 >
                     Registrar lesión
                 </button>
@@ -122,21 +122,21 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                     {injuries.map((injury) => (
                         <div
                             key={injury.id}
-                            className="bg-white rounded-lg shadow-sm border border-red-100 p-4 flex flex-col gap-3"
+                            className="bg-card border border-destructive/20 rounded-lg shadow-sm p-4 flex flex-col gap-3"
                         >
                             <div className="flex items-start justify-between">
                                 <div className="flex-1">
-                                    <p className="text-sm text-gray-500">Articulación</p>
-                                    <p className="text-base font-semibold text-gray-900">
+                                    <p className="text-sm text-muted-foreground">Articulación</p>
+                                    <p className="text-base font-semibold text-foreground">
                                         {injury.joint_name || "N/D"}
                                     </p>
                                     {injury.movement_name && (
-                                        <p className="text-sm text-gray-600 mt-1">
+                                        <p className="text-sm text-muted-foreground mt-1">
                                             Movimiento: {injury.movement_name}
                                         </p>
                                     )}
                                     {injury.muscle_name && (
-                                        <p className="text-sm text-gray-600">Músculo: {injury.muscle_name}</p>
+                                        <p className="text-sm text-muted-foreground">Músculo: {injury.muscle_name}</p>
                                     )}
                                 </div>
                                 <div className="flex flex-col items-end gap-2">
@@ -153,7 +153,7 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                                     </span>
                                     <button
                                         onClick={() => onEditClick(injury)}
-                                        className="px-2 py-1 text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                                        className="px-2 py-1 text-xs text-primary hover:text-primary hover:bg-primary/10 rounded transition-colors"
                                         aria-label="Editar lesión"
                                         title="Editar lesión"
                                     >
@@ -171,21 +171,21 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                                     Dolor {injury.pain_level}/5
                                 </span>
                                 {injury.injury_date && (
-                                    <span className="text-xs text-gray-500">
+                                    <span className="text-xs text-muted-foreground">
                                         Desde {new Date(injury.injury_date).toLocaleDateString("es-ES")}
                                     </span>
                                 )}
                             </div>
 
                             {injury.notes && (
-                                <p className="text-sm text-gray-600 line-clamp-3">{injury.notes}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-3">{injury.notes}</p>
                             )}
 
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-auto pt-2 border-t border-gray-100">
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-auto pt-2 border-t border-border">
                                 <button
                                     onClick={() => setResolveModal(injury.id)}
                                     disabled={isResolving}
-                                    className="flex-1 px-3 py-1.5 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 px-3 py-1.5 text-sm text-success hover:text-success hover:bg-success/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     aria-label="Resolver lesión"
                                 >
                                     ✅ Resolver
@@ -193,7 +193,7 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                                 <button
                                     onClick={() => setDeleteModal(injury.id)}
                                     disabled={isDeleting}
-                                    className="flex-1 px-3 py-1.5 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="flex-1 px-3 py-1.5 text-sm text-destructive hover:text-destructive hover:bg-destructive/10 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     aria-label="Eliminar lesión"
                                 >
                                     🗑️ Eliminar
@@ -214,14 +214,14 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                     iconType="success"
                 >
                     <div className="space-y-4">
-                        <p className="text-gray-700">
+                        <p className="text-foreground">
                             La lesión se marcará como resuelta y se moverá al historial. Esta acción puede revertirse
                             editando la lesión.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-end">
                             <button
                                 onClick={() => setResolveModal(null)}
-                                className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-colors"
                                 disabled={isResolving}
                             >
                                 Cancelar
@@ -229,7 +229,7 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                             <button
                                 onClick={handleResolve}
                                 disabled={isResolving}
-                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-success text-success-foreground font-semibold hover:bg-success/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isResolving ? "Resolviendo..." : "Resolver"}
                             </button>
@@ -248,13 +248,13 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                     iconType="danger"
                 >
                     <div className="space-y-4">
-                        <p className="text-gray-700">
+                        <p className="text-foreground">
                             Esta acción no se puede deshacer. La lesión se eliminará permanentemente del sistema.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 justify-end">
                             <button
                                 onClick={() => setDeleteModal(null)}
-                                className="w-full sm:w-auto px-4 py-2 rounded-lg border border-gray-300 text-gray-700 font-semibold hover:bg-gray-50 transition-colors"
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-colors"
                                 disabled={isDeleting}
                             >
                                 Cancelar
@@ -262,7 +262,7 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
                             <button
                                 onClick={handleDelete}
                                 disabled={isDeleting}
-                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-destructive text-destructive-foreground font-semibold hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                             >
                                 {isDeleting ? "Eliminando..." : "Eliminar"}
                             </button>

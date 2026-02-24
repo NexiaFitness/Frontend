@@ -71,7 +71,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
         >
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">
+                    <label className="block text-sm font-semibold text-foreground mb-2">
                         ¿Qué ejercicio quieres sustituir?
                     </label>
                     <p className="text-xs text-slate-500 mb-2">
@@ -100,8 +100,8 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                 </div>
 
                 {selectedExerciseId && (
-                    <div className="pt-2 border-t border-slate-200">
-                        <p className="text-sm font-semibold text-slate-700 mb-2">
+                    <div className="pt-2 border-t border-border">
+                        <p className="text-sm font-semibold text-foreground mb-2">
                             Alternativas para &quot;{selectedExercise?.nombre ?? "..."}&quot;
                         </p>
                         {isLoadingAlternatives ? (
@@ -115,14 +115,14 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                                         key={alt.id}
                                         className="p-3 rounded-lg bg-slate-50 border border-slate-200"
                                     >
-                                        <p className="font-medium text-slate-800">{alt.nombre}</p>
-                                        <p className="text-xs text-slate-500 mt-1">
+                                        <p className="font-medium text-foreground">{alt.nombre}</p>
+                                        <p className="text-xs text-muted-foreground mt-1">
                                             {[alt.equipo && `Equipo: ${alt.equipo}`, alt.musculatura_principal]
                                                 .filter(Boolean)
                                                 .join(" · ")}
                                         </p>
                                         {alt.reason && (
-                                            <p className="text-xs text-blue-600 mt-1">{alt.reason}</p>
+                                            <p className="text-xs text-primary mt-1">{alt.reason}</p>
                                         )}
                                     </li>
                                 ))}
@@ -138,7 +138,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                 <div className="flex justify-end pt-2">
                     <button
                         onClick={handleClose}
-                        className="px-4 py-2 rounded-lg border border-slate-300 text-slate-700 font-semibold hover:bg-slate-50 transition-colors"
+                        className="px-4 py-2 rounded-lg border border-border text-foreground font-semibold hover:bg-muted transition-colors"
                     >
                         Cerrar
                     </button>
