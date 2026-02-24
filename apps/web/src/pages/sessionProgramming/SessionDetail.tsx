@@ -162,22 +162,22 @@ export const SessionDetail: React.FC = () => {
                                     </div>
                                     <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
                                         <div>
-                                            <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                            <span className="text-xs uppercase tracking-wide text-primary">
                                                 Fecha
                                             </span>
-                                            <p className="text-gray-900 font-medium">{formatDate(session.session_date)}</p>
+                                            <p className="text-foreground font-medium">{formatDate(session.session_date)}</p>
                                         </div>
                                         <div>
-                                            <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                            <span className="text-xs uppercase tracking-wide text-primary">
                                                 Tipo
                                             </span>
-                                            <p className="text-gray-900 font-medium">{session.session_type}</p>
+                                            <p className="text-foreground font-medium">{session.session_type}</p>
                                         </div>
                                         <div>
-                                            <span className="text-xs uppercase tracking-wide" style={{ color: "#4A67B3" }}>
+                                            <span className="text-xs uppercase tracking-wide text-primary">
                                                 Plan
                                             </span>
-                                            <p className="text-gray-900 font-medium">
+                                            <p className="text-foreground font-medium">
                                                 {plan?.name || "Sin plan"}
                                             </p>
                                         </div>

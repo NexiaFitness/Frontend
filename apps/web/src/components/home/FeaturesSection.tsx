@@ -89,6 +89,7 @@ export const FeaturesSection: React.FC = () => {
                         >
                             <div className="flex flex-col md:flex-row h-full">
                                 <div className="relative md:w-2/5 h-48 md:h-auto overflow-hidden">
+                                    {/* backgroundImage inline: URL dinámico por feature (runtime). */}
                                     <div 
                                         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110"
                                         style={{ backgroundImage: `url('${feature.image}')` }}

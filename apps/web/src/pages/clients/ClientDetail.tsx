@@ -241,6 +241,7 @@ export const ClientDetail: React.FC = () => {
                     {/* Tabs Navigation */}
                     <div className="mt-6 px-4 sm:px-6 lg:px-8">
                         <div className="bg-card border border-border rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
+                            {/* WebkitOverflowScrolling: 'touch' justificado para scroll táctil suave en iOS. */}
                             <nav 
                                 className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
                                 aria-label="Tabs" 

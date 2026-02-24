@@ -62,16 +62,15 @@ export const FAQSection: React.FC = () => {
     };
 
     return (
-        <section className="py-16 sm:py-20 lg:py-24 bg-white">
+        <section className="py-16 sm:py-20 lg:py-24 bg-background">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12">
-                {/* Header */}
                 <div className="text-center mb-16">
-                    <h3 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-8`}>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-8">
                         Preguntas
                         <br />
-                        <span style={{ color: '#4A67B3' }}>Frecuentes</span>
+                        <span className="text-primary">Frecuentes</span>
                     </h3>
-                    <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-3xl mx-auto leading-relaxed`}>
+                    <p className="text-base text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                         Respuestas directas a las dudas más comunes sobre NEXIA y cómo puede 
                         profesionalizar tu práctica como entrenador.
                     </p>
@@ -117,8 +116,8 @@ export const FAQSection: React.FC = () => {
                             <div className={`transition-all duration-200 overflow-hidden ${
                                 openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                             }`}>
-                                <div className="px-6 py-5 bg-white">
-                                    <p className={`${TYPOGRAPHY.body} text-slate-600 leading-relaxed`}>
+                                <div className="px-6 py-5 bg-card">
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
                                         {faq.answer}
                                     </p>
                                 </div>

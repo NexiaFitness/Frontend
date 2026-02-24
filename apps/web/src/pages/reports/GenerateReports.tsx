@@ -77,10 +77,10 @@ export const GenerateReports: React.FC = () => {
                 <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                         <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
+                            <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
                                 Generar Reportes
                             </h2>
-                            <p className="text-white/80 text-sm md:text-base">
+                            <p className="text-muted-foreground text-sm md:text-base">
                                 Genera reportes detallados de progreso, entrenamientos y estadísticas
                             </p>
                         </div>

@@ -61,6 +61,7 @@ import { CreateTestResult } from "./pages/testing";
 
 // Páginas adicionales
 import Account from "./pages/account/Account";
+import { NotFound } from "./pages/NotFound";
 
 // Layouts
 import { PublicLayout } from "./components/ui/layout/PublicLayout";
@@ -350,7 +351,7 @@ function App() {
           <Route path="account" element={<Account />} />
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Routes>
     </ToastProvider>
   );

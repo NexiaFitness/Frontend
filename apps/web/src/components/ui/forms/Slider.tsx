@@ -12,6 +12,8 @@
  * - Soporte para modo read-only
  * - Colores personalizables
  *
+ * Notas: style en input justificado — gradiente lineal del track según value/min/max (runtime).
+ *
  * @author Frontend Team
  * @since v5.0.0
  */

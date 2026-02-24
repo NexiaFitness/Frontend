@@ -400,15 +400,16 @@ export const ClientList: React.FC = () => {
                                                     {/* Adherence */}
                                                     <div className="flex justify-center min-w-[140px]">
                                                         <div className="flex items-center gap-2 w-full max-w-[140px]">
-                                                            <div className="flex-1 bg-gray-200 rounded-full h-2 overflow-hidden min-w-[60px]">
+                                                            <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden min-w-[60px]">
+                                                                {/* width inline justificado: valor dinámico (porcentaje) por cliente. */}
                                                                 <div
-                                                                    className="h-full bg-primary-600 rounded-full transition-all"
+                                                                    className="h-full bg-primary rounded-full transition-all"
                                                                     style={{
                                                                         width: `${client.adherence_percentage ?? 0}%`,
                                                                     }}
                                                                 />
                                                             </div>
-                                                            <span className="text-sm font-medium text-gray-700 min-w-[40px] text-right whitespace-nowrap">
+                                                            <span className="text-sm font-medium text-foreground min-w-[40px] text-right whitespace-nowrap">
                                                                 {client.adherence_percentage !== null
                                                                     ? `${Math.round(client.adherence_percentage)}%`
                                                                     : "N/A"}

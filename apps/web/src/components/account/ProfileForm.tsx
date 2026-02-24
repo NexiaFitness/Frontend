@@ -110,12 +110,12 @@ export const ProfileForm: React.FC = () => {
             <ServerErrorBanner error={serverError} onDismiss={() => setServerError(null)} />
 
             {/* Información Personal */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+            <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <div className="mb-8">
-                    <h2 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-2 text-center lg:text-left`}>
+                    <h2 className="text-lg font-semibold text-foreground mb-2 text-center lg:text-left">
                         Información Personal
                     </h2>
-                    <p className={`${TYPOGRAPHY.body} text-slate-600 text-center lg:text-left`}>
+                    <p className="text-sm text-muted-foreground text-center lg:text-left">
                         Actualiza tus datos básicos de perfil
                     </p>
                 </div>

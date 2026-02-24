@@ -17,7 +17,6 @@
  */
 
 import React from "react";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 export interface CompactChartCardProps {
     title: string;
@@ -31,9 +30,9 @@ export const CompactChartCard: React.FC<CompactChartCardProps> = ({
     className,
 }) => {
     return (
-        <div className={`bg-white rounded-lg shadow px-4 pt-4 pb-2 min-w-0 ${className ?? ""}`}>
-            <h3 className={`${TYPOGRAPHY.cardTitle} mb-6`}>{title}</h3>
-            <div className="w-full min-w-0" style={{ minHeight: '360px' }}>{children}</div>
+        <div className={`bg-card border border-border rounded-lg shadow px-4 pt-4 pb-2 min-w-0 ${className ?? ""}`}>
+            <h3 className="text-base font-semibold text-foreground mb-6">{title}</h3>
+            <div className="w-full min-w-0 min-h-[360px]">{children}</div>
         </div>
     );
 };

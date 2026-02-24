@@ -20,7 +20,7 @@ interface AuthLayoutProps {
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
     <div className="min-h-[calc(100vh-128px)] flex flex-col lg:flex-row bg-background relative overflow-hidden">
-      {/* Overlay sutil primary según audit */}
+      {/* Overlay sutil primary según audit. style justificado: gradiente radial con posición/forma no expresable con utilidades Tailwind. */}
       <div
         className="absolute inset-0 pointer-events-none opacity-30"
         style={{ background: "radial-gradient(ellipse 80% 80% at 20% 20%, hsl(190 100% 50% / 0.08) 0%, transparent 60%)" }}

@@ -35,9 +35,6 @@ import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlternativesSection";
 
-// Utils
-import { TYPOGRAPHY } from "@/utils/typography";
-
 export const ExerciseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();

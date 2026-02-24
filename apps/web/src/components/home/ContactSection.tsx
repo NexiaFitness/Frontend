@@ -118,13 +118,13 @@ export const ContactSection: React.FC = () => {
                     {/* Left: Text Content */}
                     <div className="text-center lg:text-left">
                         <div className="space-y-8 max-w-xl mx-auto lg:mx-0">
-                            <h3 className={`${TYPOGRAPHY.hero} text-white leading-tight`}>
+                            <h3 className="text-3xl sm:text-4xl font-bold text-primary-foreground leading-tight">
                                 Hablemos sobre
                                 <br />
-                                <span style={{ color: '#4A67B3' }}>tu proyecto</span>
+                                <span className="text-primary">tu proyecto</span>
                             </h3>
 
-                            <p className={`${TYPOGRAPHY.heroSubtitle} text-white leading-relaxed`}>
+                            <p className="text-lg text-primary-foreground/95 leading-relaxed">
                                 ¿Tienes preguntas sobre NEXIA? ¿Quieres acceso anticipado?
                                 ¿Necesitas una demo personalizada? Contacta directamente con
                                 nuestro equipo y te ayudaremos.
@@ -132,20 +132,20 @@ export const ContactSection: React.FC = () => {
 
                             <div className="space-y-6 text-left">
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#4A67B3' }}></div>
-                                    <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0 bg-primary" />
+                                    <span className="text-base text-primary-foreground">
                                         Respuesta en menos de 24 horas
                                     </span>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#4A67B3' }}></div>
-                                    <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0 bg-primary" />
+                                    <span className="text-base text-primary-foreground">
                                         Demo personalizada disponible
                                     </span>
                                 </div>
                                 <div className="flex items-center space-x-4">
-                                    <div className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: '#4A67B3' }}></div>
-                                    <span className={`${TYPOGRAPHY.bodyLarge} text-white`}>
+                                    <div className="w-3 h-3 rounded-full flex-shrink-0 bg-primary" />
+                                    <span className="text-base text-primary-foreground">
                                         Registro para acceso beta
                                     </span>
                                 </div>
