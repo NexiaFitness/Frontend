@@ -1,7 +1,13 @@
 /**
- * NexiaSideMenu - Menú lateral fullscreen para NEXIA
- * Inspirado en LHC Legal pero adaptado al branding y navegación de NEXIA
+ * NexiaSideMenu — Drawer lateral móvil para navegación pública.
  *
+ * Contexto: Usado por AppNavbar en contexto público. Muestra ítems de usePublicNavigation
+ * (Iniciar sesión, Registrarse, etc.). Sin cabecera con logo; el logo está en la navbar.
+ *
+ * Notas: Posicionado debajo de la navbar (top-navbar-mobile/desktop). Cierra al hacer clic
+ * en overlay o en un enlace.
+ *
+ * @author Frontend Team
  * @since v1.0.0
  * @updated v4.4.2 - Unified layout: sin iconos, capitalización consistente con Dashboard
  */

@@ -241,7 +241,6 @@ frontend/
 │   │   │   │   │   ├── TrainerSideMenu.tsx
 │   │   │   │   │   └── index.ts
 │   │   │   │   ├── DashboardHeader.tsx
-│   │   │   │   ├── DashboardNavbar.tsx
 │   │   │   │   └── index.ts
 │   │   │   ├── exercises/                        # Exercise components
 │   │   │   │   ├── ExerciseCard.tsx
@@ -342,8 +341,8 @@ frontend/
 │   │   │       │   └── Textarea.tsx             # Textarea input component
 │   │   │       ├── layout/
 │   │   │       │   ├── navbar/
-│   │   │       │   │   ├── NexiaSideMenu.tsx
-│   │   │       │   │   └── PublicNavbar.tsx
+│   │   │       │   │   ├── AppNavbar.tsx
+│   │   │       │   │   └── NexiaSideMenu.tsx
 │   │   │       │   └── PublicLayout.tsx
 │   │   │       ├── modals/
 │   │   │       │   ├── __tests__/

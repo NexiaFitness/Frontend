@@ -299,10 +299,9 @@ describe("ResetPasswordForm", () => {
             await waitFor(() => {
                 expect(screen.getByRole("button", { name: /volver al login/i }))
                     .toBeDisabled();
+                expect(screen.getByRole("button", { name: /tu enlace ha caducado/i }))
+                    .toBeDisabled();
             }, { timeout: 500 });
-
-            expect(screen.getByText(/tu enlace ha caducado/i).closest("button"))
-                .toBeDisabled();
         });
     });
 

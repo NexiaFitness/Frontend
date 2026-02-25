@@ -8,7 +8,7 @@
  *
  * RESPONSIVE BEHAVIOR:
  * - Desktop: SideMenu visible según rol + DashboardLayout offset
- * - Mobile/Tablet: DashboardNavbar visible + SideMenu oculto
+ * - Mobile/Tablet: navbar (AppNavbar) visible + SideMenu oculto
  *
  * @since v4.3.8 - Unificado encabezado con dashboards usando dashboardHero
  * @updated v4.3.9 - Ajustado ancho a max-w-6xl para grid de 2 columnas

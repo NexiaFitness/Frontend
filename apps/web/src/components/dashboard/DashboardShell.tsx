@@ -18,7 +18,7 @@ import React from "react";
 import { Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardSidebar } from "./DashboardSidebar";
-import { DashboardNavbar } from "./DashboardNavbar";
+import { AppNavbar } from "@/components/ui/layout/navbar/AppNavbar";
 import { getNavigationForRole } from "@/config/navigationByRole";
 import type { RootState } from "@nexia/shared/store";
 
@@ -48,18 +48,19 @@ export const DashboardShell: React.FC = () => {
                 </div>
             )}
 
+            <AppNavbar
+                variant="dashboard"
+                menuItems={menuItems}
+                footerSubtitle={nav.footerSubtitle}
+            />
+
             <DashboardSidebar
                 menuItems={nav.menuItems}
                 headerTitle={nav.headerTitle}
                 footerSubtitle={nav.footerSubtitle}
             />
 
-            <DashboardNavbar
-                menuItems={menuItems}
-                footerSubtitle={nav.footerSubtitle}
-            />
-
-            <main className="pt-8 pb-16 min-h-screen md:pt-10 lg:ml-80 lg:pt-12">
+            <main className="pt-8 pb-16 min-h-screen md:pt-10 lg:ml-80 lg:pt-navbar-dashboard-desktop">
                 <Outlet />
             </main>
         </div>

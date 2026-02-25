@@ -67,7 +67,7 @@ El locator `getByRole('link', { name: /planes de entrenamiento/i })` resuelve a 
 ### 2.3 Layout del dashboard
 
 - **Archivo:** `apps/web/src/components/dashboard/layout/DashboardLayout.tsx`
-- **Contenido:** No oculta el sidebar. Solo define el `<main>` con `lg:ml-80` (offset para el sidebar en desktop) y overlays de loading/error de auth. No hay media queries que oculten el sidebar; la visibilidad del menú lateral la controlan los componentes que lo renderizan (TrainerSideMenu y DashboardNavbar).
+- **Contenido:** No oculta el sidebar. Solo define el `<main>` con `lg:ml-80` (offset para el sidebar en desktop) y overlays de loading/error de auth. No hay media queries que oculten el sidebar; la visibilidad del menú lateral la controlan los componentes que lo renderizan (TrainerSideMenu y navbar unificada AppNavbar).
 
 ### 2.4 Sidebar y menú móvil
 
@@ -76,10 +76,10 @@ El locator `getByRole('link', { name: /planes de entrenamiento/i })` resuelve a 
   - **Desktop (lg+, 1024px+):** visible. **Mobile/Tablet (&lt; lg):** oculto (`hidden lg:flex`).
   - Los ítems del menú son **`<div>` con `onClick={() => navigate(item.path)}`**, no `<a>` ni `<Link>`. Por tanto **no tienen rol "link"** y `getByRole('link', { name: /planes de entrenamiento/i })` **no** los encuentra.
 
-- **Navbar y drawer móvil:** `apps/web/src/components/dashboard/DashboardNavbar.tsx`
+- **Navbar y drawer móvil:** `apps/web/src/components/ui/layout/navbar/AppNavbar.tsx` (rama dashboard con `DashboardDrawer`).
   - Navbar: `lg:hidden` (visible solo en viewport &lt; 1024px).
-  - Drawer lateral (`DashboardSideMenu`): siempre montado en DOM. Cuando está cerrado usa `translate-x-full` (línea 130), por lo que el panel queda fuera del viewport a la derecha.
-  - Los ítems del drawer son **`<Link to={path}>`** (líneas 139-160), que se renderizan como `<a href="...">`. Sí tienen rol "link".
+  - Drawer lateral (DashboardDrawer): siempre montado en DOM. Cuando está cerrado usa `translate-x-full`, por lo que el panel queda fuera del viewport a la derecha.
+  - Los ítems del drawer son **`<Link to={path}>`**, que se renderizan como `<a href="...">`. Sí tienen rol "link".
 
 Conclusión: **el único elemento con rol "link" y nombre "Planes de entrenamiento" en el DOM es el del drawer móvil.** En desktop ese drawer está cerrado (`translate-x-full`), por lo que el enlace está en DOM pero fuera del viewport. Playwright resuelve a ese enlace, intenta hacer scroll (que no mueve un panel con `transform` fuera de vista) y falla con "element is outside of the viewport". No es que el sidebar desktop esté colapsado; es que **el locator está haciendo match con el enlace del drawer cerrado**, no con el sidebar visible.
 

@@ -89,8 +89,10 @@ module.exports = {
                 "10xl": "5rem",
             },
             spacing: {
-                'navbar-mobile': '5rem', 
-                'navbar-desktop': '7rem',
+                'navbar-mobile': '4rem',
+                'navbar-desktop': '5.5rem',
+                'navbar-dashboard-mobile': '3.5rem',
+                'navbar-dashboard-desktop': '5rem',
             },
         },
     },

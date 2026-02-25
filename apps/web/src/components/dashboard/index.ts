@@ -14,4 +14,3 @@
 export * from "./layout";
 export { DashboardShell } from "./DashboardShell";
 export { DashboardSidebar } from "./DashboardSidebar";
-export { DashboardNavbar } from "./DashboardNavbar";

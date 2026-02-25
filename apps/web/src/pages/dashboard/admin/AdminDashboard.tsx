@@ -4,10 +4,10 @@
  * 
  * RESPONSIVE BEHAVIOR:
  * - Desktop: AdminSideMenu visible + DashboardLayout offset
- * - Mobile/Tablet: DashboardNavbar + AdminSideMenu hidden
+ * - Mobile/Tablet: navbar (AppNavbar) + AdminSideMenu hidden
  *
  * @author Frontend Team
- * @since v4.1.0 - Unified responsive behavior with DashboardNavbar
+ * @since v4.1.0 - Unified responsive behavior with navbar unificada (AppNavbar)
  */
 
 import React from "react";

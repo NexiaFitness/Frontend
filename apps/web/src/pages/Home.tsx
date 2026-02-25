@@ -2,7 +2,7 @@
  * Página principal de NEXIA - Landing page
  * Primera impresión para usuarios no autenticados
  * 
- * Nota: La PublicNavbar ya se incluye automáticamente desde PublicLayout,
+ * Nota: La navbar (AppNavbar) se incluye desde PublicLayout,
  * por lo que no se debe duplicar aquí.
  * 
  * @author Frontend Team

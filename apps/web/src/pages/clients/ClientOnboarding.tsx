@@ -8,7 +8,7 @@
  * - Conecta con useClientOnboarding hook (shared, cross-platform).
  *
  * Arquitectura:
- * - DashboardLayout + TrainerSideMenu + DashboardNavbar (consistencia visual).
+ * - DashboardLayout + TrainerSideMenu + navbar (AppNavbar) desde DashboardShell (consistencia visual).
  * - Renderizado condicional del step actual basado en currentStep.
  * - Botones: Volver al dashboard, Anterior, Siguiente/Enviar.
  *

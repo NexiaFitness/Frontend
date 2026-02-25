@@ -17,7 +17,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { NexiaLogoCompact } from "@/components/ui/branding/NexiaLogoCompact";
 import { LogoutButton } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@nexia/shared/store";
@@ -31,7 +30,7 @@ export interface DashboardSidebarProps {
 
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     menuItems,
-    headerTitle,
+    headerTitle: _headerTitle,
     footerSubtitle,
 }) => {
     const location = useLocation();
@@ -40,14 +39,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     const isActive = (path: string) => location.pathname === path;
 
     return (
-        <aside className="hidden lg:flex fixed left-0 top-0 h-screen w-80 flex-col z-10 bg-sidebar border-r border-sidebar-border">
-            <div className="p-8 bg-sidebar border-b border-sidebar-border text-center shrink-0">
-                <div className="w-24 sm:w-32 md:w-40 h-auto mx-auto">
-                    <NexiaLogoCompact className="w-24 sm:w-32 md:w-40" />
-                </div>
-                <p className="text-sidebar-foreground/80 text-sm mt-2">{headerTitle}</p>
-            </div>
-
+        <aside className="hidden lg:flex fixed left-0 top-navbar-dashboard-desktop h-[calc(100vh-theme(space.navbar-dashboard-desktop))] w-80 flex-col z-10 bg-sidebar border-r border-sidebar-border">
             <div className="flex-1 flex flex-col min-h-0">
                 <nav className="flex-1 overflow-y-auto p-6 border-b border-sidebar-border space-y-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                     {menuItems.map((item) => {

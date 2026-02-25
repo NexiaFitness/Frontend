@@ -53,7 +53,7 @@ describe("DeleteAccountModal", () => {
             const dangerIcon = document.querySelector("svg");
             expect(dangerIcon).toBeInTheDocument();
             const warningText = screen.getByText("Esta acción es irreversible.");
-            expect(warningText).toHaveClass("text-red-600");
+            expect(warningText).toHaveClass("text-destructive");
         });
     });
 
@@ -168,8 +168,8 @@ describe("DeleteAccountModal", () => {
             render(<DeleteAccountModal {...defaultProps} />);
             const cancelButton = screen.getByRole("button", { name: "Cancelar" });
             const deleteButton = screen.getByRole("button", { name: "Eliminar cuenta" });
-            expect(cancelButton).toHaveClass("sm:w-[160px]");
-            expect(deleteButton).toHaveClass("sm:w-[160px]");
+            expect(cancelButton).toHaveClass("sm:min-w-[160px]");
+            expect(deleteButton).toHaveClass("sm:min-w-[160px]");
         });
     });
 });

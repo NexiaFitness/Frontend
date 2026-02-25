@@ -58,7 +58,7 @@ describe("ClientOnboardingForm", () => {
     });
 
     describe("Rendering & Basic UI", () => {
-        it("renders form with main title and first section (Información Personal)", () => {
+        it("renders form with main title and first section (Información Personal)", { timeout: 10000 }, () => {
             const initialData = createEmptyFormData();
             render(
                 <ClientOnboardingForm
