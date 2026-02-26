@@ -1,7 +1,7 @@
 /**
  * E2E Training Plans: Listado
  *
- * Flujo: Login → Sidebar "Planes de entrenamiento" → listado con heading y secciones.
+ * Flujo: Login → Sidebar "Planificación" → listado con heading y secciones.
  * Assertions: heading "Planificación de Entrenamiento", estado (programas activos o biblioteca o empty).
  * APIs: getTrainingPlans, getTrainingPlanTemplates (vía trainerId).
  */

@@ -23,6 +23,9 @@ import {
     ClipboardList,
     Dumbbell,
     User,
+    BarChart3,
+    Bell,
+    Play,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -43,9 +46,12 @@ const TRAINER_NAV: RoleNavigation = {
     menuItems: [
         { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
         { label: "Clientes", path: "/dashboard/clients", icon: Users },
-        { label: "Agenda", path: "/dashboard/scheduling", icon: Calendar },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans", icon: ClipboardList },
+        { label: "Planificación", path: "/dashboard/training-plans", icon: ClipboardList },
+        { label: "Calendario", path: "/dashboard/scheduling", icon: Calendar },
+        { label: "Sesiones", path: "/dashboard/scheduling", icon: Play },
         { label: "Ejercicios", path: "/dashboard/exercises", icon: Dumbbell },
+        { label: "Analítica", path: "/dashboard/reports/generate", icon: BarChart3 },
+        { label: "Alertas", path: "/dashboard", icon: Bell },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };

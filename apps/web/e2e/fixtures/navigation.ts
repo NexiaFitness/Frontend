@@ -18,7 +18,7 @@ export async function sidebarNavigate(
 }
 
 export async function navigateToPlans(page: Page): Promise<void> {
-  await sidebarNavigate(page, /planes de entrenamiento/i);
+  await sidebarNavigate(page, /planificación/i);
   await page.waitForURL(/\/dashboard\/training-plans/, { timeout: 10_000 });
 }
 
@@ -37,8 +37,8 @@ export async function navigateToAccount(page: Page): Promise<void> {
   await page.waitForURL(/\/dashboard\/account/, { timeout: 10_000 });
 }
 
-/** Ir a Programación de Sesiones (calendario). No está en sidebar trainer; navega por URL. */
+/** Ir a Calendario/Sesiones vía sidebar o URL directa. */
 export async function navigateToScheduling(page: Page): Promise<void> {
-  await page.goto("/dashboard/scheduling");
+  await sidebarNavigate(page, /calendario/i);
   await page.waitForURL(/\/dashboard\/scheduling/, { timeout: 10_000 });
 }

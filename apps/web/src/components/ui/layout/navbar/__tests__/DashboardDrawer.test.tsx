@@ -19,7 +19,7 @@ const defaultProps: DashboardDrawerProps = {
     onClose: () => {},
     menuItems: [
         { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
+        { label: "Planificación", path: "/dashboard/training-plans" },
     ],
     user: { nombre: "Coach", apellidos: "Demo" },
     footerSubtitle: "Professional Trainer",
@@ -42,7 +42,7 @@ describe("DashboardDrawer", () => {
             "href",
             "/dashboard/clients"
         );
-        expect(screen.getByRole("link", { name: /planes de entrenamiento/i })).toHaveAttribute(
+        expect(screen.getByRole("link", { name: /planificación/i })).toHaveAttribute(
             "href",
             "/dashboard/training-plans"
         );
