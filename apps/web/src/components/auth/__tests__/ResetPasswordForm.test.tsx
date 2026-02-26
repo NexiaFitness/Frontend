@@ -253,10 +253,12 @@ describe("ResetPasswordForm", () => {
 
     describe("Loading States", () => {
         it("shows loading state during submission", async () => {
-            // Usar un handler más lento para capturar el estado de loading
+            // Delay suficiente para que userEvent.type + click terminen antes de que la petición resuelva.
+            // userEvent simula typing real (~50-100ms por campo); 2s garantiza estado loading observable.
+            const requestDelayMs = 2000;
             server.use(
                 http.post("*/auth/reset-password", async () => {
-                    await new Promise((resolve) => setTimeout(resolve, 200)); // Delay para capturar loading
+                    await new Promise((resolve) => setTimeout(resolve, requestDelayMs));
                     return new Response(null, { status: 408 });
                 })
             );
@@ -268,22 +270,25 @@ describe("ResetPasswordForm", () => {
             await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            // Verificar que el botón está deshabilitado durante el loading
-            await waitFor(() => {
-                const submitButton = screen.getByRole("button", { name: /cambiar contraseña|actualizando contraseña/i });
-                expect(submitButton).toBeDisabled();
-            }, { timeout: 500 });
-
-            // Verificar que los inputs están deshabilitados
-            expect(screen.getByPlaceholderText("Mínimo 6 caracteres")).toBeDisabled();
-            expect(screen.getByPlaceholderText("Repite tu nueva contraseña")).toBeDisabled();
+            // Verificar estado de loading de forma atómica: botón e inputs deshabilitados simultáneamente.
+            await waitFor(
+                () => {
+                    const submitButton = screen.getByRole("button", {
+                        name: /cambiar contraseña|actualizando contraseña/i,
+                    });
+                    expect(submitButton).toBeDisabled();
+                    expect(screen.getByPlaceholderText("Mínimo 6 caracteres")).toBeDisabled();
+                    expect(screen.getByPlaceholderText("Repite tu nueva contraseña")).toBeDisabled();
+                },
+                { timeout: 1500 }
+            );
         });
 
         it("disables navigation links during loading", async () => {
-            // Usar un handler más lento para capturar el estado de loading
+            const requestDelayMs = 2000;
             server.use(
                 http.post("*/auth/reset-password", async () => {
-                    await new Promise((resolve) => setTimeout(resolve, 200)); // Delay para capturar loading
+                    await new Promise((resolve) => setTimeout(resolve, requestDelayMs));
                     return new Response(null, { status: 408 });
                 })
             );
@@ -295,13 +300,13 @@ describe("ResetPasswordForm", () => {
             await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            // Navigation buttons should be disabled during loading
-            await waitFor(() => {
-                expect(screen.getByRole("button", { name: /volver al login/i }))
-                    .toBeDisabled();
-                expect(screen.getByRole("button", { name: /tu enlace ha caducado/i }))
-                    .toBeDisabled();
-            }, { timeout: 500 });
+            await waitFor(
+                () => {
+                    expect(screen.getByRole("button", { name: /volver al login/i })).toBeDisabled();
+                    expect(screen.getByRole("button", { name: /tu enlace ha caducado/i })).toBeDisabled();
+                },
+                { timeout: 1500 }
+            );
         });
     });
 

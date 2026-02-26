@@ -5,27 +5,34 @@
  * - Chrome centralizado: sidebar (desktop) + navbar (móvil) + Outlet.
  * - Lee user.role del store; obtiene menuItems y metadatos desde getNavigationForRole.
  * - Incluye overlays de loading y error de auth (reubicados desde DashboardLayout).
+ * - Estado sidebarCollapsed controla ancho del sidebar y margen del main (Fase 1).
+ * - onToggleClick para toggle en tablet/touch (Fase 3).
  *
  * Notas de mantenimiento:
- * - bg-background (tokens Sparkle); no meshGradientInverted.
- * - Overlays con tokens (border-primary, bg-destructive/10).
+ * - Main: lg:ml-sidebar-collapsed | lg:ml-sidebar-expanded (tokens), transition-all duration-300, min-w-0.
  *
  * @author Frontend Team
- * @since v5.0.0 - Nexia Sparkle Flow (Fase 2a)
+ * @since v5.0.0 - Nexia Sparkle Flow (Sidebar colapsable Fase 4)
  */
 
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { AppNavbar } from "@/components/ui/layout/navbar/AppNavbar";
 import { getNavigationForRole } from "@/config/navigationByRole";
+import { cn } from "@/lib/utils";
 import type { RootState } from "@nexia/shared/store";
 
 export const DashboardShell: React.FC = () => {
     const { user, isLoading, error } = useSelector((state: RootState) => state.auth);
     const nav = getNavigationForRole(user?.role);
     const menuItems = nav.menuItems.map(({ label, path }) => ({ label, path }));
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+
+    const onHoverExpand = useCallback(() => setSidebarCollapsed(false), []);
+    const onHoverCollapse = useCallback(() => setSidebarCollapsed(true), []);
+    const onToggleClick = useCallback(() => setSidebarCollapsed((prev) => !prev), []);
 
     return (
         <div className="min-h-screen w-full bg-background">
@@ -58,9 +65,18 @@ export const DashboardShell: React.FC = () => {
                 menuItems={nav.menuItems}
                 headerTitle={nav.headerTitle}
                 footerSubtitle={nav.footerSubtitle}
+                isCollapsed={sidebarCollapsed}
+                onHoverExpand={onHoverExpand}
+                onHoverCollapse={onHoverCollapse}
+                onToggleClick={onToggleClick}
             />
 
-            <main className="pt-8 pb-16 min-h-screen md:pt-10 lg:ml-80 lg:pt-navbar-dashboard-desktop">
+            <main
+                className={cn(
+                    "pt-8 pb-16 min-h-screen md:pt-10 lg:pt-navbar-dashboard-desktop min-w-0 transition-all duration-300",
+                    sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded"
+                )}
+            >
                 <Outlet />
             </main>
         </div>

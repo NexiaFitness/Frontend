@@ -93,6 +93,8 @@ module.exports = {
                 'navbar-desktop': '5.5rem',
                 'navbar-dashboard-mobile': '3.5rem',
                 'navbar-dashboard-desktop': '5rem',
+                'sidebar-collapsed': '3.5rem',
+                'sidebar-expanded': '13.75rem',
             },
         },
     },

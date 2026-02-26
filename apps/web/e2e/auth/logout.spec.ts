@@ -14,18 +14,22 @@ test.describe("Auth — Logout", () => {
     await loginAsTrainer(page);
     await expect(page).toHaveURL(/\/dashboard/);
 
+    // Sidebar empieza colapsado: el LogoutButton solo se renderiza cuando está expandido.
+    // Hover sobre el sidebar para expandirlo y revelar el botón.
+    await page.getByRole("complementary").hover();
+
     await page
       .getByRole("complementary")
       .getByRole("button", { name: /cerrar sesión/i })
       .click();
 
+    // Modal de confirmación tiene title "¿Cerrar sesión?" — acotar para evitar strict mode
+    // (el drawer "Menú de navegación" también tiene un botón "Cerrar sesión").
+    const confirmModal = page.getByRole("dialog", { name: /¿cerrar sesión\?/i });
     await expect(
-      page.getByRole("dialog").getByRole("button", { name: /cerrar sesión/i })
+      confirmModal.getByRole("button", { name: /cerrar sesión/i })
     ).toBeVisible({ timeout: 5_000 });
-    await page
-      .getByRole("dialog")
-      .getByRole("button", { name: /cerrar sesión/i })
-      .click();
+    await confirmModal.getByRole("button", { name: /cerrar sesión/i }).click();
 
     await expect(page).not.toHaveURL(/\/dashboard/);
     await expect(
