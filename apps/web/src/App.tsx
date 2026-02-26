@@ -6,69 +6,123 @@
  * - Smart dashboard routing basado en rol del usuario autenticado
  * - Protección de rutas privadas con redirect automático
  * - Dashboard unificado vía DashboardShell (Fase 2b)
+ * - Route-based code splitting con React.lazy (BUILD_WARNINGS_ANALYSIS.md Fase 2)
  *
  * @author Frontend Team
  * @since v1.0.0
  * @updated v5.0.0 - Fase 2b: todas las rutas dashboard anidadas bajo DashboardShell
+ * @updated v5.x - Fase 2: code splitting por bloques funcionales
  */
 
-import React, { useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
-// Páginas públicas
+// Páginas públicas (críticas: estáticas)
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import VerifyEmail from "./pages/auth/VerifyEmail";
 
-// Dashboards por rol
-import { TrainerDashboard } from "./pages/dashboard/trainer/TrainerDashboard";
-import { AdminDashboard } from "./pages/dashboard/admin/AdminDashboard";
-import { AthleteDashboard } from "./pages/dashboard/athlete/AthleteDashboard";
+// Bloque 1: Públicas secundarias (lazy)
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 
-// Páginas trainer-specific
-import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
+// Bloque 2: Dashboards por rol (lazy)
+const TrainerDashboard = lazy(() =>
+  import("./pages/dashboard/trainer/TrainerDashboard").then((m) => ({ default: m.TrainerDashboard }))
+);
+const AdminDashboard = lazy(() =>
+  import("./pages/dashboard/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
+);
+const AthleteDashboard = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteDashboard").then((m) => ({ default: m.AthleteDashboard }))
+);
 
-// Client Management (trainers only)
-import { ClientOnboarding } from "./pages/clients/ClientOnboarding";
-import { ClientList } from "./pages/clients/ClientList";
-import { ClientDetail } from "./pages/clients/ClientDetail";
-import { ClientEdit } from "./pages/clients/ClientEdit";
+// Bloque 3: Módulos trainer (lazy)
+const CompleteProfile = lazy(() =>
+  import("./pages/dashboard/trainer/CompleteProfile").then((m) => ({ default: m.CompleteProfile }))
+);
+const ClientOnboarding = lazy(() =>
+  import("./pages/clients/ClientOnboarding").then((m) => ({ default: m.ClientOnboarding }))
+);
+const ClientList = lazy(() =>
+  import("./pages/clients/ClientList").then((m) => ({ default: m.ClientList }))
+);
+const ClientDetail = lazy(() =>
+  import("./pages/clients/ClientDetail").then((m) => ({ default: m.ClientDetail }))
+);
+const ClientEdit = lazy(() =>
+  import("./pages/clients/ClientEdit").then((m) => ({ default: m.ClientEdit }))
+);
+const TrainingPlansPage = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlansPage").then((m) => ({ default: m.TrainingPlansPage }))
+);
+const TrainingPlanDetail = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlanDetail").then((m) => ({ default: m.TrainingPlanDetail }))
+);
+const TrainingPlanEdit = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlanEdit").then((m) => ({ default: m.TrainingPlanEdit }))
+);
+const CreateTrainingPlan = lazy(() =>
+  import("./pages/trainingPlans/CreateTrainingPlan").then((m) => ({ default: m.CreateTrainingPlan }))
+);
+const CreateTrainingPlanTemplate = lazy(() =>
+  import("./pages/trainingPlans/CreateTrainingPlanTemplate").then((m) => ({ default: m.CreateTrainingPlanTemplate }))
+);
+const ExerciseList = lazy(() =>
+  import("./pages/exercises").then((m) => ({ default: m.ExerciseList }))
+);
+const ExerciseDetail = lazy(() =>
+  import("./pages/exercises").then((m) => ({ default: m.ExerciseDetail }))
+);
+const ExerciseForm = lazy(() =>
+  import("./pages/exercises").then((m) => ({ default: m.ExerciseForm }))
+);
+const GenerateReports = lazy(() =>
+  import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
+);
+const SchedulingPage = lazy(() =>
+  import("./pages/scheduling/SchedulingPage").then((m) => ({ default: m.SchedulingPage }))
+);
+const NewScheduledSessionPage = lazy(() =>
+  import("./pages/scheduling/NewScheduledSessionPage").then((m) => ({ default: m.NewScheduledSessionPage }))
+);
+const EditScheduledSessionPage = lazy(() =>
+  import("./pages/scheduling/EditScheduledSessionPage").then((m) => ({ default: m.EditScheduledSessionPage }))
+);
+const CreateSessionFromTemplate = lazy(() =>
+  import("./pages/sessionProgramming/CreateSessionFromTemplate").then((m) => ({ default: m.CreateSessionFromTemplate }))
+);
+const CreateSession = lazy(() =>
+  import("./pages/sessionProgramming/CreateSession").then((m) => ({ default: m.CreateSession }))
+);
+const EditSession = lazy(() =>
+  import("./pages/sessionProgramming/EditSession").then((m) => ({ default: m.EditSession }))
+);
+const CreateTemplate = lazy(() =>
+  import("./pages/sessionProgramming/CreateTemplate").then((m) => ({ default: m.CreateTemplate }))
+);
+const SessionDetail = lazy(() =>
+  import("./pages/sessionProgramming/SessionDetail").then((m) => ({ default: m.SessionDetail }))
+);
+const CreateTestResult = lazy(() =>
+  import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
+);
 
-// Training Plans Management (trainers only)
-import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
-import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
-import { TrainingPlanEdit } from "./pages/trainingPlans/TrainingPlanEdit";
-import { CreateTrainingPlan, CreateTrainingPlanTemplate } from "./pages/trainingPlans";
-
-// Exercises Management (trainers only)
-import { ExerciseList, ExerciseDetail, ExerciseForm } from "./pages/exercises";
-
-// Reports & Scheduling (trainers only)
-import { GenerateReports } from "./pages/reports/GenerateReports";
-import { SchedulingPage } from "./pages/scheduling/SchedulingPage";
-import { NewScheduledSessionPage } from "./pages/scheduling/NewScheduledSessionPage";
-import { EditScheduledSessionPage } from "./pages/scheduling/EditScheduledSessionPage";
-
-// Session Programming (trainers only)
-import { CreateSessionFromTemplate, CreateSession, EditSession, CreateTemplate, SessionDetail } from "./pages/sessionProgramming";
-
-// Testing (trainers only)
-import { CreateTestResult } from "./pages/testing";
-
-// Páginas adicionales
-import Account from "./pages/account/Account";
-import { NotFound } from "./pages/NotFound";
+// Bloque 4: Account, NotFound (lazy)
+const Account = lazy(() => import("./pages/account/Account"));
+const NotFound = lazy(() =>
+  import("./pages/NotFound").then((m) => ({ default: m.NotFound }))
+);
 
 // Layouts
 import { PublicLayout } from "./components/ui/layout/PublicLayout";
 import { DashboardShell } from "./components/dashboard/DashboardShell";
 
 // UI Components
-import { ToastProvider } from "./components/ui/feedback";
+import { ToastProvider, LoadingSpinner } from "./components/ui/feedback";
+import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -120,8 +174,10 @@ function App() {
 
   return (
     <ToastProvider>
-      <Routes>
-        <Route element={<PublicLayout />}>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <Routes>
+            <Route element={<PublicLayout />}>
           <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
           <Route path="/auth/login" element={<Login />} />
           <Route path="/auth/register" element={<Register />} />
@@ -353,6 +409,8 @@ function App() {
 
         <Route path="*" element={<NotFound />} />
       </Routes>
+        </Suspense>
+      </ErrorBoundary>
     </ToastProvider>
   );
 }
