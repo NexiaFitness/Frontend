@@ -290,6 +290,11 @@ export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
 export {
+    getClientAvatarColor,
+    getClientInitials,
+    type ClientAvatarColor,
+} from "./utils/clientAvatar";
+export {
     getFatigueAlertContextualAction,
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";

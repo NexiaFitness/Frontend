@@ -15,7 +15,7 @@ import { useNavigate } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
-import { Avatar } from "@/components/ui/avatar";
+import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 interface ClientHeaderProps {
@@ -124,11 +124,11 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     <div className="flex items-start gap-4 flex-1">
                         {/* Profile Photo */}
                         <div className="flex-shrink-0">
-                            <Avatar
+                            <ClientAvatar
+                                clientId={client.id}
                                 nombre={client.nombre}
                                 apellidos={client.apellidos}
                                 size="lg"
-                                variant="default"
                             />
                         </div>
 

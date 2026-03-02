@@ -73,7 +73,7 @@ export const DashboardShell: React.FC = () => {
 
             <main
                 className={cn(
-                    "pt-8 pb-16 min-h-screen md:pt-10 lg:pt-navbar-dashboard-desktop min-w-0 transition-all duration-200 ease-in-out",
+                    "min-h-screen min-w-0 overflow-y-auto px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
                     sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded"
                 )}
             >

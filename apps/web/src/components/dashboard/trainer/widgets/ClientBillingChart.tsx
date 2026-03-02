@@ -7,14 +7,14 @@ export const ClientBillingChart: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
-                <div className="h-64 bg-muted rounded animate-pulse" />
+            <div className="bg-surface border border-border rounded-xl p-6 lg:p-8">
+                <div className="h-64 bg-surface-2 rounded animate-pulse" />
             </div>
         );
     }
 
     return (
-        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
+        <div className="bg-surface border border-border rounded-xl p-6 lg:p-8">
             <div className="flex justify-between items-start mb-6">
                 <div>
                     <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-1">

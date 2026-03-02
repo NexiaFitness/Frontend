@@ -1,33 +1,25 @@
 /**
  * TrainerDashboard.tsx — Panel principal del entrenador.
- * 
- * Contexto:
- * Vista principal dentro del área privada de un usuario con rol "Trainer".
- * Renderiza la interfaz del dashboard con estructura responsive según diseño Figma v2.
- * Integra widgets de KPIs, billing, progreso de clientes y alertas prioritarias.
- * 
- * Notas de mantenimiento:
- * - EmailVerificationBanner y CompleteProfileBanner se renderizan condicionalmente
- * - Usa datos reales de backend: Stats, Improvement, Satisfaction, Adherence, Billing, Progress, Alerts
- * - Mantener gradiente mesh de fondo corporativo NEXIA
- * - TODO EN ESPAÑOL según diseño final
- * - ORDEN FIGMA: KPIs → (Alerts + Actions) → (Billing + Progress)
- * 
+ *
+ * Layout según DASHBOARD_LAYOUT_SPEC:
+ * Saludo + fecha → Banners → 4 StatCards → Dos columnas (Requiere atención + Hoy | Mis clientes + Facturación)
+ *
  * @author Frontend Team
  * @since v2.4.1
- * @updated v5.0.0 - Refactor completo según diseño Figma v2 (orden correcto + español)
+ * @updated v5.x - DASHBOARD_LAYOUT_SPEC: layout profesional de raíz
  */
 
 import React, { useState, useEffect } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { CompleteProfileBanner, EmailVerificationBanner } from "@/components/dashboard/shared";
+import { Users, TrendingUp, Smile, ClipboardCheck } from "lucide-react";
+import { CompleteProfileBanner, EmailVerificationBanner, GreetingHeader } from "@/components/dashboard/shared";
 import { CompleteProfileModal } from "@/components/dashboard/modals";
 import {
     KPICard,
-    ClientBillingChart,
-    ClientProgressWidget,
     PriorityAlertsWidget,
+    TodaySessionsWidget,
+    ClientListWidget,
+    BillingWidget,
 } from "@/components/dashboard/trainer/widgets";
 import {
     useClientStats,
@@ -40,214 +32,102 @@ import { baseApi } from "@nexia/shared/api/baseApi";
 import type { RootState, AppDispatch } from "@nexia/shared/store";
 
 export const TrainerDashboard: React.FC = () => {
-    const navigate = useNavigate();
     const dispatch = useDispatch<AppDispatch>();
     const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
-    
-    // ✅ CRÍTICO: TODOS los hooks deben ejecutarse ANTES del early return
-    // Hooks de datos reales
+
     const {
         getTotalClients,
         isLoading: isLoadingStats,
         isError: isErrorStats,
     } = useClientStats();
 
-    // Hooks de KPIs del dashboard (datos reales del backend)
     const clientImprovement = useClientImprovement();
     const clientSatisfaction = useClientSatisfaction();
     const planAdherence = usePlanAdherence();
 
-    // Estado del modal de Complete Profile
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
-
-    // Hook para verificar si perfil está completo
     const { isProfileComplete } = useCompleteProfileModal();
-    
-    // ✅ FASE 2.1: Cleanup en useEffect para cancelar queries cuando se desautentica
+
     useEffect(() => {
         if (!isAuthenticated) {
-            // Cancelar todas las queries cuando se desautentica
             dispatch(baseApi.util.resetApiState());
         }
     }, [isAuthenticated, dispatch]);
-    
-    // Early return si no está autenticado (DESPUÉS de todos los hooks)
+
     if (!isAuthenticated) {
         return null;
     }
 
-    // Formatear fecha en español
-    const currentDate = new Date().toLocaleDateString("es-ES", {
-        weekday: "long",
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-    });
-
     return (
-        <>
-            {/* Header con nombre y fecha */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
-                        ¡Bienvenido de vuelta, {user?.nombre}!
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base lg:text-lg capitalize">
-                        {currentDate}
+        <div className="space-y-8">
+            <GreetingHeader userName={user?.nombre} />
+
+            <EmailVerificationBanner user={user} />
+            <CompleteProfileBanner user={user} isProfileComplete={isProfileComplete} />
+
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <KPICard
+                    value={getTotalClients()}
+                    trend="+8%"
+                    label="Total de Clientes"
+                    description="vs mes anterior"
+                    icon={Users}
+                    color="primary"
+                    isLoading={isLoadingStats}
+                />
+                <KPICard
+                    value={`${clientImprovement.value}%`}
+                    trend={clientImprovement.trend}
+                    label="Progreso Promedio"
+                    description="en todos los programas"
+                    icon={TrendingUp}
+                    color="success"
+                    isLoading={clientImprovement.isLoading}
+                />
+                <KPICard
+                    value={clientSatisfaction.value}
+                    trend={clientSatisfaction.trend}
+                    label="Satisfacción del Cliente"
+                    description="feedback post-sesión"
+                    icon={Smile}
+                    color="info"
+                    isLoading={clientSatisfaction.isLoading}
+                />
+                <KPICard
+                    value={`${planAdherence.value}%`}
+                    trend={planAdherence.trend}
+                    label="Adherencia al Plan"
+                    description="planificado vs ejecutado"
+                    icon={ClipboardCheck}
+                    color="primary"
+                    isLoading={planAdherence.isLoading}
+                />
+            </div>
+
+            {isErrorStats && (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-center">
+                    <p className="text-sm text-destructive">
+                        No se pudieron cargar las estadísticas. Intenta recargar la página.
                     </p>
                 </div>
+            )}
 
-                {/* Banner de verificación de email (prioridad ALTA) */}
-                <EmailVerificationBanner user={user} />
-
-                {/* Banner de perfil incompleto */}
-                <CompleteProfileBanner user={user} isProfileComplete={isProfileComplete} />
-
-                {/* 4 KPI Cards */}
-                <div className="px-4 lg:px-8 mb-8 lg:mb-12">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                        {/* Total Clients - REAL */}
-                        <KPICard
-                            value={getTotalClients()}
-                            trend="+8%"
-                            label="Total de Clientes"
-                            description="vs mes anterior"
-                            isLoading={isLoadingStats}
-                        />
-
-                        {/* Avg Client Improvement - REAL */}
-                        <KPICard
-                            value={`${clientImprovement.value}%`}
-                            trend={clientImprovement.trend}
-                            label="Progreso Promedio"
-                            description="en todos los programas"
-                            isLoading={clientImprovement.isLoading}
-                        />
-
-                        {/* Client Satisfaction - REAL */}
-                        <KPICard
-                            value={clientSatisfaction.value}
-                            trend={clientSatisfaction.trend}
-                            label="Satisfacción del Cliente"
-                            description="feedback post-sesión"
-                            isLoading={clientSatisfaction.isLoading}
-                        />
-
-                        {/* Plan Adherence - REAL */}
-                        <KPICard
-                            value={`${planAdherence.value}%`}
-                            trend={planAdherence.trend}
-                            label="Adherencia al Plan"
-                            description="planificado vs ejecutado"
-                            isLoading={planAdherence.isLoading}
-                        />
-                    </div>
-
-                    {/* Error state para stats reales */}
-                    {isErrorStats && (
-                        <div className="mt-4 bg-destructive/10 border border-destructive/30 rounded-lg p-4 text-center">
-                            <p className="text-destructive text-sm">
-                                No se pudieron cargar las estadísticas. Intenta recargar la página.
-                            </p>
-                        </div>
-                    )}
+            <div className="flex flex-col gap-8 lg:flex-row">
+                <div className="flex-1 space-y-8 lg:w-[70%]">
+                    <PriorityAlertsWidget />
+                    <TodaySessionsWidget />
                 </div>
 
-                {/* Priority Alerts (izq) + Quick Actions (der) - SEGÚN FIGMA */}
-                <div className="px-4 lg:px-8 mb-8 lg:mb-12">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-stretch">
-                        {/* Priority Alerts - Izquierda */}
-                        <PriorityAlertsWidget />
-                        
-                        {/* Quick Actions - Derecha */}
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8 flex flex-col">
-                            <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-6">
-                                Acciones Rápidas
-                            </h3>
-                            <div className="grid grid-cols-2 gap-4 flex-1">
-                                {/* Crear Plan */}
-                                <div
-                                    className="bg-primary/10 rounded-xl p-5 cursor-pointer hover:bg-primary/20 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={() => navigate("/dashboard/training-plans/create")}
-                                >
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                                            </svg>
-                                        </div>
-                                        <h4 className="font-semibold text-foreground text-sm mb-1">Crear Plan de Entrenamiento</h4>
-                                        <p className="text-xs text-muted-foreground">Construye un programa</p>
-                                    </div>
-                                </div>
+                <aside className="space-y-8 lg:w-[30%]">
+                    <ClientListWidget />
+                    <BillingWidget />
+                </aside>
+            </div>
 
-                                {/* Añadir Cliente */}
-                                <div
-                                    className="bg-success/10 rounded-xl p-5 cursor-pointer hover:bg-success/20 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={() => navigate("/dashboard/clients/onboarding")}
-                                >
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 bg-success/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <svg className="w-6 h-6 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                                            </svg>
-                                        </div>
-                                        <h4 className="font-semibold text-foreground text-sm mb-1">Añadir Cliente</h4>
-                                        <p className="text-xs text-muted-foreground">Nuevo registro</p>
-                                    </div>
-                                </div>
-
-                                {/* Generar Reportes */}
-                                <div
-                                    className="bg-primary/10 rounded-xl p-5 cursor-pointer hover:bg-primary/20 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={() => navigate("/dashboard/reports/generate")}
-                                >
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                        </div>
-                                        <h4 className="font-semibold text-foreground text-sm mb-1">Generar Reportes</h4>
-                                        <p className="text-xs text-muted-foreground">Análisis y estadísticas</p>
-                                    </div>
-                                </div>
-
-                                {/* Programación de Sesiones */}
-                                <div
-                                    className="bg-primary/10 rounded-xl p-5 cursor-pointer hover:bg-primary/20 transition-all flex flex-col items-center justify-center h-full"
-                                    onClick={() => navigate("/dashboard/scheduling")}
-                                >
-                                    <div className="text-center">
-                                        <div className="w-12 h-12 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                                            <svg className="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                        </div>
-                                        <h4 className="font-semibold text-foreground text-sm mb-1">Programación</h4>
-                                        <p className="text-xs text-muted-foreground">Calendario de citas</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Client Billing (izq) + Client Progress (der) - SEGÚN FIGMA */}
-                <div className="px-4 lg:px-8 mb-8 lg:mb-12 pb-20 lg:pb-24">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Client Billing - Izquierda */}
-                        <ClientBillingChart />
-                        
-                        {/* Client Progress - Derecha */}
-                        <ClientProgressWidget />
-                    </div>
-                </div>
-
-            {/* Modal de Complete Profile */}
             <CompleteProfileModal
                 isOpen={showCompleteProfileModal}
                 onClose={() => setShowCompleteProfileModal(false)}
             />
-        </>
+        </div>
     );
 };

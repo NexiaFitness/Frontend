@@ -295,6 +295,12 @@ export interface ClientPreviewResponse {
 // ========================================
 
 /**
+ * Tendencia de progreso del cliente (para icono en lista "Mis clientes").
+ * up = ArrowUpRight (verde), down = ArrowDownRight (rojo), stable = Minus (muted).
+ */
+export type ClientProgressTrend = "up" | "down" | "stable";
+
+/**
  * ClientListItem - Cliente con métricas de fatiga y adherencia
  * Usado en GET /clients/with-metrics
  */
@@ -306,6 +312,8 @@ export interface ClientListItem {
     fatigue_level: string | null; // "Perfect", "Slightly Tired", "Very Tired", "Exhausted"
     fatigue_level_numeric: number | null; // 1-10 scale for sorting
     adherence_percentage: number | null; // 0-100
+    /** Tendencia de progreso; si el backend no lo envía, se muestra "stable". */
+    progress_trend?: ClientProgressTrend | null;
 }
 
 export interface ClientListWithMetricsResponse {

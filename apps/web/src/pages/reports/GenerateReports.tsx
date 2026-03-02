@@ -12,6 +12,7 @@
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
@@ -73,21 +74,14 @@ export const GenerateReports: React.FC = () => {
 
     return (
         <>
-                {/* Header */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
-                                Generar Reportes
-                            </h2>
-                            <p className="text-muted-foreground text-sm md:text-base">
-                                Genera reportes detallados de progreso, entrenamientos y estadísticas
-                            </p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
-                            Volver al Dashboard
-                        </Button>
-                    </div>
+                <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                    <PageTitle
+                        title="Generar Reportes"
+                        subtitle="Genera reportes detallados de progreso, entrenamientos y estadísticas"
+                    />
+                    <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                        Volver al Dashboard
+                    </Button>
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">

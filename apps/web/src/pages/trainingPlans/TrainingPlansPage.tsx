@@ -37,6 +37,7 @@ import { usePagination } from "@nexia/shared/hooks/common";
 import type { RootState } from "@nexia/shared/store";
 
 // Components
+import { PageTitle } from "@/components/dashboard/shared";
 import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePreviewModal } from "@/components/trainingPlans";
 import { Alert } from "@/components/ui/feedback";
 import { Pagination } from "@/components/ui/pagination";
@@ -379,15 +380,11 @@ export const TrainingPlansPage: React.FC = () => {
 
     return (
         <>
-            {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        Planificación de Entrenamiento
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Crea y gestiona programas de entrenamiento y plantillas de sesiones
-                    </p>
-                </div>
+            <PageTitle
+                title="Planificación de Entrenamiento"
+                subtitle="Crea y gestiona programas de entrenamiento y plantillas de sesiones"
+                className="mb-6"
+            />
 
                 {/* Mensajes de feedback */}
                 {successMessage && (

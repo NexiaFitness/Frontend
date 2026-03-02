@@ -14,6 +14,7 @@ import { useNavigate } from "react-router-dom";
 import { useExercises } from "@nexia/shared/hooks/exercises";
 
 // Components
+import { PageTitle } from "@/components/dashboard/shared";
 import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import { ExerciseFilters } from "@/components/exercises/ExerciseFilters";
 import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
@@ -67,23 +68,18 @@ export const ExerciseList: React.FC = () => {
 
     return (
         <>
-            {/* Header */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="text-center sm:text-left">
-                        <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                            Base de Datos de Ejercicios
-                        </h2>
-                        <p className="text-muted-foreground text-sm md:text-base">
-                            Explora y busca ejercicios para tus planes de entrenamiento
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => navigate("/dashboard/exercises/create")}
-                        className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shrink-0"
-                    >
-                        Crear Ejercicio
-                    </button>
-                </div>
+            <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <PageTitle
+                    title="Base de Datos de Ejercicios"
+                    subtitle="Explora y busca ejercicios para tus planes de entrenamiento"
+                />
+                <button
+                    onClick={() => navigate("/dashboard/exercises/create")}
+                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors shrink-0"
+                >
+                    Crear Ejercicio
+                </button>
+            </div>
 
                 {/* Busqueda */}
                 <div className="px-4 lg:px-8 mb-4">

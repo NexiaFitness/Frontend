@@ -11,7 +11,7 @@
  */
 
 import React from "react";
-import { Avatar, AvatarSize } from "./Avatar";
+import { ClientAvatar } from "./ClientAvatar";
 
 interface Client {
     id: number;
@@ -19,10 +19,12 @@ interface Client {
     apellidos: string;
 }
 
+type ClientAvatarSize = "sm" | "md" | "lg";
+
 interface ClientAvatarsGroupProps {
     clients: Client[];
     maxVisible?: number; // Número máximo de avatares a mostrar antes de "+N"
-    size?: AvatarSize;
+    size?: ClientAvatarSize;
     className?: string;
 }
 
@@ -42,12 +44,12 @@ export const ClientAvatarsGroup: React.FC<ClientAvatarsGroupProps> = ({
     return (
         <div className={`flex items-center gap-2 ${className}`}>
             {visibleClients.map((client) => (
-                <Avatar
+                <ClientAvatar
                     key={client.id}
+                    clientId={client.id}
                     nombre={client.nombre}
                     apellidos={client.apellidos}
                     size={size}
-                    variant="default"
                 />
             ))}
             {remainingCount > 0 && (

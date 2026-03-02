@@ -15,20 +15,17 @@
  */
 
 import React from "react";
+import { PageTitle } from "@/components/dashboard/shared";
 import { ProfileForm } from "@/components/account/ProfileForm";
 
 export const Account: React.FC = () => {
     return (
         <>
-                {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        Mi Cuenta
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Gestiona tu información personal y configuración de seguridad
-                    </p>
-                </div>
+            <PageTitle
+                title="Mi Cuenta"
+                subtitle="Gestiona tu información personal y configuración de seguridad"
+                className="mb-6"
+            />
 
                 {/* Contenido principal con ancho completo */}
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">

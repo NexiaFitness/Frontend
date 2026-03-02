@@ -28,11 +28,12 @@ import type { ClientListItem, RecentActivityItem } from "@nexia/shared/types/cli
 import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
+import { PageTitle } from "@/components/dashboard/shared";
 
 // UI
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Avatar } from "@/components/ui/avatar";
+import { ClientAvatar } from "@/components/ui/avatar";
 import { Pagination } from "@/components/ui/pagination";
 
 // Helper para obtener color de fatigue (tokens Nexia Sparkle Flow)
@@ -263,15 +264,11 @@ export const ClientList: React.FC = () => {
 
     return (
         <>
-            {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
-                        Clientes
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Gestiona y monitoriza el progreso de tus clientes
-                    </p>
-                </div>
+            <PageTitle
+                title="Clientes"
+                subtitle="Gestiona y monitoriza el progreso de tus clientes"
+                className="mb-6"
+            />
 
                 {/* Header con búsqueda */}
                 <div className="px-4 lg:px-8 mb-6">
@@ -372,11 +369,11 @@ export const ClientList: React.FC = () => {
                                                 >
                                                     {/* Name */}
                                                     <div className="flex items-center gap-3 min-w-0">
-                                                        <Avatar
+                                                        <ClientAvatar
+                                                            clientId={client.id}
                                                             nombre={client.nombre}
                                                             apellidos={client.apellidos}
                                                             size="sm"
-                                                            variant="primary"
                                                         />
                                                         <div className="min-w-0">
                                                             <div className="font-medium text-gray-900 truncate">

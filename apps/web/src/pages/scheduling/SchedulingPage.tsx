@@ -14,6 +14,7 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { PageTitle } from "@/components/dashboard/shared";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import {
     useGetScheduledSessions,
@@ -107,15 +108,11 @@ export const SchedulingPage: React.FC = () => {
 
     return (
         <>
-                {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        Programación de Sesiones
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Gestiona tus citas agendadas con clientes
-                    </p>
-                </div>
+            <PageTitle
+                title="Programación de Sesiones"
+                subtitle="Gestiona tus citas agendadas con clientes"
+                className="mb-6"
+            />
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     {isLoading ? (

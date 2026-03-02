@@ -64,8 +64,8 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                 <div className="flex flex-col h-full">
                     <nav className="flex-1 overflow-y-auto pt-8 px-6">
                         <ul className="space-y-2">
-                            {menuItems.map(({ path, label }) => (
-                                <li key={path}>
+                            {menuItems.map(({ path, label }, index) => (
+                                <li key={`${path}-${label}-${index}`}>
                                     <Link
                                         to={path}
                                         onClick={onClose}

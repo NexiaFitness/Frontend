@@ -137,12 +137,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                         !isCollapsed && "border-b border-border"
                     )}
                 >
-                    {menuItems.map((item) => {
+                    {menuItems.map((item, index) => {
                         const Icon = item.icon;
                         const active = isActive(item.path);
                         return (
                             <Link
-                                key={item.path}
+                                key={`${item.path}-${item.label}-${index}`}
                                 to={item.path}
                                 title={isCollapsed ? item.label : undefined}
                                 aria-label={isCollapsed ? item.label : undefined}

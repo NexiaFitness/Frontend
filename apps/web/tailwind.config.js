@@ -92,7 +92,7 @@ module.exports = {
                 'navbar-mobile': '4rem',
                 'navbar-desktop': '5.5rem',
                 'navbar-dashboard-mobile': '3.5rem',
-                'navbar-dashboard-desktop': '5rem',
+                'navbar-dashboard-desktop': '4.5rem', /* navbar un poco ancha; main usa mismo token = contenido pegada a la navbar en todas las vistas */
                 'sidebar-collapsed': '4rem',
                 'sidebar-expanded': '13.75rem',
             },
