@@ -932,7 +932,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             </div>
                             <button
                                 onClick={() => handleEditClick(record)}
-                                className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                className="rounded-lg p-2 text-primary transition-colors hover:bg-primary/20"
                                 title="Editar registro"
                                 aria-label="Editar registro"
                             >

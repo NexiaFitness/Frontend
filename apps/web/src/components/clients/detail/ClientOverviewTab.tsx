@@ -374,11 +374,9 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                     </div>
                     {lastRating ? (
                         <div className="mt-4 p-4 bg-muted/50 rounded-lg border border-border">
-                            <div className="flex items-center gap-2 flex-wrap">
-                                <span className="text-sm font-semibold text-foreground">
-                                    {lastRating.rating}/5
-                                </span>
-                                <span className="text-sm text-slate-500">
+                            <div className="flex flex-wrap items-center gap-2">
+                                <span className="text-sm font-semibold text-foreground">{lastRating.rating}/5</span>
+                                <span className="text-sm text-muted-foreground">
                                     {new Date(lastRating.rating_date).toLocaleDateString("es-ES", {
                                         day: "numeric",
                                         month: "short",
@@ -387,12 +385,12 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                 </span>
                             </div>
                             {lastRating.comment && (
-                                <p className="text-sm text-muted-foreground mt-2">{lastRating.comment}</p>
+                                <p className="mt-2 text-sm text-muted-foreground">{lastRating.comment}</p>
                             )}
                         </div>
                     ) : (
                         !showRatingForm && (
-                            <p className="mt-4 text-sm text-slate-500">Sin valoraciones</p>
+                            <p className="mt-4 text-sm text-muted-foreground">Sin valoraciones</p>
                         )
                     )}
                     {showRatingForm && (
@@ -417,14 +415,14 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                             }}
                         >
                             <div>
-                                <label htmlFor="rating-select" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="rating-select" className="mb-1 block text-sm font-medium text-foreground">
                                     Valoración (1-5)
                                 </label>
                                 <select
                                     id="rating-select"
                                     value={ratingValue}
                                     onChange={(e) => setRatingValue(Number(e.target.value))}
-                                    className="block w-full max-w-xs rounded-md border border-input px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    className="block w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                                     required
                                 >
                                     {[1, 2, 3, 4, 5].map((n) => (
@@ -435,7 +433,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                 </select>
                             </div>
                             <div>
-                                <label htmlFor="rating-comment" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="rating-comment" className="mb-1 block text-sm font-medium text-foreground">
                                     Comentario (opcional)
                                 </label>
                                 <textarea
@@ -443,7 +441,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                     value={ratingComment}
                                     onChange={(e) => setRatingComment(e.target.value)}
                                     rows={2}
-                                    className="block w-full rounded-md border border-input px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
                                 />
                             </div>
                             <div className="flex gap-2">
@@ -488,7 +486,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                             </div>
                             <button
                                 onClick={() => navigate(`/dashboard/clients/${clientId}?tab=injuries`)}
-                                className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors"
+                                className="text-sm font-semibold text-primary transition-colors hover:text-primary/80"
                             >
                                 Ver todas →
                             </button>
@@ -497,21 +495,19 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                             {activeInjuriesCompact.slice(0, 2).map((injury) => (
                                 <div
                                     key={injury.id}
-                                    className="border border-red-200 bg-red-50 rounded-lg p-4"
+                                    className="rounded-lg border border-destructive/30 bg-destructive/10 p-4"
                                 >
                                     <div className="flex items-start justify-between">
                                         <div>
-                                            <p className="text-sm text-slate-500">Articulación</p>
-                                            <p className="text-base font-semibold text-slate-900">
+                                            <p className="text-sm text-muted-foreground">Articulación</p>
+                                            <p className="text-base font-semibold text-foreground">
                                                 {injury.joint_name || `Joint #${injury.joint_id}`}
                                             </p>
                                             {injury.movement_name && (
-                                                <p className="text-sm text-slate-700 mt-1">
-                                                    {injury.movement_name}
-                                                </p>
+                                                <p className="mt-1 text-sm text-muted-foreground">{injury.movement_name}</p>
                                             )}
                                         </div>
-                                        <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-destructive/10 text-destructive">
+                                        <span className="rounded-full px-2.5 py-1 text-xs font-semibold bg-destructive/20 text-destructive">
                                             Dolor {injury.pain_level}/5
                                         </span>
                                     </div>
@@ -724,11 +720,12 @@ const ActivityCard: React.FC<ActivityCardProps> = ({ title, date, detail, onClic
     return (
         <button
             onClick={onClick}
-            className="text-left p-4 bg-muted/50 rounded-lg border border-border hover:bg-gray-100 hover:border-input transition-colors"
+            type="button"
+            className="rounded-lg border border-border bg-muted/50 p-4 text-left transition-colors hover:bg-surface-2 hover:border-border"
         >
-            <p className="text-xs font-medium text-muted-foreground mb-1">{title}</p>
-            <p className="text-sm font-semibold text-foreground mb-1">{date}</p>
-            <p className="text-xs text-gray-600">{detail}</p>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">{title}</p>
+            <p className="mb-1 text-sm font-semibold text-foreground">{date}</p>
+            <p className="text-xs text-muted-foreground">{detail}</p>
         </button>
     );
 };

@@ -1,522 +1,470 @@
 /**
- * ClientList.tsx — Lista principal de clientes del trainer
+ * ClientList.tsx — Vista Clientes (/dashboard/clients). VISTA_CLIENTES_SPEC.
  *
  * Contexto:
- * - Vista protegida (solo trainers) con lista de clientes con métricas.
- * - Diseño basado en Figma con header, tabla y sidebar derecho.
- * - Usa DashboardLayout para consistencia visual con resto del dashboard.
- * - Click en fila → navega a /dashboard/clients/{id} (detalle).
- *
- * Features:
- * - Búsqueda en tiempo real
- * - Tabla con métricas: Name, Fatigue, Adherence
- * - Sidebar derecho con Quick Actions y Recent Activity
- * - Estados: loading, error, empty
+ * - Header (título + total + botón Nuevo cliente), controles (búsqueda + Pills status + toggle grid/lista).
+ * - Vista grid (cards) o lista (tabla); paginación PAGE_SIZE=9; sidebar Actividad reciente (lg+).
+ * - Datos: useClientsListWithMetrics (page, page_size, search, status); getRecentActivity.
  *
  * @author Frontend Team
  * @since v2.6.0
- * @updated v5.0.0 - Rediseño completo basado en Figma
+ * @updated v6.0.0 - VISTA_CLIENTES_SPEC: grid/lista, SatisfactionIcon por level, PaginationBar, tokens.
  */
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { useGetClientsWithMetricsQuery, useGetRecentActivityQuery } from "@nexia/shared/api/clientsApi";
-import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import { useCompleteProfileModal } from "@nexia/shared";
-import type { ClientListItem, RecentActivityItem } from "@nexia/shared/types/client";
+import { LayoutGrid, List, Plus, Search, UserPlus } from "lucide-react";
+import {
+    useClientsListWithMetrics,
+    useGetRecentActivityQuery,
+    useGetCurrentTrainerProfileQuery,
+    useCompleteProfileModal,
+} from "@nexia/shared";
+import type { ClientListItem, ClientStatus } from "@nexia/shared/types/client";
 import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
-import { PageTitle } from "@/components/dashboard/shared";
-
-// UI
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { ClientAvatar } from "@/components/ui/avatar";
-import { Pagination } from "@/components/ui/pagination";
+import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
+import { PaginationBar } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
-// Helper para obtener color de fatigue (tokens Nexia Sparkle Flow)
-const getFatigueColor = (fatigue: string | null): string => {
+const PAGE_SIZE = 9;
+
+function getFatigueColor(fatigue: string | null): string {
     if (!fatigue) return "bg-muted text-muted-foreground";
-    const fatigueLower = fatigue.toLowerCase();
-    if (fatigueLower.includes("perfect")) return "bg-success/10 text-success";
-    if (fatigueLower.includes("slightly")) return "bg-warning/10 text-warning";
-    if (fatigueLower.includes("very")) return "bg-warning/10 text-warning";
-    if (fatigueLower.includes("exhausted")) return "bg-destructive/10 text-destructive";
+    const f = fatigue.toLowerCase();
+    if (f.includes("perfect")) return "bg-success/10 text-success";
+    if (f.includes("slightly")) return "bg-warning/10 text-warning";
+    if (f.includes("very")) return "bg-warning/10 text-warning";
+    if (f.includes("exhausted")) return "bg-destructive/10 text-destructive";
     return "bg-muted text-muted-foreground";
-};
+}
 
-// Helper para traducir fatigue
-const translateFatigue = (fatigue: string | null): string => {
-    if (!fatigue) return "Sin datos";
-    const fatigueLower = fatigue.toLowerCase();
-    if (fatigueLower.includes("perfect")) return "Perfecto";
-    if (fatigueLower.includes("slightly")) return "Ligeramente Cansado";
-    if (fatigueLower.includes("very")) return "Muy Cansado";
-    if (fatigueLower.includes("exhausted")) return "Agotado";
+function translateFatigue(fatigue: string | null): string {
+    if (!fatigue) return "—";
+    const f = fatigue.toLowerCase();
+    if (f.includes("perfect")) return "Descansado";
+    if (f.includes("slightly")) return "Cansado";
+    if (f.includes("very")) return "Muy cansado";
+    if (f.includes("exhausted")) return "Agotado";
     return fatigue;
-};
+}
 
-// Helper para formatear tiempo relativo
-const formatTimeAgo = (timestamp: string): string => {
+function getStatusLabel(status: ClientStatus | null | undefined): string {
+    if (!status) return "—";
+    if (status === "active") return "Activo";
+    if (status === "paused") return "Pausado";
+    if (status === "inactive") return "Baja";
+    return "—";
+}
+
+function getStatusBadgeClass(status: ClientStatus | null | undefined): string {
+    if (!status) return "bg-muted text-muted-foreground";
+    if (status === "active") return "bg-success/10 text-success";
+    if (status === "paused") return "bg-warning/10 text-warning";
+    return "bg-destructive/10 text-destructive";
+}
+
+function formatTimeAgo(timestamp: string): string {
     const date = new Date(timestamp);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
-
     if (diffMins < 60) return `hace ${diffMins} ${diffMins === 1 ? "minuto" : "minutos"}`;
     if (diffHours < 24) return `hace ${diffHours} ${diffHours === 1 ? "hora" : "horas"}`;
     if (diffDays === 1) return "hace 1 día";
     return `hace ${diffDays} días`;
-};
+}
 
-// Helper para traducir descripciones de actividades
-const translateActivityDescription = (type: string, description: string): string => {
-    // Si la descripción ya viene en español del backend, usarla directamente
-    // Si viene en inglés, traducir según el tipo
-    const typeLower = type.toLowerCase();
-    
-    if (typeLower.includes("session_completed")) {
-        if (description.includes("completed")) {
-            return description.replace("completed", "completó").replace("a training session", "una sesión de entrenamiento");
-        }
-        return description;
-    }
-    
-    if (typeLower.includes("client_added")) {
-        if (description.includes("joined")) {
-            return "se unió como nuevo cliente";
-        }
-        return description;
-    }
-    
-    if (typeLower.includes("session_scheduled")) {
-        if (description.includes("scheduled")) {
-            return description.replace("scheduled", "programó").replace("for", "para");
-        }
-        return description;
-    }
-    
-    if (typeLower.includes("goal_achieved")) {
-        if (description.includes("achieved")) {
-            return description.replace("achieved", "alcanzó").replace("their", "su").replace("goal", "objetivo");
-        }
-        return description;
-    }
-    
-    if (typeLower.includes("test_completed")) {
-        if (description.includes("completed")) {
-            return description.replace("completed", "completó");
-        }
-        return description;
-    }
-    
-    return description;
-};
-
-// Helper para obtener icono de actividad
-const getActivityIcon = (type: string, icon?: string): React.ReactNode => {
-    if (icon) {
-        // Si hay un icono específico del backend, usarlo
-        switch (icon) {
-            case "person_add":
-                return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                    </svg>
-                );
-            case "trending_up":
-                return (
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                    </svg>
-                );
-        }
-    }
-
-    // Iconos por tipo
+function getActivityIcon(type: string): React.ReactNode {
     switch (type) {
         case "session_completed":
             return (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             );
         case "client_added":
             return (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                 </svg>
             );
         case "session_scheduled":
             return (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
             );
         case "goal_achieved":
             return (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             );
         case "test_completed":
             return (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
             );
         default:
             return (
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
             );
     }
-};
+}
+
+type StatusFilter = "all" | "active" | "paused";
+type ViewMode = "grid" | "list";
 
 export const ClientList: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
-    
-    // ✅ Modal de perfil completo
     const { shouldBlock } = useCompleteProfileModal();
     const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
-
-    const PAGE_SIZE = 15;
     const [currentPage, setCurrentPage] = useState(1);
     const [searchInput, setSearchInput] = useState("");
     const [searchDebounced, setSearchDebounced] = useState("");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+    const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-    // Debounce búsqueda (300 ms) y reset a página 1 al buscar
     useEffect(() => {
-        setCurrentPage(1);
-        const timer = setTimeout(() => {
-            setSearchDebounced(searchInput);
-        }, 300);
-        return () => clearTimeout(timer);
+        const t = setTimeout(() => setSearchDebounced(searchInput), 300);
+        return () => clearTimeout(t);
     }, [searchInput]);
 
-    // Obtener trainer_id si es trainer
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, searchDebounced]);
+
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: user?.role !== "trainer",
     });
+    const trainerId = trainerProfile?.id ?? null;
 
-    const trainerId = trainerProfile?.id;
+    const statusParam: ClientStatus | undefined =
+        statusFilter === "all" ? undefined : statusFilter;
 
-    // Query RTK - clientes con métricas (búsqueda server-side en todas las páginas)
-    const { data: clientsData, isLoading, isError, error } = useGetClientsWithMetricsQuery(
-        {
-            page: currentPage,
-            page_size: PAGE_SIZE,
-            search: searchDebounced.trim() || undefined,
-            trainer_id: trainerId,
-        },
-        { skip: !trainerId }
-    );
+    const {
+        items,
+        total,
+        isLoading,
+        isError,
+        error,
+        totalPages,
+        safeCurrentPage,
+    } = useClientsListWithMetrics({
+        trainerId,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        search: searchDebounced.trim() || null,
+        status: statusParam ?? null,
+        skip: !trainerId,
+    });
 
-    // Query RTK - obtener actividad reciente
     const { data: activityData } = useGetRecentActivityQuery(
-        { limit: 5, trainer_id: trainerId },
+        { limit: 10, trainer_id: trainerId ?? undefined },
         { skip: !trainerId }
     );
+    const activities = activityData?.items ?? [];
 
-    const activities: RecentActivityItem[] = activityData?.items ?? [];
-    const items: ClientListItem[] = clientsData?.items ?? [];
-    const total = clientsData?.total ?? 0;
-    const totalPages = Math.ceil(total / PAGE_SIZE) || 1;
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
 
-    const handlePageChange = useCallback(
-        (page: number) => {
-            setCurrentPage(page);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        },
-        []
+    const handleClientClick = useCallback(
+        (clientId: number) => navigate(`/dashboard/clients/${clientId}`),
+        [navigate]
     );
 
-    // Handlers
-    const handleClientClick = (clientId: number) => {
-        navigate(`/dashboard/clients/${clientId}`);
-    };
-
-    const handleAddClient = () => {
+    const handleAddClient = useCallback(() => {
         if (shouldBlock) {
             setShowCompleteProfileModal(true);
             return;
         }
         navigate("/dashboard/clients/onboarding");
-    };
+    }, [shouldBlock, navigate]);
 
-    const handleCreateTrainingPlan = () => {
-        navigate("/dashboard/training-plans/create");
-    };
-
-    const handleScheduleSession = () => {
-        navigate("/dashboard/scheduling/new");
-    };
-
-    const handleManageTemplates = () => {
-        navigate("/dashboard/training-plans?tab=templates");
-    };
+    const isEmpty = !isLoading && !isError && items.length === 0;
 
     return (
         <>
-            <PageTitle
-                title="Clientes"
-                subtitle="Gestiona y monitoriza el progreso de tus clientes"
-                className="mb-6"
-            />
-
-                {/* Header con búsqueda */}
-                <div className="px-4 lg:px-8 mb-6">
-                        <div className="bg-card border border-border rounded-xl shadow-lg p-4">
-                            <div className="flex items-center">
-                                {/* Búsqueda */}
-                                <div className="flex-1 relative">
-                                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                                        </svg>
-                                    </div>
-                                    <input
-                                        type="text"
-                                        placeholder="Buscar por nombre, apellidos o email..."
-                                        value={searchInput}
-                                        onChange={(e) => setSearchInput(e.target.value)}
-                                        className="w-full pl-10 pr-4 py-2 bg-muted/50 border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent text-foreground placeholder:text-muted-foreground"
-                                        aria-label="Buscar cliente"
-                                    />
-                                </div>
-                            </div>
-                        </div>
+            <div className="space-y-4 sm:space-y-6">
+                {/* Header §4 — responsive: stack on xs, inline sm+ */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-2 sm:gap-3">
+                        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Clientes</h1>
+                        <span className="text-sm text-muted-foreground sm:text-base">{total} total</span>
                     </div>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleAddClient}
+                        className="w-full min-h-touch sm:w-auto sm:min-h-0"
+                    >
+                        <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                        Nuevo cliente
+                    </Button>
+                </div>
 
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="flex flex-col lg:flex-row gap-6 items-start">
-                        {/* Contenido principal */}
-                        <div className="flex-1 min-w-0">
-                            {/* Tabla de clientes */}
-                            <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg overflow-hidden">
-                            {/* Loading State */}
-                            {isLoading && (
-                                <div className="flex justify-center items-center py-16">
-                                    <LoadingSpinner size="lg" />
-                                </div>
-                            )}
-
-                            {/* Error State */}
-                            {isError && (
-                                <div className="p-6">
-                                    <Alert variant="error">
-                                        Error al cargar clientes:{" "}
-                                        {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data
-                                            ? String(error.data.detail)
-                                            : "Error desconocido"}
-                                    </Alert>
-                                </div>
-                            )}
-
-                            {/* Tabla */}
-                            {!isLoading && !isError && (
-                                <>
-                                    {/* Headers */}
-                                    <div className="grid grid-cols-[1fr_150px_140px_40px] gap-4 px-6 py-4 bg-muted/50 border-b border-border items-center">
-                                        <div className="font-semibold text-foreground flex items-center gap-3">
-                                            <div className="w-10 flex-shrink-0"></div>
-                                            <span>Nombre</span>
-                                        </div>
-                                        <div className="font-semibold text-foreground text-center">Fatiga</div>
-                                        <div className="font-semibold text-foreground text-center">Adherencia</div>
-                                        <div className="w-8 flex-shrink-0"></div>
-                                    </div>
-
-                                    {/* Resumen y filas */}
-                                    {!isLoading && !isError && items.length > 0 && (
-                                        <div className="px-6 py-2 bg-muted/50 border-b border-border">
-                                            <p className="text-sm text-muted-foreground">
-                                                Mostrando {items.length} de {total} clientes
-                                            </p>
-                                        </div>
+                {/* Controles §5 — full width search on mobile; pills + toggle wrap */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-muted-foreground" aria-hidden />
+                        <input
+                            type="search"
+                            placeholder="Buscar por nombre o email..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="min-h-touch w-full rounded-md border border-border bg-surface py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:min-h-0 sm:py-2"
+                            aria-label="Buscar cliente"
+                        />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap gap-1.5">
+                            {(["all", "active", "paused"] as const).map((key) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setStatusFilter(key)}
+                                    className={cn(
+                                        "min-h-[40px] rounded-full px-3 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-1.5",
+                                        statusFilter === key
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
                                     )}
-                                    {items.length === 0 ? (
-                                        <div className="p-12 text-center">
-                                            <p className="text-muted-foreground mb-4">
-                                                {searchDebounced.trim()
-                                                    ? "No se encontraron clientes con ese criterio"
-                                                    : "No hay clientes"}
-                                            </p>
-                                            {!searchDebounced.trim() && (
-                                                <Button
-                                                    variant="primary"
-                                                    onClick={() => navigate("/dashboard/clients/onboarding")}
-                                                >
-                                                    Añadir cliente
-                                                </Button>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <div>
-                                            {items.map((client, index) => (
-                                                <div
-                                                    key={client.id}
-                                                    onClick={() => handleClientClick(client.id)}
-                                                    className={`grid grid-cols-[1fr_150px_140px_40px] gap-4 px-6 py-4 cursor-pointer transition-colors items-center ${
-                                                        index % 2 === 0 ? 'bg-white' : 'bg-primary-50'
-                                                    } hover:bg-primary-100 border-b border-gray-200`}
-                                                >
-                                                    {/* Name */}
-                                                    <div className="flex items-center gap-3 min-w-0">
-                                                        <ClientAvatar
-                                                            clientId={client.id}
-                                                            nombre={client.nombre}
-                                                            apellidos={client.apellidos}
-                                                            size="sm"
-                                                        />
-                                                        <div className="min-w-0">
-                                                            <div className="font-medium text-gray-900 truncate">
-                                                                {client.nombre} {client.apellidos}
-                                                            </div>
-                                                            <div className="text-sm text-gray-500 truncate">{client.mail}</div>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Fatigue */}
-                                                    <div className="flex justify-center items-center">
-                                                        <span
-                                                            className={`px-3 py-1 rounded-full text-sm font-medium whitespace-nowrap ${getFatigueColor(
-                                                                client.fatigue_level
-                                                            )}`}
-                                                        >
-                                                            {translateFatigue(client.fatigue_level)}
-                                                        </span>
-                                                    </div>
-
-                                                    {/* Adherence */}
-                                                    <div className="flex justify-center min-w-[140px]">
-                                                        <div className="flex items-center gap-2 w-full max-w-[140px]">
-                                                            <div className="flex-1 bg-muted rounded-full h-2 overflow-hidden min-w-[60px]">
-                                                                {/* width inline justificado: valor dinámico (porcentaje) por cliente. */}
-                                                                <div
-                                                                    className="h-full bg-primary rounded-full transition-all"
-                                                                    style={{
-                                                                        width: `${client.adherence_percentage ?? 0}%`,
-                                                                    }}
-                                                                />
-                                                            </div>
-                                                            <span className="text-sm font-medium text-foreground min-w-[40px] text-right whitespace-nowrap">
-                                                                {client.adherence_percentage !== null
-                                                                    ? `${Math.round(client.adherence_percentage)}%`
-                                                                    : "N/A"}
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Arrow */}
-                                                    <div className="flex justify-center w-8 flex-shrink-0">
-                                                        <svg
-                                                            className="w-5 h-5 text-gray-400"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                                        </svg>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-
-                                    {/* Paginación */}
-                                    {!isLoading && !isError && totalPages > 1 && (
-                                        <div className="mt-0">
-                                            <Pagination
-                                                currentPage={currentPage}
-                                                totalPages={totalPages}
-                                                totalItems={total}
-                                                itemsPerPage={PAGE_SIZE}
-                                                onPageChange={handlePageChange}
-                                            />
-                                        </div>
-                                    )}
-                                </>
-                            )}
-                            </div>
+                                >
+                                    {key === "all" ? "Todos" : key === "active" ? "Activo" : "Pausado"}
+                                </button>
+                            ))}
                         </div>
-
-                        {/* Sidebar derecho */}
-                        <div className="lg:w-80 flex-shrink-0">
-                        <div className="bg-card border border-border rounded-xl shadow-lg p-6">
-                            {/* Quick Actions */}
-                            <h3 className="font-semibold text-foreground mb-4">Acciones Rápidas</h3>
-                            <div className="space-y-2">
-                                <Button
-                                    variant="primary"
-                                    size="md"
-                                    onClick={handleAddClient}
-                                    className="w-full justify-start"
-                                >
-                                    Agregar Nuevo Cliente
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="md"
-                                    onClick={handleCreateTrainingPlan}
-                                    className="w-full justify-start"
-                                >
-                                    Crear Plan de Entrenamiento
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="md"
-                                    onClick={handleScheduleSession}
-                                    className="w-full justify-start"
-                                >
-                                    Programar Sesión
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    size="md"
-                                    onClick={handleManageTemplates}
-                                    className="w-full justify-start"
-                                >
-                                    Gestionar Plantillas
-                                </Button>
-                            </div>
-
-                            {/* Línea separadora */}
-                            <div className="border-b border-border mb-4 mt-6"></div>
-
-                            {/* Recent Activity */}
-                            <h3 className="font-semibold text-foreground mb-4">ACTIVIDAD RECIENTE</h3>
-                            <div className="space-y-4">
-                                {activities.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-4">No hay actividad reciente</p>
-                                ) : (
-                                    activities.map((activity) => (
-                                        <div key={activity.id} className="flex items-start gap-3">
-                                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                                                {getActivityIcon(activity.type, activity.icon)}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm text-foreground">
-                                                    <span className="font-medium">{activity.actor_name}</span> {translateActivityDescription(activity.type, activity.description)}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground mt-1">{formatTimeAgo(activity.timestamp)}</p>
-                                            </div>
-                                        </div>
-                                    ))
+                        <div className="flex shrink-0 rounded-md border border-border">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("grid")}
+                                className={cn(
+                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
+                                    viewMode === "grid"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
                                 )}
-                            </div>
-                        </div>
+                                aria-label="Vista grid"
+                            >
+                                <LayoutGrid className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("list")}
+                                className={cn(
+                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
+                                    viewMode === "list"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                                )}
+                                aria-label="Vista lista"
+                            >
+                                <List className="h-4 w-4" />
+                            </button>
                         </div>
                     </div>
                 </div>
 
-            {/* Modal de Complete Profile */}
+                {/* Loading */}
+                {isLoading && (
+                    <div className="flex justify-center py-16">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                )}
+
+                {/* Error */}
+                {isError && (
+                    <Alert variant="error">
+                        Error al cargar clientes:{" "}
+                        {error && typeof error === "object" && "data" in error && error.data && typeof error.data === "object" && "detail" in error.data
+                            ? String((error.data as { detail?: unknown }).detail)
+                            : "Error desconocido"}
+                    </Alert>
+                )}
+
+                {/* Empty state §6 */}
+                {!isLoading && !isError && isEmpty && (
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-surface px-4 py-12 sm:py-16">
+                        <UserPlus className="mb-4 h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" aria-hidden />
+                        <p className="mb-1 text-center font-medium text-foreground sm:text-left">Aún no tienes clientes registrados.</p>
+                        <p className="mb-6 text-center text-sm text-muted-foreground sm:text-left">Añade tu primer cliente para empezar</p>
+                        <Button variant="primary" onClick={handleAddClient} className="w-full min-h-touch sm:w-auto sm:min-h-0">
+                            <Plus className="mr-2 h-4 w-4" aria-hidden />
+                            Añadir tu primer cliente
+                        </Button>
+                    </div>
+                )}
+
+                {/* Contenido + sidebar §7 — col on mobile, row lg+ */}
+                {!isLoading && !isError && !isEmpty && (
+                    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+                        <div className="min-w-0 flex-1">
+                            {viewMode === "grid" ? (
+                                /* Vista Grid §8 — 1 col xs, 2 sm, 3 xl */
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                                    {items.map((client) => (
+                                        <article
+                                            key={client.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => handleClientClick(client.id)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleClientClick(client.id)}
+                                            className="cursor-pointer rounded-lg bg-surface p-4 text-left shadow-md transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] sm:p-5"
+                                        >
+                                            <div className="mb-3 flex items-start justify-between gap-2">
+                                                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                                                    <ClientAvatar
+                                                        clientId={client.id}
+                                                        nombre={client.nombre}
+                                                        apellidos={client.apellidos}
+                                                        size="sm"
+                                                        className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
+                                                    />
+                                                    <p className="min-w-0 truncate text-sm font-medium text-foreground sm:text-base">
+                                                        {client.nombre} {client.apellidos}
+                                                    </p>
+                                                </div>
+                                                <SatisfactionIcon level={client.satisfaction_level} className="h-4 w-4 shrink-0" />
+                                            </div>
+                                            <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
+                                                    {getStatusLabel(client.status)}
+                                                </span>
+                                                <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                    {translateFatigue(client.fatigue_level)}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 gap-y-1">
+                                                <span className="text-label text-muted-foreground sm:text-caption">Adherencia</span>
+                                                <TrendIcon trend={client.satisfaction_trend ?? client.progress_trend ?? "stable"} className="h-4 w-4 shrink-0" />
+                                                <div className="min-w-0 flex-1 basis-20">
+                                                    <AdherenceBar value={client.adherence_percentage ?? 0} className="min-w-[48px] flex-1 sm:min-w-[60px]" />
+                                                </div>
+                                                <span className="whitespace-nowrap text-xs font-medium text-foreground sm:text-sm">
+                                                    {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
+                                                </span>
+                                            </div>
+                                        </article>
+                                    ))}
+                                </div>
+                            ) : (
+                                /* Vista Lista §9 — scroll horizontal en móvil */
+                                <div className="-mx-1 overflow-x-auto rounded-lg border border-border sm:mx-0">
+                                    <table className="w-full min-w-[560px] text-sm">
+                                        <thead>
+                                            <tr className="border-b border-border bg-surface text-left text-muted-foreground">
+                                                <th className="px-3 py-2.5 font-medium sm:px-4 sm:py-3">Nombre</th>
+                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Estado</th>
+                                                <th className="px-3 py-2.5 font-medium sm:px-4 sm:py-3">Satisfacción</th>
+                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Fatiga</th>
+                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Adherencia</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((client) => (
+                                                <tr
+                                                    key={client.id}
+                                                    onClick={() => handleClientClick(client.id)}
+                                                    className="cursor-pointer border-b border-border bg-background transition-colors hover:bg-surface active:bg-surface"
+                                                >
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <ClientAvatar
+                                                                clientId={client.id}
+                                                                nombre={client.nombre}
+                                                                apellidos={client.apellidos}
+                                                                size="sm"
+                                                                className="h-6 w-6 shrink-0 sm:h-7 sm:w-7"
+                                                            />
+                                                            <span className="truncate font-medium text-foreground max-w-[120px] sm:max-w-none">
+                                                                {client.nombre} {client.apellidos}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
+                                                            {getStatusLabel(client.status)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <SatisfactionIcon level={client.satisfaction_level} className="h-4 w-4" />
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                            {translateFatigue(client.fatigue_level)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <div className="flex min-w-[100px] items-center gap-1.5 sm:w-40 sm:gap-2">
+                                                            <AdherenceBar value={client.adherence_percentage ?? 0} />
+                                                            <span className="whitespace-nowrap text-foreground text-xs sm:text-sm">
+                                                                {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+
+                            {totalPages > 1 && (
+                                <PaginationBar
+                                    currentPage={safeCurrentPage}
+                                    totalPages={totalPages}
+                                    totalItems={total}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={handlePageChange}
+                                />
+                            )}
+                        </div>
+
+                        {/* Sidebar Actividad reciente §11 — oculto en móvil, ancho fijo lg+ */}
+                        <aside className="hidden w-full shrink-0 lg:block lg:w-72">
+                            <div className="rounded-lg bg-surface p-4 sm:p-5">
+                                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:mb-4">
+                                    ACTIVIDAD RECIENTE
+                                </h2>
+                                <ul className="space-y-3 sm:space-y-4">
+                                    {activities.length === 0 ? (
+                                        <li className="py-4 text-center text-sm text-muted-foreground">No hay actividad reciente</li>
+                                    ) : (
+                                        activities.map((activity) => (
+                                            <li key={activity.id} className="flex gap-2 sm:gap-3">
+                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-2 p-1 text-muted-foreground sm:h-8 sm:w-8 sm:p-1.5">
+                                                    {getActivityIcon(activity.type)}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="line-clamp-2 text-xs text-foreground sm:text-sm">
+                                                        <span className="font-medium">{activity.actor_name}</span> {activity.description}
+                                                    </p>
+                                                    <p className="mt-0.5 text-label text-muted-foreground sm:mt-1 sm:text-xs">{formatTimeAgo(activity.timestamp)}</p>
+                                                </div>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
+                            </div>
+                        </aside>
+                    </div>
+                )}
+            </div>
+
             <CompleteProfileModal
                 isOpen={showCompleteProfileModal}
                 onClose={() => setShowCompleteProfileModal(false)}

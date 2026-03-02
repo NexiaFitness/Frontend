@@ -295,24 +295,57 @@ export interface ClientPreviewResponse {
 // ========================================
 
 /**
+ * Nivel de satisfacción derivado por el backend (GET /clients/with-metrics).
+ * El frontend solo renderiza icono/color; no calcula.
+ * Alineado con backend ClientListItem.satisfaction_level.
+ */
+export type SatisfactionLevel = "happy" | "neutral" | "unhappy";
+
+/**
+ * Estado del cliente (activo, pausado, baja).
+ * Backend lo expondrá en GET /clients/with-metrics cuando esté implementado (VISTA_CLIENTES_SPEC §15).
+ */
+export type ClientStatus = "active" | "paused" | "inactive";
+
+/**
+ * Tendencia de satisfacción (backend: satisfaction_trend).
+ * up = mejora, down = empeora, stable = estable.
+ */
+export type SatisfactionTrend = "up" | "down" | "stable";
+
+/**
  * Tendencia de progreso del cliente (para icono en lista "Mis clientes").
  * up = ArrowUpRight (verde), down = ArrowDownRight (rojo), stable = Minus (muted).
  */
 export type ClientProgressTrend = "up" | "down" | "stable";
 
 /**
- * ClientListItem - Cliente con métricas de fatiga y adherencia
- * Usado en GET /clients/with-metrics
+ * ClientListItem - Cliente con métricas de fatiga, adherencia y satisfacción.
+ * Contrato: GET /clients/with-metrics (backend ClientListItem).
+ * Campos de valoraciones: last_satisfaction, satisfaction_level, last_satisfaction_date,
+ * avg_satisfaction_recent, satisfaction_trend. status cuando el backend lo añada.
  */
 export interface ClientListItem {
     id: number;
     nombre: string;
     apellidos: string;
     mail: string;
-    fatigue_level: string | null; // "Perfect", "Slightly Tired", "Very Tired", "Exhausted"
-    fatigue_level_numeric: number | null; // 1-10 scale for sorting
-    adherence_percentage: number | null; // 0-100
-    /** Tendencia de progreso; si el backend no lo envía, se muestra "stable". */
+    fatigue_level: string | null;
+    fatigue_level_numeric: number | null;
+    adherence_percentage: number | null;
+    /** Última valoración 1-5 (session). Backend. */
+    last_satisfaction: number | null;
+    /** Nivel derivado: happy | neutral | unhappy. Backend; frontend solo renderiza. */
+    satisfaction_level: SatisfactionLevel | null;
+    /** Fecha de la última valoración. ISO datetime. */
+    last_satisfaction_date: string | null;
+    /** Media de las últimas valoraciones (ventana reciente). */
+    avg_satisfaction_recent: number | null;
+    /** Tendencia de satisfacción (up/down/stable). */
+    satisfaction_trend: SatisfactionTrend | null;
+    /** Estado del cliente cuando el backend lo exponga (VISTA_CLIENTES_SPEC §15). */
+    status?: ClientStatus | null;
+    /** Tendencia de progreso para icono; si el backend no lo envía, se muestra "stable". */
     progress_trend?: ClientProgressTrend | null;
 }
 
@@ -322,6 +355,18 @@ export interface ClientListWithMetricsResponse {
     page: number;
     page_size: number;
     has_more: boolean;
+}
+
+/**
+ * Parámetros de GET /clients/with-metrics.
+ * status: cuando el backend soporte filtrado por estado (VISTA_CLIENTES_SPEC §12).
+ */
+export interface GetClientsWithMetricsParams {
+    page?: number;
+    page_size?: number;
+    search?: string | null;
+    trainer_id?: number | null;
+    status?: ClientStatus | null;
 }
 
 // ========================================

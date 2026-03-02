@@ -55,7 +55,7 @@ export const InjuriesHistorySection: React.FC<InjuriesHistorySectionProps> = ({
                     <h3 className="text-lg font-semibold text-foreground">
                         Historial completo ({totalCount})
                     </h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-sm text-muted-foreground">
                         Ordenado por fecha de registro (más reciente primero).
                     </p>
                 </div>

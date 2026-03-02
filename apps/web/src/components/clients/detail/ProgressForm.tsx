@@ -162,8 +162,8 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-6`}>
+        <div className="rounded-lg border border-border bg-surface p-6">
+            <h3 className={`${TYPOGRAPHY.sectionTitle} mb-6 text-foreground`}>
                 Añadir nuevo registro de progreso
             </h3>
 
@@ -237,14 +237,14 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                         }}
                         max={new Date().toISOString().split("T")[0]} // No permitir fechas futuras
                         min={client?.fecha_alta ? new Date(client.fecha_alta).toISOString().split("T")[0] : undefined} // No permitir fechas anteriores a fecha_alta
-                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                        className="w-full rounded-lg border border-input bg-background p-2 text-foreground"
                         required
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="mt-1 text-xs text-muted-foreground">
                         Fecha en que se realizó la medición (no puede ser futura)
                     </p>
                     {errors.fecha_registro && (
-                        <p className="text-red-600 text-sm mt-1">{errors.fecha_registro}</p>
+                        <p className="mt-1 text-sm text-destructive">{errors.fecha_registro}</p>
                     )}
                 </div>
 
@@ -261,7 +261,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                         placeholder="Observaciones sobre este registro..."
                     />
                     {errors.notas && (
-                        <p className="text-red-600 text-sm mt-1">{errors.notas}</p>
+                        <p className="mt-1 text-sm text-destructive">{errors.notas}</p>
                     )}
                 </div>
 
@@ -287,7 +287,7 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                     <button
                         type="submit"
                         disabled={isLoading}
-                        className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full rounded-lg bg-primary px-4 py-2 font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                         {isLoading ? "Guardando..." : "Guardar registro"}
                     </button>

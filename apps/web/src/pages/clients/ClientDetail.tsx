@@ -16,9 +16,11 @@
 import React, { Suspense, lazy } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
+import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
+import { TabsBar } from "@/components/ui/tabs";
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
 import { ClientOverviewTab } from "@/components/clients/detail/ClientOverviewTab";
@@ -105,10 +107,8 @@ export const ClientDetail: React.FC = () => {
     // Validación de ID
     if (!id || isNaN(clientId)) {
         return (
-            <div className="p-6">
-                <Alert variant="error">
-                    ID de cliente inválido
-                </Alert>
+            <div className="space-y-8">
+                <Alert variant="error">ID de cliente inválido</Alert>
             </div>
         );
     }
@@ -116,7 +116,7 @@ export const ClientDetail: React.FC = () => {
     // Loading state
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className="flex items-center justify-center py-16">
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -124,61 +124,55 @@ export const ClientDetail: React.FC = () => {
 
     // Error state
     if (hasError || !client) {
-        const isForbiddenError = clientError && 
-            typeof clientError === "object" && 
+        const isForbiddenError = clientError &&
+            typeof clientError === "object" &&
             clientError !== null &&
             "status" in clientError &&
             clientError.status === 403;
 
-        const errorMessage = clientError 
-            ? typeof clientError === "string" 
-                ? clientError 
-                : typeof clientError === "object" && clientError !== null
-                ? JSON.stringify(clientError)
-                : String(clientError)
-            : null;
+        const errorMessage =
+            clientError
+                ? typeof clientError === "string"
+                    ? clientError
+                    : typeof clientError === "object" && clientError !== null
+                      ? JSON.stringify(clientError)
+                      : String(clientError)
+                : null;
 
         return (
-            <div className="p-6">
+            <div className="space-y-8">
                 <Alert variant="error">
                     {isForbiddenError ? (
-                                <>
-                                    <p className="font-semibold mb-2">No tienes acceso a este cliente</p>
-                                    <p className="text-sm">Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.</p>
-                                </>
-                            ) : (
-                                <>
-                                    <p className="font-semibold mb-2">Error al cargar los datos del cliente</p>
-                                    <p className="text-sm mb-2">Por favor, intenta de nuevo.</p>
-                                    {errorMessage && (
-                                        <div className="mt-2 text-sm text-red-800 font-mono text-xs">{errorMessage}</div>
-                                    )}
-                                </>
+                        <>
+                            <p className="mb-2 font-semibold text-foreground">No tienes acceso a este cliente</p>
+                            <p className="text-sm text-muted-foreground">
+                                Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
+                            </p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="mb-2 font-semibold text-foreground">Error al cargar los datos del cliente</p>
+                            <p className="mb-2 text-sm text-muted-foreground">Por favor, intenta de nuevo.</p>
+                            {errorMessage && (
+                                <div className="mt-2 font-mono text-label text-destructive">{errorMessage}</div>
                             )}
-                        </Alert>
-                        <div className="mt-4 flex gap-3">
-                            {isForbiddenError ? (
-                                <button
-                                    onClick={() => navigate("/dashboard/clients")}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Volver a Clientes
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={refetchAll}
-                                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                                >
-                                    Reintentar
-                                </button>
-                            )}
-                            <button
-                                onClick={() => navigate("/dashboard")}
-                                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors"
-                            >
-                                Ir al Dashboard
-                            </button>
-                        </div>
+                        </>
+                    )}
+                </Alert>
+                <div className="flex flex-wrap gap-3">
+                    {isForbiddenError ? (
+                        <Button variant="primary" onClick={() => navigate("/dashboard/clients")}>
+                            Volver a Clientes
+                        </Button>
+                    ) : (
+                        <Button variant="primary" onClick={refetchAll}>
+                            Reintentar
+                        </Button>
+                    )}
+                    <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                        Ir al Dashboard
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -228,56 +222,26 @@ export const ClientDetail: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
-                    {/* Header con breadcrumbs integrados */}
-                    <ClientHeader
-                        client={client}
-                        clientId={clientId}
-                        onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
-                        onAnthropometricData={() => setActiveTab("progress")}
-                        breadcrumbItems={breadcrumbItems}
-                    />
+        <div className="space-y-8">
+            <ClientHeader
+                client={client}
+                clientId={clientId}
+                onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
+                breadcrumbItems={breadcrumbItems}
+            />
 
-                    {/* Tabs Navigation */}
-                    <div className="mt-6 px-4 sm:px-6 lg:px-8">
-                        <div className="bg-card border border-border rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
-                            {/* WebkitOverflowScrolling: 'touch' justificado para scroll táctil suave en iOS. */}
-                            <nav 
-                                className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/70 px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
-                                aria-label="Tabs" 
-                                style={{ WebkitOverflowScrolling: 'touch' }}
-                            >
-                                <style>{`
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar { height: 4px; }
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar-track { background: transparent; }
-                                    nav[aria-label="Tabs"]::-webkit-scrollbar-thumb { background-color: hsl(var(--primary)) !important; border-radius: 2px; }
-                                `}</style>
-                                {TABS.map((tab) => {
-                                    const isActive = activeTab === tab.id;
-                                    return (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => !tab.disabled && setActiveTab(tab.id)}
-                                            disabled={tab.disabled}
-                                            className={`
-                                                relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[140px] text-center
-                                                ${isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"}
-                                                ${tab.disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}
-                                            `}
-                                            aria-current={isActive ? "page" : undefined}
-                                        >
-                                            {tab.label}
-                                        </button>
-                                    );
-                                })}
-                            </nav>
-                        </div>
-                    </div>
+            {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}
+            <TabsBar
+                items={TABS}
+                value={activeTab}
+                onChange={(id) => setActiveTab(id as TabId)}
+                ariaLabel="Tabs del cliente"
+            />
 
-                    {/* Tab Content */}
-                    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
-                        {renderTabContent()}
-                    </div>
-                </div>
+            {/* Tab Content — espacio vertical según spec (pb-8 ya en main) */}
+            <div className="pt-2 pb-8">
+                {renderTabContent()}
+            </div>
+        </div>
     );
 };

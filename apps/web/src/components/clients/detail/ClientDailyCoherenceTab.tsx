@@ -671,7 +671,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                     <div className="flex items-center justify-between px-2">
                         <button
                             onClick={handlePreviousPeriod}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-2"
                             aria-label="Período anterior"
                         >
                             ← Anterior
@@ -690,7 +690,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                         </div>
                         <button
                             onClick={handleNextPeriod}
-                            className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                            className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-2"
                             aria-label="Período siguiente"
                         >
                             Siguiente →

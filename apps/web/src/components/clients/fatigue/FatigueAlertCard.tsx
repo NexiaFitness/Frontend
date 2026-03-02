@@ -35,15 +35,15 @@ interface FatigueAlertCardProps {
 const getSeverityColor = (severity: string): string => {
     switch (severity) {
         case "critical":
-            return "bg-red-100 border-red-500 text-red-800";
+            return "border-destructive/50 bg-destructive/20 text-destructive";
         case "high":
-            return "bg-orange-100 border-orange-500 text-orange-800";
+            return "border-warning/50 bg-warning/20 text-warning";
         case "medium":
-            return "bg-yellow-100 border-yellow-500 text-yellow-800";
+            return "border-warning/40 bg-warning/10 text-warning";
         case "low":
-            return "bg-blue-100 border-blue-500 text-blue-800";
+            return "border-primary/50 bg-primary/20 text-primary";
         default:
-            return "bg-gray-100 border-gray-500 text-gray-800";
+            return "border-border bg-muted text-muted-foreground";
     }
 };
 
@@ -117,16 +117,16 @@ export const FatigueAlertCard: React.FC<FatigueAlertCardProps> = ({
                             <span className="font-semibold text-sm uppercase">
                                 {getAlertTypeLabel(alert.alert_type)}
                             </span>
-                            <span className="text-xs px-2 py-1 rounded-full bg-white/50">
+                            <span className="rounded-full bg-background/50 px-2 py-1 text-xs">
                                 {alert.severity}
                             </span>
                             {isResolved && (
-                                <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800">
+                                <span className="rounded-full bg-success/20 px-2 py-1 text-xs text-success">
                                     Resuelta
                                 </span>
                             )}
                             {!isRead && !isResolved && (
-                                <span className="text-xs px-2 py-1 rounded-full bg-blue-200 text-blue-800">
+                                <span className="rounded-full bg-primary/20 px-2 py-1 text-xs text-primary">
                                     No leída
                                 </span>
                             )}
@@ -174,7 +174,7 @@ export const FatigueAlertCard: React.FC<FatigueAlertCardProps> = ({
                             <button
                                 onClick={() => onMarkAsRead(alert.id)}
                                 disabled={isMarkingAsRead}
-                                className="px-3 py-1 text-xs bg-white/70 hover:bg-white rounded transition-colors disabled:opacity-50"
+                                className="rounded bg-surface px-3 py-1 text-xs transition-colors hover:bg-surface-2 disabled:opacity-50"
                             >
                                 {isMarkingAsRead ? "Marcando..." : "Marcar como leída"}
                             </button>
@@ -182,7 +182,7 @@ export const FatigueAlertCard: React.FC<FatigueAlertCardProps> = ({
                         <button
                             onClick={handleResolveClick}
                             disabled={isResolving}
-                            className="px-3 py-1 text-xs bg-white/70 hover:bg-white rounded transition-colors disabled:opacity-50"
+                            className="rounded bg-surface px-3 py-1 text-xs transition-colors hover:bg-surface-2 disabled:opacity-50"
                         >
                             {isResolving ? "Resolviendo..." : "Resolver"}
                         </button>

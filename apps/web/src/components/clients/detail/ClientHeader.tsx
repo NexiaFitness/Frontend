@@ -22,7 +22,6 @@ interface ClientHeaderProps {
     client: Client;
     clientId?: number;
     onEditProfile?: () => void;
-    onAnthropometricData?: () => void;
     breadcrumbItems?: BreadcrumbItem[];
 }
 
@@ -30,7 +29,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     client,
     clientId: clientIdProp,
     onEditProfile,
-    onAnthropometricData,
     breadcrumbItems,
 }) => {
     const navigate = useNavigate();
@@ -109,83 +107,29 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     };
 
     return (
-        <div className="bg-white border-b border-gray-200">
-            {/* Breadcrumbs integrados */}
+        <div className="space-y-6">
+            {/* Breadcrumbs — mismo formato que dashboard, sin wrapper div */}
             {breadcrumbItems && breadcrumbItems.length > 0 && (
-                <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
-                    <Breadcrumbs items={breadcrumbItems} />
-                </div>
+                <Breadcrumbs items={breadcrumbItems} className="mb-1" />
             )}
 
-            <div className={`px-4 sm:px-6 lg:px-8 pb-6 ${breadcrumbItems ? 'pt-4' : 'pt-10'}`}>
-                {/* Fila 1: Foto + Nombre + Métricas + Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
-                    {/* Left: Foto + Info */}
-                    <div className="flex items-start gap-4 flex-1">
-                        {/* Profile Photo */}
-                        <div className="flex-shrink-0">
-                            <ClientAvatar
-                                clientId={client.id}
-                                nombre={client.nombre}
-                                apellidos={client.apellidos}
-                                size="lg"
-                            />
-                        </div>
-
-                        {/* Client Info */}
-                        <div className="flex-1">
-                            {/* Nombre */}
-                            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
-                                {client.nombre} {client.apellidos}
-                            </h1>
-
-                            {/* Metrics Grid */}
-                            <div className="grid grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-1 text-sm">
-                                {/* Age */}
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">Edad</span>
-                                    <p className="text-foreground font-medium">
-                                        {clientAge ? `${clientAge} años` : "—"}
-                                    </p>
-                                </div>
-
-                                {/* Weight */}
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">Peso</span>
-                                    <p className="text-foreground font-medium">
-                                        {client.peso ? `${client.peso} kg` : "—"}
-                                    </p>
-                                </div>
-
-                                {/* Height */}
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">Altura</span>
-                                    <p className="text-foreground font-medium">
-                                        {client.altura ? `${client.altura} cm` : "—"}
-                                    </p>
-                                </div>
-
-                                {/* BMI */}
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">IMC</span>
-                                    <p className="text-foreground font-medium">
-                                        {client.imc ? client.imc.toFixed(1) : "—"}
-                                    </p>
-                                </div>
-
-                                {/* Joined */}
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">Fecha de Alta</span>
-                                    <p className="text-foreground font-medium">
-                                        {formatJoinedDate(client.fecha_alta)}
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right: Actions - Botones en columna */}
-                    <div className="flex flex-col gap-2">
+            {/* Fila 1: Avatar | (Nombre + botones en la misma línea) | Subtítulo debajo */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                <div className="flex-shrink-0">
+                    <ClientAvatar
+                        clientId={client.id}
+                        nombre={client.nombre}
+                        apellidos={client.apellidos}
+                        size="lg"
+                    />
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                    {/* Nombre a la izquierda, botones a la derecha */}
+                    <div className="flex flex-wrap items-center gap-3 gap-y-2">
+                        <h1 className="text-2xl font-bold text-foreground">
+                            {client.nombre} {client.apellidos}
+                        </h1>
+                        <div className="ml-auto flex flex-shrink-0 flex-row flex-wrap items-center gap-2">
                         <Button
                             variant="outline"
                             size="sm"
@@ -218,86 +162,69 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                                 Editar Perfil
                             </Button>
                         )}
-                        {onAnthropometricData && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={onAnthropometricData}
-                            >
-                                Datos Antropométricos
-                            </Button>
-                        )}
+                        </div>
                     </div>
+                    <p className="text-sm text-muted-foreground">
+                        {[
+                            clientAge != null && `${clientAge} años`,
+                            client.peso != null && `${client.peso} kg`,
+                            client.altura != null && `${client.altura} cm`,
+                            client.imc != null && `IMC ${client.imc.toFixed(1)}`,
+                            `Alta ${formatJoinedDate(client.fecha_alta)}`,
+                        ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                    </p>
                 </div>
+            </div>
 
-                {/* Línea separadora */}
-                <div className="border-b border-primary mb-4"></div>
+            {/* Línea separadora */}
+            <div className="border-b border-border"></div>
 
-                {/* Fila 2: Objective + Experience + Frequency + Duration + Días/semana + Días concretos */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-4">
-                    {/* Objective */}
+            {/* Fila 2: Objective + Experience + Frequency + Duration + Días/semana + Días concretos */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Objetivo</span>
-                        <p className="text-foreground font-medium">
-                            {translateObjective(client.objetivo_entrenamiento)}
-                        </p>
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Objetivo</span>
+                        <p className="font-medium text-foreground">{translateObjective(client.objetivo_entrenamiento)}</p>
                     </div>
-
-                    {/* Experience Level */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Nivel de Experiencia</span>
-                        <p className="text-foreground font-medium">
-                            {translateExperience(client.experiencia)}
-                        </p>
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Nivel de Experiencia</span>
+                        <p className="font-medium text-foreground">{translateExperience(client.experiencia)}</p>
                     </div>
-
-                    {/* Training Frequency */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Frecuencia de Entrenamiento</span>
-                        <p className="text-foreground font-medium">
-                            {translateFrequency(client.frecuencia_semanal)}
-                        </p>
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Frecuencia de Entrenamiento</span>
+                        <p className="font-medium text-foreground">{translateFrequency(client.frecuencia_semanal)}</p>
                     </div>
-
-                    {/* Session Durations */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Duración de Sesiones</span>
-                        <p className="text-foreground font-medium">
-                            {translateSessionDuration(client.session_duration)}
-                        </p>
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Duración de Sesiones</span>
+                        <p className="font-medium text-foreground">{translateSessionDuration(client.session_duration)}</p>
                     </div>
-
-                    {/* Días/semana exactos */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Días/semana</span>
-                        <p className="text-foreground font-medium">
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Días/semana</span>
+                        <p className="font-medium text-foreground">
                             {client.exact_training_frequency != null
                                 ? `${client.exact_training_frequency} día${client.exact_training_frequency === 1 ? "" : "s"}/semana`
                                 : "—"}
                         </p>
                     </div>
-
-                    {/* Días concretos */}
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Días concretos</span>
-                        <p className="text-foreground font-medium">
-                            {formatTrainingDays(client.training_days)}
-                        </p>
+                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Días concretos</span>
+                        <p className="font-medium text-foreground">{formatTrainingDays(client.training_days)}</p>
                     </div>
                 </div>
 
                 {/* Línea separadora */}
-                <div className="border-b border-primary mb-4"></div>
+                <div className="mb-4 border-b border-border"></div>
 
                 {/* Fila 3: Notas */}
                 {(client.notes_1 || client.notes_2 || client.notes_3 || client.observaciones || onEditProfile) && (
                     <div className="mb-4">
-                        <div className="flex items-center justify-between mb-3">
-                            <span className="text-xs uppercase tracking-wide text-primary">Observaciones</span>
+                        <div className="mb-3 flex items-center justify-between">
+                            <span className="text-xs uppercase tracking-wide text-muted-foreground">Observaciones</span>
                             {onEditProfile && (
                                 <button
                                     onClick={onEditProfile}
-                                    className="text-xs text-primary hover:text-primary/80 font-medium hover:underline"
+                                    className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
                                 >
                                     + Añadir Nota
                                 </button>
@@ -328,10 +255,9 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                                     <p className="text-foreground font-medium text-sm">{client.observaciones}</p>
                                 </div>
                             )}
-                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 };

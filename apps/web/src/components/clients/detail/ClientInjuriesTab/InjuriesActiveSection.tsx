@@ -115,8 +115,8 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
         <>
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Lesiones activas</h3>
-                    <span className="text-sm text-gray-500">{injuries.length} registros</span>
+                    <h3 className="text-lg font-semibold text-foreground">Lesiones activas</h3>
+                    <span className="text-sm text-muted-foreground">{injuries.length} registros</span>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {injuries.map((injury) => (

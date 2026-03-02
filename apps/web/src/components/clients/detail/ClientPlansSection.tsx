@@ -71,7 +71,7 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center min-h-[160px]">
+            <div className="flex min-h-[160px] items-center justify-center rounded-lg border border-border bg-surface p-6">
                 <LoadingSpinner size="md" />
             </div>
         );
@@ -80,13 +80,13 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
     const hasPlans = trainingPlans && trainingPlans.length > 0;
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="rounded-lg border border-border bg-surface p-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900`}>
+                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-foreground`}>
                         Planes de Entrenamiento
                     </h3>
-                    <p className="text-slate-600 text-sm mt-1">
+                    <p className="mt-1 text-sm text-muted-foreground">
                         {hasPlans
                             ? "Planes asignados a este cliente. Haz clic para ver el detalle."
                             : "Asigna un plan de entrenamiento para estructurar el programa del cliente."}
@@ -111,44 +111,40 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
                             onClick={() =>
                                 navigate(`/dashboard/training-plans/${plan.id}`)
                             }
-                            className="block w-full text-left p-4 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 hover:border-gray-300 transition-colors"
+                            className="block w-full rounded-lg border border-border bg-surface-2 p-4 text-left transition-colors hover:border-border hover:bg-muted/50"
                             aria-label={`Ver plan ${plan.name}`}
                         >
                             <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                    <p className="font-semibold text-gray-900 truncate">
-                                        {plan.name}
-                                    </p>
-                                    <p className="text-sm text-slate-600 mt-0.5">
+                                <div className="min-w-0 flex-1">
+                                    <p className="truncate font-semibold text-foreground">{plan.name}</p>
+                                    <p className="mt-0.5 text-sm text-muted-foreground">
                                         {formatDateRange(plan.start_date, plan.end_date)}
                                     </p>
-                                    <div className="flex flex-wrap gap-2 mt-2">
-                                        <span className="inline-flex px-2 py-0.5 rounded text-xs font-medium bg-blue-50 text-blue-700">
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        <span className="inline-flex rounded px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary">
                                             {PLAN_GOAL_LABELS[plan.goal] ?? plan.goal}
                                         </span>
                                         <span
-                                            className={`inline-flex px-2 py-0.5 rounded text-xs font-medium ${
+                                            className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${
                                                 plan.status === "active"
-                                                    ? "bg-green-50 text-green-700"
+                                                    ? "bg-success/20 text-success"
                                                     : plan.status === "completed"
-                                                      ? "bg-gray-100 text-gray-700"
-                                                      : "bg-amber-50 text-amber-700"
+                                                      ? "bg-muted text-muted-foreground"
+                                                      : "bg-warning/20 text-warning"
                                             }`}
                                         >
                                             {STATUS_LABELS[plan.status] ?? plan.status}
                                         </span>
                                     </div>
                                 </div>
-                                <span className="text-slate-400 shrink-0" aria-hidden>
-                                    →
-                                </span>
+                                <span className="shrink-0 text-muted-foreground" aria-hidden>→</span>
                             </div>
                         </button>
                     ))}
                 </div>
             ) : (
-                <div className="mt-4 p-6 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 text-center">
-                    <p className="text-slate-600 text-sm mb-4">
+                <div className="mt-4 rounded-lg border-2 border-dashed border-border bg-muted/30 p-6 text-center">
+                    <p className="mb-4 text-sm text-muted-foreground">
                         Este cliente no tiene planes asignados. Crea el primero para
                         estructurar su programa de entrenamiento.
                     </p>

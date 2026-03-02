@@ -256,12 +256,12 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                     />
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Fecha de lesión</label>
+                        <label className="mb-1 block text-sm font-medium text-foreground">Fecha de lesión</label>
                         <input
                             type="date"
                             value={form.injury_date}
                             onChange={(e) => handleChange("injury_date", e.target.value)}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-600 focus:border-primary-600"
+                            className="block w-full rounded-md border border-input bg-background shadow-sm focus:border-primary focus:ring-2 focus:ring-primary"
                             required
                             disabled={isSubmitting || isEdit}
                         />
@@ -358,11 +358,11 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 {/* Textareas */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Restricciones</label>
+                        <label className="mb-1 block text-sm font-medium text-foreground">Restricciones</label>
                         <textarea
                             value={form.restrictions}
                             onChange={(e) => handleChange("restrictions", e.target.value)}
-                            className="block w-full rounded-md border-gray-300 shadow-sm focus:ring-2 focus:ring-primary-600 focus:border-primary-600"
+                            className="block w-full rounded-md border border-input bg-background shadow-sm focus:border-primary focus:ring-2 focus:ring-primary"
                             rows={3}
                             placeholder="Ej: Evitar flexión completa, no cargas pesadas."
                             disabled={isSubmitting}

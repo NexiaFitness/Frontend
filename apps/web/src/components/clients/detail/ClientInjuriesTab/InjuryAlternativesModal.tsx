@@ -113,7 +113,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                                 {alternatives.map((alt) => (
                                     <li
                                         key={alt.id}
-                                        className="p-3 rounded-lg bg-slate-50 border border-slate-200"
+                                        className="rounded-lg border border-border bg-muted/30 p-3"
                                     >
                                         <p className="font-medium text-foreground">{alt.nombre}</p>
                                         <p className="text-xs text-muted-foreground mt-1">
@@ -128,7 +128,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-sm text-slate-500 py-4">
+                            <p className="text-sm text-muted-foreground py-4">
                                 No se encontraron alternativas para este ejercicio.
                             </p>
                         )}

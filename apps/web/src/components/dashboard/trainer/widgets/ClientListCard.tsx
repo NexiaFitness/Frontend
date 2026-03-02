@@ -27,7 +27,7 @@ function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
 
 export const ClientListCard: React.FC<ClientListCardProps> = ({ client, onClick }) => {
     const adherence = Math.min(100, Math.max(0, client.adherence_percentage ?? 0));
-    const trend: ClientProgressTrend = client.progress_trend ?? "stable";
+    const trend: ClientProgressTrend = client.satisfaction_trend ?? client.progress_trend ?? "stable";
     const satisfaction = satisfactionFromFatigue(client.fatigue_level_numeric);
     const fullName = [client.nombre, client.apellidos].filter(Boolean).join(" ") || "—";
 
@@ -44,7 +44,7 @@ export const ClientListCard: React.FC<ClientListCardProps> = ({ client, onClick 
                 nombre={client.nombre}
                 apellidos={client.apellidos}
                 size="sm"
-                className="h-8 w-8 shrink-0 text-[10px] font-semibold"
+                className="h-8 w-8 shrink-0 text-label font-semibold"
             />
 
             {/* 2. Nombre + adherencia (barra + %) */}
@@ -52,14 +52,14 @@ export const ClientListCard: React.FC<ClientListCardProps> = ({ client, onClick 
                 <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
                 <div className="mt-1 flex items-center gap-2">
                     <AdherenceBar value={adherence} />
-                    <span className="text-[10px] text-muted-foreground">{adherence}%</span>
+                    <span className="text-label text-muted-foreground">{adherence}%</span>
                 </div>
             </div>
 
             {/* 3. Iconos tendencia + satisfacción (derecha) */}
             <div className="flex shrink-0 items-center gap-2">
                 <TrendIcon trend={trend} />
-                <SatisfactionIcon value={satisfaction} />
+                <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfaction} />
             </div>
         </button>
     );

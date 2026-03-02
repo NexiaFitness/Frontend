@@ -182,9 +182,9 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
         if (activeTab === "active") {
             if (unresolvedAlerts.length === 0) {
                 return (
-                    <div className="text-center py-8 text-gray-500">
+                    <div className="py-8 text-center text-muted-foreground">
                         <p className="text-base">No hay alertas pendientes</p>
-                        <p className="text-sm mt-2">
+                        <p className="mt-2 text-sm">
                             Todas las alertas han sido resueltas o no hay alertas activas para este cliente.
                         </p>
                     </div>
@@ -212,7 +212,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                                     <button
                                         type="button"
                                         onClick={() => navigate(path)}
-                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium mt-1"
+                                        className="mt-1 text-sm font-medium text-primary hover:text-primary/80"
                                     >
                                         {action.label} →
                                     </button>
@@ -227,11 +227,9 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
         // Tab "Historial"
         if (resolvedAlerts.length === 0) {
             return (
-                <div className="text-center py-8 text-gray-500">
+                <div className="py-8 text-center text-muted-foreground">
                     <p className="text-base">No hay alertas resueltas</p>
-                    <p className="text-sm mt-2">
-                        El historial de alertas resueltas aparecerá aquí.
-                    </p>
+                    <p className="mt-2 text-sm">El historial de alertas resueltas aparecerá aquí.</p>
                 </div>
             );
         }
@@ -277,7 +275,7 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                         className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
                             activeTab === "active"
                                 ? "border-primary text-primary"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
                         }`}
                         aria-selected={activeTab === "active"}
                         role="tab"
@@ -291,10 +289,10 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                     </button>
                     <button
                         onClick={() => setActiveTab("history")}
-                        className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                        className={`border-b-2 px-4 py-2 text-sm font-medium transition-colors ${
                             activeTab === "history"
                                 ? "border-primary text-primary"
-                                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
                         }`}
                         aria-selected={activeTab === "history"}
                         role="tab"

@@ -95,6 +95,24 @@ module.exports = {
                 'navbar-dashboard-desktop': '4.5rem', /* navbar un poco ancha; main usa mismo token = contenido pegada a la navbar en todas las vistas */
                 'sidebar-collapsed': '4rem',
                 'sidebar-expanded': '13.75rem',
+                /** Mínimo touch target (44px) para accesibilidad móvil. */
+                'touch': '2.75rem',
+                /** Touch target reducido para controles compactos. */
+                'touch-sm': '2.5rem',
+            },
+            minHeight: {
+                'touch': '2.75rem',
+                'touch-sm': '2.5rem',
+            },
+            minWidth: {
+                'touch': '2.75rem',
+                'touch-sm': '2.5rem',
+            },
+            fontSize: {
+                /** Etiquetas y badges pequeños (11px). */
+                'caption': ['0.6875rem', { lineHeight: '1rem' }],
+                /** Labels muy pequeños (10px). */
+                'label': ['0.625rem', { lineHeight: '0.875rem' }],
             },
         },
     },

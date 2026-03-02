@@ -16,6 +16,7 @@ import type {
     UpdateClientData,
     ClientFilters,
     ClientListWithMetricsResponse,
+    GetClientsWithMetricsParams,
     RecentActivityResponse,
     ClientPreviewResponse,
     ClientRatingCreate,
@@ -371,6 +372,7 @@ export const clientsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { ratingId }) => [
                 { type: "Client", id: `Rating-${ratingId}` },
+                { type: "Client", id: "LIST_WITH_METRICS" },
             ],
         }),
 
@@ -385,6 +387,7 @@ export const clientsApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, ratingId) => [
                 { type: "Client", id: `Rating-${ratingId}` },
+                { type: "Client", id: "LIST_WITH_METRICS" },
             ],
         }),
 
@@ -868,20 +871,15 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * Obtener lista de clientes con métricas de fatiga y adherencia.
-         * Búsqueda es server-side (todas las páginas).
+         * Obtener lista de clientes con métricas de fatiga, adherencia y satisfacción.
+         * Búsqueda y filtrado server-side. status se enviará cuando el backend lo soporte (VISTA_CLIENTES_SPEC).
          * Endpoint: GET /api/v1/clients/with-metrics
          */
         getClientsWithMetrics: builder.query<
             ClientListWithMetricsResponse,
-            {
-                page?: number;
-                page_size?: number;
-                search?: string | null;
-                trainer_id?: number;
-            }
+            GetClientsWithMetricsParams
         >({
-            query: ({ page = 1, page_size = 15, search, trainer_id }) => {
+            query: ({ page = 1, page_size = 15, search, trainer_id, status }) => {
                 const params = new URLSearchParams();
                 params.append("page", page.toString());
                 params.append("page_size", page_size.toString());
@@ -890,6 +888,9 @@ export const clientsApi = baseApi.injectEndpoints({
                 }
                 if (trainer_id) {
                     params.append("trainer_id", trainer_id.toString());
+                }
+                if (status != null) {
+                    params.append("status", status);
                 }
                 return {
                     url: `/clients/with-metrics?${params.toString()}`,

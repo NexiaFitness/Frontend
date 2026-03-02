@@ -211,7 +211,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                             className={`px-4 py-2 rounded-lg font-medium text-sm transition-all whitespace-nowrap ${
                                 isActive
                                     ? "text-white shadow-md"
-                                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                                    : "bg-surface text-foreground hover:bg-surface-2"
                             }`}
                             style={{
                                 backgroundColor: isActive ? categoryInfo.color : undefined,

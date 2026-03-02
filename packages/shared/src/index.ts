@@ -249,6 +249,7 @@ export * from "./hooks/usePublicNavigation";
 // Hooks - Clients (ordenados alfabéticamente)
 export * from "./hooks/clients/useClientDetail";
 export * from "./hooks/clients/useClientFatigue";
+export * from "./hooks/clients/useClientsListWithMetrics";
 export * from "./hooks/clients/useFatigueAlerts";
 export * from "./hooks/clients/useClientForm";
 export * from "./hooks/clients/useClientOnboarding";

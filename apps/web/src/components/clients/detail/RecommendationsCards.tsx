@@ -41,7 +41,7 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
 
     if (isLoading) {
         return (
-            <div className="bg-white rounded-lg shadow p-6 flex items-center justify-center min-h-[200px]">
+            <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-border bg-surface p-6">
                 <LoadingSpinner size="md" />
             </div>
         );
@@ -53,11 +53,11 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
                 ? String((error as { data?: unknown }).data)
                 : "Error al cargar las recomendaciones.";
         return (
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+            <div className="rounded-lg border border-border bg-surface p-6">
+                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
                     Recomendaciones de plan
                 </h3>
-                <p className="text-red-600 text-sm">{message}</p>
+                <p className="text-sm text-destructive">{message}</p>
             </div>
         );
     }
@@ -68,12 +68,12 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
 
     if (response.status === "incomplete") {
         return (
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+            <div className="rounded-lg border border-border bg-surface p-6">
+                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
                     Recomendaciones de plan
                 </h3>
-                <p className="text-gray-600 text-sm mb-2">{response.message}</p>
-                <p className="text-xs text-gray-500">
+                <p className="mb-2 text-sm text-muted-foreground">{response.message}</p>
+                <p className="text-xs text-muted-foreground">
                     Completa en la ficha del cliente:{" "}
                     {response.missing_fields.join(", ")}.
                 </p>
@@ -84,11 +84,11 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
     const { recommendations } = response;
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-1`}>
+        <div className="rounded-lg border border-border bg-surface p-6">
+            <h3 className={`${TYPOGRAPHY.sectionTitle} mb-1 text-foreground`}>
                 Recomendaciones de plan
             </h3>
-            <p className="text-sm text-gray-500 mb-4">
+            <p className="mb-4 text-sm text-muted-foreground">
                 Salida automática según experiencia, frecuencia y duración de sesión.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -131,17 +131,17 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
     subtitle,
     content,
 }) => (
-    <div className="border border-gray-200 rounded-lg p-4 bg-gray-50/50">
-        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
-        <p className="text-xs text-primary-600 font-medium mt-0.5">{subtitle}</p>
-        <div className="mt-3 text-sm text-gray-700">{content}</div>
+    <div className="rounded-lg border border-border bg-muted/30 p-4">
+        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
+        <p className="mt-0.5 text-xs font-medium text-primary">{subtitle}</p>
+        <div className="mt-3 text-sm text-muted-foreground">{content}</div>
     </div>
 );
 
 const VolumeCardContent: React.FC<{ rec: VolumeRecommendation }> = ({ rec }) => (
     <>
-        <p className="font-medium text-gray-800">{rec.range}</p>
-        <p className="mt-2 text-gray-600">{rec.explanation}</p>
+        <p className="font-medium text-foreground">{rec.range}</p>
+        <p className="mt-2 text-muted-foreground">{rec.explanation}</p>
     </>
 );
 
@@ -150,22 +150,21 @@ const IntensityCardContent: React.FC<{
 }> = ({ rec }) => (
     <>
         {rec.rpe_range && (
-            <p className="text-gray-800">
-                <span className="text-gray-500">RPE:</span> {rec.rpe_range}
+            <p className="text-foreground">
+                <span className="text-muted-foreground">RPE:</span> {rec.rpe_range}
             </p>
         )}
         {rec.rir_range && (
-            <p className="text-gray-800">
-                <span className="text-gray-500">RIR:</span> {rec.rir_range}
+            <p className="text-foreground">
+                <span className="text-muted-foreground">RIR:</span> {rec.rir_range}
             </p>
         )}
         {rec.percent_1rm_range && (
-            <p className="text-gray-800">
-                <span className="text-gray-500">%1RM:</span>{" "}
-                {rec.percent_1rm_range}
+            <p className="text-foreground">
+                <span className="text-muted-foreground">%1RM:</span> {rec.percent_1rm_range}
             </p>
         )}
-        <p className="mt-2 text-gray-600">{rec.explanation}</p>
+        <p className="mt-2 text-muted-foreground">{rec.explanation}</p>
     </>
 );
 
@@ -174,10 +173,8 @@ const ExerciseSelectionCardContent: React.FC<{
 }> = ({ rec }) => (
     <>
         {rec.categories && rec.categories.length > 0 && (
-            <p className="text-gray-800">
-                {rec.categories.join(", ")}
-            </p>
+            <p className="text-foreground">{rec.categories.join(", ")}</p>
         )}
-        <p className="mt-2 text-gray-600">{rec.explanation}</p>
+        <p className="mt-2 text-muted-foreground">{rec.explanation}</p>
     </>
 );

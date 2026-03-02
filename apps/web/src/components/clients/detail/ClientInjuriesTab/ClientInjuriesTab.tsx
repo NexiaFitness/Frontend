@@ -56,7 +56,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                 </div>
                 <div className="flex items-center gap-3">
                     {hasActiveInjuries && (
-                        <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-red-50 text-red-700 border border-red-200">
+                        <span className="inline-flex items-center rounded-full border border-destructive/30 bg-destructive/20 px-3 py-1 text-sm font-semibold text-destructive">
                             {activeInjuries.length} activas
                         </span>
                     )}
