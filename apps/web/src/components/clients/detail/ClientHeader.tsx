@@ -179,42 +179,42 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             </div>
 
             {/* Línea separadora */}
-            <div className="border-b border-border"></div>
+            <div className="border-b border-border" />
 
-            {/* Fila 2: Objective + Experience + Frequency + Duration + Días/semana + Días concretos */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                    <div>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Objetivo</span>
-                        <p className="font-medium text-foreground">{translateObjective(client.objetivo_entrenamiento)}</p>
-                    </div>
-                    <div>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Nivel de Experiencia</span>
-                        <p className="font-medium text-foreground">{translateExperience(client.experiencia)}</p>
-                    </div>
-                    <div>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Frecuencia de Entrenamiento</span>
-                        <p className="font-medium text-foreground">{translateFrequency(client.frecuencia_semanal)}</p>
-                    </div>
-                    <div>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Duración de Sesiones</span>
-                        <p className="font-medium text-foreground">{translateSessionDuration(client.session_duration)}</p>
-                    </div>
-                    <div>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Días/semana</span>
-                        <p className="font-medium text-foreground">
-                            {client.exact_training_frequency != null
-                                ? `${client.exact_training_frequency} día${client.exact_training_frequency === 1 ? "" : "s"}/semana`
-                                : "—"}
-                        </p>
-                    </div>
-                    <div>
-                        <span className="text-xs uppercase tracking-wide text-muted-foreground">Días concretos</span>
-                        <p className="font-medium text-foreground">{formatTrainingDays(client.training_days)}</p>
-                    </div>
+            {/* Preferencias de entrenamiento — contenido centrado por columna, títulos en una línea */}
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Objetivo</span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{translateObjective(client.objetivo_entrenamiento)}</p>
                 </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Nivel de Experiencia</span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{translateExperience(client.experiencia)}</p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Frecuencia</span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{translateFrequency(client.frecuencia_semanal)}</p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Duración sesiones</span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{translateSessionDuration(client.session_duration)}</p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Días/semana</span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">
+                        {client.exact_training_frequency != null
+                            ? `${client.exact_training_frequency} día${client.exact_training_frequency === 1 ? "" : "s"}/semana`
+                            : "—"}
+                    </p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Días concretos</span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{formatTrainingDays(client.training_days)}</p>
+                </div>
+            </div>
 
-                {/* Línea separadora */}
-                <div className="mb-4 border-b border-border"></div>
+            {/* Línea separadora */}
+            <div className="border-b border-border" />
 
                 {/* Fila 3: Notas */}
                 {(client.notes_1 || client.notes_2 || client.notes_3 || client.observaciones || onEditProfile) && (
