@@ -21,7 +21,7 @@ import {
     useGetCurrentTrainerProfileQuery,
     useCompleteProfileModal,
 } from "@nexia/shared";
-import type { ClientListItem, ClientStatus } from "@nexia/shared/types/client";
+import type { ClientStatus } from "@nexia/shared/types/client";
 import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";

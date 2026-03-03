@@ -165,9 +165,7 @@ export interface ScheduledSessionsFilters {
 
 // ========================================
 // TRAINER AVAILABILITY (Backend: scheduling/availability)
-// ========================================
-
-/** POST /scheduling/availability — Backend: TrainerAvailabilityCreate */
+// ========================================/** POST /scheduling/availability — Backend: TrainerAvailabilityCreate */
 export interface TrainerAvailabilityCreate {
     trainer_id: number;
     day_of_week: number; // 0=Monday, ..., 6=Sunday

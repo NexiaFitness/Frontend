@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { AlertTriangle, ArrowUpRight } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { useDashboardAlerts, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
-import { getFatigueAlertContextualAction } from "@nexia/shared";
 import type { FatigueAlertSeverity, FatigueAlertType } from "@nexia/shared/types/training";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import type { RootState } from "@nexia/shared/store";

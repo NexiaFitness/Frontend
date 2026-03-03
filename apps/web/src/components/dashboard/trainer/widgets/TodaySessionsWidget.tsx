@@ -62,7 +62,6 @@ export const TodaySessionsWidget: React.FC = () => {
         { skip: !trainerProfile?.id }
     );
 
-    const clientIds = [...new Set((sessions as ScheduledSession[]).map((s) => s.client_id))];
     const { data: clientsData } = useGetTrainerClientsQuery(
         { trainerId: trainerProfile?.id ?? 0, page: 1, per_page: 50 },
         { skip: !trainerProfile?.id }

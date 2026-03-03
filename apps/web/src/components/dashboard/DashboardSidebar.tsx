@@ -44,7 +44,7 @@ const COLLAPSE_DELAY_MS = 200;
 export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
     menuItems,
     headerTitle: _headerTitle,
-    footerSubtitle,
+    footerSubtitle: _footerSubtitle,
     isCollapsed,
     onHoverExpand,
     onHoverCollapse,
