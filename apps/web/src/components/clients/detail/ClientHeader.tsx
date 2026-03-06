@@ -23,6 +23,12 @@ interface ClientHeaderProps {
     clientId?: number;
     onEditProfile?: () => void;
     breadcrumbItems?: BreadcrumbItem[];
+    /** Fase 4.1: si el cliente tiene plan activo (para CTA Planificar: ir al tab vs abrir modal). */
+    hasActivePlan?: boolean;
+    /** Fase 4.1: CTA único "Planificar" — con plan → tab Planificación; sin plan → modal crear plan. */
+    onPlanificar?: () => void;
+    /** Fase 1.1: abrir flujo "Usar plantilla" (solo cuando no hay plan activo). */
+    onOpenUseTemplate?: () => void;
 }
 
 export const ClientHeader: React.FC<ClientHeaderProps> = ({
@@ -30,6 +36,9 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     clientId: clientIdProp,
     onEditProfile,
     breadcrumbItems,
+    hasActivePlan = false,
+    onPlanificar,
+    onOpenUseTemplate,
 }) => {
     const navigate = useNavigate();
     const clientId = clientIdProp ?? client.id;
@@ -130,18 +139,26 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                             {client.nombre} {client.apellidos}
                         </h1>
                         <div className="ml-auto flex flex-shrink-0 flex-row flex-wrap items-center gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                                navigate(
-                                    `/dashboard/training-plans/create?clientId=${clientId}`
-                                )
-                            }
-                            aria-label="Crear plan de entrenamiento"
-                        >
-                            Crear plan
-                        </Button>
+                        {onPlanificar && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={onPlanificar}
+                                aria-label="Planificar"
+                            >
+                                Planificar
+                            </Button>
+                        )}
+                        {!hasActivePlan && onOpenUseTemplate && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onOpenUseTemplate}
+                                aria-label="Usar plantilla"
+                            >
+                                Usar plantilla
+                            </Button>
+                        )}
                         <Button
                             variant="outline"
                             size="sm"

@@ -2,10 +2,36 @@
  * Training Sessions Types
  * Sesiones de entrenamiento con link directo a Training Plans
  * Sin dependencia obligatoria de Macrocycles/Mesocycles/Microcycles
- * 
+ *
+ * Coherencia: el backend incluye opcionalmente coherence en POST/PUT (Fase 3 plan UX).
+ *
  * @author Frontend Team - NEXIA
  * @since v6.0.0
  */
+
+/** Aviso de coherencia (backend: coherence.coherence_warnings[].message) */
+export interface SessionCoherenceWarning {
+    type?: string;
+    message: string;
+    deviation_percentage?: number;
+    planned_value?: number;
+    actual_value?: number;
+}
+
+/** Respuesta de validación de coherencia (GET .../coherence o en POST/PUT session) */
+export interface SessionCoherence {
+    session_id: number;
+    has_planned_values?: boolean;
+    session_has_values?: boolean;
+    planned_volume?: number;
+    planned_intensity?: number;
+    session_volume?: number;
+    session_intensity?: number;
+    volume_deviation?: number;
+    intensity_deviation?: number;
+    coherence_percentage?: number;
+    coherence_warnings: SessionCoherenceWarning[];
+}
 
 /** Item de sugerencia de ejercicio (GET /training-sessions/exercise-selection/suggestions) */
 export interface ExerciseSelectionSuggestionItem {
@@ -65,6 +91,8 @@ export interface TrainingSession {
     created_at: string;                 // ISO datetime
     updated_at: string;                  // ISO datetime
     is_active: boolean;
+    /** Incluido en POST/PUT por backend (Fase 3); evita GET adicional. */
+    coherence?: SessionCoherence | null;
 }
 
 /**

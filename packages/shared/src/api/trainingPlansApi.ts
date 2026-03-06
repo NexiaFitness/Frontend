@@ -18,6 +18,7 @@
 import { baseApi } from "./baseApi";
 import type {
     TrainingPlan,
+    ActivePlanByClientOut,
     TrainingPlansListResponse,
     TrainingPlanCreate,
     TrainingPlanUpdate,
@@ -109,6 +110,21 @@ export const trainingPlansApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * Plan activo del cliente (hoy). Resuelto por TrainingPlanInstance.
+         * Backend: GET /api/v1/training-plans/active-by-client/{client_id}
+         * 404 cuando no hay plan activo.
+         */
+        getActivePlanByClient: builder.query<ActivePlanByClientOut, number>({
+            query: (clientId) => ({
+                url: `/training-plans/active-by-client/${clientId}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, clientId) => [
+                { type: "TrainingPlan", id: `ACTIVE-${clientId}` },
+            ],
+        }),
+
+        /**
          * Obtener recomendaciones 3-card para un cliente (Volume, Intensidad, Selección de ejercicios)
          * Backend: GET /api/v1/training-plans/recommendations/{client_id}
          */
@@ -137,7 +153,12 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                     "Content-Type": "application/json",
                 },
             }),
-            invalidatesTags: [{ type: "TrainingPlan", id: "LIST" }],
+            invalidatesTags: (result, error, planData) => [
+                { type: "TrainingPlan", id: "LIST" },
+                ...(planData.client_id != null
+                    ? [{ type: "TrainingPlan" as const, id: `ACTIVE-${planData.client_id}` }]
+                    : []),
+            ],
         }),
 
         /**
@@ -478,10 +499,13 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                     method: "POST",
                 };
             },
-            invalidatesTags: [
+            invalidatesTags: (result, error, args) => [
                 { type: "TrainingPlanTemplate", id: "LIST" },
                 { type: "TrainingPlanInstance", id: "LIST" },
                 { type: "TrainingPlan", id: "LIST" },
+                ...(args.client_id != null
+                    ? [{ type: "TrainingPlan" as const, id: `ACTIVE-${args.client_id}` }]
+                    : []),
             ],
         }),
 
@@ -654,6 +678,7 @@ export const trainingPlansApi = baseApi.injectEndpoints({
 export const {
     useGetTrainingPlansQuery,
     useGetTrainingPlanQuery,
+    useGetActivePlanByClientQuery,
     useGetTrainingPlanRecommendationsQuery,
     useCreateTrainingPlanMutation,
     useUpdateTrainingPlanMutation,

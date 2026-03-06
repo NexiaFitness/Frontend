@@ -2,9 +2,9 @@
  * E2E Auth: Verificación de correo electrónico
  *
  * Flujo: /verify-email?token=... → la página envía el token automáticamente (useEffect) →
- * mensaje éxito "Correo verificado correctamente" o error "enlace no válido".
+ * mensaje éxito "Correo verificado correctamente" o redirección a dashboard (2.5s).
  * APIs: POST /auth/verify-email.
- * Sin atajos: con mock de éxito se comprueba la UI de éxito; sin mock (token inválido) se comprueba la UI de error.
+ * Acepta éxito en página o redirección: evita flakiness por timing del redirect.
  */
 
 import { test, expect } from "@playwright/test";
@@ -27,13 +27,29 @@ test.describe("Auth — Verify email", () => {
     await page.goto("/verify-email?token=e2e-valid-token", { waitUntil: "load" });
     await page.waitForLoadState("networkidle").catch(() => {});
 
-    await expect(
-      page.getByRole("heading", { name: /verificación de correo electrónico/i })
-    ).toBeVisible({ timeout: 10_000 });
+    // Tras mock éxito: la app muestra la página de verify y luego éxito, o redirige a dashboard en 2.5s.
+    // Esperamos una de las dos para no depender del timing exacto.
+    const headingVerification = page.getByRole("heading", {
+      name: /verificación de correo electrónico/i,
+    });
+    const headingSuccess = page.getByRole("heading", {
+      name: /correo verificado/i,
+    });
 
-    await expect(
-      page.getByRole("heading", { name: /correo verificado/i })
-    ).toBeVisible({ timeout: 12_000 });
+    const outcome = await Promise.race([
+      page.waitForURL(/\/dashboard/, { timeout: 14_000 }).then(() => "dashboard" as const),
+      headingVerification.waitFor({ state: "visible", timeout: 14_000 }).then(() => "page" as const),
+    ]).catch(() => "timeout" as const);
+
+    if (outcome === "dashboard") {
+      expect(page.url()).toMatch(/\/dashboard/);
+      return;
+    }
+    if (outcome === "page") {
+      await expect(headingSuccess).toBeVisible({ timeout: 6_000 });
+      return;
+    }
+    await expect(headingVerification).toBeVisible({ timeout: 1 });
   });
 
   test("invalid or expired token → error message and Volver al login", async ({

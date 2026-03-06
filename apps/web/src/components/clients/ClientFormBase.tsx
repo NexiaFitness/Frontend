@@ -62,13 +62,16 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
         }
     };
 
+    const sectionWrapperClass = "rounded-lg border border-border bg-surface p-6";
+    const sectionHeadingClass = "text-lg font-semibold text-foreground mb-4";
+
     // En modo create, mantener el formulario tradicional con botón al final
     if (mode === "create") {
         return (
-            <form onSubmit={onSubmit} className="space-y-10">
+            <form onSubmit={onSubmit} className="space-y-8">
                 {/* Datos personales */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Datos personales</h3>
+                <div className={sectionWrapperClass}>
+                    <h3 className={sectionHeadingClass}>Datos personales</h3>
                     <PersonalInfo
                         formData={formData}
                         errors={errors}
@@ -78,8 +81,8 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                 </div>
 
                 {/* Métricas físicas básicas */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Métricas físicas</h3>
+                <div className={sectionWrapperClass}>
+                    <h3 className={sectionHeadingClass}>Métricas físicas</h3>
                     <PhysicalMetrics
                         formData={formData}
                         errors={errors}
@@ -88,8 +91,8 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                 </div>
 
                 {/* Métricas antropométricas */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Antropometría</h3>
+                <div className={sectionWrapperClass}>
+                    <h3 className={sectionHeadingClass}>Antropometría</h3>
                     <AnthropometricMetrics
                         formData={formData}
                         errors={errors}
@@ -98,8 +101,8 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                 </div>
 
                 {/* Objetivos */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Objetivos</h3>
+                <div className={sectionWrapperClass}>
+                    <h3 className={sectionHeadingClass}>Objetivos</h3>
                     <TrainingGoals
                         formData={formData}
                         errors={errors}
@@ -108,8 +111,8 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                 </div>
 
                 {/* Experiencia */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Experiencia</h3>
+                <div className={sectionWrapperClass}>
+                    <h3 className={sectionHeadingClass}>Experiencia</h3>
                     <Experience
                         formData={formData}
                         errors={errors}
@@ -118,8 +121,8 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                 </div>
 
                 {/* Información de salud */}
-                <div className="bg-white rounded-lg shadow p-6">
-                    <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4">Salud</h3>
+                <div className={sectionWrapperClass}>
+                    <h3 className={sectionHeadingClass}>Salud</h3>
                     <HealthInfo
                         formData={formData}
                         errors={errors}
@@ -145,18 +148,18 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
 
     // En modo edit, cada sección tiene su propio botón de guardar.
     // Estructura semántica: <section role="region" aria-labelledby> para accesibilidad y tests E2E.
-    const sectionClass = "bg-white rounded-lg shadow p-6";
-    const headingClass = "text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-4";
+    const editSectionClass = "rounded-lg border border-border bg-surface p-6";
+    const editHeadingClass = "text-lg font-semibold text-foreground mb-4";
 
     return (
-        <div className="space-y-10">
+        <div className="space-y-8">
             {/* Información Personal */}
             <section
                 role="region"
                 aria-labelledby="personal-info-heading"
-                className={sectionClass}
+                className={editSectionClass}
             >
-                <h3 id="personal-info-heading" className={headingClass}>
+                <h3 id="personal-info-heading" className={editHeadingClass}>
                     Información Personal
                 </h3>
                 <PersonalInfo
@@ -166,7 +169,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                     isEditMode={true}
                     hideHeading
                 />
-                <div className="flex justify-end pt-4 mt-6 border-t border-gray-200">
+                <div className="flex justify-end pt-4 mt-6 border-t border-border">
                     <Button
                         type="button"
                         variant="primary"
@@ -184,9 +187,9 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
             <section
                 role="region"
                 aria-labelledby="anthropometric-heading"
-                className={sectionClass}
+                className={editSectionClass}
             >
-                <h3 id="anthropometric-heading" className={headingClass}>
+                <h3 id="anthropometric-heading" className={editHeadingClass}>
                     Datos Antropométricos
                 </h3>
                 <PhysicalMetrics
@@ -200,7 +203,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                     updateField={updateField}
                     isEditMode={true}
                 />
-                <div className="flex justify-end pt-4 mt-6 border-t border-gray-200">
+                <div className="flex justify-end pt-4 mt-6 border-t border-border">
                     <Button
                         type="button"
                         variant="primary"
@@ -218,9 +221,9 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
             <section
                 role="region"
                 aria-labelledby="training-params-heading"
-                className={sectionClass}
+                className={editSectionClass}
             >
-                <h3 id="training-params-heading" className={headingClass}>
+                <h3 id="training-params-heading" className={editHeadingClass}>
                     Parámetros de Entrenamiento
                 </h3>
                 <TrainingGoals
@@ -233,7 +236,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                     errors={errors}
                     updateField={updateField}
                 />
-                <div className="flex justify-end pt-4 mt-6 border-t border-gray-200">
+                <div className="flex justify-end pt-4 mt-6 border-t border-border">
                     <Button
                         type="button"
                         variant="primary"
@@ -251,9 +254,9 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
             <section
                 role="region"
                 aria-labelledby="health-info-heading"
-                className={sectionClass}
+                className={editSectionClass}
             >
-                <h3 id="health-info-heading" className={headingClass}>
+                <h3 id="health-info-heading" className={editHeadingClass}>
                     Información de Salud
                 </h3>
                 <HealthInfo
@@ -261,7 +264,7 @@ export const ClientFormBase: React.FC<ClientFormBaseProps> = ({
                     errors={errors}
                     updateField={updateField}
                 />
-                <div className="flex justify-end pt-4 mt-6 border-t border-gray-200">
+                <div className="flex justify-end pt-4 mt-6 border-t border-border">
                     <Button
                         type="button"
                         variant="primary"

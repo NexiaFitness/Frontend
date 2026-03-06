@@ -60,11 +60,11 @@ const SOURCE_SEMANTIC_LABEL: Record<string, string> = {
     day: "Override",
 };
 
-/** Color de la etiqueta según origen */
+/** Color de la etiqueta según origen (tokens) */
 const SOURCE_BADGE_CLASSES: Record<string, string> = {
-    month: "bg-slate-100 text-slate-600 border-slate-300",
-    week: "bg-violet-100 text-violet-700 border-violet-300",
-    day: "bg-emerald-100 text-emerald-700 border-emerald-300",
+    month: "bg-muted text-muted-foreground border-border",
+    week: "bg-primary/10 text-primary border-primary/30",
+    day: "bg-success/10 text-success border-success/30",
 };
 
 /** Parsea session_date (YYYY-MM-DD) como fecha local para evitar desfase por timezone */
@@ -172,20 +172,20 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
     const emptyDays = Array.from({ length: firstDayWeekday }, (_, i) => i);
 
     return (
-        <div className="bg-white rounded-lg shadow p-4 md:p-6">
+        <div className="rounded-lg border border-border p-4 md:p-6">
             {/* Header con mes y navegación */}
             <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl md:text-2xl font-bold text-slate-800">
+                <h3 className="text-xl md:text-2xl font-bold text-foreground">
                     {MONTHS[month]} {year}
                 </h3>
                 <div className="flex items-center gap-2">
                     <button
                         onClick={handlePreviousMonth}
-                        className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                        className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         aria-label="Mes anterior"
                     >
                         <svg
-                            className="w-5 h-5 text-slate-600"
+                            className="w-5 h-5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -200,11 +200,11 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                     </button>
                     <button
                         onClick={handleNextMonth}
-                        className="p-2 rounded-lg hover:bg-slate-100 transition-colors"
+                        className="p-2 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
                         aria-label="Mes siguiente"
                     >
                         <svg
-                            className="w-5 h-5 text-slate-600"
+                            className="w-5 h-5"
                             fill="none"
                             stroke="currentColor"
                             viewBox="0 0 24 24"
@@ -225,7 +225,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 {DAYS_OF_WEEK.map((day) => (
                     <div
                         key={day}
-                        className="text-center text-xs md:text-sm font-semibold text-slate-600 py-2"
+                        className="text-center text-xs md:text-sm font-semibold text-muted-foreground py-2"
                     >
                         {day}
                     </div>
@@ -262,11 +262,11 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                                 items-center
                                 justify-start
                                 ${hasSessions
-                                    ? "bg-slate-50 border-slate-200 hover:bg-slate-100"
-                                    : "bg-white border-transparent hover:bg-slate-50"
+                                    ? "border-border bg-muted/30 hover:bg-muted/50"
+                                    : "border-transparent hover:bg-muted/20"
                                 }
                                 ${isCurrentDay
-                                    ? "border-blue-500 ring-2 ring-blue-200"
+                                    ? "border-primary ring-2 ring-primary/30"
                                     : ""
                                 }
                                 ${plan && !isTrainable ? "opacity-75" : ""}
@@ -279,10 +279,10 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                                     font-medium
                                     mb-1
                                     ${isCurrentDay
-                                        ? "text-blue-600 font-bold"
+                                        ? "text-primary font-bold"
                                         : hasSessions
-                                            ? "text-slate-700"
-                                            : "text-slate-500"
+                                            ? "text-foreground"
+                                            : "text-muted-foreground"
                                     }
                                 `}
                             >
@@ -291,7 +291,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
                             {/* Badge "Sesión" si hay sesiones */}
                             {hasSessions && (
-                                <span className="text-[10px] md:text-xs px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded-full font-medium">
+                                <span className="text-[10px] md:text-xs px-1.5 py-0.5 bg-primary/20 text-primary rounded-full font-medium border border-primary/30">
                                     Sesión
                                 </span>
                             )}
@@ -299,7 +299,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                             {/* Origen planificación: M/S/D + Heredado/Override */}
                             {sourceLabel && plan?.source && (
                                 <span
-                                    className={`text-[10px] font-medium px-1 py-0.5 rounded border ${SOURCE_BADGE_CLASSES[plan.source] ?? "bg-amber-100 text-amber-800 border-amber-300"}`}
+                                    className={`text-[10px] font-medium px-1 py-0.5 rounded border ${SOURCE_BADGE_CLASSES[plan.source] ?? "bg-warning/10 text-warning border-warning/30"}`}
                                     title={`${SOURCE_SEMANTIC_LABEL[plan.source] ?? plan.source} (${plan.source === "month" ? "Mes" : plan.source === "week" ? "Semana" : "Día"})`}
                                 >
                                     {sourceLabel}
@@ -308,7 +308,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
                             {/* Volumen/Intensidad compactos */}
                             {plan && (plan.resolved_volume != null || plan.resolved_intensity != null) && (
-                                <span className="text-[9px] text-gray-500 leading-tight">
+                                <span className="text-[9px] text-muted-foreground leading-tight">
                                     {plan.resolved_volume != null ? `V${Math.round(plan.resolved_volume * 100)}` : ""}
                                     {plan.resolved_volume != null && plan.resolved_intensity != null ? "/" : ""}
                                     {plan.resolved_intensity != null ? `I${Math.round(plan.resolved_intensity * 100)}` : ""}
@@ -317,7 +317,7 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
 
                             {/* Día no entrenable */}
                             {plan && !isTrainable && (
-                                <span className="text-[9px] font-medium text-red-500">
+                                <span className="text-[9px] font-medium text-destructive">
                                     No ent.
                                 </span>
                             )}
@@ -326,31 +326,31 @@ export const SessionCalendar: React.FC<SessionCalendarProps> = ({
                 })}
             </div>
 
-            <div className="mt-4 pt-4 border-t border-slate-200 flex flex-wrap items-center gap-4 text-xs md:text-sm text-slate-600">
+            <div className="mt-4 pt-4 border-t border-border flex flex-wrap items-center gap-4 text-xs md:text-sm text-muted-foreground">
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-slate-200" />
+                    <div className="w-4 h-4 rounded border border-border bg-muted/50" />
                     <span>Programada</span>
                 </div>
                 <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 rounded bg-green-100 border-2 border-green-400" />
+                    <div className="w-4 h-4 rounded border-2 border-success bg-success/20" />
                     <span>Completada</span>
                 </div>
                 {planningDays && planningDays.length > 0 && (
                     <>
                         <div className="flex items-center gap-2">
-                            <span className="px-1 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-300 font-medium">M</span>
+                            <span className="px-1 py-0.5 rounded bg-muted text-muted-foreground border border-border font-medium">M</span>
                             <span>Heredado (Mes)</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="px-1 py-0.5 rounded bg-violet-100 text-violet-700 border border-violet-300 font-medium">S</span>
+                            <span className="px-1 py-0.5 rounded bg-primary/10 text-primary border border-primary/30 font-medium">S</span>
                             <span>Override (Semana)</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300 font-medium">D</span>
+                            <span className="px-1 py-0.5 rounded bg-success/10 text-success border border-success/30 font-medium">D</span>
                             <span>Override (Día)</span>
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-red-500 font-medium text-xs">No ent.</span>
+                            <span className="text-destructive font-medium text-xs">No ent.</span>
                             <span>No entrenable</span>
                         </div>
                     </>

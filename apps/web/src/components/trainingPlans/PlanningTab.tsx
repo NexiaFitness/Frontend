@@ -4,13 +4,16 @@
  * UI: monthly baselines, overrides semanales/diarios, vista plan resuelto por día,
  * calendario del mes con origen M/S/D (Fase 3).
  * Lógica en shared (hooks); solo presentación aquí.
+ * Opcionalmente controlado por padre (month/week + callbacks) para estado en URL.
  *
  * @author Frontend Team
  * @since Plan de cargas Fase 1
  * @updated Fase 2 - overrides y resolve_day_plan; Fase 3 - calendario period-based
+ * @updated Fase 1 U3 - props opcionales month, week, onMonthChange, onWeekChange
+ * @updated Fase 3 (plan UX) - mostrar weekly_average_warning bajo formularios override
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useMonthlyPlan } from "@nexia/shared/hooks/training/useMonthlyPlan";
 import { useResolvedDay } from "@nexia/shared/hooks/training/useResolvedDay";
 import { usePlanningCalendar } from "@nexia/shared/hooks/training/usePlanningCalendar";
@@ -19,7 +22,11 @@ import {
     useDailyOverrides,
 } from "@nexia/shared/hooks/training/usePlanningOverrides";
 import { useTrainingPlanCoherence } from "@nexia/shared/hooks/training/useTrainingPlanCoherence";
-import type { QualityConfig } from "@nexia/shared/types/planningCargas";
+import type {
+    QualityConfig,
+    WeeklyOverride,
+    DailyOverride,
+} from "@nexia/shared/types/planningCargas";
 import type {
     PlanCoherenceMonthItem,
     PlanCoherenceWeekItem,
@@ -27,10 +34,17 @@ import type {
 } from "@nexia/shared/types/trainingAnalytics";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { SessionCalendar } from "@/components/sessionProgramming";
+import { formatMonth, parseMonthToDate } from "@/utils/planningUrl";
 
 interface PlanningTabProps {
     planId: number;
     clientId?: number | null;
+    /** Cuando se proporciona, el mes del calendario es controlado (p. ej. desde URL). */
+    month?: string;
+    /** Semana dentro del mes (1–4). Controlada cuando se usa con onWeekChange. */
+    week?: number;
+    onMonthChange?: (month: string) => void;
+    onWeekChange?: (week: number) => void;
 }
 
 function qualitiesToDisplayString(qualities: QualityConfig | null): string {
@@ -65,7 +79,14 @@ function CoherenceBadge({ percentage }: { percentage: number }) {
     );
 }
 
-export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) => {
+export const PlanningTab: React.FC<PlanningTabProps> = ({
+    planId,
+    clientId,
+    month: controlledMonth,
+    week: controlledWeek,
+    onMonthChange,
+    onWeekChange,
+}) => {
     const [selectedMonth, setSelectedMonth] = useState("");
     const [qualitiesText, setQualitiesText] = useState("");
     const [editingId, setEditingId] = useState<number | null>(null);
@@ -76,7 +97,28 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
     const [dailyDateText, setDailyDateText] = useState("");
     const [dailyQualitiesText, setDailyQualitiesText] = useState("");
     const [resolvedDate, setResolvedDate] = useState("");
-    const [calendarMonth, setCalendarMonth] = useState<Date>(() => new Date());
+    const [internalCalendarMonth, setInternalCalendarMonth] = useState<Date>(() => new Date());
+    /** Fase 3: aviso de media semanal tras crear override (informativo, no bloquea). */
+    const [weeklyOverrideWarning, setWeeklyOverrideWarning] = useState<string | null>(null);
+    const [dailyOverrideWarning, setDailyOverrideWarning] = useState<string | null>(null);
+
+    const isMonthControlled = controlledMonth != null && onMonthChange != null;
+    const calendarMonth = useMemo(
+        () =>
+            isMonthControlled ? parseMonthToDate(controlledMonth) : internalCalendarMonth,
+        [isMonthControlled, controlledMonth, internalCalendarMonth]
+    );
+
+    const handleCalendarMonthChange = useCallback(
+        (date: Date) => {
+            if (onMonthChange) {
+                onMonthChange(formatMonth(date));
+            } else {
+                setInternalCalendarMonth(date);
+            }
+        },
+        [onMonthChange]
+    );
 
     const calendarMonthStr = useMemo(
         () =>
@@ -240,6 +282,26 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                     <h3 className="mb-3 text-lg font-semibold text-gray-800">
                         Calendario de planificación
                     </h3>
+                    {controlledWeek != null && onWeekChange != null && (
+                        <div className="mb-3 flex items-center gap-2">
+                            <label htmlFor="planning-week-select" className="text-sm font-medium text-gray-700">
+                                Semana del mes
+                            </label>
+                            <select
+                                id="planning-week-select"
+                                value={controlledWeek}
+                                onChange={(e) => onWeekChange(Number(e.target.value))}
+                                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                                aria-label="Semana del mes (1-4)"
+                            >
+                                {[1, 2, 3, 4].map((w) => (
+                                    <option key={w} value={w}>
+                                        {w}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                     {calendarLoading ? (
                         <div className="flex justify-center py-8">
                             <LoadingSpinner size="md" />
@@ -248,7 +310,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         <SessionCalendar
                             sessions={[]}
                             currentMonth={calendarMonth}
-                            onMonthChange={setCalendarMonth}
+                            onMonthChange={handleCalendarMonthChange}
                             planningDays={planningCalendarData}
                         />
                     )}
@@ -459,12 +521,16 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         onSubmit={async (e) => {
                             e.preventDefault();
                             if (!monthlyPlanIdForWeekly || !weekIdText.trim()) return;
+                            setWeeklyOverrideWarning(null);
                             try {
-                                await createWeeklyOverride({
+                                const result: WeeklyOverride = await createWeeklyOverride({
                                     monthly_plan_id: monthlyPlanIdForWeekly,
                                     week_id: weekIdText.trim(),
                                     qualities: parseQualities(weeklyQualitiesText),
                                 });
+                                if (result?.weekly_average_warning) {
+                                    setWeeklyOverrideWarning(result.weekly_average_warning);
+                                }
                                 setWeekIdText("");
                                 setWeeklyQualitiesText("");
                             } catch (err) {
@@ -509,6 +575,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                             Añadir
                         </button>
                     </form>
+                    {weeklyOverrideWarning && (
+                        <Alert variant="warning" className="mb-3">
+                            {weeklyOverrideWarning}
+                        </Alert>
+                    )}
                     <ul className="space-y-2">
                         {weeklyOverrides.map((wo) => (
                             <li
@@ -559,12 +630,16 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                         onSubmit={async (e) => {
                             e.preventDefault();
                             if (!dailyDateText.trim()) return;
+                            setDailyOverrideWarning(null);
                             try {
-                                await createDailyOverride({
+                                const result: DailyOverride = await createDailyOverride({
                                     client_id: clientId,
                                     date: dailyDateText.trim(),
                                     qualities: parseQualities(dailyQualitiesText),
                                 });
+                                if (result?.weekly_average_warning) {
+                                    setDailyOverrideWarning(result.weekly_average_warning);
+                                }
                                 setDailyDateText("");
                                 setDailyQualitiesText("");
                             } catch (err) {
@@ -606,6 +681,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({ planId, clientId }) =>
                             Añadir
                         </button>
                     </form>
+                    {dailyOverrideWarning && (
+                        <Alert variant="warning" className="mb-3">
+                            {dailyOverrideWarning}
+                        </Alert>
+                    )}
                     <ul className="space-y-2">
                         {dailyOverrides.map((do_) => (
                             <li

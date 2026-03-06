@@ -98,7 +98,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 | Área | Severidad | Descripción |
 |------|-----------|-------------|
 | Auth hydration | Alta (resuelto) | Recarga/nueva pestaña: guard debe esperar hidratación (doc DIAGNOSTICO_E2E). |
-| Sidebar vs drawer | Alta (resuelto) | Dos menús con mismo texto → locator acotado a `complementary` (doc §2.9). |
+| Sidebar vs drawer / dos complementary | Alta (resuelto) | `data-testid="dashboard-nav-sidebar"` + `getDashboardNavSidebar(page)`; doc §2.9 y §2.10. |
 | Complete Profile | Media | Modal bloquea “Añadir cliente”; trainer sin perfil completo. |
 | getTrainingPlans | Media | Backend requiere `client_id` o `trainer_id`; sin trainer_id falla. |
 | Listas vacías | Media | ClientList, TrainingPlansPage, ExerciseList: estados empty con mensajes distintos. |
@@ -390,7 +390,7 @@ export const planFactory = {
 - **Fixtures por responsabilidad** (sin archivos monolíticos):
   - `e2e/fixtures/test-data.ts`: credenciales demo (`demoUser`, `demoPassword`) y factories (`createMinimalClientData`, `createMinimalPlanData`).
   - `e2e/fixtures/auth.ts`: `loginAsTrainer(page)` — deja al usuario en dashboard o lanza si falla el login.
-  - `e2e/fixtures/navigation.ts`: `sidebarNavigate`, `navigateToPlans`, `navigateToClients`, `navigateToExercises`, `navigateToAccount` (acotados a `role="complementary"`).
+  - `e2e/fixtures/navigation.ts`: `getDashboardNavSidebar(page)` (sidebar por `data-testid="dashboard-nav-sidebar"`), `getAddClientFromListButton(page)` (botón añadir cliente desde lista), `sidebarNavigate`, `navigateToPlans`, `navigateToClients`, `navigateToExercises`, `navigateToAccount`.
 - **Specs Auth:**
   - `e2e/auth/login-success.spec.ts`: usuario no autenticado hace login y llega al dashboard; assertion sidebar "Clientes" visible.
   - `e2e/auth/login-failure.spec.ts`: credenciales inválidas → mensaje de error visible (backend devuelve "Incorrect email or password" en 400; ver DIAGNOSTICO_E2E Error 3), permanece en `/auth/login`.

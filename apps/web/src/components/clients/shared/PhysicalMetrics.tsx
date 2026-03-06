@@ -15,6 +15,7 @@
 import React, { useMemo } from "react";
 import type { PhysicalMetricsStepProps } from "@nexia/shared/types/clientOnboarding";
 import { calculateBMI } from "@nexia/shared";
+import { inputClass, labelClass, errorClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
 
 export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({
     formData,
@@ -35,59 +36,51 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({
             {/* Sección: Datos Antropométricos */}
             <div>
                 <div className="flex items-center gap-3 mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Datos Antropométricos</h3>
-                    <div className="flex-1 h-0.5 bg-gray-900"></div>
+                    <h3 className={sectionHeadingClass}>Datos Antropométricos</h3>
+                    <div className={sectionDividerClass} />
                 </div>
-                
-                {/* Mediciones Básicas */}
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Peso */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Peso <span className="text-white">*</span></label>
+                        <label className={labelClass}>Peso <span className="text-destructive">*</span></label>
                         <div className="relative">
                             <input
                                 type="number"
                                 step="0.1"
                                 value={formData.peso ?? ""}
                                 onChange={(e) => updateField("peso", Number(e.target.value))}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent pr-12"
+                                className={`${inputClass} pr-12`}
                                 placeholder="Ej: 75.5"
                             />
-                            <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">kg</span>
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kg</span>
                         </div>
-                        {errors.peso && <p className="text-red-600 text-sm mt-1">{errors.peso}</p>}
+                        {errors.peso && <p className={errorClass}>{errors.peso}</p>}
                     </div>
-
-                    {/* Altura */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">Altura <span className="text-white">*</span></label>
+                        <label className={labelClass}>Altura <span className="text-destructive">*</span></label>
                         <div className="relative">
                             <input
                                 type="number"
                                 step="0.1"
                                 value={formData.altura ?? ""}
                                 onChange={(e) => updateField("altura", Number(e.target.value))}
-                                className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent pr-12"
+                                className={`${inputClass} pr-12`}
                                 placeholder="Ej: 175"
                             />
-                            <span className="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">cm</span>
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">cm</span>
                         </div>
-                        {errors.altura && <p className="text-red-600 text-sm mt-1">{errors.altura}</p>}
+                        {errors.altura && <p className={errorClass}>{errors.altura}</p>}
                     </div>
-
-                    {/* BMI Display */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1.5">IMC</label>
-                        <div className="bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 flex items-center justify-between pointer-events-none">
-                            <span className="text-gray-600 text-sm">Auto-calculado</span>
+                        <label className={labelClass}>IMC</label>
+                        <div className="rounded-lg border border-border bg-muted/30 px-3 py-2 flex items-center justify-between pointer-events-none text-sm text-foreground">
+                            <span className="text-muted-foreground">Auto-calculado</span>
                             {bmi !== null ? (
-                                <span className="text-gray-900">
-                                    {bmi.toFixed(1)}
-                                </span>
+                                <span>{bmi.toFixed(1)}</span>
                             ) : (
-                                <span className="text-gray-400 text-sm">-</span>
+                                <span className="text-muted-foreground">—</span>
                             )}
-                            <svg className="w-5 h-5 text-gray-400 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-muted-foreground ml-2 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>

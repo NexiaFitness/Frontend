@@ -21,10 +21,10 @@ test.describe("Navbar — Vista dashboard", () => {
         const nav = page.getByRole("navigation").first();
         await expect(nav).toBeVisible({ timeout: 10_000 });
 
-        const sidebar = page.getByRole("complementary");
+        const sidebar = page.getByTestId("dashboard-nav-sidebar");
         await expect(sidebar).toBeVisible({ timeout: 10_000 });
 
-        const clientsLink = page.getByRole("complementary").getByRole("link", { name: /clientes/i });
+        const clientsLink = sidebar.getByRole("link", { name: /clientes/i });
         await expect(clientsLink).toBeVisible();
     });
 });

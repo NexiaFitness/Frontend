@@ -18,7 +18,7 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients, navigateToScheduling } from "../fixtures/navigation";
+import { navigateToClients, navigateToScheduling, getAddClientFromListButton } from "../fixtures/navigation";
 import { createMinimalClientData } from "../fixtures/test-data";
 
 const TOKEN_KEY = "nexia_token";
@@ -95,7 +95,7 @@ test.describe("Journey — Schedule session (scheduling → create scheduled ses
 
     // 1) Crear cliente (onboarding mínimo) para no depender de seed
     await navigateToClients(page);
-    await page.getByRole("button", { name: /agregar nuevo cliente/i }).click();
+    await getAddClientFromListButton(page).click();
     await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/, {
       timeout: 10_000,
     });

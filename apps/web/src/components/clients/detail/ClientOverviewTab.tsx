@@ -51,6 +51,10 @@ interface ClientOverviewTabProps {
     clientId: number;
     trainingPlans?: TrainingPlan[];
     isLoadingPlans?: boolean;
+    /** Fase 1.1: abrir modal crear plan desde cliente. */
+    onOpenCreatePlan?: () => void;
+    /** Fase 1.1: abrir flujo Usar plantilla. */
+    onOpenUseTemplate?: () => void;
 }
 
 export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
@@ -58,6 +62,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     clientId,
     trainingPlans = [],
     isLoadingPlans = false,
+    onOpenCreatePlan,
+    onOpenUseTemplate,
 }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -301,6 +307,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 clientId={clientId}
                 trainingPlans={trainingPlans}
                 isLoading={isLoadingPlans}
+                onOpenCreatePlan={onOpenCreatePlan}
+                onOpenUseTemplate={onOpenUseTemplate}
             />
 
             {/* SECCIÓN HÁBITOS (MVP DEC-02 — resumen en Resumen) */}

@@ -116,7 +116,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             : "No se pudieron cargar los datos";
 
     const handleAddSession = () => {
-        navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`);
+        navigate(`/dashboard/clients/${clientId}/sessions/new`);
     };
 
     const handleScheduleAppointment = () => {
@@ -187,12 +187,12 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     }
 
     return (
-        <div className="space-y-6 p-4 sm:p-6">
+        <div className="space-y-8">
             <div>
-                <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                <h2 className="text-lg font-semibold text-foreground">
                     Sesiones
-                </h1>
-                <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                </h2>
+                <p className="text-sm text-muted-foreground mt-0.5">
                     Sesiones de entrenamiento y citas agendadas del cliente
                 </p>
             </div>
@@ -207,10 +207,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             </div>
 
             {/* Calendario de sesiones de entrenamiento */}
-            <section className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+            <section className="rounded-xl border border-border p-4 sm:p-6">
+                <h3 className="text-base font-semibold text-foreground mb-4">
                     Sesiones de entrenamiento
-                </h2>
+                </h3>
                 <SessionCalendar
                     sessions={trainingSessions}
                     currentMonth={currentMonth}
@@ -220,10 +220,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             </section>
 
             {/* Citas agendadas — lista ordenada por fecha, sin calendario */}
-            <section className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+            <section className="rounded-xl border border-border p-4 sm:p-6">
+                <h3 className="text-base font-semibold text-foreground mb-4">
                     Citas agendadas
-                </h2>
+                </h3>
                 {scheduledSessions.length === 0 ? (
                     <p className="text-sm text-muted-foreground italic py-4">
                         No hay citas agendadas para este mes.
@@ -245,7 +245,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                     <button
                                         type="button"
                                         onClick={() => handleSessionClickScheduled(s)}
-                                        className="w-full text-left border border-border rounded-lg p-4 hover:border-primary hover:bg-primary/5 hover:shadow-sm transition-all focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                                        className="w-full text-left rounded-lg border border-border bg-transparent p-4 transition-colors hover:border-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
                                     >
                                         <div className="flex items-start justify-between gap-2">
                                             <div className="min-w-0 flex-1">
@@ -273,10 +273,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             </section>
 
             {/* Lista cronológica con filtros */}
-            <section className="bg-card border border-border rounded-xl shadow-sm p-4 sm:p-6">
-                <h2 className="text-lg font-semibold text-foreground mb-4">
+            <section className="rounded-xl border border-border p-4 sm:p-6">
+                <h3 className="text-base font-semibold text-foreground mb-4">
                     Lista cronológica
-                </h2>
+                </h3>
 
                 <div className="flex flex-wrap gap-2 mb-4">
                     <span className="text-sm font-medium text-muted-foreground">Tipo:</span>
@@ -290,10 +290,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                         <button
                             key={value}
                             onClick={() => setListFilterType(value)}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-lg border-2 transition-colors ${
+                            className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
                                 listFilterType === value
-                                    ? "border-[#4A67B3] text-[#4A67B3] bg-[#4A67B3]/5"
-                                    : "border-border text-muted-foreground hover:border-input"
+                                    ? "border-primary text-primary bg-primary/10"
+                                    : "border-border text-muted-foreground hover:border-input hover:text-foreground"
                             }`}
                         >
                             {label}
@@ -315,10 +315,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                             <button
                                 key={value}
                                 onClick={() => setSessionStatusFilter(value)}
-                                className={`px-3 py-1.5 text-sm font-medium rounded-lg border-2 transition-colors ${
+                                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
                                     sessionStatusFilter === value
-                                        ? "border-[#4A67B3] text-[#4A67B3] bg-[#4A67B3]/5"
-                                        : "border-border text-muted-foreground hover:border-input"
+                                        ? "border-primary text-primary bg-primary/10"
+                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
                                 }`}
                             >
                                 {label}
@@ -348,7 +348,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                             return (
                                 <li
                                     key={`a-${s.id}`}
-                                    className="border border-border rounded-lg p-4 hover:border-primary hover:shadow-md transition-shadow cursor-pointer"
+                                    className="rounded-lg border border-border p-4 transition-colors hover:border-primary hover:bg-primary/5 cursor-pointer"
                                     onClick={() => handleSessionClickScheduled(s)}
                                     onKeyDown={(e) => {
                                         if (e.key === "Enter" || e.key === " ") {

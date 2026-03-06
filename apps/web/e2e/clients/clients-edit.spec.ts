@@ -9,7 +9,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients } from "../fixtures/navigation";
+import { navigateToClients, getAddClientFromListButton } from "../fixtures/navigation";
 import { createMinimalClientData } from "../fixtures/test-data";
 
 test.describe("Clients — Edit", () => {
@@ -17,9 +17,7 @@ test.describe("Clients — Edit", () => {
     await loginAsTrainer(page);
     await navigateToClients(page);
 
-    await page
-      .getByRole("button", { name: /agregar nuevo cliente/i })
-      .click();
+    await getAddClientFromListButton(page).click();
 
     // Navega a onboarding (la app solo bloquea si, tras cargar, el perfil está incompleto).
     await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/, {

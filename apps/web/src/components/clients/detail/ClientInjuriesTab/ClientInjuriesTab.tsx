@@ -64,7 +64,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                         onClick={() => setIsModalOpen(true)}
                         className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
                     >
-                        ➕ Registrar lesión
+                        Registrar lesión
                     </button>
                 </div>
             </div>
@@ -80,10 +80,6 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                         injuries={activeInjuries}
                         isLoading={isLoadingActive}
                         clientId={clientId}
-                        onAddClick={() => {
-                            setSelectedInjury(null);
-                            setIsModalOpen(true);
-                        }}
                         onEditClick={(injury) => {
                             setSelectedInjury(injury);
                             setIsModalOpen(true);
@@ -110,9 +106,9 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                 injury={selectedInjury}
             />
 
-            {/* Empty global fallback si no hay datos en absoluto */}
+            {/* Empty global fallback si no hay datos en absoluto — mismo estilo que banners de la app */}
             {!isLoading && !hasActiveInjuries && historyInjuries.length === 0 && (
-                <Alert variant="info">
+                <Alert variant="warning">
                     Aún no hay lesiones registradas para este cliente.
                 </Alert>
             )}

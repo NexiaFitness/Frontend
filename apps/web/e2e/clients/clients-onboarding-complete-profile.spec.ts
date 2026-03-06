@@ -10,7 +10,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients } from "../fixtures/navigation";
+import { navigateToClients, getAddClientFromListButton } from "../fixtures/navigation";
 
 /** Perfil trainer con campos obligatorios vacíos (useCompleteProfileModal considera incompleto). */
 const incompleteTrainerProfile = {
@@ -52,7 +52,7 @@ test.describe("Clients — Onboarding complete profile block", () => {
       page.getByRole("heading", { name: /clientes/i })
     ).toBeVisible({ timeout: 10_000 });
 
-    await page.getByRole("button", { name: /agregar nuevo cliente/i }).click();
+    await getAddClientFromListButton(page).click();
 
     const dialog = page.getByRole("dialog", { name: /completa tu perfil profesional/i });
     await expect(dialog).toBeVisible({ timeout: 8_000 });

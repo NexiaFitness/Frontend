@@ -9,5 +9,7 @@
 
 export { Button } from "./Button";
 export { LogoutButton } from "./LogoutButton";
+export { SegmentButton } from "./SegmentButton";
 
 export type { ButtonVariant, ButtonSize } from "./Button";
+export type { SegmentButtonSize } from "./SegmentButton";

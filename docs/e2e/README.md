@@ -40,3 +40,5 @@ npx playwright test e2e/edge --reporter=list
 ```
 
 Requisitos: backend en `VITE_API_BASE_URL`, cuenta demo con perfil trainer (`backend/scripts/seed_demo_user.py`). Ver AUDITORIA_E2E_SUITE.md §4.3 y CLAUDE.md del proyecto.
+
+**Fixtures de navegación** (`e2e/fixtures/navigation.ts`): `getDashboardNavSidebar(page)` (sidebar por `data-testid="dashboard-nav-sidebar"`), `getAddClientFromListButton(page)` (botón único para abrir onboarding desde lista de clientes), `sidebarNavigate`, `navigateToClients`, `navigateToPlans`, etc. Ver DIAGNOSTICO_E2E.md §2.10 y §2.11.

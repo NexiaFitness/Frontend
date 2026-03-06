@@ -3,11 +3,13 @@
  *
  * Contexto:
  * - Permite seleccionar cliente y fechas para asignar una plantilla
- * - Validación de fechas
- * - Feedback visual con loading y errores
+ * - Si clientId (y opcionalmente clientName) se pasan, el cliente queda fijo y se oculta el selector;
+ *   se muestra "Asignando a: [Nombre del cliente]" en texto plano.
+ * - Validación de fechas. Feedback visual con loading y errores.
  *
  * @author Frontend Team
  * @since v5.0.0
+ * @updated v6.4.0 - Fase 1.1: prop clientId opcional para uso desde ficha cliente ("Usar plantilla").
  */
 
 import React, { useState, useEffect } from "react";
@@ -16,7 +18,7 @@ import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { Alert } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
-import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainerClientsQuery, useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { SelectOption } from "@/components/ui/forms";
 
@@ -26,6 +28,10 @@ interface AssignTemplateModalProps {
     templateId: number | null;
     templateName?: string;
     onSuccess?: () => void;
+    /** Si se pasa, el cliente queda fijo; se oculta el selector y se muestra "Asignando a: [Nombre]". */
+    clientId?: number;
+    /** Nombre del cliente cuando clientId está fijado (si no se pasa, se obtiene por API). */
+    clientName?: string;
 }
 
 export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
@@ -34,12 +40,22 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     templateId,
     templateName,
     onSuccess,
+    clientId: fixedClientId,
+    clientName: fixedClientName,
 }) => {
     // Obtener trainer_id
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
     const trainerId = trainerProfile?.id;
 
-    // Obtener clientes
+    // Nombre del cliente cuando clientId está fijado (prop o API)
+    const { data: clientData } = useGetClientQuery(fixedClientId ?? 0, {
+        skip: !fixedClientId || !open,
+    });
+    const resolvedClientName =
+        fixedClientName ??
+        (clientData ? `${clientData.nombre} ${clientData.apellidos}` : null);
+
+    // Obtener clientes (solo si no hay cliente fijo)
     const { data: clientsData } = useGetTrainerClientsQuery(
         {
             trainerId: trainerId!,
@@ -48,7 +64,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
             per_page: 50,
         },
         {
-            skip: !trainerId || !open,
+            skip: !trainerId || !open || !!fixedClientId,
         }
     );
 
@@ -67,18 +83,18 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
 
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Reset form cuando se abre/cierra
+    // Reset form cuando se abre/cierra; si hay clientId fijo, prellenar client_id
     useEffect(() => {
         if (open) {
             setFormData({
-                client_id: "",
+                client_id: fixedClientId != null ? String(fixedClientId) : "",
                 start_date: "",
                 end_date: "",
                 name: templateName || "",
             });
             setErrors({});
         }
-    }, [open, templateName]);
+    }, [open, templateName, fixedClientId]);
 
     // Validación
     const validate = (): boolean => {
@@ -109,9 +125,10 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         if (!validate() || !templateId || !trainerId) return;
 
         try {
+            const clientIdToUse = fixedClientId ?? Number(formData.client_id);
             await assignTemplate({
                 template_id: templateId,
-                client_id: Number(formData.client_id),
+                client_id: clientIdToUse,
                 start_date: formData.start_date,
                 end_date: formData.end_date,
                 name: formData.name || undefined,
@@ -168,22 +185,33 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
 
                 {/* Formulario */}
                 <div className="space-y-4">
-                    {/* Cliente */}
-                    <FormSelect
-                        label="Cliente"
-                        isRequired
-                        options={clientOptions}
-                        placeholder="Selecciona un cliente"
-                        value={formData.client_id}
-                        onChange={(e) => {
-                            setFormData((prev) => ({ ...prev, client_id: e.target.value }));
-                            if (errors.client_id) {
-                                setErrors((prev) => ({ ...prev, client_id: "" }));
-                            }
-                        }}
-                        error={errors.client_id}
-                        disabled={clients.length === 0 || isAssigning}
-                    />
+                    {/* Cliente: selector o texto fijo "Asignando a: [Nombre]" */}
+                    {fixedClientId != null ? (
+                        <div>
+                            <span className="block text-sm font-medium text-foreground mb-1.5">
+                                Cliente
+                            </span>
+                            <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
+                                Asignando a: {resolvedClientName ?? `Cliente #${fixedClientId}`}
+                            </p>
+                        </div>
+                    ) : (
+                        <FormSelect
+                            label="Cliente"
+                            isRequired
+                            options={clientOptions}
+                            placeholder="Selecciona un cliente"
+                            value={formData.client_id}
+                            onChange={(e) => {
+                                setFormData((prev) => ({ ...prev, client_id: e.target.value }));
+                                if (errors.client_id) {
+                                    setErrors((prev) => ({ ...prev, client_id: "" }));
+                                }
+                            }}
+                            error={errors.client_id}
+                            disabled={clients.length === 0 || isAssigning}
+                        />
+                    )}
 
                     {/* Nombre personalizado (opcional) */}
                     <div>
@@ -257,7 +285,9 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                         variant="primary"
                         onClick={handleSubmit}
                         isLoading={isAssigning}
-                        disabled={clients.length === 0 || isAssigning}
+                        disabled={
+                            (fixedClientId == null && clients.length === 0) || isAssigning
+                        }
                         className="flex-1 sm:flex-none"
                     >
                         {isAssigning ? "Asignando..." : "Asignar Plantilla"}

@@ -168,6 +168,52 @@ export const deleteDailyOverrideHandler = http.delete(
     }
 );
 
+// ----- training-plans/active-by-client/:clientId (Fase 1 U3) -----
+export const getActivePlanByClientHandler = http.get(
+    "*/training-plans/active-by-client/:clientId",
+    async ({ params }) => {
+        const clientId = Number(params.clientId);
+        if (!clientId) return HttpResponse.json({ detail: "Invalid clientId" }, { status: 400 });
+        return HttpResponse.json(
+            { detail: "No active training plan found for this client" },
+            { status: 404 }
+        );
+    }
+);
+
+/** Devuelve 200 con un plan activo (para tests que necesitan "tiene plan"). */
+export const getActivePlanByClientWithPlanHandler = (plan: {
+    id: number;
+    name?: string;
+    goal?: string;
+    [key: string]: unknown;
+}) =>
+    http.get("*/training-plans/active-by-client/:clientId", async ({ params }) => {
+        const clientId = Number(params.clientId);
+        if (!clientId) return HttpResponse.json({ detail: "Invalid clientId" }, { status: 400 });
+        return HttpResponse.json(
+            {
+                ...plan,
+                id: plan.id,
+                trainer_id: 1,
+                client_id: clientId,
+                name: plan.name ?? "Plan Test",
+                description: null,
+                start_date: "2026-01-01",
+                end_date: "2026-12-31",
+                goal: plan.goal ?? "Strength",
+                status: "active",
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                instance_id: 1,
+                display_name: plan.name ?? "Plan Test",
+                display_goal: plan.goal ?? "Strength",
+            },
+            { status: 200 }
+        );
+    });
+
 // ----- training-plans/:planId/coherence -----
 export const getTrainingPlanCoherenceHandler = http.get(
     "*/training-plans/:planId/coherence",
@@ -195,6 +241,7 @@ export const getTrainingPlanAlignmentHandler = http.get(
 );
 
 export const planningHandlers = [
+    getActivePlanByClientHandler,
     getMonthlyPlansHandler,
     getMonthlyPlanHandler,
     createMonthlyPlanHandler,

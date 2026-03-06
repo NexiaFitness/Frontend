@@ -13,13 +13,14 @@
  * @updated Fase 6 - Tab Planificación (planificación client-only o por plan asociado).
  */
 
-import React, { Suspense, lazy } from "react";
+import React, { Suspense, lazy, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useClientDetail } from "@nexia/shared/hooks/clients/useClientDetail";
+import { useGetActivePlanByClientQuery } from "@nexia/shared/api/trainingPlansApi";
 import { TabsBar } from "@/components/ui/tabs";
 // Tabs components - estáticos (carga inmediata)
 import { ClientHeader } from "@/components/clients/detail/ClientHeader";
@@ -29,6 +30,9 @@ import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
+import { CreatePlanModal } from "@/components/clients/detail/modals/CreatePlanModal";
+import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
+import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
 const ClientProgressTab = lazy(() => 
@@ -93,6 +97,53 @@ export const ClientDetail: React.FC = () => {
         includePlans: true,
         includeSessions: true,
     });
+
+    // Fase 4.1: plan activo para CTA "Planificar" (si hay plan → tab Planificación; si no → modal crear plan)
+    const { data: activePlan } = useGetActivePlanByClientQuery(clientId, {
+        skip: !clientId || clientId <= 0,
+    });
+    const hasActivePlan = activePlan != null && activePlan.id != null;
+
+    const handlePlanificar = useCallback(() => {
+        if (hasActivePlan) {
+            setActiveTab("planning");
+        } else {
+            setCreatePlanModalOpen(true);
+        }
+    }, [hasActivePlan, setActiveTab]);
+
+    // Fase 1.1: modales de planificación desde cliente (sin navegar a training-plans)
+    const [createPlanModalOpen, setCreatePlanModalOpen] = useState(false);
+    const [selectTemplateModalOpen, setSelectTemplateModalOpen] = useState(false);
+    const [assignTemplateModalOpen, setAssignTemplateModalOpen] = useState(false);
+    const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
+    const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
+
+    const handleCreatePlanSuccess = useCallback(() => {
+        refetchAll();
+        setActiveTab("planning");
+    }, [refetchAll, setActiveTab]);
+
+    const handleOpenUseTemplate = useCallback(() => {
+        setSelectTemplateModalOpen(true);
+    }, []);
+
+    const handleTemplateSelected = useCallback((templateId: number, templateName: string) => {
+        setSelectedTemplateId(templateId);
+        setSelectedTemplateName(templateName);
+        setSelectTemplateModalOpen(false);
+        setAssignTemplateModalOpen(true);
+    }, []);
+
+    const handleAssignTemplateSuccess = useCallback(() => {
+        setAssignTemplateModalOpen(false);
+        setSelectedTemplateId(null);
+        setSelectedTemplateName("");
+        refetchAll();
+        setActiveTab("planning");
+    }, [refetchAll, setActiveTab]);
+
+    const clientName = client ? `${client.nombre} ${client.apellidos}` : undefined;
 
     // Breadcrumbs jerárquicos
     const breadcrumbItems = [
@@ -187,6 +238,8 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
+                        onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
+                        onOpenUseTemplate={handleOpenUseTemplate}
                     />
                 );
             case "sessions":
@@ -212,6 +265,7 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
+                        onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
                     />
                 );
             case "injuries":
@@ -228,6 +282,9 @@ export const ClientDetail: React.FC = () => {
                 clientId={clientId}
                 onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                 breadcrumbItems={breadcrumbItems}
+                hasActivePlan={hasActivePlan}
+                onPlanificar={handlePlanificar}
+                onOpenUseTemplate={handleOpenUseTemplate}
             />
 
             {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}
@@ -242,6 +299,32 @@ export const ClientDetail: React.FC = () => {
             <div className="pt-2 pb-8">
                 {renderTabContent()}
             </div>
+
+            <CreatePlanModal
+                open={createPlanModalOpen}
+                onClose={() => setCreatePlanModalOpen(false)}
+                clientId={clientId}
+                clientName={clientName}
+                onSuccess={handleCreatePlanSuccess}
+            />
+            <SelectTemplateModal
+                open={selectTemplateModalOpen}
+                onClose={() => setSelectTemplateModalOpen(false)}
+                onSelect={handleTemplateSelected}
+            />
+            <AssignTemplateModal
+                open={assignTemplateModalOpen}
+                onClose={() => {
+                    setAssignTemplateModalOpen(false);
+                    setSelectedTemplateId(null);
+                    setSelectedTemplateName("");
+                }}
+                templateId={selectedTemplateId}
+                templateName={selectedTemplateName}
+                clientId={clientId}
+                clientName={clientName}
+                onSuccess={handleAssignTemplateSuccess}
+            />
         </div>
     );
 };

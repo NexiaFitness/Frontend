@@ -9,6 +9,7 @@
 ```
 docs/
 ├── README.md          (estás aquí — índice general)
+├── design/            Sistema de diseño: tokens, tipografía, componentes reutilizables
 ├── e2e/               Tests E2E (Playwright), auditoría, diagnóstico, fallos
 └── scheduling/        Planificación de sesiones agendadas, refactors
 ```
@@ -17,7 +18,19 @@ docs/
 
 ## Secciones
 
-### 1. E2E (tests end-to-end)
+### 1. Sistema de diseño (Design system)
+
+**Carpeta:** [design/](./design/)
+
+Fuente única de verdad para consistencia visual en `apps/web`: tokens de color, tipografía, espaciado, bordes y sombras; tipografía centralizada; estilos de formulario; inventario de componentes UI reutilizables; reglas (no inline, no valores hardcodeados) y checklist previa a implementar cualquier componente.
+
+| Documento | Descripción |
+|-----------|-------------|
+| [SISTEMA_DISENO.md](./design/SISTEMA_DISENO.md) | Sistema de diseño: vistas de referencia, tokens, tipografía, formularios, componentes UI, normas y checklist. Obligatorio consultar antes de añadir modales, CTAs, menús o formularios nuevos. |
+
+---
+
+### 2. E2E (tests end-to-end)
 
 **Carpeta:** [e2e/](./e2e/)
 
@@ -33,7 +46,7 @@ Documentación de la suite E2E con Playwright: auditoría, inventario de specs, 
 
 ---
 
-### 2. Scheduling (sesiones agendadas)
+### 3. Scheduling (sesiones agendadas)
 
 **Carpeta:** [scheduling/](./scheduling/)
 
@@ -49,6 +62,7 @@ Planes de diseño y refactor del flujo de sesiones agendadas (modal → vista de
 
 | Necesito… | Ir a |
 |-----------|------|
+| Tokens, tipografía, componentes UI y reglas de diseño | [design/SISTEMA_DISENO.md](./design/SISTEMA_DISENO.md) |
 | Entender la suite E2E y qué tests hay | [e2e/AUDITORIA_E2E_SUITE.md](./e2e/AUDITORIA_E2E_SUITE.md) |
 | Resolver un fallo E2E (causa raíz) | [e2e/DIAGNOSTICO_E2E.md](./e2e/DIAGNOSTICO_E2E.md) y [e2e/E2E_FALLOS_SUITE_ANALISIS.md](./e2e/E2E_FALLOS_SUITE_ANALISIS.md) |
 | Diseño de scheduling (vista nueva sesión) | [scheduling/PLAN_REFACTORIZACION_SCHEDULING_SESSION.md](./scheduling/PLAN_REFACTORIZACION_SCHEDULING_SESSION.md) |

@@ -69,6 +69,16 @@ export interface TrainingPlan {
     is_active: boolean;
 }
 
+/**
+ * ActivePlanByClientOut — GET /training-plans/active-by-client/{client_id}
+ * Plan activo del cliente (resuelto por Instance). Incluye display desde Instance si existe.
+ */
+export interface ActivePlanByClientOut extends TrainingPlan {
+    instance_id?: number | null;
+    display_name: string;
+    display_goal: string;
+}
+
 // ========================================
 // TRAINING PLAN REQUEST TYPES
 // ========================================

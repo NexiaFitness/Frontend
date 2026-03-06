@@ -3,11 +3,11 @@
 Professional fitness training management platform with React + TypeScript monorepo architecture.
 
 ## Status
-- **Branch**: `develop`
+- **Branch**: `develop` (UX/UI work en `feature/ux-ui-design`)
 - **Frontend**: ✅ Complete with responsive design + unified client forms architecture
-- **UX Sparkle (Fase 7):** Ejercicios, reportes, account, testing y componentes home migrados a design tokens (`SPEC_00_DESIGN_TOKENS.md`). `utils/backgrounds.ts` eliminado; `utils/typography.ts` y `utils/buttonStyles.ts` siguen en uso en auth y clientes.
+- **UX Sparkle (Fase 7):** Ejercicios, reportes, account, testing y componentes home migrados a design tokens (`SPEC_00_DESIGN_TOKENS.md`). Vista Clientes (VISTA_CLIENTES_SPEC): lista/grid, "Nuevo cliente" / "Añadir tu primer cliente", empty state y sidebar con `data-testid="dashboard-nav-sidebar"` para E2E.
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
-- **Testing**: ✅ Comprehensive MSW integration (224/224 passing)
+- **Testing**: ✅ MSW (224/224); **E2E Playwright 49 tests** (auth, clients, plans, exercises, journeys, edge). Fixtures: `getDashboardNavSidebar`, `getAddClientFromListButton`, `navigateToClients`; ver `frontend/docs/e2e/`.
 - **Version**: v5.5.0
 - **Client Detail (Resumen)**: Tab Overview incluye sección **Satisfacción** — último rating del cliente y acción "Registrar valoración" (UX refactor Ola 2, TICK-C02).
 
@@ -775,6 +775,8 @@ import { USER_ROLES } from "@nexia/shared/config/constants";
 - **E2E (Playwright)**: See below
 
 ## E2E (Playwright) — Fase 7.3
+**Suite actual:** 49 tests (auth, clients, plans, exercises, journeys, edge). Navegación vía `e2e/fixtures/navigation.ts` (`getDashboardNavSidebar`, `getAddClientFromListButton`, `sidebarNavigate`). Diagnóstico y causas raíz: `frontend/docs/e2e/DIAGNOSTICO_E2E.md`.
+
 Requisitos para ejecutar E2E contra backend y frontend reales:
 
 - **Backend**: Levantado en `http://127.0.0.1:8000` (o la URL que use `VITE_API_BASE_URL` en el frontend).

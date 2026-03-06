@@ -19,7 +19,7 @@ test.describe("Sidebar — Vista desktop", () => {
 
         await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
 
-        const sidebar = page.getByRole("complementary");
+        const sidebar = page.getByTestId("dashboard-nav-sidebar");
         await expect(sidebar).toBeVisible({ timeout: 10_000 });
 
         const clientsLink = sidebar.getByRole("link", { name: /clientes/i });

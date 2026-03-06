@@ -15,6 +15,7 @@ import type {
     TrainingSessionUpdate,
     SessionExercise,
     SessionExerciseCreate,
+    SessionCoherence,
 } from '../types/trainingSessions';
 import type {
     SessionRecommendationsResponse,
@@ -83,6 +84,17 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 }
                 return tags;
             },
+        }),
+
+        /**
+         * GET /training-sessions/{session_id}/coherence
+         * Validación de coherencia con el día planificado (fallback si POST no incluye coherence).
+         */
+        getSessionCoherence: builder.query<SessionCoherence, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/coherence`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: sessionId },
+            ],
         }),
 
         /**
@@ -217,6 +229,7 @@ export const {
     useGetSessionRecommendationsQuery,
     useGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
+    useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,

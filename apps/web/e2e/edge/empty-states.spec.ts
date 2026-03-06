@@ -34,9 +34,9 @@ test.describe("Edge — Empty states", () => {
 
     await navigateToClients(page);
 
-    // ClientList muestra "No hay clientes" cuando la API devuelve lista vacía (sin búsqueda)
+    // ClientList: empty state "Aún no tienes clientes registrados"; widget dashboard: "No tienes clientes aún"
     await expect(
-      page.getByText(/no hay clientes/i)
+      page.getByText(/aún no tienes clientes registrados|no tienes clientes aún/i)
     ).toBeVisible({ timeout: 15_000 });
   });
 

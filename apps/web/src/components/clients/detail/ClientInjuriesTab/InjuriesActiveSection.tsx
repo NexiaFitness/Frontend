@@ -22,7 +22,6 @@ interface InjuriesActiveSectionProps {
     injuries: InjuryWithDetails[];
     isLoading: boolean;
     clientId: number;
-    onAddClick: () => void;
     onEditClick: (injury: InjuryWithDetails) => void;
 }
 
@@ -47,7 +46,6 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
     injuries,
     isLoading,
     clientId,
-    onAddClick,
     onEditClick,
 }) => {
     const [resolveModal, setResolveModal] = useState<number | null>(null);
@@ -96,17 +94,9 @@ export const InjuriesActiveSection: React.FC<InjuriesActiveSectionProps> = ({
 
     if (!injuries || injuries.length === 0) {
         return (
-            <div className="bg-card border border-border rounded-lg shadow p-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                    <h3 className="text-lg font-semibold text-foreground">Lesiones activas</h3>
-                    <p className="text-muted-foreground mt-1">Sin lesiones activas registradas.</p>
-                </div>
-                <button
-                    onClick={onAddClick}
-                    className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:bg-primary/90 transition-colors"
-                >
-                    Registrar lesión
-                </button>
+            <div className="rounded-lg border border-border p-6">
+                <h3 className="text-lg font-semibold text-foreground">Lesiones activas</h3>
+                <p className="text-muted-foreground mt-1">Sin lesiones activas registradas.</p>
             </div>
         );
     }

@@ -128,6 +128,25 @@ Tras el fix de §2.8, sidebar y drawer tienen ambos links semánticos con el mis
 - **Locator en el spec:** `page.getByRole("complementary").getByRole("link", { name: /planes de entrenamiento/i })`. Se mantiene el regex `/planes de entrenamiento/i` para el nombre del enlace.
 - **Documentación en código:** El comentario en `planning-flow.spec.ts` explica que se hace click en el sidebar (complementary), no en el drawer, para evitar la violación de strict mode.
 
+### 2.10 Dos `complementary` en dashboard (sidebar nav + columna ClientList) — VISTA_CLIENTES_SPEC
+
+En el dashboard hay **dos** `<aside>` con rol implícito `complementary`: (1) el sidebar de navegación (DashboardSidebar / TrainerSideMenu), (2) la columna derecha de ClientList ("Mis clientes", "Facturación"). Cualquier locator `getByRole("complementary")` sin acotar provoca strict mode.
+
+- **Solución (app):** En el sidebar de navegación del dashboard se añadió `data-testid="dashboard-nav-sidebar"` (p. ej. en `DashboardSidebar.tsx` o equivalente). Así el sidebar de navegación queda identificado de forma estable.
+- **Solución (tests):** En `e2e/fixtures/navigation.ts`: `getDashboardNavSidebar(page)` devuelve `page.getByTestId("dashboard-nav-sidebar")`. Todas las navegaciones desde el sidebar usan ese helper (`sidebarNavigate`, `navigateToClients`, etc.). Logout y specs de navbar/sidebar usan `getDashboardNavSidebar(page)` para hover/click en el menú lateral. No se usa `getByRole("complementary")` en los specs.
+
+### 2.11 Dos botones "Añadir cliente" en ClientList (header + empty state) — strict mode
+
+En la vista Clientes (`ClientList.tsx`) pueden coexistir dos botones que abren el onboarding: el del **header** ("Nuevo cliente") y el del **empty state** ("Añadir tu primer cliente"). Un locator `getByRole('button', { name: /nuevo cliente|añadir tu primer cliente/i })` resuelve a 2 elementos y falla en strict mode.
+
+- **Solución (tests):** En `e2e/fixtures/navigation.ts` se exporta `getAddClientFromListButton(page)`, que devuelve `page.getByRole("button", { name: ADD_CLIENT_BUTTON_NAME }).first()`. Todos los specs que abren el onboarding desde la lista de clientes usan `getAddClientFromListButton(page).click()`; no usan el regex directamente. Así un solo punto de verdad y ningún spec olvida el `.first()`.
+
+### 2.12 Verify-email: éxito → redirect en 2.5s (flakiness)
+
+Tras verificación exitosa, la página redirige al dashboard a los 2.5 s. Si el mock responde muy rápido, a veces el test comprobaba el heading cuando ya se había redirigido.
+
+- **Solución (test):** El spec acepta **dos** resultados válidos: (1) redirección a `/dashboard` dentro del timeout, o (2) heading "Verificación de correo electrónico" visible y luego heading "Correo verificado" visible. Se usa `Promise.race` entre `waitForURL(/\/dashboard/)` y `headingVerification.waitFor({ state: "visible" })`; según el resultado se valida redirect o mensaje de éxito. Documentado en el propio spec.
+
 ---
 
 ## Error 3: Mensaje de login fallido en inglés (test login-failure)

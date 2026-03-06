@@ -26,6 +26,10 @@ interface ClientPlansSectionProps {
     clientId: number;
     trainingPlans: TrainingPlan[];
     isLoading: boolean;
+    /** Fase 1.1: abrir modal crear plan (desde cliente, sin navegar). */
+    onOpenCreatePlan?: () => void;
+    /** Fase 1.1: abrir flujo Usar plantilla. */
+    onOpenUseTemplate?: () => void;
 }
 
 const PLAN_GOAL_LABELS: Record<string, string> = {
@@ -63,9 +67,10 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
     clientId,
     trainingPlans,
     isLoading,
+    onOpenCreatePlan,
+    onOpenUseTemplate,
 }) => {
     const navigate = useNavigate();
-    const createPlanUrl = `/dashboard/training-plans/create?clientId=${clientId}`;
 
     if (!clientId || clientId <= 0) return null;
 
@@ -92,14 +97,28 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
                             : "Asigna un plan de entrenamiento para estructurar el programa del cliente."}
                     </p>
                 </div>
-                <Button
-                    variant="primary"
-                    size="sm"
-                    onClick={() => navigate(createPlanUrl)}
-                    aria-label="Crear plan de entrenamiento para este cliente"
-                >
-                    Crear plan
-                </Button>
+                <div className="flex flex-wrap items-center gap-2">
+                    {onOpenCreatePlan && (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={onOpenCreatePlan}
+                            aria-label="Crear plan desde cero"
+                        >
+                            Crear plan desde cero
+                        </Button>
+                    )}
+                    {onOpenUseTemplate && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onOpenUseTemplate}
+                            aria-label="Usar plantilla"
+                        >
+                            Usar plantilla
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {hasPlans ? (
@@ -148,13 +167,26 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
                         Este cliente no tiene planes asignados. Crea el primero para
                         estructurar su programa de entrenamiento.
                     </p>
-                    <Button
-                        variant="primary"
-                        onClick={() => navigate(createPlanUrl)}
-                        aria-label="Crear primer plan de entrenamiento"
-                    >
-                        Crear plan
-                    </Button>
+                    <div className="flex flex-wrap justify-center gap-2">
+                        {onOpenCreatePlan && (
+                            <Button
+                                variant="primary"
+                                onClick={onOpenCreatePlan}
+                                aria-label="Crear plan desde cero"
+                            >
+                                Crear plan desde cero
+                            </Button>
+                        )}
+                        {onOpenUseTemplate && (
+                            <Button
+                                variant="outline"
+                                onClick={onOpenUseTemplate}
+                                aria-label="Usar plantilla"
+                            >
+                                Usar plantilla
+                            </Button>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

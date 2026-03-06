@@ -59,6 +59,8 @@ export interface WeeklyOverride {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  /** Aviso informativo si la media semanal se desvía del baseline (Fase 3). */
+  weekly_average_warning?: string | null;
 }
 
 export interface WeeklyOverrideCreate {
@@ -80,6 +82,8 @@ export interface DailyOverride {
   created_at: string;
   updated_at: string;
   is_active: boolean;
+  /** Aviso informativo si la media semanal se desvía del baseline (Fase 3). */
+  weekly_average_warning?: string | null;
 }
 
 export interface DailyOverrideCreate {

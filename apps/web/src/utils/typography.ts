@@ -1,82 +1,65 @@
 /**
- * Typography System - Sistema centralizado de escalas tipográficas
- * 
- * Propósito: Mantener consistencia visual entre todos los componentes web
- * Contexto: Clases Tailwind CSS responsive centralizadas para la aplicación
- * 
- * Arquitectura:
- * - Escalas responsive basadas en breakpoints (sm, md, lg)
- * - Jerarquía visual clara (hero > pageTitle > sectionTitle > etc.)
- * - Cobertura completa: headers, body, states, navigation, métricas
- * 
+ * Typography System - Fuente única de verdad para tipografía (web)
+ *
+ * Propósito: Escalas reutilizables; evita repetir clases Tailwind inline y deriva.
+ * Los valores están alineados con las vistas rediseñadas (dashboard, lista clientes,
+ * detalle cliente, tab Sesiones). Cualquier cambio de diseño tipográfico se hace aquí.
+ *
  * Uso:
- * import { TYPOGRAPHY } from "@/utils/typography";
- * <h1 className={`${TYPOGRAPHY.pageTitle} text-primary-400`}>
- * 
- * Notas de mantenimiento:
- * - Solo clases Tailwind CSS (web-specific)
- * - Modificar aquí para cambios globales de typography
- * - Preparado para text-shadow responsive donde sea necesario
- * 
+ *   import { TYPOGRAPHY } from "@/utils/typography";
+ *   <h1 className={`${TYPOGRAPHY.pageTitle} text-foreground`}>
+ * El color (text-foreground, text-muted-foreground, etc.) se añade en el componente.
+ *
  * @author Frontend Team
  * @since v4.3.0
- * @updated v4.3.8 - Añadido dashboardHero para headers principales de dashboard
- * @updated v4.3.9 - Añadido formSectionTitle/Subtitle para formularios complejos
- * @updated v4.4.0 - Añadidos formLabel, formError, formHelper para consistencia en formularios
+ * @updated v6.4.0 - Redefinido según vistas rediseñadas (ClientList, ClientHeader, dashboard)
  */
 
-// Main Headers - Jerarquía visual clara
+// Valores extraídos de vistas de referencia; solo tamaño/peso, sin color
 export const TYPOGRAPHY = {
-    // Landing y marketing
-    hero: "text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold",
-    heroSubtitle: "text-base sm:text-lg md:text-xl lg:text-2xl font-medium",
-    claim: "text-base sm:text-lg md:text-xl lg:text-2xl font-medium",
+    // Títulos de página (ClientList: "Clientes")
+    pageTitle: "text-xl font-bold sm:text-2xl",
 
-    // Page headers
-    pageTitle: "text-2xl sm:text-3xl lg:text-4xl font-bold",
-    sectionTitle: "text-xl sm:text-2xl lg:text-3xl font-bold",
-    cardTitle: "text-lg sm:text-xl lg:text-2xl font-bold",
+    // Título principal en detalle (ClientHeader: nombre cliente)
+    detailPageTitle: "text-2xl font-bold",
 
-    // Content hierarchy
+    // Títulos de sección / card (ej. "Planes de Entrenamiento")
+    sectionTitle: "text-xl font-bold sm:text-2xl",
+    cardTitle: "text-lg font-semibold sm:text-xl",
+
+    // Cuerpo
     subtitle: "text-base sm:text-lg lg:text-xl",
-    lead: "text-base sm:text-lg font-medium",
     body: "text-sm sm:text-base",
-    bodyLarge: "text-sm sm:text-base md:text-lg",
+    bodyMedium: "text-sm font-medium sm:text-base",
     caption: "text-xs sm:text-sm",
 
-    // Dashboard específicos
-    metric: "text-2xl sm:text-3xl lg:text-4xl font-bold",
-    metricLabel: "text-sm sm:text-base font-medium",
-
-    // NUEVO: Dashboard hero (encabezado principal en dashboards)
+    // Dashboard hero (CompleteProfile y pantallas tipo hero)
     dashboardHero: "text-2xl md:text-3xl lg:text-5xl font-bold",
     dashboardSubtitleAlt: "text-sm md:text-lg lg:text-xl",
 
-    // Navigation
-    navLink: "text-base font-medium",
-    navLinkLarge: "text-base lg:text-lg font-medium",
+    // Dashboard métricas (AdminDashboard, AthleteDashboard)
+    metric: "text-2xl md:text-3xl lg:text-4xl font-bold",
+    metricLabel: "text-base md:text-lg lg:text-xl font-semibold",
 
-    // Modales
+    // Modales (BaseModal y contenido)
     modalTitle: "text-lg sm:text-xl lg:text-2xl font-bold",
     modalDescription: "text-sm sm:text-base",
 
-    // Forms y states
+    // Formularios (labels, errores, helpers)
     inputLabel: "text-sm font-medium",
+    formSectionTitle: "text-xl lg:text-2xl font-bold",
+    formSectionSubtitle: "text-sm lg:text-base",
     errorText: "text-sm",
     successText: "text-sm font-medium",
     helperText: "text-sm",
-    formSectionTitle: "text-xl lg:text-2xl font-bold",
-    formSectionSubtitle: "text-sm lg:text-base",
 
-    // NUEVO: Formularios consistentes
-    formLabel: "block text-sm font-medium text-gray-600 mb-1",
-    formError: "text-sm text-red-600",
-    formHelper: "text-sm text-gray-500",
-
-    // Interactive elements
+    // Navegación y botones
+    navLink: "text-base font-medium",
     buttonText: "text-sm sm:text-base",
-    buttonTextLarge: "text-base sm:text-lg",
     linkText: "text-sm sm:text-base font-medium",
+
+    // Labels pequeños / columnas (ClientHeader grid)
+    labelSmall: "text-xs uppercase tracking-wide text-muted-foreground",
 } as const;
 
 // Helper function para combinar con otras clases

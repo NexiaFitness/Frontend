@@ -9,6 +9,7 @@
  *
  * @author Frontend Team
  * @since Fase 3 - Alineación documento canónico
+ * @updated Fase 4.2 - Copy "series por grupo muscular" cuando weekly_volume_unit_type === 'series'
  */
 
 import React from "react";
@@ -128,7 +129,10 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
                     <div>
                         <span className="text-blue-600 text-xs uppercase tracking-wide block">Vol. diario rec.</span>
                         <p className="text-blue-900 font-medium">
-                            {rec.recommended_daily_volume_units.toFixed(1)} {rec.weekly_volume_unit_type}
+                            {rec.recommended_daily_volume_units.toFixed(1)}{" "}
+                            {rec.weekly_volume_unit_type === "series"
+                                ? "series por grupo muscular"
+                                : rec.weekly_volume_unit_type}
                         </p>
                     </div>
                 </div>

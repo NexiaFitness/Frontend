@@ -9,7 +9,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients } from "../fixtures/navigation";
+import { navigateToClients, getAddClientFromListButton } from "../fixtures/navigation";
 import { createMinimalClientData } from "../fixtures/test-data";
 
 test.describe("Clients — Delete (unlink)", () => {
@@ -19,9 +19,7 @@ test.describe("Clients — Delete (unlink)", () => {
     await loginAsTrainer(page);
     await navigateToClients(page);
 
-    await page
-      .getByRole("button", { name: /agregar nuevo cliente/i })
-      .click();
+    await getAddClientFromListButton(page).click();
     await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/);
 
     const data = createMinimalClientData();

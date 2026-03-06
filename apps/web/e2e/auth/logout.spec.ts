@@ -15,13 +15,11 @@ test.describe("Auth — Logout", () => {
     await expect(page).toHaveURL(/\/dashboard/);
 
     // Sidebar empieza colapsado: el LogoutButton solo se renderiza cuando está expandido.
-    // Hover sobre el sidebar para expandirlo y revelar el botón.
-    await page.getByRole("complementary").hover();
+    // Hover sobre el sidebar de navegación para expandirlo y revelar el botón.
+    const navSidebar = page.getByTestId("dashboard-nav-sidebar");
+    await navSidebar.hover();
 
-    await page
-      .getByRole("complementary")
-      .getByRole("button", { name: /cerrar sesión/i })
-      .click();
+    await navSidebar.getByRole("button", { name: /cerrar sesión/i }).click();
 
     // Modal de confirmación tiene title "¿Cerrar sesión?" — acotar para evitar strict mode
     // (el drawer "Menú de navegación" también tiene un botón "Cerrar sesión").

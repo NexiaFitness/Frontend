@@ -15,7 +15,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients } from "../fixtures/navigation";
+import { navigateToClients, getAddClientFromListButton } from "../fixtures/navigation";
 import { createMinimalClientData, createMinimalPlanData } from "../fixtures/test-data";
 
 test.describe("Journey — Create session (client → plan → create session)", () => {
@@ -26,9 +26,7 @@ test.describe("Journey — Create session (client → plan → create session)",
     await navigateToClients(page);
 
     // 1) Crear cliente (onboarding mínimo)
-    await page
-      .getByRole("button", { name: /agregar nuevo cliente/i })
-      .click();
+    await getAddClientFromListButton(page).click();
     await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/, {
       timeout: 10_000,
     });

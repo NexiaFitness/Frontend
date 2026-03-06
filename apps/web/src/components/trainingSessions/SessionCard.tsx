@@ -9,6 +9,7 @@
  */
 
 import React from "react";
+import { Calendar } from "lucide-react";
 import type { PlanTrainingSession } from "@nexia/shared";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
 import { Button } from "@/components/ui/buttons";
@@ -31,9 +32,9 @@ interface MetricItemProps {
 
 const MetricItem: React.FC<MetricItemProps> = ({ label, value }) => {
     return (
-        <div className="bg-gray-50 rounded p-2">
-            <p className="text-xs text-gray-500">{label}</p>
-            <p className="text-sm font-semibold text-gray-900">{value}</p>
+        <div className="rounded border border-border bg-muted/30 p-2">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="text-sm font-semibold text-foreground">{value}</p>
         </div>
     );
 };
@@ -46,12 +47,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({
 }) => {
     const getStatusBadge = (status: string) => {
         const badges = {
-            completed: { bg: "bg-green-100", text: "text-green-800", label: "Completada" },
-            planned: { bg: "bg-blue-100", text: "text-blue-800", label: "Planificada" },
-            cancelled: { bg: "bg-red-100", text: "text-red-800", label: "Cancelada" },
-            in_progress: { bg: "bg-yellow-100", text: "text-yellow-800", label: "En progreso" },
-            skipped: { bg: "bg-gray-100", text: "text-gray-800", label: "Saltada" },
-            modified: { bg: "bg-orange-100", text: "text-orange-800", label: "Modificada" },
+            completed: { class: "bg-success/10 text-success border-success/30", label: "Completada" },
+            planned: { class: "bg-primary/10 text-primary border-primary/30", label: "Planificada" },
+            cancelled: { class: "bg-destructive/10 text-destructive border-destructive/30", label: "Cancelada" },
+            in_progress: { class: "bg-warning/10 text-warning border-warning/30", label: "En progreso" },
+            skipped: { class: "bg-muted text-muted-foreground border-border", label: "Saltada" },
+            modified: { class: "bg-warning/10 text-warning border-warning/30", label: "Modificada" },
         };
         return badges[status as keyof typeof badges] || badges.planned;
     };
@@ -59,19 +60,20 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     const badge = getStatusBadge(session.status);
 
     return (
-        <div className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+        <div className="rounded-lg border border-border p-4 transition-colors hover:border-primary/50 hover:bg-muted/20">
             <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                        <h4 className="text-base font-semibold text-gray-900">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <h4 className="text-base font-semibold text-foreground truncate">
                             {session.session_name}
                         </h4>
-                        <span className={`px-2 py-1 text-xs font-medium rounded ${badge.bg} ${badge.text}`}>
+                        <span className={`shrink-0 px-2 py-1 text-xs font-medium rounded border ${badge.class}`}>
                             {badge.label}
                         </span>
                     </div>
-                    <p className="text-sm text-gray-500">
-                        📅 {session.session_date ? new Date(session.session_date).toLocaleDateString() : "Sin fecha"} • {session.session_type}
+                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                        <Calendar className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                        {session.session_date ? new Date(session.session_date).toLocaleDateString() : "Sin fecha"} • {session.session_type}
                     </p>
                 </div>
             </div>
@@ -117,8 +119,8 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             </div>
 
             {session.notes && (
-                <div className="bg-gray-50 rounded p-2 mb-3">
-                    <p className="text-xs text-gray-600">{session.notes}</p>
+                <div className="rounded border border-border bg-muted/30 p-2 mb-3">
+                    <p className="text-xs text-muted-foreground">{session.notes}</p>
                 </div>
             )}
 

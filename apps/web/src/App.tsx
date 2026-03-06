@@ -55,6 +55,9 @@ const ClientDetail = lazy(() =>
 const ClientEdit = lazy(() =>
   import("./pages/clients/ClientEdit").then((m) => ({ default: m.ClientEdit }))
 );
+const ClientNewSessionPage = lazy(() =>
+  import("./pages/clients/ClientNewSessionPage").then((m) => ({ default: m.ClientNewSessionPage }))
+);
 const TrainingPlansPage = lazy(() =>
   import("./pages/trainingPlans/TrainingPlansPage").then((m) => ({ default: m.TrainingPlansPage }))
 );
@@ -279,6 +282,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <ClientEdit />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients/:id/sessions/new"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientNewSessionPage />
               </RoleProtectedRoute>
             }
           />

@@ -4,11 +4,14 @@
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión manualmente
  * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
+ * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta clients/:id/sessions/new)
  * - Añadir ejercicio: botón abre ExercisePickerModal (catálogo con filtros, fuente única)
  *
  * @author Frontend Team
  * @since v5.3.0
  * @updated v6.3.0 - Ejercicios desde catálogo unificado (ExercisePickerModal)
+ * @updated Fase 1 U4 - Props opcionales para contexto cliente (no salir del cliente)
+ * @updated Fase 3 - Coherencia tras crear: avisos en pantalla + Entendido, luego redirigir
  */
 
 import React, { useState, useEffect } from "react";
@@ -32,9 +35,10 @@ import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
 } from "@nexia/shared/types/sessionProgramming";
-import type { 
+import type {
     TrainingSessionCreate,
     SessionExerciseCreate,
+    SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { LocationStateReturnTo } from "@nexia/shared";
 
@@ -47,17 +51,30 @@ const SESSION_TYPES = [
     { value: "recovery", label: "Recuperación" },
 ];
 
-export const CreateSession: React.FC = () => {
+export interface CreateSessionProps {
+    /** Cuando se usa desde clients/:id/sessions/new; prioridad sobre query. */
+    clientIdProp?: number;
+    /** Ruta a la que navegar tras crear sesión (p. ej. /dashboard/clients/123?tab=sessions). */
+    returnToPath?: string;
+    /** Ruta del botón "Volver" (p. ej. /dashboard/clients/123). */
+    backPath?: string;
+}
+
+export const CreateSession: React.FC<CreateSessionProps> = ({
+    clientIdProp,
+    returnToPath,
+    backPath,
+}) => {
     const navigate = useNavigate();
     const location = useLocation();
     const [searchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
     const { showSuccess, showError } = useToast();
 
-    // Obtener parámetros de query (soporta ambos flujos)
+    // Obtener parámetros: props (contexto cliente) tienen prioridad sobre query
     const clientIdFromQuery = searchParams.get("clientId");
     const planIdFromQuery = searchParams.get("planId");
-    const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : null;
+    const clientId = clientIdProp ?? (clientIdFromQuery ? Number(clientIdFromQuery) : null);
     const planId = planIdFromQuery ? Number(planIdFromQuery) : null;
 
     // Obtener perfil del trainer
@@ -141,6 +158,12 @@ export const CreateSession: React.FC = () => {
         planned_rest: 60,
         notes: null,
     });
+
+    /** Fase 3: avisos de coherencia tras crear sesión; al confirmar "Entendido" se redirige. */
+    const [postCreateCoherenceWarnings, setPostCreateCoherenceWarnings] = useState<
+        SessionCoherenceWarning[] | null
+    >(null);
+    const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
 
     // Validar que haya al menos clientId o planId
     useEffect(() => {
@@ -282,7 +305,7 @@ export const CreateSession: React.FC = () => {
                 for (const exercise of exercises) {
                     try {
                         let plannedRepsInt: number | null = null;
-                        
+
                         if (exercise.planned_reps && exercise.planned_reps.trim()) {
                             const repsStr = exercise.planned_reps.trim();
                             if (repsStr.includes('-')) {
@@ -327,13 +350,24 @@ export const CreateSession: React.FC = () => {
                 showSuccess("Sesión creada exitosamente.", 2000);
             }
 
-            setTimeout(() => {
-                if (selectedPlanId) {
-                    navigate(`/dashboard/training-plans/${selectedPlanId}?tab=sessions`);
-                } else {
-                    navigate(`/dashboard/clients/${effectiveClientId}?tab=sessions`);
-                }
-            }, 1500);
+            const redirectTo =
+                returnToPath ??
+                (selectedPlanId
+                    ? `/dashboard/training-plans/${selectedPlanId}?tab=sessions`
+                    : `/dashboard/clients/${effectiveClientId}?tab=sessions`);
+
+            const coherence = createdSession.coherence;
+            const warnings =
+                coherence?.coherence_warnings && coherence.coherence_warnings.length > 0
+                    ? coherence.coherence_warnings
+                    : null;
+
+            if (warnings && warnings.length > 0) {
+                setPostCreateCoherenceWarnings(warnings);
+                setPostCreateRedirectPath(redirectTo);
+            } else {
+                setTimeout(() => navigate(redirectTo), 1500);
+            }
         } catch (err) {
             console.error("Error creando sesión:", err);
             type ApiError = { data?: { detail?: string } };
@@ -349,6 +383,34 @@ export const CreateSession: React.FC = () => {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
+
+    if (postCreateCoherenceWarnings != null && postCreateCoherenceWarnings.length > 0 && postCreateRedirectPath) {
+        return (
+            <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+                <div className="rounded-xl border border-warning/30 bg-warning/10 p-6 space-y-4">
+                    <h2 className="text-xl font-semibold text-foreground">Sesión creada con avisos de coherencia</h2>
+                    <p className="text-sm text-muted-foreground">
+                        La sesión se ha guardado correctamente. Revisa los siguientes avisos respecto al plan del día:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
+                        {postCreateCoherenceWarnings.map((w, i) => (
+                            <li key={i}>{w.message}</li>
+                        ))}
+                    </ul>
+                    <Button
+                        variant="primary"
+                        onClick={() => {
+                            setPostCreateCoherenceWarnings(null);
+                            setPostCreateRedirectPath(null);
+                            navigate(postCreateRedirectPath);
+                        }}
+                    >
+                        Entendido
+                    </Button>
+                </div>
             </div>
         );
     }
@@ -369,11 +431,15 @@ export const CreateSession: React.FC = () => {
                             variant="outline"
                             size="sm"
                             onClick={() => {
-                                const state = location.state as LocationStateReturnTo | null;
-                                if (state?.from) {
-                                    navigate(state.from);
+                                if (backPath) {
+                                    navigate(backPath);
                                 } else {
-                                    navigate(-1);
+                                    const state = location.state as LocationStateReturnTo | null;
+                                    if (state?.from) {
+                                        navigate(state.from);
+                                    } else {
+                                        navigate(-1);
+                                    }
                                 }
                             }}
                         >

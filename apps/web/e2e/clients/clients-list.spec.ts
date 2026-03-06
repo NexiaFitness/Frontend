@@ -2,7 +2,7 @@
  * E2E Client Management: Lista de clientes
  *
  * Flujo: Login → sidebar "Clientes" → listado.
- * Assertions: heading "Clientes", tabla o estado vacío ("No se encontraron clientes").
+ * Assertions: heading "Clientes"; contenido es tabla/grid o estado vacío (VISTA_CLIENTES_SPEC).
  * APIs: getClientsWithMetrics, getRecentActivity.
  */
 
@@ -21,8 +21,9 @@ test.describe("Clients — List", () => {
       page.getByRole("heading", { name: /clientes/i })
     ).toBeVisible({ timeout: 10_000 });
 
+    // Contenido: estado vacío ("Aún no tienes clientes registrados") o header con total
     await expect(
-      page.getByText(/no se encontraron clientes|gestiona y monitoriza/i)
+      page.getByText(/aún no tienes clientes registrados|total/i)
     ).toBeVisible({ timeout: 10_000 });
   });
 });
