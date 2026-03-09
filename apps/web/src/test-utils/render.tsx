@@ -22,16 +22,20 @@ import type { RootState } from "@nexia/shared/store";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
     initialState?: Partial<RootState>;
+    /** URL inicial para MemoryRouter (tests de estado en URL). */
+    initialEntries?: string[];
 }
 
 export function render(
     ui: React.ReactElement,
     options: CustomRenderOptions = {}
 ): RenderResult {
-    const { initialState, ...renderOptions } = options;
+    const { initialState, initialEntries, ...renderOptions } = options;
     
     const Wrapper = ({ children }: { children: React.ReactNode }) => (
-        <TestProviders initialState={initialState}>{children}</TestProviders>
+        <TestProviders initialState={initialState} initialEntries={initialEntries}>
+            {children}
+        </TestProviders>
     );
     
     return rtlRender(ui, { wrapper: Wrapper, ...renderOptions });

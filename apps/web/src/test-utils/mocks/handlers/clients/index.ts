@@ -12,6 +12,7 @@ import { getClientsHandler } from "./list"
 import { createClientHandler } from "./create"
 import { deleteClientHandler } from "./delete"
 import { createClientPreviewHandler } from "./preview"
+import { getClientTrainingSessionsHandler, getSessionCoherenceHandler } from "./sessions"
 
 // ===== EXPORTAR HANDLERS INDIVIDUALES =====
 
@@ -32,5 +33,7 @@ export const clientsHandlers = [
     createClientHandler,
     deleteClientHandler,
     createClientPreviewHandler,
+    getClientTrainingSessionsHandler,
+    getSessionCoherenceHandler,
 ]
 

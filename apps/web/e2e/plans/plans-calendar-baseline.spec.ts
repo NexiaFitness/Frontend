@@ -37,8 +37,11 @@ test.describe("Plans — Calendar / Baseline", () => {
       `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
     );
 
-    const qualitiesInput = page.locator("#planning-baseline-qualities");
-    await qualitiesInput.fill("Fuerza: 60, Resistencia: 40");
+    // QualitiesEditor: añadir cualidades desde catálogo (Fuerza máxima 60%, Resistencia aeróbica 40%)
+    await page.locator("#planning-baseline-add").selectOption({ label: "Fuerza máxima" });
+    await page.getByLabel(/fuerza máxima pct/i).fill("60");
+    await page.locator("#planning-baseline-add").selectOption({ label: "Resistencia aeróbica" });
+    await page.getByLabel(/resistencia aeróbica pct/i).fill("40");
 
     await page.getByRole("button", { name: /^crear$/i }).click();
 
@@ -46,8 +49,9 @@ test.describe("Plans — Calendar / Baseline", () => {
     await expect(
       page.getByText(/baselines mensuales/i).first()
     ).toBeVisible({ timeout: 5_000 });
+    // Cualidades en lista (slug: fuerza_maxima, resistencia_aerobica) — acepta 60/40 o 50/50 si hay baseline previo
     await expect(
-      page.getByText(/fuerza: 60|resistencia: 40/i).first()
+      page.getByText(/fuerza_maxima|resistencia_aerobica/i).first()
     ).toBeVisible({ timeout: 15_000 });
   });
 });

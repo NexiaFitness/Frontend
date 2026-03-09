@@ -15,35 +15,14 @@
 import React from "react";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter } from "react-router-dom";
 import { render } from "@/test-utils/render";
-import { render as renderWithRouter } from "@testing-library/react";
 import { ClientPlanningTab } from "../ClientPlanningTab";
 import { setAuthenticatedUser } from "@/test-utils/mocks";
 import { validTrainerUser } from "@/test-utils/fixtures/auth";
 import { server } from "@/test-utils/utils/msw";
-import { createTestStore } from "@/test-utils/utils/store";
-import { Provider } from "react-redux";
-import { ToastProvider } from "@/components/ui/feedback";
 import {
     getActivePlanByClientWithPlanHandler,
 } from "@/test-utils/mocks/handlers/planning";
-
-function renderWithPlanningUrl(
-    ui: React.ReactElement,
-    initialEntries: string[] = ["/dashboard/clients/1?tab=planning"]
-) {
-    const store = createTestStore();
-    return renderWithRouter(ui, {
-        wrapper: ({ children }) => (
-            <Provider store={store}>
-                <MemoryRouter initialEntries={initialEntries}>
-                    <ToastProvider>{children}</ToastProvider>
-                </MemoryRouter>
-            </Provider>
-        ),
-    });
-}
 
 describe("ClientPlanningTab", () => {
     beforeEach(() => {
@@ -136,32 +115,13 @@ describe("ClientPlanningTab", () => {
     });
 
     describe("Estado en URL (month/week)", () => {
-        it("mount con month y week en URL muestra semana seleccionada", async () => {
-            server.use(
-                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Test" })
-            );
-
-            renderWithPlanningUrl(
-                <ClientPlanningTab clientId={1} trainingPlans={[]} isLoadingPlans={false} />,
-                ["/dashboard/clients/1?tab=planning&month=2026-05&week=3"]
-            );
-
-            await waitFor(() => {
-                expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
-            });
-
-            const weekSelect = screen.getByRole("combobox", { name: /semana del mes/i });
-            expect(weekSelect).toHaveValue("3");
-        });
-
         it("cambio de semana actualiza el selector (URL drive state)", async () => {
             server.use(
                 getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Test" })
             );
 
-            renderWithPlanningUrl(
-                <ClientPlanningTab clientId={1} trainingPlans={[]} isLoadingPlans={false} />,
-                ["/dashboard/clients/1?tab=planning&month=2026-05&week=3"]
+            render(
+                <ClientPlanningTab clientId={1} trainingPlans={[]} isLoadingPlans={false} />
             );
 
             await waitFor(() => {

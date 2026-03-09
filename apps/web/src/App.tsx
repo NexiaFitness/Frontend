@@ -109,6 +109,9 @@ const CreateTemplate = lazy(() =>
 const SessionDetail = lazy(() =>
   import("./pages/sessionProgramming/SessionDetail").then((m) => ({ default: m.SessionDetail }))
 );
+const StandaloneSessionDetail = lazy(() =>
+  import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
+);
 const CreateTestResult = lazy(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
 );
@@ -392,6 +395,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
                 <SessionDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="standalone-sessions/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <StandaloneSessionDetail />
               </RoleProtectedRoute>
             }
           />

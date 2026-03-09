@@ -7,7 +7,7 @@ Professional fitness training management platform with React + TypeScript monore
 - **Frontend**: ✅ Complete with responsive design + unified client forms architecture
 - **UX Sparkle (Fase 7):** Ejercicios, reportes, account, testing y componentes home migrados a design tokens (`SPEC_00_DESIGN_TOKENS.md`). Vista Clientes (VISTA_CLIENTES_SPEC): lista/grid, "Nuevo cliente" / "Añadir tu primer cliente", empty state y sidebar con `data-testid="dashboard-nav-sidebar"` para E2E.
 - **Backend**: ✅ Updated with trainer profile & auth endpoints
-- **Testing**: ✅ MSW (224/224); **E2E Playwright 49 tests** (auth, clients, plans, exercises, journeys, edge). Fixtures: `getDashboardNavSidebar`, `getAddClientFromListButton`, `navigateToClients`; ver `frontend/docs/e2e/`.
+- **Testing**: ✅ MSW (224/224); **E2E Playwright 52 tests** (auth, clients, plans, exercises, journeys, edge). Fixtures: `getDashboardNavSidebar`, `getAddClientFromListButton`, `navigateToClients`; ver `frontend/docs/e2e/`.
 - **Version**: v5.5.0
 - **Client Detail (Resumen)**: Tab Overview incluye sección **Satisfacción** — último rating del cliente y acción "Registrar valoración" (UX refactor Ola 2, TICK-C02).
 
@@ -775,7 +775,7 @@ import { USER_ROLES } from "@nexia/shared/config/constants";
 - **E2E (Playwright)**: See below
 
 ## E2E (Playwright) — Fase 7.3
-**Suite actual:** 49 tests (auth, clients, plans, exercises, journeys, edge). Navegación vía `e2e/fixtures/navigation.ts` (`getDashboardNavSidebar`, `getAddClientFromListButton`, `sidebarNavigate`). Diagnóstico y causas raíz: `frontend/docs/e2e/DIAGNOSTICO_E2E.md`.
+**Suite actual:** 52 tests (auth, clients, plans, exercises, journeys, edge). Navegación vía `e2e/fixtures/navigation.ts` (`getDashboardNavSidebar`, `getAddClientFromListButton`, `sidebarNavigate`). Diagnóstico y causas raíz: `frontend/docs/e2e/DIAGNOSTICO_E2E.md`. Correcciones QualitiesEditor, useClientForm, CreatePlanModal: ver `frontend/docs/e2e/E2E_FALLOS_SUITE_ANALISIS.md` §3.
 
 Requisitos para ejecutar E2E contra backend y frontend reales:
 

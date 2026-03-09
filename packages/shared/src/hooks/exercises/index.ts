@@ -31,6 +31,7 @@ export {
     useExercises,
     // Types
     type Exercise,
+    type ExercisePhysicalQualityRef,
     type ExerciseFilters,
     type ExerciseListResponse,
     type ExerciseCreate,

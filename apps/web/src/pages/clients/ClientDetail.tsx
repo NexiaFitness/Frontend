@@ -11,6 +11,7 @@
  * @updated v6.0.0 - Integración de Breadcrumbs jerárquicos.
  * @updated v6.2.0 - Ola 2 S03: swap a 6 tabs; "Sesiones" reemplaza Programación de Sesiones + Entrenamientos.
  * @updated Fase 6 - Tab Planificación (planificación client-only o por plan asociado).
+ * @updated U4 paso 1.5 - PlanDetailDrawer para "Ver plan" sin salir de clients/:id
  */
 
 import React, { Suspense, lazy, useState, useCallback } from "react";
@@ -30,6 +31,7 @@ import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
+import { PlanDetailDrawer } from "@/components/clients/detail/PlanDetailDrawer";
 import { CreatePlanModal } from "@/components/clients/detail/modals/CreatePlanModal";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
@@ -70,13 +72,44 @@ export const ClientDetail: React.FC = () => {
     });
 
     // S03: si la URL trae tab legacy, abrir "sessions" (enlaces antiguos)
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     React.useEffect(() => {
         const tab = searchParams.get("tab");
         if (tab === "workouts" || tab === "session-programming") {
             setActiveTab("sessions");
         }
     }, [searchParams, setActiveTab]);
+
+    // U4 paso 1.5: drawer de detalle de plan (estado + sync con ?viewPlan)
+    const [viewPlanId, setViewPlanId] = React.useState<number | null>(() => {
+        const v = searchParams.get("viewPlan");
+        const parsed = v ? parseInt(v, 10) : NaN;
+        return !isNaN(parsed) ? parsed : null;
+    });
+
+    React.useEffect(() => {
+        const v = searchParams.get("viewPlan");
+        const parsed = v ? parseInt(v, 10) : NaN;
+        setViewPlanId(!isNaN(parsed) ? parsed : null);
+    }, [searchParams]);
+
+    const handleViewPlan = useCallback((planId: number) => {
+        setViewPlanId(planId);
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.set("viewPlan", String(planId));
+            return next;
+        }, { replace: true });
+    }, [setSearchParams]);
+
+    const handleClosePlanDrawer = useCallback(() => {
+        setViewPlanId(null);
+        setSearchParams((prev) => {
+            const next = new URLSearchParams(prev);
+            next.delete("viewPlan");
+            return next;
+        }, { replace: true });
+    }, [setSearchParams]);
 
     const clientId = parseInt(id || "0", 10);
 
@@ -240,6 +273,7 @@ export const ClientDetail: React.FC = () => {
                         isLoadingPlans={isLoadingPlans}
                         onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
                         onOpenUseTemplate={handleOpenUseTemplate}
+                        onViewPlan={handleViewPlan}
                     />
                 );
             case "sessions":
@@ -325,6 +359,15 @@ export const ClientDetail: React.FC = () => {
                 clientName={clientName}
                 onSuccess={handleAssignTemplateSuccess}
             />
+
+            {/* U4 paso 1.5: drawer detalle de plan (sin salir de clients/:id) */}
+            {viewPlanId && (
+                <PlanDetailDrawer
+                    planId={viewPlanId}
+                    clientId={clientId}
+                    onClose={handleClosePlanDrawer}
+                />
+            )}
         </div>
     );
 };

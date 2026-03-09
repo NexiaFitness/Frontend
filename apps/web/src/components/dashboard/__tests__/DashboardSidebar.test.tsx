@@ -168,7 +168,7 @@ describe("DashboardSidebar", () => {
                 fireEvent.mouseLeave(aside);
                 expect(onHoverCollapse).not.toHaveBeenCalled();
 
-                vi.advanceTimersByTime(180);
+                vi.advanceTimersByTime(200);
                 expect(onHoverCollapse).toHaveBeenCalledTimes(1);
             }
 

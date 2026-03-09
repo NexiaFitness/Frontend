@@ -10,3 +10,4 @@ export * from "./schedulingApi";
 export * from "./metricsApiV2";
 export * from "./exercisesApi";
 export * from "./planningApi";
+export * from "./standaloneSessionsApi";

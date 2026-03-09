@@ -55,6 +55,8 @@ interface ClientOverviewTabProps {
     onOpenCreatePlan?: () => void;
     /** Fase 1.1: abrir flujo Usar plantilla. */
     onOpenUseTemplate?: () => void;
+    /** U4 paso 1.5: abrir drawer con detalle del plan (sin navegar). */
+    onViewPlan?: (planId: number) => void;
 }
 
 export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
@@ -64,6 +66,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     isLoadingPlans = false,
     onOpenCreatePlan,
     onOpenUseTemplate,
+    onViewPlan,
 }) => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
@@ -309,6 +312,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 isLoading={isLoadingPlans}
                 onOpenCreatePlan={onOpenCreatePlan}
                 onOpenUseTemplate={onOpenUseTemplate}
+                onViewPlan={onViewPlan}
             />
 
             {/* SECCIÓN HÁBITOS (MVP DEC-02 — resumen en Resumen) */}

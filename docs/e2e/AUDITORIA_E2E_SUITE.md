@@ -28,7 +28,8 @@ Documento de análisis de la aplicación y propuesta de suite E2E completa para 
 | `/dashboard/account` | Account | Edición cuenta, cambio contraseña, borrar cuenta | Todos | Medio |
 | `/dashboard/clients` | ClientList | Lista clientes con métricas, búsqueda | Trainer | Sí |
 | `/dashboard/clients/onboarding` | ClientOnboarding | Wizard 7 pasos alta cliente | Trainer | Sí |
-| `/dashboard/clients/:id` | ClientDetail | Detalle cliente, tabs (overview, progress, etc.) | Trainer | Sí |
+| `/dashboard/clients/:id` | ClientDetail | Detalle cliente, tabs (overview, sessions, planning, etc.) | Trainer | Sí |
+| `/dashboard/clients/:id/sessions/new` | ClientNewSessionPage | Nueva sesión en contexto cliente (no sale a session-programming) | Trainer | Sí |
 | `/dashboard/clients/:id/edit` | ClientEdit | Editar cliente | Trainer | Sí |
 | `/dashboard/clients/:id/delete` | (no ruta explícita; puede ser modal) | — | — | — |
 | `/dashboard/training-plans` | TrainingPlansPage | Lista planes + templates | Trainer | Sí |
@@ -137,7 +138,8 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 | **clients/clients-edit.spec.ts** | Alta | Lista → click cliente → Editar → cambiar nombre → guardar | Cambio reflejado en detalle o lista | getClient, updateClient | Race, no refetch | 25 min | Al menos 1 cliente |
 | **clients/clients-delete.spec.ts** | Media | Detalle o lista → eliminar → confirmar | Cliente ya no en lista o redirect a lista | deleteClient | Modal confirmación, permisos | 25 min | Cliente creado en test |
 | **clients/clients-search-filter.spec.ts** | Media | Lista → buscar nombre → filtrar (si hay UI) | Filas filtradas correctamente | getClientsWithMetrics (search) | Filtro solo frontend vs backend | 20 min | Varios clientes |
-| **clients/clients-detail-tabs.spec.ts** | Media | Detalle cliente → tabs Overview, Progress, etc. | Contenido por tab visible | getClient, getClientProgress, etc. | Tabs vacíos o error no manejado | 25 min | Cliente con datos |
+| **clients/clients-detail-tabs.spec.ts** | Media | Detalle cliente → tabs Resumen, Progreso, Planificación | Contenido por tab visible; Planificación sin plan → empty state | getClient, getClientProgress, etc. | Tabs vacíos o error no manejado | 25 min | Cliente con datos |
+| **clients/clients-planning-tab.spec.ts** | Media | Tab Planificación: sin plan (modal Crear plan), con plan (toggle Vista semana), Nueva sesión → clients/:id/sessions/new | Modal no navega; Vista semana grid; URL clients/:id/sessions/new | createTrainingPlan, getActivePlanByClient | — | 40 min | Cliente |
 | **clients/clients-onboarding-complete-profile.spec.ts** | Baja | Trainer sin perfil completo → Añadir cliente | Modal Complete Profile aparece | getCurrentTrainerProfile | Modal no bloquea | 25 min | Trainer sin perfil o mock |
 
 #### Categoría C: Training Plans (10 tests)
@@ -169,7 +171,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 |------|-----------|--------|------------------|------|----------------|-------------|--------------|
 | **journeys/journey-onboard-client.spec.ts** | Alta | Login → Clientes → Onboarding completo → Detalle → (opcional) asignar plan | Cliente creado, en detalle, datos correctos | createClient, getClient, opc. assignPlanToClient | Wizard steps, validaciones | 50 min + 30 fix | — |
 | **journeys/journey-weekly-planning.spec.ts** | Alta | Login → Planes → detalle → Planificación → baseline → override (semanal) | Baseline y override visibles en UI | getMonthlyPlans, createMonthlyPlan, createWeeklyOverride | Orden y dependencias | 45 min | 1 plan |
-| **journeys/journey-session-create.spec.ts** | Media | Cliente → plan → Session Programming → crear sesión → ejercicios → guardar | Sesión creada o listada | getClient, getTrainingPlan, createSession, createSessionExercise | Flujo largo, errores parciales | 50 min | Cliente + plan |
+| **journeys/journey-session-create.spec.ts** | Media | Cliente → modal crear plan (no navega) → tab Sesiones → Crear sesión → clients/:id/sessions/new → guardar | Sesión creada; permanece en clients/:id | getClient, createTrainingPlan, createSession | Flujo largo; regla: no salir del cliente | 50 min | Cliente |
 | **journeys/journey-schedule-session.spec.ts** | Media | Scheduling → clic día → vista /new → cliente/fecha → check conflict → crear → vuelta a calendario | URL /dashboard/scheduling, heading calendario | getScheduledSessions, checkConflict, createScheduledSession | Conflictos, slots | 40 min | Cliente, trainer |
 
 #### Categoría F: Edge Cases & Error Handling (6 tests)
@@ -188,7 +190,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 ### 2.2 Categorías resumidas
 
 - **A) Auth & Sessions:** 8 tests (login success/failure, logout, persistencia, register, forgot-password, verify-email, session-expiry).
-- **B) Client Management:** 8 tests (list, create, validations, edit, delete, search/filter, detail tabs, complete-profile block).
+- **B) Client Management:** 9 tests (list, create, validations, edit, delete, search/filter, detail tabs, planning tab, complete-profile block).
 - **C) Training Plans:** 10 tests (list, create, edit, delete, assign, calendar/baseline, overrides, template create, detail tabs + planning-flow existente).
 - **D) Exercise Database:** 3 tests (browse, search/filter, detail).
 - **E) User Journeys:** 4 tests (onboard client, weekly planning, session create, schedule session).
@@ -215,7 +217,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 
 **Siguiente paso recomendado:**
 
-- **Sprints 1–6:** Cerrados. Suite E2E completa (45 tests) implementada y validada. conflict-data.spec.ts no implementado por decisión de producto (no necesario).
+- **Sprints 1–6:** Cerrados. Suite E2E completa (52 tests, 2026-03) implementada y validada. conflict-data.spec.ts no implementado por decisión de producto (no necesario).
 - **A partir de aquí:** Mantenimiento. Ejecutar `pnpm -F web test:e2e` en CI o antes de merge; corregir tests solo si el fallo es bug de app (regla de oro §1); añadir specs nuevos cuando se añadan flujos críticos.
 
 ---
@@ -229,7 +231,7 @@ Endpoints que pueden fallar o ser complejos: createClient (validaciones backend)
 ### Sprint 2: Client Management CRUD
 
 - **Duración estimada:** 10–12 h + 4–6 h.
-- **Tests:** clients-list, clients-create, clients-create-validations, clients-edit, clients-delete, clients-search-filter, clients-detail-tabs.
+- **Tests:** clients-list, clients-create, clients-create-validations, clients-edit, clients-delete, clients-search-filter, clients-detail-tabs, clients-planning-tab.
 - **Razón:** Feature core; onboarding wizard y listado son propensos a bugs.
 
 ### Sprint 3: Training Plans Core
@@ -279,6 +281,7 @@ apps/web/e2e/
 │   ├── clients-delete.spec.ts
 │   ├── clients-search-filter.spec.ts
 │   ├── clients-detail-tabs.spec.ts
+│   ├── clients-planning-tab.spec.ts
 │   └── clients-onboarding-complete-profile.spec.ts
 ├── plans/
 │   ├── planning-flow.spec.ts          # existente
@@ -519,6 +522,7 @@ apps/web/e2e/
 │   ├── clients-delete.spec.ts
 │   ├── clients-search-filter.spec.ts
 │   ├── clients-detail-tabs.spec.ts
+│   ├── clients-planning-tab.spec.ts
 │   └── clients-onboarding-complete-profile.spec.ts
 ├── edge/
 │   └── unauthorized-redirect.spec.ts

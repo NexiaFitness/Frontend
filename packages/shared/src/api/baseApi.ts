@@ -278,6 +278,7 @@ export const baseApi = createApi({
         "SessionBlockExercise",
         "TrainingSession",
         "SessionExercise",
+        "StandaloneSession",
         "Report",
         "ScheduledSession",
         "TrainerAvailability",

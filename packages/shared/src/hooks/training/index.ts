@@ -21,4 +21,10 @@ export {
 } from './usePlanningOverrides';
 export { useTrainingPlanCoherence } from './useTrainingPlanCoherence';
 export { useTrainingPlanAlignment } from './useTrainingPlanAlignment';
+export {
+    useWeekPlanningData,
+    getWeekStartDate,
+    getWeekDates,
+    type WeekDayData,
+} from './useWeekPlanningData';
 

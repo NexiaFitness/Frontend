@@ -11,9 +11,17 @@
 
 import { baseApi } from "./baseApi";
 import type { CatalogCountry, CatalogCitiesResponse } from "../types/catalogs";
+import type { PhysicalQuality } from "../types/planningCargas";
 
 export const catalogsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
+        getPhysicalQualities: builder.query<PhysicalQuality[], void>({
+            query: () => ({
+                url: "/catalogs/physical-qualities",
+                method: "GET",
+            }),
+            providesTags: ["User"],
+        }),
         getCountries: builder.query<CatalogCountry[], void>({
             query: () => ({
                 url: "/catalogs/countries",
@@ -54,6 +62,7 @@ export const catalogsApi = baseApi.injectEndpoints({
 });
 
 export const {
+    useGetPhysicalQualitiesQuery,
     useGetCountriesQuery,
     useGetCitiesQuery,
     useGetTrainerOccupationsQuery,

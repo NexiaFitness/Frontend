@@ -22,15 +22,17 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
+import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
+import type { PlanTrainingSession } from "@nexia/shared";
 import {
     SCHEDULED_SESSION_TYPE,
     SESSION_STATUS,
 } from "@nexia/shared/types/scheduling";
-import type { PlanTrainingSession } from "@nexia/shared";
-import { SessionCalendar } from "@/components/sessionProgramming";
+import { SessionCalendar, type SessionCalendarSession } from "@/components/sessionProgramming";
 import { SessionCard } from "@/components/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -97,6 +99,15 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     );
 
     const {
+        data: standaloneSessions = [],
+        isLoading: isLoadingStandalone,
+        isError: isErrorStandalone,
+    } = useGetStandaloneSessionsByClientQuery(
+        { clientId, skip: 0, limit: 1000 },
+        { refetchOnMountOrArgChange: true }
+    );
+
+    const {
         data: scheduledSessions = [],
         isLoading: isLoadingScheduled,
         isError: isErrorScheduled,
@@ -108,8 +119,8 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         limit: 500,
     });
 
-    const isLoading = isLoadingSessions || isLoadingScheduled;
-    const isError = isErrorSessions || isErrorScheduled;
+    const isLoading = isLoadingSessions || isLoadingStandalone || isLoadingScheduled;
+    const isError = isErrorSessions || isErrorStandalone || isErrorScheduled;
     const errorMessage =
         sessionsError && typeof sessionsError === "object" && "data" in sessionsError
             ? String((sessionsError as { data: unknown }).data)
@@ -125,10 +136,14 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
     const handleDateClickSession = (
         _date: Date,
-        sessionsForDay: (PlanTrainingSession | TrainingSession)[]
+        sessionsForDay: SessionCalendarSession[]
     ) => {
         if (sessionsForDay.length > 0 && sessionsForDay[0]?.id) {
-            navigate(`/dashboard/session-programming/sessions/${sessionsForDay[0].id}`);
+            const s = sessionsForDay[0];
+            const path = "session_kind" in s && s.session_kind === "standalone"
+                ? `/dashboard/standalone-sessions/${s.id}`
+                : `/dashboard/session-programming/sessions/${s.id}`;
+            navigate(path);
         }
     };
 
@@ -136,17 +151,33 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         navigate(`/dashboard/scheduling/${session.id}/edit`);
     };
 
-    const handleViewSessionDetail = (session: PlanTrainingSession | TrainingSession) => {
-        navigate(`/dashboard/session-programming/sessions/${session.id}`);
+    const handleViewSessionDetail = (session: SessionListItem | PlanTrainingSession | TrainingSession) => {
+        const path = "session_kind" in session && session.session_kind === "standalone"
+            ? `/dashboard/standalone-sessions/${session.id}`
+            : `/dashboard/session-programming/sessions/${session.id}`;
+        navigate(path);
     };
+
+    // P2: Merge training + standalone en lista unificada para calendario y lista
+    const allSessions: SessionListItem[] = useMemo(() => {
+        const list: SessionListItem[] = [];
+        trainingSessions.forEach((s) => {
+            list.push({ ...s, session_kind: "training" as const });
+        });
+        standaloneSessions.forEach((s) => {
+            list.push({ ...s, session_kind: "standalone" as const });
+        });
+        list.sort((a, b) => (a.session_date ?? "").localeCompare(b.session_date ?? ""));
+        return list;
+    }, [trainingSessions, standaloneSessions]);
 
     // Lista unificada cronológica: sesiones + citas, ordenadas por fecha
     const mergedList = useMemo(() => {
         const items: Array<
-            | { type: "session"; date: string; item: PlanTrainingSession | TrainingSession }
+            | { type: "session"; date: string; item: SessionListItem }
             | { type: "appointment"; date: string; item: ScheduledSession }
         > = [];
-        trainingSessions.forEach((s) => {
+        allSessions.forEach((s) => {
             const d = s.session_date ?? "";
             if (d) items.push({ type: "session", date: d, item: s });
         });
@@ -155,7 +186,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         });
         items.sort((a, b) => a.date.localeCompare(b.date) || 0);
         return items;
-    }, [trainingSessions, scheduledSessions]);
+    }, [allSessions, scheduledSessions]);
 
     const filteredList = useMemo(() => {
         return mergedList.filter((entry) => {
@@ -212,7 +243,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     Sesiones de entrenamiento
                 </h3>
                 <SessionCalendar
-                    sessions={trainingSessions}
+                    sessions={allSessions}
                     currentMonth={currentMonth}
                     onMonthChange={setCurrentMonth}
                     onDateClick={handleDateClickSession}
@@ -335,10 +366,11 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     <ul className="space-y-3">
                         {filteredList.map((entry) => {
                             if (entry.type === "session") {
+                                const s = entry.item as SessionListItem;
                                 return (
-                                    <li key={`s-${entry.item.id}`}>
+                                    <li key={`s-${s.session_kind}-${s.id}`}>
                                         <SessionCard
-                                            session={entry.item}
+                                            session={s}
                                             onViewDetail={handleViewSessionDetail}
                                         />
                                     </li>

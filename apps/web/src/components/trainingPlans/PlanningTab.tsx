@@ -11,6 +11,8 @@
  * @updated Fase 2 - overrides y resolve_day_plan; Fase 3 - calendario period-based
  * @updated Fase 1 U3 - props opcionales month, week, onMonthChange, onWeekChange
  * @updated Fase 3 (plan UX) - mostrar weekly_average_warning bajo formularios override
+ * @updated Fase 5b U11 - selector de cualidades desde catálogo (PhysicalQuality), parseQualities/qualitiesToDisplayString desde shared
+ * @updated Fase 5 - Vista semana L-D (7 columnas) con planificado, programado y badge coherencia
  */
 
 import React, { useState, useMemo, useCallback } from "react";
@@ -22,8 +24,12 @@ import {
     useDailyOverrides,
 } from "@nexia/shared/hooks/training/usePlanningOverrides";
 import { useTrainingPlanCoherence } from "@nexia/shared/hooks/training/useTrainingPlanCoherence";
+import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
+import { qualitiesToDisplayString } from "@nexia/shared/utils/qualityUtils";
 import type {
-    QualityConfig,
+    PhysicalQuality,
+    NestedQualitiesConfig,
+    QualityValue,
     WeeklyOverride,
     DailyOverride,
 } from "@nexia/shared/types/planningCargas";
@@ -34,6 +40,8 @@ import type {
 } from "@nexia/shared/types/trainingAnalytics";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { SessionCalendar } from "@/components/sessionProgramming";
+import { WeekViewGrid } from "@/components/trainingPlans/WeekViewGrid";
+import { useWeekPlanningData } from "@nexia/shared/hooks/training/useWeekPlanningData";
 import { formatMonth, parseMonthToDate } from "@/utils/planningUrl";
 
 interface PlanningTabProps {
@@ -47,11 +55,20 @@ interface PlanningTabProps {
     onWeekChange?: (week: number) => void;
 }
 
-function qualitiesToDisplayString(qualities: QualityConfig | null): string {
-    if (!qualities || Object.keys(qualities).length === 0) return "—";
-    return Object.entries(qualities)
-        .map(([k, v]) => `${k}: ${Math.round((v as number) * 100)}%`)
-        .join(", ");
+/** Convierte qualities de API (flat o anidado) a NestedQualitiesConfig para el formulario. */
+function toNormalizedNested(
+    qualities: Record<string, number | QualityValue> | null | undefined
+): NestedQualitiesConfig | null {
+    if (!qualities || Object.keys(qualities).length === 0) return null;
+    const out: NestedQualitiesConfig = {};
+    for (const [k, v] of Object.entries(qualities)) {
+        if (typeof v === "number") {
+            out[k] = { pct: v };
+        } else if (v && typeof v === "object" && "pct" in v) {
+            out[k] = { pct: v.pct, volume_pct: v.volume_pct, intensity_pct: v.intensity_pct };
+        }
+    }
+    return Object.keys(out).length ? out : null;
 }
 
 /** Verde ≥80%, amarillo ≥60%, rojo <60% (TICK-P02) */
@@ -79,6 +96,138 @@ function CoherenceBadge({ percentage }: { percentage: number }) {
     );
 }
 
+interface QualitiesEditorProps {
+    catalog: PhysicalQuality[];
+    value: NestedQualitiesConfig | null;
+    onChange: (v: NestedQualitiesConfig | null) => void;
+    idPrefix?: string;
+}
+
+function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: QualitiesEditorProps) {
+    const config = value ?? {};
+    const slugs = Object.keys(config);
+    const addSlug = (slug: string) => {
+        const item = catalog.find((c) => c.slug === slug);
+        if (!item || config[slug]) return;
+        const next: NestedQualitiesConfig = { ...config, [slug]: { pct: 0.5, intensity_pct: 0.5 } };
+        if (item.has_volume) next[slug].volume_pct = 0.5;
+        onChange(next);
+    };
+    const removeSlug = (slug: string) => {
+        const next = { ...config };
+        delete next[slug];
+        onChange(Object.keys(next).length ? next : null);
+    };
+    const updateSlug = (slug: string, field: keyof QualityValue, num: number) => {
+        const entry = config[slug] ?? { pct: 0.5, intensity_pct: 0.5 };
+        const next = { ...config, [slug]: { ...entry, [field]: num } };
+        onChange(next);
+    };
+    const availableToAdd = catalog.filter((c) => !config[c.slug]);
+
+    return (
+        <div className="space-y-2">
+            {slugs.map((slug) => {
+                const item = catalog.find((c) => c.slug === slug);
+                const entry = config[slug] ?? { pct: 0.5, intensity_pct: 0.5 };
+                const name = item?.name ?? slug;
+                return (
+                    <div
+                        key={slug}
+                        className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-gray-50 p-2 text-sm"
+                    >
+                        <span className="font-medium text-gray-800 min-w-[120px]">{name}</span>
+                        <label className="sr-only">pct %</label>
+                        <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={Math.round(entry.pct * 100)}
+                            onChange={(e) =>
+                                updateSlug(slug, "pct", Math.min(100, Math.max(0, Number(e.target.value))) / 100)
+                            }
+                            className="w-14 rounded border border-gray-300 px-2 py-1 text-right"
+                            aria-label={`${name} pct`}
+                        />
+                        <span className="text-gray-500">%</span>
+                        <label className="sr-only">intensidad %</label>
+                        <input
+                            type="number"
+                            min={0}
+                            max={100}
+                            value={Math.round((entry.intensity_pct ?? entry.pct) * 100)}
+                            onChange={(e) =>
+                                updateSlug(
+                                    slug,
+                                    "intensity_pct",
+                                    Math.min(100, Math.max(0, Number(e.target.value))) / 100
+                                )
+                            }
+                            className="w-14 rounded border border-gray-300 px-2 py-1 text-right"
+                            aria-label={`${name} intensidad`}
+                        />
+                        <span className="text-gray-500">% int</span>
+                        {item?.has_volume && (
+                            <>
+                                <label className="sr-only">volumen %</label>
+                                <input
+                                    type="number"
+                                    min={0}
+                                    max={100}
+                                    value={Math.round((entry.volume_pct ?? entry.pct) * 100)}
+                                    onChange={(e) =>
+                                        updateSlug(
+                                            slug,
+                                            "volume_pct",
+                                            Math.min(100, Math.max(0, Number(e.target.value))) / 100
+                                        )
+                                    }
+                                    className="w-14 rounded border border-gray-300 px-2 py-1 text-right"
+                                    aria-label={`${name} volumen`}
+                                />
+                                <span className="text-gray-500">% vol</span>
+                            </>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => removeSlug(slug)}
+                            className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                            aria-label={`Quitar ${name}`}
+                        >
+                            Quitar
+                        </button>
+                    </div>
+                );
+            })}
+            {availableToAdd.length > 0 && (
+                <div className="flex items-center gap-2">
+                    <label htmlFor={`${idPrefix}-add`} className="text-sm text-gray-600">
+                        Añadir cualidad
+                    </label>
+                    <select
+                        id={`${idPrefix}-add`}
+                        value=""
+                        onChange={(e) => {
+                            const slug = e.target.value;
+                            if (slug) addSlug(slug);
+                            e.target.value = "";
+                        }}
+                        className="rounded border border-gray-300 px-2 py-1 text-sm"
+                        aria-label="Añadir cualidad del catálogo"
+                    >
+                        <option value="">— Elegir —</option>
+                        {availableToAdd.map((c) => (
+                            <option key={c.id} value={c.slug}>
+                                {c.name}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export const PlanningTab: React.FC<PlanningTabProps> = ({
     planId,
     clientId,
@@ -88,19 +237,21 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
     onWeekChange,
 }) => {
     const [selectedMonth, setSelectedMonth] = useState("");
-    const [qualitiesText, setQualitiesText] = useState("");
+    const [monthlyQualities, setMonthlyQualities] = useState<NestedQualitiesConfig | null>(null);
     const [editingId, setEditingId] = useState<number | null>(null);
-    const [editQualitiesText, setEditQualitiesText] = useState("");
+    const [editQualities, setEditQualities] = useState<NestedQualitiesConfig | null>(null);
     const [selectedMonthlyForWeekly, setSelectedMonthlyForWeekly] = useState<number | null>(null);
     const [weekIdText, setWeekIdText] = useState("");
-    const [weeklyQualitiesText, setWeeklyQualitiesText] = useState("");
+    const [weeklyQualities, setWeeklyQualities] = useState<NestedQualitiesConfig | null>(null);
     const [dailyDateText, setDailyDateText] = useState("");
-    const [dailyQualitiesText, setDailyQualitiesText] = useState("");
+    const [dailyQualities, setDailyQualities] = useState<NestedQualitiesConfig | null>(null);
     const [resolvedDate, setResolvedDate] = useState("");
     const [internalCalendarMonth, setInternalCalendarMonth] = useState<Date>(() => new Date());
     /** Fase 3: aviso de media semanal tras crear override (informativo, no bloquea). */
     const [weeklyOverrideWarning, setWeeklyOverrideWarning] = useState<string | null>(null);
     const [dailyOverrideWarning, setDailyOverrideWarning] = useState<string | null>(null);
+
+    const { data: physicalQualitiesCatalog = [] } = useGetPhysicalQualitiesQuery();
 
     const isMonthControlled = controlledMonth != null && onMonthChange != null;
     const calendarMonth = useMemo(
@@ -164,6 +315,17 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
         isDeleting: isDeletingDaily,
     } = useDailyOverrides(clientId ?? null);
 
+    const [viewMode, setViewMode] = useState<"calendar" | "week">("calendar");
+    const [internalWeek, setInternalWeek] = useState(1);
+    const effectiveWeek = controlledWeek ?? internalWeek;
+
+    const { days: weekDays, isLoading: weekLoading } = useWeekPlanningData({
+        clientId: clientId ?? null,
+        planId,
+        month: calendarMonthStr,
+        week: effectiveWeek,
+    });
+
     const { data: resolvedDay, isLoading: resolvedLoading } = useResolvedDay({
         clientId: clientId ?? null,
         date: resolvedDate || null,
@@ -201,21 +363,6 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
         return m;
     }, [coherenceData?.day_coherence]);
 
-    const parseQualities = (text: string): QualityConfig | null => {
-        const trimmed = text.trim();
-        if (!trimmed) return null;
-        const out: QualityConfig = {};
-        const pairs = trimmed.split(/[,;]/).map((s) => s.trim());
-        for (const p of pairs) {
-            const idx = p.lastIndexOf(":");
-            if (idx === -1) continue;
-            const name = p.slice(0, idx).trim();
-            const val = parseFloat(p.slice(idx + 1).trim());
-            if (name && !Number.isNaN(val)) out[name] = val / 100;
-        }
-        return Object.keys(out).length ? out : null;
-    };
-
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!selectedMonth) return;
@@ -224,10 +371,10 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                 training_plan_id: planId,
                 client_id: clientId ?? undefined,
                 month: selectedMonth,
-                qualities: parseQualities(qualitiesText),
+                qualities: monthlyQualities,
             });
             setSelectedMonth("");
-            setQualitiesText("");
+            setMonthlyQualities(null);
         } catch (err) {
             console.error(err);
             alert("Error al crear el baseline mensual");
@@ -236,9 +383,9 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
 
     const handleUpdate = async (id: number) => {
         try {
-            await updateMonthlyPlan(id, { qualities: parseQualities(editQualitiesText) });
+            await updateMonthlyPlan(id, { qualities: editQualities });
             setEditingId(null);
-            setEditQualitiesText("");
+            setEditQualities(null);
         } catch (err) {
             console.error(err);
             alert("Error al actualizar");
@@ -278,41 +425,79 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
         <div className="space-y-6">
             {/* Fase 3: Calendario del mes (solo si hay cliente asignado) */}
             {clientId != null && (
-                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-lg font-semibold text-gray-800">
-                        Calendario de planificación
-                    </h3>
-                    {controlledWeek != null && onWeekChange != null && (
-                        <div className="mb-3 flex items-center gap-2">
-                            <label htmlFor="planning-week-select" className="text-sm font-medium text-gray-700">
-                                Semana del mes
-                            </label>
-                            <select
-                                id="planning-week-select"
-                                value={controlledWeek}
-                                onChange={(e) => onWeekChange(Number(e.target.value))}
-                                className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
-                                aria-label="Semana del mes (1-4)"
-                            >
-                                {[1, 2, 3, 4].map((w) => (
-                                    <option key={w} value={w}>
-                                        {w}
-                                    </option>
-                                ))}
-                            </select>
+                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                        <h3 className="text-lg font-semibold text-foreground">
+                            Calendario de planificación
+                        </h3>
+                        <div className="flex items-center gap-3">
+                            <div className="flex rounded-lg border border-border p-0.5" role="tablist">
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={viewMode === "calendar"}
+                                    onClick={() => setViewMode("calendar")}
+                                    className={`min-h-touch-sm min-w-touch-sm rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                                        viewMode === "calendar"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "text-muted-foreground hover:bg-muted"
+                                    }`}
+                                >
+                                    Calendario
+                                </button>
+                                <button
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={viewMode === "week"}
+                                    onClick={() => setViewMode("week")}
+                                    className={`min-h-touch-sm min-w-touch-sm rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                                        viewMode === "week"
+                                            ? "bg-primary text-primary-foreground"
+                                            : "text-muted-foreground hover:bg-muted"
+                                    }`}
+                                >
+                                    Vista semana
+                                </button>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <label htmlFor="planning-week-select" className="text-sm font-medium text-muted-foreground">
+                                    Semana
+                                </label>
+                                <select
+                                    id="planning-week-select"
+                                    value={effectiveWeek}
+                                    onChange={(e) => {
+                                        const v = Number(e.target.value);
+                                        if (onWeekChange) onWeekChange(v);
+                                        else setInternalWeek(v);
+                                    }}
+                                    className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
+                                    aria-label="Semana del mes (1-4)"
+                                >
+                                    {[1, 2, 3, 4].map((w) => (
+                                        <option key={w} value={w}>
+                                            {w}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                         </div>
-                    )}
-                    {calendarLoading ? (
-                        <div className="flex justify-center py-8">
-                            <LoadingSpinner size="md" />
-                        </div>
+                    </div>
+                    {viewMode === "calendar" ? (
+                        calendarLoading ? (
+                            <div className="flex justify-center py-8">
+                                <LoadingSpinner size="md" />
+                            </div>
+                        ) : (
+                            <SessionCalendar
+                                sessions={[]}
+                                currentMonth={calendarMonth}
+                                onMonthChange={handleCalendarMonthChange}
+                                planningDays={planningCalendarData}
+                            />
+                        )
                     ) : (
-                        <SessionCalendar
-                            sessions={[]}
-                            currentMonth={calendarMonth}
-                            onMonthChange={handleCalendarMonthChange}
-                            planningDays={planningCalendarData}
-                        />
+                        <WeekViewGrid days={weekDays} isLoading={weekLoading} />
                     )}
                 </section>
             )}
@@ -338,20 +523,15 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                             required
                         />
                     </div>
-                    <div className="min-w-[200px] flex-1">
-                        <label
-                            htmlFor="planning-baseline-qualities"
-                            className="mb-1 block text-sm font-medium text-gray-700"
-                        >
-                            Cualidades (ej: Fuerza: 60, Resistencia: 40)
-                        </label>
-                        <input
-                            id="planning-baseline-qualities"
-                            type="text"
-                            value={qualitiesText}
-                            onChange={(e) => setQualitiesText(e.target.value)}
-                            placeholder="Fuerza: 60, Resistencia: 40"
-                            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    <div className="min-w-[280px] flex-1">
+                        <span className="mb-1 block text-sm font-medium text-gray-700">
+                            Cualidades
+                        </span>
+                        <QualitiesEditor
+                            idPrefix="planning-baseline"
+                            catalog={physicalQualitiesCatalog}
+                            value={monthlyQualities}
+                            onChange={setMonthlyQualities}
                         />
                     </div>
                     <button
@@ -425,15 +605,14 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 <div className="flex gap-2">
                                     {editingId === mp.id ? (
                                         <>
-                                            <input
-                                                type="text"
-                                                value={editQualitiesText}
-                                                onChange={(e) =>
-                                                    setEditQualitiesText(e.target.value)
-                                                }
-                                                placeholder="Fuerza: 70, Resistencia: 30"
-                                                className="rounded border border-gray-300 px-2 py-1 text-sm"
-                                            />
+                                            <div className="min-w-[260px]">
+                                                <QualitiesEditor
+                                                    idPrefix={`edit-baseline-${mp.id}`}
+                                                    catalog={physicalQualitiesCatalog}
+                                                    value={editQualities}
+                                                    onChange={setEditQualities}
+                                                />
+                                            </div>
                                             <button
                                                 type="button"
                                                 onClick={() => handleUpdate(mp.id)}
@@ -446,7 +625,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                                 type="button"
                                                 onClick={() => {
                                                     setEditingId(null);
-                                                    setEditQualitiesText("");
+                                                    setEditQualities(null);
                                                 }}
                                                 className="rounded bg-gray-400 px-2 py-1 text-sm text-white"
                                             >
@@ -459,16 +638,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                                 type="button"
                                                 onClick={() => {
                                                     setEditingId(mp.id);
-                                                    setEditQualitiesText(
-                                                        mp.qualities
-                                                            ? Object.entries(mp.qualities)
-                                                                  .map(
-                                                                      ([k, v]) =>
-                                                                          `${k}: ${Math.round((v as number) * 100)}`
-                                                                  )
-                                                                  .join(", ")
-                                                            : ""
-                                                    );
+                                                    setEditQualities(toNormalizedNested(mp.qualities as Record<string, number | QualityValue> | null));
                                                 }}
                                                 className="rounded bg-[#4A67B3] px-2 py-1 text-sm text-white hover:bg-[#3d5a9e]"
                                             >
@@ -526,13 +696,13 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 const result: WeeklyOverride = await createWeeklyOverride({
                                     monthly_plan_id: monthlyPlanIdForWeekly,
                                     week_id: weekIdText.trim(),
-                                    qualities: parseQualities(weeklyQualitiesText),
+                                    qualities: weeklyQualities,
                                 });
                                 if (result?.weekly_average_warning) {
                                     setWeeklyOverrideWarning(result.weekly_average_warning);
                                 }
                                 setWeekIdText("");
-                                setWeeklyQualitiesText("");
+                                setWeeklyQualities(null);
                             } catch (err) {
                                 console.error(err);
                                 alert("Error al crear override semanal");
@@ -553,17 +723,13 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
                             />
                         </div>
-                        <div className="min-w-[180px]">
-                            <label htmlFor="planning-weekly-qualities" className="mb-1 block text-sm text-gray-700">
-                                Cualidades
-                            </label>
-                            <input
-                                id="planning-weekly-qualities"
-                                type="text"
-                                value={weeklyQualitiesText}
-                                onChange={(e) => setWeeklyQualitiesText(e.target.value)}
-                                placeholder="Fuerza: 80"
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        <div className="min-w-[280px]">
+                            <span className="mb-1 block text-sm text-gray-700">Cualidades</span>
+                            <QualitiesEditor
+                                idPrefix="planning-weekly"
+                                catalog={physicalQualitiesCatalog}
+                                value={weeklyQualities}
+                                onChange={setWeeklyQualities}
                             />
                         </div>
                         <button
@@ -635,13 +801,13 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 const result: DailyOverride = await createDailyOverride({
                                     client_id: clientId,
                                     date: dailyDateText.trim(),
-                                    qualities: parseQualities(dailyQualitiesText),
+                                    qualities: dailyQualities,
                                 });
                                 if (result?.weekly_average_warning) {
                                     setDailyOverrideWarning(result.weekly_average_warning);
                                 }
                                 setDailyDateText("");
-                                setDailyQualitiesText("");
+                                setDailyQualities(null);
                             } catch (err) {
                                 console.error(err);
                                 alert("Error al crear override diario");
@@ -660,16 +826,13 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
                             />
                         </div>
-                        <div className="min-w-[180px]">
-                            <label className="mb-1 block text-sm text-gray-700">
-                                Cualidades
-                            </label>
-                            <input
-                                type="text"
-                                value={dailyQualitiesText}
-                                onChange={(e) => setDailyQualitiesText(e.target.value)}
-                                placeholder="Fuerza: 90"
-                                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                        <div className="min-w-[280px]">
+                            <span className="mb-1 block text-sm text-gray-700">Cualidades</span>
+                            <QualitiesEditor
+                                idPrefix="planning-daily"
+                                catalog={physicalQualitiesCatalog}
+                                value={dailyQualities}
+                                onChange={setDailyQualities}
                             />
                         </div>
                         <button

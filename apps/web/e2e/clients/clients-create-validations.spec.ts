@@ -32,7 +32,7 @@ test.describe("Clients — Create validations", () => {
       });
     } else {
       await expect(
-        page.getByText(/obligatorio|requerido|error|inválido/i)
+        page.getByText(/obligatorio|requerido|error|inválido/i).first()
       ).toBeVisible({ timeout: 5_000 });
     }
   });

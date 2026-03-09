@@ -1,6 +1,8 @@
 # Análisis de causa raíz — Fallos E2E en suite completa
 
-Documento de análisis de los 2 tests que fallan al ejecutar `pnpm -F web test:e2e` (43 passed, 2 failed). Sin especulaciones; basado en código y flujo real.
+Documento de análisis de fallos E2E al ejecutar `pnpm -F web test:e2e`. Sin especulaciones; basado en código y flujo real.
+
+**Estado actual (2026-03):** 52 tests passed. Correcciones documentadas en §3.
 
 ---
 
@@ -90,3 +92,30 @@ El test usa `page.getByLabel(/cualidades/i)`: el regex coincide con **ambos** la
 | plans-calendar-baseline | **Locator ambiguo**: `getByLabel(/cualidades/i)` resuelve a 2 inputs (baseline y weekly). | Test (selector) | Acotar al input del baseline (id o label único). |
 
 Ninguno de los dos fallos indica un bug de producto; ambos se resuelven con cambios en los tests (y opcionalmente en datos/backend para el primero).
+
+---
+
+## 3. Migración QualitiesEditor y correcciones 2026-03
+
+### Contexto
+
+La UI de planificación (`PlanningTab`) migró de inputs de texto libre (`#planning-baseline-qualities`, placeholder "Fuerza: 60") al componente **QualitiesEditor**, que usa un select para añadir cualidades desde el catálogo (`physical_qualities`) y inputs numéricos por cualidad.
+
+### Fallos y soluciones
+
+| Spec | Síntoma | Causa | Solución |
+|------|---------|-------|----------|
+| **plans-calendar-baseline** | `#planning-baseline-qualities` no existe; `selectOption({ label: /regex/ })` → "expected string, got object" | UI usa QualitiesEditor; Playwright exige `label` como string | `selectOption({ label: "Fuerza máxima" })`; `getByLabel(/fuerza máxima pct/i).fill("60")` |
+| **plans-overrides** | Idem; assertion `/fuerza.*60|resistencia.*40/` falla si hay baseline 50/50 previo | Mismo plan reutilizado entre tests; backend puede tener baseline existente | Assertion robusta: `/fuerza_maxima|resistencia_aerobica/` |
+| **journey-weekly-planning** | Idem QualitiesEditor | Mismo patrón | Misma solución que plans-overrides |
+| **clients-create-validations** | No aparece texto "obligatorio" al enviar sin datos | `useClientForm` no exponía `validate()`; `handleShowReview` no actualizaba errores | Añadir `validate()` en `packages/shared` |
+| **clients-planning-tab** | Strict mode: "Crear plan" resuelve a 2+ elementos | Modal + empty state comparten texto | Acotar a `dialog.getByRole("button", { name: /crear plan/i })` |
+| **journey-session-create** | Idem "Crear plan"; heading "Sesiones" strict mode | Múltiples headings con "Sesiones" | Scoped dialog; `.first()` en heading |
+| **journey-onboard-client** | Timeout en `getByPlaceholder(/ej: juan/i)` | Página tarda en cargar; posible error previo | Esperar `heading "Agregar Nuevo Cliente"` antes de fill |
+
+### Patrones aplicados
+
+1. **QualitiesEditor:** `#planning-baseline-add` / `#planning-weekly-add` con `selectOption({ label: "Fuerza máxima" })` (string). Inputs: `getByLabel(/fuerza máxima pct/i)`. Si hay baseline previo: `.last()` para el input del override semanal.
+2. **Modales:** Siempre acotar selectores al `dialog` cuando hay elementos duplicados fuera (empty state, header).
+3. **Assertions robustas:** En listas que pueden tener datos de tests previos, usar regex que acepte variantes (p. ej. slugs `fuerza_maxima` en lugar de porcentajes concretos).
+4. **useClientForm:** La función `validate()` debe existir y actualizar `errors`; `ClientOnboardingForm` la usa en `handleShowReview` antes de mostrar Review.

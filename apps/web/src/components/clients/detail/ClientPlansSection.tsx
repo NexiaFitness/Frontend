@@ -13,6 +13,8 @@
  *
  * @author Frontend Team
  * @since v6.3.0 - Plan visible desde cliente + Crear plan desde cliente
+ * @updated U13 Fase 4.3 - Navegación con ?fromClient para breadcrumbs y Volver al cliente
+ * @updated U4 paso 1.5 - onViewPlan para abrir drawer sin navegar (fallback: navigate si no hay onViewPlan)
  */
 
 import React from "react";
@@ -30,6 +32,8 @@ interface ClientPlansSectionProps {
     onOpenCreatePlan?: () => void;
     /** Fase 1.1: abrir flujo Usar plantilla. */
     onOpenUseTemplate?: () => void;
+    /** U4 paso 1.5: abrir drawer con detalle del plan (si existe, no navega). */
+    onViewPlan?: (planId: number) => void;
 }
 
 const PLAN_GOAL_LABELS: Record<string, string> = {
@@ -69,6 +73,7 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
     isLoading,
     onOpenCreatePlan,
     onOpenUseTemplate,
+    onViewPlan,
 }) => {
     const navigate = useNavigate();
 
@@ -128,7 +133,9 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
                             key={plan.id}
                             type="button"
                             onClick={() =>
-                                navigate(`/dashboard/training-plans/${plan.id}`)
+                                onViewPlan
+                                    ? onViewPlan(plan.id)
+                                    : navigate(`/dashboard/training-plans/${plan.id}?fromClient=${clientId}`)
                             }
                             className="block w-full rounded-lg border border-border bg-surface-2 p-4 text-left transition-colors hover:border-border hover:bg-muted/50"
                             aria-label={`Ver plan ${plan.name}`}

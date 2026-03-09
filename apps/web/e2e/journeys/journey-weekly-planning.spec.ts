@@ -50,15 +50,18 @@ test.describe("Journey — Weekly planning", () => {
       await monthInput.fill(
         `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}`
       );
-      const qualitiesInput = page.getByLabel(/cualidades/i).first();
-      await qualitiesInput.fill("Fuerza: 50, Resistencia: 50");
+      await page.locator("#planning-baseline-add").selectOption({ label: "Fuerza máxima" });
+      await page.getByLabel(/fuerza máxima pct/i).fill("50");
+      await page.locator("#planning-baseline-add").selectOption({ label: "Resistencia aeróbica" });
+      await page.getByLabel(/resistencia aeróbica pct/i).fill("50");
       await page.getByRole("button", { name: /^crear$/i }).click();
       await expect(overridesHeading).toBeVisible({ timeout: 10_000 });
     }
 
     const weekId = `${new Date().getFullYear()}-02-W1`;
     await page.getByLabel(/week_id \(ej\./i).fill(weekId);
-    await page.getByPlaceholder("Fuerza: 80").fill("Fuerza: 80");
+    await page.locator("#planning-weekly-add").selectOption({ label: "Fuerza máxima" });
+    await page.getByLabel(/fuerza máxima pct/i).last().fill("80");
     await page.getByRole("button", { name: /añadir override semanal/i }).click();
 
     await expect(
@@ -68,7 +71,7 @@ test.describe("Journey — Weekly planning", () => {
       page.getByText(new RegExp(weekId.replace(/-/g, "\\-"), "i")).first()
     ).toBeVisible({ timeout: 10_000 });
     await expect(
-      page.getByText(/fuerza:\s*80/i).first()
+      page.getByText(/fuerza.*80|80%.*fuerza/i).first()
     ).toBeVisible({ timeout: 5_000 });
   });
 });

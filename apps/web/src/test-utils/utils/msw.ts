@@ -12,6 +12,7 @@ import { setupServer } from "msw/node";
 import { authHandlers } from "../mocks/handlers/auth";
 import { accountHandlers } from "../mocks/handlers/account";
 import { clientsHandlers } from "../mocks/handlers/clients";
+import { catalogsHandlers } from "../mocks/handlers/catalogs";
 import { planningHandlers } from "../mocks/handlers/planning";
 import { injuriesHandlers } from "../mocks/handlers/injuries";
 import { trainersHandlers } from "../mocks/handlers/trainers";
@@ -22,6 +23,7 @@ export const server = setupServer(
     ...authHandlers,
     ...accountHandlers,
     ...clientsHandlers,
+    ...catalogsHandlers,
     ...planningHandlers,
     ...injuriesHandlers,
     ...trainersHandlers,

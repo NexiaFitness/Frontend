@@ -35,6 +35,13 @@ import { baseApi } from "../../api/baseApi";
  * Exercise - Ejercicio del módulo legacy /exercises/
  * Backend schema: ExerciseOut (backend/app/schemas.py)
  */
+/** Ref for Exercise–PhysicalQuality M2M (Fase 5b). */
+export interface ExercisePhysicalQualityRef {
+    id: number;
+    name: string;
+    slug: string;
+}
+
 export interface Exercise {
     id: number;
     exercise_id: string; // String único del ejercicio
@@ -54,6 +61,8 @@ export interface Exercise {
     created_at: string;
     updated_at: string;
     is_active: boolean;
+    /** Fase 5b: cualidades físicas asociadas (M2M). */
+    physical_qualities?: ExercisePhysicalQualityRef[] | null;
 }
 
 /**
@@ -110,6 +119,8 @@ export interface ExerciseCreate {
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;
+    /** Fase 5b: IDs de cualidades físicas (M2M Exercise–PhysicalQuality). */
+    physical_quality_ids?: number[] | null;
 }
 
 /**
@@ -134,6 +145,8 @@ export interface ExerciseUpdate {
     descripcion?: string | null;
     instrucciones?: string | null;
     notas?: string | null;
+    /** Fase 5b: IDs de cualidades físicas (M2M). */
+    physical_quality_ids?: number[] | null;
 }
 
 /**

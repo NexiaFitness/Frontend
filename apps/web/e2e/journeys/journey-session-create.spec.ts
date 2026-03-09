@@ -1,25 +1,27 @@
 /**
- * E2E User Journey: Create session (client → plan → Session Programming → create session)
+ * E2E User Journey: Create session (client → modal plan → tab Sesiones → create session)
  *
- * Flujo: Login → Clientes → onboarding cliente → detalle cliente → tab Entrenamientos →
- * + Nuevo Plan → crear plan (mínimo) → detalle plan (tab Sesiones) → + Nueva Sesión →
- * rellenar sesión (nombre, fecha, tipo) → opcional: agregar ejercicio → Crear Sesión →
- * redirección a plan sesiones o cliente; sesión creada o mensaje éxito.
+ * Flujo UX actual (Plan integración flujo planificación):
+ * - Login → Clientes → onboarding cliente → detalle cliente (Resumen) →
+ * - "Crear plan" abre MODAL (no navega a training-plans/create) →
+ * - Rellenar modal (nombre, objetivo, fechas) → Crear plan →
+ * - Modal cierra, tab cambia a Planificación, se permanece en clients/:id →
+ * - Tab Sesiones → "+ Crear sesión" → clients/:id/sessions/new →
+ * - Rellenar sesión (nombre, fecha, tipo) → Crear sesión →
+ * - Redirección a clients/:id?tab=sessions (no sale del cliente).
  *
- * Assertions: URL create-session; tras guardar, redirección y sesión listada o éxito visible.
- * APIs: createClient, createTrainingPlan, createTrainingSession, createSessionExercise.
+ * Regla: Crear plan y nueva sesión desde cliente NO redirigen a /dashboard/training-plans.
  *
- * Requisitos: Backend operativo; cuenta demo trainer. Si falla: causa raíz (§3.5 auditoría);
- * si es bug de app, corregir app; no parchear test.
+ * Assertions: URL clients/:id durante todo el flujo; tras crear sesión, vuelta a clients/:id?tab=sessions.
  */
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
 import { navigateToClients, getAddClientFromListButton } from "../fixtures/navigation";
-import { createMinimalClientData, createMinimalPlanData } from "../fixtures/test-data";
+import { createMinimalClientData } from "../fixtures/test-data";
 
-test.describe("Journey — Create session (client → plan → create session)", () => {
-  test("login → client onboarding → plan → create session → session created or listed", async ({
+test.describe("Journey — Create session (client → modal plan → create session)", () => {
+  test("login → client onboarding → modal crear plan → tab Sesiones → create session → stay in client", async ({
     page,
   }) => {
     await loginAsTrainer(page);
@@ -30,6 +32,10 @@ test.describe("Journey — Create session (client → plan → create session)",
     await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/, {
       timeout: 10_000,
     });
+
+    await expect(
+      page.getByRole("heading", { name: /agregar nuevo cliente/i })
+    ).toBeVisible({ timeout: 15_000 });
 
     const clientData = createMinimalClientData();
     await page.getByPlaceholder(/ej: juan/i).fill(clientData.nombre);
@@ -44,46 +50,53 @@ test.describe("Journey — Create session (client → plan → create session)",
     await expect(page).toHaveURL(/\/dashboard\/clients\/\d+/, {
       timeout: 20_000,
     });
+    const clientUrlMatch = page.url().match(/\/dashboard\/clients\/(\d+)/);
+    const clientId = clientUrlMatch?.[1];
+    expect(clientId).toBeTruthy();
 
-    // 2) En Resumen (tab por defecto): sección Planes → Crear plan
+    // 2) En Resumen: "Crear plan" abre modal (NO navega a training-plans)
     await page
       .getByRole("button", { name: /crear plan/i })
       .first()
       .click();
-    await expect(page).toHaveURL(/\/dashboard\/training-plans\/create\?clientId=\d+/, {
-      timeout: 10_000,
-    });
 
-    // 3) Crear plan (formulario mínimo)
-    const planData = createMinimalPlanData();
-    await page
-      .getByPlaceholder(/ej: programa de fuerza/i)
-      .fill(planData.name);
-    await page.getByLabel(/categoría/i).selectOption({ index: 1 });
+    // Modal visible; URL sigue siendo clients/:id
+    await expect(page).toHaveURL(new RegExp(`/dashboard/clients/${clientId}`));
+    await expect(page).not.toHaveURL(/\/dashboard\/training-plans/);
+    await expect(
+      page.getByRole("dialog", { name: /crear plan de entrenamiento/i })
+    ).toBeVisible({ timeout: 5_000 });
+
+    // 3) Rellenar modal: nombre, objetivo, fechas (scoped to dialog)
+    const dialog = page.getByRole("dialog", { name: /crear plan de entrenamiento/i });
+    const planName = `E2E Plan ${Date.now()}`;
+    await dialog.getByPlaceholder(/ej: programa de fuerza/i).fill(planName);
+    await dialog.getByLabel(/objetivo/i).selectOption({ value: "Muscle Gain" });
     const start = new Date();
     const end = new Date();
     end.setMonth(end.getMonth() + 3);
-    await page
-      .getByLabel(/fecha de inicio/i)
-      .fill(start.toISOString().slice(0, 10));
-    await page
-      .getByLabel(/fecha de fin/i)
-      .fill(end.toISOString().slice(0, 10));
-    await page.getByRole("button", { name: /siguiente/i }).click();
+    await dialog.getByLabel(/fecha de inicio/i).fill(start.toISOString().slice(0, 10));
+    await dialog.getByLabel(/fecha de fin/i).fill(end.toISOString().slice(0, 10));
+    await dialog.getByRole("button", { name: /crear plan/i }).click();
 
-    await expect(page).toHaveURL(/\/dashboard\/training-plans\/\d+/, {
-      timeout: 15_000,
-    });
+    // 4) Modal cierra; tab Planificación activo; URL sigue clients/:id
+    await expect(page).not.toHaveURL(/\/dashboard\/training-plans/);
+    await expect(page).toHaveURL(new RegExp(`/dashboard/clients/${clientId}`));
+    await expect(dialog).not.toBeVisible({ timeout: 15_000 });
 
-    // 4) En detalle del plan (tab Sesiones por defecto) → + Nueva Sesión
+    // 5) Ir a tab Sesiones → "+ Crear sesión" → clients/:id/sessions/new
     await page
-      .getByRole("button", { name: /\+ nueva sesión/i })
+      .getByRole("navigation", { name: /tabs/i })
+      .getByRole("button", { name: /sesiones/i })
       .click();
-    await expect(page).toHaveURL(/\/dashboard\/session-programming\/create-session\?planId=\d+/, {
-      timeout: 10_000,
-    });
+    await page.getByRole("button", { name: /\+ crear sesión/i }).click();
 
-    // 5) Rellenar formulario de sesión
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/clients/${clientId}/sessions/new`),
+      { timeout: 10_000 }
+    );
+
+    // 6) Rellenar formulario de sesión
     const sessionName = `E2E Sesión ${Date.now()}`;
     await page
       .getByPlaceholder(/ej: entrenamiento de fuerza - piernas/i)
@@ -95,20 +108,25 @@ test.describe("Journey — Create session (client → plan → create session)",
       .fill(sessionDate.toISOString().slice(0, 10));
     await page.getByLabel(/tipo de sesión/i).selectOption({ value: "training" });
 
-    // 6) Crear sesión (sin ejercicios para flujo estable)
-    await page
-      .getByRole("button", { name: /crear sesión/i })
-      .click();
+    // 7) Crear sesión (sin ejercicios para flujo estable)
+    await page.getByRole("button", { name: /crear sesión/i }).click();
 
-    // 7) Redirección: plan (tab sesiones) o cliente (tab workouts)
+    // 8) Si hay avisos de coherencia, pulsar Entendido (sino redirect automático ~1.5s)
+    await page.waitForTimeout(2500);
+    const entendidoBtn = page.getByRole("button", { name: /entendido/i });
+    if (await entendidoBtn.isVisible().catch(() => false)) {
+      await entendidoBtn.click();
+    }
+
+    // 9) Redirección a clients/:id?tab=sessions (no sale del cliente)
     await expect(page).not.toHaveURL(/create-session/);
+    await expect(page).not.toHaveURL(/\/dashboard\/training-plans/);
     await expect(page).toHaveURL(
-      /\/dashboard\/(training-plans\/\d+|clients\/\d+)/,
+      new RegExp(`/dashboard/clients/${clientId}(\\?.*tab=sessions)?`),
       { timeout: 15_000 }
     );
-    // Evidencia de éxito: heading único del módulo de sesiones (strict mode)
     await expect(
-      page.getByRole("heading", { name: "Sesiones de Entrenamiento" })
+      page.getByRole("heading", { name: /sesiones/i }).first()
     ).toBeVisible({ timeout: 10_000 });
   });
 });

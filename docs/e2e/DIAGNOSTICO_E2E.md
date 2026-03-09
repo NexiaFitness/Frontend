@@ -397,6 +397,16 @@ Si la captura `e2e-login-page-captured.png` sale **en blanco**, la causa es que 
 
 ---
 
+## Error 11: QualitiesEditor, useClientForm validate, CreatePlanModal (resuelto, 2026-03)
+
+- **Specs afectados:** `plans-calendar-baseline`, `plans-overrides`, `journey-weekly-planning`, `clients-create-validations`, `clients-planning-tab`, `journey-session-create`, `journey-onboard-client`.
+- **Síntomas:** (1) `#planning-baseline-qualities` no existe; `selectOption({ label: /regex/ })` → "expected string, got object". (2) `clients-create-validations` no muestra errores de validación. (3) Strict mode con botón "Crear plan" (múltiples elementos). (4) Timeout en placeholder onboarding.
+- **Causa raíz:** (1) La UI de planificación usa **QualitiesEditor** (select + inputs por cualidad), no input de texto libre. Playwright exige `label` como string en `selectOption`. (2) `useClientForm` no exponía la función `validate()`; `ClientOnboardingForm.handleShowReview` la usaba pero no estaba implementada. (3) Modal CreatePlanModal y empty state comparten texto "Crear plan". (4) Onboarding tarda en cargar; falta espera explícita.
+- **Solución (app):** Añadir `validate()` en `useClientForm` que llame a `validateClientForm`, actualice `errors` y devuelva `{ isValid }`.
+- **Solución (tests):** (1) QualitiesEditor: `selectOption({ label: "Fuerza máxima" })` (string); `getByLabel(/fuerza máxima pct/i)`; `.last()` para override si hay baseline. (2) Assertion robusta en plans-calendar-baseline: `/fuerza_maxima|resistencia_aerobica/`. (3) Acotar selectores al `dialog` cuando hay duplicados. (4) Esperar `heading "Agregar Nuevo Cliente"` antes de fill. Ver `E2E_FALLOS_SUITE_ANALISIS.md` §3.
+
+---
+
 ## Referencias rápidas
 
 - **Base API / token:** `packages/shared/src/api/baseApi.ts` (prepareHeaders, 401).

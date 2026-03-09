@@ -21,6 +21,7 @@ import {
     useUpdateExerciseMutation,
 } from "@nexia/shared/hooks/exercises";
 import type { ExerciseCreate, ExerciseUpdate } from "@nexia/shared/hooks/exercises";
+import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 
 const TIPO_OPTIONS = [
     { value: "monoarticular", label: "Monoarticular" },
@@ -60,6 +61,7 @@ export const ExerciseForm: React.FC = () => {
 
     const [formData, setFormData] = useState<Partial<ExerciseCreate>>(defaultForm);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [selectedPhysicalQualityIds, setSelectedPhysicalQualityIds] = useState<number[]>([]);
 
     const { data: exercise, isLoading: isLoadingExercise } = useGetExerciseByIdQuery(
         exerciseId!,
@@ -68,6 +70,8 @@ export const ExerciseForm: React.FC = () => {
 
     const [createExercise, { isLoading: isCreating }] = useCreateExerciseMutation();
     const [updateExercise, { isLoading: isUpdating }] = useUpdateExerciseMutation();
+
+    const { data: physicalQualitiesCatalog = [] } = useGetPhysicalQualitiesQuery();
 
     useEffect(() => {
         if (exercise) {
@@ -87,6 +91,9 @@ export const ExerciseForm: React.FC = () => {
                 instrucciones: exercise.instrucciones ?? "",
                 notas: exercise.notas ?? "",
             });
+            setSelectedPhysicalQualityIds(
+                (exercise.physical_qualities ?? []).map((pq) => pq.id)
+            );
         }
     }, [exercise]);
 
@@ -121,6 +128,7 @@ export const ExerciseForm: React.FC = () => {
                     descripcion: formData.descripcion?.trim() || null,
                     instrucciones: formData.instrucciones?.trim() || null,
                     notas: formData.notas?.trim() || null,
+                    physical_quality_ids: selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
                 };
                 await updateExercise({ exerciseId, data: updatePayload }).unwrap();
                 showSuccess("Ejercicio actualizado correctamente");
@@ -141,6 +149,7 @@ export const ExerciseForm: React.FC = () => {
                     descripcion: formData.descripcion?.trim() || null,
                     instrucciones: formData.instrucciones?.trim() || null,
                     notas: formData.notas?.trim() || null,
+                    physical_quality_ids: selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
                 };
                 const created = await createExercise(createPayload).unwrap();
                 showSuccess("Ejercicio creado correctamente");
@@ -295,6 +304,39 @@ export const ExerciseForm: React.FC = () => {
                                 onChange={(e) => setFormData({ ...formData, musculatura_secundaria: e.target.value })}
                                 placeholder="gluteos, core (separados por coma)"
                             />
+                        </div>
+
+                        <div>
+                            <span className="block text-sm font-semibold text-slate-700 mb-2">Cualidades físicas</span>
+                            <p className="text-muted-foreground text-xs mb-2">
+                                Relaciona el ejercicio con las cualidades del catálogo (planificación y coherencia).
+                            </p>
+                            <div className="flex flex-wrap gap-x-6 gap-y-2" role="group" aria-label="Cualidades físicas">
+                                {physicalQualitiesCatalog
+                                    .slice()
+                                    .sort((a, b) => a.display_order - b.display_order)
+                                    .map((pq) => (
+                                        <label
+                                            key={pq.id}
+                                            className="flex items-center gap-2 cursor-pointer text-sm text-slate-700"
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={selectedPhysicalQualityIds.includes(pq.id)}
+                                                onChange={() => {
+                                                    setSelectedPhysicalQualityIds((prev: number[]) =>
+                                                        prev.includes(pq.id)
+                                                            ? prev.filter((id: number) => id !== pq.id)
+                                                            : [...prev, pq.id]
+                                                    );
+                                                }}
+                                                className="rounded border-border"
+                                                aria-label={pq.name}
+                                            />
+                                            {pq.name}
+                                        </label>
+                                    ))}
+                            </div>
                         </div>
 
                         <div>

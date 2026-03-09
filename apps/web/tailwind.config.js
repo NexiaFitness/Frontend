@@ -95,6 +95,8 @@ module.exports = {
                 'navbar-dashboard-desktop': '4.5rem', /* navbar un poco ancha; main usa mismo token = contenido pegada a la navbar en todas las vistas */
                 'sidebar-collapsed': '4rem',
                 'sidebar-expanded': '13.75rem',
+                /** Panel drawer (U4 paso 1.5): ancho del panel lateral de detalle de plan desde cliente. */
+                'panel-drawer': '32rem',
                 /** Mínimo touch target (44px) para accesibilidad móvil. */
                 'touch': '2.75rem',
                 /** Touch target reducido para controles compactos. */

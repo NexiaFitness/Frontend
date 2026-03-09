@@ -33,6 +33,8 @@ export interface UseClientFormResult {
         field: K,
         value: ClientFormData[K]
     ) => void;
+    /** Valida el formulario sin enviar. Devuelve isValid y actualiza errors si hay fallos. */
+    validate: () => { isValid: boolean };
     handleSubmit: () => Promise<{ success: boolean; clientId?: number; error?: unknown }>;
     isSubmitting: boolean;
 }
@@ -118,10 +120,21 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
         }
     }, [formData, mode, clientId, createClient, updateClient]);
 
+    /**
+     * validate — Valida el formulario sin enviar.
+     * Actualiza errors y devuelve isValid.
+     */
+    const validate = useCallback(() => {
+        const { isValid, stepErrors } = validateClientForm(formData);
+        setErrors(stepErrors);
+        return { isValid };
+    }, [formData]);
+
     return {
         formData,
         errors,
         updateField,
+        validate,
         handleSubmit,
         isSubmitting,
     };

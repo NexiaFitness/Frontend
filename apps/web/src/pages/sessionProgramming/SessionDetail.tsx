@@ -2,6 +2,7 @@
  * SessionDetail.tsx — Vista de detalle de una sesion de entrenamiento.
  * Contexto: acceso desde planes y clientes, con navegacion profesional.
  * Notas de mantenimiento: no toca backend; usa RTK Query y tipados de shared.
+ * Fase 5: métrica planned_sets vs actual_sets por ejercicio y total de sesión.
  * @author Frontend Team
  * @since v6.2.0
  */
@@ -15,6 +16,10 @@ import { useGetTrainingSessionQuery, useGetSessionExercisesQuery } from "@nexia/
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { SessionExercise } from "@nexia/shared/types/trainingSessions";
+import {
+    formatSetsMetric,
+    computeSessionSetsTotals,
+} from "@/utils/sessionExerciseUtils";
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
@@ -87,6 +92,11 @@ export const SessionDetail: React.FC = () => {
 
         return items;
     }, [client, plan, session]);
+
+    const setsTotals = useMemo(
+        () => computeSessionSetsTotals(exercises),
+        [exercises]
+    );
 
     if (!sessionId || Number.isNaN(sessionId)) {
         return (
@@ -259,7 +269,26 @@ export const SessionDetail: React.FC = () => {
                     <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         <div className="grid grid-cols-1 gap-6">
                             <div className="bg-card rounded-xl border border-border p-6">
-                                <h2 className="text-lg font-semibold text-foreground mb-4">Ejercicios de la sesion</h2>
+                                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                                    <h2 className="text-lg font-semibold text-foreground">
+                                        Ejercicios de la sesion
+                                    </h2>
+                                    {!isLoadingExercises &&
+                                        !isErrorExercises &&
+                                        exercises.length > 0 &&
+                                        (setsTotals.totalPlanned > 0 || setsTotals.totalActual > 0) && (
+                                            <div
+                                                className="text-sm text-muted-foreground"
+                                                aria-label="Total series programadas vs realizadas"
+                                            >
+                                                Total:{" "}
+                                                <span className="font-medium text-foreground">
+                                                    {setsTotals.totalActual}/{setsTotals.totalPlanned}{" "}
+                                                    series
+                                                </span>
+                                            </div>
+                                        )}
+                                </div>
 
                                 {isLoadingExercises && (
                                     <div className="flex items-center justify-center py-8">
@@ -272,7 +301,9 @@ export const SessionDetail: React.FC = () => {
                                 )}
 
                                 {!isLoadingExercises && !isErrorExercises && exercises.length === 0 && (
-                                    <div className="text-sm text-gray-500">No hay ejercicios registrados.</div>
+                                    <div className="text-sm text-muted-foreground">
+                                        No hay ejercicios registrados.
+                                    </div>
                                 )}
 
                                 {!isLoadingExercises && !isErrorExercises && exercises.length > 0 && (
@@ -286,14 +317,27 @@ export const SessionDetail: React.FC = () => {
                                                     <p className="text-sm font-semibold text-gray-900">
                                                         {renderExerciseName(exercise)}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">
+                                                    <p className="text-xs text-muted-foreground">
                                                         Orden: {exercise.order_in_session}
                                                     </p>
                                                 </div>
-                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-gray-600">
+                                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground">
                                                     <div>
                                                         <span className="block uppercase">Series</span>
-                                                        <span className="font-medium">{exercise.planned_sets ?? "—"}</span>
+                                                        {(() => {
+                                                            const metric = formatSetsMetric(
+                                                                exercise.planned_sets,
+                                                                exercise.actual_sets
+                                                            );
+                                                            return (
+                                                                <span
+                                                                    className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium ${metric.badgeClass}`}
+                                                                    title="Programadas / realizadas"
+                                                                >
+                                                                    {metric.label}
+                                                                </span>
+                                                            );
+                                                        })()}
                                                     </div>
                                                     <div>
                                                         <span className="block uppercase">Reps</span>

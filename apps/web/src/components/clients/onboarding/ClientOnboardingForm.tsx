@@ -50,7 +50,7 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
     const [showReview, setShowReview] = useState(false);
 
     // Usar useClientForm para lógica compartida
-    const { formData, errors, updateField, handleSubmit, isSubmitting } = useClientForm({
+    const { formData, errors, updateField, validate, handleSubmit, isSubmitting } = useClientForm({
         mode: "create",
         initialData,
     });
@@ -58,9 +58,12 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
     // Props compartidos para todos los componentes
     const stepProps = { formData, errors, updateField };
 
-    // Handler para mostrar Review
+    // Handler para mostrar Review (valida antes; si falla, errores visibles en formulario)
     const handleShowReview = () => {
-        setShowReview(true);
+        const { isValid } = validate();
+        if (isValid) {
+            setShowReview(true);
+        }
     };
 
     // Handler para volver al formulario desde Review

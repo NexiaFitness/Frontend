@@ -70,6 +70,30 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * GET /training-sessions/?client_id={id}
+         * Obtener todas las sesiones de un cliente (filtro client-side por plan y fechas).
+         * Usado por Vista semana L-D.
+         */
+        getTrainingSessionsByClient: builder.query<TrainingSession[], number>({
+            query: (clientId) => ({
+                url: '/training-sessions/',
+                params: { client_id: clientId },
+            }),
+            providesTags: (result, _error, clientId) => {
+                const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan'; id: string | number }> = [];
+                if (result) {
+                    tags.push(
+                        ...result.map(({ id }) => ({ type: 'TrainingSession' as const, id })),
+                        { type: 'TrainingSession', id: `CLIENT_${clientId}` as const }
+                    );
+                } else {
+                    tags.push({ type: 'TrainingSession', id: `CLIENT_${clientId}` as const });
+                }
+                return tags;
+            },
+        }),
+
+        /**
          * GET /training-sessions/{id}
          * Obtener una sesión específica
          */
@@ -228,6 +252,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
 export const {
     useGetSessionRecommendationsQuery,
     useGetTrainingSessionsQuery,
+    useGetTrainingSessionsByClientQuery,
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,

@@ -12,11 +12,11 @@ import React from "react";
 import { Calendar } from "lucide-react";
 import type { PlanTrainingSession } from "@nexia/shared";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
+import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
 import { Button } from "@/components/ui/buttons";
 
-// Union type para compatibilidad durante transición
-// Ambos tipos tienen campos compatibles para visualización
-type SessionCardSession = PlanTrainingSession | LegacyTrainingSession;
+// Union type: TrainingSession + StandaloneSession (P2)
+type SessionCardSession = PlanTrainingSession | LegacyTrainingSession | SessionListItem;
 
 interface SessionCardProps {
     session: SessionCardSession;
@@ -70,6 +70,11 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         <span className={`shrink-0 px-2 py-1 text-xs font-medium rounded border ${badge.class}`}>
                             {badge.label}
                         </span>
+                        {"session_kind" in session && session.session_kind === "standalone" && (
+                            <span className="shrink-0 px-2 py-1 text-xs font-medium rounded border bg-slate-100 text-slate-700 border-slate-200">
+                                Sesión libre
+                            </span>
+                        )}
                     </div>
                     <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                         <Calendar className="h-4 w-4 shrink-0 text-primary" aria-hidden />
@@ -92,28 +97,28 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         value={`${session.actual_duration} min`}
                     />
                 )}
-                {session.planned_intensity && (
+                {"planned_intensity" in session && (session as { planned_intensity?: number }).planned_intensity != null && (
                     <MetricItem
                         label="Intensidad plan."
-                        value={session.planned_intensity.toFixed(1)}
+                        value={(session as { planned_intensity: number }).planned_intensity.toFixed(1)}
                     />
                 )}
-                {session.actual_intensity && (
+                {"actual_intensity" in session && (session as { actual_intensity?: number }).actual_intensity != null && (
                     <MetricItem
                         label="Intensidad real"
-                        value={session.actual_intensity.toFixed(1)}
+                        value={(session as { actual_intensity: number }).actual_intensity.toFixed(1)}
                     />
                 )}
-                {session.planned_volume && (
+                {"planned_volume" in session && (session as { planned_volume?: number }).planned_volume != null && (
                     <MetricItem
                         label="Volumen plan."
-                        value={session.planned_volume.toString()}
+                        value={(session as { planned_volume: number }).planned_volume.toString()}
                     />
                 )}
-                {session.actual_volume && (
+                {"actual_volume" in session && (session as { actual_volume?: number }).actual_volume != null && (
                     <MetricItem
                         label="Volumen real"
-                        value={session.actual_volume.toString()}
+                        value={(session as { actual_volume: number }).actual_volume.toString()}
                     />
                 )}
             </div>

@@ -68,6 +68,7 @@ Variantes opacidad: `bg-primary/10`, `text-muted-foreground`, `bg-success/10`, e
 - **Touch targets (accesibilidad):** `min-h-touch` (2.75rem), `min-w-touch`, `min-h-touch-sm`, `min-w-touch-sm` (2.5rem). Usar en botones y controles interactivos en móvil.
 - **Contenido:** `space-y-4`, `space-y-6`, `gap-2`, `gap-3`, `gap-4`, `p-4`, `p-6`, `px-3 py-2`, etc. Consistir con ClientList y ClientDetail.
 - **Navbar/sidebar:** `navbar-mobile`, `navbar-desktop`, `navbar-dashboard-mobile`, `navbar-dashboard-desktop`, `sidebar-collapsed`, `sidebar-expanded` (definidos en `tailwind.config.js`).
+- **Panel drawer:** `panel-drawer` (32rem) — ancho del panel lateral para detalle de plan desde cliente (U4 paso 1.5).
 
 ### 3.4 Sombras
 

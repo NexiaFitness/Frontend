@@ -16,10 +16,10 @@ import React, { useMemo } from "react";
 import type { PlanTrainingSession } from "@nexia/shared";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
 import type { ResolvedDayPlan } from "@nexia/shared/types/planningCargas";
+import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
 
-// Union type para compatibilidad durante transición
-// Ambos tipos tienen campos compatibles para visualización (session_date, session_name, etc.)
-type SessionCalendarSession = PlanTrainingSession | LegacyTrainingSession;
+// Union type: TrainingSession + StandaloneSession (P2) — exportado para ClientSessionsTab
+export type SessionCalendarSession = PlanTrainingSession | LegacyTrainingSession | SessionListItem;
 
 export interface SessionCalendarProps {
     sessions: SessionCalendarSession[];

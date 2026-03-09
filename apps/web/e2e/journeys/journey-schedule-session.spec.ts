@@ -100,6 +100,10 @@ test.describe("Journey — Schedule session (scheduling → create scheduled ses
       timeout: 10_000,
     });
 
+    await expect(
+      page.getByRole("heading", { name: /agregar nuevo cliente/i })
+    ).toBeVisible({ timeout: 15_000 });
+
     const clientData = createMinimalClientData();
     await page.getByPlaceholder(/ej: juan/i).fill(clientData.nombre);
     await page.getByPlaceholder(/ej: pérez/i).fill(clientData.apellidos);

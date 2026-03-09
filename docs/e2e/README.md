@@ -8,7 +8,7 @@ Esta carpeta agrupa toda la documentación relacionada con los **tests end-to-en
 
 | Archivo | Contenido |
 |---------|-----------|
-| **AUDITORIA_E2E_SUITE.md** | Auditoría de la app (rutas, APIs, edge cases), suite propuesta (~45 tests en 6 categorías), plan por sprints (1–6), estado actual (**suite cerrada**), helpers, cómo ejecutar cada sprint, estimaciones y recomendaciones. Incluye la regla de oro: *bug de app → corregir app*. |
+| **AUDITORIA_E2E_SUITE.md** | Auditoría de la app (rutas, APIs, edge cases), suite propuesta (52 tests en 6 categorías), plan por sprints (1–6), estado actual (**suite cerrada**), helpers, cómo ejecutar cada sprint, estimaciones y recomendaciones. Incluye la regla de oro: *bug de app → corregir app*. |
 | **DIAGNOSTICO_E2E.md** | Diagnóstico error por error: causa raíz, solución aplicada o propuesta (hydration, sidebar/drawer, mensajes login, locators strict mode, accesibilidad label/control, migraciones BD, etc.). Referencia para no parchear sin validación. |
 | **E2E_FALLOS_SUITE_ANALISIS.md** | Análisis de fallos concretos al ejecutar la suite completa (ej. journey-schedule-session por conflicto de horario, plans-calendar-baseline por locator ambiguo) y soluciones aplicadas. |
 

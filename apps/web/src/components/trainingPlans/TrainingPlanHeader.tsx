@@ -16,6 +16,7 @@
  * @author Frontend Team
  * @since v3.3.0
  * @updated v6.1.0 - Eliminación de duplicidad: métricas movidas al header. Mejora de intuitividad en link de cliente.
+ * @updated U13 Fase 4.3 - Botón "Volver al cliente" cuando volverAlClienteClientId está presente.
  */
 
 import React, { useState } from "react";
@@ -35,6 +36,8 @@ interface TrainingPlanHeaderProps {
     onRefresh: () => void;
     /** Abre el modal de asignar plan a cliente (desde detalle) */
     onAssignPlan?: () => void;
+    /** U13 Fase 4.3: si existe, muestra botón "Volver al cliente" que navega a /dashboard/clients/:id */
+    volverAlClienteClientId?: number;
 }
 
 export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
@@ -43,6 +46,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     breadcrumbItems,
     onRefresh: _onRefresh,
     onAssignPlan,
+    volverAlClienteClientId,
 }) => {
     const navigate = useNavigate();
     const { showError } = useToast();
@@ -122,9 +126,39 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
 
     return (
         <div className="bg-card border-b border-border">
-            {/* Breadcrumbs integrados */}
-            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
+            {/* Breadcrumbs integrados + Volver al cliente (U13 Fase 4.3) */}
+            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <Breadcrumbs items={breadcrumbItems} />
+                {volverAlClienteClientId && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                            navigate(
+                                `/dashboard/clients/${volverAlClienteClientId}?tab=planificacion`
+                            )
+                        }
+                        className="shrink-0"
+                        aria-label="Volver al cliente"
+                    >
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            className="h-4 w-4 mr-2"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            aria-hidden
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                            />
+                        </svg>
+                        Volver al cliente
+                    </Button>
+                )}
             </div>
 
             <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">

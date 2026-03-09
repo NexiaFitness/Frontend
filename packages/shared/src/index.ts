@@ -16,6 +16,13 @@ export {
     useDeleteTrainingSessionMutation,
     useCreateSessionExerciseMutation,
 } from "./api/trainingSessionsApi";
+export {
+    useGetStandaloneSessionsByClientQuery,
+    useGetStandaloneSessionQuery,
+    useGetStandaloneSessionExercisesQuery,
+    useCreateStandaloneSessionMutation,
+    useCreateStandaloneSessionExerciseMutation,
+} from "./api/standaloneSessionsApi";
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
@@ -137,6 +144,7 @@ export {
     TRAINING_SESSION_STATUS_LABELS,
 } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
+export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export * from "./types/coherence";
 export * from "./types/dashboard";
 export * from "./types/testing";
@@ -300,6 +308,7 @@ export {
     getFatigueAlertContextualAction,
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";
+export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
 
 // Components
 export * from "./components/SmartNavigation";

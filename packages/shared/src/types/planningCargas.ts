@@ -7,15 +7,43 @@
  *
  * @author Frontend Team
  * @since Plan de cargas Fase 0
+ * @updated Fase 5b — PhysicalQuality catalog, QualityValue (nested qualities)
  */
 
 // ---------------------------------------------------------------------------
-// Calidad física: distribución (ej. Fuerza 40%, Resistencia 60%)
+// Catálogo de cualidades físicas (GET /catalogs/physical-qualities)
 // ---------------------------------------------------------------------------
 
+export interface PhysicalQuality {
+  id: number;
+  name: string;
+  slug: string;
+  modality: string;
+  has_volume: boolean;
+  display_order: number;
+}
+
+// ---------------------------------------------------------------------------
+// Calidad física: valor anidado (Fase 5b) y legacy flat
+// ---------------------------------------------------------------------------
+
+/** Valor de una cualidad en estructura anidada (clave = slug). */
+export interface QualityValue {
+  pct: number;
+  volume_pct?: number;
+  intensity_pct?: number;
+}
+
+/** Estructura anidada: slug -> { pct, volume_pct?, intensity_pct? }. */
+export type NestedQualitiesConfig = Record<string, QualityValue>;
+
+/** Legacy: nombre -> pct (0–1). Mantener para compatibilidad con respuestas antiguas. */
 export interface QualityConfig {
   [qualityName: string]: number; // e.g. { "Fuerza": 0.4, "Resistencia": 0.6 }
 }
+
+/** Payload para create/update: backend acepta anidado (Fase 5b) o legacy flat. */
+export type QualitiesPayload = QualityConfig | NestedQualitiesConfig;
 
 // ---------------------------------------------------------------------------
 // Baseline mensual (monthly_plan)
@@ -39,11 +67,11 @@ export interface MonthlyPlanCreate {
   training_plan_id?: number | null;
   client_id?: number | null;
   month: string;
-  qualities?: QualityConfig | null;
+  qualities?: QualitiesPayload | null;
 }
 
 export interface MonthlyPlanUpdate {
-  qualities?: QualityConfig | null;
+  qualities?: QualitiesPayload | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -66,7 +94,7 @@ export interface WeeklyOverride {
 export interface WeeklyOverrideCreate {
   monthly_plan_id: number;
   week_id: string;
-  qualities?: QualityConfig | null;
+  qualities?: QualitiesPayload | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -89,7 +117,7 @@ export interface DailyOverride {
 export interface DailyOverrideCreate {
   client_id: number;
   date: string;
-  qualities?: QualityConfig | null;
+  qualities?: QualitiesPayload | null;
 }
 
 // ---------------------------------------------------------------------------

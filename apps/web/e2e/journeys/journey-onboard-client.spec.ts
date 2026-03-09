@@ -33,6 +33,10 @@ test.describe("Journey — Onboard client", () => {
       timeout: 10_000,
     });
 
+    await expect(
+      page.getByRole("heading", { name: /agregar nuevo cliente/i })
+    ).toBeVisible({ timeout: 15_000 });
+
     const data = createMinimalClientData();
     await page.getByPlaceholder(/ej: juan/i).fill(data.nombre);
     await page.getByPlaceholder(/ej: pérez/i).fill(data.apellidos);
