@@ -27,8 +27,8 @@ pnpm install
 pnpm -F shared build
 
 # Start development server
-pnpm -F web dev
-# → http://localhost:5173
+pnpm run dev
+# (o pnpm -F web dev) → http://localhost:5173
 ```
 
 ## Project Structure

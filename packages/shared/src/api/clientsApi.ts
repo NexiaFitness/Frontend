@@ -64,16 +64,21 @@ import type {
     UpdateTestResultData,
 } from "../types/testing";
 
+/** Límite máximo de page_size para GET /trainers/{id}/clients (backend: 1–50) */
+const TRAINER_CLIENTS_PAGE_SIZE_MAX = 50;
+
 export const clientsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         /**
-         * Obtener clientes de un trainer específico (filtrado por trainer_id)
+         * Obtener clientes de un trainer específico (filtrado por trainer_id).
+         * Backend limita page_size a 1–50; valores mayores se ajustan automáticamente.
          */
         getTrainerClients: builder.query<ClientsListResponse, { trainerId: number; filters?: ClientFilters; page?: number; per_page?: number }>({
             query: ({ trainerId, filters = {}, page = 1, per_page = 10 }) => {
+                const pageSize = Math.min(Math.max(1, per_page), TRAINER_CLIENTS_PAGE_SIZE_MAX);
                 const params = new URLSearchParams();
                 params.append('page', page.toString());
-                params.append('page_size', per_page.toString());
+                params.append('page_size', pageSize.toString());
                 
                 if (filters.search) {
                     params.append('search', filters.search);

@@ -48,7 +48,7 @@ const TRAINER_NAV: RoleNavigation = {
         { label: "Clientes", path: "/dashboard/clients", icon: Users },
         { label: "Planificación", path: "/dashboard/training-plans", icon: ClipboardList },
         { label: "Calendario", path: "/dashboard/scheduling", icon: Calendar },
-        { label: "Sesiones", path: "/dashboard/scheduling", icon: Play },
+        { label: "Sesiones", path: "/dashboard/sessions", icon: Play },
         { label: "Ejercicios", path: "/dashboard/exercises", icon: Dumbbell },
         { label: "Analítica", path: "/dashboard/reports/generate", icon: BarChart3 },
         { label: "Alertas", path: "/dashboard", icon: Bell },

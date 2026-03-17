@@ -35,23 +35,24 @@ interface FormSelectProps
     placeholder?: string;
 }
 
-const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed caret-primary-600`;
+const baseStyles =
+    "block w-full rounded-md border bg-surface-2 text-foreground transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed caret-primary";
 
-// Mobile-first responsive sizes
+// Mobile-first responsive sizes — sm = mismo alto que pills (Todas, Planificadas, etc.)
 const sizeStyles: Record<SelectSize, string> = {
-    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
+    sm: "px-3 py-1.5 text-sm min-h-9 h-9",
     md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
 };
 
 const stateStyles = {
-    default: "border-gray-300 focus:border-primary-500 focus:ring-primary-500",
-    error: "border-red-500 focus:border-red-500 focus:ring-red-500",
+    default: "border-border focus:border-primary focus:ring-primary",
+    error: "border-destructive focus:border-destructive focus:ring-destructive",
 };
 
-const labelStyles = "block text-sm font-medium text-gray-600 mb-1";
-const errorStyles = "mt-1 text-sm text-red-600 dark:text-red-400";
-const helperStyles = "mt-1 text-sm text-gray-500 dark:text-gray-400";
+const labelStyles = "block text-sm font-medium text-foreground mb-1";
+const errorStyles = "mt-1 text-sm text-destructive";
+const helperStyles = "mt-1 text-sm text-muted-foreground";
 
 export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
     (
@@ -78,7 +79,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
 
         const hasError = Boolean(error);
         const hasValue = value !== "" && value !== undefined && value !== null;
-        const textColorClass = hasValue ? "text-gray-900" : "text-gray-400";
+        const textColorClass = hasValue ? "text-foreground" : "text-muted-foreground";
 
         return (
             <div className="w-full">
@@ -103,7 +104,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                     {...props}
                 >
                     {placeholder && (
-                        <option value="" disabled className="text-gray-400">
+                        <option value="" disabled className="text-muted-foreground">
                             {placeholder}
                         </option>
                     )}
@@ -112,7 +113,7 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                             key={option.value}
                             value={option.value}
                             disabled={option.disabled}
-                            className="text-gray-900"
+                            className="text-foreground bg-surface-2"
                         >
                             {option.label}
                         </option>

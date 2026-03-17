@@ -26,7 +26,7 @@ export const GenerateReports: React.FC = () => {
     const { generateReport, isLoading, isError, error, trainerId } = useGenerateReport();
 
     const { data: clientsData } = useGetTrainerClientsQuery(
-        { trainerId: trainerId ?? 0, page: 1, per_page: 100 },
+        { trainerId: trainerId ?? 0, page: 1, per_page: 50 },
         { skip: !trainerId }
     );
 

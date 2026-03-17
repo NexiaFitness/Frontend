@@ -138,53 +138,34 @@ const baseQuery = fetchBaseQuery({
 });
 
 /**
- * Interceptor temporal para suprimir logs de errores 403 en consola
- * Los errores 403 son manejados apropiadamente por los componentes,
- * pero el navegador los loguea automáticamente. Este interceptor los suprime.
+ * Interceptor para suprimir logs de errores 401/403 en consola.
+ * 401: manejado por refresh token; 403: manejado por componentes.
  */
-const suppress403ConsoleErrors = (): (() => void) => {
-    if (typeof window === 'undefined') {
-        return () => {}; // No-op en SSR
-    }
+const suppressAuthConsoleErrors = (): (() => void) => {
+    if (typeof window === 'undefined') return () => {};
 
     const originalError = console.error;
     const originalWarn = console.warn;
-    
-    // Interceptar console.error y console.warn
+    const isOurApi = (s: string) =>
+        s.includes(API_CONFIG.BASE_URL) || s.includes('/api/v1');
+    const is401Or403 = (s: string) =>
+        s.includes('401') || s.includes('403') ||
+        s.includes('Unauthorized') || s.includes('Forbidden');
+
     const errorInterceptor = (...args: unknown[]): void => {
-        const errorString = args.join(' ');
-        // Suprimir logs que contengan "403" y "Forbidden" relacionados con nuestros endpoints
-        if (
-            typeof errorString === 'string' &&
-            (errorString.includes('403') || errorString.includes('Forbidden')) &&
-            (errorString.includes(API_CONFIG.BASE_URL) || errorString.includes('/api/v1'))
-        ) {
-            // Silenciar este log específico
-            return;
-        }
-        // Loguear otros errores normalmente
+        const s = String(args.join(' '));
+        if (is401Or403(s) && isOurApi(s)) return;
         originalError.apply(console, args);
     };
 
     const warnInterceptor = (...args: unknown[]): void => {
-        const warnString = args.join(' ');
-        // Suprimir warnings que contengan "403" y "Forbidden"
-        if (
-            typeof warnString === 'string' &&
-            (warnString.includes('403') || warnString.includes('Forbidden')) &&
-            (warnString.includes(API_CONFIG.BASE_URL) || warnString.includes('/api/v1'))
-        ) {
-            // Silenciar este warning específico
-            return;
-        }
-        // Loguear otros warnings normalmente
+        const s = String(args.join(' '));
+        if (is401Or403(s) && isOurApi(s)) return;
         originalWarn.apply(console, args);
     };
 
     console.error = errorInterceptor;
     console.warn = warnInterceptor;
-
-    // Retornar función de limpieza
     return () => {
         console.error = originalError;
         console.warn = originalWarn;
@@ -202,8 +183,8 @@ const baseQueryWithReauth: BaseQueryFn<
     unknown,
     FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-    // Suprimir logs de 403 durante la ejecución de la query
-    const restoreConsole = suppress403ConsoleErrors();
+    // Suprimir logs de 401/403 durante la ejecución de la query
+    const restoreConsole = suppressAuthConsoleErrors();
     
     try {
         const result = await baseQuery(args, api, extraOptions);

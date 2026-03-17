@@ -1,4 +1,5 @@
 export * from "./fatigueApi";
+export * from "./sessionsApi";
 export * from "./habitsApi";
 export * from "./sessionProgrammingApi";
 export * from "./billingApi";

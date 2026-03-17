@@ -29,7 +29,7 @@ export type ButtonVariant =
     | "secondary"
     | "ghost"
     | "link";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant;
@@ -38,7 +38,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-    "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50";
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
 const variantStyles: Record<string, string> = {
     default:
@@ -59,11 +59,11 @@ const variantStyles: Record<string, string> = {
         "text-primary underline-offset-4 hover:underline",
 };
 
-// Mobile-first → escalado en sm/md
 const sizeStyles: Record<ButtonSize, string> = {
-    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
-    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
-    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
+    sm: "h-9 rounded-md px-3",
+    md: "h-10 px-4 py-2",
+    lg: "h-11 rounded-md px-8",
+    icon: "h-10 w-10",
 };
 
 export const Button = forwardRef<

@@ -5,6 +5,9 @@ export * from "./api/clientsApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
+export {
+    useGetSessionsQuery,
+} from "./api/sessionsApi";
 // Training Sessions API - exported separately to avoid conflicts
 export {
     useGetTrainingSessionsQuery,
@@ -127,6 +130,7 @@ export * from "./types/training";
 export * from "./types/trainingAnalytics";
 export * from "./types/trainingRecommendations";
 export * from "./types/sessionRecommendations";
+export * from "./types/sessions";
 // Training Sessions Types - exported separately to avoid conflicts with training.ts
 export type {
     TrainingSession as PlanTrainingSession,

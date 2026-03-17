@@ -112,6 +112,9 @@ const SessionDetail = lazy(() =>
 const StandaloneSessionDetail = lazy(() =>
   import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
 );
+const SessionsPage = lazy(() =>
+  import("./pages/sessions/SessionsPage").then((m) => ({ default: m.SessionsPage }))
+);
 const CreateTestResult = lazy(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
 );
@@ -361,6 +364,16 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <EditScheduledSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
+
+          {/* Sessions list (unified training + standalone) */}
+          <Route
+            path="sessions"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <SessionsPage />
               </RoleProtectedRoute>
             }
           />

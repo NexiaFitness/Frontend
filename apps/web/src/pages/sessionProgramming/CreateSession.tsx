@@ -16,34 +16,44 @@
  * @updated P2 - StandaloneSession cuando no hay plan activo en la fecha
  */
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea } from "@/components/ui/forms";
-import { useGetClientQuery, useGetClientTrainingPlansQuery } from "@nexia/shared/api/clientsApi";
-import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
+import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
+import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import { 
-    useCreateTrainingSessionMutation,
-    useCreateSessionExerciseMutation,
-} from "@nexia/shared/api/trainingSessionsApi";
+import { useCreateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
 import {
     useCreateStandaloneSessionMutation,
     useCreateStandaloneSessionExerciseMutation,
 } from "@nexia/shared/api/standaloneSessionsApi";
+import {
+    useGetTrainingBlockTypesQuery,
+    useCreateSessionBlockMutation,
+    useCreateSessionBlockExerciseMutation,
+    useCreateSessionTemplateMutation,
+} from "@nexia/shared/api/sessionProgrammingApi";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { ExercisePickerModal } from "@/components/exercises/ExercisePickerModal";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
+import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
+import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
+import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
+import { ClipboardList } from "lucide-react";
+import { ClientAvatar } from "@/components/ui/avatar";
+import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
+import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
+import { TriangleAlert } from "lucide-react";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
 } from "@nexia/shared/types/sessionProgramming";
 import type {
     TrainingSessionCreate,
-    SessionExerciseCreate,
     SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { LocationStateReturnTo } from "@nexia/shared";
@@ -83,6 +93,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const clientId = clientIdProp ?? (clientIdFromQuery ? Number(clientIdFromQuery) : null);
     const planId = planIdFromQuery ? Number(planIdFromQuery) : null;
 
+    /** Cliente seleccionado desde el selector (cuando se entra sin clientId/planId, p. ej. desde /dashboard/sessions) */
+    const [selectedClientIdFromSelector, setSelectedClientIdFromSelector] = useState<number | null>(null);
+    const resolvedClientId = clientId ?? selectedClientIdFromSelector;
+
     // Obtener perfil del trainer
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
@@ -90,13 +104,19 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const trainerId = trainerProfile?.id ?? 0;
 
     // Obtener datos según el flujo
-    const { data: client, isLoading: isLoadingClient } = useGetClientQuery(clientId || 0, { skip: !clientId });
+    const { data: client, isLoading: isLoadingClient } = useGetClientQuery(resolvedClientId || 0, { skip: !resolvedClientId });
     const { data: plan, isLoading: isLoadingPlan } = useGetTrainingPlanQuery(planId || 0, { skip: !planId });
 
-    // Si no viene planId pero sí clientId, buscar planes activos del cliente
+    // Si no viene planId pero sí resolvedClientId, buscar planes activos del cliente
     const { data: clientPlans, isLoading: isLoadingPlans } = useGetClientTrainingPlansQuery(
-        { clientId: clientId || 0, skip: 0, limit: 100 },
-        { skip: !!planId || !clientId }
+        { clientId: resolvedClientId || 0, skip: 0, limit: 100 },
+        { skip: !!planId || !resolvedClientId }
+    );
+
+    // Clientes del trainer (para selector — siempre cargar cuando no hay contexto de cliente/plan)
+    const { data: trainerClientsData } = useGetTrainerClientsQuery(
+        { trainerId, page: 1, per_page: 50 },
+        { skip: !trainerId }
     );
 
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
@@ -115,29 +135,83 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     }, [clientPlans, planId]);
 
     // Si viene planId, obtener clientId del plan y cargar el cliente del plan
-    const effectiveClientId = planId && plan ? plan.client_id : clientId;
+    const effectiveClientId = planId && plan ? plan.client_id : resolvedClientId;
     const { data: planClient } = useGetClientQuery(effectiveClientId || 0, { 
-        skip: !effectiveClientId || (!!clientId && !planId) 
+        skip: !effectiveClientId || (!!resolvedClientId && !planId) 
+    });
+
+    // Lesiones activas del cliente (solo cuando hay cliente seleccionado — para banner de alerta)
+    const { activeInjuries: clientActiveInjuries = [], hasActiveInjuries } = useClientInjuries({
+        clientId: effectiveClientId ?? 0,
+        includeHistory: false,
+    });
+
+    // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
+    const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(effectiveClientId ?? 0, {
+        skip: !effectiveClientId || effectiveClientId <= 0,
     });
 
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
 
+    const prefillApplied = useRef<{ clientId: number; duration: boolean; rec: boolean } | null>(null);
+
+    useEffect(() => {
+        if (!effectiveClientId || effectiveClientId <= 0) {
+            prefillApplied.current = null;
+            return;
+        }
+        if (prefillApplied.current?.clientId !== effectiveClientId) {
+            prefillApplied.current = { clientId: effectiveClientId, duration: false, rec: false };
+        }
+        const state = prefillApplied.current;
+        const updates: Partial<typeof formData> = {};
+
+        const profile = displayClient as { session_duration?: string | null } | undefined;
+        if (!state.duration && profile?.session_duration) {
+            const durationMap: Record<string, string> = {
+                short_lt_1h: "45",
+                medium_1h_to_1h30: "60",
+                long_gt_1h30: "90",
+            };
+            updates.plannedDuration = durationMap[profile.session_duration] ?? "60";
+            state.duration = true;
+        }
+
+        const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
+        if (!state.rec && rec?.status === "complete" && rec.recommendations) {
+            const levelToSlider: Record<string, string> = {
+                low: "3",
+                Low: "3",
+                medium: "6",
+                Medium: "6",
+                high: "8",
+                High: "8",
+            };
+            const volLevel = rec.recommendations.volume?.level;
+            const intLevel = rec.recommendations.intensity?.level;
+            if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
+            if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
+            state.rec = true;
+        }
+
+        if (Object.keys(updates).length > 0) {
+            setFormData((prev) => ({ ...prev, ...updates }));
+        }
+    }, [effectiveClientId, displayClient, recommendationsData]);
+
     // Hook de mutación para crear sesión
     const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
     const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
-    
-    // Hook de mutación para crear ejercicios de sesión
-    const [createSessionExercise, { isLoading: isSavingExercises }] = useCreateSessionExerciseMutation();
     const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
 
     const [formData, setFormData] = useState({
         sessionName: "",
         sessionDate: new Date().toISOString().split("T")[0],
-        sessionType: "training",
-        plannedDuration: "",
-        plannedIntensity: "",
-        plannedVolume: "",
+        sessionType: "strength",
+        plannedDuration: "60",
+        plannedIntensity: "5",
+        plannedVolume: "5",
         notes: "",
     });
 
@@ -155,31 +229,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     }, [clientPlans, formData.sessionDate]);
 
     // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
-    const useStandaloneSession = !planId && !!clientId && !isLoadingPlans && !hasActivePlanForDate;
+    const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
 
-    // Estado de ejercicios
-    interface ExerciseFormData {
-        exercise_id: number;
-        exercise_name: string;
-        order_in_block: number;
-        planned_sets: number;
-        planned_reps: string;
-        planned_weight: number | null;
-        planned_rest: number | null;
-        notes: string | null;
-    }
-
-    const [exercises, setExercises] = useState<ExerciseFormData[]>([]);
-    const [showExerciseForm, setShowExerciseForm] = useState(false);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
-    const [currentExercise, setCurrentExercise] = useState<Partial<ExerciseFormData>>({
-        planned_sets: 3,
-        planned_reps: "10",
-        planned_weight: null,
-        planned_rest: 60,
-        notes: null,
-    });
+    /** Fase 3: bloque de entrenamiento seleccionado (para "+ Añadir serie" en Fase 4) */
+    const [activeBlockTypeId, setActiveBlockTypeId] = useState<number | null>(null);
+
+    /** Fase 4+7: Constructor por bloques */
+    const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
+    const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
+
+    const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
+    const [createSessionBlock] = useCreateSessionBlockMutation();
+    const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
+    const [createSessionTemplate, { isLoading: isSavingTemplate }] = useCreateSessionTemplateMutation();
 
     /** Fase 3: avisos de coherencia tras crear sesión; al confirmar "Entendido" se redirige. */
     const [postCreateCoherenceWarnings, setPostCreateCoherenceWarnings] = useState<
@@ -187,87 +251,47 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     >(null);
     const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
 
-    // Validar que haya al menos clientId o planId
-    useEffect(() => {
-        if (!clientId && !planId) {
-            showError("Debes proporcionar un cliente o un plan de entrenamiento");
-            navigate("/dashboard");
-        }
-    }, [clientId, planId, navigate, showError]);
-
-    // Handler cuando el usuario selecciona un ejercicio del catálogo (modal)
+    /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
-        setCurrentExercise({
-            exercise_id: exercise.id,
-            exercise_name: exercise.nombre,
-            order_in_block: exercises.length + 1,
-            planned_sets: 3,
-            planned_reps: "10",
-            planned_weight: null,
-            planned_rest: 60,
+        if (!targetRowIdForPicker) return;
+        const newEx: ConstructorExercise = {
+            id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+            exerciseId: exercise.id,
+            exerciseName: exercise.nombre,
+            plannedReps: "10",
+            plannedWeight: null,
+            plannedDuration: null,
+            effortCharacter: null,
+            effortValue: null,
             notes: null,
-        });
-        setShowExerciseForm(true);
+        };
+        setConstructorRows((prev) =>
+            prev.map((r) =>
+                r.id === targetRowIdForPicker
+                    ? { ...r, exercises: [...r.exercises, newEx] }
+                    : r
+            )
+        );
+        setTargetRowIdForPicker(null);
         setShowExercisePickerModal(false);
     };
 
-    // Handler para añadir ejercicio a la lista (tras configurar series/reps)
-    const handleAddExercise = () => {
-        if (!currentExercise.exercise_id || !currentExercise.exercise_name) {
-            showError("Selecciona un ejercicio desde el catálogo");
-            return;
+    /** Guardar como plantilla — no requiere cliente */
+    const handleSaveAsTemplate = async () => {
+        const name = formData.sessionName.trim() || "Plantilla sin nombre";
+        try {
+            await createSessionTemplate({
+                name,
+                description: formData.notes.trim() || null,
+                session_type: formData.sessionType,
+                estimated_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
+                is_public: false,
+            }).unwrap();
+            showSuccess("Plantilla guardada correctamente", 2000);
+            setTimeout(() => navigate(-1), 1500);
+        } catch (err) {
+            showError("Error al guardar la plantilla. Inténtalo de nuevo.");
         }
-        if (!currentExercise.planned_sets || currentExercise.planned_sets <= 0) {
-            showError("Las series deben ser mayor a 0");
-            return;
-        }
-        if (!currentExercise.planned_reps || currentExercise.planned_reps.trim() === "") {
-            showError("Las repeticiones son obligatorias");
-            return;
-        }
-
-        const newExercise: ExerciseFormData = {
-            exercise_id: currentExercise.exercise_id,
-            exercise_name: currentExercise.exercise_name,
-            order_in_block: exercises.length + 1,
-            planned_sets: currentExercise.planned_sets,
-            planned_reps: currentExercise.planned_reps,
-            planned_weight: currentExercise.planned_weight || null,
-            planned_rest: currentExercise.planned_rest || null,
-            notes: currentExercise.notes || null,
-        };
-
-        setExercises([...exercises, newExercise]);
-        setCurrentExercise({
-            planned_sets: 3,
-            planned_reps: "10",
-            planned_weight: null,
-            planned_rest: 60,
-            notes: null,
-        });
-        setShowExerciseForm(false);
-    };
-
-    const handleCancelExerciseForm = () => {
-        setCurrentExercise({
-            planned_sets: 3,
-            planned_reps: "10",
-            planned_weight: null,
-            planned_rest: 60,
-            notes: null,
-        });
-        setShowExerciseForm(false);
-    };
-
-    // Handler para eliminar ejercicio de la lista
-    const handleRemoveExercise = (index: number) => {
-        const updatedExercises = exercises
-            .filter((_, i) => i !== index)
-            .map((ex, i) => ({
-                ...ex,
-                order_in_block: i + 1,
-            }));
-        setExercises(updatedExercises);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -320,7 +344,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
         try {
             if (useStandaloneSession) {
-                // P2: Crear StandaloneSession (sesión libre)
+                // P2: Crear StandaloneSession (sesión libre) — ejercicios aplanados del Constructor
                 const standaloneData = {
                     trainer_id: trainerId,
                     client_id: effectiveClientId,
@@ -334,17 +358,30 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
                 const created = await createStandaloneSession(standaloneData).unwrap();
 
-                if (exercises.length > 0) {
+                let order = 0;
+                const flatExercises = constructorRows.flatMap((r) =>
+                    r.exercises.map((ex) => ({
+                        exercise_id: ex.exerciseId,
+                        order_in_session: ++order,
+                        planned_sets: r.sets ?? 3,
+                        planned_reps: convertPlannedReps(ex.plannedReps ?? ""),
+                        planned_weight: ex.plannedWeight,
+                        planned_rest: r.rest,
+                        notes: ex.notes,
+                    }))
+                );
+
+                if (flatExercises.length > 0) {
                     let savedCount = 0;
-                    for (const ex of exercises) {
+                    for (const ex of flatExercises) {
                         try {
                             await createStandaloneExercise({
                                 sessionId: created.id,
                                 data: {
                                     exercise_id: ex.exercise_id,
-                                    order_in_session: ex.order_in_block,
+                                    order_in_session: ex.order_in_session,
                                     planned_sets: ex.planned_sets,
-                                    planned_reps: convertPlannedReps(ex.planned_reps),
+                                    planned_reps: ex.planned_reps,
                                     planned_weight: ex.planned_weight,
                                     planned_rest: ex.planned_rest,
                                     notes: ex.notes,
@@ -352,13 +389,13 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             }).unwrap();
                             savedCount++;
                         } catch {
-                            // continuar con el resto
+                            // continuar
                         }
                     }
                     showSuccess(
-                        savedCount === exercises.length
+                        savedCount === flatExercises.length
                             ? `Sesión libre creada con ${savedCount} ejercicios.`
-                            : `Sesión libre creada. ${savedCount}/${exercises.length} ejercicios guardados.`,
+                            : `Sesión libre creada. ${savedCount}/${flatExercises.length} ejercicios guardados.`,
                         2000
                     );
                 } else {
@@ -366,7 +403,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 }
                 setTimeout(() => navigate(redirectTo), 1500);
             } else {
-                // TrainingSession (con plan)
+                // Fase 7: TrainingSession con bloques
                 const sessionData: TrainingSessionCreate = {
                     training_plan_id: selectedPlanId!,
                     client_id: effectiveClientId,
@@ -383,35 +420,67 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
                 const createdSession = await createTrainingSession(sessionData).unwrap();
 
-                if (exercises.length > 0) {
-                    let savedCount = 0;
-                    let failedCount = 0;
-                    for (const exercise of exercises) {
+                if (constructorRows.length > 0) {
+                    let blocksSaved = 0;
+                    let exercisesSaved = 0;
+                    for (let i = 0; i < constructorRows.length; i++) {
+                        const row = constructorRows[i];
+                        if (!row.blockTypeId) continue;
                         try {
-                            const exercisePayload: SessionExerciseCreate = {
-                                exercise_id: exercise.exercise_id,
-                                order_in_session: exercise.order_in_block,
-                                planned_sets: exercise.planned_sets,
-                                planned_reps: convertPlannedReps(exercise.planned_reps),
-                                planned_weight: exercise.planned_weight,
-                                planned_rest: exercise.planned_rest,
-                                notes: exercise.notes,
+                            const blockPayload = {
+                                block_type_id: row.blockTypeId,
+                                order_in_session: i + 1,
+                                set_type: row.setType,
+                                rounds: row.rounds,
+                                time_cap: row.timeCap,
+                                interval_seconds: row.intervalSeconds,
+                                objective_text:
+                                    row.setType === "for_time"
+                                        ? "Objetivo: menor tiempo"
+                                        : row.setType === "amrap"
+                                        ? "Objetivo: máximo rendimiento"
+                                        : null,
                             };
-                            await createSessionExercise({
+                            const createdBlock = await createSessionBlock({
                                 sessionId: createdSession.id,
-                                data: exercisePayload,
+                                data: blockPayload,
                             }).unwrap();
-                            savedCount++;
+
+                            for (let j = 0; j < row.exercises.length; j++) {
+                                const ex = row.exercises[j];
+                                try {
+                                    await createSessionBlockExercise({
+                                        blockId: createdBlock.id,
+                                        data: {
+                                            exercise_id: ex.exerciseId,
+                                            order_in_block: j + 1,
+                                            set_type: row.setType,
+                                            planned_sets: row.sets,
+                                            planned_reps: ex.plannedReps,
+                                            planned_weight: ex.plannedWeight,
+                                            planned_rest: row.rest,
+                                            effort_character: ex.effortCharacter,
+                                            effort_value: ex.effortValue,
+                                            notes: ex.notes,
+                                        },
+                                    }).unwrap();
+                                    exercisesSaved++;
+                                } catch {
+                                    // continuar
+                                }
+                            }
+                            blocksSaved++;
                         } catch {
-                            failedCount++;
+                            // continuar
                         }
                     }
-                    if (savedCount === exercises.length) {
-                        showSuccess(`Sesión creada con ${savedCount} ejercicios exitosamente.`, 2000);
-                    } else if (savedCount > 0) {
-                        showSuccess(`Sesión creada. ${savedCount} ejercicios guardados, ${failedCount} fallaron.`, 3000);
+                    const totalEx = constructorRows.reduce((s, r) => s + r.exercises.length, 0);
+                    if (blocksSaved === constructorRows.length && exercisesSaved === totalEx) {
+                        showSuccess(`Sesión creada con ${blocksSaved} bloques y ${exercisesSaved} ejercicios.`, 2000);
+                    } else if (blocksSaved > 0) {
+                        showSuccess(`Sesión creada. ${blocksSaved} bloques, ${exercisesSaved} ejercicios guardados.`, 3000);
                     } else {
-                        showError("Sesión creada, pero hubo un error al guardar los ejercicios.");
+                        showError("Sesión creada, pero hubo un error al guardar los bloques.");
                     }
                 } else {
                     showSuccess("Sesión creada exitosamente.", 2000);
@@ -479,19 +548,335 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     return (
         <>
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="space-y-6 pb-24 px-4 lg:px-8">
+                {/* Header + Volver — mismo patrón que dashboard */}
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <PageTitle title="Nueva Sesión" />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                            if (backPath) {
+                                navigate(backPath);
+                            } else {
+                                const state = location.state as LocationStateReturnTo | null;
+                                if (state?.from) {
+                                    navigate(state.from);
+                                } else {
+                                    navigate(-1);
+                                }
+                            }
+                        }}
+                    >
+                        Volver
+                    </Button>
+                </div>
+
+                {/* Tarjeta contexto cliente: combobox (diseño Lovable) o avatar */}
+                {!resolvedClientId && !planId ? (
+                    <div className="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm space-y-3">
+                        <FormCombobox
+                            value={selectedClientIdFromSelector?.toString() || ""}
+                            onChange={(v) => setSelectedClientIdFromSelector(v ? Number(v) : null)}
+                            options={[
+                                { value: "", label: "Seleccionar cliente *" },
+                                ...(trainerClientsData?.items || []).map((c) => ({
+                                    value: c.id.toString(),
+                                    label: `${c.nombre} ${c.apellidos}`,
+                                })),
+                            ]}
+                            placeholder="Seleccionar cliente *"
+                            aria-label="Seleccionar cliente"
+                        />
+                    </div>
+                ) : displayClient && effectiveClientId ? (
+                    <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-4">
+                        <ClientAvatar
+                            clientId={effectiveClientId}
+                            nombre={displayClient.nombre}
+                            apellidos={displayClient.apellidos}
+                            size="sm"
+                        />
                         <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                                Nueva Sesión
-                            </h2>
-                            <p className="text-white/80 text-sm md:text-base">
-                                Crear una nueva sesión de entrenamiento para {displayClient ? `${displayClient.nombre} ${displayClient.apellidos}` : "atleta"}
+                            <p className="text-sm font-semibold text-foreground">
+                                Creando sesión para {displayClient.nombre} {displayClient.apellidos}
                             </p>
                         </div>
+                    </div>
+                ) : null}
+
+                <form id="create-session-form" onSubmit={handleSubmit}>
+                {/* Grid: 3 primeras filas (nombre, fecha, duración) + columna derecha con plan — solo cuando hay cliente */}
+                <div className={`grid grid-cols-1 gap-6 ${effectiveClientId ? "lg:grid-cols-[1fr_420px]" : ""}`}>
+                    <div className="space-y-5">
+                            {/* Nombre de la Sesión + Plan de Entrenamiento (misma línea cuando hay cliente) */}
+                            <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
+                                <div>
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Nombre de la Sesión *
+                                    </label>
+                                    <Input
+                                        type="text"
+                                        value={formData.sessionName}
+                                        onChange={(e) => setFormData({ ...formData, sessionName: e.target.value })}
+                                        required
+                                        placeholder="Ej: Fuerza — Tren superior A"
+                                        className="bg-surface"
+                                    />
+                                    {formErrors.sessionName && <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>}
+                                </div>
+                                {resolvedClientId && (
+                                <div>
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                    Plan de Entrenamiento {!useStandaloneSession && "*"}
+                                </label>
+                                {useStandaloneSession ? (
+                                        <Input
+                                            type="text"
+                                            value="Sesión libre"
+                                            disabled
+                                            className="bg-muted"
+                                        />
+                                    ) : planId ? (
+                                        <Input
+                                            type="text"
+                                            value={plan?.name || "Cargando..."}
+                                            disabled
+                                            className="bg-muted"
+                                        />
+                                    ) : (
+                                        <>
+                                            <FormSelect
+                                                value={selectedPlanId?.toString() || ""}
+                                                onChange={(e) => setSelectedPlanId(e.target.value ? Number(e.target.value) : null)}
+                                                required={!!resolvedClientId && !useStandaloneSession}
+                                                options={[
+                                                    { value: "", label: "Selecciona un plan" },
+                                                    ...(clientPlans || []).map((p) => ({
+                                                        value: p.id.toString(),
+                                                        label: `${p.name} (${p.status === "active" ? "Activo" : "Inactivo"})`,
+                                                    })),
+                                                ]}
+                                            />
+                                            {(clientPlans || []).length === 0 && resolvedClientId && (
+                                                <p className="text-xs text-destructive mt-2">
+                                                    Este cliente no tiene planes disponibles. Crea un plan para poder programar sesiones.
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+                                    {!useStandaloneSession && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            La sesión debe estar vinculada a un plan para el seguimiento de carga.
+                                        </p>
+                                    )}
+                                </div>
+                                )}
+                            </div>
+
+                            {/* Fecha y Tipo */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label htmlFor="create-session-date" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Fecha de la Sesión *
+                                    </label>
+                                    <DatePickerButton
+                                        label="Seleccionar fecha"
+                                        value={formData.sessionDate}
+                                        onChange={(v) => setFormData({ ...formData, sessionDate: v })}
+                                        variant="form"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="create-session-type" className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Tipo de Sesión *
+                                    </label>
+                                    <FormSelect
+                                        id="create-session-type"
+                                        value={formData.sessionType}
+                                        onChange={(e) => setFormData({ ...formData, sessionType: e.target.value })}
+                                        required
+                                        options={SESSION_TYPES}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Fila Duración + Intensidad + Volumen (grid 3 cols, spec 4.1.3) */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Duración (min)
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        value={formData.plannedDuration}
+                                        onChange={(e) => setFormData({ ...formData, plannedDuration: e.target.value })}
+                                        placeholder="60"
+                                        className="bg-surface"
+                                    />
+                                </div>
+                                <div className="mt-3 md:mt-0">
+                                    <Slider
+                                        label="Intensidad (5/10)"
+                                        value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
+                                        min={1}
+                                        max={10}
+                                        color="primary"
+                                        onChange={(v) => setFormData({ ...formData, plannedIntensity: String(v) })}
+                                    />
+                                </div>
+                                <div className="mt-3 md:mt-0">
+                                    <Slider
+                                        label="Volumen (5/10)"
+                                        value={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
+                                        min={1}
+                                        max={10}
+                                        color="primary"
+                                        onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
+                                    />
+                                </div>
+                            </div>
+                    </div>
+
+                    {/* Columna derecha: Plan del día — solo cuando hay cliente seleccionado */}
+                    {effectiveClientId != null && effectiveClientId > 0 && (
+                    <div className="lg:self-stretch">
+                        {useStandaloneSession ? (
+                                <div className="rounded-lg border border-border border-l-2 border-l-primary bg-card p-5 text-card-foreground shadow-sm h-full flex flex-col justify-center">
+                                    <div className="py-2 text-center">
+                                        <ClipboardList className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" aria-hidden />
+                                        <p className="text-sm font-medium text-foreground">Sin plan asignado</p>
+                                        <p className="mt-1 text-xs text-muted-foreground">
+                                            Este cliente no tiene un plan de entrenamiento activo.
+                                        </p>
+                                        <div className="mt-4 flex flex-col gap-2">
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                size="sm"
+                                                className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/dashboard/training-plans/create?clientId=${effectiveClientId}`
+                                                    )
+                                                }
+                                            >
+                                                <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                                Crear plan
+                                            </Button>
+                                            <p className="text-[11px] text-muted-foreground">
+                                                Puedes continuar sin plan y crear la sesión libremente.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <SessionDayPlan
+                                    clientId={effectiveClientId}
+                                    sessionDate={formData.sessionDate}
+                                    trainerId={trainerId}
+                                />
+                            )}
+                    </div>
+                    )}
+                </div>
+
+                {/* A partir de aquí todo ancho: banner lesiones, recomendaciones, bloques, constructor, notas */}
+                <div className="mt-6 space-y-5 w-full">
+                            {/* Alerta lesiones activas — solo cuando hay cliente seleccionado */}
+                            {effectiveClientId && hasActiveInjuries && displayClient && (
+                                <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-4">
+                                    <TriangleAlert className="h-5 w-5 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
+                                    <p className="text-sm text-[hsl(var(--warning))]">
+                                        Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
+                                        {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
+                                        ). Los ejercicios contraindicados están marcados en la lista.
+                                    </p>
+                                </div>
+                            )}
+
+                            {/* Recomendaciones de plan (Lovable) — solo cuando hay cliente asignado */}
+                            {effectiveClientId && (
+                                <RecommendationsCards clientId={effectiveClientId} />
+                            )}
+
+                            {/* Bloques de Entrenamiento */}
+                            <div className="space-y-3">
+                                <h3 className="text-lg font-bold text-foreground">
+                                    Bloques de Entrenamiento
+                                </h3>
+                                <TrainingBlockSelector
+                                    activeBlockTypeId={activeBlockTypeId}
+                                    onSelect={setActiveBlockTypeId}
+                                />
+                            </div>
+
+                            {/* Constructor de Sesión — debajo de Bloques */}
+                            <div className="pt-6 border-t border-border">
+                                <div className="flex items-center justify-between mb-6">
+                                    <h3 className="text-lg font-bold text-foreground">Constructor de Sesión</h3>
+                                    {constructorRows.length > 0 && (
+                                        <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-semibold rounded-full">
+                                            {constructorRows.length} serie{constructorRows.length !== 1 ? "s" : ""}
+                                        </span>
+                                    )}
+                                </div>
+
+                                <SessionConstructor
+                                    rows={constructorRows}
+                                    blockTypes={blockTypes}
+                                    activeBlockTypeId={activeBlockTypeId}
+                                    onRowsChange={setConstructorRows}
+                                    onAddExerciseRequest={(rowId) => {
+                                        setTargetRowIdForPicker(rowId);
+                                        setShowExercisePickerModal(true);
+                                    }}
+                                />
+                            </div>
+
+                            {/* Notas — al final del formulario */}
+                            <div className="pt-6 border-t border-border">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                    Notas de la Sesión
+                                </label>
+                                <Textarea
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                    rows={3}
+                                    placeholder="Instrucciones generales para la sesión..."
+                                />
+                            </div>
+
+                            {showExercisePickerModal && (
+                                <ExercisePickerModal
+                                    isOpen={true}
+                                    onClose={() => {
+                                        setShowExercisePickerModal(false);
+                                        setTargetRowIdForPicker(null);
+                                    }}
+                                    onSelect={handleSelectFromPicker}
+                                />
+                            )}
+                </div>
+                </form>
+            </div>
+
+            {/* Barra fija inferior — layout imagen 2: Guardar como Plantilla (izq), Cancelar + Crear Sesión (der) */}
+            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background p-4">
+                <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={handleSaveAsTemplate}
+                        disabled={isSavingTemplate}
+                        isLoading={isSavingTemplate}
+                    >
+                        Guardar como Plantilla
+                    </Button>
+                    <div className="flex gap-3">
                         <Button
+                            type="button"
                             variant="outline"
-                            size="sm"
                             onClick={() => {
                                 if (backPath) {
                                     navigate(backPath);
@@ -505,276 +890,29 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 }
                             }}
                         >
-                            Volver
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="create-session-form"
+                            variant="primary"
+                            disabled={
+                                !effectiveClientId ||
+                                isCreatingSession ||
+                                isCreatingStandalone ||
+                                isSavingStandaloneExercises
+                            }
+                            isLoading={
+                                isCreatingSession ||
+                                isCreatingStandalone ||
+                                isSavingStandaloneExercises
+                            }
+                        >
+                            Crear Sesión
                         </Button>
                     </div>
                 </div>
-
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Panel de recomendaciones: con plan = SessionDayPlan; sin plan = RecommendationsCards (P2) */}
-                            {effectiveClientId != null && effectiveClientId > 0 && (
-                                useStandaloneSession ? (
-                                    <RecommendationsCards clientId={effectiveClientId} />
-                                ) : (
-                                    <SessionDayPlan
-                                        clientId={effectiveClientId}
-                                        sessionDate={formData.sessionDate}
-                                        trainerId={trainerId}
-                                    />
-                                )
-                            )}
-
-                            {/* Nombre de la Sesión */}
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Nombre de la Sesión *
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={formData.sessionName}
-                                    onChange={(e) => setFormData({ ...formData, sessionName: e.target.value })}
-                                    required
-                                    placeholder="Ej: Entrenamiento de Fuerza - Piernas"
-                                />
-                                {formErrors.sessionName && <p className="text-red-600 text-xs mt-1">{formErrors.sessionName}</p>}
-                            </div>
-
-                            {/* Selector de Plan de Entrenamiento (oculto cuando sesión libre P2) */}
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Plan de Entrenamiento {!useStandaloneSession && "*"}
-                                </label>
-                                {useStandaloneSession ? (
-                                    <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg">
-                                        <p className="text-sm text-slate-600">
-                                            Sesión libre (sin plan activo para esta fecha)
-                                        </p>
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            La sesión se creará como sesión independiente.
-                                        </p>
-                                    </div>
-                                ) : planId ? (
-                                    <Input
-                                        type="text"
-                                        value={plan?.name || "Cargando..."}
-                                        disabled
-                                        className="bg-muted"
-                                    />
-                                ) : (
-                                    <>
-                                        <FormSelect
-                                            value={selectedPlanId?.toString() || ""}
-                                            onChange={(e) => setSelectedPlanId(Number(e.target.value))}
-                                            required
-                                            options={[
-                                                { value: "", label: "Selecciona un plan" },
-                                                ...(clientPlans || []).map((p) => ({
-                                                    value: p.id.toString(),
-                                                    label: `${p.name} (${p.status === "active" ? "Activo" : "Inactivo"})`,
-                                                })),
-                                            ]}
-                                        />
-                                        {(clientPlans || []).length === 0 && (
-                                            <p className="text-xs text-red-600 mt-2">
-                                                Este cliente no tiene planes disponibles. Crea un plan para poder programar sesiones.
-                                            </p>
-                                        )}
-                                    </>
-                                )}
-                                {!useStandaloneSession && (
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        La sesión debe estar vinculada a un plan para el seguimiento de carga.
-                                    </p>
-                                )}
-                            </div>
-
-                            {/* Fecha y Tipo */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="create-session-date" className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Fecha de la Sesión *
-                                    </label>
-                                    <Input
-                                        id="create-session-date"
-                                        type="date"
-                                        value={formData.sessionDate}
-                                        onChange={(e) => setFormData({ ...formData, sessionDate: e.target.value })}
-                                        required
-                                    />
-                                </div>
-                                <div>
-                                    <label htmlFor="create-session-type" className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Tipo de Sesión *
-                                    </label>
-                                    <FormSelect
-                                        id="create-session-type"
-                                        value={formData.sessionType}
-                                        onChange={(e) => setFormData({ ...formData, sessionType: e.target.value })}
-                                        required
-                                        options={SESSION_TYPES}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Duración, Intensidad, Volumen */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Duración (min)
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={formData.plannedDuration}
-                                        onChange={(e) => setFormData({ ...formData, plannedDuration: e.target.value })}
-                                        placeholder="60"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Intensidad (1-10)
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={formData.plannedIntensity}
-                                        onChange={(e) => setFormData({ ...formData, plannedIntensity: e.target.value })}
-                                        min="1" max="10"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                        Volumen (1-10)
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={formData.plannedVolume}
-                                        onChange={(e) => setFormData({ ...formData, plannedVolume: e.target.value })}
-                                        min="1" max="10"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Notas */}
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                    Notas de la Sesión
-                                </label>
-                                <Textarea
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                    rows={3}
-                                    placeholder="Instrucciones generales para la sesión..."
-                                />
-                            </div>
-
-                            {/* Sección de Ejercicios */}
-                            <div className="mt-8 pt-8 border-t border-border">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-bold text-foreground">Ejercicios</h3>
-                                    {exercises.length > 0 && (
-                                        <span className="px-3 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">
-                                            {exercises.length} ejercicio{exercises.length !== 1 ? 's' : ''}
-                                        </span>
-                                    )}
-                                </div>
-
-                                {/* Lista de ejercicios */}
-                                <div className="space-y-3 mb-6">
-                                    {exercises.map((exercise, index) => (
-                                        <div key={index} className="flex items-center gap-3 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                            <div className="flex-1">
-                                                <p className="font-semibold text-foreground">{exercise.exercise_name}</p>
-                                                <p className="text-sm text-muted-foreground">
-                                                    {exercise.planned_sets} series × {exercise.planned_reps} reps
-                                                    {exercise.planned_weight && ` @ ${exercise.planned_weight}kg`}
-                                                </p>
-                                            </div>
-                                            <button type="button" onClick={() => handleRemoveExercise(index)} className="text-red-600 hover:text-red-800 font-bold px-2">×</button>
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {/* Añadir ejercicio: catálogo unificado (solo monta modal cuando abierto) */}
-                                {showExercisePickerModal && (
-                                    <ExercisePickerModal
-                                        isOpen={true}
-                                        onClose={() => setShowExercisePickerModal(false)}
-                                        onSelect={handleSelectFromPicker}
-                                    />
-                                )}
-                                {showExerciseForm ? (
-                                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                        <p className="text-sm font-medium text-slate-700">
-                                            Ejercicio seleccionado: <span className="font-semibold">{currentExercise.exercise_name}</span>
-                                        </p>
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div>
-                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                                    Series *
-                                                </label>
-                                                <Input
-                                                    type="number"
-                                                    value={currentExercise.planned_sets || ""}
-                                                    onChange={(e) =>
-                                                        setCurrentExercise({
-                                                            ...currentExercise,
-                                                            planned_sets: Number(e.target.value),
-                                                        })
-                                                    }
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-sm font-semibold text-slate-700 mb-2">
-                                                    Reps *
-                                                </label>
-                                                <Input
-                                                    type="text"
-                                                    value={currentExercise.planned_reps || ""}
-                                                    onChange={(e) =>
-                                                        setCurrentExercise({
-                                                            ...currentExercise,
-                                                            planned_reps: e.target.value,
-                                                        })
-                                                    }
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="flex gap-3">
-                                            <Button type="button" variant="primary" onClick={handleAddExercise}>
-                                                Agregar
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                onClick={handleCancelExerciseForm}
-                                            >
-                                                Cancelar
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setShowExercisePickerModal(true)}
-                                        className="w-full"
-                                    >
-                                        + Añadir Ejercicio
-                                    </Button>
-                                )}
-                            </div>
-
-                            {/* Botones finales */}
-                            <div className="flex justify-end gap-3 pt-6 border-t border-border">
-                                <Button type="button" variant="outline" onClick={() => navigate(-1)}>Cancelar</Button>
-                                <Button type="submit" variant="primary" disabled={isCreatingSession || isSavingExercises || isCreatingStandalone || isSavingStandaloneExercises} isLoading={isCreatingSession || isSavingExercises || isCreatingStandalone || isSavingStandaloneExercises}>
-                                    Crear Sesión
-                                </Button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+            </div>
         </>
     );
 };

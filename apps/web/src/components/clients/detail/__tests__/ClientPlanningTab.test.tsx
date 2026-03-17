@@ -12,7 +12,6 @@
  * @updated Fase 1 U3 — plan activo vía API + estado month/week en URL
  */
 
-import React from "react";
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";

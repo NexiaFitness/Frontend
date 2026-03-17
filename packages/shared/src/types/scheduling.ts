@@ -173,9 +173,7 @@ export interface TrainerAvailabilityCreate {
     end_time: string; // HH:mm
     is_recurring: boolean;
     specific_date?: string | null; // ISO date when not recurring
-}
-
-/** PUT /scheduling/availability/{id} — Backend: TrainerAvailabilityUpdate */
+}/** PUT /scheduling/availability/{id} — Backend: TrainerAvailabilityUpdate */
 export interface TrainerAvailabilityUpdate {
     day_of_week?: number | null;
     start_time?: string | null;

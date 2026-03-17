@@ -525,6 +525,7 @@ export const {
 
     // Session Block Exercises
     useGetSessionBlockExercisesQuery,
+    useLazyGetSessionBlockExercisesQuery,
     useGetSessionBlockExerciseQuery,
     useCreateSessionBlockExerciseMutation,
     useUpdateSessionBlockExerciseMutation,

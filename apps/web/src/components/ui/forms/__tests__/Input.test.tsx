@@ -72,9 +72,9 @@ describe("Input", () => {
             render(<Input size="sm" placeholder="Small input" />)
             
             const input = screen.getByPlaceholderText("Small input")
-            // sm = px-3 py-2 text-sm en mobile y sm+
-            expect(input).toHaveClass("px-3", "py-2", "text-sm")
-            expect(input).toHaveClass("min-h-[40px]")
+            // sm = mismo alto que pills (filtros): px-3 py-1.5 text-sm min-h-9 h-9
+            expect(input).toHaveClass("px-3", "py-1.5", "text-sm")
+            expect(input).toHaveClass("min-h-9", "h-9")
         })
 
         it("renders medium size correctly", () => {

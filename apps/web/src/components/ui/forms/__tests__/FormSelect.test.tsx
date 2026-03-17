@@ -46,7 +46,7 @@ describe("FormSelect", () => {
         expect(placeholderOption).toHaveAttribute("value", "")
     })
 
-    it("applies gray text when no value selected", () => {
+    it("applies muted text when no value selected", () => {
         render(
             <FormSelect
                 options={mockOptions}
@@ -55,10 +55,10 @@ describe("FormSelect", () => {
                 onChange={() => { }}
             />
         )
-        expect(screen.getByRole("combobox")).toHaveClass("text-gray-400")
+        expect(screen.getByRole("combobox")).toHaveClass("text-muted-foreground")
     })
 
-    it("applies dark text when value is selected", () => {
+    it("applies foreground text when value is selected", () => {
         render(
             <FormSelect
                 options={mockOptions}
@@ -66,7 +66,7 @@ describe("FormSelect", () => {
                 onChange={() => { }}
             />
         )
-        expect(screen.getByRole("combobox")).toHaveClass("text-gray-900")
+        expect(screen.getByRole("combobox")).toHaveClass("text-foreground")
     })
 
     it("shows label and associates it with select", () => {

@@ -29,24 +29,24 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 }
 
 const baseStyles =
-    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50";
 
-// Mobile-first responsive sizes
+// Mobile-first responsive sizes — sm = mismo alto que pills (filtros)
 const sizeStyles: Record<InputSize, string> = {
-    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
+    sm: "px-3 py-1.5 text-sm min-h-9 h-9",
     md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
 };
 
 // Para inputs password con icono → padding derecho extra
 const passwordSizeStyles: Record<InputSize, string> = {
-    sm: "px-3 py-2 pr-10 text-sm min-h-[40px] sm:min-h-[44px]",
+    sm: "px-3 py-1.5 pr-10 text-sm min-h-9 h-9",
     md: "px-3 py-2 pr-12 text-sm sm:px-4 sm:py-2.5 sm:pr-12 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 pr-14 text-base sm:px-5 sm:py-3 sm:pr-14 sm:text-lg sm:min-h-[48px]",
 };
 
 const stateStyles = {
-    default: "border-input focus-visible:border-ring",
+    default: "border-input focus-visible:border-primary focus-visible:ring-primary",
     error: "border-destructive focus-visible:ring-destructive",
 };
 

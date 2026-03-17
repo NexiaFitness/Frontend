@@ -43,9 +43,9 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
     if (isLoading) {
         return (
-            <div className="flex items-center gap-2 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="flex items-center gap-2 p-4 bg-primary/10 border border-primary/30 rounded-lg">
                 <LoadingSpinner size="sm" />
-                <span className="text-sm text-blue-700">Cargando plan del día...</span>
+                <span className="text-sm text-primary">Cargando plan del día...</span>
             </div>
         );
     }
@@ -81,15 +81,15 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
     if (!("has_planned_values" in response) || !response.has_planned_values || !response.recommendations) {
         return (
             <div className="space-y-3">
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-600">
+                <div className="p-4 bg-muted/50 border border-border rounded-lg">
+                    <p className="text-sm text-muted-foreground">
                         Plan activo sin valores planificados para este día.
                     </p>
                 </div>
                 {warnings.length > 0 && (
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <h4 className="text-sm font-semibold text-amber-900 mb-1">Avisos de coherencia</h4>
-                        <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
+                    <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+                        <h4 className="text-sm font-semibold text-warning mb-1">Avisos de coherencia</h4>
+                        <ul className="list-disc list-inside text-sm text-warning space-y-1">
                             {warnings.map((w, i) => (
                                 <li key={i}>{w}</li>
                             ))}
@@ -104,31 +104,31 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
     return (
         <div className="space-y-3">
-            {/* Bloque Hoy toca */}
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                    Hoy toca
+            {/* Bloque Hoy toca — card lateral con border-l-primary */}
+            <div className="p-5 border-l-2 border-l-primary bg-card rounded-lg">
+                <h4 className="text-sm font-semibold text-foreground mb-2">
+                    Plan del día
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
                     <div>
-                        <span className="text-blue-600 text-xs uppercase tracking-wide block">Cualidad</span>
-                        <p className="text-blue-900 font-medium">{rec.physical_quality}</p>
+                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Cualidad</span>
+                        <p className="text-foreground font-medium">{rec.physical_quality}</p>
                     </div>
                     <div>
-                        <span className="text-blue-600 text-xs uppercase tracking-wide block">Volumen</span>
-                        <p className="text-blue-900 font-medium">
+                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Volumen</span>
+                        <p className="text-foreground font-medium">
                             {rec.planned_volume_scale.toFixed(1)}/10
                         </p>
                     </div>
                     <div>
-                        <span className="text-blue-600 text-xs uppercase tracking-wide block">Intensidad</span>
-                        <p className="text-blue-900 font-medium">
+                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Intensidad</span>
+                        <p className="text-foreground font-medium">
                             {rec.planned_intensity_scale.toFixed(1)}/10
                         </p>
                     </div>
                     <div>
-                        <span className="text-blue-600 text-xs uppercase tracking-wide block">Vol. diario rec.</span>
-                        <p className="text-blue-900 font-medium">
+                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Vol. diario rec.</span>
+                        <p className="text-foreground font-medium">
                             {rec.recommended_daily_volume_units.toFixed(1)}{" "}
                             {rec.weekly_volume_unit_type === "series"
                                 ? "series por grupo muscular"
@@ -137,7 +137,7 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
                     </div>
                 </div>
                 {rec.day_inherited && (
-                    <p className="text-xs text-blue-600 mt-2">
+                    <p className="text-xs text-muted-foreground mt-2">
                         Valores heredados del plan semanal/mensual.
                     </p>
                 )}
@@ -145,11 +145,11 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
             {/* Warnings */}
             {warnings.length > 0 && (
-                <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                    <h4 className="text-sm font-semibold text-amber-900 mb-1">
+                <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
+                    <h4 className="text-sm font-semibold text-warning mb-1">
                         Avisos de coherencia
                     </h4>
-                    <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
+                    <ul className="list-disc list-inside text-sm text-warning space-y-1">
                         {warnings.map((w, i) => (
                             <li key={i}>{w}</li>
                         ))}

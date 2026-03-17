@@ -18,9 +18,26 @@ export const SET_TYPE = {
     SINGLE_SET: "single_set",
     SUPERSET: "superset",
     DROPSET: "dropset",
+    GIANT_SET: "giant_set",
+    CIRCUIT: "circuit",
+    FOR_TIME: "for_time",
+    EMOM: "emom",
+    AMRAP: "amrap",
 } as const;
 
 export type SetType = (typeof SET_TYPE)[keyof typeof SET_TYPE];
+
+/** Labels para UI (Constructor de Sesión, selector tipo serie) */
+export const SET_TYPE_LABELS: Record<SetType, string> = {
+    single_set: "Clásico",
+    superset: "Superset",
+    dropset: "Dropset",
+    giant_set: "Giant Set",
+    circuit: "Circuit",
+    for_time: "For Time",
+    emom: "EMOM",
+    amrap: "AMRAP",
+};
 
 export const EFFORT_CHARACTER = {
     RPE: "rpe",
@@ -114,6 +131,11 @@ export interface SessionBlock {
     training_session_id: number;
     block_type_id: number;
     order_in_session: number;
+    set_type: SetType | null;
+    rounds: number | null;
+    time_cap: number | null;
+    interval_seconds: number | null;
+    objective_text: string | null;
     planned_intensity: number | null;
     planned_volume: number | null;
     actual_intensity: number | null;
@@ -129,6 +151,11 @@ export interface SessionBlock {
 export interface SessionBlockCreate {
     block_type_id: number;
     order_in_session: number;
+    set_type?: SetType | null;
+    rounds?: number | null;
+    time_cap?: number | null;
+    interval_seconds?: number | null;
+    objective_text?: string | null;
     planned_intensity?: number | null;
     planned_volume?: number | null;
     actual_intensity?: number | null;
@@ -139,6 +166,11 @@ export interface SessionBlockCreate {
 }
 
 export interface SessionBlockUpdate {
+    set_type?: SetType | null;
+    rounds?: number | null;
+    time_cap?: number | null;
+    interval_seconds?: number | null;
+    objective_text?: string | null;
     planned_intensity?: number | null;
     planned_volume?: number | null;
     actual_intensity?: number | null;

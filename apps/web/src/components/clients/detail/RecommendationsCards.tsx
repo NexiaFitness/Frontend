@@ -5,12 +5,14 @@
  * - Consume GET /training-plans/recommendations/{client_id}
  * - Muestra recomendaciones automáticas del sistema (solo lectura)
  * - Estados: loading, error, incompleto (ficha cliente), completo (3 cards)
+ * - Diseño Lovable: Zap header, Dumbbell/Flame/Zap por card
  *
  * @author Frontend Team
  * @since Fase 2 - Alineación documento canónico
  */
 
 import React from "react";
+import { Zap, Dumbbell, Flame } from "lucide-react";
 import { useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import type {
     TrainingPlanRecommendationsResponse,
@@ -19,7 +21,6 @@ import type {
     ExerciseSelectionRecommendation,
 } from "@nexia/shared/types/trainingRecommendations";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface RecommendationsCardsProps {
     clientId: number;
@@ -53,10 +54,11 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
                 ? String((error as { data?: unknown }).data)
                 : "Error al cargar las recomendaciones.";
         return (
-            <div className="rounded-lg border border-border bg-surface p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
-                    Recomendaciones de plan
-                </h3>
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" aria-hidden />
+                    <h3 className="text-sm font-semibold text-foreground">Recomendaciones de plan</h3>
+                </div>
                 <p className="text-sm text-destructive">{message}</p>
             </div>
         );
@@ -68,11 +70,12 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
 
     if (response.status === "incomplete") {
         return (
-            <div className="rounded-lg border border-border bg-surface p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
-                    Recomendaciones de plan
-                </h3>
-                <p className="mb-2 text-sm text-muted-foreground">{response.message}</p>
+            <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-primary" aria-hidden />
+                    <h3 className="text-sm font-semibold text-foreground">Recomendaciones de plan</h3>
+                </div>
+                <p className="text-sm text-muted-foreground">{response.message}</p>
                 <p className="text-xs text-muted-foreground">
                     Completa en la ficha del cliente:{" "}
                     {response.missing_fields.join(", ")}.
@@ -84,25 +87,29 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
     const { recommendations } = response;
 
     return (
-        <div className="rounded-lg border border-border bg-surface p-6">
-            <h3 className={`${TYPOGRAPHY.sectionTitle} mb-1 text-foreground`}>
-                Recomendaciones de plan
-            </h3>
-            <p className="mb-4 text-sm text-muted-foreground">
+        <div className="space-y-3">
+            <div className="flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" aria-hidden />
+                <h3 className="text-sm font-semibold text-foreground">Recomendaciones de plan</h3>
+            </div>
+            <p className="text-xs text-muted-foreground">
                 Salida automática según experiencia, frecuencia y duración de sesión.
             </p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <RecommendationCard
+                    icon={<Dumbbell className="h-3.5 w-3.5 text-primary" aria-hidden />}
                     title="Volumen"
                     subtitle={recommendations.volume.level_es}
                     content={<VolumeCardContent rec={recommendations.volume} />}
                 />
                 <RecommendationCard
+                    icon={<Flame className="h-3.5 w-3.5 text-warning" aria-hidden />}
                     title="Intensidad"
                     subtitle={recommendations.intensity.level_es}
                     content={<IntensityCardContent rec={recommendations.intensity} />}
                 />
                 <RecommendationCard
+                    icon={<Zap className="h-3.5 w-3.5 text-info" aria-hidden />}
                     title="Selección de ejercicios"
                     subtitle={`${recommendations.exercise_selection.total_exercises_per_session} ejercicios/sesión`}
                     content={
@@ -121,27 +128,32 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
 // ========================================
 
 interface RecommendationCardProps {
+    icon: React.ReactNode;
     title: string;
     subtitle: string;
     content: React.ReactNode;
 }
 
 const RecommendationCard: React.FC<RecommendationCardProps> = ({
+    icon,
     title,
     subtitle,
     content,
 }) => (
-    <div className="rounded-lg border border-border bg-muted/30 p-4">
-        <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-        <p className="mt-0.5 text-xs font-medium text-primary">{subtitle}</p>
-        <div className="mt-3 text-sm text-muted-foreground">{content}</div>
+    <div className="rounded-lg border border-border bg-surface p-4 space-y-2">
+        <div className="flex items-center gap-2">
+            {icon}
+            <span className="text-xs font-semibold text-muted-foreground">{title}</span>
+        </div>
+        <span className="text-sm font-bold text-primary">{subtitle}</span>
+        <div className="text-sm text-muted-foreground">{content}</div>
     </div>
 );
 
 const VolumeCardContent: React.FC<{ rec: VolumeRecommendation }> = ({ rec }) => (
     <>
-        <p className="font-medium text-foreground">{rec.range}</p>
-        <p className="mt-2 text-muted-foreground">{rec.explanation}</p>
+        <p className="text-sm font-semibold text-foreground">{rec.range}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">{rec.explanation}</p>
     </>
 );
 
@@ -173,8 +185,17 @@ const ExerciseSelectionCardContent: React.FC<{
 }> = ({ rec }) => (
     <>
         {rec.categories && rec.categories.length > 0 && (
-            <p className="text-foreground">{rec.categories.join(", ")}</p>
+            <div className="flex flex-wrap gap-1">
+                {rec.categories.map((c) => (
+                    <span
+                        key={c}
+                        className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] font-medium"
+                    >
+                        {c}
+                    </span>
+                ))}
+            </div>
         )}
-        <p className="mt-2 text-muted-foreground">{rec.explanation}</p>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">{rec.explanation}</p>
     </>
 );
