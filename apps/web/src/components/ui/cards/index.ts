@@ -9,8 +9,10 @@
 export { MetricCard } from "./MetricCard";
 export { ChartCard } from "./ChartCard";
 export { CompactChartCard } from "./CompactChartCard";
+export { EmptyStateCard } from "./EmptyStateCard";
 
 export type { MetricCardProps } from "./MetricCard";
+export type { EmptyStateCardProps } from "./EmptyStateCard";
 export type { ChartCardProps } from "./ChartCard";
 export type { CompactChartCardProps } from "./CompactChartCard";
 

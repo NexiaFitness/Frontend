@@ -40,7 +40,7 @@ import type { RootState } from "@nexia/shared/store";
 import { PageTitle } from "@/components/dashboard/shared";
 import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePreviewModal } from "@/components/trainingPlans";
 import { Alert } from "@/components/ui/feedback";
-import { Pagination } from "@/components/ui/pagination";
+import { PaginationBar } from "@/components/ui/pagination";
 
 export const TrainingPlansPage: React.FC = () => {
     const navigate = useNavigate();
@@ -70,6 +70,10 @@ export const TrainingPlansPage: React.FC = () => {
     // Estados de feedback
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+    // Búsqueda por módulo
+    const [searchActivePlans, setSearchActivePlans] = useState("");
+    const [searchTemplates, setSearchTemplates] = useState("");
 
     // Auto-dismiss de mensajes después de 5 segundos
     useEffect(() => {
@@ -152,6 +156,24 @@ export const TrainingPlansPage: React.FC = () => {
         return plans.filter((plan) => plan.status === "active" && plan.is_active);
     }, [plans]);
 
+    // Filtrar por búsqueda (nombre de plan/template o cliente)
+    const filteredActivePlans = useMemo(() => {
+        const q = searchActivePlans.trim().toLowerCase();
+        if (!q) return activePlans;
+        return activePlans.filter((plan) => {
+            const nameMatch = plan.name?.toLowerCase().includes(q);
+            const clientName = plan.client_id ? clientNamesMap[plan.client_id] : "";
+            const clientMatch = clientName?.toLowerCase().includes(q);
+            return nameMatch || clientMatch;
+        });
+    }, [activePlans, searchActivePlans, clientNamesMap]);
+
+    const filteredTemplates = useMemo(() => {
+        const q = searchTemplates.trim().toLowerCase();
+        if (!q) return templates;
+        return templates.filter((t) => t.name?.toLowerCase().includes(q));
+    }, [templates, searchTemplates]);
+
     // Paginación para programas activos
     const ACTIVE_PLANS_PER_PAGE = 6;
     const {
@@ -161,17 +183,34 @@ export const TrainingPlansPage: React.FC = () => {
         totalItems: totalActivePlans,
         setPage: setActivePlansPage,
     } = usePagination({
-        items: activePlans,
+        items: filteredActivePlans,
         itemsPerPage: ACTIVE_PLANS_PER_PAGE,
         resetOnItemsChange: true,
     });
 
     const handleActivePlansPageChange = (page: number): void => {
         setActivePlansPage(page);
-        // Scroll suave hacia arriba de la sección
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
+    // Paginación para Biblioteca de Templates
+    const TEMPLATES_PER_PAGE = 9;
+    const {
+        currentPage: templatesPage,
+        totalPages: totalTemplatesPages,
+        paginatedItems: paginatedTemplates,
+        totalItems: totalTemplates,
+        setPage: setTemplatesPage,
+    } = usePagination({
+        items: filteredTemplates,
+        itemsPerPage: TEMPLATES_PER_PAGE,
+        resetOnItemsChange: true,
+    });
+
+    const handleTemplatesPageChange = (page: number): void => {
+        setTemplatesPage(page);
+        templatesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
 
     // Map de plan_id -> array de clientes (para mostrar múltiples avatares)
     // Agrupa planes con el mismo nombre o template_id para mostrar múltiples clientes
@@ -182,7 +221,7 @@ export const TrainingPlansPage: React.FC = () => {
         // Primero, crear un mapa de nombre/template_id -> array de planes
         const plansByKey = new Map<string, typeof activePlans>();
         
-        activePlans.forEach((plan) => {
+        filteredActivePlans.forEach((plan) => {
             // Usar template_id si existe, sino usar nombre
             const key = plan.template_id ? `template_${plan.template_id}` : `name_${plan.name}`;
             if (!plansByKey.has(key)) {
@@ -212,7 +251,7 @@ export const TrainingPlansPage: React.FC = () => {
         });
         
         return map;
-    }, [activePlans, clientsData?.items]);
+    }, [filteredActivePlans, clientsData?.items]);
 
     // Handlers
     const handleAssignTemplate = (templateId: number) => {
@@ -379,7 +418,7 @@ export const TrainingPlansPage: React.FC = () => {
     const isLoading = isLoadingTemplates || isLoadingPlans;
 
     return (
-        <>
+        <div className="space-y-6 sm:space-y-8">
             <PageTitle
                 title="Planificación de Entrenamiento"
                 subtitle="Crea y gestiona programas de entrenamiento y plantillas de sesiones"
@@ -416,6 +455,11 @@ export const TrainingPlansPage: React.FC = () => {
                 <TrainingPlansSection
                     title="Programas Activos"
                     description="Programas de entrenamiento asignados a clientes actualmente"
+                    totalCount={filteredActivePlans.length}
+                    searchValue={searchActivePlans}
+                    onSearchChange={setSearchActivePlans}
+                    searchPlaceholder="Buscar por nombre de plan o cliente..."
+                    searchAriaLabel="Buscar programa activo"
                     items={paginatedActivePlans}
                     type="active"
                     clientNames={clientNamesMap}
@@ -431,38 +475,48 @@ export const TrainingPlansPage: React.FC = () => {
                     processingIds={processingIds}
                 />
 
-                {/* Paginación para Programas Activos */}
-                {totalActivePlansPages > 1 && (
-                    <div className="px-4 lg:px-8 mb-8">
-                        <Pagination
-                            currentPage={activePlansPage}
-                            totalPages={totalActivePlansPages}
-                            totalItems={totalActivePlans}
-                            itemsPerPage={ACTIVE_PLANS_PER_PAGE}
-                            onPageChange={handleActivePlansPageChange}
-                        />
-                    </div>
-                )}
+            {totalActivePlansPages > 1 && (
+                <PaginationBar
+                    currentPage={activePlansPage}
+                    totalPages={totalActivePlansPages}
+                    totalItems={totalActivePlans}
+                    pageSize={ACTIVE_PLANS_PER_PAGE}
+                    onPageChange={handleActivePlansPageChange}
+                />
+            )}
 
-                {/* Sección 2: Biblioteca de Templates (destino de ?tab=templates) */}
-                <div id="section-templates" ref={templatesSectionRef}>
-                    <TrainingPlansSection
-                        title="Biblioteca de Templates"
-                        description="Plantillas reutilizables que puedes asignar a múltiples clientes"
-                        items={templates}
-                        type="template"
-                        onCreate={handleCreateTemplate}
-                        onAssign={handleAssignTemplate}
-                        onDuplicate={handleDuplicateTemplate}
-                        onDelete={handleDeleteTemplate}
-                        onView={handleViewPlan}
-                        onPreview={handlePreviewTemplate}
-                        isLoading={isLoadingTemplates}
-                        processingIds={processingIds}
+            <div id="section-templates" ref={templatesSectionRef}>
+                <TrainingPlansSection
+                    title="Biblioteca de Templates"
+                    description="Plantillas reutilizables que puedes asignar a múltiples clientes"
+                    totalCount={filteredTemplates.length}
+                    searchValue={searchTemplates}
+                    onSearchChange={setSearchTemplates}
+                    searchPlaceholder="Buscar por nombre de plantilla..."
+                    searchAriaLabel="Buscar plantilla"
+                    items={paginatedTemplates}
+                    type="template"
+                    onCreate={handleCreateTemplate}
+                    onAssign={handleAssignTemplate}
+                    onDuplicate={handleDuplicateTemplate}
+                    onDelete={handleDeleteTemplate}
+                    onView={handleViewPlan}
+                    onPreview={handlePreviewTemplate}
+                    isLoading={isLoadingTemplates}
+                    processingIds={processingIds}
+                />
+                {totalTemplatesPages > 1 && (
+                    <PaginationBar
+                        currentPage={templatesPage}
+                        totalPages={totalTemplatesPages}
+                        totalItems={totalTemplates}
+                        pageSize={TEMPLATES_PER_PAGE}
+                        onPageChange={handleTemplatesPageChange}
                     />
-                </div>
+                )}
+            </div>
 
-                {/* Modal de Asignar Plantilla */}
+            {/* Modal de Asignar Plantilla */}
                 <AssignTemplateModal
                     open={assignModalOpen}
                     onClose={() => {
@@ -473,10 +527,9 @@ export const TrainingPlansPage: React.FC = () => {
                     templateId={selectedTemplateId}
                     templateName={selectedTemplateName}
                     onSuccess={handleAssignSuccess}
-                />
+            />
 
-                {/* Modal de Asignar plan a cliente */}
-                <AssignPlanModal
+            <AssignPlanModal
                     open={!!planIdForAssignModal}
                     onClose={() => setPlanIdForAssignModal(null)}
                     planId={planIdForAssignModal ?? 0}
@@ -485,18 +538,17 @@ export const TrainingPlansPage: React.FC = () => {
                         setPlanIdForAssignModal(null);
                         refetchPlans();
                     }}
-                />
+            />
 
-                {/* Modal de Preview de Template */}
-                <TemplatePreviewModal
+            <TemplatePreviewModal
                     isOpen={previewModalOpen}
                     onClose={() => {
                         setPreviewModalOpen(false);
                         setPreviewTemplateId(null);
                     }}
                     templateId={previewTemplateId}
-                    onUseTemplate={handleUseTemplateFromPreview}
-                />
-        </>
+                onUseTemplate={handleUseTemplateFromPreview}
+            />
+        </div>
     );
 };

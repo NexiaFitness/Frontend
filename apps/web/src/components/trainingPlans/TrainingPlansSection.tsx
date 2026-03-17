@@ -3,15 +3,20 @@
  *
  * Contexto:
  * - Renderiza una sección completa (templates, activos, archivados)
- * - Grid responsive con cards
- * - Botón de crear nuevo
+ * - Tokens: bg-card, border-border, text-foreground, text-muted-foreground
+ * - EmptyStateCard para estados vacíos
  *
  * @author Frontend Team
  * @since v5.0.0
+ * @updated v6.x - Tokens, EmptyStateCard, layout consistente con dashboard/clients
  */
 
 import React from "react";
+import { Archive, ClipboardList, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { SearchBar } from "@/components/ui/forms";
+import { LoadingSpinner } from "@/components/ui/feedback";
+import { EmptyStateCard } from "@/components/ui/cards";
 import { TrainingPlanCard } from "./TrainingPlanCard";
 import type { TrainingPlan, TrainingPlanTemplate } from "@nexia/shared/types/training";
 import type { Client } from "@nexia/shared/types/client";
@@ -21,8 +26,8 @@ interface TrainingPlansSectionProps {
     description?: string;
     items: (TrainingPlan | TrainingPlanTemplate)[];
     type: "template" | "active" | "archived";
-    clientNames?: Record<number, string>; // Map de client_id -> nombre
-    clientsMap?: Record<number, Client[]>; // Map de plan_id -> array de clientes
+    clientNames?: Record<number, string>;
+    clientsMap?: Record<number, Client[]>;
     onCreate?: () => void;
     onAssign?: (id: number) => void;
     onDuplicate?: (id: number) => void;
@@ -30,16 +35,21 @@ interface TrainingPlansSectionProps {
     onDelete?: (id: number) => void;
     onEdit?: (id: number) => void;
     onView?: (id: number) => void;
-    onPreview?: (id: number) => void; // Para templates
-    onAddClient?: (id: number) => void; // Para programas activos
-    onStatusChange?: (id: number, status: string) => void; // Para dropdown de progreso
+    onPreview?: (id: number) => void;
+    onAddClient?: (id: number) => void;
+    onStatusChange?: (id: number, status: string) => void;
     isLoading?: boolean;
-    processingIds?: Set<number>; // IDs de items que están siendo procesados
+    processingIds?: Set<number>;
 }
 
 export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
     title,
     description,
+    totalCount,
+    searchValue = "",
+    onSearchChange,
+    searchPlaceholder,
+    searchAriaLabel,
     items,
     type,
     clientNames = {},
@@ -57,123 +67,116 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
     isLoading = false,
     processingIds = new Set(),
 }) => {
-    // Determinar si es template
     const isTemplate = items.length > 0 && "usage_count" in items[0];
+    const EmptyIcon = isTemplate ? FileStack : ClipboardList;
+    const SectionIcon = type === "template" ? FileStack : type === "archived" ? Archive : ClipboardList;
 
     return (
-        <div className="mb-8 lg:mb-12">
-            {/* Header */}
-            <div className="mb-6 px-4 lg:px-8">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div className="flex-1">
-                        <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 mb-2">
-                            {title}
-                        </h2>
-                        {description && (
-                            <p className="text-gray-600 text-sm md:text-base">
-                                {description}
-                            </p>
+        <section className="mb-8 lg:mb-12">
+            {/* Header — icono + h3 + badge total (estilo ClientList) */}
+            <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-border">
+                <div className="flex-1 space-y-1">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2">
+                            <SectionIcon className="h-4 w-4 text-primary" aria-hidden />
+                            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+                        </div>
+                        {totalCount !== undefined && (
+                            <span className="text-sm text-muted-foreground sm:text-base">{totalCount} total</span>
                         )}
                     </div>
-                    {onCreate && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={onCreate}
-                            className="w-full sm:w-auto"
-                        >
-                            {type === "active" ? "+ Nuevo Programa" : "+ Crear New Template"}
-                        </Button>
+                    {description && (
+                        <p className="text-xs text-muted-foreground">{description}</p>
                     )}
                 </div>
+                {onCreate && (
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={onCreate}
+                        className="w-full sm:w-auto"
+                    >
+                        {type === "active" ? "+ Nuevo Programa" : "+ Crear Plantilla"}
+                    </Button>
+                )}
             </div>
 
-            {/* Grid de Cards */}
-            {isLoading ? (
-                <div className="px-4 lg:px-8">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-12 text-center">
-                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
-                        <p className="mt-4 text-slate-600">Cargando...</p>
-                    </div>
-                </div>
-            ) : items.length === 0 ? (
-                <div className="px-4 lg:px-8">
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8 lg:p-12 text-center">
-                        <div className="max-w-md mx-auto">
-                            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                <svg
-                                    className="w-8 h-8 text-slate-400"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={2}
-                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-                                    />
-                                </svg>
-                            </div>
-                            <h3 className="text-xl font-bold text-slate-800 mb-2">
-                                No hay {isTemplate ? "plantillas" : "planes"} aún
-                            </h3>
-                            <p className="text-slate-600 mb-6">
-                                {isTemplate
-                                    ? "Crea tu primera plantilla reutilizable para asignar a múltiples clientes."
-                                    : type === "active"
-                                    ? "No hay planes activos en este momento."
-                                    : "No hay planes archivados."}
-                            </p>
-                            {onCreate && (
-                                <Button variant="primary" size="lg" onClick={onCreate}>
-                                    + Crear {isTemplate ? "Primera Plantilla" : "Primer Plan"}
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            ) : (
-                <div className="px-4 lg:px-8">
-                    <div className={type === "active" 
-                        ? "space-y-4" 
-                        : "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
-                    }>
-                        {items.map((item) => {
-                            // Obtener nombre del cliente si es plan activo (legacy, para compatibilidad)
-                            const clientId = !isTemplate && "client_id" in item ? item.client_id : null;
-                            const clientName = clientId && clientId !== null ? clientNames[clientId] : undefined;
-
-                            // Obtener array de clientes para este plan (nuevo)
-                            const clients = clientsMap[item.id] || [];
-
-                            // Determinar si este item está siendo procesado
-                            const isProcessing = processingIds.has(item.id);
-
-                            return (
-                                <TrainingPlanCard
-                                    key={item.id}
-                                    item={item}
-                                    type={type}
-                                    clientName={clientName}
-                                    clients={clients}
-                                    onEdit={onEdit ? () => onEdit(item.id) : undefined}
-                                    onAssign={onAssign ? () => onAssign(item.id) : undefined}
-                                    onDuplicate={onDuplicate ? () => onDuplicate(item.id) : undefined}
-                                    onConvert={onConvert ? () => onConvert(item.id) : undefined}
-                                    onDelete={onDelete ? () => onDelete(item.id) : undefined}
-                                    onView={onView ? () => onView(item.id) : undefined}
-                                    onPreview={onPreview ? () => onPreview(item.id) : undefined}
-                                    onAddClient={onAddClient ? () => onAddClient(item.id) : undefined}
-                                    onStatusChange={onStatusChange ? (status: string) => onStatusChange(item.id, status) : undefined}
-                                    isProcessing={isProcessing}
-                                />
-                            );
-                        })}
-                    </div>
+            {/* Buscador — estilo ClientList */}
+            {onSearchChange && (
+                <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <SearchBar
+                        value={searchValue}
+                        onChange={onSearchChange}
+                        placeholder={searchPlaceholder}
+                        ariaLabel={searchAriaLabel}
+                    />
                 </div>
             )}
-        </div>
+
+            {/* Content */}
+            {isLoading ? (
+                <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-border bg-card p-12">
+                    <LoadingSpinner size="lg" />
+                </div>
+            ) : items.length === 0 ? (
+                <EmptyStateCard
+                    icon={<EmptyIcon aria-hidden />}
+                    title={`No hay ${isTemplate ? "plantillas" : "planes"} aún`}
+                    description={
+                        isTemplate
+                            ? "Crea tu primera plantilla reutilizable para asignar a múltiples clientes."
+                            : type === "active"
+                            ? "No hay planes activos en este momento."
+                            : "No hay planes archivados."
+                    }
+                    action={
+                        onCreate && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
+                                onClick={onCreate}
+                            >
+                                <EmptyIcon className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                Crear {isTemplate ? "primera plantilla" : "primer plan"}
+                            </Button>
+                        )
+                    }
+                />
+            ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {items.map((item) => {
+                        const clientId = !isTemplate && "client_id" in item ? item.client_id : null;
+                        const clientName = clientId != null ? clientNames[clientId] : undefined;
+                        const clients = clientsMap[item.id] || [];
+                        const isProcessing = processingIds.has(item.id);
+
+                        return (
+                            <TrainingPlanCard
+                                key={item.id}
+                                item={item}
+                                type={type}
+                                clientName={clientName}
+                                clients={clients}
+                                onEdit={onEdit ? () => onEdit(item.id) : undefined}
+                                onAssign={onAssign ? () => onAssign(item.id) : undefined}
+                                onDuplicate={onDuplicate ? () => onDuplicate(item.id) : undefined}
+                                onConvert={onConvert ? () => onConvert(item.id) : undefined}
+                                onDelete={onDelete ? () => onDelete(item.id) : undefined}
+                                onView={onView ? () => onView(item.id) : undefined}
+                                onPreview={onPreview ? () => onPreview(item.id) : undefined}
+                                onAddClient={onAddClient ? () => onAddClient(item.id) : undefined}
+                                onStatusChange={
+                                    onStatusChange
+                                        ? (status: string) => onStatusChange(item.id, status)
+                                        : undefined
+                                }
+                                isProcessing={isProcessing}
+                            />
+                        );
+                    })}
+                </div>
+            )}
+        </section>
     );
 };
-

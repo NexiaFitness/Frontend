@@ -44,6 +44,7 @@ import { SessionConstructor } from "@/components/sessionProgramming/SessionConst
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { ClipboardList } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
+import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
@@ -742,34 +743,32 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     {effectiveClientId != null && effectiveClientId > 0 && (
                     <div className="lg:self-stretch">
                         {useStandaloneSession ? (
-                                <div className="rounded-lg border border-border border-l-2 border-l-primary bg-card p-5 text-card-foreground shadow-sm h-full flex flex-col justify-center">
-                                    <div className="py-2 text-center">
-                                        <ClipboardList className="mx-auto mb-3 h-8 w-8 text-muted-foreground/40" aria-hidden />
-                                        <p className="text-sm font-medium text-foreground">Sin plan asignado</p>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            Este cliente no tiene un plan de entrenamiento activo.
+                                <EmptyStateCard
+                                    icon={<ClipboardList aria-hidden />}
+                                    title="Sin plan asignado"
+                                    description="Este cliente no tiene un plan de entrenamiento activo."
+                                    action={
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`
+                                                )
+                                            }
+                                        >
+                                            <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                            Crear plan
+                                        </Button>
+                                    }
+                                    footer={
+                                        <p className="text-[11px] text-muted-foreground">
+                                            Puedes continuar sin plan y crear la sesión libremente.
                                         </p>
-                                        <div className="mt-4 flex flex-col gap-2">
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/dashboard/training-plans/create?clientId=${effectiveClientId}`
-                                                    )
-                                                }
-                                            >
-                                                <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
-                                                Crear plan
-                                            </Button>
-                                            <p className="text-[11px] text-muted-foreground">
-                                                Puedes continuar sin plan y crear la sesión libremente.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                    }
+                                />
                             ) : (
                                 <SessionDayPlan
                                     clientId={effectiveClientId}

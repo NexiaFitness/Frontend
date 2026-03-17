@@ -68,10 +68,10 @@ export const useTrainingPlanTemplates = ({
         isError: isErrorTemplates,
         error: errorTemplates,
         refetch: refetchTemplates,
-    } = useGetTrainingPlanTemplatesQuery({
-        trainerId,
-        category,
-    });
+    } = useGetTrainingPlanTemplatesQuery(
+        { trainerId, category },
+        { skip: trainerId == null || trainerId <= 0 }
+    );
 
     // Query para plantilla específica
     const {

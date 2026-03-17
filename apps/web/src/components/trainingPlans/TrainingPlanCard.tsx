@@ -1,20 +1,20 @@
 /**
- * TrainingPlanCard.tsx — Card individual para mostrar plan o plantilla
+ * TrainingPlanCard.tsx — Card individual para plan o plantilla
  *
- * Contexto:
- * - Muestra información de un plan o plantilla con acciones contextuales
- * - Diseño alineado con imagen de referencia
- * - Acciones visibles según tipo (template, active, archived)
+ * Tokens: bg-card, border-border, text-foreground, text-muted-foreground
+ * Estilo: rounded-lg border border-border border-l-2 border-l-primary
  *
  * @author Frontend Team
  * @since v5.0.0
- * @updated v6.0.0 - Rediseño completo según imagen de referencia
+ * @updated v6.x - Tokens, diseño consistente con app
  */
 
-import React from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { MoreVertical, Pencil, Copy, Trash2, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { ClientAvatarsGroup } from "@/components/ui/avatar";
 import { FormSelect } from "@/components/ui/forms";
+import { cn } from "@/lib/utils";
 import type { TrainingPlan, TrainingPlanTemplate } from "@nexia/shared/types/training";
 import type { Client } from "@nexia/shared/types/client";
 
@@ -22,41 +22,56 @@ interface TrainingPlanCardProps {
     item: TrainingPlan | TrainingPlanTemplate;
     type: "template" | "active" | "archived";
     clientName?: string;
-    clients?: Client[]; // Múltiples clientes para programas activos
+    clients?: Client[];
     onEdit?: () => void;
     onAssign?: () => void;
     onDuplicate?: () => void;
     onConvert?: () => void;
     onDelete?: () => void;
     onView?: () => void;
-    onPreview?: () => void; // Para templates
-    onAddClient?: () => void; // Para programas activos
-    onStatusChange?: (status: string) => void; // Para dropdown de progreso
+    onPreview?: () => void;
+    onAddClient?: () => void;
+    onStatusChange?: (status: string) => void;
     isProcessing?: boolean;
 }
+
+const CARD_BASE =
+    "rounded-lg border border-border border-l-2 border-l-primary bg-card p-5 text-card-foreground shadow-sm transition-all duration-200 hover:shadow-md";
 
 export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
     item,
     type,
     clientName: _clientName,
     clients = [],
-    onEdit: _onEdit,
+    onEdit,
     onAssign,
-    onDuplicate: _onDuplicate,
-    onConvert: _onConvert,
-    onDelete: _onDelete,
+    onDuplicate,
+    onConvert,
+    onDelete,
     onView,
     onPreview,
     onAddClient,
     onStatusChange,
     isProcessing = false,
 }) => {
-    // Determinar si es template o plan
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+                setMenuOpen(false);
+            }
+        };
+        if (menuOpen) {
+            document.addEventListener("mousedown", handleClickOutside);
+        }
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, [menuOpen]);
     const isTemplate = "usage_count" in item;
     const template = isTemplate ? (item as TrainingPlanTemplate) : null;
     const plan = !isTemplate ? (item as TrainingPlan) : null;
 
-    // Calcular duración
     const getDuration = (): string => {
         if (template) {
             if (template.duration_value && template.duration_unit) {
@@ -80,61 +95,64 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
         return "Duración no especificada";
     };
 
-    // Calcular frecuencia de entrenamiento
     const getFrequency = (): string | null => {
         if (template?.training_days_per_week) {
             return `${template.training_days_per_week}x/semana`;
         }
-        // Para planes activos, intentar obtener desde template_id si existe
-        if (plan?.template_id) {
-            // Esto se puede mejorar obteniendo el template, pero por ahora retornamos null
-            return null;
-        }
         return null;
     };
 
-    // Badge de estado o nivel
     const getBadge = (): React.ReactNode => {
         if (type === "archived") {
             return (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-800">
+                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
                     Archivado
                 </span>
             );
         }
         if (type === "active" && plan?.status) {
-            const statusColors: Record<string, string> = {
-                active: "bg-green-100 text-green-800",
-                completed: "bg-blue-100 text-blue-800",
-                paused: "bg-yellow-100 text-yellow-800",
-                cancelled: "bg-red-100 text-red-800",
+            const statusMap: Record<string, string> = {
+                active: "bg-success/10 text-success",
+                completed: "bg-primary/10 text-primary",
+                paused: "bg-warning/10 text-warning",
+                cancelled: "bg-destructive/10 text-destructive",
             };
-            const statusLabels: Record<string, string> = {
+            const labels: Record<string, string> = {
                 active: "Activo",
                 completed: "Completado",
                 paused: "Pausado",
                 cancelled: "Cancelado",
             };
             return (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusColors[plan.status] || statusColors.active}`}>
-                    {statusLabels[plan.status] || plan.status}
+                <span
+                    className={cn(
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        statusMap[plan.status] ?? "bg-muted text-muted-foreground"
+                    )}
+                >
+                    {labels[plan.status] ?? plan.status}
                 </span>
             );
         }
         if (isTemplate && template?.level) {
-            const levelColors: Record<string, string> = {
-                beginner: "bg-green-100 text-green-800",
-                intermediate: "bg-yellow-100 text-yellow-800",
-                advanced: "bg-red-100 text-red-800",
+            const levelMap: Record<string, string> = {
+                beginner: "bg-success/10 text-success",
+                intermediate: "bg-warning/10 text-warning",
+                advanced: "bg-destructive/10 text-destructive",
             };
-            const levelLabels: Record<string, string> = {
+            const labels: Record<string, string> = {
                 beginner: "Principiante",
                 intermediate: "Intermedio",
                 advanced: "Avanzado",
             };
             return (
-                <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${levelColors[template.level] || "bg-slate-100 text-slate-800"}`}>
-                    {levelLabels[template.level] || template.level}
+                <span
+                    className={cn(
+                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        levelMap[template.level] ?? "bg-muted text-muted-foreground"
+                    )}
+                >
+                    {labels[template.level] ?? template.level}
                 </span>
             );
         }
@@ -144,61 +162,46 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
     const duration = getDuration();
     const frequency = getFrequency();
 
-    // Layout diferente para programas activos (horizontal) vs templates (vertical)
     if (type === "active") {
         return (
-            <div className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200">
-                {/* Título y badge */}
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <h3 className="text-lg font-semibold text-slate-800">
-                        {item.name}
-                    </h3>
+            <article className={cn(CARD_BASE, "flex flex-col")}>
+                <div className="mb-3 flex flex-wrap items-center gap-2">
+                    <h3 className="text-lg font-semibold text-foreground">{item.name}</h3>
                     {getBadge()}
                 </div>
 
-                {/* Fila: Descripción a la izquierda, info (duración, frecuencia, avatares, progreso, ellipsis) a la derecha */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-4">
-                    {/* Descripción a la izquierda */}
-                    <div className="flex-1 min-w-0">
+                <div className="mb-4 flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div className="min-w-0 flex-1">
                         {item.description && (
-                            <p className="text-sm text-slate-600 line-clamp-2">
+                            <p className="line-clamp-2 text-sm text-muted-foreground">
                                 {item.description}
                             </p>
                         )}
                     </div>
 
-                    {/* Información a la derecha: Duración, Frecuencia, Avatares, Progress y Ellipsis */}
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-slate-600 flex-shrink-0">
+                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <span>{duration}</span>
                         {frequency && (
                             <>
-                                <span className="text-slate-300">•</span>
+                                <span className="text-border">•</span>
                                 <span>{frequency}</span>
                             </>
                         )}
-                        
-                        {/* Avatares de clientes */}
                         {clients.length > 0 && (
                             <>
-                                <span className="text-slate-300">•</span>
+                                <span className="text-border">•</span>
                                 <div className="flex items-center gap-2">
-                                    <ClientAvatarsGroup
-                                        clients={clients}
-                                        maxVisible={3}
-                                        size="sm"
-                                    />
-                                    <span className="text-slate-600">
+                                    <ClientAvatarsGroup clients={clients} maxVisible={3} size="sm" />
+                                    <span className="text-muted-foreground">
                                         {clients.length} {clients.length === 1 ? "cliente" : "clientes"}
                                     </span>
                                 </div>
                             </>
                         )}
-
-                        {/* Dropdown de Progreso */}
                         {plan && onStatusChange && (
                             <>
-                                <span className="text-slate-300">•</span>
-                                <div className="w-auto min-w-[120px]">
+                                <span className="text-border">•</span>
+                                <div className="min-w-[120px]">
                                     <FormSelect
                                         value={plan.status || "active"}
                                         onChange={(e) => onStatusChange(e.target.value)}
@@ -213,34 +216,73 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                                 </div>
                             </>
                         )}
-
-                        {/* Menú de opciones (ellipsis vertical) - Al lado del progreso */}
-                        <button
-                            type="button"
-                            className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors"
-                            disabled={isProcessing}
-                            title="Más opciones"
-                        >
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
+                        <div className="relative" ref={menuRef}>
+                            <button
+                                type="button"
+                                onClick={() => setMenuOpen((o) => !o)}
+                                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                                disabled={isProcessing}
+                                title="Más opciones"
+                                aria-label="Más opciones"
+                                aria-haspopup="menu"
+                                aria-expanded={menuOpen}
                             >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                                />
-                            </svg>
-                        </button>
+                                <MoreVertical className="h-5 w-5" />
+                            </button>
+                            {menuOpen && (
+                                <div
+                                    role="menu"
+                                    className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-md border border-border bg-popover py-1 shadow-lg"
+                                >
+                                    {onEdit && (
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            onClick={() => {
+                                                onEdit();
+                                                setMenuOpen(false);
+                                            }}
+                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+                                        >
+                                            <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                                            Editar
+                                        </button>
+                                    )}
+                                    {onConvert && (
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            onClick={() => {
+                                                onConvert();
+                                                setMenuOpen(false);
+                                            }}
+                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+                                        >
+                                            <FileStack className="h-4 w-4 shrink-0" aria-hidden />
+                                            Convertir a plantilla
+                                        </button>
+                                    )}
+                                    {onDelete && (
+                                        <button
+                                            type="button"
+                                            role="menuitem"
+                                            onClick={() => {
+                                                onDelete();
+                                                setMenuOpen(false);
+                                            }}
+                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+                                        >
+                                            <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                                            Eliminar
+                                        </button>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
                 </div>
 
-                {/* Botones abajo en fila horizontal - Ocupan todo el ancho */}
-                <div className="flex items-center gap-2 pt-4 border-t border-slate-200">
-                    {/* Ver Detalles */}
+                <div className="flex gap-2 border-t border-border pt-4">
                     {onView && (
                         <Button
                             variant="outline"
@@ -249,11 +291,9 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                             disabled={isProcessing}
                             className="flex-1"
                         >
-                            Ver Detalles
+                            Ver detalles
                         </Button>
                     )}
-
-                    {/* Agregar Cliente */}
                     {onAddClient && (
                         <Button
                             variant="primary"
@@ -262,22 +302,20 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                             disabled={isProcessing}
                             className="flex-1"
                         >
-                            Agregar Cliente
+                            Agregar cliente
                         </Button>
                     )}
                 </div>
-            </div>
+            </article>
         );
     }
 
-    // Layout vertical para templates - Siempre con botones abajo
     return (
-        <div className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200 flex flex-col h-full">
-            {/* Header con título y badge en la misma línea */}
-            <div className="flex items-start justify-between mb-3">
-                <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                        <h3 className="text-lg font-semibold text-slate-800 line-clamp-2">
+        <article className={cn(CARD_BASE, "flex h-full flex-col")}>
+            <div className="mb-3 flex items-start justify-between">
+                <div className="min-w-0 flex-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <h3 className="line-clamp-2 text-lg font-semibold text-foreground">
                             {item.name}
                         </h3>
                         {getBadge()}
@@ -285,53 +323,45 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                 </div>
             </div>
 
-            {/* Descripción - Siempre ocupa espacio mínimo */}
             <div className="mb-4 min-h-[2.5rem]">
                 {item.description ? (
-                    <p className="text-sm text-slate-600 line-clamp-2">
-                        {item.description}
-                    </p>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
                 ) : (
-                    <p className="text-sm text-slate-400 italic">Sin descripción</p>
+                    <p className="text-sm italic text-muted-foreground/70">Sin descripción</p>
                 )}
             </div>
 
-            {/* Información: Duración y Frecuencia en la misma línea */}
-            <div className="flex items-center gap-2 text-sm text-slate-600 mb-4">
+            <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
                 <span>{duration}</span>
                 {frequency && (
                     <>
-                        <span className="text-slate-300">•</span>
+                        <span className="text-border">•</span>
                         <span>{frequency}</span>
                     </>
                 )}
             </div>
 
-            {/* Tags (solo para templates) */}
-            {isTemplate && template && template.tags && template.tags.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-4">
-                    {template.tags.slice(0, 3).map((tag, index) => (
+            {isTemplate && template?.tags && template.tags.length > 0 && (
+                <div className="mb-4 flex flex-wrap gap-2">
+                    {template.tags.slice(0, 3).map((tag, i) => (
                         <span
-                            key={index}
-                            className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700"
+                            key={i}
+                            className="inline-flex rounded-md px-2.5 py-1 text-xs font-medium bg-surface-2 text-muted-foreground"
                         >
                             {tag}
                         </span>
                     ))}
                     {template.tags.length > 3 && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-700">
+                        <span className="inline-flex rounded-md px-2.5 py-1 text-xs font-medium bg-surface-2 text-muted-foreground">
                             +{template.tags.length - 3}
                         </span>
                     )}
                 </div>
             )}
 
-            {/* Spacer para empujar botones abajo */}
-            <div className="flex-1"></div>
+            <div className="mt-auto flex-1" />
 
-            {/* Acciones - Botones y ellipsis - Siempre abajo */}
-            <div className="flex items-center gap-2 pt-4 border-t border-slate-200 mt-auto">
-                {/* Vista Previa - Solo para templates */}
+            <div className="flex items-center gap-2 border-t border-border pt-4">
                 {type === "template" && onPreview && (
                     <Button
                         variant="outline"
@@ -340,11 +370,9 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                         disabled={isProcessing}
                         className="flex-1"
                     >
-                        Vista Previa
+                        Vista previa
                     </Button>
                 )}
-
-                {/* Usar Template - Solo para templates */}
                 {type === "template" && onAssign && (
                     <Button
                         variant="primary"
@@ -353,32 +381,73 @@ export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
                         disabled={isProcessing}
                         className="flex-1"
                     >
-                        Usar Template
+                        Usar plantilla
                     </Button>
                 )}
-
-                {/* Menú de opciones (ellipsis vertical) - Siempre disponible */}
-                <button
-                    type="button"
-                    className="p-2 text-slate-600 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors flex-shrink-0"
-                    disabled={isProcessing}
-                    title="Más opciones"
-                >
-                    <svg
-                        className="w-5 h-5"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                <div className="relative shrink-0" ref={menuRef}>
+                    <button
+                        type="button"
+                        onClick={() => setMenuOpen((o) => !o)}
+                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                        disabled={isProcessing}
+                        title="Más opciones"
+                        aria-label="Más opciones"
+                        aria-haspopup="menu"
+                        aria-expanded={menuOpen}
                     >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"
-                        />
-                    </svg>
-                </button>
+                        <MoreVertical className="h-5 w-5" />
+                    </button>
+                    {menuOpen && (
+                        <div
+                            role="menu"
+                            className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-md border border-border bg-popover py-1 shadow-lg"
+                        >
+                            {onEdit && (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        onEdit();
+                                        setMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+                                >
+                                    <Pencil className="h-4 w-4 shrink-0" aria-hidden />
+                                    Editar
+                                </button>
+                            )}
+                            {onDuplicate && (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        onDuplicate();
+                                        setMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+                                >
+                                    <Copy className="h-4 w-4 shrink-0" aria-hidden />
+                                    Duplicar
+                                </button>
+                            )}
+                            {onDelete && (
+                                <button
+                                    type="button"
+                                    role="menuitem"
+                                    onClick={() => {
+                                        onDelete();
+                                        setMenuOpen(false);
+                                    }}
+                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
+                                    Eliminar
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
             </div>
-        </div>
+        </article>
     );
 };

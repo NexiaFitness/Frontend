@@ -21,7 +21,7 @@ import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
 
 // UI
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Pagination } from "@/components/ui/pagination";
+import { PaginationBar } from "@/components/ui/pagination";
 
 export const ExerciseList: React.FC = () => {
     const navigate = useNavigate();
@@ -167,11 +167,11 @@ export const ExerciseList: React.FC = () => {
 
                             {totalPages > 1 && (
                                 <div className="mt-8">
-                                    <Pagination
+                                    <PaginationBar
                                         currentPage={currentPage}
                                         totalPages={totalPages}
                                         totalItems={total}
-                                        itemsPerPage={itemsPerPage}
+                                        pageSize={itemsPerPage}
                                         onPageChange={handlePageChange}
                                     />
                                 </div>

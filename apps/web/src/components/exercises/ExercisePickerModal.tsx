@@ -17,6 +17,7 @@ import { ExerciseSearch } from "./ExerciseSearch";
 import { ExerciseFilters } from "./ExerciseFilters";
 import { ExerciseCard } from "./ExerciseCard";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { PaginationBar } from "@/components/ui/pagination";
 
 interface ExercisePickerModalProps {
     isOpen: boolean;
@@ -54,21 +55,15 @@ export const ExercisePickerModal: React.FC<ExercisePickerModalProps> = ({
         [onSelect, onClose]
     );
 
-    const handlePageChange = useCallback(
-        (direction: "prev" | "next") => {
-            const newSkip =
-                direction === "next"
-                    ? pagination.skip + pagination.limit
-                    : Math.max(0, pagination.skip - pagination.limit);
-            setPagination(newSkip, pagination.limit);
-        },
-        [pagination, setPagination]
-    );
-
     const currentPage = Math.floor(pagination.skip / pagination.limit) + 1;
-    const totalPages = Math.ceil(total / pagination.limit);
-    const hasNext = pagination.skip + pagination.limit < total;
-    const hasPrev = pagination.skip > 0;
+    const totalPages = Math.max(1, Math.ceil(total / pagination.limit));
+
+    const handlePageChange = useCallback(
+        (page: number) => {
+            setPagination((page - 1) * pagination.limit, pagination.limit);
+        },
+        [pagination.limit, setPagination]
+    );
 
     if (!isOpen) return null;
 
@@ -130,28 +125,14 @@ export const ExercisePickerModal: React.FC<ExercisePickerModalProps> = ({
 
                 {/* Pagination */}
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between p-4 border-t border-gray-200">
-                        <span className="text-sm text-gray-600">
-                            Página {currentPage} de {totalPages} ({total} ejercicios)
-                        </span>
-                        <div className="flex gap-2">
-                            <button
-                                type="button"
-                                onClick={() => handlePageChange("prev")}
-                                disabled={!hasPrev}
-                                className="px-3 py-1 text-sm rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                            >
-                                Anterior
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handlePageChange("next")}
-                                disabled={!hasNext}
-                                className="px-3 py-1 text-sm rounded border border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
-                            >
-                                Siguiente
-                            </button>
-                        </div>
+                    <div className="border-t border-border p-4">
+                        <PaginationBar
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={total}
+                            pageSize={pagination.limit}
+                            onPageChange={handlePageChange}
+                        />
                     </div>
                 )}
             </div>
