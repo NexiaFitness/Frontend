@@ -11,6 +11,7 @@
  * @author Frontend Team
  * @since v2.0.0
  * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn()
+ * @updated v6.4.0 - size "compact" para paneles estrechos (ExercisePickerPanel)
  */
 
 import React, { forwardRef, useId, useState } from "react";
@@ -31,8 +32,10 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 const baseStyles =
     "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50";
 
-// Mobile-first responsive sizes — xs = compact (Constructor, chips); sm = pills (filtros)
+// Mobile-first responsive sizes — compact = paneles estrechos (ExercisePickerPanel); xs = chips; sm = pills
 const sizeStyles: Record<InputSize, string> = {
+    compact:
+        "h-7 min-w-0 px-2 py-1 text-[11px] rounded-md border border-border/60 bg-surface",
     xs: "h-8 px-2.5 py-1.5 text-xs rounded-md border border-border/60 bg-surface",
     sm: "px-3 py-1.5 text-sm min-h-9 h-9",
     md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
@@ -102,7 +105,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                             inputSizeStyles,
                             error
                                 ? stateStyles.error
-                                : size === "xs"
+                                : size === "xs" || size === "compact"
                                 ? stateStyles.defaultXs
                                 : stateStyles.default,
                             className

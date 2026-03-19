@@ -42,21 +42,23 @@ const baseStyles =
 
 const variantStyles: Record<string, string> = {
     default:
-        "bg-primary text-primary-foreground hover:bg-primary/90",
+        "border border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
     primary:
-        "bg-primary text-primary-foreground hover:bg-primary/90",
+        "border border-transparent bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 disabled:opacity-100 disabled:brightness-100",
     destructive:
-        "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
     danger:
-        "bg-destructive text-destructive-foreground hover:bg-destructive/90",
+        "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
     outline:
-        "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
+        "border border-primary text-primary bg-transparent hover:bg-primary/10",
+    "outline-destructive":
+        "rounded-lg border border-destructive/30 bg-destructive/20 text-destructive hover:bg-destructive/30 hover:border-destructive/50",
     secondary:
-        "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+        "border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
     ghost:
-        "hover:bg-accent hover:text-accent-foreground",
+        "border border-transparent hover:bg-accent hover:text-accent-foreground",
     link:
-        "text-primary underline-offset-4 hover:underline",
+        "border border-transparent text-primary underline-offset-4 hover:underline",
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

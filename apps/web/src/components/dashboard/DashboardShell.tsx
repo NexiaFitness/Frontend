@@ -35,7 +35,12 @@ export const DashboardShell: React.FC = () => {
     const onToggleClick = useCallback(() => setSidebarCollapsed((prev) => !prev), []);
 
     return (
-        <div className="min-h-screen w-full bg-background">
+        <div
+            className={cn(
+                "min-h-screen w-full bg-background [--sidebar-width:0]",
+                sidebarCollapsed ? "lg:[--sidebar-width:4rem]" : "lg:[--sidebar-width:13.75rem]"
+            )}
+        >
             {isLoading && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-2xl">

@@ -5,18 +5,19 @@
  * - Vista protegida (solo trainers) para crear sesión manualmente
  * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
  * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta clients/:id/sessions/new)
- * - Añadir ejercicio: botón abre ExercisePickerModal (catálogo con filtros, fuente única)
+ * - Añadir ejercicio: botón abre ExercisePickerPanel (panel lateral, lista por letra)
  * - P2: Si no hay plan activo para la fecha seleccionada → StandaloneSession (sesión libre)
  *
  * @author Frontend Team
  * @since v5.3.0
- * @updated v6.3.0 - Ejercicios desde catálogo unificado (ExercisePickerModal)
+ * @updated v6.4.0 - Panel lateral ExercisePickerPanel (reemplaza modal)
  * @updated Fase 1 U4 - Props opcionales para contexto cliente (no salir del cliente)
  * @updated Fase 3 - Coherencia tras crear: avisos en pantalla + Entendido, luego redirigir
  * @updated P2 - StandaloneSession cuando no hay plan activo en la fecha
  */
 
-import React, { useState, useEffect, useMemo, useRef } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
@@ -37,7 +38,7 @@ import {
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import { ExercisePickerModal } from "@/components/exercises/ExercisePickerModal";
+import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
@@ -88,7 +89,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const location = useLocation();
     const [searchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
-    const { showSuccess, showError } = useToast();
+    const { showSuccess, showError, showWarning } = useToast();
 
     // Obtener parámetros: props (contexto cliente) tienen prioridad sobre query
     const clientIdFromQuery = searchParams.get("clientId");
@@ -272,21 +273,20 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     : r
             )
         );
-        setTargetRowIdForPicker(null);
-        setShowExercisePickerModal(false);
+        /* targetRowIdForPicker se mantiene: panel abierto para añadir más a la misma fila */
     };
 
-    /** Guardar como plantilla — no requiere cliente */
+    /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */
     const handleSaveAsTemplate = async () => {
-        const name = formData.sessionName.trim() || "Plantilla sin nombre";
+        const payload = buildTemplatePayloadFromConstructorRows({
+            constructorRows,
+            sessionName: formData.sessionName,
+            sessionType: formData.sessionType,
+            plannedDuration: formData.plannedDuration,
+            notes: formData.notes,
+        });
         try {
-            await createSessionTemplate({
-                name,
-                description: formData.notes.trim() || null,
-                session_type: formData.sessionType,
-                estimated_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
-                is_public: false,
-            }).unwrap();
+            await createSessionTemplate(payload).unwrap();
             showSuccess("Plantilla guardada correctamente", 2000);
             setTimeout(() => navigate(-1), 1500);
         } catch (err) {
@@ -294,11 +294,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setFormErrors({});
-
-        const errors: Record<string, string> = {};
+    const validateForm = useCallback((): { valid: boolean; errors: CreateSessionFormErrors } => {
+        const errors: CreateSessionFormErrors = {};
         if (!formData.sessionName.trim()) {
             errors.sessionName = "El nombre de la sesión es obligatorio";
         }
@@ -308,20 +305,25 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         if (!formData.sessionType) {
             errors.sessionType = "El tipo de sesión es obligatorio";
         }
-        
-        // P2: Solo requerir plan cuando usamos TrainingSession
         if (!useStandaloneSession && !selectedPlanId) {
-            errors.general = "Debes seleccionar un plan de entrenamiento para esta sesión";
-            showError("Debes seleccionar un plan de entrenamiento");
+            errors.trainingPlanId = "Debes seleccionar un plan de entrenamiento para esta sesión";
         }
+        return { valid: Object.keys(errors).length === 0, errors };
+    }, [formData.sessionName, formData.sessionDate, formData.sessionType, useStandaloneSession, selectedPlanId]);
 
-        if (Object.keys(errors).length > 0) {
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormErrors({});
+
+        const { valid, errors } = validateForm();
+        if (!valid) {
             setFormErrors(errors);
+            showWarning("Completa todos los campos obligatorios antes de crear la sesión", 5000);
             return;
         }
 
         if (!trainerId || !effectiveClientId) {
-            showError("No se pudo obtener la información del entrenador o cliente");
+            showWarning("Selecciona un cliente para continuar con la creación de la sesión", 5000);
             return;
         }
 
@@ -793,71 +795,86 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 <RecommendationsCards clientId={effectiveClientId} />
                             )}
 
-                            {/* Bloques + Constructor — space-y-5 (20px) entre cards */}
-                            <div className="space-y-5">
-                                <TrainingBlockSelector
-                                    selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
-                                    onSelect={(blockTypeId) => {
-                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
-                                        const newRow: ConstructorRow = {
-                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                                            blockTypeId: blockTypeId,
-                                            setType: SET_TYPE.SINGLE_SET,
-                                            sets: 3,
-                                            rounds: null,
-                                            timeCap: null,
-                                            intervalSeconds: null,
-                                            exercises: [],
-                                            rest: 60,
-                                            repsTipo: "reps",
-                                        };
-                                        setConstructorRows((prev) => [...prev, newRow]);
-                                    }}
-                                />
-                                <SessionConstructor
-                                    rows={constructorRows}
-                                    blockTypes={blockTypes}
-                                    onRowsChange={setConstructorRows}
-                                    onAddExerciseRequest={(rowId) => {
-                                        setTargetRowIdForPicker(rowId);
-                                        setShowExercisePickerModal(true);
-                                    }}
-                                />
-                            </div>
+                            {/* Bloques + Constructor + Panel lateral — flex cuando panel abierto */}
+                            <div className="flex gap-6">
+                                <div
+                                    className={cn(
+                                        "flex-1 space-y-5 min-w-0",
+                                        showExercisePickerModal && "lg:max-w-[calc(100%-324px)]"
+                                    )}
+                                >
+                                    <div className="space-y-5">
+                                        <TrainingBlockSelector
+                                            selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
+                                            onSelect={(blockTypeId) => {
+                                                if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
+                                                const newRow: ConstructorRow = {
+                                                    id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                                    blockTypeId: blockTypeId,
+                                                    setType: SET_TYPE.SINGLE_SET,
+                                                    sets: 3,
+                                                    rounds: null,
+                                                    timeCap: null,
+                                                    intervalSeconds: null,
+                                                    exercises: [],
+                                                    rest: 60,
+                                                    repsTipo: "reps",
+                                                };
+                                                setConstructorRows((prev) => [...prev, newRow]);
+                                            }}
+                                        />
+                                        <SessionConstructor
+                                            rows={constructorRows}
+                                            blockTypes={blockTypes}
+                                            onRowsChange={setConstructorRows}
+                                            onAddExerciseRequest={(rowId) => {
+                                                setTargetRowIdForPicker(rowId);
+                                                setShowExercisePickerModal(true);
+                                            }}
+                                        />
+                                    </div>
 
-                            {/* Notas — al final del formulario */}
-                            <div className="pt-6 border-t border-border">
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Notas de la Sesión
-                                </label>
-                                <Textarea
-                                    value={formData.notes}
-                                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                                    rows={3}
-                                    placeholder="Instrucciones generales para la sesión..."
-                                />
-                            </div>
+                                    {/* Notas — al final del formulario */}
+                                    <div className="pt-6 border-t border-border">
+                                        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                            Notas de la Sesión
+                                        </label>
+                                        <Textarea
+                                            value={formData.notes}
+                                            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                                            rows={3}
+                                            placeholder="Instrucciones generales para la sesión..."
+                                        />
+                                    </div>
+                                </div>
 
-                            {showExercisePickerModal && (
-                                <ExercisePickerModal
-                                    isOpen={true}
-                                    onClose={() => {
-                                        setShowExercisePickerModal(false);
-                                        setTargetRowIdForPicker(null);
-                                    }}
-                                    onSelect={handleSelectFromPicker}
-                                />
-                            )}
+                                {showExercisePickerModal && (
+                                    <ExercisePickerPanel
+                                        isOpen={true}
+                                        onClose={() => {
+                                            setShowExercisePickerModal(false);
+                                            setTargetRowIdForPicker(null);
+                                        }}
+                                        onSelect={handleSelectFromPicker}
+                                        clientId={effectiveClientId ?? undefined}
+                                        activeInjuries={clientActiveInjuries}
+                                    />
+                                )}
+                            </div>
                 </div>
                 </form>
             </div>
 
-            {/* Barra fija inferior — layout imagen 2: Guardar como Plantilla (izq), Cancelar + Crear Sesión (der) */}
-            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background p-4">
+            {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
+            <div
+                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
+                style={{ left: "var(--sidebar-width, 0)" }}
+            >
                 <div className="flex items-center justify-between gap-3">
                     <Button
                         type="button"
                         variant="outline"
+                        size="sm"
                         onClick={handleSaveAsTemplate}
                         disabled={isSavingTemplate}
                         isLoading={isSavingTemplate}
@@ -867,7 +884,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     <div className="flex gap-3">
                         <Button
                             type="button"
-                            variant="outline"
+                            variant="outline-destructive"
+                            size="sm"
                             onClick={() => {
                                 if (backPath) {
                                     navigate(backPath);
@@ -887,8 +905,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             type="submit"
                             form="create-session-form"
                             variant="primary"
+                            size="sm"
                             disabled={
-                                !effectiveClientId ||
                                 isCreatingSession ||
                                 isCreatingStandalone ||
                                 isSavingStandaloneExercises
@@ -898,6 +916,20 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 isCreatingStandalone ||
                                 isSavingStandaloneExercises
                             }
+                            onClick={(e) => {
+                                if (isCreatingSession || isCreatingStandalone || isSavingStandaloneExercises) return;
+                                if (!effectiveClientId) {
+                                    e.preventDefault();
+                                    showWarning("Selecciona un cliente para continuar con la creación de la sesión");
+                                    return;
+                                }
+                                const { valid, errors } = validateForm();
+                                if (!valid) {
+                                    e.preventDefault();
+                                    setFormErrors(errors);
+                                    showWarning("Completa todos los campos obligatorios antes de crear la sesión");
+                                }
+                            }}
                         >
                             Crear Sesión
                         </Button>

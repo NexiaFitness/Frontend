@@ -81,7 +81,6 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         data: activePlan,
         isLoading: isLoadingActive,
         isError,
-        error,
     } = useGetActivePlanByClientQuery(clientId, { skip: !clientId || clientId <= 0 });
 
     const isLoading = isLoadingPlans || isLoadingActive;
@@ -96,21 +95,15 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     }
 
     if (!hasActivePlan) {
-        const is404 =
-            isError &&
-            error != null &&
-            typeof error === "object" &&
-            "status" in error &&
-            Number((error as { status?: unknown }).status) === 404;
         return (
             <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-8 text-center">
                 <p className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
                     Sin plan activo
                 </p>
                 <p className="mb-6 text-sm text-muted-foreground">
-                    {is404
-                        ? "Este cliente no tiene un plan de entrenamiento activo. Crea uno para ver baselines, overrides y calendario aquí."
-                        : "No se pudo cargar el plan activo. Puedes crear un plan para este cliente."}
+                    {isError
+                        ? "No se pudo cargar el plan activo. Puedes crear un plan para este cliente."
+                        : "Este cliente no tiene un plan de entrenamiento activo. Crea uno para ver baselines, overrides y calendario aquí."}
                 </p>
                 {onOpenCreatePlan && (
                     <Button

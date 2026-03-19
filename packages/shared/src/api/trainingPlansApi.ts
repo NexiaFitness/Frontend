@@ -112,13 +112,20 @@ export const trainingPlansApi = baseApi.injectEndpoints({
         /**
          * Plan activo del cliente (hoy). Resuelto por TrainingPlanInstance.
          * Backend: GET /api/v1/training-plans/active-by-client/{client_id}
-         * 404 cuando no hay plan activo.
+         * 404 cuando no hay plan activo (tratado como data: null, no error).
          */
-        getActivePlanByClient: builder.query<ActivePlanByClientOut, number>({
-            query: (clientId) => ({
-                url: `/training-plans/active-by-client/${clientId}`,
-                method: "GET",
-            }),
+        getActivePlanByClient: builder.query<ActivePlanByClientOut | null, number>({
+            queryFn: async (clientId, _queryApi, _extraOptions, baseQuery) => {
+                const result = await baseQuery({
+                    url: `/training-plans/active-by-client/${clientId}`,
+                    method: "GET",
+                });
+                if (result.error && "status" in result.error && result.error.status === 404) {
+                    return { data: null };
+                }
+                if (result.error) return result as { error: unknown };
+                return { data: result.data as ActivePlanByClientOut };
+            },
             providesTags: (result, error, clientId) => [
                 { type: "TrainingPlan", id: `ACTIVE-${clientId}` },
             ],

@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
+import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/buttons";
@@ -42,7 +43,7 @@ import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
-import { ExercisePickerModal } from "@/components/exercises/ExercisePickerModal";
+import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import type {
     ConstructorRow,
     ConstructorExercise,
@@ -87,6 +88,10 @@ export const EditSession: React.FC = () => {
     );
     const { data: client } = useGetClientQuery(session?.client_id ?? 0, {
         skip: !session?.client_id,
+    });
+    const { activeInjuries: clientActiveInjuries = [] } = useClientInjuries({
+        clientId: session?.client_id ?? 0,
+        includeHistory: false,
     });
 
     // Hook de mutación para actualizar sesión
@@ -211,8 +216,7 @@ export const EditSession: React.FC = () => {
                         : r
                 )
             );
-            setTargetRowIdForPicker(null);
-            setShowExercisePickerModal(false);
+            /* Panel permanece abierto para añadir más a la misma fila */
         },
         [targetRowIdForPicker]
     );
@@ -599,17 +603,6 @@ export const EditSession: React.FC = () => {
                                 />
                             </div>
                         </form>
-
-                        {showExercisePickerModal && (
-                            <ExercisePickerModal
-                                isOpen={true}
-                                onClose={() => {
-                                    setShowExercisePickerModal(false);
-                                    setTargetRowIdForPicker(null);
-                                }}
-                                onSelect={handleSelectFromPicker}
-                            />
-                        )}
                     </div>
 
                     {/* Columna derecha: Plan del día */}
@@ -625,15 +618,19 @@ export const EditSession: React.FC = () => {
                 </div>
             </div>
 
-            {/* Barra fija inferior */}
-            <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background p-4 flex justify-end gap-3">
-                <Button type="button" variant="outline" onClick={() => navigate(-1)}>
+            {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
+            <div
+                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4 flex justify-end gap-3"
+                style={{ left: "var(--sidebar-width, 0)" }}
+            >
+                <Button type="button" variant="outline" size="sm" onClick={() => navigate(-1)}>
                     Cancelar
                 </Button>
                 <Button
                     type="submit"
                     form="edit-session-form"
                     variant="primary"
+                    size="sm"
                     disabled={isUpdatingSession}
                     isLoading={isUpdatingSession}
                 >

@@ -101,6 +101,38 @@ export interface SessionTemplate {
     is_active: boolean;
 }
 
+/** Exercise within a template block (create payload). */
+export interface SessionTemplateExerciseCreate {
+    exercise_id: number;
+    order_in_block: number;
+    set_type?: SetType; // Default: "single_set"
+    planned_sets?: number | null;
+    planned_reps?: string | null;
+    planned_weight?: number | null;
+    planned_duration?: number | null;
+    planned_distance?: number | null;
+    planned_rest?: number | null;
+    effort_character?: EffortCharacter | null;
+    effort_value?: number | null;
+    notes?: string | null;
+}
+
+/** Block with exercises (create payload for template). */
+export interface SessionTemplateBlockWithExercisesCreate {
+    block_type_id: number;
+    order_in_template: number;
+    set_type?: SetType | null;
+    rounds?: number | null;
+    time_cap?: number | null;
+    interval_seconds?: number | null;
+    objective_text?: string | null;
+    planned_intensity?: number | null;
+    planned_volume?: number | null;
+    estimated_duration?: number | null;
+    notes?: string | null;
+    exercises: SessionTemplateExerciseCreate[];
+}
+
 export interface SessionTemplateCreate {
     name: string;
     description?: string | null;
@@ -110,6 +142,7 @@ export interface SessionTemplateCreate {
     target_muscles?: string | null;
     equipment_needed?: string | null;
     is_public?: boolean; // Default: false
+    blocks?: SessionTemplateBlockWithExercisesCreate[] | null;
 }
 
 export interface SessionTemplateUpdate {
