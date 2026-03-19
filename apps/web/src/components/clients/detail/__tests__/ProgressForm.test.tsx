@@ -398,7 +398,7 @@ describe("ProgressForm", () => {
         });
 
         it("handles API error during submission", async () => {
-            server.use(createProgressRecordErrorHandler);
+            server.use(getClientHandler, createProgressRecordErrorHandler);
 
             const user = userEvent.setup();
             render(<ProgressForm clientId={1} />);
@@ -407,7 +407,13 @@ describe("ProgressForm", () => {
                 expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
             });
 
-            // Llenar formulario
+            // Esperar a que altura se prellene desde el perfil del cliente
+            await waitFor(() => {
+                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                expect(alturaInput.value).toBe("180");
+            });
+
+            // Llenar peso (altura ya viene prefilled)
             const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
             await user.clear(pesoInput);
             await user.type(pesoInput, "82");
@@ -416,7 +422,7 @@ describe("ProgressForm", () => {
             const submitButton = screen.getByRole("button", { name: /guardar registro/i });
             await user.click(submitButton);
 
-            // Verificar mensaje de error
+            // Verificar mensaje de error de API
             await waitFor(() => {
                 expect(screen.getByText(/error al guardar el registro/i)).toBeInTheDocument();
             }, { timeout: 3000 });
