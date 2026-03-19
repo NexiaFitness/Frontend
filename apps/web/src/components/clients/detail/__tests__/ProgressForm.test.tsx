@@ -369,6 +369,12 @@ describe("ProgressForm", () => {
                 expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
             });
 
+            // Esperar altura prefilled (evita flakiness en CI donde el mock puede ser más lento)
+            await waitFor(() => {
+                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                expect(alturaInput.value).toBe("180");
+            });
+
             // Llenar formulario
             const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
             await user.clear(pesoInput);
