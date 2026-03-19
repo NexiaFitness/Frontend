@@ -49,3 +49,9 @@ export const APP_INFO = {
     VERSION: '1.0.0',
     DESCRIPTION: 'Professional fitness training management platform',
 } as const;
+
+/**
+ * Máximo de registros por petición en GET /exercises/?limit=...
+ * Debe coincidir con el backend (FastAPI Query le=1000 en app/api/exercises.py).
+ */
+export const EXERCISES_LIST_MAX_LIMIT = 1000;

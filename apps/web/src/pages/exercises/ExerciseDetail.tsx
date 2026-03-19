@@ -1,83 +1,86 @@
 /**
- * ExerciseDetail.tsx — Página de detalle de ejercicio individual
- *
- * Propósito: Mostrar información completa de un ejercicio (nombre, descripción, instrucciones, etc.)
- * Contexto: módulo Exercise Database Browser de NEXIA Fitness
- * Notas de mantenimiento: mantener coherencia con ClientDetail y otras vistas
- *
- * Arquitectura:
- * - Usa backend /exercises/{id} (funcional, legacy pero correcto)
- * - Exercise Catalog solo para Reference Tables
- * - Tipos desde useExercises (alineados con backend)
- *
- * @author Frontend Team
- * @since v4.8.0
- * @updated v5.0.0 - Sub-Fase 2.6: tipos correctos, helpers compartidos, campos alineados con backend
+ * ExerciseDetail.tsx — Detalle de ejercicio (API) o borrador local (ex-new-* + location.state)
  */
 
-import React, { useMemo, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import {
-    useGetExerciseByIdQuery,
-    useDeleteExerciseMutation,
-} from "@nexia/shared/hooks/exercises";
+import React, { useMemo } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
+import type { Exercise } from "@nexia/shared/hooks/exercises";
 import {
     getMuscleLabel,
     getEquipmentLabel,
     getLevelLabel,
     getLevelBadgeColor,
     getMuscleGradient,
+    localViewToExercise,
+    equipmentParts,
 } from "@/utils/exercises";
+import type { LocalExerciseView } from "@/types/exerciseLocal";
 
-// UI
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlternativesSection";
+
+interface LocationState {
+    localExercise?: LocalExerciseView;
+}
 
 export const ExerciseDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const location = useLocation();
+    const routeId = id ? decodeURIComponent(id) : "";
+    const isLocalRoute = routeId.startsWith("ex-new");
+    const locationState = location.state as LocationState | null;
 
-    const exerciseId = id ? parseInt(id, 10) : null;
+    const numericId = routeId ? parseInt(routeId, 10) : NaN;
+    const hasValidNumericId = !Number.isNaN(numericId) && numericId > 0;
 
-    const { data: exercise, isLoading, isError, error } = useGetExerciseByIdQuery(
-        exerciseId!,
-        { skip: !exerciseId }
-    );
+    const { data: apiExercise, isLoading, isError, error } = useGetExerciseByIdQuery(numericId, {
+        skip: isLocalRoute || !hasValidNumericId,
+    });
 
-    const [deleteExercise, { isLoading: isDeleting }] = useDeleteExerciseMutation();
+    const localPayload = useMemo(() => {
+        if (!isLocalRoute) return undefined;
+        const l = locationState?.localExercise;
+        if (l && l.rowId === routeId) return l;
+        return undefined;
+    }, [isLocalRoute, locationState?.localExercise, routeId]);
+
+    const exercise: Exercise | undefined = useMemo(() => {
+        if (isLocalRoute) {
+            if (!localPayload) return undefined;
+            return localViewToExercise(localPayload);
+        }
+        return apiExercise;
+    }, [isLocalRoute, localPayload, apiExercise]);
+
+    const exerciseIdForApi = hasValidNumericId ? numericId : null;
 
     const handleBack = () => {
         navigate("/dashboard/exercises");
     };
 
-    const handleDelete = async () => {
-        if (!exerciseId) return;
-        try {
-            await deleteExercise(exerciseId).unwrap();
-            navigate("/dashboard/exercises", { replace: true });
-        } catch {
-            setDeleteModalOpen(false);
-        }
-    };
-
-    // Parsear músculos (comma-separated strings)
     const primaryMuscle = useMemo(() => {
         if (!exercise?.musculatura_principal) return "";
-        return exercise.musculatura_principal.split(',')[0].trim();
+        return exercise.musculatura_principal.split(",")[0].trim();
     }, [exercise?.musculatura_principal]);
 
     const secondaryMuscles = useMemo(() => {
         if (!exercise?.musculatura_secundaria) return [];
         return exercise.musculatura_secundaria
-            .split(',')
+            .split(",")
             .map((m) => m.trim())
             .filter((m) => m.length > 0);
     }, [exercise?.musculatura_secundaria]);
 
-    if (!exerciseId) {
+    const equipmentList = useMemo(
+        () => equipmentParts(exercise?.equipo),
+        [exercise?.equipo]
+    );
+
+    if (!routeId) {
         return (
             <div className="px-4 lg:px-8">
                 <Alert variant="error">ID de ejercicio inválido</Alert>
@@ -88,7 +91,32 @@ export const ExerciseDetail: React.FC = () => {
         );
     }
 
-    if (isLoading) {
+    if (isLocalRoute && !localPayload) {
+        return (
+            <div className="px-4 lg:px-8">
+                <Alert variant="error">
+                    Este ejercicio solo estaba disponible en la navegación anterior. Abre de nuevo el
+                    listado y selecciónalo desde ahí, o recarga la página de ejercicios.
+                </Alert>
+                <Button onClick={handleBack} className="mt-4">
+                    Volver a Ejercicios
+                </Button>
+            </div>
+        );
+    }
+
+    if (!isLocalRoute && !hasValidNumericId) {
+        return (
+            <div className="px-4 lg:px-8">
+                <Alert variant="error">ID de ejercicio inválido</Alert>
+                <Button onClick={handleBack} className="mt-4">
+                    Volver a Ejercicios
+                </Button>
+            </div>
+        );
+    }
+
+    if (!isLocalRoute && isLoading) {
         return (
             <div className="flex justify-center items-center py-16">
                 <LoadingSpinner size="lg" />
@@ -97,14 +125,14 @@ export const ExerciseDetail: React.FC = () => {
         );
     }
 
-    if (isError || !exercise) {
+    if (!isLocalRoute && (isError || !exercise)) {
         return (
             <div className="px-4 lg:px-8">
                 <Alert variant="error">
                     Error al cargar el ejercicio. Por favor, intenta de nuevo.
                     {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data && (
                         <div className="mt-2 text-sm">
-                            {String(error.data.detail)}
+                            {String((error.data as { detail?: unknown }).detail)}
                         </div>
                     )}
                 </Alert>
@@ -115,171 +143,154 @@ export const ExerciseDetail: React.FC = () => {
         );
     }
 
+    if (!exercise) {
+        return null;
+    }
+
     return (
         <>
-            {/* Header con botón volver */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleBack}
-                        className="mb-4"
+            <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+                <Button variant="outline" size="sm" onClick={handleBack} className="mb-4">
+                    ← Volver a Ejercicios
+                </Button>
+                {isLocalRoute && (
+                    <Alert variant="warning" className="mb-4">
+                        Ejercicio solo en esta sesión (no guardado en el servidor).
+                    </Alert>
+                )}
+                <h2 className="text-2xl font-bold text-foreground md:text-3xl mb-2">{exerciseDisplayName(exercise)}</h2>
+            </div>
+
+            <div className="px-4 lg:px-8 pb-12 lg:pb-20">
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-xl backdrop-blur-sm lg:p-8">
+                    <div
+                        className={`mb-6 flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br ${getMuscleGradient(primaryMuscle)}`}
                     >
-                        ← Volver a Ejercicios
-                    </Button>
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        {exercise.nombre}
-                    </h2>
-                </div>
+                        <div className="text-6xl font-bold text-white opacity-50">💪</div>
+                    </div>
 
-                {/* Contenido principal */}
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                        {/* Imagen placeholder con gradiente */}
-                        <div
-                            className={`aspect-video rounded-xl mb-6 bg-gradient-to-br ${getMuscleGradient(primaryMuscle)} flex items-center justify-center`}
-                        >
-                            <div className="text-white text-6xl font-bold opacity-50">
-                                💪
-                            </div>
+                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <div>
+                            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Grupo Muscular Principal
+                            </p>
+                            {primaryMuscle ? (
+                                <p className="text-base font-semibold text-foreground">
+                                    {getMuscleLabel(primaryMuscle)}
+                                </p>
+                            ) : (
+                                <p className="text-base text-muted-foreground">No especificado</p>
+                            )}
                         </div>
 
-                        {/* Información básica */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
-                                    Grupo Muscular Principal
-                                </p>
-                                {primaryMuscle ? (
-                                    <p className="text-base font-semibold text-foreground">
-                                        {getMuscleLabel(primaryMuscle)}
-                                    </p>
-                                ) : (
-                                    <p className="text-base text-muted-foreground">No especificado</p>
-                                )}
-                            </div>
+                        <div>
+                            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Nivel
+                            </p>
+                            {exercise.nivel ? (
+                                <span
+                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${getLevelBadgeColor(exercise.nivel)}`}
+                                >
+                                    {getLevelLabel(exercise.nivel)}
+                                </span>
+                            ) : (
+                                <p className="text-base text-muted-foreground">No especificado</p>
+                            )}
+                        </div>
+                    </div>
 
-                            <div>
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-1">
-                                    Nivel
-                                </p>
-                                {exercise.nivel ? (
+                    {secondaryMuscles.length > 0 && (
+                        <div className="mb-6">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Músculos Secundarios
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {secondaryMuscles.map((muscle, index) => (
                                     <span
-                                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium ${getLevelBadgeColor(exercise.nivel)}`}
+                                        key={`${muscle}-${index}`}
+                                        className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium text-foreground"
                                     >
-                                        {getLevelLabel(exercise.nivel)}
+                                        {getMuscleLabel(muscle)}
                                     </span>
-                                ) : (
-                                    <p className="text-base text-muted-foreground">No especificado</p>
-                                )}
+                                ))}
                             </div>
                         </div>
+                    )}
 
-                        {/* Músculos secundarios */}
-                        {secondaryMuscles.length > 0 && (
-                            <div className="mb-6">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
-                                    Músculos Secundarios
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {secondaryMuscles.map((muscle, index) => (
+                    {exercise.equipo && (
+                        <div className="mb-6">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Equipamiento
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                                {equipmentList.length > 0 ? (
+                                    equipmentList.map((eq) => (
                                         <span
-                                            key={`${muscle}-${index}`}
-                                            className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-muted text-foreground"
+                                            key={eq}
+                                            className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary"
                                         >
-                                            {getMuscleLabel(muscle)}
+                                            {getEquipmentLabel(eq)}
                                         </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Equipamiento */}
-                        {exercise.equipo && (
-                            <div className="mb-6">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
-                                    Equipamiento
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-sm font-medium bg-primary/10 text-primary">
+                                    ))
+                                ) : (
+                                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary">
                                         {getEquipmentLabel(exercise.equipo)}
                                     </span>
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Descripción */}
-                        {exercise.descripcion && (
-                            <div className="mb-6">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
-                                    Descripción
-                                </p>
-                                <p className="text-base text-muted-foreground leading-relaxed">
-                                    {exercise.descripcion}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Instrucciones */}
-                        {exercise.instrucciones && (
-                            <div className="mb-6">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
-                                    Instrucciones
-                                </p>
-                                <p className="text-base text-muted-foreground leading-relaxed whitespace-pre-line">
-                                    {exercise.instrucciones}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Notas */}
-                        {exercise.notas && (
-                            <div className="mb-6">
-                                <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium mb-2">
-                                    Notas
-                                </p>
-                                <p className="text-base text-muted-foreground leading-relaxed">
-                                    {exercise.notas}
-                                </p>
-                            </div>
-                        )}
-
-                        {/* Alternativas (TICK-E05) */}
-                        <ExerciseAlternativesSection exerciseId={exerciseId} />
-                    </div>
-                </div>
-
-                {/* Modal confirmar eliminar */}
-                {deleteModalOpen && (
-                    <BaseModal
-                        isOpen={true}
-                        onClose={() => setDeleteModalOpen(false)}
-                        title="¿Eliminar este ejercicio?"
-                        description="Esta acción no se puede deshacer."
-                        iconType="danger"
-                    >
-                        <div className="space-y-4">
-                            <p className="text-muted-foreground">
-                                Se eliminará &quot;{exercise.nombre}&quot; permanentemente de la base de datos.
-                            </p>
-                            <div className="flex flex-col sm:flex-row gap-3 justify-end">
-                                <button
-                                    onClick={() => setDeleteModalOpen(false)}
-                                    className="px-4 py-2 rounded-lg border border-border text-foreground font-semibold hover:bg-muted"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    disabled={isDeleting}
-                                    className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground font-semibold hover:bg-destructive/90 disabled:opacity-50"
-                                >
-                                    {isDeleting ? "Eliminando..." : "Eliminar"}
-                                </button>
+                                )}
                             </div>
                         </div>
-                    </BaseModal>
-                )}
+                    )}
+
+                    {localPayload?.videoUrl ? (
+                        <div className="mb-6">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Video
+                            </p>
+                            <a
+                                href={localPayload.videoUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
+                            >
+                                Abrir enlace de video
+                            </a>
+                        </div>
+                    ) : null}
+
+                    {exercise.descripcion && (
+                        <div className="mb-6">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Descripción
+                            </p>
+                            <p className="text-base leading-relaxed text-muted-foreground">{exercise.descripcion}</p>
+                        </div>
+                    )}
+
+                    {exercise.instrucciones && (
+                        <div className="mb-6">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Instrucciones
+                            </p>
+                            <p className="whitespace-pre-line text-base leading-relaxed text-muted-foreground">
+                                {exercise.instrucciones}
+                            </p>
+                        </div>
+                    )}
+
+                    {exercise.notas && (
+                        <div className="mb-6">
+                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Notas
+                            </p>
+                            <p className="text-base leading-relaxed text-muted-foreground">{exercise.notas}</p>
+                        </div>
+                    )}
+
+                    {!isLocalRoute && exerciseIdForApi ? (
+                        <ExerciseAlternativesSection exerciseId={exerciseIdForApi} />
+                    ) : null}
+                </div>
+            </div>
         </>
     );
 };

@@ -94,21 +94,25 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
         const isNotFound = error && "status" in error && (error as { status: number }).status === 404;
         return (
             <div className="flex flex-col gap-4 p-6">
-                <Alert variant="error">
+                <Alert
+                    variant="error"
+                    action={
+                        <>
+                            {!isNotFound && (
+                                <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
+                                    Reintentar
+                                </Button>
+                            )}
+                            <Button variant="outline" size="sm" onClick={onClose}>
+                                Cerrar
+                            </Button>
+                        </>
+                    }
+                >
                     {isNotFound
                         ? "El plan no existe o ha sido eliminado."
                         : "Error al cargar el plan. Intenta de nuevo."}
                 </Alert>
-                <div className="flex gap-3">
-                    {!isNotFound && (
-                        <Button variant="primary" size="sm" onClick={() => refetch()}>
-                            Reintentar
-                        </Button>
-                    )}
-                    <Button variant="outline" size="sm" onClick={onClose}>
-                        Cerrar
-                    </Button>
-                </div>
             </div>
         );
     }

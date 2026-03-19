@@ -24,6 +24,7 @@ export {
 // Legacy exercises module hooks (GET/POST/PUT/DELETE /exercises/)
 export {
     useGetExercisesQuery,
+    useGetExerciseLibraryQuery,
     useGetExerciseByIdQuery,
     useCreateExerciseMutation,
     useUpdateExerciseMutation,

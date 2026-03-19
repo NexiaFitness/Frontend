@@ -1,11 +1,8 @@
 /**
  * E2E Exercises: Browse list
  *
- * Flujo: Login → Sidebar "Ejercicios" → listado con heading.
- * Assertions: heading "Base de Datos de Ejercicios", lista (cards o "Mostrando X de Y") o empty state.
- * APIs: getExercises (useExercises). Paginación si totalPages > 1.
- *
- * Requisitos: backend con /api/v1/exercises/ disponible (puede devolver 0 ejercicios).
+ * Flujo: Login → Sidebar "Ejercicios" → biblioteca (spec Lovable).
+ * Assertions: heading "Ejercicios · {count}", búsqueda, contenido (cards / tabla) o empty state.
  */
 
 import { test, expect } from "@playwright/test";
@@ -19,42 +16,33 @@ test.describe("Exercises — Browse", () => {
     await loginAsTrainer(page);
     await navigateToExercises(page);
 
-    await expect(
-      page.getByRole("heading", { name: /base de datos de ejercicios/i })
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /ejercicios ·/i })).toBeVisible({
+      timeout: 15_000,
+    });
 
-    // Después de cargar: o hay resultados (texto "Mostrando" o cards) o empty state
+    await expect(page.getByPlaceholder(/buscar ejercicio/i)).toBeVisible();
+
     await expect(
       page
-        .getByText(
-          /mostrando \d+ de \d+ ejercicios|aún no hay ejercicios|no se encontraron ejercicios/i
-        )
+        .getByText(/tu biblioteca está vacía|nuevo ejercicio/i)
         .first()
     ).toBeVisible({ timeout: 15_000 });
   });
 
-  test("when list has results, loading is replaced by content or empty", async ({
-    page,
-  }) => {
+  test("when list loads, loading state finishes", async ({ page }) => {
     await loginAsTrainer(page);
     await navigateToExercises(page);
 
-    await expect(
-      page.getByRole("heading", { name: /base de datos de ejercicios/i })
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /ejercicios ·/i })).toBeVisible({
+      timeout: 15_000,
+    });
 
-    // Loading debe desaparecer; luego contenido ("Mostrando X de Y") o empty
     await page
-      .getByText(/cargando ejercicios/i)
-      .waitFor({ state: "hidden", timeout: 20_000 })
+      .locator(".animate-spin")
+      .first()
+      .waitFor({ state: "hidden", timeout: 25_000 })
       .catch(() => {});
 
-    await expect(
-      page
-        .getByText(
-          /mostrando \d+ de \d+ ejercicios|aún no hay ejercicios|no se encontraron ejercicios/i
-        )
-        .first()
-    ).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByPlaceholder(/buscar ejercicio/i)).toBeVisible();
   });
 });

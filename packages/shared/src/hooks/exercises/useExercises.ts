@@ -23,7 +23,9 @@
  */
 
 import { useState, useMemo, useCallback } from "react";
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "../../api/baseApi";
+import { EXERCISES_LIST_MAX_LIMIT } from "../../config/constants";
 
 // ========================================
 // TIPOS TEMPORALES PARA MÓDULO EXERCISES LEGACY
@@ -42,10 +44,34 @@ export interface ExercisePhysicalQualityRef {
     slug: string;
 }
 
+/** Catálogo Excel / Tablas: músculos con rol (prime_mover, synergist, stabilizer). */
+export interface ExerciseMuscleRef {
+    id: number;
+    name: string;
+    name_en: string;
+    name_es?: string | null;
+    role: string;
+}
+
+export interface ExerciseEquipmentRef {
+    id: number;
+    name_en: string;
+    name_es?: string | null;
+}
+
+export interface ExerciseMovementPatternRef {
+    id: number;
+    name_en: string;
+    name_es?: string | null;
+    role?: string | null;
+}
+
 export interface Exercise {
     id: number;
     exercise_id: string; // String único del ejercicio
+    /** Tablas.xlsx `exercise_name_es` — texto UI; español o anglicismo según Excel; no traducir en front. */
     nombre: string;
+    /** Tablas.xlsx `exercise_name_en` — identificador EN tal cual; no traducir. */
     nombre_ingles: string | null;
     tipo: string;
     categoria: string;
@@ -63,6 +89,10 @@ export interface Exercise {
     is_active: boolean;
     /** Fase 5b: cualidades físicas asociadas (M2M). */
     physical_qualities?: ExercisePhysicalQualityRef[] | null;
+    /** Relaciones del catálogo nuevo (GET /exercises/ las incluye cuando existen mappings). */
+    muscles?: ExerciseMuscleRef[] | null;
+    equipment?: ExerciseEquipmentRef[] | null;
+    movement_patterns?: ExerciseMovementPatternRef[] | null;
 }
 
 /**
@@ -212,8 +242,12 @@ const exercisesListApi = baseApi.injectEndpoints({
         getExercises: builder.query<ExerciseListResponse, GetExercisesParams>({
             query: ({ skip = 0, limit = 100, ...filters }) => {
                 const params = new URLSearchParams();
-                params.append('skip', skip.toString());
-                params.append('limit', limit.toString());
+                params.append("skip", skip.toString());
+                const safeLimit = Math.min(
+                    Math.max(Number(limit) || 100, 1),
+                    EXERCISES_LIST_MAX_LIMIT
+                );
+                params.append("limit", String(safeLimit));
                 
                 if (filters.tipo) {
                     params.append('tipo', filters.tipo);
@@ -266,6 +300,60 @@ const exercisesListApi = baseApi.injectEndpoints({
                     ]
                     : [{ type: "Exercise", id: "LIST" }],
         }),
+        /**
+         * Biblioteca completa: pagina con limit=EXERCISES_LIST_MAX_LIMIT hasta has_more=false.
+         * El backend rechaza limit>1000 (422); este endpoint evita una sola petición inválida.
+         */
+        getExerciseLibrary: builder.query<ExerciseListResponse, void>({
+            async queryFn(_arg, _api, _extraOptions, fetchWithBQ) {
+                const pageSize = EXERCISES_LIST_MAX_LIMIT;
+                const merged: Exercise[] = [];
+                let skip = 0;
+                let reportedTotal = 0;
+
+                for (;;) {
+                    const res = await fetchWithBQ({
+                        url: `/exercises/?skip=${skip}&limit=${pageSize}`,
+                        method: "GET",
+                    });
+                    if (res.error) {
+                        return { error: res.error as FetchBaseQueryError };
+                    }
+                    const page = res.data as ExerciseListResponse;
+                    if (skip === 0) {
+                        reportedTotal = page.total;
+                    }
+                    merged.push(...page.exercises);
+                    if (!page.has_more || page.exercises.length === 0) {
+                        break;
+                    }
+                    skip += pageSize;
+                    if (skip > reportedTotal + pageSize) {
+                        break;
+                    }
+                }
+
+                return {
+                    data: {
+                        exercises: merged,
+                        total: reportedTotal,
+                        skip: 0,
+                        limit: merged.length,
+                        has_more: false,
+                    },
+                };
+            },
+            providesTags: (result) =>
+                result?.exercises
+                    ? [
+                          ...result.exercises.map(({ id }) => ({
+                              type: "Exercise" as const,
+                              id,
+                          })),
+                          { type: "Exercise", id: "LIST" },
+                      ]
+                    : [{ type: "Exercise", id: "LIST" }],
+        }),
         getExerciseById: builder.query<Exercise, number>({
             query: (id) => ({
                 url: `/exercises/${id}`,
@@ -311,6 +399,7 @@ const exercisesListApi = baseApi.injectEndpoints({
 // Export hooks
 export const {
     useGetExercisesQuery,
+    useGetExerciseLibraryQuery,
     useGetExerciseByIdQuery,
     useCreateExerciseMutation,
     useUpdateExerciseMutation,

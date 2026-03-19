@@ -38,6 +38,7 @@ import {
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
@@ -259,7 +260,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         const newEx: ConstructorExercise = {
             id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             exerciseId: exercise.id,
-            exerciseName: exercise.nombre,
+            exerciseName: exerciseDisplayName(exercise),
             plannedReps: "10",
             plannedWeight: null,
             plannedDuration: null,

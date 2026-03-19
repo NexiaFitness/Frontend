@@ -36,6 +36,7 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
 import type { AppDispatch } from "@nexia/shared/store";
@@ -201,7 +202,7 @@ export const EditSession: React.FC = () => {
             const newEx: ConstructorExercise = {
                 id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
                 exerciseId: exercise.id,
-                exerciseName: exercise.nombre,
+                exerciseName: exerciseDisplayName(exercise),
                 plannedReps: "10",
                 plannedWeight: null,
                 plannedDuration: null,

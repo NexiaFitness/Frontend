@@ -27,6 +27,7 @@ import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Button } from "@/components/ui/buttons";
 import type { BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 // Tabs components - estáticos (carga inmediata)
@@ -201,28 +202,26 @@ export const TrainingPlanDetail: React.FC = () => {
 
         return (
             <div className="p-6">
-                        <Alert variant="error">
-                            {isNotFound 
-                                ? "El plan de entrenamiento solicitado no existe o ha sido eliminado." 
-                                : "Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo."}
-                        </Alert>
-                        <div className="flex gap-3 mt-4">
+                <Alert
+                    variant="error"
+                    action={
+                        <>
                             {!isNotFound && (
-                                <button
-                                    onClick={() => refetch()}
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                                >
+                                <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
                                     Reintentar
-                                </button>
+                                </Button>
                             )}
-                            <button
-                                onClick={() => navigate("/dashboard/training-plans")}
-                                className="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors"
-                            >
+                            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/training-plans")}>
                                 Volver a Planes
-                            </button>
-                        </div>
-                    </div>
+                            </Button>
+                        </>
+                    }
+                >
+                    {isNotFound
+                        ? "El plan de entrenamiento solicitado no existe o ha sido eliminado."
+                        : "Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo."}
+                </Alert>
+            </div>
         );
     }
 

@@ -144,16 +144,19 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
     if (isError) {
         return (
             <div className="p-6">
-                <Alert variant="error">
+                <Alert
+                    variant="error"
+                    action={
+                        <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
+                            Reintentar
+                        </Button>
+                    }
+                >
                     <div className="space-y-2">
                         <p className="font-semibold">Error al cargar tests</p>
-                        <p>No se pudieron cargar los tests físicos. Por favor, intenta de nuevo.</p>
-                        <button
-                            onClick={() => refetch()}
-                            className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                        >
-                            Reintentar
-                        </button>
+                        <p className="text-muted-foreground">
+                            No se pudieron cargar los tests físicos. Por favor, intenta de nuevo.
+                        </p>
                     </div>
                 </Alert>
             </div>

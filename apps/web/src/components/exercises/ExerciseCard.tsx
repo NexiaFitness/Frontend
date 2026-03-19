@@ -1,112 +1,113 @@
 /**
- * ExerciseCard.tsx — Card individual de ejercicio para lista
+ * ExerciseCard.tsx — Card de ejercicio (biblioteca / picker)
  *
- * Propósito: Componente presentacional reutilizable que muestra información clave del ejercicio
- * Contexto: módulo Exercise Database Browser de NEXIA Fitness
- * Notas de mantenimiento: mantener coherencia con TrainingPlanCard y ClientCard
- *
- * @author Frontend Team
- * @since v4.8.0
- * @updated v5.0.0 - Refactorizado para Exercise Catalog, alineado con TrainingPlanCard
+ * Layout alineado con spec Lovable: nombre, badges grupo/tipo, equipo · nivel, video opcional.
+ * En modales legacy (picker) pasar className para fondo claro.
  */
 
 import React from "react";
+import { Play } from "lucide-react";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
+import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/Badge";
 import {
     getMuscleLabel,
-    getEquipmentLabel,
     getLevelLabel,
-    getLevelBadgeColor,
-    getMuscleGradient,
+    getGroupColor,
+    normalizeLevel,
+    getLevelTextClass,
+    muscleFacetLabel,
+    equipmentDisplayLine,
 } from "@/utils/exercises";
 
-interface ExerciseCardProps {
-    exercise: Exercise;
-    onSelect?: (exercise: Exercise) => void;
+function tipoLabelFromBackend(tipo: string): "Compuesto" | "Aislamiento" {
+    const t = tipo.toLowerCase();
+    if (t === "monoarticular") return "Aislamiento";
+    return "Compuesto";
 }
 
-export const ExerciseCard: React.FC<ExerciseCardProps> = ({ exercise, onSelect }) => {
-    // Extraer músculo principal (puede ser comma-separated)
-    const primaryMuscle = exercise.musculatura_principal
-        ? exercise.musculatura_principal.split(',')[0].trim()
-        : '';
+export interface ExerciseCardProps {
+    exercise: Exercise;
+    videoUrl?: string | null;
+    onSelect?: (exercise: Exercise) => void;
+    className?: string;
+}
 
-    // Handler para click
-    const handleClick = () => {
-        if (onSelect) {
-            onSelect(exercise);
-        }
-    };
+export const ExerciseCard: React.FC<ExerciseCardProps> = ({
+    exercise,
+    videoUrl = null,
+    onSelect,
+    className,
+}) => {
+    const muscleLabel = muscleFacetLabel(exercise);
+    const colors = getGroupColor(muscleLabel || exercise.musculatura_principal || "");
+    const levelNorm = normalizeLevel(exercise.nivel || "");
+    const levelClass = getLevelTextClass(levelNorm);
+    const tipoLabel = tipoLabelFromBackend(exercise.tipo || "");
+    const equipLine = equipmentDisplayLine(exercise);
+    const ariaLabel = `${exerciseDisplayName(exercise)} - ${getMuscleLabel(muscleLabel)}`;
 
-    // Handler para navegación con teclado
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+    const handleClick = () => onSelect?.(exercise);
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
+        if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             handleClick();
         }
     };
 
-    // Aria label para accesibilidad
-    const ariaLabel = `${exercise.nombre} - ${getMuscleLabel(primaryMuscle)}`;
-
     return (
-        <div
+        <button
+            type="button"
             onClick={handleClick}
             onKeyDown={handleKeyDown}
-            role={onSelect ? "button" : undefined}
-            tabIndex={onSelect ? 0 : undefined}
+            disabled={!onSelect}
             aria-label={onSelect ? ariaLabel : undefined}
-            className={`bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-all duration-200 flex flex-col h-full ${
-                onSelect ? "cursor-pointer" : ""
-            }`}
+            className={cn(
+                "flex flex-col rounded-lg bg-card p-5 text-left transition-all hover:bg-surface-2",
+                colors.glow,
+                onSelect ? "cursor-pointer" : "cursor-default",
+                className
+            )}
         >
-            {/* Imagen placeholder con gradiente */}
-            <div
-                className={`aspect-video rounded-lg mb-4 bg-gradient-to-br ${getMuscleGradient(primaryMuscle)} flex items-center justify-center`}
-            >
-                <div className="text-white text-4xl font-bold opacity-50">
-                    💪
-                </div>
-            </div>
+            <h3 className="text-sm font-bold text-foreground line-clamp-2">{exerciseDisplayName(exercise)}</h3>
 
-            {/* Nombre del ejercicio */}
-            <h3 className="text-lg font-semibold text-slate-800 mb-2 line-clamp-2">
-                {exercise.nombre}
-            </h3>
-
-            {/* Grupo muscular principal */}
-            {primaryMuscle && (
-                <div className="mb-3">
-                    <span className="text-sm text-slate-600">
-                        {getMuscleLabel(primaryMuscle)}
-                    </span>
-                </div>
-            )}
-
-            {/* Badges: Nivel y Equipamiento */}
-            <div className="flex flex-wrap gap-2 mb-3">
-                {exercise.nivel && (
-                    <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getLevelBadgeColor(exercise.nivel)}`}
+            <div className="mt-2 flex flex-wrap gap-1.5">
+                {muscleLabel && (
+                    <Badge
+                        variant="outline"
+                        className={cn(
+                            "border-0 px-1.5 py-0 text-[10px] font-medium leading-tight",
+                            colors.bg,
+                            colors.text
+                        )}
                     >
-                        {getLevelLabel(exercise.nivel)}
-                    </span>
+                        {getMuscleLabel(muscleLabel)}
+                    </Badge>
                 )}
-                {exercise.equipo && (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-                        {getEquipmentLabel(exercise.equipo)}
-                    </span>
-                )}
+                <Badge variant="outline" className="border-border text-[10px] text-muted-foreground">
+                    {tipoLabel}
+                </Badge>
             </div>
 
-            {/* Descripción corta (si existe) */}
-            {exercise.descripcion && (
-                <div className="flex-1 min-h-[2.5rem]">
-                    <p className="text-sm text-slate-600 line-clamp-2">
-                        {exercise.descripcion}
-                    </p>
+            <p className="mt-3 text-xs text-muted-foreground">
+                {equipLine ? (
+                    <span>
+                        {equipLine}
+                        {" · "}
+                    </span>
+                ) : null}
+                <span className={cn("font-medium", levelClass)}>{getLevelLabel(exercise.nivel || "")}</span>
+            </p>
+
+            {videoUrl ? (
+                <div className="mt-2 flex items-center gap-1 text-[10px] text-primary">
+                    <Play className="h-3 w-3 shrink-0" aria-hidden />
+                    <span>Video disponible</span>
                 </div>
-            )}
-        </div>
+            ) : null}
+        </button>
     );
 };
+
+export { tipoLabelFromBackend };

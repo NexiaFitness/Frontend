@@ -224,40 +224,42 @@ export const ClientDetail: React.FC = () => {
                 : null;
 
         return (
-            <div className="space-y-8">
-                <Alert variant="error">
-                    {isForbiddenError ? (
-                        <>
-                            <p className="mb-2 font-semibold text-foreground">No tienes acceso a este cliente</p>
-                            <p className="text-sm text-muted-foreground">
-                                Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <p className="mb-2 font-semibold text-foreground">Error al cargar los datos del cliente</p>
-                            <p className="mb-2 text-sm text-muted-foreground">Por favor, intenta de nuevo.</p>
-                            {errorMessage && (
-                                <div className="mt-2 font-mono text-label text-destructive">{errorMessage}</div>
-                            )}
-                        </>
-                    )}
-                </Alert>
-                <div className="flex flex-wrap gap-3">
-                    {isForbiddenError ? (
-                        <Button variant="primary" onClick={() => navigate("/dashboard/clients")}>
-                            Volver a Clientes
+            <Alert
+                variant="error"
+                action={
+                    <>
+                        {isForbiddenError ? (
+                            <Button variant="primary" size="sm" onClick={() => navigate("/dashboard/clients")}>
+                                Volver a Clientes
+                            </Button>
+                        ) : (
+                            <Button variant="outline-destructive" size="sm" onClick={refetchAll}>
+                                Reintentar
+                            </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                            Ir al Dashboard
                         </Button>
-                    ) : (
-                        <Button variant="primary" onClick={refetchAll}>
-                            Reintentar
-                        </Button>
-                    )}
-                    <Button variant="outline" onClick={() => navigate("/dashboard")}>
-                        Ir al Dashboard
-                    </Button>
-                </div>
-            </div>
+                    </>
+                }
+            >
+                {isForbiddenError ? (
+                    <>
+                        <p className="mb-2 font-semibold text-foreground">No tienes acceso a este cliente</p>
+                        <p className="text-sm text-muted-foreground">
+                            Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <p className="mb-2 font-semibold text-foreground">Error al cargar los datos del cliente</p>
+                        <p className="mb-2 text-sm text-muted-foreground">Por favor, intenta de nuevo.</p>
+                        {errorMessage && (
+                            <div className="mt-2 font-mono text-label text-destructive">{errorMessage}</div>
+                        )}
+                    </>
+                )}
+            </Alert>
         );
     }
 

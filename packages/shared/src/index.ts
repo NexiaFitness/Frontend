@@ -297,6 +297,7 @@ export { initStorage, storage } from './storage/IStorage';
 export type { IStorage } from './storage/IStorage';
 
 // Utils
+export * from "./utils/exerciseNames";
 export * from "./utils/charts/chartParsers";
 export * from "./utils/charts/chartAggregators";
 export * from "./utils/validations";
