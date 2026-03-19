@@ -33,10 +33,11 @@ vi.mock("react-router-dom", async () => {
     }
 })
 
-// Estado simulado de auth
-let mockAuthState: { isAuthenticated: boolean; token: string | null } = {
+// Estado simulado de auth (isLoading para hidratación)
+let mockAuthState: { isAuthenticated: boolean; token: string | null; isLoading?: boolean } = {
     isAuthenticated: false,
     token: null,
+    isLoading: false,
 }
 
 // Mock react-redux
@@ -53,8 +54,22 @@ vi.mock("react-redux", async () => {
 describe("ProtectedRoute", () => {
     beforeEach(() => {
         vi.clearAllMocks()
-        mockAuthState = { isAuthenticated: false, token: null }
+        mockAuthState = { isAuthenticated: false, token: null, isLoading: false }
         mockLocationPathname = "/dashboard"
+    })
+
+    it("muestra estado de carga mientras isLoading y no redirige", () => {
+        mockAuthState = { isAuthenticated: false, token: null, isLoading: true }
+
+        render(
+            <ProtectedRoute>
+                <div>Contenido protegido</div>
+            </ProtectedRoute>
+        )
+
+        expect(screen.getByRole("status", { name: /comprobando sesión/i })).toBeInTheDocument()
+        expect(screen.queryByTestId("navigate")).not.toBeInTheDocument()
+        expect(screen.queryByText("Contenido protegido")).not.toBeInTheDocument()
     })
 
     it("redirige al login si no está autenticado", () => {
@@ -73,7 +88,7 @@ describe("ProtectedRoute", () => {
     })
 
     it("renderiza los children si está autenticado con token válido", () => {
-        mockAuthState = { isAuthenticated: true, token: "fake-token" }
+        mockAuthState = { isAuthenticated: true, token: "fake-token", isLoading: false }
 
         render(
             <ProtectedRoute>
@@ -85,7 +100,7 @@ describe("ProtectedRoute", () => {
     })
 
     it("redirige si isAuthenticated es true pero token está vacío", () => {
-        mockAuthState = { isAuthenticated: true, token: "" }
+        mockAuthState = { isAuthenticated: true, token: "", isLoading: false }
 
         render(
             <ProtectedRoute>
@@ -99,7 +114,7 @@ describe("ProtectedRoute", () => {
     })
 
     it("mantiene la ruta actual en state.from al redirigir", () => {
-        mockAuthState = { isAuthenticated: false, token: null }
+        mockAuthState = { isAuthenticated: false, token: null, isLoading: false }
         mockLocationPathname = "/clients"
 
         render(

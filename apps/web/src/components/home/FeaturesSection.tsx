@@ -16,7 +16,6 @@
  */
 
 import React from "react";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface FeatureCard {
     title: string;
@@ -67,47 +66,41 @@ const features: FeatureCard[] = [
 export const FeaturesSection: React.FC = () => {
     return (
         <section 
-            className="py-16 sm:py-20 lg:py-24 bg-white"
+            className="py-16 sm:py-20 lg:py-24 bg-background"
         >
             <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-                {/* Header */}
                 <div className="text-center mb-16">
-                    <h3 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-8`}>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-8">
                         La Ciencia Se Encuentra
                         <br />
-                        <span className="text-blue-400">con la Gestión Empresarial</span>
+                        <span className="text-primary">con la Gestión Empresarial</span>
                     </h3>
-                    <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-4xl mx-auto leading-relaxed`}>
+                    <p className="text-base text-muted-foreground max-w-4xl mx-auto leading-relaxed">
                         La primera plataforma que integra de forma fluida programación de entrenamiento 
                         basada en evidencia con herramientas completas de gestión empresarial.
                     </p>
                 </div>
 
-                {/* Features Grid - Layout Horizontal */}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-16">
                     {features.map((feature, index) => (
                         <div 
                             key={index}
-                            className="group bg-slate-900 rounded-2xl overflow-hidden shadow-2xl hover:shadow-3xl transition-all duration-500 hover:-translate-y-1"
+                            className="group bg-card border border-border rounded-2xl overflow-hidden shadow-2xl transition-all duration-500 hover:-translate-y-1"
                         >
-                            {/* Layout Horizontal: Imagen izquierda + Contenido derecha */}
                             <div className="flex flex-col md:flex-row h-full">
-                                {/* Imagen */}
                                 <div className="relative md:w-2/5 h-48 md:h-auto overflow-hidden">
+                                    {/* backgroundImage inline: URL dinámico por feature (runtime). */}
                                     <div 
                                         className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-500 group-hover:scale-110"
                                         style={{ backgroundImage: `url('${feature.image}')` }}
                                     />
-                                    {/* Overlay gradiente */}
-                                    <div className="absolute inset-0 bg-gradient-to-r md:bg-gradient-to-r from-slate-900/60 via-transparent to-transparent md:from-transparent md:to-slate-900/80"></div>
+                                    <div className="absolute inset-0 bg-gradient-to-r md:bg-gradient-to-r from-card/60 via-transparent to-transparent md:from-transparent md:to-card/80" />
                                 </div>
-
-                                {/* Contenido */}
-                                <div className="relative md:w-3/5 p-6 bg-slate-900 flex flex-col justify-center">
-                                    <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-4 group-hover:text-blue-400 transition-colors duration-300`}>
+                                <div className="relative md:w-3/5 p-6 bg-card flex flex-col justify-center">
+                                    <h4 className="text-lg font-semibold text-foreground mb-4 transition-colors duration-300 group-hover:text-primary">
                                         {feature.title}
                                     </h4>
-                                    <p className={`${TYPOGRAPHY.body} text-slate-300 leading-relaxed`}>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
                                         {feature.description}
                                     </p>
                                 </div>
@@ -116,31 +109,22 @@ export const FeaturesSection: React.FC = () => {
                     ))}
                 </div>
 
-                {/* Stats Section */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>6+</div>
-                        <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
-                            Características Principales
-                        </div>
+                        <div className="text-2xl font-bold text-primary mb-2">6+</div>
+                        <div className="text-sm text-muted-foreground">Características Principales</div>
                     </div>
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>2.500+</div>
-                        <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
-                            Estudios Analizados
-                        </div>
+                        <div className="text-2xl font-bold text-primary mb-2">2.500+</div>
+                        <div className="text-sm text-muted-foreground">Estudios Analizados</div>
                     </div>
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>50+</div>
-                        <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
-                            Variables Monitorizadas
-                        </div>
+                        <div className="text-2xl font-bold text-primary mb-2">50+</div>
+                        <div className="text-sm text-muted-foreground">Variables Monitorizadas</div>
                     </div>
                     <div className="text-center">
-                        <div className={`${TYPOGRAPHY.metric} text-blue-400 mb-2`}>12</div>
-                        <div className={`${TYPOGRAPHY.metricLabel} text-slate-700`}>
-                            Modelos de IA
-                        </div>
+                        <div className="text-2xl font-bold text-primary mb-2">12</div>
+                        <div className="text-sm text-muted-foreground">Modelos de IA</div>
                     </div>
                 </div>
             </div>

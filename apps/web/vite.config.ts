@@ -23,41 +23,48 @@ export default defineConfig({
   build: {
     rollupOptions: {
       output: {
-        // NUEVO: Forzar invalidación de cache con timestamp
-        // Esto genera hashes únicos que Vercel no puede cachear
         entryFileNames: `assets/[name]-[hash].js`,
         chunkFileNames: `assets/[name]-[hash].js`,
         assetFileNames: `assets/[name]-[hash][extname]`,
         
         manualChunks: (id) => {
-          // React y React DOM - vendor core (debe cargarse PRIMERO)
-          if (id.includes("node_modules/react") || id.includes("node_modules/react-dom")) {
-            return "react-vendor";
-          }
-
-          // Recharts - biblioteca pesada de gráficos (se carga bajo demanda)
+          // Recharts - biblioteca pesada de gráficos (267 KB)
+          // Separada porque solo se usa en páginas específicas (charts)
           if (id.includes("node_modules/recharts")) {
             return "recharts-vendor";
           }
 
           // Redux Toolkit y React-Redux - state management
+          // Separado pero cargado early porque lo usa toda la app
           if (id.includes("node_modules/@reduxjs/toolkit") || id.includes("node_modules/react-redux")) {
             return "redux-vendor";
           }
 
           // React Router - routing
+          // Separado pero cargado early porque lo usa toda la app
           if (id.includes("node_modules/react-router")) {
             return "router-vendor";
           }
 
-          // Otros node_modules grandes
+          // React y React DOM - CRÍTICO: NO separar
+          // Debe estar en el mismo chunk vendor que otras dependencias
+          // para evitar condiciones de carrera en inicialización
+          // React ahora va al chunk "vendor" principal
+
+          // Otros node_modules (INCLUYENDO React)
+          // React DEBE estar aquí para estar disponible cuando vendor.js lo necesite
           if (id.includes("node_modules")) {
             return "vendor";
+          }
+
+          // Separar componentes de planning (tienen gráficos pesados)
+          if (id.includes("/components/trainingPlans/planning/")) {
+            return "planning-components";
           }
         },
       },
     },
-    chunkSizeWarningLimit: 500,
+    chunkSizeWarningLimit: 600,
   },
   test: {
     environment: 'jsdom',

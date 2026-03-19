@@ -9,6 +9,7 @@
 export { ClientList } from "./ClientList";
 export { ClientDetail } from "./ClientDetail";
 export { ClientOnboarding } from "./ClientOnboarding";
+export { ClientEdit } from "./ClientEdit";
 
 // Componentes auxiliares
 export { ClientCard } from "./ClientCard";

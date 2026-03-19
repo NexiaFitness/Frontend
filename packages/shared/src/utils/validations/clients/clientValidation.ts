@@ -104,6 +104,14 @@ export const validateClientForm = (
     // id_passport: sin validación específica (string libre, opcional)
     // No se valida, solo se acepta el valor tal cual
 
+    // exact_training_frequency (opcional; si se envía debe ser 1-7)
+    if (data.exact_training_frequency !== undefined && data.exact_training_frequency !== null) {
+        const n = Number(data.exact_training_frequency);
+        if (!Number.isInteger(n) || n < 1 || n > 7) {
+            errors.exact_training_frequency = "Debe ser un número entre 1 y 7";
+        }
+    }
+
     /**
      * ========================================
      * VALIDACIONES ANTROPOMÉTRICAS (v2.5.0)
@@ -162,6 +170,23 @@ export const validateClientForm = (
     if (data.diameter_femur_bicondylar !== undefined && data.diameter_femur_bicondylar !== null) {
         if (data.diameter_femur_bicondylar < 5 || data.diameter_femur_bicondylar > 20) {
             errors.diameter_femur_bicondylar = "El diámetro de rodilla debe estar entre 5 y 20 cm";
+        }
+    }
+
+    // Somatotipo (1.0-7.0 para cada componente)
+    if (data.somatotype_endomorph !== undefined && data.somatotype_endomorph !== null) {
+        if (data.somatotype_endomorph < 1.0 || data.somatotype_endomorph > 7.0) {
+            errors.somatotype_endomorph = "El valor de endomorph debe estar entre 1.0 y 7.0";
+        }
+    }
+    if (data.somatotype_mesomorph !== undefined && data.somatotype_mesomorph !== null) {
+        if (data.somatotype_mesomorph < 1.0 || data.somatotype_mesomorph > 7.0) {
+            errors.somatotype_mesomorph = "El valor de mesomorph debe estar entre 1.0 y 7.0";
+        }
+    }
+    if (data.somatotype_ectomorph !== undefined && data.somatotype_ectomorph !== null) {
+        if (data.somatotype_ectomorph < 1.0 || data.somatotype_ectomorph > 7.0) {
+            errors.somatotype_ectomorph = "El valor de ectomorph debe estar entre 1.0 y 7.0";
         }
     }
 

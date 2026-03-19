@@ -64,11 +64,8 @@ describe("LogoutConfirmationModal", () => {
 
     describe("Conditional Rendering", () => {
         it("renders nothing when isOpen is false", () => {
-            const { container } = render(
-                <LogoutConfirmationModal {...defaultProps} isOpen={false} />
-            );
-
-            expect(container.firstChild).toBeNull();
+            render(<LogoutConfirmationModal {...defaultProps} isOpen={false} />);
+            expect(screen.queryByText("¿Cerrar sesión?")).not.toBeInTheDocument();
         });
 
         it("renders modal when isOpen is true", () => {

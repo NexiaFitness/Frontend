@@ -13,7 +13,6 @@
  */
 
 import React, { useState } from "react";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 interface FAQItem {
     question: string;
@@ -63,16 +62,15 @@ export const FAQSection: React.FC = () => {
     };
 
     return (
-        <section className="py-16 sm:py-20 lg:py-24 bg-white">
+        <section className="py-16 sm:py-20 lg:py-24 bg-background">
             <div className="max-w-4xl mx-auto px-6 sm:px-8 lg:px-12">
-                {/* Header */}
                 <div className="text-center mb-16">
-                    <h3 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-8`}>
+                    <h3 className="text-2xl sm:text-3xl font-bold text-foreground mb-8">
                         Preguntas
                         <br />
-                        <span className="text-blue-400">Frecuentes</span>
+                        <span className="text-primary">Frecuentes</span>
                     </h3>
-                    <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-3xl mx-auto leading-relaxed`}>
+                    <p className="text-base text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                         Respuestas directas a las dudas más comunes sobre NEXIA y cómo puede 
                         profesionalizar tu práctica como entrenador.
                     </p>
@@ -83,13 +81,27 @@ export const FAQSection: React.FC = () => {
                     {faqData.map((faq, index) => (
                         <div 
                             key={index}
-                            className="border border-slate-200 rounded-xl overflow-hidden transition-all duration-200 hover:border-blue-300"
+                            className={`border rounded-xl overflow-hidden transition-all duration-200 ${
+                                openIndex === index ? 'border-primary' : 'border-border'
+                            }`}
+                            onMouseEnter={(e) => {
+                                if (openIndex !== index) {
+                                    e.currentTarget.classList.remove('border-border');
+                                    e.currentTarget.classList.add('border-primary');
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (openIndex !== index) {
+                                    e.currentTarget.classList.remove('border-primary');
+                                    e.currentTarget.classList.add('border-border');
+                                }
+                            }}
                         >
                             <button
                                 onClick={() => toggleFAQ(index)}
-                                className="w-full px-6 py-5 text-left bg-slate-50 hover:bg-slate-100 transition-colors duration-200 flex justify-between items-center"
+                                className="w-full px-6 py-5 text-left bg-muted hover:bg-muted/80 transition-colors duration-200 flex justify-between items-center"
                             >
-                                <span className={`${TYPOGRAPHY.subtitle} text-slate-800 font-semibold pr-4`}>
+                                <span className="text-sm font-semibold text-foreground pr-4">
                                     {faq.question}
                                 </span>
                                 <div className={`flex-shrink-0 transition-transform duration-200 ${
@@ -104,8 +116,8 @@ export const FAQSection: React.FC = () => {
                             <div className={`transition-all duration-200 overflow-hidden ${
                                 openIndex === index ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
                             }`}>
-                                <div className="px-6 py-5 bg-white">
-                                    <p className={`${TYPOGRAPHY.body} text-slate-600 leading-relaxed`}>
+                                <div className="px-6 py-5 bg-card">
+                                    <p className="text-sm text-muted-foreground leading-relaxed">
                                         {faq.answer}
                                     </p>
                                 </div>
@@ -116,10 +128,10 @@ export const FAQSection: React.FC = () => {
 
                 {/* Bottom Call to Action */}
                 <div className="mt-16 text-center">
-                    <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 mb-4`}>
+                    <p className="text-base text-muted-foreground mb-4">
                         ¿No encuentras la respuesta que buscas?
                     </p>
-                    <p className={`${TYPOGRAPHY.body} text-slate-500`}>
+                    <p className="text-sm text-muted-foreground/80">
                         Contacta directamente con nuestro equipo para resolver cualquier duda específica 
                         sobre tu caso de uso o necesidades particulares.
                     </p>

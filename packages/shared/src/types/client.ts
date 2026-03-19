@@ -63,6 +63,29 @@ export const SESSION_DURATION_ENUM = {
 
 export type SessionDuration = (typeof SESSION_DURATION_ENUM)[keyof typeof SESSION_DURATION_ENUM];
 
+/** Días de la semana aceptados por el backend (training_days). Usar estos valores en formularios. */
+export const TRAINING_DAY_VALUES = [
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+    "Friday",
+    "Saturday",
+    "Sunday",
+] as const;
+export type TrainingDayValue = (typeof TRAINING_DAY_VALUES)[number];
+
+/** Etiquetas cortas para UI (L, M, X, J, V, S, D) */
+export const TRAINING_DAY_LABELS: Record<TrainingDayValue, string> = {
+    Monday: "L",
+    Tuesday: "M",
+    Wednesday: "X",
+    Thursday: "J",
+    Friday: "V",
+    Saturday: "S",
+    Sunday: "D",
+};
+
 // ========================================
 // CLIENT ENTITY (Response de GET/POST/PUT)
 // ========================================
@@ -102,7 +125,11 @@ export interface Client {
     // Campos adicionales del backend
     objective?: string | null;  // ¿Duplicado? Mantener por compatibilidad
     session_duration?: string | null;
-    
+    /** Número exacto de días de entrenamiento por semana (1-7). Backend: exact_training_frequency */
+    exact_training_frequency?: number | null;
+    /** Días concretos de la semana en que entrena (ej. ["Monday","Wednesday","Friday"]). Backend: training_days */
+    training_days?: string[] | null;
+
     // ========================================
     // ANTROPOMETRÍA (nomenclatura backend exacta)
     // ========================================
@@ -129,6 +156,11 @@ export interface Client {
     diameter_humerus_biepicondylar?: number | null;
     diameter_femur_bicondylar?: number | null;
     diameter_bi_styloid_wrist?: number | null;
+    
+    // Somatotipo (valores 1.0-7.0 para cada componente)
+    somatotype_endomorph?: number | null;
+    somatotype_mesomorph?: number | null;
+    somatotype_ectomorph?: number | null;
     
     // Notas
     notes_1?: string | null;
@@ -168,7 +200,9 @@ export interface CreateClientData {
     birthdate?: string | null;
     objective?: string | null;
     session_duration?: string | null;
-    
+    exact_training_frequency?: number | null;
+    training_days?: string[] | null;
+
     // Antropometría
     skinfold_triceps?: number | null;
     skinfold_subscapular?: number | null;
@@ -187,6 +221,9 @@ export interface CreateClientData {
     diameter_humerus_biepicondylar?: number | null;
     diameter_femur_bicondylar?: number | null;
     diameter_bi_styloid_wrist?: number | null;
+    somatotype_endomorph?: number | null;
+    somatotype_mesomorph?: number | null;
+    somatotype_ectomorph?: number | null;
     notes_1?: string | null;
     notes_2?: string | null;
     notes_3?: string | null;
@@ -236,6 +273,123 @@ export interface DeleteClientResponse {
 }
 
 // ========================================
+// CLIENT PREVIEW RESPONSE (POST /clients/preview)
+// ========================================
+
+/**
+ * ClientPreviewResponse - Respuesta de POST /clients/preview
+ * Devuelve solo los valores calculados (BMI y somatotipo) sin persistir
+ * Alineado 100% con backend FastAPI ClientPreviewResponse schema
+ */
+export interface ClientPreviewResponse {
+    bmi: number | null;
+    somatotype: {
+        endomorph: number | null;
+        mesomorph: number | null;
+        ectomorph: number | null;
+    };
+}
+
+// ========================================
+// CLIENT LIST WITH METRICS (Dashboard view)
+// ========================================
+
+/**
+ * Nivel de satisfacción derivado por el backend (GET /clients/with-metrics).
+ * El frontend solo renderiza icono/color; no calcula.
+ * Alineado con backend ClientListItem.satisfaction_level.
+ */
+export type SatisfactionLevel = "happy" | "neutral" | "unhappy";
+
+/**
+ * Estado del cliente (activo, pausado, baja).
+ * Backend lo expondrá en GET /clients/with-metrics cuando esté implementado (VISTA_CLIENTES_SPEC §15).
+ */
+export type ClientStatus = "active" | "paused" | "inactive";
+
+/**
+ * Tendencia de satisfacción (backend: satisfaction_trend).
+ * up = mejora, down = empeora, stable = estable.
+ */
+export type SatisfactionTrend = "up" | "down" | "stable";
+
+/**
+ * Tendencia de progreso del cliente (para icono en lista "Mis clientes").
+ * up = ArrowUpRight (verde), down = ArrowDownRight (rojo), stable = Minus (muted).
+ */
+export type ClientProgressTrend = "up" | "down" | "stable";
+
+/**
+ * ClientListItem - Cliente con métricas de fatiga, adherencia y satisfacción.
+ * Contrato: GET /clients/with-metrics (backend ClientListItem).
+ * Campos de valoraciones: last_satisfaction, satisfaction_level, last_satisfaction_date,
+ * avg_satisfaction_recent, satisfaction_trend. status cuando el backend lo añada.
+ */
+export interface ClientListItem {
+    id: number;
+    nombre: string;
+    apellidos: string;
+    mail: string;
+    fatigue_level: string | null;
+    fatigue_level_numeric: number | null;
+    adherence_percentage: number | null;
+    /** Última valoración 1-5 (session). Backend. */
+    last_satisfaction: number | null;
+    /** Nivel derivado: happy | neutral | unhappy. Backend; frontend solo renderiza. */
+    satisfaction_level: SatisfactionLevel | null;
+    /** Fecha de la última valoración. ISO datetime. */
+    last_satisfaction_date: string | null;
+    /** Media de las últimas valoraciones (ventana reciente). */
+    avg_satisfaction_recent: number | null;
+    /** Tendencia de satisfacción (up/down/stable). */
+    satisfaction_trend: SatisfactionTrend | null;
+    /** Estado del cliente cuando el backend lo exponga (VISTA_CLIENTES_SPEC §15). */
+    status?: ClientStatus | null;
+    /** Tendencia de progreso para icono; si el backend no lo envía, se muestra "stable". */
+    progress_trend?: ClientProgressTrend | null;
+}
+
+export interface ClientListWithMetricsResponse {
+    items: ClientListItem[];
+    total: number;
+    page: number;
+    page_size: number;
+    has_more: boolean;
+}
+
+/**
+ * Parámetros de GET /clients/with-metrics.
+ * status: cuando el backend soporte filtrado por estado (VISTA_CLIENTES_SPEC §12).
+ */
+export interface GetClientsWithMetricsParams {
+    page?: number;
+    page_size?: number;
+    search?: string | null;
+    trainer_id?: number | null;
+    status?: ClientStatus | null;
+}
+
+// ========================================
+// RECENT ACTIVITY
+// ========================================
+
+export interface RecentActivityItem {
+    id: number;
+    type: "session_completed" | "client_added" | "session_scheduled" | "goal_achieved" | "test_completed";
+    actor_name: string;
+    description: string;
+    timestamp: string; // ISO date string
+    client_id?: number;
+    session_id?: number;
+    icon?: string; // Icon identifier for UI
+}
+
+export interface RecentActivityResponse {
+    items: RecentActivityItem[];
+    total: number;
+}
+
+// ========================================
 // FORMULARIOS (Frontend only)
 // ========================================
 
@@ -264,7 +418,9 @@ export interface ClientFormErrors {
     birthdate?: string;
     objective?: string;
     session_duration?: string;
-    
+    exact_training_frequency?: string;
+    training_days?: string;
+
     // Antropometría
     skinfold_triceps?: string;
     skinfold_subscapular?: string;
@@ -283,6 +439,9 @@ export interface ClientFormErrors {
     diameter_humerus_biepicondylar?: string;
     diameter_femur_bicondylar?: string;
     diameter_bi_styloid_wrist?: string;
+    somatotype_endomorph?: string;
+    somatotype_mesomorph?: string;
+    somatotype_ectomorph?: string;
     notes_1?: string;
     notes_2?: string;
     notes_3?: string;
@@ -327,6 +486,41 @@ export interface ClientState {
         total: number;
         total_pages: number;
     };
+}
+
+// ========================================
+// CLIENT RATINGS (satisfacción / valoraciones)
+// Backend: POST/GET /clients/{id}/ratings, GET/PUT/DELETE /clients/ratings/{id}
+// ========================================
+
+export type ClientRatingType = "general" | "session" | "program" | "trainer";
+
+export interface ClientRatingCreate {
+    client_id: number;
+    trainer_id?: number | null;
+    rating: number; // 1-5
+    comment?: string | null;
+    rating_type?: ClientRatingType;
+    session_id?: number | null;
+}
+
+export interface ClientRatingUpdate {
+    rating?: number; // 1-5
+    comment?: string | null;
+}
+
+export interface ClientRatingOut {
+    id: number;
+    client_id: number;
+    trainer_id: number | null;
+    rating: number;
+    comment: string | null;
+    rating_type: ClientRatingType;
+    session_id: number | null;
+    rating_date: string; // ISO datetime
+    created_at: string;
+    updated_at: string;
+    is_active: boolean;
 }
 
 // ========================================

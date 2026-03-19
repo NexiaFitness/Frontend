@@ -9,11 +9,8 @@
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
 import { CompleteProfileForm } from "@/components/dashboard/trainer";
-import { TYPOGRAPHY } from "@/utils/typography";
+import { TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
 import { useCompleteProfile } from "@nexia/shared";
 
 export const CompleteProfile: React.FC = () => {
@@ -27,13 +24,6 @@ export const CompleteProfile: React.FC = () => {
         onRedirect: (path: string) => navigate(path, { replace: true }) 
     });
 
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/plans" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
-
     // Loading state
     if (isLoadingTrainer) {
         return (
@@ -45,16 +35,12 @@ export const CompleteProfile: React.FC = () => {
 
     return (
         <>
-            <DashboardNavbar menuItems={menuItems} />
-            <TrainerSideMenu />
-            
-            <DashboardLayout>
-                {/* Header Section - Alineado con TrainerDashboard */}
+                {/* Encabezado responsive igual a dashboards */}
                 <div className="mb-8 lg:mb-12 text-center px-4 lg:px-8">
-                    <h1 className={`${TYPOGRAPHY.dashboardHero} text-white mb-3 lg:mb-4`}>
+                    <h2 className={TYPOGRAPHY_COMBINATIONS.dashboardHeroTitle}>
                         Completa tu perfil profesional
-                    </h1>
-                    <p className={`${TYPOGRAPHY.dashboardSubtitleAlt} text-white/70`}>
+                    </h2>
+                    <p className={TYPOGRAPHY_COMBINATIONS.dashboardHeroSubtitle}>
                         Solo necesitamos algunos datos más para personalizar tu experiencia y desbloquear todas las funcionalidades
                     </p>
                 </div>
@@ -138,7 +124,6 @@ export const CompleteProfile: React.FC = () => {
                         </p>
                     </div>
                 </div>
-            </DashboardLayout>
         </>
     );
 };

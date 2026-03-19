@@ -3,180 +3,243 @@
  *
  * Contexto:
  * - Vista completa del plan con tabs
- * - Tabs: Overview, Macrocycles, Mesocycles, Microcycles
- * - Layout: Header + Tabs + Content
- * - Patrón idéntico a ClientDetail
+ * - Tabs: Volver, Sesiones, Hitos, Gráficos
+ * - Layout: Breadcrumbs + Header + Tabs + Content
  *
  * Responsabilidades:
  * - Cargar datos del plan con RTK Query
  * - Gestionar navegación entre tabs
- * - Mostrar loading/error states
- * - Actions: Edit, Delete, Add Macrocycle
+ * - Incluir tab de retorno al cliente para mejorar la UX
  *
  * @author Frontend Team
  * @since v3.3.0
+ * @updated v6.2.1 - Corregido bucle de navegación al usar el tab 'Volver'.
+ * @updated U13 Fase 4.3 - Breadcrumbs Cliente > Planificación > Plan y botón Volver al cliente con ?fromClient
  */
 
 import React, { useState, Suspense, lazy } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
-import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainerClientsQuery, useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { useSelector } from "react-redux";
+import type { RootState } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
-import { DashboardLayout } from "@/components/dashboard/layout/DashboardLayout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import type { BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 // Tabs components - estáticos (carga inmediata)
 import {
     TrainingPlanHeader,
-    OverviewTab,
-    MacrocyclesTab,
-    MesocyclesTab,
-    MicrocyclesTab,
+    MilestonesTab,
+    SessionsTab,
+    PlanningTab,
+    AssignPlanModal,
 } from "@/components/trainingPlans";
 
-// Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
+// Lazy loading para tabs pesados (carga bajo demanda)
 const ChartsTab = lazy(() => 
     import("@/components/trainingPlans").then(module => ({
         default: module.ChartsTab
     }))
 );
 
-type TabId = "overview" | "macrocycles" | "mesocycles" | "microcycles" | "charts";
+type TabId = "back" | "sessions" | "planning" | "milestones" | "charts";
 
 interface Tab {
     id: TabId;
     label: string;
+    icon?: React.ReactNode;
 }
 
 const TABS: Tab[] = [
-    { id: "overview", label: "Overview" },
-    { id: "macrocycles", label: "Macrocycles" },
-    { id: "mesocycles", label: "Mesocycles" },
-    { id: "microcycles", label: "Microcycles" },
-    { id: "charts", label: "Charts" },
+    { 
+        id: "back", 
+        label: "Volver al Cliente",
+        icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+        )
+    },
+    { id: "sessions", label: "Sesiones" },
+    { id: "planning", label: "Planificación" },
+    { id: "milestones", label: "Hitos" },
+    { id: "charts", label: "Gráficos" },
 ];
 
 export const TrainingPlanDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<TabId>("overview");
+    const [searchParams] = useSearchParams();
+    const user = useSelector((state: RootState) => state.auth.user);
+
+    // U13 Fase 4.3: origen cliente vía query param ?fromClient={client_id}
+    const fromClientParam = searchParams.get("fromClient");
+    const parsedFromClient = fromClientParam ? parseInt(fromClientParam, 10) : NaN;
+    const fromClientId = !isNaN(parsedFromClient) ? parsedFromClient : null;
+
+    // Tab navigation con query parameters - Sesiones por defecto
+    const { activeTab, setActiveTab } = useTabNavigation<TabId>({
+        validTabs: TABS.map((t) => t.id),
+        defaultTab: "sessions",
+    });
 
     const planId = parseInt(id || "0", 10);
+    const [assignModalOpen, setAssignModalOpen] = useState(false);
+
+    // Obtener perfil del trainer para obtener trainer_id correcto
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !user || user.role !== "trainer",
+    });
+    const trainerId = trainerProfile?.id;
 
     // Cargar datos del plan
     const { data: plan, isLoading, isError, error, refetch } = useGetTrainingPlanQuery(planId, {
         skip: !id || isNaN(planId),
     });
 
-    // Cargar clientes para obtener el nombre del cliente asignado
-    const { data: clientsData } = useGetClientsQuery({
-        filters: {},
-        page: 1,
-        per_page: 100,
-    });
+    // Cargar clientes del trainer para obtener el nombre del cliente asignado
+    const { data: clientsData } = useGetTrainerClientsQuery(
+        {
+            trainerId: trainerId!,
+            filters: {},
+            page: 1,
+            per_page: 50,
+        },
+        {
+            skip: !trainerId,
+        }
+    );
 
     const clients = clientsData?.items ?? [];
-    const clientName = clients.find((c: Client) => c.id === plan?.client_id)
-        ? `${clients.find((c: Client) => c.id === plan?.client_id)?.nombre} ${clients.find((c: Client) => c.id === plan?.client_id)?.apellidos}`
+    const assignedClient = clients.find((c: Client) => c.id === plan?.client_id);
+    const clientName = assignedClient
+        ? `${assignedClient.nombre} ${assignedClient.apellidos}`
         : undefined;
 
-    // Items del menú superior
-    const menuItems = [
+    // U13: cliente para breadcrumbs/Volver cuando fromClient en URL (fallback: plan.client_id)
+    const { data: fromClientData } = useGetClientQuery(fromClientId!, {
+        skip: !fromClientId || (!!assignedClient && assignedClient.id === fromClientId),
+    });
+    const fromClientClient =
+        assignedClient?.id === fromClientId ? assignedClient : fromClientData;
+    const clientIdForVolver = fromClientId ?? plan?.client_id ?? null;
+
+    // Manejador para cambiar de tab
+    const handleTabChange = (tabId: TabId) => {
+        if (tabId === "back") {
+            const targetClientId = clientIdForVolver ?? assignedClient?.id;
+            if (targetClientId) {
+                navigate(`/dashboard/clients/${targetClientId}?tab=planificacion`);
+            } else {
+                navigate("/dashboard/clients");
+            }
+            return;
+        }
+        setActiveTab(tabId);
+    };
+
+    // U13 Fase 4.3: Breadcrumbs según origen (fromClient → Cliente > Planificación > Plan)
+    const breadcrumbItems: BreadcrumbItem[] = [
         { label: "Dashboard", path: "/dashboard" },
         { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/training-plans" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
     ];
+
+    const clientForBreadcrumb = fromClientId ? fromClientClient : assignedClient;
+    const clientIdForBreadcrumb = fromClientId ?? assignedClient?.id;
+    const clientLabel = clientForBreadcrumb
+        ? `${clientForBreadcrumb.nombre} ${clientForBreadcrumb.apellidos}`
+        : clientIdForBreadcrumb
+          ? "Cliente"
+          : undefined;
+
+    if (clientIdForBreadcrumb && clientLabel) {
+        breadcrumbItems.push({
+            label: clientLabel,
+            path: `/dashboard/clients/${clientIdForBreadcrumb}`,
+        });
+    }
+
+    // Con fromClient: añadir "Planificación" antes del plan
+    if (fromClientId && clientIdForBreadcrumb) {
+        breadcrumbItems.push({
+            label: "Planificación",
+            path: `/dashboard/clients/${clientIdForBreadcrumb}?tab=planificacion`,
+        });
+    }
+
+    if (plan) {
+        breadcrumbItems.push({
+            label: plan.name,
+            active: true,
+        });
+    }
 
     // Validación de ID
     if (!id || isNaN(planId)) {
         return (
-            <>
-                <DashboardNavbar menuItems={menuItems} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
-                        <Alert variant="error">Invalid training plan ID</Alert>
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="p-6">
+                <Alert variant="error">ID de plan de entrenamiento inválido</Alert>
+            </div>
         );
     }
 
     // Loading state
     if (isLoading) {
         return (
-            <>
-                <DashboardNavbar menuItems={menuItems} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="flex items-center justify-center min-h-screen">
-                        <LoadingSpinner size="lg" />
-                    </div>
-                </DashboardLayout>
-            </>
+            <div className="flex items-center justify-center min-h-screen">
+                <LoadingSpinner size="lg" />
+            </div>
         );
     }
 
-    // Error state
+    // Error state profesional
     if (isError || !plan) {
+        const isNotFound = error && 'status' in error && error.status === 404;
+
         return (
-            <>
-                <DashboardNavbar menuItems={menuItems} />
-                <TrainerSideMenu />
-                <DashboardLayout>
-                    <div className="p-6">
+            <div className="p-6">
                         <Alert variant="error">
-                            Error loading training plan. Please try again.
-                            {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data && (
-                                <div className="mt-2 text-sm">
-                                    {String(error.data.detail)}
-                                </div>
-                            )}
+                            {isNotFound 
+                                ? "El plan de entrenamiento solicitado no existe o ha sido eliminado." 
+                                : "Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo."}
                         </Alert>
-                        <button
-                            onClick={() => refetch()}
-                            className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                        >
-                            Retry
-                        </button>
-                        <button
-                            onClick={() => navigate("/dashboard/training-plans")}
-                            className="mt-4 ml-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700"
-                        >
-                            Back to Plans
-                        </button>
+                        <div className="flex gap-3 mt-4">
+                            {!isNotFound && (
+                                <button
+                                    onClick={() => refetch()}
+                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                                >
+                                    Reintentar
+                                </button>
+                            )}
+                            <button
+                                onClick={() => navigate("/dashboard/training-plans")}
+                                className="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors"
+                            >
+                                Volver a Planes
+                            </button>
+                        </div>
                     </div>
-                </DashboardLayout>
-            </>
         );
     }
-
-    // Handler para abrir formulario de macrocycle desde header
-    const handleAddMacrocycle = () => {
-        setActiveTab("macrocycles");
-        // El tab de macrocycles tiene su propio botón + que expande el formulario
-    };
 
     // Render tab content
     const renderTabContent = () => {
         switch (activeTab) {
-            case "overview":
-                return <OverviewTab plan={plan} clientName={clientName} />;
-            case "macrocycles":
+            case "sessions":
+                return <SessionsTab planId={planId} />;
+            case "planning":
                 return (
-                    <MacrocyclesTab
+                    <PlanningTab
                         planId={planId}
-                        planStartDate={plan.start_date}
-                        planEndDate={plan.end_date}
+                        clientId={plan?.client_id ?? null}
                     />
                 );
-            case "mesocycles":
-                return <MesocyclesTab planId={planId} />;
-            case "microcycles":
-                return <MicrocyclesTab planId={planId} />;
+            case "milestones":
+                return <MilestonesTab planId={planId} />;
             case "charts":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
@@ -193,54 +256,71 @@ export const TrainingPlanDetail: React.FC = () => {
     };
 
     return (
-        <>
-            {/* Navbar móvil/tablet */}
-            <DashboardNavbar menuItems={menuItems} />
-
-            {/* Sidebar escritorio */}
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                <div className="min-h-screen bg-gray-50">
-                    {/* Header con info del plan y actions */}
+        <div
+                    className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20"
+                    data-testid="training-plan-detail"
+                >
+                    {/* Header con info del plan y contexto del atleta */}
                     <TrainingPlanHeader
                         plan={plan}
                         clientName={clientName}
+                        breadcrumbItems={breadcrumbItems}
                         onRefresh={refetch}
-                        onAddMacrocycle={handleAddMacrocycle}
+                        onAssignPlan={() => setAssignModalOpen(true)}
+                        volverAlClienteClientId={clientIdForVolver ?? undefined}
+                    />
+
+                    {/* Modal asignar plan a cliente (desde detalle) */}
+                    <AssignPlanModal
+                        open={assignModalOpen}
+                        onClose={() => setAssignModalOpen(false)}
+                        planId={planId}
+                        planName={plan.name}
+                        onSuccess={() => {
+                            setAssignModalOpen(false);
+                            refetch();
+                        }}
                     />
 
                     {/* Tabs Navigation */}
-                    <div className="bg-white border-b border-gray-200">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <nav className="flex space-x-8" aria-label="Tabs">
-                                {TABS.map((tab) => (
-                                    <button
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        className={`
-                                            py-4 px-1 border-b-2 font-medium text-sm transition-colors cursor-pointer
-                                            ${
-                                                activeTab === tab.id
-                                                    ? "border-indigo-500 text-indigo-600"
-                                                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                                            }
-                                        `}
-                                        aria-current={activeTab === tab.id ? "page" : undefined}
-                                    >
-                                        {tab.label}
-                                    </button>
-                                ))}
+                    <div className="mt-6 px-4 sm:px-6 lg:px-8">
+                        <div className="bg-card border border-border rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
+                            <nav 
+                                className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
+                                aria-label="Tabs"
+                            >
+                                {TABS.map((tab) => {
+                                    const isActive = activeTab === tab.id;
+                                    const isBack = tab.id === "back";
+                                    return (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => handleTabChange(tab.id)}
+                                            className={`
+                                                relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex items-center justify-center flex-none min-w-[140px] text-center
+                                                ${isActive
+                                                    ? "text-primary border-b-2 border-primary"
+                                                    : isBack
+                                                        ? "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                                                        : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
+                                                }
+                                                cursor-pointer
+                                            `}
+                                            aria-current={isActive ? "page" : undefined}
+                                        >
+                                            {tab.icon}
+                                            {tab.label}
+                                        </button>
+                                    );
+                                })}
                             </nav>
                         </div>
                     </div>
 
                     {/* Tab Content */}
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
                         {renderTabContent()}
                     </div>
                 </div>
-            </DashboardLayout>
-        </>
     );
 };

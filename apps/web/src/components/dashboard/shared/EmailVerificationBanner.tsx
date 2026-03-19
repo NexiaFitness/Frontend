@@ -1,48 +1,30 @@
 /**
- * EmailVerificationBanner - Aviso para emails no verificados
- * 
- * Mejorado para ocupar todo el ancho visible del dashboard.
- * Estilo más compacto y profesional: tipografía más pequeña, botón outline alineado a la derecha.
- * 
- * @author Frontend
+ * EmailVerificationBanner — Aviso para emails no verificados.
+ *
+ * Estilo semi-transparente verde (success), coherente con el banner de alertas.
+ * Layout: icono + texto a la izquierda, botón + cerrar a la derecha.
+ *
  * @since v2.5.2
- * @updated v4.0.0 - Full width + diseño compacto + botón outline
- * @updated v4.1.0 - Recibe user completo para detectar cambios durante hydration
+ * @updated v5.x - Diseño spec: bg-success/10, border-success/20, botón ghost
  */
 
-import React from "react";
+import React, { useState } from "react";
+import { Mail, X } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { useResendVerificationMutation } from "@nexia/shared/api/authApi";
+import { useResendVerificationMutation } from "@nexia/shared";
 import type { User } from "@nexia/shared/types/auth";
 
 interface Props {
     user: User | null;
 }
 
-export const EmailVerificationBanner: React.FC<Props> = ({ user }) => {
+const EmailVerificationBannerComponent: React.FC<Props> = ({ user }) => {
+    const [visible, setVisible] = useState(true);
     const [resendVerification, { isLoading, isSuccess }] = useResendVerificationMutation();
-    
-    // Log estratégico del banner
-    // eslint-disable-next-line no-console
-    console.info("[EmailVerificationBanner]", {
-        user: user?.email || 'no user',
-        isVerified: user?.is_verified ?? 'no user',
-        willRender: user && !user.is_verified
-    });
-    
-    // Limpiar cualquier dismiss previo (banner no dismissable)
-    React.useEffect(() => {
-        if (user?.email) {
-            const dismissKey = `email-verification-dismissed-${user.email}`;
-            sessionStorage.removeItem(dismissKey);
-        }
-    }, [user?.email]);
-    
-    // Si user es null (loading), no mostrar banner
-    if (!user) return null;
 
-    // Si email verificado, no mostrar banner
-    if (user.is_verified) return null;
+    if (!user || user.is_verified || !visible) {
+        return null;
+    }
 
     const handleResend = async () => {
         if (!user?.email) return;
@@ -53,47 +35,46 @@ export const EmailVerificationBanner: React.FC<Props> = ({ user }) => {
         }
     };
 
-
     return (
-        <div className="w-full mb-4">
-            <div className="bg-blue-500/90 text-white flex flex-col md:flex-row md:items-center md:justify-between border-b-2 border-blue-600/40 p-3 md:p-4 lg:p-5 shadow-md">
-                <div className="flex items-start space-x-3 flex-1">
-                    <svg
-                        className="w-5 h-5 text-white mt-0.5 shrink-0"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                    >
-                        <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
-                        <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
-                    </svg>
-                    <div className="flex-1 text-sm leading-snug">
-                        <p className="font-medium">
-                            Verifica tu correo electrónico
-                        </p>
-                        <p className="opacity-90 mt-0.5">
-                            Para poder crear clientes y acceder a todas las funciones, necesitas verificar tu email:{" "}
-                            <strong>{user?.email}</strong>
-                        </p>
-                    </div>
-                </div>
-
-                <div className="flex items-center mt-3 md:mt-0 gap-2">
-                    <Button
-                        onClick={handleResend}
-                        variant="outline"
-                        size="sm"
-                        isLoading={isLoading}
-                        disabled={isLoading || isSuccess}
-                    >
-                        {isLoading
-                            ? "Enviando..."
-                            : isSuccess
-                            ? "Email enviado"
-                            : "Reenviar verificación"}
-                    </Button>
-
-                </div>
+        <div className="flex items-center justify-between rounded-lg bg-success/10 border border-success/20 px-5 py-3">
+            <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 shrink-0 text-success" />
+                <p className="text-sm text-success">
+                    Para crear clientes y acceder a todas las funciones, verifica tu email:{" "}
+                    <strong>{user?.email}</strong>
+                </p>
+            </div>
+            <div className="flex items-center gap-2">
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleResend}
+                    isLoading={isLoading}
+                    disabled={isLoading || isSuccess}
+                    className="text-success hover:text-success hover:bg-success/10"
+                >
+                    {isLoading ? "Enviando..." : isSuccess ? "Email enviado" : "Reenviar verificación"}
+                </Button>
+                <button
+                    type="button"
+                    onClick={() => setVisible(false)}
+                    className="text-success/60 hover:text-success transition-colors"
+                    aria-label="Cerrar aviso"
+                >
+                    <X className="h-4 w-4" />
+                </button>
             </div>
         </div>
     );
 };
+
+export const EmailVerificationBanner = React.memo(EmailVerificationBannerComponent, (prevProps, nextProps) => {
+    const prevIsVerified = prevProps.user?.is_verified ?? null;
+    const nextIsVerified = nextProps.user?.is_verified ?? null;
+    const prevEmail = prevProps.user?.email ?? null;
+    const nextEmail = nextProps.user?.email ?? null;
+
+    if (prevProps.user === null && nextProps.user === null) return true;
+    if (prevIsVerified !== nextIsVerified || prevEmail !== nextEmail) return false;
+    return true;
+});

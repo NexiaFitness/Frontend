@@ -45,28 +45,30 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
     return (
         <div className="space-y-6">
             {/* General Settings */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+            <div className="rounded-lg border border-border bg-surface p-6">
+                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-4 text-center text-foreground lg:text-left`}>
                     Configuración General
                 </h3>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-center text-sm font-medium text-foreground lg:text-left">
                             Editar Perfil del Cliente
                         </label>
-                        <p className="text-sm text-gray-600 mb-3">
+                        <p className="mb-3 text-center text-sm text-muted-foreground lg:text-left">
                             Modifica los datos personales, objetivos y métricas del cliente.
                         </p>
-                        <Button variant="primary" size="md" onClick={handleEdit}>
-                            ✏️ Editar Cliente
-                        </Button>
+                        <div className="flex justify-center lg:justify-end pt-4">
+                            <Button variant="primary" size="md" onClick={handleEdit}>
+                                Editar Cliente
+                            </Button>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Metadata */}
-            <div className="bg-white rounded-lg shadow p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-4`}>
+            <div className="rounded-lg border border-border bg-surface p-6">
+                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-4 text-center text-foreground lg:text-left`}>
                     Información del Sistema
                 </h3>
                 <div className="space-y-2 text-sm">
@@ -89,21 +91,21 @@ export const ClientSettingsTab: React.FC<ClientSettingsTabProps> = ({
 
             {/* Danger Zone */}
             <div className="bg-red-50 border-2 border-red-200 rounded-lg p-6">
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2`}>
+                <h3 className={`${TYPOGRAPHY.sectionTitle} text-red-900 mb-2 text-center lg:text-left`}>
                     Zona de Peligro
                 </h3>
-                <p className="text-sm text-red-700 mb-4">
-                    Eliminar este cliente es una acción permanente. Todos los datos asociados
-                    (entrenamientos, progreso, feedback) serán eliminados.
+                <p className="text-sm text-red-700 mb-4 text-center lg:text-left">
+                    Desvincular este cliente lo eliminará de tu lista. El cliente seguirá existiendo en el sistema.
                 </p>
-                <Button
-                    variant="outline"
-                    size="md"
-                    onClick={() => setShowDeleteModal(true)}
-                    className="bg-red-600 text-white hover:bg-red-700 border-red-600"
-                >
-                    🗑️ Eliminar Cliente
-                </Button>
+                <div className="flex justify-center lg:justify-end pt-4">
+                    <Button
+                        variant="danger"
+                        size="md"
+                        onClick={() => setShowDeleteModal(true)}
+                    >
+                        Desvincular Cliente
+                    </Button>
+                </div>
             </div>
 
             {/* Delete Modal */}
@@ -128,9 +130,9 @@ interface InfoRowProps {
 
 const InfoRow: React.FC<InfoRowProps> = ({ label, value }) => {
     return (
-        <div className="flex justify-between py-2 border-b border-gray-100">
-            <span className="text-gray-600">{label}:</span>
-            <span className="font-medium text-gray-900">{value}</span>
+        <div className="flex justify-between border-b border-border py-2">
+            <span className="text-muted-foreground">{label}:</span>
+            <span className="font-medium text-foreground">{value}</span>
         </div>
     );
 };

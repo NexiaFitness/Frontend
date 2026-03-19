@@ -61,8 +61,8 @@ export const ClientStats: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-6">
                 {/* Total Clientes */}
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
                             <p className="text-3xl font-bold text-slate-800">
                                 {totalClients}
                             </p>
@@ -70,12 +70,13 @@ export const ClientStats: React.FC = () => {
                                 Total Clientes
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <svg
                                 className="w-6 h-6 text-blue-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
                                     strokeLinecap="round"
@@ -90,8 +91,8 @@ export const ClientStats: React.FC = () => {
 
                 {/* Clientes Activos */}
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
                             <p className="text-3xl font-bold text-green-600">
                                 {activeClients}
                             </p>
@@ -104,12 +105,13 @@ export const ClientStats: React.FC = () => {
                                     : 0}% del total
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <svg
                                 className="w-6 h-6 text-green-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
                                     strokeLinecap="round"
@@ -124,8 +126,8 @@ export const ClientStats: React.FC = () => {
 
                 {/* Clientes Inactivos */}
                 <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1">
                             <p className="text-3xl font-bold text-slate-600">
                                 {inactiveClients}
                             </p>
@@ -138,12 +140,13 @@ export const ClientStats: React.FC = () => {
                                     : 0}% del total
                             </p>
                         </div>
-                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center">
+                        <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center flex-shrink-0">
                             <svg
                                 className="w-6 h-6 text-slate-600"
                                 fill="none"
                                 stroke="currentColor"
                                 viewBox="0 0 24 24"
+                                xmlns="http://www.w3.org/2000/svg"
                             >
                                 <path
                                     strokeLinecap="round"

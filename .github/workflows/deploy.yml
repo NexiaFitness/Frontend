@@ -52,7 +52,10 @@ jobs:
         
       - name: Lint web application
         run: pnpm --filter web lint
-        
+
+      - name: Run tests
+        run: pnpm --filter web test
+
       - name: Build web application
         run: pnpm --filter web build
         

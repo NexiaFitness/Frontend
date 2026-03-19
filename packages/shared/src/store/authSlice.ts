@@ -77,6 +77,9 @@ export const logout = createAsyncThunk(
             }
         }
         
+        // ✅ NOTA: resetApiState() ya se ejecutó en useLogout ANTES de disparar este thunk
+        // No es necesario ejecutarlo aquí de nuevo
+        
         // Si hay refresh_token, intentar llamar al backend para revocarlo
         // El backend requiere refresh_token obligatorio según schema RefreshRequest
         if (refreshToken && typeof refreshToken === 'string' && refreshToken.trim() !== '') {
@@ -107,10 +110,6 @@ export const logout = createAsyncThunk(
             return rejectWithValue('Error during storage cleanup');
         }
         
-        // Resetear el store de RTK Query para cancelar todas las queries pendientes
-        // Esto evita que queries sigan ejecutándose después del logout
-        dispatch(baseApi.util.resetApiState());
-        
         // Logout exitoso (limpieza local completada)
         return null;
     }
@@ -124,7 +123,7 @@ export const authSlice: Slice<AuthState> = createSlice({
         // Acción cuando login es exitoso
         loginSuccess: (
             state: AuthState,
-            action: PayloadAction<{ user: User; token: string }>
+            action: PayloadAction<{ user: User; token: string; refreshToken?: string }>
         ) => {
             state.user = action.payload.user;
             state.token = action.payload.token;
@@ -132,15 +131,17 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
 
-            // Persistencia async
             storage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
             storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(action.payload.user));
+            if (action.payload.refreshToken) {
+                storage.setItem(AUTH_CONFIG.REFRESH_KEY, action.payload.refreshToken);
+            }
         },
 
         // Acción cuando registro es exitoso (autologin)
         registerSuccess: (
             state: AuthState,
-            action: PayloadAction<{ user: User; token: string }>
+            action: PayloadAction<{ user: User; token: string; refreshToken?: string }>
         ) => {
             state.user = action.payload.user;
             state.token = action.payload.token;
@@ -148,9 +149,11 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
 
-            // Persistencia async
             storage.setItem(AUTH_CONFIG.TOKEN_KEY, action.payload.token);
             storage.setItem(AUTH_CONFIG.USER_KEY, JSON.stringify(action.payload.user));
+            if (action.payload.refreshToken) {
+                storage.setItem(AUTH_CONFIG.REFRESH_KEY, action.payload.refreshToken);
+            }
         },
 
         // Acción cuando login falla
@@ -161,9 +164,9 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = action.payload;
 
-            // Limpiar storage async
             storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
             storage.removeItem(AUTH_CONFIG.USER_KEY);
+            storage.removeItem(AUTH_CONFIG.REFRESH_KEY);
         },
 
         // Acción para limpiar errores
@@ -205,14 +208,16 @@ export const authSlice: Slice<AuthState> = createSlice({
             })
             // Logout async thunk handlers
             .addCase(logout.pending, (state) => {
+                // ✅ CRÍTICO: Actualizar estado SINCÓNICAMENTE para que hooks vean isAuthenticated = false inmediatamente
+                // Esto previene que queries se ejecuten durante el logout
+                state.user = null;
+                state.token = null;
+                state.isAuthenticated = false;
                 state.isLoading = true;
                 state.error = null;
             })
             .addCase(logout.fulfilled, (state) => {
-                // Limpiar todo el estado de autenticación
-                state.user = null;
-                state.token = null;
-                state.isAuthenticated = false;
+                // Estado ya está limpio en pending, solo actualizar loading
                 state.isLoading = false;
                 state.error = null;
             })

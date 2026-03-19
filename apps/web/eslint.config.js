@@ -8,11 +8,12 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   {
-    // Ignorar archivos/carpetas generadas
+    // Ignorar archivos/carpetas generadas y E2E (fuera del tsconfig del app)
     ignores: [
       'dist/**/*',
       'build/**/*',
       'coverage/**/*',
+      'e2e/**/*',
       '*.config.js',
       '*.config.ts',
       'node_modules/**/*',

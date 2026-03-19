@@ -2,7 +2,7 @@
  * NexiaLogoCompact — Versión compacta del logotipo NEXIA.
  *
  * Uso:
- * - Diseñado para Navbars (PublicNavbar, DashboardNavbar).
+ * - Diseñado para la navbar unificada (AppNavbar y componentes de navbar).
  * - Escala automáticamente al alto de la navbar sin desbordar.
  * - Usa versión optimizada del logo en Cloudinary para mayor claridad.
  *
@@ -22,10 +22,10 @@ interface NexiaLogoCompactProps {
 export const NexiaLogoCompact: React.FC<NexiaLogoCompactProps> = ({ className }) => {
     return (
         <img
-            src="https://res.cloudinary.com/dcpirdjji/image/upload/v1758709050/Logo_sin_fondo_navbar_ckwzes.png"
+            src="/assets/NEXIA-LOGO.png"
             alt="NEXIA Fitness"
             className={clsx(
-                "h-full max-h-[64px] lg:max-h-[80px] object-contain", // ajusta al alto de navbar
+                "h-full max-h-[60px] lg:max-h-[80px] object-contain", // ajusta al alto de navbar
                 className
             )}
         />

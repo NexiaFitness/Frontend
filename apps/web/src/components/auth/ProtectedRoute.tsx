@@ -1,34 +1,45 @@
 /**
- * ProtectedRoute.tsx — Componente de ruta protegida para autenticación.
+ * ProtectedRoute.tsx — Guard de rutas protegidas por autenticación.
  *
- * Verifica que el usuario esté autenticado:
- * - Si no hay token válido en Redux → redirige a /auth/login
- * - Si hay token válido → renderiza children
+ * Responsabilidades:
+ * - Esperar a que termine la hidratación de auth (hydrateAuth) antes de decidir.
+ * - Si no hay sesión válida tras la hidratación, redirigir a /auth/login.
+ * - Si hay token y usuario en Redux, renderizar children.
  *
  * Contexto:
- * - Web con React Router (v6).
- * - En móvil (React Native) habrá implementación específica.
+ * - En recarga (o page.goto en E2E), Redux arranca con token null; hydrateAuth
+ *   restaura desde localStorage de forma asíncrona. El guard no debe redirigir
+ *   hasta que isLoading sea false (ver frontend/docs/DIAGNOSTICO_E2E.md, Error 1).
+ * - Web con React Router v6. En móvil (React Native) se usará implementación específica.
  *
- * @autor Frontend Team
+ * @author Frontend Team
  * @since v1.0.0
+ * @updated E2E: espera hidratación y muestra LoadingSpinner en bootstrap
  */
 
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
+import { LoadingSpinner } from "@/components/ui/feedback";
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { isAuthenticated, token } = useSelector((state: RootState) => state.auth);
+    const { isAuthenticated, token, isLoading } = useSelector((state: RootState) => state.auth);
     const location = useLocation();
 
-    // Verificar si usuario está autenticado
+    if (isLoading) {
+        return (
+            <div className="flex min-h-[50vh] items-center justify-center" role="status" aria-label="Comprobando sesión">
+                <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
+
     if (!isAuthenticated || !token) {
-        // Guardar la ruta actual para redirigir después del login
         return (
             <Navigate
                 to="/auth/login"
@@ -38,6 +49,5 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
         );
     }
 
-    // Usuario autenticado → renderizar contenido protegido
     return <>{children}</>;
 };

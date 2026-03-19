@@ -14,14 +14,23 @@
  *
  * @author Frontend Team
  * @since v1.0.0
- * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
+ * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn(), variantes default/destructive/ghost/link
  */
 
 import React, { forwardRef } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "primary" | "secondary" | "danger" | "outline";
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonVariant =
+    | "default"
+    | "primary"
+    | "destructive"
+    | "danger"
+    | "outline"
+    | "outline-destructive"
+    | "secondary"
+    | "ghost"
+    | "link";
+export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
     variant?: ButtonVariant;
@@ -30,23 +39,34 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseStyles =
-    "inline-flex items-center justify-center rounded-md font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
-const variantStyles: Record<ButtonVariant, string> = {
+const variantStyles: Record<string, string> = {
+    default:
+        "border border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
     primary:
-        "bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500",
-    secondary:
-        "bg-white/20 backdrop-blur-sm border border-white text-white hover:bg-white/30 focus:ring-white/50",
-    danger: "bg-red-600 text-white hover:bg-red-700 focus:ring-red-500",
+        "border border-transparent bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 disabled:opacity-100 disabled:brightness-100",
+    destructive:
+        "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    danger:
+        "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
     outline:
-        "bg-transparent border-2 border-slate-800 text-slate-800 hover:bg-slate-800 hover:text-white focus:ring-slate-500",
+        "border border-primary text-primary bg-transparent hover:bg-primary/10",
+    "outline-destructive":
+        "rounded-lg border border-destructive/30 bg-destructive/20 text-destructive hover:bg-destructive/30 hover:border-destructive/50",
+    secondary:
+        "border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
+    ghost:
+        "border border-transparent hover:bg-accent hover:text-accent-foreground",
+    link:
+        "border border-transparent text-primary underline-offset-4 hover:underline",
 };
 
-// Mobile-first → escalado en sm/md
 const sizeStyles: Record<ButtonSize, string> = {
-    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
-    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
-    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
+    sm: "h-9 rounded-md px-3",
+    md: "h-10 px-4 py-2",
+    lg: "h-11 rounded-md px-8",
+    icon: "h-10 w-10",
 };
 
 export const Button = forwardRef<
@@ -70,7 +90,7 @@ export const Button = forwardRef<
         return (
             <button
                 ref={ref}
-                className={clsx(
+                className={cn(
                     baseStyles,
                     variantStyles[variant],
                     sizeStyles[size],
@@ -81,7 +101,7 @@ export const Button = forwardRef<
             >
                 {isLoading && (
                     <span
-                        className="mr-2 inline-block animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                        className="mr-2 inline-block size-4 animate-spin rounded-full border-2 border-current border-t-transparent"
                         aria-hidden="true"
                     />
                 )}

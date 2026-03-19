@@ -12,7 +12,7 @@ import userEvent from "@testing-library/user-event"
 import { render } from "@/test-utils/render"
 import { LogoutButton } from "../LogoutButton"
 import { setupServer } from "msw/node"
-import { logoutHandler, logoutThunkHandler } from "@/test-utils/mocks/handlers/authHandlers"
+import { logoutHandler, logoutThunkHandler } from "@/test-utils/mocks/handlers/auth"
 
 // MSW Server para interceptar requests
 const server = setupServer(logoutHandler, logoutThunkHandler)

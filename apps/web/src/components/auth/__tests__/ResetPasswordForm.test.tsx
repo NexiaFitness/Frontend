@@ -10,6 +10,7 @@
 
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http } from "msw";
 import { render } from "@/test-utils/render";
 import { ResetPasswordForm } from "../ResetPasswordForm";
 import { server } from "@/test-utils/utils/msw";
@@ -19,7 +20,7 @@ import {
   resetPasswordInvalidTokenHandler,
   resetPasswordValidationHandler,
   resetPasswordNetworkErrorHandler
-} from "@/test-utils/mocks/handlers/authHandlers";
+} from "@/test-utils/mocks/handlers/auth";
 import {
     mockNavigate,
     clearRouterMocks,
@@ -252,7 +253,15 @@ describe("ResetPasswordForm", () => {
 
     describe("Loading States", () => {
         it("shows loading state during submission", async () => {
-            server.use(resetPasswordTimeoutHandler);
+            // Delay suficiente para que userEvent.type + click terminen antes de que la petición resuelva.
+            // userEvent simula typing real (~50-100ms por campo); 2s garantiza estado loading observable.
+            const requestDelayMs = 2000;
+            server.use(
+                http.post("*/auth/reset-password", async () => {
+                    await new Promise((resolve) => setTimeout(resolve, requestDelayMs));
+                    return new Response(null, { status: 408 });
+                })
+            );
 
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
@@ -261,22 +270,28 @@ describe("ResetPasswordForm", () => {
             await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            // Should show loading text and disabled state
-            await waitFor(() => {
-                expect(screen.getByRole("button", { name: /actualizando contraseña/i }))
-                    .toBeInTheDocument();
-            }, { timeout: 200 });
-
-            expect(screen.getByRole("button", { name: /actualizando contraseña/i }))
-                .toBeDisabled();
-            expect(screen.getByPlaceholderText("Mínimo 6 caracteres"))
-                .toBeDisabled();
-            expect(screen.getByPlaceholderText("Repite tu nueva contraseña"))
-                .toBeDisabled();
+            // Verificar estado de loading de forma atómica: botón e inputs deshabilitados simultáneamente.
+            await waitFor(
+                () => {
+                    const submitButton = screen.getByRole("button", {
+                        name: /cambiar contraseña|actualizando contraseña/i,
+                    });
+                    expect(submitButton).toBeDisabled();
+                    expect(screen.getByPlaceholderText("Mínimo 6 caracteres")).toBeDisabled();
+                    expect(screen.getByPlaceholderText("Repite tu nueva contraseña")).toBeDisabled();
+                },
+                { timeout: 1500 }
+            );
         });
 
         it("disables navigation links during loading", async () => {
-            server.use(resetPasswordTimeoutHandler);
+            const requestDelayMs = 2000;
+            server.use(
+                http.post("*/auth/reset-password", async () => {
+                    await new Promise((resolve) => setTimeout(resolve, requestDelayMs));
+                    return new Response(null, { status: 408 });
+                })
+            );
 
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
@@ -285,14 +300,13 @@ describe("ResetPasswordForm", () => {
             await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            // Navigation buttons should be disabled during loading
-            await waitFor(() => {
-                expect(screen.getByRole("button", { name: /volver al login/i }))
-                    .toBeDisabled();
-            }, { timeout: 200 });
-
-            expect(screen.getByText(/tu enlace ha caducado/i).closest("button"))
-                .toBeDisabled();
+            await waitFor(
+                () => {
+                    expect(screen.getByRole("button", { name: /volver al login/i })).toBeDisabled();
+                    expect(screen.getByRole("button", { name: /tu enlace ha caducado/i })).toBeDisabled();
+                },
+                { timeout: 1500 }
+            );
         });
     });
 

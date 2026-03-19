@@ -18,16 +18,16 @@ import { TYPOGRAPHY } from "@/utils/typography";
 
 export const ClientNutritionTab: React.FC = () => {
     return (
-        <div className="bg-white rounded-lg shadow p-12 text-center">
-            <div className="max-w-md mx-auto">
-                <div className="text-6xl mb-4">🍎</div>
-                <h3 className={`${TYPOGRAPHY.sectionTitle} text-gray-900 mb-2`}>
+        <div className="rounded-lg border border-border bg-surface p-12 text-center">
+            <div className="mx-auto max-w-md">
+                <div className="mb-4 text-6xl">🍎</div>
+                <h3 className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
                     Módulo de Nutrición
                 </h3>
-                <p className="text-gray-600 mb-4">
+                <p className="mb-4 text-muted-foreground">
                     Esta funcionalidad estará disponible próximamente.
                 </p>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-muted-foreground">
                     Podrás gestionar planes nutricionales, seguimiento de macros y objetivos dietéticos.
                 </p>
             </div>

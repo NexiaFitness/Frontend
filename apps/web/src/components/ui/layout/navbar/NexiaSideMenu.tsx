@@ -1,7 +1,13 @@
 /**
- * NexiaSideMenu - Menú lateral fullscreen para NEXIA
- * Inspirado en LHC Legal pero adaptado al branding y navegación de NEXIA
+ * NexiaSideMenu — Drawer lateral móvil para navegación pública.
  *
+ * Contexto: Usado por AppNavbar en contexto público. Muestra ítems de usePublicNavigation
+ * (Iniciar sesión, Registrarse, etc.). Sin cabecera con logo; el logo está en la navbar.
+ *
+ * Notas: Posicionado debajo de la navbar (top-navbar-mobile/desktop). Cierra al hacer clic
+ * en overlay o en un enlace.
+ *
+ * @author Frontend Team
  * @since v1.0.0
  * @updated v4.4.2 - Unified layout: sin iconos, capitalización consistente con Dashboard
  */
@@ -27,10 +33,9 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
         <>
             {/* Overlay */}
             <div
-                className={`fixed inset-0 z-40 transition-opacity duration-300 ${
+                className={`fixed inset-0 z-40 transition-opacity duration-300 bg-black/60 ${
                     isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
                 }`}
-                style={{ backgroundColor: "rgba(0, 0, 0, 0.6)" }}
                 onClick={onClose}
             />
 
@@ -44,7 +49,7 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
                     h-[calc(100vh-theme(space.navbar-mobile))] 
                     lg:h-[calc(100vh-theme(space.navbar-desktop))] 
                     z-50 transform transition-transform duration-500 ease-in-out 
-                    bg-sidebar-nav 
+                    bg-surface 
                     ${isOpen ? "translate-x-0" : "translate-x-full"}
                 `}
             >

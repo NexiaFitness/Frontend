@@ -18,8 +18,11 @@
  * Calcula el IMC (Índice de Masa Corporal).
  * Fórmula: peso (kg) / altura² (m²).
  *
+ * ⚠️ IMPORTANTE: Recibe altura en metros siempre.
+ * Si la altura viene en centímetros, convertir antes de llamar: alturaEnMetros = altura / 100
+ *
  * @param peso - Peso en kilogramos
- * @param altura - Altura en metros
+ * @param altura - Altura en metros (no centímetros)
  * @returns número redondeado a un decimal, o 0 si no es válido
  */
 export const calculateBMI = (peso: number, altura: number): number => {

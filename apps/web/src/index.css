@@ -1,14 +1,93 @@
 /**
  * Estilos base para la aplicación web principal
- * Configuración Tailwind centralizada tras migración arquitectónica
- * 
+ * Configuración Tailwind centralizada — Nexia Sparkle Flow (Fase 0)
+ *
  * @ruta apps/web/src/index.css
  */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 @tailwind base;
-@tailwind components; 
+@tailwind components;
 @tailwind utilities;
 
-/* Estilos globales adicionales opcionales */
+/* ===== Design Tokens — Nexia Sparkle Flow ===== */
+@layer base {
+  :root {
+    --background: 240 33% 4%;
+    --foreground: 0 0% 100%;
+    --card: 240 18% 12%;
+    --card-foreground: 0 0% 100%;
+    --popover: 240 18% 12%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 190 100% 50%;
+    --primary-foreground: 240 33% 4%;
+    --secondary: 240 14% 17%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 240 14% 17%;
+    --muted-foreground: 240 10% 65%;
+    --accent: 240 14% 17%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 344 100% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 153 100% 50%;
+    --success-foreground: 240 33% 4%;
+    --warning: 40 100% 50%;
+    --warning-foreground: 240 33% 4%;
+    --info: 190 100% 50%;
+    --info-foreground: 240 33% 4%;
+    --surface: 240 18% 12%;
+    --surface-2: 240 14% 16%;
+    --border: 240 14% 20%;
+    --input: 240 14% 20%;
+    --ring: 190 100% 50%;
+    --radius: 0.5rem;
+    --sidebar-background: 240 18% 12%;
+    --sidebar-foreground: 240 10% 65%;
+    --sidebar-primary: 190 100% 50%;
+    --sidebar-primary-foreground: 240 33% 4%;
+    --sidebar-accent: 240 14% 17%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 240 14% 20%;
+    --sidebar-ring: 190 100% 50%;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Scrollbar ExercisePickerPanel: track transparente, thumb y botones azul primary */
+@layer utilities {
+  .scrollbar-primary {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary)) transparent;
+  }
+  .scrollbar-primary::-webkit-scrollbar {
+    width: 8px;
+  }
+  .scrollbar-primary::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-primary::-webkit-scrollbar-thumb {
+    background: hsl(var(--primary));
+    border-radius: 4px;
+  }
+  .scrollbar-primary::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary) / 0.85);
+  }
+  .scrollbar-primary::-webkit-scrollbar-button {
+    background: hsl(var(--primary));
+    height: 8px;
+  }
+  .scrollbar-primary::-webkit-scrollbar-button:vertical:decrement {
+    background: hsl(var(--primary)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 14l5-5 5 5z'/%3E%3C/svg%3E") center/10px no-repeat;
+  }
+  .scrollbar-primary::-webkit-scrollbar-button:vertical:increment {
+    background: hsl(var(--primary)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") center/10px no-repeat;
+  }
+}

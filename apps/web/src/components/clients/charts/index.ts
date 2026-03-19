@@ -1,0 +1,12 @@
+export { SomatotipoChart } from "./SomatotipoChart";
+
+
+
+
+
+
+
+
+
+
+

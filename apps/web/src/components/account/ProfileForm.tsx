@@ -21,8 +21,6 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useUpdateAccountMutation, selectUser, setCurrentUser, logout } from "@nexia/shared";
 import type { AppDispatch } from "@nexia/shared/store";
 import type { UpdateAccountPayload } from "@nexia/shared/types/account";
@@ -104,20 +102,20 @@ export const ProfileForm: React.FC = () => {
         <div className="space-y-8">
             {/* Mensajes de estado */}
             {successMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>{successMessage}</p>
+                <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+                    <p className="text-sm font-medium text-success">{successMessage}</p>
                 </div>
             )}
 
             <ServerErrorBanner error={serverError} onDismiss={() => setServerError(null)} />
 
             {/* Información Personal */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+            <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <div className="mb-8">
-                    <h2 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-2`}>
+                    <h2 className="text-lg font-semibold text-foreground mb-2 text-center lg:text-left">
                         Información Personal
                     </h2>
-                    <p className={`${TYPOGRAPHY.body} text-slate-600`}>
+                    <p className="text-sm text-muted-foreground text-center lg:text-left">
                         Actualiza tus datos básicos de perfil
                     </p>
                 </div>
@@ -158,14 +156,14 @@ export const ProfileForm: React.FC = () => {
                         disabled={isLoading}
                     />
 
-                    <div className="flex justify-end pt-4">
+                    <div className="flex justify-center lg:justify-end pt-4">
                         <Button
                             type="submit"
                             variant="primary"
                             size="md"
                             isLoading={isLoading}
                             disabled={isLoading}
-                            className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
+                            className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3 md:w-auto md:min-w-[180px]"
                         >
                             {isLoading ? "Guardando..." : "Guardar"}
                         </Button>
@@ -174,52 +172,27 @@ export const ProfileForm: React.FC = () => {
             </div>
 
             {/* Seguridad */}
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+            <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <ChangePasswordForm />
             </div>
 
-            {/* Zona de Peligro (solo no-admin) */}
             {user?.role !== "admin" && (
-                <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8">
-                    <div className="text-center">
-                        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                            <svg
-                                className="w-8 h-8 text-red-600"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"
-                                />
-                            </svg>
-                        </div>
-
-                        <h3 className={`${TYPOGRAPHY.sectionTitle} text-slate-800 mb-4`}>
-                            Zona de Peligro
-                        </h3>
-                        <p
-                            className={`${TYPOGRAPHY.body} text-slate-600 mb-2 max-w-md mx-auto`}
-                        >
-                            Una vez eliminada tu cuenta, perderás acceso permanente a todos tus datos.
-                        </p>
-                        <p
-                            className={`${TYPOGRAPHY.errorText} text-red-600 font-medium mb-8`}
-                        >
-                            Esta acción no se puede deshacer.
-                        </p>
-
+                <div className="bg-destructive/10 border-2 border-destructive/30 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-destructive mb-2 text-center lg:text-left">
+                        Zona de Peligro
+                    </h3>
+                    <p className="text-sm text-destructive mb-4 text-center lg:text-left">
+                        Eliminar tu cuenta es una acción permanente. Todos los datos asociados
+                        serán eliminados.
+                    </p>
+                    <div className="flex justify-center lg:justify-end pt-4">
                         <Button
                             type="button"
                             variant="danger"
                             size="md"
                             onClick={() => setDeleteOpen(true)}
-                            className={BUTTON_PRESETS.formPrimary + " md:w-auto md:min-w-[180px]"}
                         >
-                            Eliminar
+                            Eliminar Cuenta
                         </Button>
                     </div>
                 </div>

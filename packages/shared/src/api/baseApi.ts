@@ -6,20 +6,126 @@
  * @author Frontend Team
  * @since v1.0.0
  * @updated v3.2.0 - Agregado tagType "TrainingPlan"
- * @updated v3.3.0 - Agregados tagTypes "Macrocycle", "Mesocycle", "Microcycle"
+ * @updated v3.3.0 - tagTypes planning (Fase 6: Macrocycle/Mesocycle/Microcycle removidos)
+ * @updated v4.7.0 - Agregado tagType "Milestone"
+ * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance", "MovementPattern", "MuscleGroup", "Equipment", "Tag", "Action"
+ * @updated UX Sprint 1 - TICK-D04: interceptor refresh token en 401 (mutex, un reintento)
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
 import type { BaseQueryFn, FetchArgs, FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { API_CONFIG, AUTH_CONFIG } from "@nexia/shared/config/constants";
+import type { RootState } from "../store";
+
+/**
+ * Helper síncrono para leer token de localStorage de forma segura.
+ * Compatible con SSR y entornos donde localStorage puede no estar disponible.
+ * 
+ * @param key - Clave del token en localStorage
+ * @returns Token o null si no está disponible
+ */
+const getTokenSafely = (key: string): string | null => {
+    // Verificar que estamos en entorno browser (no SSR)
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    
+    // Verificar que localStorage está disponible
+    if (typeof window.localStorage === 'undefined') {
+        return null;
+    }
+    
+    try {
+        return window.localStorage.getItem(key);
+    } catch (error) {
+        // localStorage puede fallar en modo privado, bloqueado por política, etc.
+        // En producción, no loguear para evitar ruido en consola
+        if (process.env.NODE_ENV !== 'production') {
+            console.warn('[baseApi] Failed to read token from localStorage:', error);
+        }
+        return null;
+    }
+};
+
+/** Escribe en localStorage de forma segura (solo browser). Usado tras refresh token. */
+const setStorageSafely = (key: string, value: string): void => {
+    if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
+    try {
+        window.localStorage.setItem(key, value);
+    } catch {
+        // silenciar
+    }
+};
+
+/** Mutex: solo una petición de refresh a la vez (TICK-D04). */
+let refreshPromise: Promise<boolean> | null = null;
+
+/**
+ * Llama a POST /auth/refresh con el refresh_token, persiste nuevos tokens y user.
+ * No usa authApi para evitar dependencia circular (authApi extiende baseApi).
+ */
+const doRefresh = async (refreshToken: string): Promise<boolean> => {
+    const url = `${API_CONFIG.BASE_URL}/auth/refresh`;
+    try {
+        const res = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ refresh_token: refreshToken }),
+        });
+        if (!res.ok) return false;
+        const data = (await res.json()) as {
+            access_token?: string;
+            refresh_token?: string;
+            user?: unknown;
+        };
+        if (data.access_token) setStorageSafely(AUTH_CONFIG.TOKEN_KEY, data.access_token);
+        if (data.refresh_token) setStorageSafely(AUTH_CONFIG.REFRESH_KEY, data.refresh_token);
+        if (data.user) setStorageSafely(AUTH_CONFIG.USER_KEY, JSON.stringify(data.user));
+        return true;
+    } catch {
+        return false;
+    }
+};
+
+/**
+ * Wrapper de fetch que suprime logs de errores 403 en consola del navegador
+ * Intercepta los errores antes de que el navegador los loguee
+ */
+const fetchWith403Suppression = async (
+    input: RequestInfo | URL,
+    init?: RequestInit
+): Promise<Response> => {
+    try {
+        const response = await fetch(input, init);
+        
+        // Si es 403, interceptar el error antes de que se propague
+        if (response.status === 403) {
+            // Crear una respuesta clonada para que RTK Query pueda manejarla
+            // pero suprimir el log del navegador interceptando el error
+            const clonedResponse = response.clone();
+            
+            // El navegador puede loguear el error antes de que llegue aquí
+            // Por eso también usamos el interceptor de consola en baseQueryWithReauth
+            return clonedResponse;
+        }
+        
+        return response;
+    } catch (error) {
+        // Si el error es relacionado con 403, suprimirlo silenciosamente
+        // pero aún así propagarlo para que RTK Query lo maneje
+        throw error;
+    }
+};
 
 // BaseQuery personalizado que respeta headers personalizados
+// Usa fetchWith403Suppression para suprimir logs de 403
 const baseQuery = fetchBaseQuery({
     baseUrl: API_CONFIG.BASE_URL,
+    fetchFn: typeof window !== 'undefined' ? fetchWith403Suppression : fetch,
     prepareHeaders: (headers, { endpoint }) => {
         // Solo añadir Authorization si NO es login (login no necesita token)
         if (endpoint !== 'login') {
-            const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
+            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
             if (token) {
                 headers.set("Authorization", `Bearer ${token}`);
             }
@@ -31,25 +137,98 @@ const baseQuery = fetchBaseQuery({
     },
 });
 
-// BaseQuery con manejo de errores 401 (silencioso después de logout)
+/**
+ * Interceptor para suprimir logs de errores 401/403 en consola.
+ * 401: manejado por refresh token; 403: manejado por componentes.
+ */
+const suppressAuthConsoleErrors = (): (() => void) => {
+    if (typeof window === 'undefined') return () => {};
+
+    const originalError = console.error;
+    const originalWarn = console.warn;
+    const isOurApi = (s: string) =>
+        s.includes(API_CONFIG.BASE_URL) || s.includes('/api/v1');
+    const is401Or403 = (s: string) =>
+        s.includes('401') || s.includes('403') ||
+        s.includes('Unauthorized') || s.includes('Forbidden');
+
+    const errorInterceptor = (...args: unknown[]): void => {
+        const s = String(args.join(' '));
+        if (is401Or403(s) && isOurApi(s)) return;
+        originalError.apply(console, args);
+    };
+
+    const warnInterceptor = (...args: unknown[]): void => {
+        const s = String(args.join(' '));
+        if (is401Or403(s) && isOurApi(s)) return;
+        originalWarn.apply(console, args);
+    };
+
+    console.error = errorInterceptor;
+    console.warn = warnInterceptor;
+    return () => {
+        console.error = originalError;
+        console.warn = originalWarn;
+    };
+};
+
+/**
+ * BaseQuery con manejo profesional de errores HTTP
+ * - 401 (Unauthorized): Silencioso si no hay token/isAuthenticated (después de logout)
+ * - 403 (Forbidden): Se propaga para que los componentes lo manejen, pero se suprimen logs en consola
+ * - Otros errores: Se propagan normalmente
+ */
 const baseQueryWithReauth: BaseQueryFn<
     string | FetchArgs,
     unknown,
     FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-    const result = await baseQuery(args, api, extraOptions);
+    // Suprimir logs de 401/403 durante la ejecución de la query
+    const restoreConsole = suppressAuthConsoleErrors();
     
-    // Si hay error 401 y no hay token, es probable que sea después de logout
-    // En ese caso, retornar un resultado "silencioso" para evitar errores en consola
-    if (result.error && result.error.status === 401) {
-        const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY);
-        if (!token) {
-            // No hay token, probablemente después de logout - retornar resultado "silencioso"
-            return { data: undefined };
+    try {
+        const result = await baseQuery(args, api, extraOptions);
+        
+        // Manejo de errores 401 (Unauthorized) - TICK-D04: intentar refresh y reintentar una vez
+        if (result.error && result.error.status === 401) {
+            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+            const state = api.getState() as RootState;
+            const isAuthenticated = state.auth?.isAuthenticated ?? false;
+
+            if (!token || !isAuthenticated) {
+                restoreConsole();
+                return { data: undefined };
+            }
+
+            const refreshToken = getTokenSafely(AUTH_CONFIG.REFRESH_KEY);
+            if (!refreshToken) {
+                restoreConsole();
+                return { data: undefined };
+            }
+
+            if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
+            const refreshed = await refreshPromise;
+            refreshPromise = null;
+
+            if (!refreshed) {
+                restoreConsole();
+                return { data: undefined };
+            }
+
+            const retryResult = await baseQuery(args, api, extraOptions);
+            restoreConsole();
+            return retryResult;
         }
+        
+        // Errores 403 (Forbidden) se propagan para que los componentes los manejen
+        // Los logs en consola ya fueron suprimidos por el interceptor
+        
+        restoreConsole();
+        return result;
+    } catch (error) {
+        restoreConsole();
+        throw error;
     }
-    
-    return result;
 };
 
 // API base que luego será extendida por cada módulo (auth, clients, etc.)
@@ -57,5 +236,40 @@ export const baseApi = createApi({
     reducerPath: "api",
     baseQuery: baseQueryWithReauth,
     endpoints: () => ({}), // los endpoints se añaden en archivos específicos
-    tagTypes: ["Auth", "User", "Client", "Trainer", "Exercise", "TrainingPlan", "Macrocycle", "Mesocycle", "Microcycle"],
+    tagTypes: [
+        "Auth",
+        "User",
+        "Client",
+        "Trainer",
+        "Exercise",
+        "MovementPattern",
+        "MuscleGroup",
+        "Equipment",
+        "Tag",
+        "Action",
+        "TrainingPlan",
+        "TrainingPlanTemplate",
+        "TrainingPlanInstance",
+        "Milestone",
+        "MonthlyPlan",
+        "FatigueAlert",
+        "SessionTemplate",
+        "TrainingBlockType",
+        "SessionBlock",
+        "SessionBlockExercise",
+        "TrainingSession",
+        "SessionExercise",
+        "StandaloneSession",
+        "Report",
+        "ScheduledSession",
+        "TrainerAvailability",
+        "PhysicalTest",
+        "TrainingPlanSummary",
+        "TrainingPlanMonthlySummary",
+        "TrainingPlanWeeklySummary",
+        "TrainingPlanAdherenceStats",
+        "Metrics",
+        "Injuries",
+        "HabitInsights",
+    ],
 });

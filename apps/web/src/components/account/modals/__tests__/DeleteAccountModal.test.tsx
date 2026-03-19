@@ -18,7 +18,7 @@ import {
     deleteAccountErrorHandler,
     deleteAccountNetworkErrorHandler,
     deleteAccountRetryHandler,
-} from "@/test-utils/mocks/handlers/accountHandlers";
+} from "@/test-utils/mocks/handlers/account";
 import { clearRouterMocks } from "@/test-utils/mocks";
 
 describe("DeleteAccountModal", () => {
@@ -36,10 +36,8 @@ describe("DeleteAccountModal", () => {
 
     describe("Rendering & Basic UI", () => {
         it("renders nothing when isOpen is false", () => {
-            const { container } = render(
-                <DeleteAccountModal {...defaultProps} isOpen={false} />
-            );
-            expect(container.firstChild).toBeNull();
+            render(<DeleteAccountModal {...defaultProps} isOpen={false} />);
+            expect(screen.queryByRole("heading", { name: "Eliminar cuenta" })).not.toBeInTheDocument();
         });
 
         it("renders modal when isOpen is true", () => {
@@ -55,7 +53,7 @@ describe("DeleteAccountModal", () => {
             const dangerIcon = document.querySelector("svg");
             expect(dangerIcon).toBeInTheDocument();
             const warningText = screen.getByText("Esta acción es irreversible.");
-            expect(warningText).toHaveClass("text-red-600");
+            expect(warningText).toHaveClass("text-destructive");
         });
     });
 
@@ -170,8 +168,8 @@ describe("DeleteAccountModal", () => {
             render(<DeleteAccountModal {...defaultProps} />);
             const cancelButton = screen.getByRole("button", { name: "Cancelar" });
             const deleteButton = screen.getByRole("button", { name: "Eliminar cuenta" });
-            expect(cancelButton).toHaveClass("sm:w-[160px]");
-            expect(deleteButton).toHaveClass("sm:w-[160px]");
+            expect(cancelButton).toHaveClass("sm:min-w-[160px]");
+            expect(deleteButton).toHaveClass("sm:min-w-[160px]");
         });
     });
 });

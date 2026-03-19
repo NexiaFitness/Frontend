@@ -10,14 +10,15 @@
  *
  * @author Frontend Team
  * @since v2.0.0
- * @updated v4.3.0 - Responsive sizeStyles con min-h accesible
+ * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn()
+ * @updated v6.4.0 - size "compact" para paneles estrechos (ExercisePickerPanel)
  */
 
 import React, { forwardRef, useId, useState } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 
-export type InputType = "text" | "email" | "password";
-export type InputSize = "sm" | "md" | "lg";
+export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
+export type InputSize = "xs" | "compact" | "sm" | "md" | "lg";
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
     type?: InputType;
@@ -28,30 +29,37 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
     helperText?: string;
 }
 
-const baseStyles = `block w-full rounded-md border transition-colors focus:outline-none focus:ring-2 focus:ring-primary-600 focus:border-primary-600 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed placeholder-gray-400 text-gray-900 caret-primary-600`;
+const baseStyles =
+    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50";
 
-// Mobile-first responsive sizes
+// Mobile-first responsive sizes — compact = paneles estrechos (ExercisePickerPanel); xs = chips; sm = pills
 const sizeStyles: Record<InputSize, string> = {
-    sm: "px-3 py-2 text-sm min-h-[40px] sm:min-h-[44px]",
+    compact:
+        "h-7 min-w-0 px-2 py-1 text-[11px] rounded-md border border-border/60 bg-surface",
+    xs: "h-8 px-2.5 py-1.5 text-xs rounded-md border border-border/60 bg-surface",
+    sm: "px-3 py-1.5 text-sm min-h-9 h-9",
     md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
 };
 
 // Para inputs password con icono → padding derecho extra
 const passwordSizeStyles: Record<InputSize, string> = {
-    sm: "px-3 py-2 pr-10 text-sm min-h-[40px] sm:min-h-[44px]",
+    compact: "h-7 px-2 py-1 pr-9 text-[11px]",
+    xs: "h-8 px-2.5 py-1.5 pr-9 text-xs",
+    sm: "px-3 py-1.5 pr-10 text-sm min-h-9 h-9",
     md: "px-3 py-2 pr-12 text-sm sm:px-4 sm:py-2.5 sm:pr-12 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 pr-14 text-base sm:px-5 sm:py-3 sm:pr-14 sm:text-lg sm:min-h-[48px]",
 };
 
 const stateStyles = {
-    default: "border-gray-300 focus:border-primary-500 focus:ring-primary-500",
-    error: "border-red-500 focus:border-red-500 focus:ring-red-500",
+    default: "border-input focus-visible:border-primary focus-visible:ring-primary",
+    defaultXs: "border-border/60 bg-surface focus-visible:border-primary focus-visible:ring-primary",
+    error: "border-destructive focus-visible:ring-destructive",
 };
 
-const labelStyles = "block text-sm font-medium text-gray-600 mb-1";
-const errorStyles = "mt-1 text-sm text-red-600 dark:text-red-400";
-const helperStyles = "mt-1 text-sm text-gray-500 dark:text-gray-400";
+const labelStyles = "block text-sm font-medium text-foreground mb-1";
+const errorStyles = "mt-1 text-sm text-destructive";
+const helperStyles = "mt-1 text-sm text-muted-foreground";
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
@@ -84,7 +92,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 {label && (
                     <label htmlFor={inputId} className={labelStyles}>
                         {label}
-                        {isRequired && <span className="text-white ml-1">*</span>}
+                        {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
                 )}
 
@@ -93,10 +101,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         ref={ref}
                         id={inputId}
                         type={currentInputType}
-                        className={clsx(
+                        className={cn(
                             baseStyles,
                             inputSizeStyles,
-                            error ? stateStyles.error : stateStyles.default,
+                            error
+                                ? stateStyles.error
+                                : size === "xs" || size === "compact"
+                                ? stateStyles.defaultXs
+                                : stateStyles.default,
                             className
                         )}
                         {...props}
@@ -106,7 +118,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         <button
                             type="button"
                             onClick={togglePasswordVisibility}
-                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 focus:outline-none focus:text-primary-600 transition-colors"
+                            className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground focus:outline-none focus-visible:text-primary transition-colors"
                             aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
                             tabIndex={0}
                         >

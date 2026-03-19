@@ -6,15 +6,10 @@
     "baseUrl": ".",
     "paths": {
       "@/*": ["src/*"],
+      "@nexia/shared": ["../../packages/shared/src/index"],
       "@nexia/shared/*": ["../../packages/shared/src/*"]
     }
   },
-  "include": [
-    "src",
-    "vitest.config.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist"
-  ]
+  "include": ["src", "vitest.config.ts"],
+  "exclude": ["node_modules", "dist"]
 }

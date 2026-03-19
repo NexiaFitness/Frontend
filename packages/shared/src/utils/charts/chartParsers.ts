@@ -7,8 +7,8 @@
  * - Necesitamos convertir a números 0-10 para recharts
  * 
  * Responsabilidades:
- * - Parsear volume_intensity_ratio (Macrocycle)
- * - Parsear target_volume/target_intensity (Mesocycle)
+ * - Parsear volume_intensity_ratio (month qualities)
+ * - Parsear target_volume/target_intensity (week/day qualities)
  * - Detectar patrones: high/medium/low, números, porcentajes
  * - Fallback seguro si no coincide patrón
  * 
@@ -151,7 +151,7 @@ export function parseTargetValue(value: string | null | undefined): number {
 }
 
 /**
- * Parsea volume_intensity_ratio de Macrocycle
+ * Parsea volume_intensity_ratio (month qualities)
  * 
  * Formato esperado: "High Volume, Low Intensity" o variantes
  * 

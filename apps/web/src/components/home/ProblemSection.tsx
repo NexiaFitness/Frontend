@@ -18,7 +18,6 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { TYPOGRAPHY } from "@/utils/typography";
 
 export const ProblemSection: React.FC = () => {
     const [activeSection, setActiveSection] = useState(0); // 0 = Situación Actual, 1 = Con NEXIA
@@ -73,17 +72,16 @@ export const ProblemSection: React.FC = () => {
     ];
 
     return (
-        <section className="bg-slate-50">
-            {/* Header Estático */}
+        <section className="bg-background">
             <div className="py-16 sm:py-20">
                 <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
-                    <h2 className={`${TYPOGRAPHY.pageTitle} text-slate-800 mb-6`}>
+                    <h2 className="text-2xl sm:text-3xl font-bold text-foreground mb-6">
                         NEXIA para Entrenadores
                     </h2>
-                    <h3 className={`${TYPOGRAPHY.sectionTitle} text-blue-400 mb-8`}>
-                        Programación y <span className="text-slate-800">Gestión Integradas</span>
+                    <h3 className="text-xl font-semibold text-primary mb-8">
+                        Programación y <span className="text-foreground">Gestión Integradas</span>
                     </h3>
-                    <p className={`${TYPOGRAPHY.bodyLarge} text-slate-600 max-w-4xl mx-auto leading-relaxed`}>
+                    <p className="text-base text-muted-foreground max-w-4xl mx-auto leading-relaxed">
                         Una plataforma que combina la creación de programas de entrenamiento con la gestión de tu negocio. 
                         Incluye seguimiento de progreso de atletas, análisis de rendimiento, y todas las herramientas administrativas. 
                         Todo en un lugar, basado en metodología deportiva.
@@ -111,32 +109,32 @@ export const ProblemSection: React.FC = () => {
                         />
                         
                         {/* Overlay más sutil para rojo */}
-                        <div className="absolute inset-0 bg-gradient-to-r from-slate-900/60 via-slate-900/40 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-r from-foreground/60 via-foreground/40 to-transparent" />
                         
                         <div className="absolute inset-0 flex items-center justify-start px-12">
                             <div className={`text-left max-w-2xl transition-all duration-500 ${
                                 expandedSection === 0 ? 'opacity-100 translate-x-0' : 'opacity-70 -translate-x-4'
                             }`}>
-                                <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-6 border-l-4 border-red-400 pl-6`}>
+                                <h4 className="text-lg font-semibold text-primary-foreground mb-6 border-l-4 border-destructive pl-6">
                                     {sections[0].title}
                                 </h4>
                                 
-                                <p className={`${TYPOGRAPHY.subtitle} text-red-200 font-light leading-relaxed mb-8 italic`}>
+                                <p className="text-sm text-destructive/80 font-light leading-relaxed mb-8 italic">
                                     {sections[0].subtitle}
                                 </p>
                                 
                                 <div className="mb-8 space-y-4">
                                     {sections[0].problems.map((problem, index) => (
                                         <div key={index} className="flex items-start space-x-3">
-                                            <span className="text-red-400 text-xl leading-none">×</span>
-                                            <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed`}>
+                                            <span className="text-destructive text-xl leading-none">×</span>
+                                            <p className="text-sm text-primary-foreground/90 leading-relaxed">
                                                 {problem}
                                             </p>
                                         </div>
                                     ))}
                                 </div>
                                 
-                                <button className="border-2 border-red-400 text-white hover:bg-red-400 hover:text-white px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide">
+                                <button className="border-2 border-destructive text-primary-foreground hover:bg-destructive hover:text-destructive-foreground px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide">
                                     {sections[0].buttonText}
                                 </button>
                             </div>
@@ -160,32 +158,32 @@ export const ProblemSection: React.FC = () => {
                         />
                         
                         {/* Overlay MUCHO más sutil para azul */}
-                        <div className="absolute inset-0 bg-gradient-to-l from-blue-900/50 via-blue-900/30 to-transparent" />
+                        <div className="absolute inset-0 bg-gradient-to-l from-primary/50 via-primary/30 to-transparent" />
                         
                         <div className="absolute inset-0 flex items-center justify-end px-12">
                             <div className={`text-right max-w-2xl transition-all duration-500 ${
                                 expandedSection === 1 ? 'opacity-100 translate-x-0' : 'opacity-70 translate-x-4'
                             }`}>
-                                <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-6 border-r-4 border-blue-400 pr-6`}>
+                                <h4 className="text-lg font-semibold text-primary-foreground mb-6 border-r-4 border-primary pr-6">
                                     {sections[1].title}
                                 </h4>
                                 
-                                <p className={`${TYPOGRAPHY.subtitle} text-blue-200 font-light leading-relaxed mb-8 italic`}>
+                                <p className="text-sm text-primary-foreground/80 font-light leading-relaxed mb-8 italic">
                                     {sections[1].subtitle}
                                 </p>
                                 
                                 <div className="mb-8 space-y-4">
                                     {sections[1].problems.map((solution, index) => (
                                         <div key={index} className="flex items-start space-x-3 justify-end">
-                                            <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed text-right`}>
+                                            <p className="text-sm text-primary-foreground/90 leading-relaxed text-right">
                                                 {solution}
                                             </p>
-                                            <span className="text-blue-400 text-xl leading-none">✓</span>
+                                            <span className="text-primary text-xl leading-none">✓</span>
                                         </div>
                                     ))}
                                 </div>
                                 
-                                <button className="border-2 border-blue-400 text-white hover:bg-blue-400 hover:text-white px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide">
+                                <button className="border-2 border-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide">
                                     {sections[1].buttonText}
                                 </button>
                             </div>
@@ -221,20 +219,20 @@ export const ProblemSection: React.FC = () => {
                     {/* Overlay MUY sutil en mobile - transición más suave */}
                     <div className={`absolute inset-0 transition-all duration-700 ease-in-out ${
                         sections[activeSection].theme === 'red' 
-                            ? 'bg-gradient-to-b from-slate-900/50 via-slate-900/30 to-slate-900/40'
-                            : 'bg-gradient-to-b from-blue-900/40 via-blue-900/20 to-blue-900/30'
+                            ? 'bg-gradient-to-b from-foreground/50 via-foreground/30 to-foreground/40'
+                            : 'bg-gradient-to-b from-primary/40 via-primary/20 to-primary/30'
                     }`} />
                     
                     <div className="absolute inset-0 flex items-center justify-center px-6 sm:px-8">
                         <div className="text-center max-w-lg transition-all duration-500 ease-in-out">
-                            <h4 className={`${TYPOGRAPHY.cardTitle} text-white mb-6 border-b-4 pb-4 ${
-                                sections[activeSection].theme === 'red' ? 'border-red-400' : 'border-blue-400'
+                            <h4 className={`text-lg font-semibold text-primary-foreground mb-6 border-b-4 pb-4 ${
+                                sections[activeSection].theme === 'red' ? 'border-destructive' : 'border-primary'
                             }`}>
                                 {sections[activeSection].title}
                             </h4>
                             
-                            <p className={`${TYPOGRAPHY.subtitle} mb-8 italic font-light leading-relaxed ${
-                                sections[activeSection].theme === 'red' ? 'text-red-200' : 'text-blue-200'
+                            <p className={`text-sm mb-8 italic font-light leading-relaxed ${
+                                sections[activeSection].theme === 'red' ? 'text-destructive/80' : 'text-primary-foreground/80'
                             }`}>
                                 {sections[activeSection].subtitle}
                             </p>
@@ -243,11 +241,11 @@ export const ProblemSection: React.FC = () => {
                                 {sections[activeSection].problems.map((item, index) => (
                                     <div key={index} className="flex items-start space-x-3">
                                         <span className={`text-xl leading-none ${
-                                            sections[activeSection].theme === 'red' ? 'text-red-400' : 'text-blue-400'
+                                            sections[activeSection].theme === 'red' ? 'text-destructive' : 'text-primary'
                                         }`}>
                                             {sections[activeSection].theme === 'red' ? '×' : '✓'}
                                         </span>
-                                        <p className={`${TYPOGRAPHY.body} text-white/90 leading-relaxed text-left`}>
+                                        <p className="text-sm text-primary-foreground/90 leading-relaxed text-left">
                                             {item}
                                         </p>
                                     </div>
@@ -255,10 +253,10 @@ export const ProblemSection: React.FC = () => {
                             </div>
                             
                             <button
-                                className={`border-2 text-white hover:text-white px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide ${
+                                className={`border-2 text-primary-foreground px-8 py-3 font-semibold transition-all duration-300 uppercase tracking-wide ${
                                     sections[activeSection].theme === 'red' 
-                                        ? 'border-red-400 hover:bg-red-400'
-                                        : 'border-blue-400 hover:bg-blue-400'
+                                        ? 'border-destructive hover:bg-destructive hover:text-destructive-foreground'
+                                        : 'border-primary hover:bg-primary hover:text-primary-foreground'
                                 }`}
                             >
                                 {sections[activeSection].buttonText}
@@ -278,8 +276,8 @@ export const ProblemSection: React.FC = () => {
                             }}
                             className={`h-2 transition-all duration-300 ease-in-out ${
                                 index === activeSection 
-                                    ? `w-16 ${section.theme === 'red' ? 'bg-red-400' : 'bg-blue-400'}` 
-                                    : 'w-8 bg-white/30'
+                                    ? `w-16 ${section.theme === 'red' ? 'bg-destructive' : 'bg-primary'}` 
+                                    : 'w-8 bg-primary-foreground/30'
                             }`}
                         />
                     ))}

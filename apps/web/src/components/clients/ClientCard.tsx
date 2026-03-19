@@ -59,43 +59,43 @@ const getExperienciaLabel = (nivel?: string): string => {
     return nivel ? labels[nivel] || nivel : "No especificado";
 };
 
-// Helper para color de badge de objetivo
+// Helper para color de badge de objetivo (tokens Nexia Sparkle Flow)
 const getObjetivoBadgeColor = (objetivo?: string): string => {
     const colors: Record<string, string> = {
-        weight_loss: "bg-blue-100 text-blue-700",
-        muscle_gain: "bg-purple-100 text-purple-700",
-        performance: "bg-orange-100 text-orange-700",
-        health: "bg-green-100 text-green-700",
+        weight_loss: "bg-primary/10 text-primary",
+        muscle_gain: "bg-accent/20 text-accent-foreground",
+        performance: "bg-warning/10 text-warning",
+        health: "bg-success/10 text-success",
     };
-    return objetivo ? colors[objetivo] || "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700";
+    return objetivo ? colors[objetivo] || "bg-muted text-muted-foreground" : "bg-muted text-muted-foreground";
 };
 
-// Helper para color de badge de experiencia
+// Helper para color de badge de experiencia (tokens Nexia Sparkle Flow)
 const getExperienciaBadgeColor = (nivel?: string): string => {
     const colors: Record<string, string> = {
-        beginner: "bg-green-100 text-green-700",
-        intermediate: "bg-yellow-100 text-yellow-700",
-        advanced: "bg-red-100 text-red-700",
+        beginner: "bg-success/10 text-success",
+        intermediate: "bg-warning/10 text-warning",
+        advanced: "bg-destructive/10 text-destructive",
     };
-    return nivel ? colors[nivel] || "bg-slate-100 text-slate-700" : "bg-slate-100 text-slate-700";
+    return nivel ? colors[nivel] || "bg-muted text-muted-foreground" : "bg-muted text-muted-foreground";
 };
 
 export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
     return (
         <div
             onClick={onClick}
-            className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer hover:scale-[1.02] p-6"
+            className="bg-card border border-border rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer hover:scale-[1.02] p-6"
         >
             {/* Header con nombre y estado */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-bold text-slate-800 truncate">
+                    <h3 className="text-lg font-bold text-foreground truncate">
                         {client.nombre} {client.apellidos}
                     </h3>
-                    <p className="text-sm text-slate-600 truncate">{client.mail}</p>
+                    <p className="text-sm text-muted-foreground truncate">{client.mail}</p>
                 </div>
                 <div
-                    className={`flex-shrink-0 ml-2 w-3 h-3 rounded-full ${client.activo ? "bg-green-500" : "bg-slate-300"
+                    className={`flex-shrink-0 ml-2 w-3 h-3 rounded-full ${client.activo ? "bg-success" : "bg-muted"
                         }`}
                     title={client.activo ? "Activo" : "Inactivo"}
                 />
@@ -127,27 +127,27 @@ export const ClientCard: React.FC<ClientCardProps> = ({ client, onClick }) => {
             <div className="grid grid-cols-3 gap-3 mb-4">
                 {client.edad && (
                     <div>
-                        <p className="text-xs text-slate-500">Edad</p>
-                        <p className="text-sm font-semibold text-slate-800">{client.edad} años</p>
+                        <p className="text-xs text-muted-foreground">Edad</p>
+                        <p className="text-sm font-semibold text-foreground">{client.edad} años</p>
                     </div>
                 )}
                 {client.peso && (
                     <div>
-                        <p className="text-xs text-slate-500">Peso</p>
-                        <p className="text-sm font-semibold text-slate-800">{client.peso} kg</p>
+                        <p className="text-xs text-muted-foreground">Peso</p>
+                        <p className="text-sm font-semibold text-foreground">{client.peso} kg</p>
                     </div>
                 )}
                 {client.imc && (
                     <div>
-                        <p className="text-xs text-slate-500">IMC</p>
-                        <p className="text-sm font-semibold text-slate-800">{client.imc.toFixed(1)}</p>
+                        <p className="text-xs text-muted-foreground">IMC</p>
+                        <p className="text-sm font-semibold text-foreground">{client.imc.toFixed(1)}</p>
                     </div>
                 )}
             </div>
 
             {/* Footer con fecha de registro */}
-            <div className="pt-4 border-t border-slate-200">
-                <p className="text-xs text-slate-500">
+            <div className="pt-4 border-t border-border">
+                <p className="text-xs text-muted-foreground">
                     Cliente desde {formatDate(client.fecha_alta)}
                 </p>
             </div>

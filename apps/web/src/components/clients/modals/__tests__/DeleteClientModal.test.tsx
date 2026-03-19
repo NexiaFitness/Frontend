@@ -3,9 +3,9 @@
  *
  * Se valida:
  * - Render condicional (isOpen).
- * - Muestra título, descripción y datos del cliente.
+ * - Muestra título y descripción con nombre del cliente.
  * - Botón "Cancelar" ejecuta onClose.
- * - Botón "Eliminar cliente" dispara mutación y onDeleteSuccess.
+ * - Botón "Desvincular cliente" dispara mutación y onDeleteSuccess.
  * - Mensaje de advertencia consistente con TYPOGRAPHY.errorText.
  *
  * Usa MSW para interceptar requests de eliminación de clientes.
@@ -17,17 +17,22 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { DeleteClientModal } from "../DeleteClientModal";
-import { createMockClient } from "@/test-utils/fixtures/clientFixture";
-// Mock inline para este test específico (MSW no intercepta DELETE /clients/{id})
-const mockDeleteClient = vi.fn(() => ({
-    unwrap: () => Promise.resolve({ message: "Client deleted successfully" })
+import { createMockClient } from "@/test-utils/fixtures/clients";
+// Mock inline para este test específico
+const mockUnlinkClient = vi.fn(() => ({
+    unwrap: () => Promise.resolve({ message: "Client unlinked successfully" })
 }));
 
-vi.mock("@shared/api/clientsApi", () => ({
-    useDeleteClientMutation: () => [
-        mockDeleteClient,
+const mockTrainerProfile = { id: 1 };
+
+vi.mock("@nexia/shared/api/trainerApi", () => ({
+    useUnlinkClientMutation: () => [
+        mockUnlinkClient,
         { isLoading: false },
     ],
+    useGetCurrentTrainerProfileQuery: () => ({
+        data: mockTrainerProfile,
+    }),
 }));
 
 const mockClient = createMockClient();
@@ -43,35 +48,32 @@ describe("DeleteClientModal", () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
-        mockDeleteClient.mockClear();
+        mockUnlinkClient.mockClear();
     });
 
     it("no renderiza nada si isOpen=false", () => {
-        const { container } = render(
-            <DeleteClientModal {...defaultProps} isOpen={false} />
-        );
-        expect(container.firstChild).toBeNull();
+        render(<DeleteClientModal {...defaultProps} isOpen={false} />);
+        expect(screen.queryByRole("heading", { name: "Desvincular Cliente" })).not.toBeInTheDocument();
     });
 
     it("renderiza título y descripción", () => {
         render(<DeleteClientModal {...defaultProps} />);
         expect(
-            screen.getByRole("heading", { name: "Eliminar Cliente" })
+            screen.getByRole("heading", { name: "Desvincular Cliente" })
         ).toBeInTheDocument();
         expect(
             screen.getByText(
-                `¿Estás seguro de que deseas eliminar a ${mockClient.nombre} ${mockClient.apellidos}?`
+                `¿Estás seguro de que deseas desvincular a ${mockClient.nombre} ${mockClient.apellidos}?`
             )
         ).toBeInTheDocument();
     });
 
-    it("muestra los datos del cliente (mail y objetivo)", () => {
+    it("muestra la descripción del modal con el nombre del cliente", () => {
         render(<DeleteClientModal {...defaultProps} />);
-        expect(screen.getByText("Email:")).toBeInTheDocument();
-        expect(screen.getByText(mockClient.mail)).toBeInTheDocument();
-        expect(screen.getByText("Objetivo:")).toBeInTheDocument();
         expect(
-            screen.getByText(mockClient.objetivo_entrenamiento?.replace("_", " ") || "No especificado")
+            screen.getByText(
+                `¿Estás seguro de que deseas desvincular a ${mockClient.nombre} ${mockClient.apellidos}?`
+            )
         ).toBeInTheDocument();
     });
 
@@ -85,8 +87,8 @@ describe("DeleteClientModal", () => {
     it("ejecuta onDeleteSuccess tras confirmar eliminación", async () => {
         const user = userEvent.setup();
         render(<DeleteClientModal {...defaultProps} />);
-        await user.click(screen.getByRole("button", { name: "Eliminar cliente" }));
-        expect(mockDeleteClient).toHaveBeenCalledTimes(1);
+        await user.click(screen.getByRole("button", { name: /Desvincular cliente/i }));
+        expect(mockUnlinkClient).toHaveBeenCalledTimes(1);
         expect(defaultProps.onDeleteSuccess).toHaveBeenCalledTimes(1);
         expect(defaultProps.onClose).toHaveBeenCalledTimes(1);
     });
@@ -94,7 +96,7 @@ describe("DeleteClientModal", () => {
     it("muestra mensaje de advertencia irreversible", () => {
         render(<DeleteClientModal {...defaultProps} />);
         expect(
-            screen.getByText("Esta acción no se puede deshacer.")
+            screen.getByText("Esta acción es irreversible.")
         ).toBeInTheDocument();
     });
 });

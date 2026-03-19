@@ -22,8 +22,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { TYPOGRAPHY, TYPOGRAPHY_COMBINATIONS } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useLoginMutation, loginSuccess, loginFailure, useAuthForm } from "@nexia/shared";
 import { validateLoginForm } from "@nexia/shared/utils/validations";
 import type { AppDispatch } from "@nexia/shared/store";
@@ -79,6 +77,7 @@ export const LoginForm: React.FC = () => {
                 loginSuccess({
                     user: response.user,
                     token: response.access_token,
+                    refreshToken: response.refresh_token,
                 })
             );
 
@@ -95,17 +94,17 @@ export const LoginForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className={`${TYPOGRAPHY.pageTitle} mb-2 text-primary-400`}>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-primary">
                     Bienvenido de vuelta
                 </h1>
-                <p className={`${TYPOGRAPHY.body} text-gray-600`}>
+                <p className="text-sm sm:text-base text-muted-foreground">
                     Inicia sesión en tu cuenta de NEXIA
                 </p>
             </div>
 
             {successMessage && (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <p className={TYPOGRAPHY_COMBINATIONS.successMessage}>
+                <div className="bg-success/10 border border-success/30 rounded-lg p-4">
+                    <p className="text-sm font-medium text-foreground">
                         {successMessage}
                     </p>
                 </div>
@@ -123,6 +122,7 @@ export const LoginForm: React.FC = () => {
                     placeholder="Introduce tu correo electrónico"
                     isRequired
                     disabled={isLoading}
+                    autoComplete="email"
                 />
 
                 <Input
@@ -134,15 +134,16 @@ export const LoginForm: React.FC = () => {
                     placeholder="Introduce tu contraseña"
                     isRequired
                     disabled={isLoading}
+                    autoComplete="current-password"
                 />
 
                 <Button
                     type="submit"
                     variant="primary"
-                    size="md" // unificado con LogoutButton
+                    size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className={BUTTON_PRESETS.formPrimary}
+                    className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3"
                 >
                     {isLoading ? "Iniciando sesión..." : "Iniciar sesión"}
                 </Button>
@@ -151,18 +152,18 @@ export const LoginForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => navigate("/auth/forgot-password")}
-                        className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
+                        className="text-sm sm:text-base font-medium text-primary underline underline-offset-4 hover:text-primary/90 disabled:opacity-50"
                         disabled={isLoading}
                     >
                         ¿Olvidaste tu contraseña?
                     </button>
 
-                    <div className="text-gray-600">
+                    <div className="text-muted-foreground">
                         ¿No tienes cuenta?{" "}
                         <button
                             type="button"
                             onClick={() => navigate("/auth/register")}
-                            className={`${TYPOGRAPHY.linkText} text-blue-600 hover:text-blue-700 underline disabled:opacity-50`}
+                            className="text-sm sm:text-base font-medium text-primary underline underline-offset-4 hover:text-primary/90 disabled:opacity-50"
                             disabled={isLoading}
                         >
                             Regístrate aquí

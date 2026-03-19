@@ -1,54 +1,137 @@
 /**
  * App principal
- * 
+ *
  * Configura las rutas de React Router con:
  * - Layout público para homepage y páginas de autenticación
  * - Smart dashboard routing basado en rol del usuario autenticado
  * - Protección de rutas privadas con redirect automático
- * - Client Management: List, Detail, Onboarding
- * - Training Plans Management: List (FASE 1)
- * 
+ * - Dashboard unificado vía DashboardShell (Fase 2b)
+ * - Route-based code splitting con React.lazy (BUILD_WARNINGS_ANALYSIS.md Fase 2)
+ *
  * @author Frontend Team
  * @since v1.0.0
- * @updated v3.2.0 - Role-based dashboard routing implementado
- * @updated v3.2.0 - Training Plans Management agregado (FASE 1)
- * @updated v2.6.0 - Client Management Dashboard
+ * @updated v5.0.0 - Fase 2b: todas las rutas dashboard anidadas bajo DashboardShell
+ * @updated v5.x - Fase 2: code splitting por bloques funcionales
  */
 
-import React, { useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 
-// Páginas públicas
+// Páginas públicas (críticas: estáticas)
 import Home from "./pages/Home";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
-import ForgotPassword from "./pages/auth/ForgotPassword";
-import ResetPassword from "./pages/auth/ResetPassword";
-import VerifyEmail from "./pages/auth/VerifyEmail";
 
-// Dashboards por rol
-import { TrainerDashboard } from "./pages/dashboard/trainer/TrainerDashboard";
-import { AdminDashboard } from "./pages/dashboard/admin/AdminDashboard";
-import { AthleteDashboard } from "./pages/dashboard/athlete/AthleteDashboard";
+// Bloque 1: Públicas secundarias (lazy)
+const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 
-// Páginas trainer-specific
-import { CompleteProfile } from "./pages/dashboard/trainer/CompleteProfile";
+// Bloque 2: Dashboards por rol (lazy)
+const TrainerDashboard = lazy(() =>
+  import("./pages/dashboard/trainer/TrainerDashboard").then((m) => ({ default: m.TrainerDashboard }))
+);
+const AdminDashboard = lazy(() =>
+  import("./pages/dashboard/admin/AdminDashboard").then((m) => ({ default: m.AdminDashboard }))
+);
+const AthleteDashboard = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteDashboard").then((m) => ({ default: m.AthleteDashboard }))
+);
 
-// Client Management (trainers only)
-import { ClientOnboarding } from "./pages/clients/ClientOnboarding";
-import { ClientList } from "./pages/clients/ClientList";
-import { ClientDetail } from "./pages/clients/ClientDetail";
+// Bloque 3: Módulos trainer (lazy)
+const CompleteProfile = lazy(() =>
+  import("./pages/dashboard/trainer/CompleteProfile").then((m) => ({ default: m.CompleteProfile }))
+);
+const ClientOnboarding = lazy(() =>
+  import("./pages/clients/ClientOnboarding").then((m) => ({ default: m.ClientOnboarding }))
+);
+const ClientList = lazy(() =>
+  import("./pages/clients/ClientList").then((m) => ({ default: m.ClientList }))
+);
+const ClientDetail = lazy(() =>
+  import("./pages/clients/ClientDetail").then((m) => ({ default: m.ClientDetail }))
+);
+const ClientEdit = lazy(() =>
+  import("./pages/clients/ClientEdit").then((m) => ({ default: m.ClientEdit }))
+);
+const ClientNewSessionPage = lazy(() =>
+  import("./pages/clients/ClientNewSessionPage").then((m) => ({ default: m.ClientNewSessionPage }))
+);
+const TrainingPlansPage = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlansPage").then((m) => ({ default: m.TrainingPlansPage }))
+);
+const TrainingPlanDetail = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlanDetail").then((m) => ({ default: m.TrainingPlanDetail }))
+);
+const TrainingPlanEdit = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlanEdit").then((m) => ({ default: m.TrainingPlanEdit }))
+);
+const CreateTrainingPlan = lazy(() =>
+  import("./pages/trainingPlans/CreateTrainingPlan").then((m) => ({ default: m.CreateTrainingPlan }))
+);
+const CreateTrainingPlanTemplate = lazy(() =>
+  import("./pages/trainingPlans/CreateTrainingPlanTemplate").then((m) => ({ default: m.CreateTrainingPlanTemplate }))
+);
+const ExerciseList = lazy(() =>
+  import("./pages/exercises").then((m) => ({ default: m.ExerciseList }))
+);
+const ExerciseDetail = lazy(() =>
+  import("./pages/exercises").then((m) => ({ default: m.ExerciseDetail }))
+);
+const ExerciseForm = lazy(() =>
+  import("./pages/exercises").then((m) => ({ default: m.ExerciseForm }))
+);
+const GenerateReports = lazy(() =>
+  import("./pages/reports/GenerateReports").then((m) => ({ default: m.GenerateReports }))
+);
+const SchedulingPage = lazy(() =>
+  import("./pages/scheduling/SchedulingPage").then((m) => ({ default: m.SchedulingPage }))
+);
+const NewScheduledSessionPage = lazy(() =>
+  import("./pages/scheduling/NewScheduledSessionPage").then((m) => ({ default: m.NewScheduledSessionPage }))
+);
+const EditScheduledSessionPage = lazy(() =>
+  import("./pages/scheduling/EditScheduledSessionPage").then((m) => ({ default: m.EditScheduledSessionPage }))
+);
+const CreateSessionFromTemplate = lazy(() =>
+  import("./pages/sessionProgramming/CreateSessionFromTemplate").then((m) => ({ default: m.CreateSessionFromTemplate }))
+);
+const CreateSession = lazy(() =>
+  import("./pages/sessionProgramming/CreateSession").then((m) => ({ default: m.CreateSession }))
+);
+const EditSession = lazy(() =>
+  import("./pages/sessionProgramming/EditSession").then((m) => ({ default: m.EditSession }))
+);
+const CreateTemplate = lazy(() =>
+  import("./pages/sessionProgramming/CreateTemplate").then((m) => ({ default: m.CreateTemplate }))
+);
+const SessionDetail = lazy(() =>
+  import("./pages/sessionProgramming/SessionDetail").then((m) => ({ default: m.SessionDetail }))
+);
+const StandaloneSessionDetail = lazy(() =>
+  import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
+);
+const SessionsPage = lazy(() =>
+  import("./pages/sessions/SessionsPage").then((m) => ({ default: m.SessionsPage }))
+);
+const CreateTestResult = lazy(() =>
+  import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
+);
 
-// Training Plans Management (trainers only)
-import { TrainingPlansPage } from "./pages/trainingPlans/TrainingPlansPage";
-import { TrainingPlanDetail } from "./pages/trainingPlans/TrainingPlanDetail";
-
-// Páginas adicionales
-import Account from "./pages/account/Account";
+// Bloque 4: Account, NotFound (lazy)
+const Account = lazy(() => import("./pages/account/Account"));
+const NotFound = lazy(() =>
+  import("./pages/NotFound").then((m) => ({ default: m.NotFound }))
+);
 
 // Layouts
 import { PublicLayout } from "./components/ui/layout/PublicLayout";
+import { DashboardShell } from "./components/dashboard/DashboardShell";
+
+// UI Components
+import { ToastProvider, LoadingSpinner } from "./components/ui/feedback";
+import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
@@ -60,17 +143,17 @@ import { USER_ROLES } from "@nexia/shared/utils/roles";
 import { hydrateAuth } from "@nexia/shared/store/authSlice";
 
 /**
- * DashboardRouter - Router inteligente basado en roles
+ * DashboardRouter - Router inteligente basado en roles para index /dashboard
  */
 const DashboardRouter: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   switch (user?.role) {
-    case 'admin':
+    case "admin":
       return <AdminDashboard />;
-    case 'trainer':
+    case "trainer":
       return <TrainerDashboard />;
-    case 'athlete':
+    case "athlete":
       return <AthleteDashboard />;
     default:
       console.error(`Unknown user role: ${user?.role}`);
@@ -82,143 +165,288 @@ function App() {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, isLoading, user } = useSelector((state: RootState) => state.auth);
 
-  // Hidratar auth state al montar app
   useEffect(() => {
     dispatch(hydrateAuth());
   }, [dispatch]);
 
-  // Log estratégico de auth state
   useEffect(() => {
-    if (!isLoading) {  // Solo loguear después de hydration
+    if (!isLoading) {
       // eslint-disable-next-line no-console
       console.info("[App] Auth state:", {
         isAuthenticated,
-        user: user?.email || 'none',
-        role: user?.role || 'none',
-        verified: user?.is_verified ?? false
+        user: user?.email || "none",
+        role: user?.role || "none",
+        verified: user?.is_verified ?? false,
       });
     }
   }, [isAuthenticated, isLoading, user]);
 
   return (
-    <Routes>
-      {/* Rutas públicas */}
-      <Route element={<PublicLayout />}>
+    <ToastProvider>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingSpinner size="lg" />}>
+          <Routes>
+            <Route element={<PublicLayout />}>
+          <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/register" element={<Register />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
+        </Route>
+
+        {/* Dashboard: todas las rutas anidadas bajo DashboardShell (Fase 2b) */}
         <Route
-          path="/"
+          path="/dashboard"
           element={
-            isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />
+            <ProtectedRoute>
+              <DashboardShell />
+            </ProtectedRoute>
           }
-        />
-        <Route path="/auth/login" element={<Login />} />
-        <Route path="/auth/register" element={<Register />} />
-        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-        <Route path="/reset-password" element={<ResetPassword />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
-      </Route>
+        >
+          <Route index element={<DashboardRouter />} />
 
-      {/* Dashboard principal */}
-      <Route
-        path="/dashboard"
-        element={
-          <ProtectedRoute>
-            <DashboardRouter />
-          </ProtectedRoute>
-        }
-      />
+          {/* Training Plans - rutas específicas primero */}
+          <Route
+            path="training-plans/templates/create"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <CreateTrainingPlanTemplate />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/create"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <CreateTrainingPlan />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlanEdit />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlanDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlansPage />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* ============================================ */}
-      {/* TRAINING PLANS MANAGEMENT - Trainers only */}
-      {/* ============================================ */}
+          {/* Exercises */}
+          <Route
+            path="exercises/create"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseForm />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="exercises/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseForm />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="exercises/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="exercises"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ExerciseList />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Training Plan Detail - Ruta específica PRIMERO */}
-      <Route
-        path="/dashboard/training-plans/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <TrainingPlanDetail />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Clients */}
+          <Route
+            path="clients/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientEdit />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients/:id/sessions/new"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientNewSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients/onboarding"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientOnboarding />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="clients"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <ClientList />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Training Plans List - ✅ FASE 1 IMPLEMENTADA */}
-      <Route
-        path="/dashboard/training-plans"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <TrainingPlansPage />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Complete Profile */}
+          <Route
+            path="trainer/complete-profile"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <CompleteProfile />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* ============================================ */}
-      {/* CLIENT MANAGEMENT - Trainers only */}
-      {/* ============================================ */}
+          {/* Reports & Scheduling */}
+          <Route
+            path="reports/generate"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <GenerateReports />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="scheduling"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <SchedulingPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="scheduling/new"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <NewScheduledSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="scheduling/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <EditScheduledSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
 
-      <Route
-        path="/dashboard/clients/:id"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientDetail />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Sessions list (unified training + standalone) */}
+          <Route
+            path="sessions"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <SessionsPage />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Client Onboarding (wizard de alta) */}
-      <Route
-        path="/dashboard/clients/onboarding"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientOnboarding />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Session Programming */}
+          <Route
+            path="session-programming/create-from-template/:templateId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateSessionFromTemplate />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/create-session"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateSession />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/edit-session/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <EditSession />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/sessions/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <SessionDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="standalone-sessions/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <StandaloneSessionDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/create-template"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateTemplate />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Client List (lista principal) */}
-      <Route
-        path="/dashboard/clients"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <ClientList />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Testing */}
+          <Route
+            path="testing/create-test"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateTestResult />
+              </RoleProtectedRoute>
+            }
+          />
 
-      {/* Complete Profile - Solo trainers */}
-      <Route
-        path="/dashboard/trainer/complete-profile"
-        element={
-          <ProtectedRoute>
-            <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-              <CompleteProfile />
-            </RoleProtectedRoute>
-          </ProtectedRoute>
-        }
-      />
+          {/* Account - todos los roles */}
+          <Route path="account" element={<Account />} />
+        </Route>
 
-      {/* Account - Todos los roles */}
-      <Route
-        path="/dashboard/account"
-        element={
-          <ProtectedRoute>
-            <Account />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* Catch-all */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+        </Suspense>
+      </ErrorBoundary>
+    </ToastProvider>
   );
 }
 

@@ -8,3 +8,6 @@
 
 export { CompleteProfileBanner } from "./CompleteProfileBanner";
 export { EmailVerificationBanner } from "./EmailVerificationBanner";
+export { GreetingHeader } from "./GreetingHeader";
+export { PageTitle } from "./PageTitle";
+export type { PageTitleProps } from "./PageTitle";

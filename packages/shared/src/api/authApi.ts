@@ -22,6 +22,7 @@ import type {
     ResetPasswordData,
     LogoutRequest,
     LogoutResponse,
+    RefreshRequest,
     User,
 } from "../types/auth";
 

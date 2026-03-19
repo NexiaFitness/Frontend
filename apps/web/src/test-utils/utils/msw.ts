@@ -9,11 +9,26 @@
  */
 
 import { setupServer } from "msw/node";
-import { authHandlers } from "../mocks/handlers/authHandlers";
-import { accountHandlers } from "../mocks/handlers/accountHandlers"; // ADD THIS LINE
+import { authHandlers } from "../mocks/handlers/auth";
+import { accountHandlers } from "../mocks/handlers/account";
+import { clientsHandlers } from "../mocks/handlers/clients";
+import { catalogsHandlers } from "../mocks/handlers/catalogs";
+import { planningHandlers } from "../mocks/handlers/planning";
+import { injuriesHandlers } from "../mocks/handlers/injuries";
+import { trainersHandlers } from "../mocks/handlers/trainers";
+import { fatigueHandlers } from "../mocks/handlers/fatigue";
 
 // Servidor MSW con handlers centralizados
-export const server = setupServer(...authHandlers, ...accountHandlers); // UPDATE THIS LINE
+export const server = setupServer(
+    ...authHandlers,
+    ...accountHandlers,
+    ...clientsHandlers,
+    ...catalogsHandlers,
+    ...planningHandlers,
+    ...injuriesHandlers,
+    ...trainersHandlers,
+    ...fatigueHandlers
+);
 
 // Setup global para tests
 export const setupMSW = () => {

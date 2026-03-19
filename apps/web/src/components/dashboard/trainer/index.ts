@@ -6,5 +6,4 @@
  * @since v3.2.0
  */
 
-export { TrainerSideMenu } from "./TrainerSideMenu";
 export { CompleteProfileForm } from "./CompleteProfileForm";

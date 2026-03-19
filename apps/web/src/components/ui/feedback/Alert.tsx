@@ -3,13 +3,9 @@
  *
  * Contexto:
  * - Alertas para diferentes contextos: info, success, warning, error.
- * - Diseño consistente con ServerErrorBanner (mismo patrón visual).
+ * - Usa tokens de diseño de la app (primary, success, warning, destructive).
  * - Botón de cierre opcional (onDismiss).
  * - Iconos SVG integrados por variante.
- *
- * Notas de mantenimiento:
- * - Sigue el mismo patrón de colores que ServerErrorBanner:
- *   bg-{color}-50, border-{color}-200, text-{color}-800
  * - Accesibilidad con role="alert"
  *
  * @author Frontend Team
@@ -25,30 +21,31 @@ interface AlertProps {
     onDismiss?: () => void;
 }
 
+/** Estilos por variante usando tokens de la app (sin fondos blancos) */
 const variantStyles = {
     info: {
-        container: "bg-blue-50 border-blue-200",
-        text: "text-blue-800",
-        icon: "text-blue-600",
-        dismissButton: "text-blue-400 hover:text-blue-600",
+        container: "bg-primary/10 border border-primary/30",
+        text: "text-foreground",
+        icon: "text-primary",
+        dismissButton: "text-primary/80 hover:text-primary",
     },
     success: {
-        container: "bg-green-50 border-green-200",
-        text: "text-green-800",
-        icon: "text-green-600",
-        dismissButton: "text-green-400 hover:text-green-600",
+        container: "bg-success/10 border border-success/30",
+        text: "text-foreground",
+        icon: "text-success",
+        dismissButton: "text-success/80 hover:text-success",
     },
     warning: {
-        container: "bg-yellow-50 border-yellow-200",
-        text: "text-yellow-800",
-        icon: "text-yellow-600",
-        dismissButton: "text-yellow-400 hover:text-yellow-600",
+        container: "bg-warning/10 border border-warning/30",
+        text: "text-foreground",
+        icon: "text-warning",
+        dismissButton: "text-warning/80 hover:text-warning",
     },
     error: {
-        container: "bg-red-50 border-red-200",
-        text: "text-red-800",
-        icon: "text-red-600",
-        dismissButton: "text-red-400 hover:text-red-600",
+        container: "bg-destructive/10 border border-destructive/30",
+        text: "text-foreground",
+        icon: "text-destructive",
+        dismissButton: "text-destructive/80 hover:text-destructive",
     },
 };
 

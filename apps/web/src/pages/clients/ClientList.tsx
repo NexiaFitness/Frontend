@@ -1,301 +1,474 @@
 /**
- * ClientList.tsx — Lista principal de clientes del trainer
+ * ClientList.tsx — Vista Clientes (/dashboard/clients). VISTA_CLIENTES_SPEC.
  *
  * Contexto:
- * - Vista protegida (solo trainers) con lista paginada de clientes.
- * - Integra búsqueda en tiempo real y filtros avanzados.
- * - Usa DashboardLayout para consistencia visual con resto del dashboard.
- * - Click en card → navega a /dashboard/clients/{id} (detalle).
- *
- * Features:
- * - Paginación funcional con query params
- * - Búsqueda debounced (500ms)
- * - Filtros: objetivo_entrenamiento, experiencia, activo
- * - Estados: loading, error, empty
- * - Botón "Add New Client" → onboarding wizard
- * - Stats overview (total, activos, inactivos)
- *
- * Notas de mantenimiento:
- * - useGetClientsQuery invalida cache automáticamente
- * - Filtros persisten en URL (compartible)
- * - Responsive mobile-first
+ * - Header (título + total + botón Nuevo cliente), controles (búsqueda + Pills status + toggle grid/lista).
+ * - Vista grid (cards) o lista (tabla); paginación PAGE_SIZE=9; sidebar Actividad reciente (lg+).
+ * - Datos: useClientsListWithMetrics (page, page_size, search, status); getRecentActivity.
  *
  * @author Frontend Team
  * @since v2.6.0
+ * @updated v6.0.0 - VISTA_CLIENTES_SPEC: grid/lista, SatisfactionIcon por level, PaginationBar, tokens.
  */
 
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { useGetClientsQuery } from "@nexia/shared/api/clientsApi";
-import type { ClientFilters as ClientFiltersType, Client } from "@nexia/shared/types/client";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { LayoutGrid, List, Plus, Search, UserPlus } from "lucide-react";
+import {
+    useClientsListWithMetrics,
+    useGetRecentActivityQuery,
+    useGetCurrentTrainerProfileQuery,
+    useCompleteProfileModal,
+} from "@nexia/shared";
+import type { ClientStatus } from "@nexia/shared/types/client";
+import type { RootState } from "@nexia/shared/store";
 
-// Layouts
-import { DashboardLayout } from "@/components/dashboard/layout";
-import { DashboardNavbar } from "@/components/dashboard/DashboardNavbar";
-import { TrainerSideMenu } from "@/components/dashboard/trainer/TrainerSideMenu";
-
-// Components
-import { ClientCard } from "@/components/clients/ClientCard";
-import { ClientFilters } from "@/components/clients/ClientFilters";
-import { ClientStats } from "@/components/clients/ClientStats";
-
-// UI
+import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { ClientAvatar } from "@/components/ui/avatar";
+import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
+import { PaginationBar } from "@/components/ui/pagination";
+import { cn } from "@/lib/utils";
 
-// Utils
-import { TYPOGRAPHY } from "@/utils/typography";
+const PAGE_SIZE = 9;
+
+function getFatigueColor(fatigue: string | null): string {
+    if (!fatigue) return "bg-muted text-muted-foreground";
+    const f = fatigue.toLowerCase();
+    if (f.includes("perfect")) return "bg-success/10 text-success";
+    if (f.includes("slightly")) return "bg-warning/10 text-warning";
+    if (f.includes("very")) return "bg-warning/10 text-warning";
+    if (f.includes("exhausted")) return "bg-destructive/10 text-destructive";
+    return "bg-muted text-muted-foreground";
+}
+
+function translateFatigue(fatigue: string | null): string {
+    if (!fatigue) return "—";
+    const f = fatigue.toLowerCase();
+    if (f.includes("perfect")) return "Descansado";
+    if (f.includes("slightly")) return "Cansado";
+    if (f.includes("very")) return "Muy cansado";
+    if (f.includes("exhausted")) return "Agotado";
+    return fatigue;
+}
+
+function getStatusLabel(status: ClientStatus | null | undefined): string {
+    if (!status) return "—";
+    if (status === "active") return "Activo";
+    if (status === "paused") return "Pausado";
+    if (status === "inactive") return "Baja";
+    return "—";
+}
+
+function getStatusBadgeClass(status: ClientStatus | null | undefined): string {
+    if (!status) return "bg-muted text-muted-foreground";
+    if (status === "active") return "bg-success/10 text-success";
+    if (status === "paused") return "bg-warning/10 text-warning";
+    return "bg-destructive/10 text-destructive";
+}
+
+function formatTimeAgo(timestamp: string): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffMins < 60) return `hace ${diffMins} ${diffMins === 1 ? "minuto" : "minutos"}`;
+    if (diffHours < 24) return `hace ${diffHours} ${diffHours === 1 ? "hora" : "horas"}`;
+    if (diffDays === 1) return "hace 1 día";
+    return `hace ${diffDays} días`;
+}
+
+function getActivityIcon(type: string): React.ReactNode {
+    switch (type) {
+        case "session_completed":
+            return (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            );
+        case "client_added":
+            return (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+            );
+        case "session_scheduled":
+            return (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+            );
+        case "goal_achieved":
+            return (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            );
+        case "test_completed":
+            return (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+            );
+        default:
+            return (
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            );
+    }
+}
+
+type StatusFilter = "all" | "active" | "paused";
+type ViewMode = "grid" | "list";
 
 export const ClientList: React.FC = () => {
     const navigate = useNavigate();
-    const [searchParams, setSearchParams] = useSearchParams();
+    const { user } = useSelector((state: RootState) => state.auth);
+    const { shouldBlock } = useCompleteProfileModal();
+    const [showCompleteProfileModal, setShowCompleteProfileModal] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [searchInput, setSearchInput] = useState("");
+    const [searchDebounced, setSearchDebounced] = useState("");
+    const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+    const [viewMode, setViewMode] = useState<ViewMode>("grid");
 
-    // State de filtros (inicializado desde URL) - FIX: Type casting para TypeScript strict
-    const [filters, setFilters] = useState<ClientFiltersType>({
-        search: searchParams.get("search") || "",
-        objetivo_entrenamiento: (searchParams.get("objetivo_entrenamiento") as ClientFiltersType["objetivo_entrenamiento"]) || undefined,
-        experiencia: (searchParams.get("experiencia") as ClientFiltersType["experiencia"]) || undefined,
-        activo: searchParams.get("activo") === "true" ? true : searchParams.get("activo") === "false" ? false : undefined,
-    });
-
-    // State de paginación
-    const [page, setPage] = useState(Number(searchParams.get("page")) || 1);
-    const perPage = 12; // Cards por página
-
-    // Query RTK
-    const { data, isLoading, isError, error } = useGetClientsQuery({
-        filters,
-        page,
-        per_page: perPage,
-    });
-
-    // Validar datos y calcular valores derivados de forma segura (alineado con backend)
-    const clients: Client[] = data?.items ?? [];  // ← Backend usa "items" (no "clients")
-    const totalClients = data?.total ?? 0;
-    const currentPage = data?.page ?? page;
-    const pageSize = data?.page_size ?? perPage;  // ← Backend usa "page_size" (no "per_page")
-    const hasMore = data?.has_more ?? false;  // ← Backend usa "has_more"
-    
-    // Calcular total_pages desde page_size y total (solo para UI)
-    const totalPages = pageSize > 0 ? Math.ceil(totalClients / pageSize) : 0;
-
-    // Sincronizar filtros con URL (para compartir links)
     useEffect(() => {
-        const params = new URLSearchParams();
-        if (filters.search) params.set("search", filters.search);
-        if (filters.objetivo_entrenamiento) params.set("objetivo_entrenamiento", filters.objetivo_entrenamiento);
-        if (filters.experiencia) params.set("experiencia", filters.experiencia);
-        if (filters.activo !== undefined) params.set("activo", filters.activo.toString());
-        if (page > 1) params.set("page", page.toString());
-        setSearchParams(params);
-    }, [filters, page, setSearchParams]);
+        const t = setTimeout(() => setSearchDebounced(searchInput), 300);
+        return () => clearTimeout(t);
+    }, [searchInput]);
 
-    // Handlers
-    const handleFiltersChange = (newFilters: ClientFiltersType) => {
-        setFilters(newFilters);
-        setPage(1); // Reset a primera página al filtrar
-    };
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [statusFilter, searchDebounced]);
 
-    const handleCardClick = (clientId: number) => {
-        navigate(`/dashboard/clients/${clientId}`);
-    };
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: user?.role !== "trainer",
+    });
+    const trainerId = trainerProfile?.id ?? null;
 
-    const handleAddClient = () => {
-        navigate("/dashboard/clients/onboarding");
-    };
+    const statusParam: ClientStatus | undefined =
+        statusFilter === "all" ? undefined : statusFilter;
 
-    const handlePageChange = (newPage: number) => {
-        setPage(newPage);
+    const {
+        items,
+        total,
+        isLoading,
+        isError,
+        error,
+        totalPages,
+        safeCurrentPage,
+    } = useClientsListWithMetrics({
+        trainerId,
+        page: currentPage,
+        pageSize: PAGE_SIZE,
+        search: searchDebounced.trim() || null,
+        status: statusParam ?? null,
+        skip: !trainerId,
+    });
+
+    const { data: activityData } = useGetRecentActivityQuery(
+        { limit: 10, trainer_id: trainerId ?? undefined },
+        { skip: !trainerId }
+    );
+    const activities = activityData?.items ?? [];
+
+    const handlePageChange = useCallback((page: number) => {
+        setCurrentPage(page);
         window.scrollTo({ top: 0, behavior: "smooth" });
-    };
+    }, []);
 
-    // Items del menú superior
-    const menuItems = [
-        { label: "Dashboard", path: "/dashboard" },
-        { label: "Clientes", path: "/dashboard/clients" },
-        { label: "Planes de entrenamiento", path: "/dashboard/plans" },
-        { label: "Mi cuenta", path: "/dashboard/account" },
-    ];
+    const handleClientClick = useCallback(
+        (clientId: number) => navigate(`/dashboard/clients/${clientId}`),
+        [navigate]
+    );
+
+    const handleAddClient = useCallback(() => {
+        if (shouldBlock) {
+            setShowCompleteProfileModal(true);
+            return;
+        }
+        navigate("/dashboard/clients/onboarding");
+    }, [shouldBlock, navigate]);
+
+    const isEmpty = !isLoading && !isError && items.length === 0;
 
     return (
         <>
-            {/* Navbar móvil/tablet */}
-            <DashboardNavbar menuItems={menuItems} />
+            <div className="space-y-4 sm:space-y-6">
+                {/* Header §4 — responsive: stack on xs, inline sm+ */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                    <div className="flex min-w-0 flex-wrap items-baseline gap-2 sm:gap-3">
+                        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Clientes</h1>
+                        <span className="text-sm text-muted-foreground sm:text-base">{total} total</span>
+                    </div>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        onClick={handleAddClient}
+                        className="w-full min-h-touch sm:w-auto sm:min-h-0"
+                    >
+                        <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
+                        Nuevo cliente
+                    </Button>
+                </div>
 
-            {/* Sidebar escritorio */}
-            <TrainerSideMenu />
-
-            <DashboardLayout>
-                {/* Header */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className={`${TYPOGRAPHY.dashboardHero} text-white mb-2`}>
-                                Mis Clientes
-                            </h2>
-                            <p className="text-white/80 text-sm md:text-base">
-                                Gestiona y monitoriza el progreso de tus clientes
-                            </p>
+                {/* Controles §5 — full width search on mobile; pills + toggle wrap */}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-muted-foreground" aria-hidden />
+                        <input
+                            type="search"
+                            placeholder="Buscar por nombre o email..."
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            className="min-h-touch w-full rounded-md border border-border bg-surface py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring sm:min-h-0 sm:py-2"
+                            aria-label="Buscar cliente"
+                        />
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div className="flex flex-wrap gap-1.5">
+                            {(["all", "active", "paused"] as const).map((key) => (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setStatusFilter(key)}
+                                    className={cn(
+                                        "min-h-[40px] rounded-full px-3 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-1.5",
+                                        statusFilter === key
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    {key === "all" ? "Todos" : key === "active" ? "Activo" : "Pausado"}
+                                </button>
+                            ))}
                         </div>
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            onClick={handleAddClient}
-                            className="w-full sm:w-auto sm:min-w-[180px]"
-                        >
-                            + Agregar Cliente
-                        </Button>
+                        <div className="flex shrink-0 rounded-md border border-border">
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("grid")}
+                                className={cn(
+                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
+                                    viewMode === "grid"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                                )}
+                                aria-label="Vista grid"
+                            >
+                                <LayoutGrid className="h-4 w-4" />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setViewMode("list")}
+                                className={cn(
+                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
+                                    viewMode === "list"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                                )}
+                                aria-label="Vista lista"
+                            >
+                                <List className="h-4 w-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                {/* Stats Overview */}
-                <ClientStats />
+                {/* Loading */}
+                {isLoading && (
+                    <div className="flex justify-center py-16">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                )}
 
-                {/* Filtros */}
-                <div className="px-4 lg:px-8 mb-6">
-                    <ClientFilters filters={filters} onFiltersChange={handleFiltersChange} />
-                </div>
+                {/* Error */}
+                {isError && (
+                    <Alert variant="error">
+                        Error al cargar clientes:{" "}
+                        {error && typeof error === "object" && "data" in error && error.data && typeof error.data === "object" && "detail" in error.data
+                            ? String((error.data as { detail?: unknown }).detail)
+                            : "Error desconocido"}
+                    </Alert>
+                )}
 
-                {/* Lista de clientes */}
-                <div className="px-4 lg:px-8 mb-8">
-                    {/* Loading State */}
-                    {isLoading && (
-                        <div className="flex justify-center items-center py-16">
-                            <LoadingSpinner size="lg" />
-                        </div>
-                    )}
+                {/* Empty state §6 */}
+                {!isLoading && !isError && isEmpty && (
+                    <div className="flex flex-col items-center justify-center rounded-lg bg-surface px-4 py-12 sm:py-16">
+                        <UserPlus className="mb-4 h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" aria-hidden />
+                        <p className="mb-1 text-center font-medium text-foreground sm:text-left">Aún no tienes clientes registrados.</p>
+                        <p className="mb-6 text-center text-sm text-muted-foreground sm:text-left">Añade tu primer cliente para empezar</p>
+                        <Button variant="primary" onClick={handleAddClient} className="w-full min-h-touch sm:w-auto sm:min-h-0">
+                            <Plus className="mr-2 h-4 w-4" aria-hidden />
+                            Añadir tu primer cliente
+                        </Button>
+                    </div>
+                )}
 
-                    {/* Error State */}
-                    {isError && (
-                        <Alert variant="error" className="mb-6">
-                            Error al cargar clientes:{" "}
-                            {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data
-                                ? String(error.data.detail)
-                                : "Error desconocido"}
-                        </Alert>
-                    )}
-
-                    {/* Empty State */}
-                    {!isLoading && !isError && clients.length === 0 && (
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-8 lg:p-12 text-center">
-                            <div className="max-w-md mx-auto">
-                                <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <svg
-                                        className="w-8 h-8 text-slate-400"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                                        />
-                                    </svg>
+                {/* Contenido + sidebar §7 — col on mobile, row lg+ */}
+                {!isLoading && !isError && !isEmpty && (
+                    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
+                        <div className="min-w-0 flex-1">
+                            {viewMode === "grid" ? (
+                                /* Vista Grid §8 — 1 col xs, 2 sm, 3 xl */
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                                    {items.map((client) => (
+                                        <article
+                                            key={client.id}
+                                            role="button"
+                                            tabIndex={0}
+                                            onClick={() => handleClientClick(client.id)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleClientClick(client.id)}
+                                            className="cursor-pointer rounded-lg bg-surface p-4 text-left shadow-md transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] sm:p-5"
+                                        >
+                                            <div className="mb-3 flex items-start justify-between gap-2">
+                                                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
+                                                    <ClientAvatar
+                                                        clientId={client.id}
+                                                        nombre={client.nombre}
+                                                        apellidos={client.apellidos}
+                                                        size="sm"
+                                                        className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
+                                                    />
+                                                    <p className="min-w-0 truncate text-sm font-medium text-foreground sm:text-base">
+                                                        {client.nombre} {client.apellidos}
+                                                    </p>
+                                                </div>
+                                                <SatisfactionIcon level={client.satisfaction_level} className="h-4 w-4 shrink-0" />
+                                            </div>
+                                            <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
+                                                <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
+                                                    {getStatusLabel(client.status)}
+                                                </span>
+                                                <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                    {translateFatigue(client.fatigue_level)}
+                                                </span>
+                                            </div>
+                                            <div className="flex flex-wrap items-center gap-2 gap-y-1">
+                                                <span className="text-label text-muted-foreground sm:text-caption">Adherencia</span>
+                                                <TrendIcon trend={client.satisfaction_trend ?? client.progress_trend ?? "stable"} className="h-4 w-4 shrink-0" />
+                                                <div className="min-w-0 flex-1 basis-20">
+                                                    <AdherenceBar value={client.adherence_percentage ?? 0} className="min-w-[48px] flex-1 sm:min-w-[60px]" />
+                                                </div>
+                                                <span className="whitespace-nowrap text-xs font-medium text-foreground sm:text-sm">
+                                                    {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
+                                                </span>
+                                            </div>
+                                        </article>
+                                    ))}
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-800 mb-2">
-                                {filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined
-                                    ? "No se encontraron clientes"
-                                    : "Aún no tienes clientes"}
-                                </h3>
-                                <p className="text-slate-600 mb-6">
-                                    {filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined
-                                        ? "Intenta ajustar los filtros de búsqueda"
-                                        : "Comienza agregando tu primer cliente para empezar a gestionar entrenamientos"}
-                                </p>
-                                <Button variant="primary" size="lg" onClick={handleAddClient}>
-                                    + Agregar Primer Cliente
-                                </Button>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Grid de clientes */}
-                    {!isLoading && !isError && clients.length > 0 && (
-                        <>
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-                                {clients.map((client) => (
-                                    <ClientCard
-                                        key={client.id}
-                                        client={client}
-                                        onClick={() => handleCardClick(client.id)}
-                                    />
-                                ))}
-                            </div>
-
-                            {/* Paginación */}
-                            {totalPages > 1 && (
-                                <div className="flex justify-center items-center gap-2 mt-8">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePageChange(page - 1)}
-                                        disabled={page === 1}
-                                    >
-                                        ← Anterior
-                                    </Button>
-
-                                    <div className="flex items-center gap-2">
-                                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                                            // Lógica para mostrar 5 páginas alrededor de la actual
-                                            let pageNumber: number;
-                                            if (totalPages <= 5) {
-                                                pageNumber = i + 1;
-                                            } else if (page <= 3) {
-                                                pageNumber = i + 1;
-                                            } else if (page >= totalPages - 2) {
-                                                pageNumber = totalPages - 4 + i;
-                                            } else {
-                                                pageNumber = page - 2 + i;
-                                            }
-
-                                            return (
-                                                <button
-                                                    key={pageNumber}
-                                                    onClick={() => handlePageChange(pageNumber)}
-                                                    className={`w-10 h-10 rounded-lg font-medium transition-colors ${
-                                                        page === pageNumber
-                                                            ? "bg-primary-600 text-white"
-                                                            : "bg-white text-slate-700 hover:bg-slate-100"
-                                                    }`}
+                            ) : (
+                                /* Vista Lista §9 — scroll horizontal en móvil */
+                                <div className="-mx-1 overflow-x-auto rounded-lg border border-border sm:mx-0">
+                                    <table className="w-full min-w-[560px] text-sm">
+                                        <thead>
+                                            <tr className="border-b border-border bg-surface text-left text-muted-foreground">
+                                                <th className="px-3 py-2.5 font-medium sm:px-4 sm:py-3">Nombre</th>
+                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Estado</th>
+                                                <th className="px-3 py-2.5 font-medium sm:px-4 sm:py-3">Satisfacción</th>
+                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Fatiga</th>
+                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Adherencia</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {items.map((client) => (
+                                                <tr
+                                                    key={client.id}
+                                                    onClick={() => handleClientClick(client.id)}
+                                                    className="cursor-pointer border-b border-border bg-background transition-colors hover:bg-surface active:bg-surface"
                                                 >
-                                                    {pageNumber}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
-
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handlePageChange(page + 1)}
-                                        disabled={page >= totalPages}
-                                    >
-                                        Siguiente →
-                                    </Button>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <ClientAvatar
+                                                                clientId={client.id}
+                                                                nombre={client.nombre}
+                                                                apellidos={client.apellidos}
+                                                                size="sm"
+                                                                className="h-6 w-6 shrink-0 sm:h-7 sm:w-7"
+                                                            />
+                                                            <span className="truncate font-medium text-foreground max-w-[120px] sm:max-w-none">
+                                                                {client.nombre} {client.apellidos}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
+                                                            {getStatusLabel(client.status)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <SatisfactionIcon level={client.satisfaction_level} className="h-4 w-4" />
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                            {translateFatigue(client.fatigue_level)}
+                                                        </span>
+                                                    </td>
+                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                        <div className="flex min-w-[100px] items-center gap-1.5 sm:w-40 sm:gap-2">
+                                                            <AdherenceBar value={client.adherence_percentage ?? 0} />
+                                                            <span className="whitespace-nowrap text-foreground text-xs sm:text-sm">
+                                                                {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
+                                                            </span>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
                             )}
 
-                            {/* Info de paginación */}
-                            <div className="text-center mt-4">
-                                <p className="text-sm text-white/80">
-                                    Mostrando {(page - 1) * pageSize + 1}-
-                                    {Math.min(page * pageSize, totalClients)} de {totalClients} clientes
-                                </p>
-                                <p className="text-xs text-white/60 mt-1">
-                                    Página actual: {currentPage} / {totalPages}
-                                </p>
-                                {hasMore && (
-                                    <p className="text-xs text-white/60 mt-1 italic">
-                                        Hay más clientes disponibles en las siguientes páginas...
-                                    </p>
-                                )}
+                            {totalPages > 1 && (
+                                <PaginationBar
+                                    currentPage={safeCurrentPage}
+                                    totalPages={totalPages}
+                                    totalItems={total}
+                                    pageSize={PAGE_SIZE}
+                                    onPageChange={handlePageChange}
+                                />
+                            )}
+                        </div>
+
+                        {/* Sidebar Actividad reciente §11 — oculto en móvil, ancho fijo lg+ */}
+                        <aside className="hidden w-full shrink-0 lg:block lg:w-72">
+                            <div className="rounded-lg bg-surface p-4 sm:p-5">
+                                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:mb-4">
+                                    ACTIVIDAD RECIENTE
+                                </h2>
+                                <ul className="space-y-3 sm:space-y-4">
+                                    {activities.length === 0 ? (
+                                        <li className="py-4 text-center text-sm text-muted-foreground">No hay actividad reciente</li>
+                                    ) : (
+                                        activities.map((activity) => (
+                                            <li key={activity.id} className="flex gap-2 sm:gap-3">
+                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-2 p-1 text-muted-foreground sm:h-8 sm:w-8 sm:p-1.5">
+                                                    {getActivityIcon(activity.type)}
+                                                </div>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="line-clamp-2 text-xs text-foreground sm:text-sm">
+                                                        <span className="font-medium">{activity.actor_name}</span> {activity.description}
+                                                    </p>
+                                                    <p className="mt-0.5 text-label text-muted-foreground sm:mt-1 sm:text-xs">{formatTimeAgo(activity.timestamp)}</p>
+                                                </div>
+                                            </li>
+                                        ))
+                                    )}
+                                </ul>
                             </div>
-                        </>
-                    )}
-                </div>
-            </DashboardLayout>
+                        </aside>
+                    </div>
+                )}
+            </div>
+
+            <CompleteProfileModal
+                isOpen={showCompleteProfileModal}
+                onClose={() => setShowCompleteProfileModal(false)}
+            />
         </>
     );
 };

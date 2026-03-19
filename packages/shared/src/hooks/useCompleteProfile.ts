@@ -9,7 +9,7 @@
  * @since v2.3.0
  */
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { USER_ROLES } from "@nexia/shared/utils/roles";
@@ -38,13 +38,21 @@ export const useCompleteProfile = ({ onRedirect }: UseCompleteProfileProps = {})
 
     const trainer = trainerData;
 
-    // Verificar si el perfil está completo
-    const isProfileComplete = Boolean(trainer &&
-        trainer.occupation &&
-        trainer.training_modality &&
-        trainer.location_country &&
-        trainer.location_city &&
-        trainer.telefono);
+    // ✅ OPTIMIZACIÓN: Memoizar isProfileComplete para evitar re-renders innecesarios
+    const isProfileComplete = useMemo(() => {
+        return Boolean(trainer &&
+            trainer.occupation &&
+            trainer.training_modality &&
+            trainer.location_country &&
+            trainer.location_city &&
+            trainer.telefono);
+    }, [
+        trainer?.occupation,
+        trainer?.training_modality,
+        trainer?.location_country,
+        trainer?.location_city,
+        trainer?.telefono,
+    ]);
 
 
     // Redirect si no es trainer
