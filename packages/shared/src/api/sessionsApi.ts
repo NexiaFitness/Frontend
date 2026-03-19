@@ -1,7 +1,11 @@
 /**
  * Sessions list API (unified training + standalone).
- * Backend: GET /api/v1/sessions
+ * Backend: GET /api/v1/sessions (Swagger fuente de verdad).
+ * Contrato: SessionListResponse segun OpenAPI.
  * VISTA_LISTADO_SESIONES Fase 1.
+ *
+ * @author Frontend Team
+ * @since VISTA_LISTADO_SESIONES
  */
 
 import { baseApi } from "./baseApi";
@@ -12,7 +16,7 @@ export const sessionsApi = baseApi.injectEndpoints({
         /**
          * GET /sessions
          * Listado unificado de sesiones (training + standalone) para un trainer.
-         * Soporta filtros, paginación y ordenación.
+         * Contrato alineado con Swagger.
          */
         getSessions: builder.query<SessionListResponse, GetSessionsParams>({
             query: ({
