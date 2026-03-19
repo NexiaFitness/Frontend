@@ -59,19 +59,25 @@ export interface SessionSetsTotals {
     totalActual: number;
 }
 
+/** Ejercicio con series (snake_case o camelCase según fuente). */
+export type ExerciseWithSets = {
+    planned_sets?: number | null;
+    actual_sets?: number | null;
+    plannedSets?: number | null;
+    actualSets?: number | null;
+};
+
 /**
  * Calcula totales de series programadas y realizadas para una lista de ejercicios.
  */
-export function computeSessionSetsTotals(
-    exercises: Array<{ planned_sets?: number | null; actual_sets?: number | null }>
-): SessionSetsTotals {
+export function computeSessionSetsTotals(exercises: ExerciseWithSets[]): SessionSetsTotals {
     let totalPlanned = 0;
     let totalActual = 0;
     for (const ex of exercises) {
-        const planned = "plannedSets" in ex ? ex.plannedSets : ex.planned_sets;
-        const actual = "actualSets" in ex ? ex.actualSets : ex.actual_sets;
-        if (planned != null && planned >= 0) totalPlanned += planned;
-        if (actual != null && actual >= 0) totalActual += actual;
+        const planned = ex.plannedSets ?? ex.planned_sets;
+        const actual = ex.actualSets ?? ex.actual_sets;
+        if (typeof planned === "number" && planned >= 0) totalPlanned += planned;
+        if (typeof actual === "number" && actual >= 0) totalActual += actual;
     }
     return { totalPlanned, totalActual };
 }

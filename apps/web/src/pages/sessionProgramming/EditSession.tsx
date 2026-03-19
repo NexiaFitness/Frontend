@@ -12,7 +12,6 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { cn } from "@/lib/utils";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { Button } from "@/components/ui/buttons";
@@ -37,6 +36,7 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
 import type { AppDispatch } from "@nexia/shared/store";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
@@ -445,8 +445,9 @@ export const EditSession: React.FC = () => {
                     </div>
                 )}
 
-                {/* Grid 2 cols */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_380px]">
+                {/* Flex: form + SessionDayPlan + ExercisePickerPanel (cuando abierto) */}
+                <div className="flex flex-col lg:flex-row gap-6 min-w-0">
+                    <div className={`flex-1 min-w-0 ${showExercisePickerModal ? "lg:max-w-[calc(100%-324px)]" : ""}`}>
                     <div className="bg-card border border-border rounded-lg p-6 lg:p-8">
                         <form id="edit-session-form" onSubmit={handleSubmit} className="space-y-5">
                             {/* Nombre de la Sesión */}
@@ -604,16 +605,30 @@ export const EditSession: React.FC = () => {
                             </div>
                         </form>
                     </div>
+                    </div>
 
                     {/* Columna derecha: Plan del día */}
                     {session.client_id && (
-                        <div className="lg:self-start">
+                        <div className="lg:w-[380px] shrink-0 lg:self-start">
                             <SessionDayPlan
                                 clientId={session.client_id}
                                 sessionDate={formData.sessionDate}
                                 trainerId={session.trainer_id ?? 0}
                             />
                         </div>
+                    )}
+
+                    {showExercisePickerModal && (
+                        <ExercisePickerPanel
+                            isOpen={true}
+                            onClose={() => {
+                                setShowExercisePickerModal(false);
+                                setTargetRowIdForPicker(null);
+                            }}
+                            onSelect={handleSelectFromPicker}
+                            clientId={session.client_id ?? undefined}
+                            activeInjuries={clientActiveInjuries}
+                        />
                     )}
                 </div>
             </div>

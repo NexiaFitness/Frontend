@@ -18,7 +18,7 @@ import React, { forwardRef, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
-export type InputSize = "xs" | "sm" | "md" | "lg";
+export type InputSize = "xs" | "compact" | "sm" | "md" | "lg";
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
     type?: InputType;
@@ -44,6 +44,7 @@ const sizeStyles: Record<InputSize, string> = {
 
 // Para inputs password con icono → padding derecho extra
 const passwordSizeStyles: Record<InputSize, string> = {
+    compact: "h-7 px-2 py-1 pr-9 text-[11px]",
     xs: "h-8 px-2.5 py-1.5 pr-9 text-xs",
     sm: "px-3 py-1.5 pr-10 text-sm min-h-9 h-9",
     md: "px-3 py-2 pr-12 text-sm sm:px-4 sm:py-2.5 sm:pr-12 sm:text-base sm:min-h-[44px]",

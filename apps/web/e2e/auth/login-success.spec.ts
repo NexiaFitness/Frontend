@@ -8,6 +8,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
+import { getDashboardNavSidebar } from "../fixtures/navigation";
 
 test.describe("Auth — Login success", () => {
   test("unauthenticated user can log in and reaches dashboard", async ({
@@ -17,7 +18,7 @@ test.describe("Auth — Login success", () => {
 
     await expect(page).toHaveURL(/\/dashboard/);
     await expect(
-      page.getByRole("complementary").getByRole("link", { name: /clientes/i })
+      getDashboardNavSidebar(page).getByRole("link", { name: /clientes/i })
     ).toBeVisible({ timeout: 10_000 });
   });
 });

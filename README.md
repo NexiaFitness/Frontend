@@ -788,6 +788,7 @@ Comandos:
 ```bash
 cd frontend
 pnpm install
+npx playwright install chromium   # Primera vez: descarga binarios del navegador
 pnpm -F web test:e2e        # Ejecuta E2E (Chromium)
 pnpm -F web test:e2e:ui    # Modo UI de Playwright
 ```

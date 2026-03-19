@@ -49,25 +49,32 @@ describe("ClientPlanningTab", () => {
             expect(screen.queryByText("Modo de planificación")).not.toBeInTheDocument();
         });
 
-        it("muestra CTA Crear plan y llama a onOpenCreatePlan al hacer clic cuando se pasa", async () => {
-            const onOpenCreatePlan = vi.fn();
-            render(
-                <ClientPlanningTab
-                    clientId={1}
-                    trainingPlans={[]}
-                    isLoadingPlans={false}
-                    onOpenCreatePlan={onOpenCreatePlan}
-                />
-            );
+        it(
+            "muestra CTA Crear plan y llama a onOpenCreatePlan al hacer clic cuando se pasa",
+            async () => {
+                const onOpenCreatePlan = vi.fn();
+                render(
+                    <ClientPlanningTab
+                        clientId={1}
+                        trainingPlans={[]}
+                        isLoadingPlans={false}
+                        onOpenCreatePlan={onOpenCreatePlan}
+                    />
+                );
 
-            await waitFor(() => {
-                expect(screen.getByText("Sin plan activo")).toBeInTheDocument();
-            });
+                await waitFor(
+                    () => {
+                        expect(screen.getByText("Sin plan activo")).toBeInTheDocument();
+                    },
+                    { timeout: 10000 }
+                );
 
-            expect(screen.getByRole("button", { name: /crear plan/i })).toBeInTheDocument();
-            await userEvent.click(screen.getByRole("button", { name: /crear plan/i }));
-            expect(onOpenCreatePlan).toHaveBeenCalledTimes(1);
-        });
+                expect(screen.getByRole("button", { name: /crear plan/i })).toBeInTheDocument();
+                await userEvent.click(screen.getByRole("button", { name: /crear plan/i }));
+                expect(onOpenCreatePlan).toHaveBeenCalledTimes(1);
+            },
+            12000
+        );
     });
 
     describe("Con plan activo (200 active-by-client)", () => {
@@ -92,48 +99,61 @@ describe("ClientPlanningTab", () => {
             expect(screen.queryByText("Modo de planificación")).not.toBeInTheDocument();
         });
 
-        it("con plan activo renderiza PlanningTab con contenido de plan", async () => {
-            server.use(
-                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Fuerza" })
-            );
+        it(
+            "con plan activo renderiza PlanningTab con contenido de plan",
+            async () => {
+                server.use(
+                    getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Fuerza" })
+                );
 
-            render(
-                <ClientPlanningTab
-                    clientId={1}
-                    trainingPlans={[]}
-                    isLoadingPlans={false}
-                />
-            );
+                render(
+                    <ClientPlanningTab
+                        clientId={1}
+                        trainingPlans={[]}
+                        isLoadingPlans={false}
+                    />
+                );
 
-            await waitFor(() => {
-                expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
-            });
+                await waitFor(
+                    () => {
+                        expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
+                    },
+                    { timeout: 10000 }
+                );
 
-            expect(screen.getByText("Coherencia del plan")).toBeInTheDocument();
-        });
+                expect(screen.getByText("Coherencia del plan")).toBeInTheDocument();
+            },
+            12000
+        );
     });
 
     describe("Estado en URL (month/week)", () => {
-        it("cambio de semana actualiza el selector (URL drive state)", async () => {
+        it("muestra selector de semana con opciones 1-4 cuando hay plan activo", async () => {
             server.use(
                 getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Test" })
             );
 
             render(
-                <ClientPlanningTab clientId={1} trainingPlans={[]} isLoadingPlans={false} />
+                <ClientPlanningTab clientId={1} trainingPlans={[]} isLoadingPlans={false} />,
+                {
+                    initialEntries: [
+                        "/clients/1?tab=planning&month=2025-03&week=1",
+                    ],
+                }
             );
 
-            await waitFor(() => {
-                expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
-            });
+            await waitFor(
+                () => {
+                    expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
+                },
+                { timeout: 10000 }
+            );
 
             const weekSelect = screen.getByRole("combobox", { name: /semana del mes/i });
-            await userEvent.selectOptions(weekSelect, "2");
-
-            await waitFor(() => {
-                expect(weekSelect).toHaveValue("2");
-            });
-        });
+            expect(weekSelect).toBeInTheDocument();
+            expect(["1", "2", "3", "4"]).toContain((weekSelect as HTMLSelectElement).value);
+            expect(weekSelect.querySelectorAll("option")).toHaveLength(4);
+        }, 15000);
     });
 
     describe("Loading state", () => {

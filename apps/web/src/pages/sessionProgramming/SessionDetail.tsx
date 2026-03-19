@@ -145,11 +145,6 @@ export const SessionDetail: React.FC = () => {
         });
     };
 
-    const renderExerciseName = (exercise: SessionExercise): string => {
-        if (exercise.exercise?.nombre) return exercise.exercise.nombre;
-        return `Ejercicio ${exercise.exercise_id}`;
-    };
-
     return (
                 <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
                     <div className="bg-white border-b border-gray-200">

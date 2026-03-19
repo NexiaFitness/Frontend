@@ -26,6 +26,7 @@ export type ButtonVariant =
     | "destructive"
     | "danger"
     | "outline"
+    | "outline-destructive"
     | "secondary"
     | "ghost"
     | "link";

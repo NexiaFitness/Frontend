@@ -22,8 +22,8 @@ import type { RootState } from "@nexia/shared/store";
 
 interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
     initialState?: Partial<RootState>;
-    /** URL inicial para MemoryRouter (tests de estado en URL). */
-    initialEntries?: string[];
+    /** URL inicial para MemoryRouter (tests de estado en URL). Acepta string o { pathname, search }. */
+    initialEntries?: Array<string | { pathname: string; search?: string }>;
 }
 
 export function render(

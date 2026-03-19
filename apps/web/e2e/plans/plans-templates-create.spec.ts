@@ -45,8 +45,11 @@ test.describe("Plans — Templates create", () => {
     await page.waitForURL(/\/dashboard\/training-plans(?:\?|$)/, {
       timeout: 15_000,
     });
+    // Biblioteca de Templates está debajo; los templates están paginados — buscar por nombre para encontrarlo
+    await page.locator("#section-templates").scrollIntoViewIfNeeded();
+    await page.getByPlaceholder(/buscar por nombre de plantilla/i).fill(TEMPLATE_NAME);
     await expect(
-      page.getByText(TEMPLATE_NAME).first()
+      page.getByRole("heading", { name: TEMPLATE_NAME })
     ).toBeVisible({ timeout: 10_000 });
   });
 });

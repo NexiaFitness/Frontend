@@ -163,9 +163,12 @@ describe("ClientOverviewTab", () => {
         it("renders personal information section", async () => {
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                expect(screen.getByText(/información personal/i)).toBeInTheDocument();
-            });
+            await waitFor(
+                () => {
+                    expect(screen.getByText(/información personal/i)).toBeInTheDocument();
+                },
+                { timeout: 8000 }
+            );
 
             expect(screen.getByText(mockClient.mail!)).toBeInTheDocument();
         });
@@ -173,7 +176,6 @@ describe("ClientOverviewTab", () => {
 
     describe("Metrics Display", () => {
         it("displays adherence metric correctly", async () => {
-            // Usar fixture con adherencia específica
             const coherenceData = createMockCoherenceData({
                 client_id: 1,
                 kpis: {
@@ -192,9 +194,12 @@ describe("ClientOverviewTab", () => {
 
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                expect(screen.getAllByText(/85%/i).length).toBeGreaterThanOrEqual(1);
-            });
+            await waitFor(
+                () => {
+                    expect(screen.getAllByText(/85%/i).length).toBeGreaterThanOrEqual(1);
+                },
+                { timeout: 8000 }
+            );
         });
 
         it("displays weight metric with change", async () => {

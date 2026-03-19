@@ -151,8 +151,8 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                                 onMouseEnter={() => handlePrefetch(item.path)}
                                 onFocus={() => handlePrefetch(item.path)}
                                 className={cn(
-                                    "flex items-center gap-3 rounded-md border-l-[3px] px-3 py-2.5 text-sm transition-colors duration-150",
-                                    isCollapsed ? "justify-center" : "",
+                                    "flex items-center gap-3 rounded-md border-l-[3px] py-2.5 text-sm transition-colors duration-150",
+                                    isCollapsed ? "pl-[14px] pr-[14px]" : "pl-[14px] pr-3",
                                     active
                                         ? "border-l-primary bg-primary/10 text-primary"
                                         : "border-l-transparent text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -167,7 +167,12 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
                     })}
                 </nav>
 
-                <div className="shrink-0 border-t border-border p-3 min-h-[3.75rem]">
+                <div
+                    className={cn(
+                        "shrink-0 border-t border-border min-h-[3.75rem]",
+                        isCollapsed ? "pl-[14px] pr-[14px] py-3" : "pl-[14px] pr-3 py-3"
+                    )}
+                >
                     <div className="flex items-start gap-3">
                         <div
                             className="h-8 w-8 shrink-0 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-medium"

@@ -9,6 +9,7 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
+import { getDashboardNavSidebar } from "../fixtures/navigation";
 
 test.describe("Auth — Session persistence", () => {
   test("after reload user remains on dashboard", async ({ page }) => {
@@ -20,7 +21,7 @@ test.describe("Auth — Session persistence", () => {
 
     await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 });
     await expect(
-      page.getByRole("complementary").getByRole("link", { name: /clientes/i })
+      getDashboardNavSidebar(page).getByRole("link", { name: /clientes/i })
     ).toBeVisible({ timeout: 10_000 });
   });
 });

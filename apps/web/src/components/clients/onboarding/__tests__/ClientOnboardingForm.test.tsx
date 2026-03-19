@@ -154,7 +154,7 @@ describe("ClientOnboardingForm", () => {
     });
 
     describe("Form Validation", () => {
-        it("allows opening Review with empty form (validation on Crear Perfil)", async () => {
+        it("blocks opening Review when form is empty (validation on Siguiente)", async () => {
             const user = userEvent.setup();
             const initialData = createEmptyFormData();
 
@@ -166,12 +166,14 @@ describe("ClientOnboardingForm", () => {
             );
 
             await user.click(screen.getByRole("button", { name: /siguiente/i }));
+
             await waitFor(() => {
-                expect(screen.getByRole("heading", { name: /revisar perfil del cliente/i })).toBeInTheDocument();
+                expect(screen.getByRole("heading", { name: /información personal/i })).toBeInTheDocument();
             });
+            expect(screen.queryByRole("heading", { name: /revisar perfil del cliente/i })).not.toBeInTheDocument();
         });
 
-        it("allows opening Review with invalid email (validation on submit)", async () => {
+        it("blocks opening Review when email is invalid (validation on Siguiente)", async () => {
             const user = userEvent.setup();
             const initialData = createInvalidEmailFormData();
 
@@ -183,9 +185,11 @@ describe("ClientOnboardingForm", () => {
             );
 
             await user.click(screen.getByRole("button", { name: /siguiente/i }));
+
             await waitFor(() => {
-                expect(screen.getByRole("heading", { name: /revisar perfil del cliente/i })).toBeInTheDocument();
+                expect(screen.getByRole("heading", { name: /información personal/i })).toBeInTheDocument();
             });
+            expect(screen.queryByRole("heading", { name: /revisar perfil del cliente/i })).not.toBeInTheDocument();
         });
 
         it("allows opening Review with mismatched email (validation on submit)", async () => {

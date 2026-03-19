@@ -44,6 +44,7 @@ import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingB
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { buildExercisePayload } from "./buildExercisePayload";
+import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { ClipboardList } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
@@ -289,7 +290,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             await createSessionTemplate(payload).unwrap();
             showSuccess("Plantilla guardada correctamente", 2000);
             setTimeout(() => navigate(-1), 1500);
-        } catch (err) {
+        } catch {
             showError("Error al guardar la plantilla. Inténtalo de nuevo.");
         }
     };

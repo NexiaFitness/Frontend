@@ -96,16 +96,12 @@ test.describe("Journey — Create session (client → modal plan → create sess
       { timeout: 10_000 }
     );
 
-    // 6) Rellenar formulario de sesión
+    // 6) Rellenar formulario de sesión (CreateSession usa placeholder "Ej: Fuerza — Tren superior A")
     const sessionName = `E2E Sesión ${Date.now()}`;
     await page
-      .getByPlaceholder(/ej: entrenamiento de fuerza - piernas/i)
+      .getByPlaceholder(/ej: fuerza/i)
       .fill(sessionName);
-    const sessionDate = new Date();
-    sessionDate.setDate(sessionDate.getDate() + 1);
-    await page
-      .getByLabel(/fecha de la sesión/i)
-      .fill(sessionDate.toISOString().slice(0, 10));
+    // Fecha: CreateSession usa DatePickerButton (no input); la fecha por defecto (hoy) está dentro del plan recién creado
     await page.getByLabel(/tipo de sesión/i).selectOption({ value: "training" });
 
     // 7) Crear sesión (sin ejercicios para flujo estable)

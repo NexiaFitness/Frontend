@@ -15,6 +15,7 @@
  * @updated v3.3.0 - Agregados endpoints de Cycles System
  */
 
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "./baseApi";
 import type {
     TrainingPlan,
@@ -123,7 +124,9 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 if (result.error && "status" in result.error && result.error.status === 404) {
                     return { data: null };
                 }
-                if (result.error) return result as { error: unknown };
+                if (result.error) {
+                    return { error: result.error as FetchBaseQueryError };
+                }
                 return { data: result.data as ActivePlanByClientOut };
             },
             providesTags: (result, error, clientId) => [

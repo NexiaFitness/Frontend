@@ -23,7 +23,7 @@ import { ToastProvider } from "@/components/ui/feedback";
 interface TestProvidersProps extends PropsWithChildren {
     initialState?: Partial<RootState>;
     /** Si se define, usa MemoryRouter con esta URL inicial (para tests de estado en URL). */
-    initialEntries?: string[];
+    initialEntries?: Array<string | { pathname: string; search?: string }>;
 }
 
 export function TestProviders({ children, initialState, initialEntries }: TestProvidersProps) {

@@ -84,6 +84,10 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         onRowsChange([...rows, newRow]);
     };
 
+    const handleRemoveRow = (rowId: string) => {
+        onRowsChange(rows.filter((r) => r.id !== rowId));
+    };
+
     const handleRemoveBlock = (blockTypeId: number) => {
         onRowsChange(rows.filter((r) => r.blockTypeId !== blockTypeId));
     };
@@ -139,6 +143,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                     row={row}
                                     blockTypes={blockTypes}
                                     onUpdate={handleUpdateRow}
+                                    onRemove={handleRemoveRow}
                                     onAddExercise={handleAddExercise}
                                     onRemoveExercise={handleRemoveExercise}
                                     onUpdateExercise={handleUpdateExercise}
