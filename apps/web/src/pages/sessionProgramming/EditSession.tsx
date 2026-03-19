@@ -43,7 +43,15 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import { ExercisePickerModal } from "@/components/exercises/ExercisePickerModal";
-import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
+import type {
+    ConstructorRow,
+    ConstructorExercise,
+    RepsTipo,
+} from "@/components/sessionProgramming/constructorTypes";
+import {
+    buildExercisePayload,
+    buildExerciseUpdatePayload,
+} from "./buildExercisePayload";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
@@ -97,9 +105,6 @@ export const EditSession: React.FC = () => {
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    /** Fase 3: bloque de entrenamiento seleccionado */
-    const [activeBlockTypeId, setActiveBlockTypeId] = useState<number | null>(null);
-
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
@@ -131,8 +136,16 @@ export const EditSession: React.FC = () => {
                     exercisesByBlock[b.id] = result.data;
                 }
             }
+            const inferRepsTipo = (
+                ex: { planned_reps: string | null; planned_duration: number | null }
+            ): RepsTipo => {
+                if (ex.planned_duration != null && !ex.planned_reps?.trim()) return "tiempo";
+                return "reps";
+            };
+
             const rows: ConstructorRow[] = blocks.map((b, i) => {
                 const exs = exercisesByBlock[b.id] ?? [];
+                const firstEx = exs[0];
                 return {
                     id: `row-${b.id}-${i}`,
                     serverBlockId: b.id,
@@ -143,6 +156,7 @@ export const EditSession: React.FC = () => {
                     timeCap: b.time_cap,
                     intervalSeconds: b.interval_seconds,
                     rest: exs[0]?.planned_rest ?? 60,
+                    repsTipo: firstEx ? inferRepsTipo(firstEx) : "reps",
                     exercises: exs.map((ex, j) => ({
                         id: `ex-${ex.id}-${j}`,
                         serverExerciseId: ex.id,
@@ -313,28 +327,26 @@ export const EditSession: React.FC = () => {
 
                     for (let j = 0; j < row.exercises.length; j++) {
                         const ex = row.exercises[j];
-                        const payload = {
-                            exercise_id: ex.exerciseId,
-                            order_in_block: j + 1,
-                            set_type: row.setType,
-                            planned_sets: row.sets,
-                            planned_reps: ex.plannedReps,
-                            planned_weight: ex.plannedWeight,
-                            planned_rest: row.rest,
-                            effort_character: ex.effortCharacter,
-                            effort_value: ex.effortValue,
-                            notes: ex.notes,
-                        };
                         if (ex.serverExerciseId) {
+                            const updatePayload = buildExerciseUpdatePayload(
+                                row,
+                                ex
+                            );
                             await updateSessionBlockExercise({
                                 id: ex.serverExerciseId,
-                                data: payload,
+                                data: updatePayload,
                             }).unwrap();
                             serverExIds.delete(ex.serverExerciseId);
                         } else {
+                            const createPayload = buildExercisePayload(
+                                row,
+                                ex,
+                                j + 1,
+                                row.setType
+                            );
                             await createSessionBlockExercise({
                                 blockId: row.serverBlockId,
-                                data: payload,
+                                data: createPayload,
                             }).unwrap();
                         }
                     }
@@ -348,20 +360,15 @@ export const EditSession: React.FC = () => {
                     }).unwrap();
                     for (let j = 0; j < row.exercises.length; j++) {
                         const ex = row.exercises[j];
+                        const payload = buildExercisePayload(
+                            row,
+                            ex,
+                            j + 1,
+                            row.setType
+                        );
                         await createSessionBlockExercise({
                             blockId: created.id,
-                            data: {
-                                exercise_id: ex.exerciseId,
-                                order_in_block: j + 1,
-                                set_type: row.setType,
-                                planned_sets: row.sets,
-                                planned_reps: ex.plannedReps,
-                                planned_weight: ex.plannedWeight,
-                                planned_rest: row.rest,
-                                effort_character: ex.effortCharacter,
-                                effort_value: ex.effortValue,
-                                notes: ex.notes,
-                            },
+                            data: payload,
                         }).unwrap();
                     }
                 }
@@ -406,7 +413,7 @@ export const EditSession: React.FC = () => {
 
     return (
         <>
-            <div className="space-y-6 pb-24 px-4 lg:px-8">
+            <div className="space-y-6 pb-24">
                 {/* Header + Volver */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <h2 className="text-2xl md:text-3xl font-bold text-foreground">
@@ -560,23 +567,30 @@ export const EditSession: React.FC = () => {
                                 />
                             </div>
 
-                            {/* Constructor de Sesión — Fase 8 */}
-                            <div className="mt-8 pt-8 border-t border-border">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-bold text-foreground">
-                                        Constructor de Sesión
-                                    </h3>
-                                    {constructorRows.length > 0 && (
-                                        <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-semibold rounded-full">
-                                            {constructorRows.length} serie
-                                            {constructorRows.length !== 1 ? "s" : ""}
-                                        </span>
-                                    )}
-                                </div>
+                            {/* Bloques + Constructor — space-y-5 (20px) entre cards */}
+                            <div className="mt-8 pt-8 border-t border-border space-y-5">
+                                <TrainingBlockSelector
+                                    selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
+                                    onSelect={(blockTypeId) => {
+                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
+                                        const newRow: ConstructorRow = {
+                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockTypeId: blockTypeId,
+                                            setType: SET_TYPE.SINGLE_SET,
+                                            sets: 3,
+                                            rounds: null,
+                                            timeCap: null,
+                                            intervalSeconds: null,
+                                            exercises: [],
+                                            rest: 60,
+                                            repsTipo: "reps",
+                                        };
+                                        setConstructorRows((prev) => [...prev, newRow]);
+                                    }}
+                                />
                                 <SessionConstructor
                                     rows={constructorRows}
                                     blockTypes={blockTypes}
-                                    activeBlockTypeId={activeBlockTypeId}
                                     onRowsChange={setConstructorRows}
                                     onAddExerciseRequest={(rowId) => {
                                         setTargetRowIdForPicker(rowId);
@@ -608,17 +622,6 @@ export const EditSession: React.FC = () => {
                             />
                         </div>
                     )}
-                </div>
-
-                {/* Bloques de Entrenamiento — Fase 3 */}
-                <div className="space-y-3">
-                    <h3 className="text-lg font-bold text-foreground">
-                        Bloques de Entrenamiento
-                    </h3>
-                    <TrainingBlockSelector
-                        activeBlockTypeId={activeBlockTypeId}
-                        onSelect={setActiveBlockTypeId}
-                    />
                 </div>
             </div>
 

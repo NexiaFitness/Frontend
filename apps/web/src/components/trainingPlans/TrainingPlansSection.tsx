@@ -24,6 +24,11 @@ import type { Client } from "@nexia/shared/types/client";
 interface TrainingPlansSectionProps {
     title: string;
     description?: string;
+    totalCount?: number;
+    searchValue?: string;
+    onSearchChange?: (value: string) => void;
+    searchPlaceholder?: string;
+    searchAriaLabel?: string;
     items: (TrainingPlan | TrainingPlanTemplate)[];
     type: "template" | "active" | "archived";
     clientNames?: Record<number, string>;

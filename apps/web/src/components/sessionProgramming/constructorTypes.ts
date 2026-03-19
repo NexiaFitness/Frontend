@@ -22,6 +22,9 @@ export interface ConstructorExercise {
     serverExerciseId?: number;
 }
 
+/** Modo de la columna Reps/Tiempo: Reps o Tiempo (AMRAP es tipo de serie, no modo reps) */
+export type RepsTipo = "reps" | "tiempo";
+
 export interface ConstructorRow {
     id: string;
     blockTypeId: number;
@@ -32,6 +35,8 @@ export interface ConstructorRow {
     intervalSeconds: number | null;
     exercises: ConstructorExercise[];
     rest: number | null;
+    /** Modo Reps/Tiempo: Reps, Tiempo, RPE, AMRAP — determina inputs de la columna */
+    repsTipo?: RepsTipo;
     /** ID en servidor (para EditSession diff) */
     serverBlockId?: number;
 }

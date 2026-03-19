@@ -29,7 +29,7 @@ export type SetType = (typeof SET_TYPE)[keyof typeof SET_TYPE];
 
 /** Labels para UI (Constructor de Sesión, selector tipo serie) */
 export const SET_TYPE_LABELS: Record<SetType, string> = {
-    single_set: "Clásico",
+    single_set: "Single Set",
     superset: "Superset",
     dropset: "Dropset",
     giant_set: "Giant Set",
@@ -43,6 +43,7 @@ export const EFFORT_CHARACTER = {
     RPE: "rpe",
     RIR: "rir",
     VELOCITY_LOSS: "velocity_loss",
+    PCT_RM: "pct_rm",
 } as const;
 
 export type EffortCharacter = (typeof EFFORT_CHARACTER)[keyof typeof EFFORT_CHARACTER];

@@ -17,7 +17,7 @@ import React, { forwardRef, useId, useState } from "react";
 import { cn } from "@/lib/utils";
 
 export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
-export type InputSize = "sm" | "md" | "lg";
+export type InputSize = "xs" | "sm" | "md" | "lg";
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
     type?: InputType;
@@ -31,8 +31,9 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 const baseStyles =
     "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50";
 
-// Mobile-first responsive sizes — sm = mismo alto que pills (filtros)
+// Mobile-first responsive sizes — xs = compact (Constructor, chips); sm = pills (filtros)
 const sizeStyles: Record<InputSize, string> = {
+    xs: "h-8 px-2.5 py-1.5 text-xs rounded-md border border-border/60 bg-surface",
     sm: "px-3 py-1.5 text-sm min-h-9 h-9",
     md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
@@ -40,6 +41,7 @@ const sizeStyles: Record<InputSize, string> = {
 
 // Para inputs password con icono → padding derecho extra
 const passwordSizeStyles: Record<InputSize, string> = {
+    xs: "h-8 px-2.5 py-1.5 pr-9 text-xs",
     sm: "px-3 py-1.5 pr-10 text-sm min-h-9 h-9",
     md: "px-3 py-2 pr-12 text-sm sm:px-4 sm:py-2.5 sm:pr-12 sm:text-base sm:min-h-[44px]",
     lg: "px-4 py-2.5 pr-14 text-base sm:px-5 sm:py-3 sm:pr-14 sm:text-lg sm:min-h-[48px]",
@@ -47,6 +49,7 @@ const passwordSizeStyles: Record<InputSize, string> = {
 
 const stateStyles = {
     default: "border-input focus-visible:border-primary focus-visible:ring-primary",
+    defaultXs: "border-border/60 bg-surface focus-visible:border-primary focus-visible:ring-primary",
     error: "border-destructive focus-visible:ring-destructive",
 };
 
@@ -97,7 +100,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         className={cn(
                             baseStyles,
                             inputSizeStyles,
-                            error ? stateStyles.error : stateStyles.default,
+                            error
+                                ? stateStyles.error
+                                : size === "xs"
+                                ? stateStyles.defaultXs
+                                : stateStyles.default,
                             className
                         )}
                         {...props}

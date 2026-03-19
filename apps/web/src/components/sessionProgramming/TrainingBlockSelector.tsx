@@ -1,10 +1,11 @@
 /**
  * TrainingBlockSelector.tsx — Selector de tipos de bloque de entrenamiento
  *
- * Fila horizontal de chips/botones con los tipos de bloque (predefinidos + custom).
- * Último botón: "+ Bloque Personalizado" para crear nuevo tipo inline.
+ * Card con cabecera y fila de chips (predefinidos + custom). Al hacer click en un bloque
+ * pasa a activo; la siguiente fila del Constructor usará ese bloque.
+ * "+ Bloque Personalizado" abre flujo para crear nuevo tipo.
  *
- * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 3
+ * @spec IMPL_CREATE_EDIT_SESSION.md §15.2 — diseño Lovable con tokens agent.md
  */
 
 import React, { useState } from "react";
@@ -34,16 +35,16 @@ function getDisplayName(bt: TrainingBlockType): string {
 }
 
 export interface TrainingBlockSelectorProps {
-    /** ID del bloque actualmente seleccionado */
-    activeBlockTypeId: number | null;
-    /** Callback al seleccionar un bloque */
-    onSelect: (blockTypeId: number | null) => void;
+    /** IDs de bloques que tienen series en la sesión (marcados) */
+    selectedBlockTypeIds: number[];
+    /** Callback al hacer clic en un bloque — añade el bloque a la sesión */
+    onSelect: (blockTypeId: number) => void;
     /** Clase CSS adicional */
     className?: string;
 }
 
 export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
-    activeBlockTypeId,
+    selectedBlockTypeIds,
     onSelect,
     className,
 }) => {
@@ -77,40 +78,70 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
 
     if (isLoading) {
         return (
-            <div className={cn("flex flex-wrap gap-2", className)}>
-                <div className="h-9 w-24 rounded-md bg-muted/50 animate-pulse" />
-                <div className="h-9 w-28 rounded-md bg-muted/50 animate-pulse" />
-                <div className="h-9 w-32 rounded-md bg-muted/50 animate-pulse" />
+            <div
+                className={cn(
+                    "rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm",
+                    className
+                )}
+            >
+                <div className="mb-3 h-4 w-40 rounded bg-muted/50 animate-pulse" />
+                <div className="flex flex-wrap gap-2">
+                    <div className="h-7 w-24 rounded-md bg-muted/50 animate-pulse" />
+                    <div className="h-7 w-28 rounded-md bg-muted/50 animate-pulse" />
+                    <div className="h-7 w-32 rounded-md bg-muted/50 animate-pulse" />
+                </div>
             </div>
         );
     }
 
     return (
-        <div className={cn("flex flex-wrap gap-2", className)}>
-            {blockTypes.map((bt) => (
-                <button
-                    key={bt.id}
-                    type="button"
-                    onClick={() => onSelect(activeBlockTypeId === bt.id ? null : bt.id)}
-                    className={cn(
-                        "px-4 py-2 rounded-md text-sm font-medium border transition-colors",
-                        activeBlockTypeId === bt.id
-                            ? "bg-primary/20 text-primary border-primary"
-                            : "bg-surface text-muted-foreground border-border hover:bg-muted/50"
-                    )}
-                >
-                    {getDisplayName(bt)}
-                </button>
-            ))}
+        <div
+            className={cn(
+                "rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm",
+                className
+            )}
+        >
+            <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-foreground">
+                    Bloques de Entrenamiento
+                </h3>
+                {!showCustomInput && (
+                    <button
+                        type="button"
+                        onClick={() => setShowCustomInput(true)}
+                        className="inline-flex items-center rounded-md border border-primary/30 bg-transparent px-3 h-7 text-xs font-medium text-primary transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)]"
+                    >
+                        + Bloque Personalizado
+                    </button>
+                )}
+            </div>
 
-            {showCustomInput ? (
-                <div className="flex items-center gap-2">
+            <div className="flex flex-wrap gap-2">
+                {blockTypes.map((bt) => (
+                    <button
+                        key={bt.id}
+                        type="button"
+                        onClick={() => onSelect(bt.id)}
+                        className={cn(
+                            "rounded-md border px-3 py-1.5 text-xs font-medium transition-all",
+                            selectedBlockTypeIds.includes(bt.id)
+                                ? "border-primary/40 bg-primary/10 text-primary"
+                                : "border-border bg-surface text-foreground hover:border-primary/50 hover:bg-primary/5"
+                        )}
+                    >
+                        {getDisplayName(bt)}
+                    </button>
+                ))}
+            </div>
+
+            {showCustomInput && (
+                <div className="mt-3 flex items-center gap-2 rounded-md border border-border bg-surface/50 p-2">
                     <Input
                         type="text"
                         value={customName}
                         onChange={(e) => setCustomName(e.target.value)}
                         placeholder="Nombre del bloque"
-                        className="w-40 h-9 text-sm"
+                        className="h-7 w-36 text-xs"
                         autoFocus
                         onKeyDown={(e) => {
                             if (e.key === "Enter") handleCreateCustom();
@@ -121,26 +152,18 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
                         type="button"
                         onClick={handleCreateCustom}
                         disabled={!customName.trim() || isCreating}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                        className="rounded-md px-3 h-7 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
                     >
                         {isCreating ? "..." : "Crear"}
                     </button>
                     <button
                         type="button"
                         onClick={handleCancelCustom}
-                        className="px-3 py-1.5 rounded-md text-sm font-medium bg-surface text-muted-foreground border border-border hover:bg-muted/50"
+                        className="rounded-md px-3 h-7 text-xs font-medium border border-border bg-surface text-muted-foreground hover:bg-muted/50 transition-colors"
                     >
                         Cancelar
                     </button>
                 </div>
-            ) : (
-                <button
-                    type="button"
-                    onClick={() => setShowCustomInput(true)}
-                    className="px-4 py-2 rounded-md text-sm font-medium bg-surface text-muted-foreground border border-dashed border-border hover:bg-muted/50 hover:border-primary/50"
-                >
-                    + Bloque Personalizado
-                </button>
             )}
         </div>
     );

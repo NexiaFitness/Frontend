@@ -42,6 +42,7 @@ import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
+import { buildExercisePayload } from "./buildExercisePayload";
 import { ClipboardList } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
@@ -53,6 +54,7 @@ import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
 } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     TrainingSessionCreate,
     SessionCoherenceWarning,
@@ -233,9 +235,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
 
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
-
-    /** Fase 3: bloque de entrenamiento seleccionado (para "+ Añadir serie" en Fase 4) */
-    const [activeBlockTypeId, setActiveBlockTypeId] = useState<number | null>(null);
 
     /** Fase 4+7: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
@@ -450,20 +449,15 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             for (let j = 0; j < row.exercises.length; j++) {
                                 const ex = row.exercises[j];
                                 try {
+                                    const payload = buildExercisePayload(
+                                        row,
+                                        ex,
+                                        j + 1,
+                                        row.setType
+                                    );
                                     await createSessionBlockExercise({
                                         blockId: createdBlock.id,
-                                        data: {
-                                            exercise_id: ex.exerciseId,
-                                            order_in_block: j + 1,
-                                            set_type: row.setType,
-                                            planned_sets: row.sets,
-                                            planned_reps: ex.plannedReps,
-                                            planned_weight: ex.plannedWeight,
-                                            planned_rest: row.rest,
-                                            effort_character: ex.effortCharacter,
-                                            effort_value: ex.effortValue,
-                                            notes: ex.notes,
-                                        },
+                                        data: payload,
                                     }).unwrap();
                                     exercisesSaved++;
                                 } catch {
@@ -521,7 +515,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     if (postCreateCoherenceWarnings != null && postCreateCoherenceWarnings.length > 0 && postCreateRedirectPath) {
         return (
-            <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+            <div className="mb-6 lg:mb-8">
                 <div className="rounded-xl border border-warning/30 bg-warning/10 p-6 space-y-4">
                     <h2 className="text-xl font-semibold text-foreground">Sesión creada con avisos de coherencia</h2>
                     <p className="text-sm text-muted-foreground">
@@ -549,7 +543,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     return (
         <>
-            <div className="space-y-6 pb-24 px-4 lg:px-8">
+            <div className="space-y-6 pb-24">
                 {/* Header + Volver — mismo patrón que dashboard */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <PageTitle title="Nueva Sesión" />
@@ -619,7 +613,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     <Input
                                         type="text"
                                         value={formData.sessionName}
-                                        onChange={(e) => setFormData({ ...formData, sessionName: e.target.value })}
+                                        onChange={(e) => setFormData((prev) => ({ ...prev, sessionName: e.target.value }))}
                                         required
                                         placeholder="Ej: Fuerza — Tren superior A"
                                         className="bg-surface"
@@ -695,7 +689,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     <FormSelect
                                         id="create-session-type"
                                         value={formData.sessionType}
-                                        onChange={(e) => setFormData({ ...formData, sessionType: e.target.value })}
+                                        onChange={(e) => setFormData((prev) => ({ ...prev, sessionType: e.target.value }))}
                                         required
                                         options={SESSION_TYPES}
                                     />
@@ -723,7 +717,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         min={1}
                                         max={10}
                                         color="primary"
-                                        onChange={(v) => setFormData({ ...formData, plannedIntensity: String(v) })}
+                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
                                     />
                                 </div>
                                 <div className="mt-3 md:mt-0">
@@ -799,32 +793,30 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 <RecommendationsCards clientId={effectiveClientId} />
                             )}
 
-                            {/* Bloques de Entrenamiento */}
-                            <div className="space-y-3">
-                                <h3 className="text-lg font-bold text-foreground">
-                                    Bloques de Entrenamiento
-                                </h3>
+                            {/* Bloques + Constructor — space-y-5 (20px) entre cards */}
+                            <div className="space-y-5">
                                 <TrainingBlockSelector
-                                    activeBlockTypeId={activeBlockTypeId}
-                                    onSelect={setActiveBlockTypeId}
+                                    selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
+                                    onSelect={(blockTypeId) => {
+                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
+                                        const newRow: ConstructorRow = {
+                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockTypeId: blockTypeId,
+                                            setType: SET_TYPE.SINGLE_SET,
+                                            sets: 3,
+                                            rounds: null,
+                                            timeCap: null,
+                                            intervalSeconds: null,
+                                            exercises: [],
+                                            rest: 60,
+                                            repsTipo: "reps",
+                                        };
+                                        setConstructorRows((prev) => [...prev, newRow]);
+                                    }}
                                 />
-                            </div>
-
-                            {/* Constructor de Sesión — debajo de Bloques */}
-                            <div className="pt-6 border-t border-border">
-                                <div className="flex items-center justify-between mb-6">
-                                    <h3 className="text-lg font-bold text-foreground">Constructor de Sesión</h3>
-                                    {constructorRows.length > 0 && (
-                                        <span className="px-3 py-1 bg-primary/20 text-primary text-sm font-semibold rounded-full">
-                                            {constructorRows.length} serie{constructorRows.length !== 1 ? "s" : ""}
-                                        </span>
-                                    )}
-                                </div>
-
                                 <SessionConstructor
                                     rows={constructorRows}
                                     blockTypes={blockTypes}
-                                    activeBlockTypeId={activeBlockTypeId}
                                     onRowsChange={setConstructorRows}
                                     onAddExerciseRequest={(rowId) => {
                                         setTargetRowIdForPicker(rowId);
@@ -840,7 +832,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </label>
                                 <Textarea
                                     value={formData.notes}
-                                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                                     rows={3}
                                     placeholder="Instrucciones generales para la sesión..."
                                 />
@@ -862,7 +854,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
             {/* Barra fija inferior — layout imagen 2: Guardar como Plantilla (izq), Cancelar + Crear Sesión (der) */}
             <div className="fixed bottom-0 left-0 right-0 z-30 border-t border-border bg-background p-4">
-                <div className="mx-auto flex max-w-5xl items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-3">
                     <Button
                         type="button"
                         variant="outline"

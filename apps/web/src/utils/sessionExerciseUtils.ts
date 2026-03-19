@@ -68,8 +68,10 @@ export function computeSessionSetsTotals(
     let totalPlanned = 0;
     let totalActual = 0;
     for (const ex of exercises) {
-        if (ex.planned_sets != null && ex.planned_sets >= 0) totalPlanned += ex.planned_sets;
-        if (ex.actual_sets != null && ex.actual_sets >= 0) totalActual += ex.actual_sets;
+        const planned = "plannedSets" in ex ? ex.plannedSets : ex.planned_sets;
+        const actual = "actualSets" in ex ? ex.actualSets : ex.actual_sets;
+        if (planned != null && planned >= 0) totalPlanned += planned;
+        if (actual != null && actual >= 0) totalActual += actual;
     }
     return { totalPlanned, totalActual };
 }

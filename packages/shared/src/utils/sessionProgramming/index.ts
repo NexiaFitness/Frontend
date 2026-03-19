@@ -7,6 +7,11 @@
 
 export { buildTrainingSessionCreate } from "./buildTrainingSessionCreate";
 export type { BuildTrainingSessionCreateParams } from "./buildTrainingSessionCreate";
+export {
+    getCaracterTipoFromEffortCharacter,
+    getEffortCharacterForCaracterTipo,
+} from "./effortCharacterMapping";
+export type { CaracterTipo } from "./effortCharacterMapping";
 
 
 

@@ -12,10 +12,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { useGetTrainingSessionQuery, useGetSessionExercisesQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetTrainingSessionQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import type { SessionExercise } from "@nexia/shared/types/trainingSessions";
+import { useSessionExercisesDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import {
     formatSetsMetric,
     computeSessionSetsTotals,
@@ -48,12 +48,10 @@ export const SessionDetail: React.FC = () => {
     });
 
     const {
-        data: exercises = [],
+        exercises,
         isLoading: isLoadingExercises,
         isError: isErrorExercises,
-    } = useGetSessionExercisesQuery(sessionId, {
-        skip: !sessionId || Number.isNaN(sessionId),
-    });
+    } = useSessionExercisesDisplay(sessionId && !Number.isNaN(sessionId) ? sessionId : null);
 
     const { data: plan } = useGetTrainingPlanQuery(session?.training_plan_id || 0, {
         skip: !session?.training_plan_id,
@@ -311,23 +309,28 @@ export const SessionDetail: React.FC = () => {
                                         {exercises.map((exercise) => (
                                             <div
                                                 key={exercise.id}
-                                                className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-gray-200 rounded-lg p-4"
+                                                className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-border rounded-lg p-4"
                                             >
                                                 <div>
-                                                    <p className="text-sm font-semibold text-gray-900">
-                                                        {renderExerciseName(exercise)}
+                                                    <p className="text-sm font-semibold text-foreground">
+                                                        {exercise.exerciseName}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        Orden: {exercise.order_in_session}
-                                                    </p>
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <span>Orden: {exercise.order}</span>
+                                                        {exercise.blockName && (
+                                                            <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary">
+                                                                {exercise.blockName}
+                                                            </span>
+                                                        )}
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground">
                                                     <div>
                                                         <span className="block uppercase">Series</span>
                                                         {(() => {
                                                             const metric = formatSetsMetric(
-                                                                exercise.planned_sets,
-                                                                exercise.actual_sets
+                                                                exercise.plannedSets,
+                                                                exercise.actualSets
                                                             );
                                                             return (
                                                                 <span
@@ -340,21 +343,38 @@ export const SessionDetail: React.FC = () => {
                                                         })()}
                                                     </div>
                                                     <div>
-                                                        <span className="block uppercase">Reps</span>
-                                                        <span className="font-medium">{exercise.planned_reps ?? "—"}</span>
+                                                        <span className="block uppercase">Reps / Tiempo</span>
+                                                        <span className="font-medium">
+                                                            {exercise.plannedReps ?? (exercise.plannedDuration != null ? `${exercise.plannedDuration} s` : "—")}
+                                                        </span>
                                                     </div>
                                                     <div>
                                                         <span className="block uppercase">Peso</span>
                                                         <span className="font-medium">
-                                                            {exercise.planned_weight ?? "—"}
+                                                            {exercise.plannedWeight ?? "—"}
                                                         </span>
                                                     </div>
                                                     <div>
                                                         <span className="block uppercase">Descanso</span>
                                                         <span className="font-medium">
-                                                            {exercise.planned_rest ?? "—"}
+                                                            {exercise.plannedRest != null ? `${exercise.plannedRest} s` : "—"}
                                                         </span>
                                                     </div>
+                                                    {(exercise.effortCharacter || exercise.effortValue != null) && (
+                                                        <div className="col-span-2 sm:col-span-4">
+                                                            <span className="block uppercase">Carácter</span>
+                                                            <span className="font-medium">
+                                                                {exercise.effortCharacter === "rpe"
+                                                                    ? "RPE"
+                                                                    : exercise.effortCharacter === "rir"
+                                                                    ? "RIR"
+                                                                    : exercise.effortCharacter === "pct_rm"
+                                                                    ? "%RM"
+                                                                    : exercise.effortCharacter ?? "—"}
+                                                                {exercise.effortValue != null ? ` ${exercise.effortValue}` : ""}
+                                                            </span>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {exercise.notes && (
                                                     <div className="text-xs text-muted-foreground md:text-right">

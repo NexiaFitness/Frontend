@@ -1,14 +1,15 @@
 /**
  * SessionConstructor.tsx — Tabla principal del Constructor de Sesión
  *
- * Cabeceras: BLOQUE | TIPO SERIE | SERIES | EJERCICIOS | REPS/TIEMPO | CARÁCTER | DESCANSO | [papelera]
- * "+ Añadir serie" añade fila con activeBlockTypeId y setType = "single_set"
+ * Dos estados: placeholder (sin filas) vs tabla (con cabeceras, filas, pie por bloque).
+ * Filas agrupadas por blockTypeId; cada grupo tiene su pie: + Añadir serie | Eliminar bloque.
  *
  * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
+ * @spec Lovable — Bloques + Constructor dinámico
  */
 
 import React from "react";
-import { Button } from "@/components/ui/buttons";
+import { Plus, Trash2, Timer } from "lucide-react";
 import { SessionConstructorRow } from "./SessionConstructorRow";
 import type { ConstructorRow, ConstructorExercise } from "./constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
@@ -21,7 +22,6 @@ function generateId(): string {
 export interface SessionConstructorProps {
     rows: ConstructorRow[];
     blockTypes: TrainingBlockType[];
-    activeBlockTypeId: number | null;
     onRowsChange: (rows: ConstructorRow[]) => void;
     onAddExerciseRequest: (rowId: string) => void;
 }
@@ -29,7 +29,6 @@ export interface SessionConstructorProps {
 export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     rows,
     blockTypes,
-    activeBlockTypeId,
     onRowsChange,
     onAddExerciseRequest,
 }) => {
@@ -37,10 +36,6 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         onRowsChange(
             rows.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
         );
-    };
-
-    const handleRemoveRow = (rowId: string) => {
-        onRowsChange(rows.filter((r) => r.id !== rowId));
     };
 
     const handleAddExercise = (rowId: string) => {
@@ -73,12 +68,10 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         );
     };
 
-    const handleAddRow = () => {
-        const defaultBlockTypeId =
-            activeBlockTypeId ?? blockTypes[0]?.id ?? 0;
+    const handleAddRow = (blockTypeId: number) => {
         const newRow: ConstructorRow = {
             id: generateId(),
-            blockTypeId: defaultBlockTypeId,
+            blockTypeId,
             setType: SET_TYPE.SINGLE_SET,
             sets: 3,
             rounds: null,
@@ -86,71 +79,93 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
             intervalSeconds: null,
             exercises: [],
             rest: 60,
+            repsTipo: "reps",
         };
         onRowsChange([...rows, newRow]);
     };
 
+    const handleRemoveBlock = (blockTypeId: number) => {
+        onRowsChange(rows.filter((r) => r.blockTypeId !== blockTypeId));
+    };
+
+    /** Agrupar filas por blockTypeId para mostrar pie por bloque */
+    const rowsByBlock = React.useMemo(() => {
+        const map = new Map<number, ConstructorRow[]>();
+        for (const row of rows) {
+            if (!row.blockTypeId) continue;
+            const list = map.get(row.blockTypeId) ?? [];
+            list.push(row);
+            map.set(row.blockTypeId, list);
+        }
+        return map;
+    }, [rows]);
+
+    const showTable = rows.length > 0;
+
     return (
-        <div className="space-y-4">
-            <div className="overflow-x-auto rounded-lg border border-border">
-                <table className="w-full min-w-[800px] text-sm">
-                    <thead>
-                        <tr className="bg-muted/50 border-b border-border">
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground">
-                                BLOQUE
-                            </th>
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground">
-                                TIPO SERIE
-                            </th>
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground w-20">
-                                SERIES
-                            </th>
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground min-w-[180px]">
-                                EJERCICIOS
-                            </th>
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground min-w-[100px]">
-                                REPS / TIEMPO
-                            </th>
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground w-24">
-                                CARÁCTER
-                            </th>
-                            <th className="py-2 px-2 text-left text-xs font-medium text-muted-foreground w-20">
-                                DESCANSO
-                            </th>
-                            <th className="py-2 px-2 w-10" />
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((row) => (
-                            <SessionConstructorRow
-                                key={row.id}
-                                row={row}
-                                blockTypes={blockTypes}
-                                onUpdate={handleUpdateRow}
-                                onRemove={handleRemoveRow}
-                                onAddExercise={handleAddExercise}
-                                onRemoveExercise={handleRemoveExercise}
-                                onUpdateExercise={handleUpdateExercise}
-                            />
-                        ))}
-                    </tbody>
-                </table>
+        <div className="rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-border">
+                <h3 className="text-sm font-semibold text-foreground">
+                    Constructor de Sesión
+                </h3>
             </div>
 
-            {rows.length === 0 ? (
-                <div className="rounded-lg bg-surface py-12 text-center text-sm text-muted-foreground">
+            {!showTable ? (
+                <div className="p-12 text-center text-sm text-muted-foreground">
                     Selecciona un bloque de entrenamiento para comenzar a construir tu sesión.
                 </div>
-            ) : null}
+            ) : (
+                <div className="divide-y divide-border">
+                    {/* Cabeceras — grid: más espacio Reps/Tiempo, Carácter, Descanso; menos Ejercicios */}
+                    <div className="grid grid-cols-[170px_110px_70px_minmax(140px,1fr)_140px_160px_100px] gap-2 px-4 py-2.5 bg-surface/50 text-[11px] font-medium text-muted-foreground uppercase tracking-wider items-center">
+                        <span>Bloque</span>
+                        <span>Tipo Serie</span>
+                        <span>Series</span>
+                        <span>Ejercicios</span>
+                        <span className="flex items-center justify-center w-full text-center">Reps / Tiempo</span>
+                        <span className="flex items-center justify-center w-full text-center">Carácter</span>
+                        <span className="flex items-center justify-center gap-1 w-full text-center">
+                            <Timer className="h-3 w-3 shrink-0" aria-hidden />
+                            Descanso
+                        </span>
+                    </div>
 
-            <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddRow}
-                className="w-full"
-            >
-                + Añadir serie
-            </Button>
+                    {/* Filas agrupadas por bloque — cada grupo tiene su pie con + Añadir serie | Eliminar bloque */}
+                    {Array.from(rowsByBlock.entries()).map(([blockTypeId, blockRows]) => (
+                        <React.Fragment key={blockTypeId}>
+                            {blockRows.map((row) => (
+                                <SessionConstructorRow
+                                    key={row.id}
+                                    row={row}
+                                    blockTypes={blockTypes}
+                                    onUpdate={handleUpdateRow}
+                                    onAddExercise={handleAddExercise}
+                                    onRemoveExercise={handleRemoveExercise}
+                                    onUpdateExercise={handleUpdateExercise}
+                                />
+                            ))}
+                            <div className="flex items-center justify-between px-4 py-2 bg-surface/20 border-t border-border/40">
+                                <button
+                                    type="button"
+                                    onClick={() => handleAddRow(blockTypeId)}
+                                    className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-primary transition-colors"
+                                >
+                                    <Plus className="h-3 w-3" aria-hidden />
+                                    Añadir serie
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemoveBlock(blockTypeId)}
+                                    className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                                >
+                                    <Trash2 className="h-3 w-3" aria-hidden />
+                                    Eliminar bloque
+                                </button>
+                            </div>
+                        </React.Fragment>
+                    ))}
+                </div>
+            )}
         </div>
     );
 };
