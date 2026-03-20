@@ -155,9 +155,11 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
             { skip?: number; limit?: number }
         >({
             query: ({ skip = 0, limit = 100 }) => {
+                const safeSkip = Math.max(0, skip);
+                const safeLimit = Math.min(Math.max(1, limit), 100);
                 const params = new URLSearchParams();
-                params.append("skip", skip.toString());
-                params.append("limit", limit.toString());
+                params.append("skip", safeSkip.toString());
+                params.append("limit", safeLimit.toString());
 
                 return {
                     url: `/session-programming/session-templates?${params.toString()}`,

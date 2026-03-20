@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
-import { useToast, LoadingSpinner } from "@/components/ui/feedback";
+import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -52,7 +52,6 @@ import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import { TriangleAlert } from "lucide-react";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -605,9 +604,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 ) : null}
 
                 <form id="create-session-form" onSubmit={handleSubmit}>
-                {/* Grid: 3 primeras filas (nombre, fecha, duración) + columna derecha con plan — solo cuando hay cliente */}
-                <div className={`grid grid-cols-1 gap-6 ${effectiveClientId ? "lg:grid-cols-[1fr_420px]" : ""}`}>
-                    <div className="space-y-5">
+                {/* Datos base sesión */}
+                <div className="space-y-5">
                             {/* Nombre de la Sesión + Plan de Entrenamiento (misma línea cuando hay cliente) */}
                             <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
                                 <div>
@@ -735,61 +733,57 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     />
                                 </div>
                             </div>
-                    </div>
-
-                    {/* Columna derecha: Plan del día — solo cuando hay cliente seleccionado */}
-                    {effectiveClientId != null && effectiveClientId > 0 && (
-                    <div className="lg:self-stretch">
-                        {useStandaloneSession ? (
-                                <EmptyStateCard
-                                    icon={<ClipboardList aria-hidden />}
-                                    title="Sin plan asignado"
-                                    description="Este cliente no tiene un plan de entrenamiento activo."
-                                    action={
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`
-                                                )
-                                            }
-                                        >
-                                            <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
-                                            Crear plan
-                                        </Button>
-                                    }
-                                    footer={
-                                        <p className="text-[11px] text-muted-foreground">
-                                            Puedes continuar sin plan y crear la sesión libremente.
-                                        </p>
-                                    }
-                                />
-                            ) : (
-                                <SessionDayPlan
-                                    clientId={effectiveClientId}
-                                    sessionDate={formData.sessionDate}
-                                    trainerId={trainerId}
-                                />
-                            )}
-                    </div>
-                    )}
                 </div>
+
+                {/* Plan del día / estado del plan — ancho completo */}
+                {effectiveClientId != null && effectiveClientId > 0 && (
+                    <div className="mt-5 w-full">
+                        {useStandaloneSession ? (
+                            <EmptyStateCard
+                                icon={<ClipboardList aria-hidden />}
+                                title="Sin plan asignado"
+                                description="Este cliente no tiene un plan de entrenamiento activo."
+                                action={
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
+                                        onClick={() =>
+                                            navigate(
+                                                `/dashboard/training-plans/create?clientId=${effectiveClientId}`
+                                            )
+                                        }
+                                    >
+                                        <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                        Crear plan
+                                    </Button>
+                                }
+                                footer={
+                                    <p className="text-[11px] text-muted-foreground">
+                                        Puedes continuar sin plan y crear la sesión libremente.
+                                    </p>
+                                }
+                            />
+                        ) : (
+                            <SessionDayPlan
+                                clientId={effectiveClientId}
+                                sessionDate={formData.sessionDate}
+                                trainerId={trainerId}
+                            />
+                        )}
+                    </div>
+                )}
 
                 {/* A partir de aquí todo ancho: banner lesiones, recomendaciones, bloques, constructor, notas */}
                 <div className="mt-6 space-y-5 w-full">
                             {/* Alerta lesiones activas — solo cuando hay cliente seleccionado */}
                             {effectiveClientId && hasActiveInjuries && displayClient && (
-                                <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-4">
-                                    <TriangleAlert className="h-5 w-5 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
-                                    <p className="text-sm text-[hsl(var(--warning))]">
-                                        Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
-                                        {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
-                                        ). Los ejercicios contraindicados están marcados en la lista.
-                                    </p>
-                                </div>
+                                <Alert variant="warning">
+                                    Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
+                                    {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
+                                    ). Los ejercicios contraindicados están marcados en la lista.
+                                </Alert>
                             )}
 
                             {/* Recomendaciones de plan (Lovable) — solo cuando hay cliente asignado */}

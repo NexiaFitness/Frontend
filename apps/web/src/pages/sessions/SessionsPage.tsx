@@ -126,7 +126,7 @@ export const SessionsPage: React.FC = () => {
     );
 
     const { data: templates = [], isLoading: isLoadingTemplates } = useGetSessionTemplatesQuery(
-        { skip: 0, limit: 200 },
+        { skip: 0, limit: 100 },
         { skip: !isAuthenticated }
     );
 
