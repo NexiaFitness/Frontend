@@ -42,7 +42,10 @@ export const useCreateSessionFromTemplate = ({
     const [createMutation, { isLoading, isError, error }] = useCreateTrainingSessionMutation();
     const [applyTemplateMutation] = useApplyTemplateToSessionMutation();
     const [useTemplateMutation] = useUseSessionTemplateMutation();
-    const { data: template, isLoading: isLoadingTemplate } = useGetSessionTemplateQuery(templateId);
+    const { data: template, isLoading: isLoadingTemplate } = useGetSessionTemplateQuery(
+        templateId,
+        { skip: !templateId || templateId <= 0 }
+    );
 
     const createSession = useCallback(
         async (data: { sessionDate: string; trainingPlanId: number }) => {

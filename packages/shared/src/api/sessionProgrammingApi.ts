@@ -4,7 +4,7 @@
  * Contexto:
  * - Endpoints para Session Templates, Training Block Types, Sessions, Blocks
  * - Integrado con sistema RBAC (trainers solo sus propios recursos)
- * - Backend devuelve arrays directos (no wrapper paginado)
+ * - Listado session-templates: { items, total }; skip/limit y search opcional
  *
  * Endpoints implementados:
  * - Session Templates CRUD
@@ -26,6 +26,7 @@ import type {
     // Session Templates
     SessionTemplate,
     SessionTemplateCreate,
+    SessionTemplateListResponse,
     SessionTemplateUpdate,
     // Session Blocks
     SessionBlock,
@@ -151,15 +152,18 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
          * Backend: GET /api/v1/session-programming/session-templates
          */
         getSessionTemplates: builder.query<
-            SessionTemplate[],
-            { skip?: number; limit?: number }
+            SessionTemplateListResponse,
+            { skip?: number; limit?: number; search?: string }
         >({
-            query: ({ skip = 0, limit = 100 }) => {
+            query: ({ skip = 0, limit = 100, search }) => {
                 const safeSkip = Math.max(0, skip);
                 const safeLimit = Math.min(Math.max(1, limit), 100);
                 const params = new URLSearchParams();
                 params.append("skip", safeSkip.toString());
                 params.append("limit", safeLimit.toString());
+                if (search && search.trim()) {
+                    params.append("search", search.trim());
+                }
 
                 return {
                     url: `/session-programming/session-templates?${params.toString()}`,
@@ -167,9 +171,12 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
                 };
             },
             providesTags: (result) =>
-                result
+                result?.items?.length
                     ? [
-                        ...result.map(({ id }) => ({ type: "SessionTemplate" as const, id })),
+                        ...result.items.map(({ id }) => ({
+                            type: "SessionTemplate" as const,
+                            id,
+                        })),
                         { type: "SessionTemplate", id: "LIST" },
                     ]
                     : [{ type: "SessionTemplate", id: "LIST" }],

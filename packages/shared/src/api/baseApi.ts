@@ -60,17 +60,37 @@ const setStorageSafely = (key: string, value: string): void => {
 /** Mutex: solo una petición de refresh a la vez (TICK-D04). */
 let refreshPromise: Promise<boolean> | null = null;
 
+/** Evita que POST /auth/refresh cuelgue indefinidamente y bloquee otras peticiones (p. ej. login). */
+const REFRESH_FETCH_TIMEOUT_MS = 20_000;
+
+/**
+ * Mutaciones donde 401 significa credenciales/token inválidos en esa petición, no "access caducado".
+ * No deben disparar refresh+retry (riesgo de bloqueo si /auth/refresh no responde).
+ */
+const ENDPOINTS_401_SKIP_REFRESH = new Set<string>([
+    "login",
+    "register",
+    "verifyEmail",
+    "resendVerification",
+    "forgotPassword",
+    "resetPassword",
+    "logout",
+]);
+
 /**
  * Llama a POST /auth/refresh con el refresh_token, persiste nuevos tokens y user.
  * No usa authApi para evitar dependencia circular (authApi extiende baseApi).
  */
 const doRefresh = async (refreshToken: string): Promise<boolean> => {
     const url = `${API_CONFIG.BASE_URL}/auth/refresh`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REFRESH_FETCH_TIMEOUT_MS);
     try {
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refresh_token: refreshToken }),
+            signal: controller.signal,
         });
         if (!res.ok) return false;
         const data = (await res.json()) as {
@@ -84,6 +104,8 @@ const doRefresh = async (refreshToken: string): Promise<boolean> => {
         return true;
     } catch {
         return false;
+    } finally {
+        clearTimeout(timeoutId);
     }
 };
 
@@ -191,6 +213,13 @@ const baseQueryWithReauth: BaseQueryFn<
         
         // Manejo de errores 401 (Unauthorized) - TICK-D04: intentar refresh y reintentar una vez
         if (result.error && result.error.status === 401) {
+            const endpointName = api.endpoint ?? "";
+
+            if (ENDPOINTS_401_SKIP_REFRESH.has(endpointName)) {
+                restoreConsole();
+                return result;
+            }
+
             const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
             const state = api.getState() as RootState;
             const isAuthenticated = state.auth?.isAuthenticated ?? false;
@@ -206,18 +235,21 @@ const baseQueryWithReauth: BaseQueryFn<
                 return { data: undefined };
             }
 
-            if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
-            const refreshed = await refreshPromise;
-            refreshPromise = null;
+            try {
+                if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
+                const refreshed = await refreshPromise;
 
-            if (!refreshed) {
+                if (!refreshed) {
+                    restoreConsole();
+                    return { data: undefined };
+                }
+
+                const retryResult = await baseQuery(args, api, extraOptions);
                 restoreConsole();
-                return { data: undefined };
+                return retryResult;
+            } finally {
+                refreshPromise = null;
             }
-
-            const retryResult = await baseQuery(args, api, extraOptions);
-            restoreConsole();
-            return retryResult;
         }
         
         // Errores 403 (Forbidden) se propagan para que los componentes los manejen

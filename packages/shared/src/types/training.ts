@@ -67,6 +67,9 @@ export interface TrainingPlan {
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
+    /** Contadores de sesiones del plan (listados por trainer/client desde backend). */
+    sessions_completed: number;
+    sessions_total: number;
 }
 
 /**
@@ -203,6 +206,7 @@ export interface TrainingSession {
     client_id: number;
     trainer_id: number;
     session_date: string | null; // ISO date, nullable for generic plans
+    session_time?: string | null;
     session_name: string;
     session_type: string;
     // Generic plan support

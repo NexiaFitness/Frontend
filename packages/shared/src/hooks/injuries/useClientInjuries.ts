@@ -47,19 +47,24 @@ export const useClientInjuries = ({
     // =========================================================================
 
     const {
-        data: activeInjuriesRaw = [],
+        data: activeInjuriesRaw,
         isLoading: isLoadingActive,
     } = useGetClientActiveInjuriesQuery(clientId);
 
     const {
-        data: historyInjuriesRaw = [],
+        data: historyInjuriesRaw,
         isLoading: isLoadingHistory,
     } = useGetClientInjuriesQuery(clientId, {
         skip: !includeHistory,
     });
 
-    const { data: joints = [] } = useGetJointsQuery();
-    const { data: muscles = [] } = useGetMusclesQuery();
+    const { data: jointsData } = useGetJointsQuery();
+    const { data: musclesData } = useGetMusclesQuery();
+
+    const joints = Array.isArray(jointsData) ? jointsData : [];
+    const muscles = Array.isArray(musclesData) ? musclesData : [];
+    const activeInjuriesList = Array.isArray(activeInjuriesRaw) ? activeInjuriesRaw : [];
+    const historyInjuriesList = Array.isArray(historyInjuriesRaw) ? historyInjuriesRaw : [];
 
     // =========================================================================
     // ENRIQUECIMIENTO DE DATOS
@@ -78,13 +83,13 @@ export const useClientInjuries = ({
     };
 
     const activeInjuries = useMemo(
-        () => activeInjuriesRaw.map(enrichInjury),
-        [activeInjuriesRaw, joints, muscles]
+        () => activeInjuriesList.map(enrichInjury),
+        [activeInjuriesList, joints, muscles]
     );
 
     const historyInjuries = useMemo(
-        () => historyInjuriesRaw.map(enrichInjury),
-        [historyInjuriesRaw, joints, muscles]
+        () => historyInjuriesList.map(enrichInjury),
+        [historyInjuriesList, joints, muscles]
     );
 
     // =========================================================================

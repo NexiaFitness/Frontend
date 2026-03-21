@@ -14,7 +14,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { LayoutGrid, List, Plus, Search, UserPlus } from "lucide-react";
+import { Battery, BatteryLow, LayoutGrid, List, Plus, Search, UserPlus } from "lucide-react";
 import {
     useClientsListWithMetrics,
     useGetRecentActivityQuery,
@@ -34,6 +34,12 @@ import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 9;
 
+/** Satisfacción 1–10: fatigue 1 (perfecto) → 10, fatigue 10 (exhausted) → 1. Usado como fallback cuando no hay satisfaction_level. */
+function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
+    const raw = fatigueLevelNumeric != null ? 10 - fatigueLevelNumeric : 5;
+    return Math.max(1, Math.min(10, raw));
+}
+
 function getFatigueColor(fatigue: string | null): string {
     if (!fatigue) return "bg-muted text-muted-foreground";
     const f = fatigue.toLowerCase();
@@ -45,13 +51,24 @@ function getFatigueColor(fatigue: string | null): string {
 }
 
 function translateFatigue(fatigue: string | null): string {
-    if (!fatigue) return "—";
+    if (!fatigue) return "Sin datos";
     const f = fatigue.toLowerCase();
     if (f.includes("perfect")) return "Descansado";
     if (f.includes("slightly")) return "Cansado";
     if (f.includes("very")) return "Muy cansado";
     if (f.includes("exhausted")) return "Agotado";
     return fatigue;
+}
+
+function FatigueBatteryIcon({ fatigue }: { fatigue: string | null }) {
+    if (!fatigue) return <Battery className="h-3.5 w-3.5 shrink-0 opacity-50" aria-hidden />;
+    const f = fatigue.toLowerCase();
+    const isLow = f.includes("slightly") || f.includes("very") || f.includes("exhausted");
+    return isLow ? (
+        <BatteryLow className="h-3.5 w-3.5 shrink-0" aria-hidden />
+    ) : (
+        <Battery className="h-3.5 w-3.5 shrink-0" aria-hidden />
+    );
 }
 
 function getStatusLabel(status: ClientStatus | null | undefined): string {
@@ -63,8 +80,7 @@ function getStatusLabel(status: ClientStatus | null | undefined): string {
 }
 
 function getStatusBadgeClass(status: ClientStatus | null | undefined): string {
-    if (!status) return "bg-muted text-muted-foreground";
-    if (status === "active") return "bg-success/10 text-success";
+    if (!status || status === "active") return "bg-success/10 text-success";
     if (status === "paused") return "bg-warning/10 text-warning";
     return "bg-destructive/10 text-destructive";
 }
@@ -150,6 +166,7 @@ export const ClientList: React.FC = () => {
         skip: user?.role !== "trainer",
     });
     const trainerId = trainerProfile?.id ?? null;
+    const isTrainerOrAdmin = user?.role === "trainer" || user?.role === "admin";
 
     const statusParam: ClientStatus | undefined =
         statusFilter === "all" ? undefined : statusFilter;
@@ -168,12 +185,12 @@ export const ClientList: React.FC = () => {
         pageSize: PAGE_SIZE,
         search: searchDebounced.trim() || null,
         status: statusParam ?? null,
-        skip: !trainerId,
+        skip: !isTrainerOrAdmin,
     });
 
     const { data: activityData } = useGetRecentActivityQuery(
         { limit: 10, trainer_id: trainerId ?? undefined },
-        { skip: !trainerId }
+        { skip: !isTrainerOrAdmin }
     );
     const activities = activityData?.items ?? [];
 
@@ -338,25 +355,54 @@ export const ClientList: React.FC = () => {
                                                         {client.nombre} {client.apellidos}
                                                     </p>
                                                 </div>
-                                                <SatisfactionIcon level={client.satisfaction_level} className="h-4 w-4 shrink-0" />
+                                                <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfactionFromFatigue(client.fatigue_level_numeric)} className="h-4 w-4 shrink-0" />
                                             </div>
                                             <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
                                                 <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
                                                     {getStatusLabel(client.status)}
                                                 </span>
-                                                <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                    <FatigueBatteryIcon fatigue={client.fatigue_level} />
                                                     {translateFatigue(client.fatigue_level)}
                                                 </span>
                                             </div>
-                                            <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                                                <span className="text-label text-muted-foreground sm:text-caption">Adherencia</span>
-                                                <TrendIcon trend={client.satisfaction_trend ?? client.progress_trend ?? "stable"} className="h-4 w-4 shrink-0" />
-                                                <div className="min-w-0 flex-1 basis-20">
-                                                    <AdherenceBar value={client.adherence_percentage ?? 0} className="min-w-[48px] flex-1 sm:min-w-[60px]" />
+                                            <div className="w-full">
+                                                <div className="mb-1.5">
+                                                    <span className="text-label text-muted-foreground sm:text-caption">Adherencia</span>
                                                 </div>
-                                                <span className="whitespace-nowrap text-xs font-medium text-foreground sm:text-sm">
-                                                    {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
-                                                </span>
+                                                <div className="flex items-center gap-2">
+                                                    <AdherenceBar value={client.adherence_percentage ?? 0} className="min-w-0 flex-1" />
+                                                    <div className="relative flex shrink-0 flex-col items-end">
+                                                        <TrendIcon
+                                                            trend={
+                                                                client.satisfaction_trend ??
+                                                                client.progress_trend ??
+                                                                (client.adherence_percentage != null
+                                                                    ? client.adherence_percentage >= 75
+                                                                        ? "up"
+                                                                        : client.adherence_percentage < 50
+                                                                          ? "down"
+                                                                          : "stable"
+                                                                    : "stable")
+                                                            }
+                                                            className="absolute -top-3.5 h-3.5 w-3.5"
+                                                        />
+                                                        <span
+                                                            className={cn(
+                                                                "whitespace-nowrap text-xs font-medium sm:text-sm",
+                                                                client.adherence_percentage == null
+                                                                    ? "text-muted-foreground"
+                                                                    : client.adherence_percentage >= 75
+                                                                      ? "text-success"
+                                                                      : client.adherence_percentage >= 50
+                                                                        ? "text-warning"
+                                                                        : "text-destructive"
+                                                            )}
+                                                        >
+                                                            {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
+                                                        </span>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </article>
                                     ))}
@@ -401,10 +447,11 @@ export const ClientList: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                                                        <SatisfactionIcon level={client.satisfaction_level} className="h-4 w-4" />
+                                                        <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfactionFromFatigue(client.fatigue_level_numeric)} className="h-4 w-4" />
                                                     </td>
                                                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                                                        <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                            <FatigueBatteryIcon fatigue={client.fatigue_level} />
                                                             {translateFatigue(client.fatigue_level)}
                                                         </span>
                                                     </td>
@@ -412,7 +459,7 @@ export const ClientList: React.FC = () => {
                                                         <div className="flex min-w-[100px] items-center gap-1.5 sm:w-40 sm:gap-2">
                                                             <AdherenceBar value={client.adherence_percentage ?? 0} />
                                                             <span className="whitespace-nowrap text-foreground text-xs sm:text-sm">
-                                                                {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "—"}
+                                                                {client.adherence_percentage != null ? `${Math.round(client.adherence_percentage)}%` : "Sin datos"}
                                                             </span>
                                                         </div>
                                                     </td>

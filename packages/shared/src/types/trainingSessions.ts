@@ -75,6 +75,8 @@ export interface TrainingSession {
     client_id: number;
     trainer_id: number;
     session_date: string | null;      // ISO date: "2026-01-23", nullable for generic plans
+    /** Hora local de la sesión (backend: Time → JSON "HH:MM:SS" o null). */
+    session_time?: string | null;
     session_name: string;
     session_type: string;
     // Generic plan support
@@ -105,6 +107,7 @@ export interface TrainingSessionCreate {
     client_id: number;
     trainer_id: number;
     session_date: string;                // ISO date: "2026-01-23"
+    session_time?: string | null;
     session_name: string;
     session_type: string;
     training_day_number?: number | null;
@@ -124,6 +127,7 @@ export interface TrainingSessionCreate {
  */
 export interface TrainingSessionUpdate {
     session_date?: string;
+    session_time?: string | null;
     session_name?: string;
     session_type?: string;
     training_day_number?: number | null;

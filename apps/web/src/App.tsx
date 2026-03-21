@@ -73,6 +73,11 @@ const CreateTrainingPlan = lazy(() =>
 const CreateTrainingPlanTemplate = lazy(() =>
   import("./pages/trainingPlans/CreateTrainingPlanTemplate").then((m) => ({ default: m.CreateTrainingPlanTemplate }))
 );
+const TrainingPlanTemplateDetail = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlanTemplateDetail").then((m) => ({
+    default: m.TrainingPlanTemplateDetail,
+  }))
+);
 const ExerciseList = lazy(() =>
   import("./pages/exercises").then((m) => ({ default: m.ExerciseList }))
 );
@@ -212,6 +217,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <CreateTrainingPlanTemplate />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/templates/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlanTemplateDetail />
               </RoleProtectedRoute>
             }
           />

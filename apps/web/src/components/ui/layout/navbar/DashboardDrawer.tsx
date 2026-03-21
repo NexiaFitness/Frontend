@@ -34,7 +34,21 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     footerSubtitle = "Professional Trainer",
 }) => {
     const location = useLocation();
-    const isActiveLink = (href: string) => location.pathname === href;
+    const isActiveLink = (href: string) => {
+        if (
+            href === "/dashboard/sessions" &&
+            (
+                location.pathname.startsWith("/dashboard/session-programming") ||
+                location.pathname.startsWith("/dashboard/standalone-sessions")
+            )
+        ) {
+            return true;
+        }
+        if (href === "/dashboard") {
+            return location.pathname === "/dashboard";
+        }
+        return location.pathname === href || location.pathname.startsWith(`${href}/`);
+    };
 
     return (
         <>

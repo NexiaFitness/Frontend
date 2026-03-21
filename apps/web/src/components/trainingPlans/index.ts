@@ -7,6 +7,7 @@
 
 // Nuevos componentes (Fase 3-4)
 export { TrainingPlanCard } from "./TrainingPlanCard";
+export { TrainingPlanTemplateCard } from "./TrainingPlanTemplateCard";
 export { TrainingPlansSection } from "./TrainingPlansSection";
 export { AssignTemplateModal } from "./AssignTemplateModal";
 export { AssignPlanModal } from "./AssignPlanModal";

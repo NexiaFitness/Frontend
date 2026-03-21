@@ -5,14 +5,15 @@
  * rompa toda la aplicación. Usa componentDidCatch y getDerivedStateFromError (class component).
  *
  * Notas de mantenimiento: No usar librerías externas. Fallback debe ser accesible y permitir
- * recuperación (ej. enlace a home o recargar).
+ * recuperación. "Volver al inicio" usa location.assign("/") para recargar y limpiar el estado
+ * del boundary (un <Link> no resetea hasError y la pantalla de error seguía visible).
  *
  * @author Frontend Team
  * @since v5.x
  */
 
 import { Component, ErrorInfo, ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/buttons";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -49,12 +50,16 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
           <p className="max-w-md text-sm text-muted-foreground">
             Ha ocurrido un error inesperado. Por favor, intenta recargar o volver al inicio.
           </p>
-          <Link
-            to="/"
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            onClick={() => {
+              window.location.assign("/");
+            }}
           >
             Volver al inicio
-          </Link>
+          </Button>
         </div>
       );
     }

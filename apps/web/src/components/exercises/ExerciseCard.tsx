@@ -19,13 +19,8 @@ import {
     getLevelTextClass,
     muscleFacetLabel,
     equipmentDisplayLine,
+    tipoLabelFromBackend,
 } from "@/utils/exercises";
-
-function tipoLabelFromBackend(tipo: string): "Compuesto" | "Aislamiento" {
-    const t = tipo.toLowerCase();
-    if (t === "monoarticular") return "Aislamiento";
-    return "Compuesto";
-}
 
 export interface ExerciseCardProps {
     exercise: Exercise;
@@ -109,5 +104,3 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         </button>
     );
 };
-
-export { tipoLabelFromBackend };

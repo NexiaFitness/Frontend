@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
-import { useToast, LoadingSpinner } from "@/components/ui/feedback";
+import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -46,13 +46,12 @@ import { SessionConstructor } from "@/components/sessionProgramming/SessionConst
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { buildExercisePayload } from "./buildExercisePayload";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
-import { ClipboardList } from "lucide-react";
+import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import { TriangleAlert } from "lucide-react";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -63,15 +62,7 @@ import type {
     SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { LocationStateReturnTo } from "@nexia/shared";
-
-const SESSION_TYPES = [
-    { value: "training", label: "Entrenamiento" },
-    { value: "cardio", label: "Cardio" },
-    { value: "strength", label: "Fuerza" },
-    { value: "endurance", label: "Resistencia" },
-    { value: "flexibility", label: "Flexibilidad" },
-    { value: "recovery", label: "Recuperación" },
-];
+import { SESSION_TYPES } from "./sessionFormConstants";
 
 export interface CreateSessionProps {
     /** Cuando se usa desde clients/:id/sessions/new; prioridad sobre query. */
@@ -567,6 +558,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             }
                         }}
                     >
+                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
                     </Button>
                 </div>
@@ -606,8 +598,13 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
                 <form id="create-session-form" onSubmit={handleSubmit}>
                 {/* Grid: 3 primeras filas (nombre, fecha, duración) + columna derecha con plan — solo cuando hay cliente */}
-                <div className={`grid grid-cols-1 gap-6 ${effectiveClientId ? "lg:grid-cols-[1fr_420px]" : ""}`}>
-                    <div className="space-y-5">
+                <div
+                    className={cn(
+                        "grid grid-cols-1 items-stretch gap-6",
+                        effectiveClientId ? "lg:grid-cols-[1fr_420px]" : "",
+                    )}
+                >
+                    <div className="min-h-0 space-y-5">
                             {/* Nombre de la Sesión + Plan de Entrenamiento (misma línea cuando hay cliente) */}
                             <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
                                 <div>
@@ -700,7 +697,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </div>
                             </div>
 
-                            {/* Fila Duración + Intensidad + Volumen (grid 3 cols, spec 4.1.3) */}
+                            {/* Fila Duración + Volumen + Intensidad (grid 3 cols, spec 4.1.3) */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
@@ -716,17 +713,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </div>
                                 <div className="mt-3 md:mt-0">
                                     <Slider
-                                        label="Intensidad (5/10)"
-                                        value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
-                                        min={1}
-                                        max={10}
-                                        color="primary"
-                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
-                                    />
-                                </div>
-                                <div className="mt-3 md:mt-0">
-                                    <Slider
-                                        label="Volumen (5/10)"
+                                        label="Volumen"
+                                        labelIcon={<Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />}
                                         value={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
                                         min={1}
                                         max={10}
@@ -734,14 +722,26 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
                                     />
                                 </div>
+                                <div className="mt-3 md:mt-0">
+                                    <Slider
+                                        label="Intensidad"
+                                        labelIcon={<Flame className="h-3.5 w-3.5 text-warning" aria-hidden />}
+                                        value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
+                                        min={1}
+                                        max={10}
+                                        color="warning"
+                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
+                                    />
+                                </div>
                             </div>
                     </div>
 
                     {/* Columna derecha: Plan del día — solo cuando hay cliente seleccionado */}
                     {effectiveClientId != null && effectiveClientId > 0 && (
-                    <div className="lg:self-stretch">
+                    <div className="flex h-full min-h-0 flex-col lg:self-stretch">
                         {useStandaloneSession ? (
                                 <EmptyStateCard
+                                    className="h-full min-h-0 flex-1"
                                     icon={<ClipboardList aria-hidden />}
                                     title="Sin plan asignado"
                                     description="Este cliente no tiene un plan de entrenamiento activo."
@@ -782,14 +782,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 <div className="mt-6 space-y-5 w-full">
                             {/* Alerta lesiones activas — solo cuando hay cliente seleccionado */}
                             {effectiveClientId && hasActiveInjuries && displayClient && (
-                                <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-4">
-                                    <TriangleAlert className="h-5 w-5 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
-                                    <p className="text-sm text-[hsl(var(--warning))]">
-                                        Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
-                                        {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
-                                        ). Los ejercicios contraindicados están marcados en la lista.
-                                    </p>
-                                </div>
+                                <Alert variant="warning">
+                                    Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
+                                    {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
+                                    ). Los ejercicios contraindicados están marcados en la lista.
+                                </Alert>
                             )}
 
                             {/* Recomendaciones de plan (Lovable) — solo cuando hay cliente asignado */}

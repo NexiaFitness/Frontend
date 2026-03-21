@@ -27,7 +27,16 @@ function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
 
 export const ClientListCard: React.FC<ClientListCardProps> = ({ client, onClick }) => {
     const adherence = Math.min(100, Math.max(0, client.adherence_percentage ?? 0));
-    const trend: ClientProgressTrend = client.satisfaction_trend ?? client.progress_trend ?? "stable";
+    const trend: ClientProgressTrend =
+        client.satisfaction_trend ??
+        client.progress_trend ??
+        (client.adherence_percentage != null
+            ? client.adherence_percentage >= 75
+                ? "up"
+                : client.adherence_percentage < 50
+                  ? "down"
+                  : "stable"
+            : "stable");
     const satisfaction = satisfactionFromFatigue(client.fatigue_level_numeric);
     const fullName = [client.nombre, client.apellidos].filter(Boolean).join(" ") || "—";
 

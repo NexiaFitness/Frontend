@@ -167,7 +167,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         standaloneSessions.forEach((s) => {
             list.push({ ...s, session_kind: "standalone" as const });
         });
-        list.sort((a, b) => (a.session_date ?? "").localeCompare(b.session_date ?? ""));
+        list.sort((a, b) => (b.session_date ?? "").localeCompare(a.session_date ?? ""));
         return list;
     }, [trainingSessions, standaloneSessions]);
 
@@ -184,7 +184,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         scheduledSessions.forEach((s) => {
             items.push({ type: "appointment", date: s.scheduled_date, item: s });
         });
-        items.sort((a, b) => a.date.localeCompare(b.date) || 0);
+        items.sort((a, b) => b.date.localeCompare(a.date) || 0);
         return items;
     }, [allSessions, scheduledSessions]);
 
@@ -268,8 +268,8 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                         {[...scheduledSessions]
                             .sort(
                                 (a, b) =>
-                                    a.scheduled_date.localeCompare(b.scheduled_date) ||
-                                    a.start_time.localeCompare(b.start_time)
+                                    b.scheduled_date.localeCompare(a.scheduled_date) ||
+                                    b.start_time.localeCompare(a.start_time)
                             )
                             .map((s) => (
                                 <li key={s.id}>

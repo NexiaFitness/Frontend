@@ -101,6 +101,12 @@ export interface SessionTemplate {
     is_active: boolean;
 }
 
+/** Paginated list from GET /session-programming/session-templates */
+export interface SessionTemplateListResponse {
+    items: SessionTemplate[];
+    total: number;
+}
+
 /** Exercise within a template block (create payload). */
 export interface SessionTemplateExerciseCreate {
     exercise_id: number;

@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Search, Pencil, LayoutList, Layers } from "lucide-react";
+import { Plus, Search, Pencil } from "lucide-react";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetSessionsQuery } from "@nexia/shared/api/sessionsApi";
 import { useGetSessionTemplatesQuery } from "@nexia/shared/api/sessionProgrammingApi";
@@ -88,10 +88,19 @@ export const SessionsPage: React.FC = () => {
     const [searchDebounced, setSearchDebounced] = useState("");
     const [page, setPage] = useState(1);
 
+    const [templatesSearch, setTemplatesSearch] = useState("");
+    const [templatesSearchDebounced, setTemplatesSearchDebounced] = useState("");
+    const [templatesPage, setTemplatesPage] = useState(1);
+
     useEffect(() => {
         const t = setTimeout(() => setSearchDebounced(search), 300);
         return () => clearTimeout(t);
     }, [search]);
+
+    useEffect(() => {
+        const t = setTimeout(() => setTemplatesSearchDebounced(templatesSearch), 300);
+        return () => clearTimeout(t);
+    }, [templatesSearch]);
 
     const handleStatusChange = (val: string) => {
         setStatusFilter(val);
@@ -107,7 +116,13 @@ export const SessionsPage: React.FC = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     }, []);
 
+    const handleTemplatesPageChange = useCallback((newPage: number) => {
+        setTemplatesPage(newPage);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+    }, []);
+
     const skip = (page - 1) * PAGE_SIZE;
+    const templatesSkip = (templatesPage - 1) * PAGE_SIZE;
 
     const { data, isLoading, isError } = useGetSessionsQuery(
         {
@@ -125,14 +140,19 @@ export const SessionsPage: React.FC = () => {
         { skip: !trainerId || !isAuthenticated }
     );
 
-    const { data: templates = [], isLoading: isLoadingTemplates } = useGetSessionTemplatesQuery(
-        { skip: 0, limit: 100 },
+    const { data: templatesData, isLoading: isLoadingTemplates } = useGetSessionTemplatesQuery(
+        {
+            skip: templatesSkip,
+            limit: PAGE_SIZE,
+            search: templatesSearchDebounced.trim() || undefined,
+        },
         { skip: !isAuthenticated }
     );
 
     const items = data?.items ?? [];
     const total = data?.total ?? 0;
-    const templatesTotal = templates.length;
+    const templatesList = templatesData?.items ?? [];
+    const templatesTotal = templatesData?.total ?? 0;
 
     if (!trainerId && !isLoading) {
         return (
@@ -178,7 +198,6 @@ export const SessionsPage: React.FC = () => {
             </div>
 
             <TabsBar
-                variant="segmented"
                 ariaLabel="Sesiones y plantillas"
                 value={activeTab}
                 onChange={(id) => {
@@ -187,18 +206,8 @@ export const SessionsPage: React.FC = () => {
                     }
                 }}
                 items={[
-                    {
-                        id: "sessions",
-                        label: "Sesiones",
-                        icon: <LayoutList className="h-4 w-4" aria-hidden />,
-                        badge: total,
-                    },
-                    {
-                        id: "templates",
-                        label: "Plantillas",
-                        icon: <Layers className="h-4 w-4" aria-hidden />,
-                        badge: templatesTotal,
-                    },
+                    { id: "sessions", label: "Sesiones" },
+                    { id: "templates", label: "Plantillas" },
                 ]}
             />
 
@@ -382,11 +391,31 @@ export const SessionsPage: React.FC = () => {
 
             {activeTab === "templates" && (
                 <>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="relative ml-auto w-full sm:w-80">
+                            <Search
+                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden
+                            />
+                            <Input
+                                type="text"
+                                size="sm"
+                                placeholder="Buscar plantilla por nombre o descripción..."
+                                value={templatesSearch}
+                                onChange={(e) => {
+                                    setTemplatesSearch(e.target.value);
+                                    setTemplatesPage(1);
+                                }}
+                                className="w-full pl-8"
+                                aria-label="Buscar plantillas"
+                            />
+                        </div>
+                    </div>
                     {isLoadingTemplates ? (
                         <div className="flex items-center justify-center min-h-[160px]">
                             <LoadingSpinner size="md" />
                         </div>
-                    ) : templatesTotal === 0 ? (
+                    ) : templatesTotal === 0 && !templatesSearchDebounced.trim() ? (
                         <div className="flex flex-col items-center justify-center rounded-lg bg-surface py-20 text-center">
                             <p className="mb-1 font-medium">Sin plantillas.</p>
                             <p className="mb-4 text-sm text-muted-foreground">
@@ -400,39 +429,57 @@ export const SessionsPage: React.FC = () => {
                                 Crear primera plantilla
                             </Button>
                         </div>
-                    ) : (
-                        <div className="space-y-2">
-                            {templates.map((template: SessionTemplate) => (
-                                <div
-                                    key={template.id}
-                                    className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <p className="truncate text-sm font-semibold text-foreground">
-                                            {template.name}
-                                        </p>
-                                        <p className="mt-1 text-xs text-muted-foreground">
-                                            {template.session_type}
-                                            {template.estimated_duration != null
-                                                ? ` · ${template.estimated_duration} min`
-                                                : ""}
-                                            {template.usage_count > 0 ? ` · ${template.usage_count} usos` : ""}
-                                        </p>
-                                    </div>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                            navigate(
-                                                `/dashboard/session-programming/create-from-template/${template.id}`
-                                            )
-                                        }
-                                    >
-                                        Usar plantilla
-                                    </Button>
-                                </div>
-                            ))}
+                    ) : templatesList.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center rounded-lg bg-surface py-16 text-center">
+                            <p className="mb-1 font-medium">Ninguna plantilla coincide.</p>
+                            <p className="text-sm text-muted-foreground">
+                                Prueba con otro término de búsqueda.
+                            </p>
                         </div>
+                    ) : (
+                        <>
+                            <div className="space-y-2">
+                                {templatesList.map((template: SessionTemplate) => (
+                                    <div
+                                        key={template.id}
+                                        className="flex items-center justify-between gap-4 rounded-lg border border-border bg-card p-4"
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <p className="truncate text-sm font-semibold text-foreground">
+                                                {template.name}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {template.session_type}
+                                                {template.estimated_duration != null
+                                                    ? ` · ${template.estimated_duration} min`
+                                                    : ""}
+                                                {template.usage_count > 0
+                                                    ? ` · ${template.usage_count} usos`
+                                                    : ""}
+                                            </p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                navigate(
+                                                    `/dashboard/session-programming/create-from-template/${template.id}`
+                                                )
+                                            }
+                                        >
+                                            Usar plantilla
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                            <PaginationBar
+                                currentPage={templatesPage}
+                                totalPages={Math.max(1, Math.ceil(templatesTotal / PAGE_SIZE))}
+                                totalItems={templatesTotal}
+                                pageSize={PAGE_SIZE}
+                                onPageChange={handleTemplatesPageChange}
+                            />
+                        </>
                     )}
                 </>
             )}

@@ -41,4 +41,6 @@ npx playwright test e2e/edge --reporter=list
 
 Requisitos: backend en `VITE_API_BASE_URL`, cuenta demo con perfil trainer (`backend/scripts/seed_demo_user.py`). Ver AUDITORIA_E2E_SUITE.md §4.3 y CLAUDE.md del proyecto.
 
+**BD dedicada E2E (recomendado):** `backend/.env.e2e` con `DATABASE_URL=.../nexia_e2e` y `ENVIRONMENT=development`. Reset: `bash backend/scripts/reset_e2e_db.sh` (Git Bash o WSL). Al arrancar Playwright, `global-setup` imprime un recordatorio en consola. Limpieza de datos E2E en la BD de desarrollo: `backend/scripts/purge_e2e_data.py` (`DRY_RUN=1` primero).
+
 **Fixtures de navegación** (`e2e/fixtures/navigation.ts`): `getDashboardNavSidebar(page)` (sidebar por `data-testid="dashboard-nav-sidebar"`), `getAddClientFromListButton(page)` (botón único para abrir onboarding desde lista de clientes), `sidebarNavigate`, `navigateToClients`, `navigateToPlans`, etc. Ver DIAGNOSTICO_E2E.md §2.10 y §2.11.

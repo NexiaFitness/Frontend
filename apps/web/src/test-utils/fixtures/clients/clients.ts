@@ -18,7 +18,7 @@ export const createMockClient = (overrides: Partial<Client> = {}): Client => ({
   nombre: "Carlos",
   apellidos: "Pérez",
   mail: "carlos@test.com",
-  fecha_alta: new Date().toISOString().split('T')[0], // Formato YYYY-MM-DD (date del backend)
+  fecha_alta: "2025-01-01", // Fecha fija para tests deterministas
   objetivo_entrenamiento: "Aumentar masa muscular", // Valor exacto del enum TrainingGoalEnum del backend
   edad: 30,
   peso: 80,

@@ -15,7 +15,7 @@ import { Textarea } from "@/components/ui/forms";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
-import { ExerciseCard, tipoLabelFromBackend } from "@/components/exercises/ExerciseCard";
+import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 import {
     getFilterOptions,
@@ -30,6 +30,7 @@ import {
     getEquipmentLabel,
     normalizeLevel,
     localViewToExercise,
+    tipoLabelFromBackend,
 } from "@/utils/exercises";
 
 type ViewMode = "grid" | "list";
@@ -87,12 +88,11 @@ export const ExercisesPage: React.FC = () => {
     const [localAdditions, setLocalAdditions] = useState<LocalExerciseView[]>([]);
     const [form, setForm] = useState<NewExerciseFormState>(emptyForm());
 
-    const apiExercises = data?.exercises ?? [];
-
     const exercises = useMemo(() => {
+        const apiExercises = data?.exercises ?? [];
         const localEx = localAdditions.map(localViewToExercise);
         return [...apiExercises, ...localEx];
-    }, [apiExercises, localAdditions]);
+    }, [data?.exercises, localAdditions]);
 
     const filterOpts = useMemo(() => getFilterOptions(exercises), [exercises]);
 

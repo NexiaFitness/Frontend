@@ -8,7 +8,19 @@
 
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Calendar, CheckCircle, ChevronRight, Clock, Dumbbell, Flame, Gauge, Pencil, Target, Timer } from "lucide-react";
+import {
+    ArrowLeft,
+    Calendar,
+    CheckCircle,
+    ChevronRight,
+    Clock,
+    Dumbbell,
+    Flame,
+    Gauge,
+    Pencil,
+    Target,
+    Timer,
+} from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import { Button } from "@/components/ui/buttons";
@@ -19,6 +31,7 @@ import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionExercisesDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { cn } from "@/lib/utils";
+import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
@@ -145,6 +158,7 @@ export const SessionDetail: React.FC = () => {
                         className="mt-4"
                         onClick={() => navigate("/dashboard/sessions")}
                     >
+                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver a sesiones
                     </Button>
                 </div>
@@ -197,7 +211,7 @@ export const SessionDetail: React.FC = () => {
                 <span className="truncate font-medium text-foreground">{session.session_name}</span>
             </div>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="flex items-start gap-4">
                     <span className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-full">
                         <span className="flex h-full w-full items-center justify-center rounded-full bg-success/20 text-lg font-bold text-success">
@@ -215,6 +229,11 @@ export const SessionDetail: React.FC = () => {
                             </Badge>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">{clientName}</p>
+                        {session.training_plan_id && plan?.name ? (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                Plan: <span className="font-medium text-foreground">{plan.name}</span>
+                            </p>
+                        ) : null}
                         <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1.5">
                                 <Calendar className="h-3.5 w-3.5" aria-hidden />
@@ -231,14 +250,22 @@ export const SessionDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <Button
-                    variant="outline"
-                    className="inline-flex h-10 shrink-0 items-center justify-center gap-2 whitespace-nowrap rounded-md border border-primary/30 bg-transparent px-4 py-2 text-sm font-medium text-primary hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)]"
-                    onClick={() => navigate(`/dashboard/sessions/${session.id}/edit`)}
-                >
-                    <Pencil className="mr-1 h-4 w-4" aria-hidden />
-                    Editar sesión
-                </Button>
+                <div className="flex shrink-0 items-center gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => navigate("/dashboard/sessions")}
+                    >
+                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                        Volver
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate(`/dashboard/session-programming/edit-session/${session.id}`)}
+                    >
+                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                        Editar sesión
+                    </Button>
+                </div>
             </div>
 
             {dayPlan && (
@@ -327,66 +354,9 @@ export const SessionDetail: React.FC = () => {
                 ) : isErrorExercises ? (
                     <Alert variant="error">No se pudieron cargar los ejercicios</Alert>
                 ) : (
-                    <div className="space-y-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {exercises.map((exercise) => (
-                            (() => {
-                                const sets = Math.max(1, exercise.plannedSets ?? 1);
-                                const hasProgressive =
-                                    typeof exercise.plannedReps === "string" && exercise.plannedReps.includes(",");
-                                const repSchemeLabel = hasProgressive ? "reps progresivas" : "reps fijas";
-                                const repsToShow = hasProgressive
-                                    ? exercise.plannedReps
-                                          .split(",")
-                                          .map((v) => v.trim())
-                                          .filter(Boolean)
-                                          .slice(0, sets)
-                                    : Array.from({ length: sets }, () => String(exercise.plannedReps ?? 0));
-                                const normalizedRepsToShow =
-                                    repsToShow.length === sets
-                                        ? repsToShow
-                                        : [...repsToShow, ...Array.from({ length: sets - repsToShow.length }, () => String(exercise.plannedReps ?? 0))];
-
-                                return (
-                                    <div
-                                        key={exercise.id}
-                                        className="rounded-lg bg-surface border border-border/30 overflow-hidden transition-all duration-150 hover:border-border/60"
-                                    >
-                                        <div className="flex items-center gap-3 px-4 py-3">
-                                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-sm font-bold text-primary tabular-nums">
-                                                {exercise.order}
-                                            </span>
-                                            <div className="min-w-0 flex-1">
-                                                <span className="text-sm font-semibold">{exercise.exerciseName}</span>
-                                            </div>
-                                        </div>
-                                        <div className="border-t border-border/30 bg-surface-2/30 px-4 py-3">
-                                            <div className="flex items-center justify-between mb-2.5">
-                                                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                                    {sets} series · {repSchemeLabel}
-                                                </span>
-                                                <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                                                    <Timer className="h-3 w-3" aria-hidden />
-                                                    {exercise.plannedRest ?? 0}s descanso entre series
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                {normalizedRepsToShow.map((reps, i) => (
-                                                    <div
-                                                        key={`${exercise.id}-set-${i + 1}`}
-                                                        className="flex-1 flex flex-col items-center gap-0.5 rounded-lg bg-primary/10 border border-primary/20 py-3"
-                                                    >
-                                                        <span className="text-[10px] font-medium text-primary/60">S{i + 1}</span>
-                                                        <span className="text-lg font-bold tabular-nums text-primary leading-none">
-                                                            {reps}
-                                                        </span>
-                                                        <span className="text-[9px] text-primary/50">reps</span>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })()
+                            <SessionDetailExerciseCard key={exercise.id} exercise={exercise} />
                         ))}
                     </div>
                 )}

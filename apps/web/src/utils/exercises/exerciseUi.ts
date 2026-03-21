@@ -136,3 +136,10 @@ export function getLevelTextClass(level: NormalizedLevel): string {
             return "text-muted-foreground";
     }
 }
+
+/** Mapea `tipo` del backend (p. ej. monoarticular) a etiqueta de UI de la biblioteca. */
+export function tipoLabelFromBackend(tipo: string): "Compuesto" | "Aislamiento" {
+    const t = tipo.toLowerCase();
+    if (t === "monoarticular") return "Aislamiento";
+    return "Compuesto";
+}
