@@ -210,10 +210,15 @@ export const ExercisesPage: React.FC = () => {
     return (
         <div className="space-y-6">
             {/* Cabecera */}
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold text-foreground">
-                    Ejercicios · {exercises.length}
-                </h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">
+                        Ejercicios
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        {exercises.length} ejercicios disponibles
+                    </p>
+                </div>
                 <Button
                     type="button"
                     variant="primary"

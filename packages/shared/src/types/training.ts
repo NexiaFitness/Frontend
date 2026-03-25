@@ -33,13 +33,14 @@ export const TRAINING_PLAN_STATUS = {
 export type TrainingPlanStatus = (typeof TRAINING_PLAN_STATUS)[keyof typeof TRAINING_PLAN_STATUS];
 
 export const TRAINING_PLAN_GOAL = {
-    MUSCLE_GAIN: "Muscle Gain",
-    WEIGHT_LOSS: "Weight Loss",
-    STRENGTH: "Strength",
-    ENDURANCE: "Endurance",
-    GENERAL_FITNESS: "General Fitness",
-    REHABILITATION: "Rehabilitation",
-    PERFORMANCE: "Performance",
+    HYPERTROPHY: "hypertrophy",
+    STRENGTH: "strength",
+    POWER: "power",
+    ENDURANCE: "endurance",
+    WEIGHT_LOSS: "weight_loss",
+    REHABILITATION: "rehabilitation",
+    GENERAL_FITNESS: "general_fitness",
+    SPORT_PERFORMANCE: "sport_performance",
 } as const;
 
 export type TrainingPlanGoal = (typeof TRAINING_PLAN_GOAL)[keyof typeof TRAINING_PLAN_GOAL];

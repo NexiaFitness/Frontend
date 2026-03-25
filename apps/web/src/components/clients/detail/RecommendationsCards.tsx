@@ -25,19 +25,23 @@ import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 
 interface RecommendationsCardsProps {
     clientId: number;
+    /** Optional plan objective to override client's default objetivo_entrenamiento */
+    planGoal?: string;
 }
 
 export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
     clientId,
+    planGoal,
 }) => {
     const {
         data,
         isLoading,
         isError,
         error,
-    } = useGetTrainingPlanRecommendationsQuery(clientId, {
-        skip: !clientId || clientId <= 0,
-    });
+    } = useGetTrainingPlanRecommendationsQuery(
+        { clientId, planGoal },
+        { skip: !clientId || clientId <= 0 }
+    );
 
     if (!clientId || clientId <= 0) return null;
 

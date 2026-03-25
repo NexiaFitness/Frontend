@@ -216,7 +216,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                         <div key={ex.id} className="flex items-center gap-1 min-h-8">
                             {showCombobox ? (
                                 <FormCombobox
-                                    size="sm8"
+                                    size="sm"
                                     value={repsTipo}
                                     onChange={(v) => onUpdate(row.id, { repsTipo: v as RepsTipo })}
                                     options={REPS_TIPO_OPTIONS}
@@ -299,7 +299,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                     return (
                         <div key={ex.id} className="flex items-center gap-1">
                             <FormCombobox
-                                size="sm62_8"
+                                size="sm"
                                 value={caracterTipo}
                                 onChange={(v) => {
                                     const val = v as CaracterTipo;

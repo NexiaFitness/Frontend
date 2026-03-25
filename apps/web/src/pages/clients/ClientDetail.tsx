@@ -12,10 +12,11 @@
  * @updated v6.2.0 - Ola 2 S03: swap a 6 tabs; "Sesiones" reemplaza Programación de Sesiones + Entrenamientos.
  * @updated Fase 6 - Tab Planificación (planificación client-only o por plan asociado).
  * @updated U4 paso 1.5 - PlanDetailDrawer para "Ver plan" sin salir de clients/:id
+ * @updated Marzo 2026 - Eliminado CreatePlanModal; navegación a /training-plans/create para crear planes
  */
 
 import React, { Suspense, lazy, useState, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -32,7 +33,6 @@ import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
 import { PlanDetailDrawer } from "@/components/clients/detail/PlanDetailDrawer";
-import { CreatePlanModal } from "@/components/clients/detail/modals/CreatePlanModal";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 
@@ -137,25 +137,25 @@ export const ClientDetail: React.FC = () => {
     });
     const hasActivePlan = activePlan != null && activePlan.id != null;
 
+    const location = useLocation();
+
     const handlePlanificar = useCallback(() => {
         if (hasActivePlan) {
             setActiveTab("planning");
         } else {
-            setCreatePlanModalOpen(true);
+            navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+                state: { from: location.pathname },
+            });
         }
-    }, [hasActivePlan, setActiveTab]);
+    }, [hasActivePlan, setActiveTab, navigate, clientId, location.pathname]);
 
     // Fase 1.1: modales de planificación desde cliente (sin navegar a training-plans)
-    const [createPlanModalOpen, setCreatePlanModalOpen] = useState(false);
     const [selectTemplateModalOpen, setSelectTemplateModalOpen] = useState(false);
     const [assignTemplateModalOpen, setAssignTemplateModalOpen] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
 
-    const handleCreatePlanSuccess = useCallback(() => {
-        refetchAll();
-        setActiveTab("planning");
-    }, [refetchAll, setActiveTab]);
+
 
     const handleOpenUseTemplate = useCallback(() => {
         setSelectTemplateModalOpen(true);
@@ -273,7 +273,9 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
-                        onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
+                        onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+                            state: { from: location.pathname },
+                        })}
                         onOpenUseTemplate={handleOpenUseTemplate}
                         onViewPlan={handleViewPlan}
                     />
@@ -301,7 +303,9 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
-                        onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
+                        onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+                            state: { from: location.pathname },
+                        })}
                     />
                 );
             case "injuries":
@@ -336,13 +340,6 @@ export const ClientDetail: React.FC = () => {
                 {renderTabContent()}
             </div>
 
-            <CreatePlanModal
-                open={createPlanModalOpen}
-                onClose={() => setCreatePlanModalOpen(false)}
-                clientId={clientId}
-                clientName={clientName}
-                onSuccess={handleCreatePlanSuccess}
-            />
             <SelectTemplateModal
                 open={selectTemplateModalOpen}
                 onClose={() => setSelectTemplateModalOpen(false)}

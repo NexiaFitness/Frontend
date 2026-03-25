@@ -8,6 +8,7 @@
  * @author Frontend Team
  * @since v3.2.0
  * @updated v6.x - TabsBar, URL sync, CTA "Nueva planificación"
+ * @updated v6.5.0 - Modal SelectClientModal para flujo unificado de creación de planes
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
@@ -30,6 +31,7 @@ import {
 } from "@nexia/shared/types/training";
 
 import { TrainingPlansSection } from "@/components/trainingPlans";
+import { SelectClientModal } from "@/components/trainingPlans/modals/SelectClientModal";
 import { Alert } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/buttons";
@@ -41,13 +43,14 @@ type PlansTabId = "planning" | "templates";
 
 /** Objetivos del backend → etiqueta en español (alineado con TrainingPlanCard). */
 const PLAN_GOAL_LABEL_ES: Record<(typeof TRAINING_PLAN_GOAL)[keyof typeof TRAINING_PLAN_GOAL], string> = {
-    [TRAINING_PLAN_GOAL.MUSCLE_GAIN]: "Hipertrofia",
+    [TRAINING_PLAN_GOAL.HYPERTROPHY]: "Hipertrofia",
     [TRAINING_PLAN_GOAL.STRENGTH]: "Fuerza",
-    [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: "Pérdida de peso",
+    [TRAINING_PLAN_GOAL.POWER]: "Potencia",
     [TRAINING_PLAN_GOAL.ENDURANCE]: "Resistencia",
+    [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: "Pérdida de peso",
     [TRAINING_PLAN_GOAL.GENERAL_FITNESS]: "Fitness general",
     [TRAINING_PLAN_GOAL.REHABILITATION]: "Rehabilitación",
-    [TRAINING_PLAN_GOAL.PERFORMANCE]: "Rendimiento",
+    [TRAINING_PLAN_GOAL.SPORT_PERFORMANCE]: "Rendimiento deportivo",
 };
 
 const PLAN_GOAL_SELECT_OPTIONS: { value: string; label: string }[] = [
@@ -309,8 +312,10 @@ export const TrainingPlansPage: React.FC = () => {
         navigate("/dashboard/training-plans/templates/create");
     };
 
+    const [isSelectClientModalOpen, setIsSelectClientModalOpen] = useState(false);
+
     const handleCreatePlan = () => {
-        navigate("/dashboard/training-plans/create");
+        setIsSelectClientModalOpen(true);
     };
 
     const isLoading = isLoadingTemplates || isLoadingPlans;
@@ -323,12 +328,17 @@ export const TrainingPlansPage: React.FC = () => {
                 </Alert>
             )}
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold text-foreground">
-                    {activeTab === "planning"
-                        ? `Planificación · ${filteredAssignedPlans.length}`
-                        : `Plantillas · ${filteredTemplates.length}`}
-                </h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">
+                        {activeTab === "planning" ? "Planificación" : "Plantillas"}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        {activeTab === "planning"
+                            ? `${filteredAssignedPlans.length} planes activos`
+                            : `${filteredTemplates.length} plantillas disponibles`}
+                    </p>
+                </div>
                 {activeTab === "planning" ? (
                     <Button size="sm" onClick={handleCreatePlan}>
                         <Plus className="mr-1 h-4 w-4" aria-hidden />
@@ -560,6 +570,11 @@ export const TrainingPlansPage: React.FC = () => {
                     )}
                 </>
             )}
+
+            <SelectClientModal
+                isOpen={isSelectClientModalOpen}
+                onClose={() => setIsSelectClientModalOpen(false)}
+            />
         </div>
     );
 };

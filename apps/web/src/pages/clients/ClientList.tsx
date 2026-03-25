@@ -218,10 +218,10 @@ export const ClientList: React.FC = () => {
         <>
             <div className="space-y-4 sm:space-y-6">
                 {/* Header §4 — responsive: stack on xs, inline sm+ */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
-                    <div className="flex min-w-0 flex-wrap items-baseline gap-2 sm:gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
                         <h1 className="text-xl font-bold text-foreground sm:text-2xl">Clientes</h1>
-                        <span className="text-sm text-muted-foreground sm:text-base">{total} total</span>
+                        <p className="mt-1 text-sm text-muted-foreground">{total} total</p>
                     </div>
                     <Button
                         variant="primary"

@@ -1,6 +1,8 @@
 /**
  * Etiquetas ES y chips de categoría para planes y plantillas.
- * El color viene de `goal` (canónico del backend); tags solo aportan etiquetas de display.
+ * El color viene de `goal` (canónico del backend snake_case); tags solo aportan etiquetas de display.
+ * 
+ * @updated v7.0.0 - Actualizado a snake_case (8 valores) para alinearse con TrainingGoalEnum
  */
 
 import {
@@ -9,7 +11,20 @@ import {
     type TrainingPlanTemplate,
 } from "@nexia/shared/types/training";
 
+/**
+ * Labels en español para cada valor de goal (snake_case)
+ */
 export const GOAL_LABEL_ES: Record<string, string> = {
+    // snake_case keys (nuevo estándar backend)
+    hypertrophy: "Hipertrofia",
+    strength: "Fuerza",
+    power: "Potencia",
+    endurance: "Resistencia",
+    weight_loss: "Pérdida de peso",
+    general_fitness: "Fitness general",
+    rehabilitation: "Rehabilitación",
+    sport_performance: "Rendimiento deportivo",
+    // Legacy keys (para compatibilidad)
     "Muscle Gain": "Hipertrofia",
     Strength: "Fuerza",
     "Weight Loss": "Pérdida de peso",
@@ -26,38 +41,63 @@ const CHIP_NEUTRAL = "bg-muted/50 text-muted-foreground";
  * primary=cyan, success=verde, warning=ámbar.
  */
 const GOAL_CHIP_TONE: Record<string, string> = {
-    [TRAINING_PLAN_GOAL.MUSCLE_GAIN]: "bg-primary/15 text-primary", // Hipertrofia: crecimiento, construcción
+    [TRAINING_PLAN_GOAL.HYPERTROPHY]: "bg-primary/15 text-primary", // Hipertrofia: crecimiento, construcción
     [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: "bg-warning/10 text-warning", // Pérdida de peso: quemar, déficit
     [TRAINING_PLAN_GOAL.STRENGTH]: "bg-red-600/20 text-red-400", // Fuerza: rojo
+    [TRAINING_PLAN_GOAL.POWER]: "bg-purple-600/20 text-purple-400", // Potencia: púrpura
     [TRAINING_PLAN_GOAL.ENDURANCE]: "bg-primary/10 text-primary", // Resistencia: aliento, esfuerzo sostenido
     [TRAINING_PLAN_GOAL.GENERAL_FITNESS]: "bg-success/12 text-success", // Mantenimiento: verde
     [TRAINING_PLAN_GOAL.REHABILITATION]: "bg-orange-700/25 text-orange-400", // Rehabilitación: naranja oscuro
-    [TRAINING_PLAN_GOAL.PERFORMANCE]: "bg-violet-600/20 text-violet-400", // Rendimiento: granate morado
+    [TRAINING_PLAN_GOAL.SPORT_PERFORMANCE]: "bg-violet-600/20 text-violet-400", // Rendimiento: granate morado
 };
 
+/**
+ * Mapeo de variantes de texto a goal canónico snake_case
+ */
 const GOAL_TO_CANONICAL: Record<string, string> = {
-    hipertrofia: TRAINING_PLAN_GOAL.MUSCLE_GAIN,
-    Hipertrofia: TRAINING_PLAN_GOAL.MUSCLE_GAIN,
-    "Aumentar masa muscular": TRAINING_PLAN_GOAL.MUSCLE_GAIN,
-    Mantenimiento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
-    Mantenimento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
-    mantenimiento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
-    mantenimento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    // snake_case (ya canónicos)
+    hypertrophy: TRAINING_PLAN_GOAL.HYPERTROPHY,
+    strength: TRAINING_PLAN_GOAL.STRENGTH,
+    power: TRAINING_PLAN_GOAL.POWER,
+    endurance: TRAINING_PLAN_GOAL.ENDURANCE,
+    weight_loss: TRAINING_PLAN_GOAL.WEIGHT_LOSS,
+    rehabilitation: TRAINING_PLAN_GOAL.REHABILITATION,
+    general_fitness: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    sport_performance: TRAINING_PLAN_GOAL.SPORT_PERFORMANCE,
+    // Variantes en español
+    hipertrofia: TRAINING_PLAN_GOAL.HYPERTROPHY,
+    Hipertrofia: TRAINING_PLAN_GOAL.HYPERTROPHY,
+    "Aumentar masa muscular": TRAINING_PLAN_GOAL.HYPERTROPHY,
+    fuerza: TRAINING_PLAN_GOAL.STRENGTH,
+    Fuerza: TRAINING_PLAN_GOAL.STRENGTH,
+    potencia: TRAINING_PLAN_GOAL.POWER,
+    Potencia: TRAINING_PLAN_GOAL.POWER,
+    resistencia: TRAINING_PLAN_GOAL.ENDURANCE,
+    Resistencia: TRAINING_PLAN_GOAL.ENDURANCE,
+    "pérdida de peso": TRAINING_PLAN_GOAL.WEIGHT_LOSS,
     "Pérdida de peso": TRAINING_PLAN_GOAL.WEIGHT_LOSS,
     "Perdida de peso": TRAINING_PLAN_GOAL.WEIGHT_LOSS,
-    Rendimiento: TRAINING_PLAN_GOAL.PERFORMANCE,
-    "Rendimiento deportivo": TRAINING_PLAN_GOAL.PERFORMANCE,
-    Fuerza: TRAINING_PLAN_GOAL.STRENGTH,
-    Resistencia: TRAINING_PLAN_GOAL.ENDURANCE,
+    mantenimiento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    Mantenimiento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    Mantenimento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    mantenimento: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    "fitness general": TRAINING_PLAN_GOAL.GENERAL_FITNESS,
     "Fitness general": TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    rehabilitacion: TRAINING_PLAN_GOAL.REHABILITATION,
+    rehabilitación: TRAINING_PLAN_GOAL.REHABILITATION,
     Rehabilitación: TRAINING_PLAN_GOAL.REHABILITATION,
-    [TRAINING_PLAN_GOAL.MUSCLE_GAIN]: TRAINING_PLAN_GOAL.MUSCLE_GAIN,
-    [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: TRAINING_PLAN_GOAL.WEIGHT_LOSS,
-    [TRAINING_PLAN_GOAL.STRENGTH]: TRAINING_PLAN_GOAL.STRENGTH,
-    [TRAINING_PLAN_GOAL.ENDURANCE]: TRAINING_PLAN_GOAL.ENDURANCE,
-    [TRAINING_PLAN_GOAL.GENERAL_FITNESS]: TRAINING_PLAN_GOAL.GENERAL_FITNESS,
-    [TRAINING_PLAN_GOAL.REHABILITATION]: TRAINING_PLAN_GOAL.REHABILITATION,
-    [TRAINING_PLAN_GOAL.PERFORMANCE]: TRAINING_PLAN_GOAL.PERFORMANCE,
+    rendimiento: TRAINING_PLAN_GOAL.SPORT_PERFORMANCE,
+    Rendimiento: TRAINING_PLAN_GOAL.SPORT_PERFORMANCE,
+    "rendimiento deportivo": TRAINING_PLAN_GOAL.SPORT_PERFORMANCE,
+    "Rendimiento deportivo": TRAINING_PLAN_GOAL.SPORT_PERFORMANCE,
+    // Legacy Title Case (para compatibilidad)
+    "Muscle Gain": TRAINING_PLAN_GOAL.HYPERTROPHY,
+    "Weight Loss": TRAINING_PLAN_GOAL.WEIGHT_LOSS,
+    Strength: TRAINING_PLAN_GOAL.STRENGTH,
+    Endurance: TRAINING_PLAN_GOAL.ENDURANCE,
+    "General Fitness": TRAINING_PLAN_GOAL.GENERAL_FITNESS,
+    Rehabilitation: TRAINING_PLAN_GOAL.REHABILITATION,
+    Performance: TRAINING_PLAN_GOAL.SPORT_PERFORMANCE,
 };
 
 function canonicalGoal(goal: string | null | undefined): string {
@@ -90,7 +130,7 @@ function chipsFromTagsWithGoal(
 function chipFromGoal(goal: string | null | undefined): TrainingCategoryChip[] {
     const g = goal?.trim() ?? "";
     if (!g) return [];
-    const label = GOAL_LABEL_ES[g] ?? g;
+    const label = GOAL_LABEL_ES[g] ?? GOAL_LABEL_ES[canonicalGoal(g)] ?? g;
     const toneClass = toneFromGoal(goal);
     return [{ label, toneClass }];
 }

@@ -180,10 +180,17 @@ export const SessionsPage: React.FC = () => {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold text-foreground">
-                    {activeTab === "sessions" ? `Sesiones · ${total}` : `Plantillas · ${templatesTotal}`}
-                </h1>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold text-foreground">
+                        {activeTab === "sessions" ? "Sesiones" : "Plantillas"}
+                    </h1>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        {activeTab === "sessions"
+                            ? `${total} sesiones programadas`
+                            : `${templatesTotal} plantillas disponibles`}
+                    </p>
+                </div>
                 {activeTab === "sessions" ? (
                     <Button size="sm" onClick={() => navigate("/dashboard/session-programming/create-session")}>
                         <Plus className="mr-1 h-4 w-4" aria-hidden />

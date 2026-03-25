@@ -80,7 +80,6 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const {
         data: activePlan,
         isLoading: isLoadingActive,
-        isError,
     } = useGetActivePlanByClientQuery(clientId, { skip: !clientId || clientId <= 0 });
 
     const isLoading = isLoadingPlans || isLoadingActive;
@@ -101,9 +100,8 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                     Sin plan activo
                 </p>
                 <p className="mb-6 text-sm text-muted-foreground">
-                    {isError
-                        ? "No se pudo cargar el plan activo. Puedes crear un plan para este cliente."
-                        : "Este cliente no tiene un plan de entrenamiento activo. Crea uno para ver baselines, overrides y calendario aquí."}
+                    Este cliente no tiene un plan de entrenamiento activo.
+                    Crea uno para ver baselines, overrides y calendario aquí.
                 </p>
                 {onOpenCreatePlan && (
                     <Button

@@ -144,9 +144,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     });
 
     // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
-    const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(effectiveClientId ?? 0, {
-        skip: !effectiveClientId || effectiveClientId <= 0,
-    });
+    const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(
+        { clientId: effectiveClientId ?? 0 },
+        { skip: !effectiveClientId || effectiveClientId <= 0 }
+    );
 
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
@@ -753,7 +754,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
                                             onClick={() =>
                                                 navigate(
-                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`
+                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`,
+                                                    {
+                                                        state: { from: location.pathname },
+                                                    }
                                                 )
                                             }
                                         >

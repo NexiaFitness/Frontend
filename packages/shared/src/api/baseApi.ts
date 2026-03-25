@@ -160,29 +160,46 @@ const baseQuery = fetchBaseQuery({
 });
 
 /**
- * Interceptor para suprimir logs de errores 401/403 en consola.
- * 401: manejado por refresh token; 403: manejado por componentes.
+ * Endpoints donde 404 es un resultado válido (no un error).
+ * Estos endpoints retornan 404 cuando el recurso no existe, lo cual
+ * es manejado gracefulmente por el frontend (ej: data: null).
  */
-const suppressAuthConsoleErrors = (): (() => void) => {
+const ENDPOINTS_404_EXPECTED = new Set([
+    'active-by-client',  // GET /training-plans/active-by-client/{id} - no hay plan activo
+]);
+
+/**
+ * Interceptor para suprimir logs de errores esperados en consola.
+ * - 401: manejado por refresh token
+ * - 403: manejado por componentes
+ * - 404: manejado como data: null en endpoints específicos
+ */
+const suppressExpectedConsoleErrors = (): (() => void) => {
     if (typeof window === 'undefined') return () => {};
 
     const originalError = console.error;
     const originalWarn = console.warn;
+    
     const isOurApi = (s: string) =>
         s.includes(API_CONFIG.BASE_URL) || s.includes('/api/v1');
+    
     const is401Or403 = (s: string) =>
         s.includes('401') || s.includes('403') ||
         s.includes('Unauthorized') || s.includes('Forbidden');
+    
+    const is404Expected = (s: string) =>
+        s.includes('404') && 
+        Array.from(ENDPOINTS_404_EXPECTED).some(endpoint => s.includes(endpoint));
 
     const errorInterceptor = (...args: unknown[]): void => {
         const s = String(args.join(' '));
-        if (is401Or403(s) && isOurApi(s)) return;
+        if ((is401Or403(s) || is404Expected(s)) && isOurApi(s)) return;
         originalError.apply(console, args);
     };
 
     const warnInterceptor = (...args: unknown[]): void => {
         const s = String(args.join(' '));
-        if (is401Or403(s) && isOurApi(s)) return;
+        if ((is401Or403(s) || is404Expected(s)) && isOurApi(s)) return;
         originalWarn.apply(console, args);
     };
 
@@ -198,6 +215,7 @@ const suppressAuthConsoleErrors = (): (() => void) => {
  * BaseQuery con manejo profesional de errores HTTP
  * - 401 (Unauthorized): Silencioso si no hay token/isAuthenticated (después de logout)
  * - 403 (Forbidden): Se propaga para que los componentes lo manejen, pero se suprimen logs en consola
+ * - 404 (Not Found): Silencioso en endpoints donde es resultado válido (ej: active-by-client)
  * - Otros errores: Se propagan normalmente
  */
 const baseQueryWithReauth: BaseQueryFn<
@@ -205,8 +223,8 @@ const baseQueryWithReauth: BaseQueryFn<
     unknown,
     FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-    // Suprimir logs de 401/403 durante la ejecución de la query
-    const restoreConsole = suppressAuthConsoleErrors();
+    // Suprimir logs de errores esperados durante la ejecución de la query
+    const restoreConsole = suppressExpectedConsoleErrors();
     
     try {
         const result = await baseQuery(args, api, extraOptions);

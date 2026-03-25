@@ -42,9 +42,14 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
                             className={selectClass}
                         >
                             <option value="">Selecciona un objetivo</option>
-                            <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
-                            <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
-                            <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
+                            <option value={TRAINING_GOAL_ENUM.HIPERTROFIA}>Hipertrofia muscular</option>
+                            <option value={TRAINING_GOAL_ENUM.FUERZA}>Fuerza máxima</option>
+                            <option value={TRAINING_GOAL_ENUM.POTENCIA}>Potencia / explosividad</option>
+                            <option value={TRAINING_GOAL_ENUM.RESISTENCIA}>Resistencia cardiovascular</option>
+                            <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso / definición</option>
+                            <option value={TRAINING_GOAL_ENUM.REHABILITACION}>Rehabilitación / readaptación</option>
+                            <option value={TRAINING_GOAL_ENUM.FITNESS_GENERAL}>Fitness general / salud</option>
+                            <option value={TRAINING_GOAL_ENUM.RENDIMIENTO_DEPORTIVO}>Rendimiento deportivo</option>
                         </select>
                         {errors.objetivo_entrenamiento && <p className={errorClass}>{errors.objetivo_entrenamiento}</p>}
                     </div>

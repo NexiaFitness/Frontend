@@ -16,7 +16,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 
-export type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+export type BadgeVariant = "default" | "secondary" | "destructive" | "outline" | "subtle";
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
     variant?: BadgeVariant;
@@ -31,6 +31,8 @@ const variantStyles: Record<BadgeVariant, string> = {
         "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
     outline:
         "text-foreground border-input",
+    subtle:
+        "border-transparent bg-primary/15 text-primary hover:bg-primary/20",
 };
 
 export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
