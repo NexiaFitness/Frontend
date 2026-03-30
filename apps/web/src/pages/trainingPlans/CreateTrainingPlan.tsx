@@ -277,7 +277,7 @@ export const CreateTrainingPlan: React.FC = () => {
         };
 
         // Detectar solapamiento con instancias existentes
-        const overlapping = existingInstances.find((p) =>
+        const overlapping = sortedInstances.find((p) =>
             planOverlapsDateRange(p, formData.start_date, formData.end_date)
         );
 
@@ -343,11 +343,24 @@ export const CreateTrainingPlan: React.FC = () => {
             case "active":
                 return { label: "Activo", className: "text-success" };
             case "completed":
-                return { label: "Completado", className: "text-muted-foreground" };
+                return { label: "Completado", className: "text-warning" };
             default:
                 return { label: status, className: "text-muted-foreground" };
         }
     };
+
+    /**
+     * Ordena instancias: activo primero, luego por fecha de inicio descendente (más reciente arriba)
+     */
+    const sortedInstances = useMemo(() => {
+        return [...existingInstances].sort((a, b) => {
+            // Activo siempre primero
+            if (a.status === "active" && b.status !== "active") return -1;
+            if (b.status === "active" && a.status !== "active") return 1;
+            // Luego por fecha de inicio descendente (más reciente arriba)
+            return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
+        });
+    }, [existingInstances]);
 
     const renderExistingPlans = () => {
         if (isLoadingPlans) {
@@ -358,7 +371,7 @@ export const CreateTrainingPlan: React.FC = () => {
             );
         }
 
-        if (existingInstances.length === 0) {
+        if (sortedInstances.length === 0) {
             return (
                 <div className="rounded-lg bg-surface-2 px-4 py-2.5">
                     <p className="text-sm text-muted-foreground">
@@ -370,7 +383,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
         return (
             <div className="space-y-2">
-                {existingInstances.map((instance: TrainingPlanInstance) => {
+                {sortedInstances.map((instance: TrainingPlanInstance) => {
                     const statusBadge = getInstanceStatusBadge(instance.status);
                     return (
                         <div
