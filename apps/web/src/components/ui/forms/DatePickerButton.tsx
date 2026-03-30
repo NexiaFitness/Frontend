@@ -50,7 +50,10 @@ function toDate(value: string): Date | undefined {
 }
 
 function toYYYYMMDD(d: Date): string {
-    return d.toISOString().slice(0, 10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 }
 
 export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
@@ -79,6 +82,14 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [open]);
+
+    // Sincronizar mes mostrado con el valor seleccionado
+    useEffect(() => {
+        const date = toDate(value);
+        if (date) {
+            setMonth(date);
+        }
+    }, [value]);
 
     const handleSelect = (d: Date | undefined) => {
         if (d) {
