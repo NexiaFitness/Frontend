@@ -138,7 +138,7 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                     </div>
 
                     <p className="text-sm text-muted-foreground">
-                        Se cerrará el plan anterior y se archivará. ¿Desea continuar?
+                        Se cerrará el plan anterior. ¿Desea continuar?
                     </p>
                 </div>
 
