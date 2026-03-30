@@ -105,9 +105,17 @@ function canonicalGoal(goal: string | null | undefined): string {
     return GOAL_TO_CANONICAL[g] ?? g;
 }
 
-function toneFromGoal(goal: string | null | undefined): string {
+export function toneFromGoal(goal: string | null | undefined): string {
     const canonical = canonicalGoal(goal);
     return (canonical && GOAL_CHIP_TONE[canonical]) ?? CHIP_NEUTRAL;
+}
+
+export function chipFromGoal(goal: string | null | undefined): TrainingCategoryChip[] {
+    const g = goal?.trim() ?? "";
+    if (!g) return [];
+    const label = GOAL_LABEL_ES[g] ?? GOAL_LABEL_ES[canonicalGoal(g)] ?? g;
+    const toneClass = toneFromGoal(goal);
+    return [{ label, toneClass }];
 }
 
 export interface TrainingCategoryChip {
@@ -124,15 +132,6 @@ function chipsFromTagsWithGoal(
         .filter(Boolean);
     const unique = Array.from(new Set(labels)).slice(0, 6);
     return unique.map((label) => ({ label, toneClass: toneFromGoal(label) }));
-}
-
-/** Un chip desde goal: etiqueta traducida, color por objetivo. */
-function chipFromGoal(goal: string | null | undefined): TrainingCategoryChip[] {
-    const g = goal?.trim() ?? "";
-    if (!g) return [];
-    const label = GOAL_LABEL_ES[g] ?? GOAL_LABEL_ES[canonicalGoal(g)] ?? g;
-    const toneClass = toneFromGoal(goal);
-    return [{ label, toneClass }];
 }
 
 export function categoryChipsFromTrainingPlan(plan: TrainingPlan): TrainingCategoryChip[] {

@@ -28,6 +28,7 @@ import {
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
+import { chipFromGoal } from "@/components/trainingPlans/goalLabels";
 import {
     TRAINING_PLAN_GOAL,
     type TrainingPlanGoal,
@@ -404,9 +405,16 @@ export const CreateTrainingPlan: React.FC = () => {
                                 {instance.goal && (
                                     <>
                                         <span className="mx-1.5">·</span>
-                                        <Badge variant="subtle" className="text-[10px]">
-                                            {GOAL_OPTIONS.find(g => g.value === instance.goal)?.label || instance.goal}
-                                        </Badge>
+                                        {(() => {
+                                            const chips = chipFromGoal(instance.goal);
+                                            const chip = chips[0];
+                                            if (!chip) return null;
+                                            return (
+                                                <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 font-semibold text-[10px] border-transparent ${chip.toneClass}`}>
+                                                    {chip.label}
+                                                </span>
+                                            );
+                                        })()}
                                     </>
                                 )}
                             </div>
