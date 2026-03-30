@@ -20,6 +20,7 @@ import { RecommendationsCards } from "@/components/clients/detail/Recommendation
 import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
 import { Badge } from "@/components/ui/Badge";
 import { ClientAvatar } from "@/components/ui/avatar";
+import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import {
     useCreateTrainingPlanMutation,
     useGetTrainingPlansQuery,
@@ -74,6 +75,14 @@ const GOAL_OPTIONS = [
 // ============================================================================
 // UTILS
 // ============================================================================
+
+function planOverlapsDateRange(plan: { start_date?: string | null; end_date?: string | null }, dateFrom: string, dateTo: string): boolean {
+    const start = plan.start_date?.slice(0, 10) ?? "";
+    const end = plan.end_date?.slice(0, 10) ?? "";
+    if (dateFrom && end < dateFrom) return false;
+    if (dateTo && start > dateTo) return false;
+    return true;
+}
 
 /**
  * Mapea el objetivo del cliente (texto libre en español) al goal del plan.
@@ -170,6 +179,9 @@ export const CreateTrainingPlan: React.FC = () => {
     });
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
+    const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
+    const [overlappingPlan, setOverlappingPlan] = useState<{ name: string; start_date: string; end_date: string } | null>(null);
+    const [pendingPlanData, setPendingPlanData] = useState<TrainingPlanCreate | null>(null);
 
     // ============================================================================
     // EFFECTS
@@ -252,21 +264,40 @@ export const CreateTrainingPlan: React.FC = () => {
             return;
         }
 
+        const planData: TrainingPlanCreate = {
+            trainer_id: trainerId,
+            client_id: clientId,
+            name: formData.name.trim(),
+            goal: formData.goal,
+            start_date: formData.start_date,
+            end_date: formData.end_date,
+            status: "active",
+            description: null,
+            tags: null,
+        };
+
+        // Detectar solapamiento con planes existentes
+        const overlapping = existingPlans.find((p) =>
+            planOverlapsDateRange(p, formData.start_date, formData.end_date)
+        );
+
+        if (overlapping) {
+            setOverlappingPlan({
+                name: overlapping.name,
+                start_date: formatDate(overlapping.start_date),
+                end_date: formatDate(overlapping.end_date),
+            });
+            setPendingPlanData(planData);
+            setIsOverlapModalOpen(true);
+            return;
+        }
+
+        await doCreatePlan(planData);
+    };
+
+    const doCreatePlan = async (planData: TrainingPlanCreate) => {
         try {
-            const planData: TrainingPlanCreate = {
-                trainer_id: trainerId,
-                client_id: clientId,
-                name: formData.name.trim(),
-                goal: formData.goal,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                status: "active",
-                description: null,
-                tags: null,
-            };
-
             const result = await createPlan(planData).unwrap();
-
             showSuccess("Plan creado exitosamente", 2000);
 
             setTimeout(() => {
@@ -284,6 +315,20 @@ export const CreateTrainingPlan: React.FC = () => {
                     : "Error al crear el plan";
             showError(errorMessage);
         }
+    };
+
+    const handleConfirmOverlap = async () => {
+        if (!pendingPlanData) return;
+        setIsOverlapModalOpen(false);
+        await doCreatePlan(pendingPlanData);
+        setPendingPlanData(null);
+        setOverlappingPlan(null);
+    };
+
+    const handleCancelOverlap = () => {
+        setIsOverlapModalOpen(false);
+        setPendingPlanData(null);
+        setOverlappingPlan(null);
     };
 
     // ============================================================================
@@ -560,6 +605,17 @@ export const CreateTrainingPlan: React.FC = () => {
                     </Button>
                 </div>
             </div>
+
+            {/* Modal de solapamiento de fechas */}
+            <PlanOverlapModal
+                isOpen={isOverlapModalOpen}
+                onClose={handleCancelOverlap}
+                onConfirm={handleConfirmOverlap}
+                planName={overlappingPlan?.name || ""}
+                planStartDate={overlappingPlan?.start_date || ""}
+                planEndDate={overlappingPlan?.end_date || ""}
+                isLoading={isCreating}
+            />
         </div>
     );
 };

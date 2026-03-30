@@ -13,6 +13,9 @@ export { AssignTemplateModal } from "./AssignTemplateModal";
 export { AssignPlanModal } from "./AssignPlanModal";
 export { TemplatePreviewModal } from "./TemplatePreviewModal";
 
+// Modales
+export { SelectClientModal, PlanOverlapModal } from "./modals";
+
 // Componentes existentes (Fase 1-2)
 export { TrainingPlanHeader } from "./TrainingPlanHeader";
 export { OverviewTab } from "./OverviewTab";
