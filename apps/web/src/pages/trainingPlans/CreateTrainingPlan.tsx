@@ -23,7 +23,7 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import {
     useCreateTrainingPlanMutation,
-    useGetTrainingPlansQuery,
+    useGetTrainingPlanInstancesQuery,
 } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
@@ -32,7 +32,7 @@ import {
     TRAINING_PLAN_GOAL,
     type TrainingPlanGoal,
 } from "@nexia/shared/types/training";
-import type { TrainingPlanCreate } from "@nexia/shared/types/training";
+import type { TrainingPlanCreate, TrainingPlanInstance } from "@nexia/shared/types/training";
 
 // ============================================================================
 // TYPES
@@ -158,9 +158,9 @@ export const CreateTrainingPlan: React.FC = () => {
         skip: !clientId,
     });
 
-    // Obtener planes existentes del cliente
-    const { data: existingPlans = [], isLoading: isLoadingPlans } = useGetTrainingPlansQuery(
-        { client_id: clientId || 0, trainer_id: trainerId },
+    // Obtener instancias de planes existentes del cliente
+    const { data: existingInstances = [], isLoading: isLoadingPlans } = useGetTrainingPlanInstancesQuery(
+        { clientId: clientId || 0, trainerId: trainerId },
         { skip: !clientId || !trainerId }
     );
 
@@ -276,8 +276,8 @@ export const CreateTrainingPlan: React.FC = () => {
             tags: null,
         };
 
-        // Detectar solapamiento con planes existentes
-        const overlapping = existingPlans.find((p) =>
+        // Detectar solapamiento con instancias existentes
+        const overlapping = existingInstances.find((p) =>
             planOverlapsDateRange(p, formData.start_date, formData.end_date)
         );
 
@@ -335,6 +335,20 @@ export const CreateTrainingPlan: React.FC = () => {
     // RENDER HELPERS
     // ============================================================================
 
+    /**
+     * Obtiene el badge de status para una instancia
+     */
+    const getInstanceStatusBadge = (status: string) => {
+        switch (status) {
+            case "active":
+                return { label: "Activo", className: "text-success" };
+            case "completed":
+                return { label: "Completado", className: "text-muted-foreground" };
+            default:
+                return { label: status, className: "text-muted-foreground" };
+        }
+    };
+
     const renderExistingPlans = () => {
         if (isLoadingPlans) {
             return (
@@ -344,11 +358,11 @@ export const CreateTrainingPlan: React.FC = () => {
             );
         }
 
-        if (existingPlans.length === 0) {
+        if (existingInstances.length === 0) {
             return (
                 <div className="rounded-lg bg-surface-2 px-4 py-2.5">
                     <p className="text-sm text-muted-foreground">
-                        No hay planes existentes para este cliente
+                        No hay planes asignados a este cliente
                     </p>
                 </div>
             );
@@ -356,56 +370,32 @@ export const CreateTrainingPlan: React.FC = () => {
 
         return (
             <div className="space-y-2">
-                {existingPlans.map((plan) => {
-                    const progress = plan.sessions_total > 0 
-                        ? Math.round((plan.sessions_completed / plan.sessions_total) * 100) 
-                        : 0;
+                {existingInstances.map((instance: TrainingPlanInstance) => {
+                    const statusBadge = getInstanceStatusBadge(instance.status);
                     return (
                         <div
-                            key={plan.id}
+                            key={instance.id}
                             className="rounded-lg bg-surface-2 px-4 py-2.5 space-y-2"
                         >
                             {/* Nombre del plan + Estado */}
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-medium truncate">{plan.name}</p>
-                                <span className="inline-flex shrink-0 items-center text-xs font-medium text-success">
-                                    Activo
+                                <p className="text-sm font-medium truncate">{instance.name}</p>
+                                <span className={`inline-flex shrink-0 items-center text-xs font-medium ${statusBadge.className}`}>
+                                    {statusBadge.label}
                                 </span>
                             </div>
                             
                             {/* Fechas y objetivo */}
                             <div className="text-xs text-muted-foreground">
-                                {formatDate(plan.start_date)} — {formatDate(plan.end_date)}
-                                {plan.goal && (
+                                {formatDate(instance.start_date)} — {formatDate(instance.end_date)}
+                                {instance.goal && (
                                     <>
                                         <span className="mx-1.5">·</span>
                                         <Badge variant="subtle" className="text-[10px]">
-                                            {GOAL_OPTIONS.find(g => g.value === plan.goal)?.label || plan.goal}
+                                            {GOAL_OPTIONS.find(g => g.value === instance.goal)?.label || instance.goal}
                                         </Badge>
                                     </>
                                 )}
-                            </div>
-                            
-                            {/* Barra de progreso de sesiones */}
-                            <div className="space-y-1">
-                                <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>Sesiones</span>
-                                    <span className="tabular-nums text-foreground">
-                                        {plan.sessions_completed} / {plan.sessions_total}
-                                    </span>
-                                </div>
-                                <div 
-                                    className="h-2 w-full overflow-hidden rounded-full bg-muted" 
-                                    role="progressbar" 
-                                    aria-valuenow={progress} 
-                                    aria-valuemin={0} 
-                                    aria-valuemax={100}
-                                >
-                                    <div 
-                                        className="h-full rounded-full bg-primary transition-all duration-300" 
-                                        style={{ width: `${progress}%` }} 
-                                    />
-                                </div>
                             </div>
                         </div>
                     );
