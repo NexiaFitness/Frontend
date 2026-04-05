@@ -1,0 +1,173 @@
+/**
+ * PeriodizationCalendar.tsx — Calendario de periodización con selección de rango
+ *
+ * Migrado a BaseMonthCalendar. Renderiza celdas con estados:
+ * - Planificado (bg-primary/15 + dot)
+ * - En selección (bg-primary/30 + rounded corners)
+ * - Hoy (ring)
+ *
+ * @author Frontend Team
+ * @since v8.0.0
+ * @updated v8.2.0 - Migrado a BaseMonthCalendar
+ */
+
+import React, { useMemo, useCallback } from "react";
+import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
+import { isDateInRange, countPlannedDays, toLocalISO } from "@nexia/shared/utils/periodBlockOverlap";
+import { BaseMonthCalendar, type CalendarDayInfo } from "@/components/ui/calendar/BaseMonthCalendar";
+import type { PeriodBlockFormState } from "./usePeriodBlockForm";
+
+interface Props {
+  currentMonth: Date;
+  onMonthChange: (d: Date) => void;
+  blocks: PlanPeriodBlock[];
+  formState: PeriodBlockFormState;
+  onDayClick: (dateStr: string) => void;
+}
+
+function parseLocal(s: string): Date {
+  const [y, m, d] = s.split("-").map(Number);
+  return new Date(y, m - 1, d);
+}
+
+export const PeriodizationCalendar: React.FC<Props> = ({
+  currentMonth,
+  onMonthChange,
+  blocks,
+  formState,
+  onDayClick,
+}) => {
+  const year = currentMonth.getFullYear();
+  const month = currentMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthStart = useMemo(() => new Date(year, month, 1), [year, month]);
+  const monthEnd = useMemo(() => new Date(year, month, daysInMonth), [year, month, daysInMonth]);
+
+  const planned = useMemo(() => countPlannedDays(blocks, monthStart, monthEnd), [blocks, monthStart, monthEnd]);
+
+  const plannedSet = useMemo(() => {
+    const s = new Set<string>();
+    for (const b of blocks) {
+      const bs = parseLocal(b.start_date);
+      const be = parseLocal(b.end_date);
+      const start = bs > monthStart ? bs : new Date(monthStart);
+      const end = be < monthEnd ? be : new Date(monthEnd);
+      const cur = new Date(start);
+      while (cur <= end) {
+        s.add(toLocalISO(cur));
+        cur.setDate(cur.getDate() + 1);
+      }
+    }
+    return s;
+  }, [blocks, monthStart, monthEnd]);
+
+  const isInSelection = useCallback(
+    (dateStr: string): boolean => {
+      if (!formState.startDate) return false;
+      if (formState.phase === "rangeStart") return dateStr === formState.startDate;
+      if (formState.endDate) return isDateInRange(dateStr, formState.startDate, formState.endDate);
+      return false;
+    },
+    [formState]
+  );
+
+  const isSelectionStart = useCallback(
+    (dateStr: string) =>
+      formState.startDate === dateStr && (formState.phase === "rangeStart" || formState.phase === "rangeComplete"),
+    [formState]
+  );
+
+  const isSelectionEnd = useCallback(
+    (dateStr: string) => formState.endDate === dateStr && formState.phase === "rangeComplete",
+    [formState]
+  );
+
+  const renderCell = useCallback(
+    (dayInfo: CalendarDayInfo) => {
+      const { dateISO, dayOfMonth, isToday } = dayInfo;
+      const isPlanned = plannedSet.has(dateISO);
+      const inSel = isInSelection(dateISO);
+      const isStart = isSelectionStart(dateISO);
+      const isEnd = isSelectionEnd(dateISO);
+      const isSingleDay = isStart && isEnd;
+
+      let bgClass = "bg-surface";
+      let textClass = "text-foreground";
+      let roundClass = "";
+
+      if (inSel) {
+        bgClass = "bg-primary/30";
+        textClass = "text-foreground";
+        if (isSingleDay) {
+          roundClass = "rounded-l-md rounded-r-md";
+        } else if (isStart) {
+          roundClass = "rounded-l-md";
+        } else if (isEnd) {
+          roundClass = "rounded-r-md";
+        }
+      } else if (isPlanned) {
+        bgClass = "bg-primary/15";
+        textClass = "text-primary";
+      }
+
+      const ringClass = isToday ? "ring-1 ring-primary ring-inset" : "";
+
+      return (
+        <button
+          type="button"
+          onClick={() => onDayClick(dateISO)}
+          className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringClass}`}
+          aria-label={`${dayOfMonth}`}
+          aria-pressed={inSel}
+        >
+          <span className="z-10">{dayOfMonth}</span>
+          {isPlanned && !inSel && (
+            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
+          )}
+        </button>
+      );
+    },
+    [plannedSet, isInSelection, isSelectionStart, isSelectionEnd, onDayClick]
+  );
+
+  const subtitle = useMemo(
+    () => (
+      <p className="text-xs text-muted-foreground">
+        <span className="font-semibold text-foreground">{planned}</span> de{" "}
+        <span className="font-semibold text-foreground">{daysInMonth}</span> días planificados
+      </p>
+    ),
+    [planned, daysInMonth]
+  );
+
+  const footer = useMemo(
+    () => (
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-border/30">
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-primary/15 ring-1 ring-primary/30" />
+          <span className="text-[10px] text-muted-foreground">Planificado</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-primary/30" />
+          <span className="text-[10px] text-muted-foreground">Selección</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-surface ring-1 ring-primary" />
+          <span className="text-[10px] text-muted-foreground">Hoy</span>
+        </div>
+      </div>
+    ),
+    []
+  );
+
+  return (
+    <BaseMonthCalendar
+      currentMonth={currentMonth}
+      onMonthChange={onMonthChange}
+      renderCell={renderCell}
+      subtitle={subtitle}
+      footer={footer}
+      compactCells
+    />
+  );
+};

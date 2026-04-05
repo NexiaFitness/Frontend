@@ -26,6 +26,7 @@ import {
     MilestonesTab,
     SessionsTab,
     PlanningTab,
+    PlanPeriodizationSection,
 } from "@/components/trainingPlans";
 
 const ChartsTab = lazy(() =>
@@ -123,10 +124,10 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
                 return <SessionsTab planId={planId} />;
             case "planning":
                 return (
-                    <PlanningTab
-                        planId={planId}
-                        clientId={plan.client_id ?? null}
-                    />
+                    <div className="space-y-8">
+                        <PlanningTab planId={planId} clientId={clientId} />
+                        <PlanPeriodizationSection planId={planId} />
+                    </div>
                 );
             case "milestones":
                 return <MilestonesTab planId={planId} />;

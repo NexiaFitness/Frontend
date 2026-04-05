@@ -321,5 +321,6 @@ export const baseApi = createApi({
         "Metrics",
         "Injuries",
         "HabitInsights",
+        "PlanPeriodBlock",
     ],
 });

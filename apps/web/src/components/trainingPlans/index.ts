@@ -22,4 +22,9 @@ export { OverviewTab } from "./OverviewTab";
 export { MilestonesTab } from "./MilestonesTab";
 export { ChartsTab } from "./ChartsTab";
 export { SessionsTab } from "./SessionsTab";
+
+// Plan de cargas (baselines mensuales, overrides, plan resuelto)
 export { PlanningTab } from "./PlanningTab";
+
+// Periodización por bloques (complementa PlanningTab)
+export { PlanPeriodizationSection } from "./periodization";

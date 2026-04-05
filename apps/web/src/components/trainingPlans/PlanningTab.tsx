@@ -82,10 +82,10 @@ function CoherenceBadge({ percentage }: { percentage: number }) {
     const color = coherenceBadgeColor(percentage);
     const classes =
         color === "green"
-            ? "bg-green-100 text-green-800 border-green-200"
+            ? "bg-success/15 text-success border-success/30"
             : color === "amber"
-              ? "bg-amber-100 text-amber-800 border-amber-200"
-              : "bg-red-100 text-red-800 border-red-200";
+              ? "bg-warning/15 text-warning border-warning/30"
+              : "bg-destructive/15 text-destructive border-destructive/30";
     return (
         <span
             className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-medium ${classes}`}
@@ -134,9 +134,9 @@ function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: Q
                 return (
                     <div
                         key={slug}
-                        className="flex flex-wrap items-center gap-2 rounded border border-gray-200 bg-gray-50 p-2 text-sm"
+                        className="flex flex-wrap items-center gap-2 rounded border border-border/50 bg-surface p-2 text-sm"
                     >
-                        <span className="font-medium text-gray-800 min-w-[120px]">{name}</span>
+                        <span className="font-medium text-foreground min-w-[120px]">{name}</span>
                         <label className="sr-only">pct %</label>
                         <input
                             type="number"
@@ -146,10 +146,10 @@ function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: Q
                             onChange={(e) =>
                                 updateSlug(slug, "pct", Math.min(100, Math.max(0, Number(e.target.value))) / 100)
                             }
-                            className="w-14 rounded border border-gray-300 px-2 py-1 text-right"
+                            className="w-14 rounded border border-border bg-background px-2 py-1 text-right text-foreground"
                             aria-label={`${name} pct`}
                         />
-                        <span className="text-gray-500">%</span>
+                        <span className="text-muted-foreground">%</span>
                         <label className="sr-only">intensidad %</label>
                         <input
                             type="number"
@@ -163,10 +163,10 @@ function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: Q
                                     Math.min(100, Math.max(0, Number(e.target.value))) / 100
                                 )
                             }
-                            className="w-14 rounded border border-gray-300 px-2 py-1 text-right"
+                            className="w-14 rounded border border-border bg-background px-2 py-1 text-right text-foreground"
                             aria-label={`${name} intensidad`}
                         />
-                        <span className="text-gray-500">% int</span>
+                        <span className="text-muted-foreground">% int</span>
                         {item?.has_volume && (
                             <>
                                 <label className="sr-only">volumen %</label>
@@ -182,16 +182,16 @@ function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: Q
                                             Math.min(100, Math.max(0, Number(e.target.value))) / 100
                                         )
                                     }
-                                    className="w-14 rounded border border-gray-300 px-2 py-1 text-right"
+                                    className="w-14 rounded border border-border bg-background px-2 py-1 text-right text-foreground"
                                     aria-label={`${name} volumen`}
                                 />
-                                <span className="text-gray-500">% vol</span>
+                                <span className="text-muted-foreground">% vol</span>
                             </>
                         )}
                         <button
                             type="button"
                             onClick={() => removeSlug(slug)}
-                            className="rounded bg-red-600 px-2 py-1 text-xs text-white hover:bg-red-700"
+                            className="rounded bg-destructive px-2 py-1 text-xs text-destructive-foreground hover:bg-destructive/90"
                             aria-label={`Quitar ${name}`}
                         >
                             Quitar
@@ -201,7 +201,7 @@ function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: Q
             })}
             {availableToAdd.length > 0 && (
                 <div className="flex items-center gap-2">
-                    <label htmlFor={`${idPrefix}-add`} className="text-sm text-gray-600">
+                    <label htmlFor={`${idPrefix}-add`} className="text-sm text-muted-foreground">
                         Añadir cualidad
                     </label>
                     <select
@@ -212,7 +212,7 @@ function QualitiesEditor({ catalog, value, onChange, idPrefix = "qualities" }: Q
                             if (slug) addSlug(slug);
                             e.target.value = "";
                         }}
-                        className="rounded border border-gray-300 px-2 py-1 text-sm"
+                        className="rounded border border-border bg-background px-2 py-1 text-sm text-foreground"
                         aria-label="Añadir cualidad del catálogo"
                     >
                         <option value="">— Elegir —</option>
@@ -502,15 +502,15 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                 </section>
             )}
 
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Nuevo baseline mensual
                 </h3>
                 <form onSubmit={handleCreate} className="flex flex-wrap items-end gap-3">
                     <div>
                         <label
                             htmlFor="planning-baseline-month"
-                            className="mb-1 block text-sm font-medium text-gray-700"
+                            className="mb-1 block text-sm font-medium text-foreground"
                         >
                             Mes (YYYY-MM)
                         </label>
@@ -519,12 +519,12 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                             type="month"
                             value={selectedMonth}
                             onChange={(e) => setSelectedMonth(e.target.value)}
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                             required
                         />
                     </div>
                     <div className="min-w-[280px] flex-1">
-                        <span className="mb-1 block text-sm font-medium text-gray-700">
+                        <span className="mb-1 block text-sm font-medium text-foreground">
                             Cualidades
                         </span>
                         <QualitiesEditor
@@ -537,7 +537,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                     <button
                         type="submit"
                         disabled={isCreating || !selectedMonth}
-                        className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm font-medium text-white hover:bg-[#3d5a9e] disabled:opacity-50"
+                        className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
                     >
                         {isCreating ? "Creando…" : "Crear"}
                     </button>
@@ -546,55 +546,54 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
 
             {/* TICK-P02: Badge de coherencia global del plan */}
             {coherenceData != null && (
-                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-2 text-lg font-semibold text-gray-800">
+                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <h3 className="mb-2 text-lg font-semibold text-foreground">
                         Coherencia del plan
                     </h3>
                     <div className="flex items-center gap-2">
                         <CoherenceBadge percentage={Math.round(coherenceData.overall_coherence)} />
-                        <span className="text-sm text-gray-600">
+                        <span className="text-sm text-muted-foreground">
                             Global (umbral desviación: {coherenceData.deviation_threshold}%)
                         </span>
                     </div>
                 </section>
             )}
 
-            {/* TICK-P05: Botón Sincronizar planificación. Endpoint sync bottom-up no disponible en backend (removido en Fase 6); UI preparada para cuando exista. */}
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-2 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-2 text-lg font-semibold text-foreground">
                     Sincronizar planificación
                 </h3>
-                <p className="mb-3 text-sm text-gray-600">
+                <p className="mb-3 text-sm text-muted-foreground">
                     Actualizar la planificación desde sesiones realizadas (sync bottom-up). En desarrollo.
                 </p>
                 <button
                     type="button"
                     disabled
                     title="Endpoint de sincronización no disponible aún"
-                    className="rounded-lg border border-gray-300 bg-gray-100 px-4 py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
+                    className="rounded-lg border border-border bg-muted px-4 py-2 text-sm font-medium text-muted-foreground cursor-not-allowed"
                 >
                     Sincronizar planificación
                 </button>
             </section>
 
-            <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                <h3 className="mb-3 text-lg font-semibold text-gray-800">
+            <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                <h3 className="mb-3 text-lg font-semibold text-foreground">
                     Baselines mensuales
                 </h3>
                 {monthlyPlans.length === 0 ? (
-                    <p className="text-gray-500">Aún no hay baselines. Crea uno arriba.</p>
+                    <p className="text-muted-foreground">Aún no hay baselines. Crea uno arriba.</p>
                 ) : (
                     <ul className="space-y-2">
                         {monthlyPlans.map((mp) => (
                             <li
                                 key={mp.id}
-                                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 p-3"
+                                className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border/50 bg-surface p-3"
                             >
                                 <div className="flex flex-wrap items-center gap-2">
-                                    <span className="font-medium text-gray-800">
+                                    <span className="font-medium text-foreground">
                                         {mp.month}
                                     </span>
-                                    <span className="text-sm text-gray-600">
+                                    <span className="text-sm text-muted-foreground">
                                         {qualitiesToDisplayString(mp.qualities)}
                                     </span>
                                     {(() => {
@@ -617,7 +616,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                                 type="button"
                                                 onClick={() => handleUpdate(mp.id)}
                                                 disabled={isUpdating}
-                                                className="rounded bg-green-600 px-2 py-1 text-sm text-white"
+                                                className="rounded bg-success px-2 py-1 text-sm text-success-foreground"
                                             >
                                                 Guardar
                                             </button>
@@ -627,7 +626,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                                     setEditingId(null);
                                                     setEditQualities(null);
                                                 }}
-                                                className="rounded bg-gray-400 px-2 py-1 text-sm text-white"
+                                                className="rounded bg-muted-foreground px-2 py-1 text-sm text-background"
                                             >
                                                 Cancelar
                                             </button>
@@ -640,7 +639,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                                     setEditingId(mp.id);
                                                     setEditQualities(toNormalizedNested(mp.qualities as Record<string, number | QualityValue> | null));
                                                 }}
-                                                className="rounded bg-[#4A67B3] px-2 py-1 text-sm text-white hover:bg-[#3d5a9e]"
+                                                className="rounded bg-primary px-2 py-1 text-sm text-primary-foreground hover:bg-primary/90"
                                             >
                                                 Editar
                                             </button>
@@ -648,7 +647,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                                 type="button"
                                                 onClick={() => handleDelete(mp.id)}
                                                 disabled={isDeleting}
-                                                className="rounded bg-red-600 px-2 py-1 text-sm text-white hover:bg-red-700 disabled:opacity-50"
+                                                className="rounded bg-destructive px-2 py-1 text-sm text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
                                             >
                                                 Eliminar
                                             </button>
@@ -663,12 +662,12 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
 
             {/* Fase 2: Overrides semanales */}
             {monthlyPlans.length > 0 && (
-                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-lg font-semibold text-gray-800">
+                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <h3 className="mb-3 text-lg font-semibold text-foreground">
                         Overrides semanales
                     </h3>
                     <div className="mb-3">
-                        <label className="mb-1 block text-sm font-medium text-gray-700">
+                        <label className="mb-1 block text-sm font-medium text-foreground">
                             Baseline mensual
                         </label>
                         <select
@@ -678,7 +677,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                     e.target.value ? Number(e.target.value) : null
                                 )
                             }
-                            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                            className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                         >
                             {monthlyPlans.map((mp) => (
                                 <option key={mp.id} value={mp.id}>
@@ -711,7 +710,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                         className="mb-3 flex flex-wrap items-end gap-3"
                     >
                         <div>
-                            <label htmlFor="planning-weekly-week-id" className="mb-1 block text-sm text-gray-700">
+                            <label htmlFor="planning-weekly-week-id" className="mb-1 block text-sm text-muted-foreground">
                                 week_id (ej. 2026-02-W1)
                             </label>
                             <input
@@ -720,11 +719,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 value={weekIdText}
                                 onChange={(e) => setWeekIdText(e.target.value)}
                                 placeholder="2026-02-W1"
-                                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                             />
                         </div>
                         <div className="min-w-[280px]">
-                            <span className="mb-1 block text-sm text-gray-700">Cualidades</span>
+                            <span className="mb-1 block text-sm text-muted-foreground">Cualidades</span>
                             <QualitiesEditor
                                 idPrefix="planning-weekly"
                                 catalog={physicalQualitiesCatalog}
@@ -736,7 +735,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                             type="submit"
                             aria-label="Añadir override semanal"
                             disabled={isCreatingWeekly || !weekIdText.trim()}
-                            className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm text-white disabled:opacity-50"
+                            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
                         >
                             Añadir
                         </button>
@@ -750,11 +749,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                         {weeklyOverrides.map((wo) => (
                             <li
                                 key={wo.id}
-                                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
+                                className="flex items-center justify-between rounded-lg border border-border/50 bg-surface p-2 text-sm"
                             >
                                 <span className="flex flex-wrap items-center gap-2">
                                     {wo.week_id}{" "}
-                                    <span className="text-gray-600">
+                                    <span className="text-muted-foreground">
                                         {qualitiesToDisplayString(wo.qualities)}
                                     </span>
                                     {(() => {
@@ -773,14 +772,14 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                         }
                                     }}
                                     disabled={isDeletingWeekly}
-                                    className="rounded bg-red-600 px-2 py-1 text-white"
+                                    className="rounded bg-destructive px-2 py-1 text-destructive-foreground"
                                 >
                                     Eliminar
                                 </button>
                             </li>
                         ))}
                         {weeklyOverrides.length === 0 && (
-                            <li className="text-gray-500">Ningún override semanal.</li>
+                            <li className="text-muted-foreground">Ningún override semanal.</li>
                         )}
                     </ul>
                 </section>
@@ -788,8 +787,8 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
 
             {/* Fase 2: Overrides diarios (solo si hay cliente) */}
             {clientId != null && (
-                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-lg font-semibold text-gray-800">
+                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <h3 className="mb-3 text-lg font-semibold text-foreground">
                         Overrides diarios
                     </h3>
                     <form
@@ -816,18 +815,18 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                         className="mb-3 flex flex-wrap items-end gap-3"
                     >
                         <div>
-                            <label className="mb-1 block text-sm text-gray-700">
+                            <label className="mb-1 block text-sm text-muted-foreground">
                                 Fecha (YYYY-MM-DD)
                             </label>
                             <input
                                 type="date"
                                 value={dailyDateText}
                                 onChange={(e) => setDailyDateText(e.target.value)}
-                                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                             />
                         </div>
                         <div className="min-w-[280px]">
-                            <span className="mb-1 block text-sm text-gray-700">Cualidades</span>
+                            <span className="mb-1 block text-sm text-muted-foreground">Cualidades</span>
                             <QualitiesEditor
                                 idPrefix="planning-daily"
                                 catalog={physicalQualitiesCatalog}
@@ -839,7 +838,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                             type="submit"
                             aria-label="Añadir override diario"
                             disabled={isCreatingDaily || !dailyDateText}
-                            className="rounded-lg bg-[#4A67B3] px-4 py-2 text-sm text-white disabled:opacity-50"
+                            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground disabled:opacity-50"
                         >
                             Añadir
                         </button>
@@ -853,11 +852,11 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                         {dailyOverrides.map((do_) => (
                             <li
                                 key={do_.id}
-                                className="flex items-center justify-between rounded-lg border border-gray-100 bg-gray-50 p-2 text-sm"
+                                className="flex items-center justify-between rounded-lg border border-border/50 bg-surface p-2 text-sm"
                             >
                                 <span className="flex flex-wrap items-center gap-2">
                                     {do_.date}{" "}
-                                    <span className="text-gray-600">
+                                    <span className="text-muted-foreground">
                                         {qualitiesToDisplayString(do_.qualities)}
                                     </span>
                                     {(() => {
@@ -876,14 +875,14 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                         }
                                     }}
                                     disabled={isDeletingDaily}
-                                    className="rounded bg-red-600 px-2 py-1 text-white"
+                                    className="rounded bg-destructive px-2 py-1 text-destructive-foreground"
                                 >
                                     Eliminar
                                 </button>
                             </li>
                         ))}
                         {dailyOverrides.length === 0 && (
-                            <li className="text-gray-500">Ningún override diario.</li>
+                            <li className="text-muted-foreground">Ningún override diario.</li>
                         )}
                     </ul>
                 </section>
@@ -891,42 +890,42 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
 
             {/* Fase 2: Plan resuelto para un día */}
             {clientId != null && (
-                <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-                    <h3 className="mb-3 text-lg font-semibold text-gray-800">
+                <section className="rounded-xl border border-border bg-card p-4 shadow-sm">
+                    <h3 className="mb-3 text-lg font-semibold text-foreground">
                         Plan resuelto (día)
                     </h3>
                     <div className="mb-3 flex flex-wrap items-end gap-3">
                         <div>
-                            <label className="mb-1 block text-sm text-gray-700">
+                            <label className="mb-1 block text-sm text-muted-foreground">
                                 Fecha
                             </label>
                             <input
                                 type="date"
                                 value={resolvedDate}
                                 onChange={(e) => setResolvedDate(e.target.value)}
-                                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                                className="rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground"
                             />
                         </div>
                     </div>
                     {resolvedLoading && resolvedDate ? (
-                        <p className="text-gray-500">Cargando…</p>
+                        <p className="text-muted-foreground">Cargando…</p>
                     ) : resolvedDay && resolvedDate ? (
                         <div className={`rounded-lg border p-3 text-sm ${
                             !resolvedDay.is_trainable
-                                ? "border-red-200 bg-red-50"
+                                ? "border-destructive/30 bg-destructive/10"
                                 : resolvedDay.source === "day" || resolvedDay.source === "week"
-                                    ? "border-violet-200 bg-violet-50"
-                                    : "border-gray-200 bg-gray-50"
+                                    ? "border-primary/30 bg-primary/10"
+                                    : "border-border/50 bg-surface"
                         }`}>
                             <div className="flex items-center gap-2 mb-2">
                                 <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                     resolvedDay.source === "month"
-                                        ? "bg-slate-200 text-slate-700"
+                                        ? "bg-muted text-muted-foreground"
                                         : resolvedDay.source === "week"
-                                            ? "bg-violet-200 text-violet-700"
+                                            ? "bg-primary/15 text-primary"
                                             : resolvedDay.source === "day"
-                                                ? "bg-emerald-200 text-emerald-700"
-                                                : "bg-gray-200 text-gray-600"
+                                                ? "bg-success/15 text-success"
+                                                : "bg-muted text-muted-foreground"
                                 }`}>
                                     {resolvedDay.source === "month" ? "Heredado (Mes)"
                                         : resolvedDay.source === "week" ? "Override (Semana)"
@@ -934,7 +933,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                         : "Sin origen"}
                                 </span>
                                 {!resolvedDay.is_trainable && (
-                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-200 text-red-700">
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-destructive/15 text-destructive">
                                         No entrenable
                                     </span>
                                 )}
@@ -947,16 +946,16 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                                 resolvedDay.resolved_intensity != null) && (
                                 <div className="mt-2 flex gap-4">
                                     <div className="flex items-center gap-1">
-                                        <span className="text-gray-500">Volumen:</span>
-                                        <span className="font-semibold">
+                                        <span className="text-muted-foreground">Volumen:</span>
+                                        <span className="font-semibold text-foreground">
                                             {resolvedDay.resolved_volume != null
                                                 ? `${Math.round(resolvedDay.resolved_volume * 100)}%`
                                                 : "—"}
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-1">
-                                        <span className="text-gray-500">Intensidad:</span>
-                                        <span className="font-semibold">
+                                        <span className="text-muted-foreground">Intensidad:</span>
+                                        <span className="font-semibold text-foreground">
                                             {resolvedDay.resolved_intensity != null
                                                 ? `${Math.round(resolvedDay.resolved_intensity * 100)}%`
                                                 : "—"}
@@ -966,7 +965,7 @@ export const PlanningTab: React.FC<PlanningTabProps> = ({
                             )}
                         </div>
                     ) : (
-                        <p className="text-gray-500">
+                        <p className="text-muted-foreground">
                             Elige una fecha para ver el plan resuelto.
                         </p>
                     )}

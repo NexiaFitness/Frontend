@@ -1,13 +1,9 @@
 /**
  * ScheduledSessionCard.tsx — Mini-card para mostrar sesión agendada en calendario
  *
- * Contexto:
- * - Componente compacto para mostrar dentro de días del calendario
- * - Muestra hora, cliente y tipo de sesión
- * - Clickable para abrir modal de edición
- *
  * @author NEXIA Frontend Team
  * @since v1.0.0
+ * @updated v8.1.0 — Migrado a design tokens
  */
 
 import React from "react";
@@ -28,14 +24,24 @@ const getSessionTypeLabel = (type: string): string => {
     return labels[type] || type;
 };
 
-const getStatusColor = (status: string): string => {
-    const colors: Record<string, string> = {
-        [SESSION_STATUS.SCHEDULED]: "bg-blue-100 text-blue-700",
-        [SESSION_STATUS.CONFIRMED]: "bg-green-100 text-green-700",
-        [SESSION_STATUS.COMPLETED]: "bg-slate-100 text-slate-700",
-        [SESSION_STATUS.CANCELLED]: "bg-red-100 text-red-700",
+const getStatusClasses = (status: string): string => {
+    const classes: Record<string, string> = {
+        [SESSION_STATUS.SCHEDULED]: "bg-primary/15 text-primary",
+        [SESSION_STATUS.CONFIRMED]: "bg-success/15 text-success",
+        [SESSION_STATUS.COMPLETED]: "bg-muted text-muted-foreground",
+        [SESSION_STATUS.CANCELLED]: "bg-destructive/15 text-destructive",
     };
-    return colors[status] || "bg-slate-100 text-slate-700";
+    return classes[status] || "bg-muted text-muted-foreground";
+};
+
+const getStatusLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+        [SESSION_STATUS.SCHEDULED]: "Agendada",
+        [SESSION_STATUS.CONFIRMED]: "Confirmada",
+        [SESSION_STATUS.COMPLETED]: "Completada",
+        [SESSION_STATUS.CANCELLED]: "Cancelada",
+    };
+    return labels[status] || status;
 };
 
 export const ScheduledSessionCard: React.FC<ScheduledSessionCardProps> = ({
@@ -45,27 +51,23 @@ export const ScheduledSessionCard: React.FC<ScheduledSessionCardProps> = ({
     return (
         <div
             onClick={onClick}
-            className="w-full p-1.5 bg-white border border-slate-200 rounded-md hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer text-left"
+            className="w-full p-1.5 bg-card border border-border/50 rounded-md hover:border-primary/30 hover:shadow-sm transition-all cursor-pointer text-left"
         >
             <div className="flex items-start justify-between gap-1">
                 <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold text-slate-800 truncate">
+                    <p className="text-xs font-semibold text-foreground truncate">
                         {session.start_time}
                     </p>
-                    <p className="text-[10px] text-slate-600 truncate">
+                    <p className="text-[10px] text-muted-foreground truncate">
                         {getSessionTypeLabel(session.session_type)}
                     </p>
                 </div>
                 <span
-                    className={`text-[9px] px-1 py-0.5 rounded ${getStatusColor(session.status)} font-medium flex-shrink-0`}
+                    className={`text-[9px] px-1 py-0.5 rounded font-medium flex-shrink-0 ${getStatusClasses(session.status)}`}
                 >
-                    {session.status === SESSION_STATUS.SCHEDULED ? "Agendada" :
-                        session.status === SESSION_STATUS.CONFIRMED ? "Confirmada" :
-                        session.status === SESSION_STATUS.COMPLETED ? "Completada" :
-                        "Cancelada"}
+                    {getStatusLabel(session.status)}
                 </span>
             </div>
         </div>
     );
 };
-

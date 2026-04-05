@@ -314,6 +314,8 @@ export {
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
+export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
+export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
 
 // Components
 export * from "./components/SmartNavigation";

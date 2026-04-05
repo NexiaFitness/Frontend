@@ -1,13 +1,9 @@
 /**
  * UpcomingScheduledSessionCard.tsx — Card para mostrar próxima sesión agendada
  *
- * Contexto:
- * - Componente para sidebar de SchedulingPage
- * - Muestra detalles de próxima cita o mensaje si no hay
- * - Diseño similar a UpcomingSessionCard pero para ScheduledSession
- *
  * @author NEXIA Frontend Team
  * @since v1.0.0
+ * @updated v8.1.0 — Migrado a design tokens
  */
 
 import React from "react";
@@ -21,15 +17,10 @@ interface UpcomingScheduledSessionCardProps {
 
 const formatDate = (dateStr: string): string => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("es-ES", {
-        month: "short",
-        day: "numeric",
-    });
+    return date.toLocaleDateString("es-ES", { month: "short", day: "numeric" });
 };
 
-const formatTime = (timeStr: string): string => {
-    return timeStr.substring(0, 5); // HH:mm
-};
+const formatTime = (timeStr: string): string => timeStr.substring(0, 5);
 
 const getSessionTypeLabel = (type: string): string => {
     const labels: Record<string, string> = {
@@ -40,14 +31,24 @@ const getSessionTypeLabel = (type: string): string => {
     return labels[type] || type;
 };
 
-const getStatusBadgeColor = (status: string): string => {
-    const colors: Record<string, string> = {
-        [SESSION_STATUS.SCHEDULED]: "bg-blue-100 text-blue-700",
-        [SESSION_STATUS.CONFIRMED]: "bg-green-100 text-green-700",
-        [SESSION_STATUS.COMPLETED]: "bg-slate-100 text-slate-700",
-        [SESSION_STATUS.CANCELLED]: "bg-red-100 text-red-700",
+const getStatusClasses = (status: string): string => {
+    const classes: Record<string, string> = {
+        [SESSION_STATUS.SCHEDULED]: "bg-primary/15 text-primary",
+        [SESSION_STATUS.CONFIRMED]: "bg-success/15 text-success",
+        [SESSION_STATUS.COMPLETED]: "bg-muted text-muted-foreground",
+        [SESSION_STATUS.CANCELLED]: "bg-destructive/15 text-destructive",
     };
-    return colors[status] || "bg-slate-100 text-slate-700";
+    return classes[status] || "bg-muted text-muted-foreground";
+};
+
+const getStatusLabel = (status: string): string => {
+    const labels: Record<string, string> = {
+        [SESSION_STATUS.SCHEDULED]: "Agendada",
+        [SESSION_STATUS.CONFIRMED]: "Confirmada",
+        [SESSION_STATUS.COMPLETED]: "Completada",
+        [SESSION_STATUS.CANCELLED]: "Cancelada",
+    };
+    return labels[status] || status;
 };
 
 export const UpcomingScheduledSessionCard: React.FC<UpcomingScheduledSessionCardProps> = ({
@@ -56,11 +57,11 @@ export const UpcomingScheduledSessionCard: React.FC<UpcomingScheduledSessionCard
 }) => {
     if (!session) {
         return (
-            <div className="bg-white rounded-lg shadow p-4">
-                <h3 className="text-sm font-semibold text-slate-600 mb-3">
+            <div className="rounded-lg bg-surface border border-border/50 p-5">
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                     Próxima Sesión
                 </h3>
-                <p className="text-sm text-slate-500 italic">
+                <p className="text-sm text-muted-foreground italic">
                     No hay sesiones próximas
                 </p>
             </div>
@@ -69,45 +70,48 @@ export const UpcomingScheduledSessionCard: React.FC<UpcomingScheduledSessionCard
 
     return (
         <div
-            className={`bg-white rounded-lg shadow p-4 ${onSessionClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
+            className={`rounded-lg bg-surface border border-border/50 p-5 transition-colors ${
+                onSessionClick ? "cursor-pointer hover:border-primary/30" : ""
+            }`}
             onClick={onSessionClick}
         >
-            <h3 className="text-sm font-semibold text-slate-600 mb-3">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
                 Próxima Sesión
             </h3>
 
             <div className="space-y-2">
                 <div>
-                    <p className="text-2xl font-bold text-slate-800 mb-1">
+                    <p className="text-2xl font-bold text-foreground mb-1">
                         {formatDate(session.scheduled_date)}
                     </p>
-                    <p className="text-sm text-slate-600">
+                    <p className="text-sm text-muted-foreground">
                         {formatTime(session.start_time)} - {formatTime(session.end_time)}
                     </p>
                 </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs font-medium text-slate-700">
+                    <span className="text-xs font-medium text-foreground">
                         {getSessionTypeLabel(session.session_type)}
                     </span>
                     <span
-                        className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusBadgeColor(session.status)}`}
+                        className={`text-xs px-2 py-1 rounded-full font-medium ${getStatusClasses(session.status)}`}
                     >
-                        {session.status === SESSION_STATUS.SCHEDULED ? "Agendada" :
-                            session.status === SESSION_STATUS.CONFIRMED ? "Confirmada" :
-                            session.status === SESSION_STATUS.COMPLETED ? "Completada" :
-                            "Cancelada"}
+                        {getStatusLabel(session.status)}
                     </span>
                 </div>
 
                 {session.location && (
-                    <p className="text-xs text-slate-500">
-                        📍 {session.location}
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                        <svg className="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {session.location}
                     </p>
                 )}
 
                 {session.notes && (
-                    <p className="text-xs text-slate-600 line-clamp-2">
+                    <p className="text-xs text-muted-foreground line-clamp-2">
                         {session.notes}
                     </p>
                 )}
@@ -115,4 +119,3 @@ export const UpcomingScheduledSessionCard: React.FC<UpcomingScheduledSessionCard
         </div>
     );
 };
-

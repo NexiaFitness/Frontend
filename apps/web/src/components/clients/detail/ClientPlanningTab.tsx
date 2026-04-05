@@ -1,40 +1,28 @@
 /**
- * ClientPlanningTab.tsx — Planificación desde perfil de cliente (Fase 1.2–1.3)
+ * ClientPlanningTab.tsx — Planificación desde perfil de cliente
  *
  * Obtiene el plan activo del cliente vía GET active-by-client/{client_id}.
- * Si no hay plan activo: estado vacío + CTA "Crear plan" (abre modal, no navega).
- * Si hay plan activo: reutiliza PlanningTab con ese planId (sin selector).
- * Controla estado de planificación en URL: ?tab=planning&month=YYYY-MM&week=N.
- * Reacciona a cambios de URL (back/forward o edición manual).
+ * Si no hay plan activo: estado vacío + CTA "Crear plan".
+ * Si hay plan activo: muestra PlanningTab (cargas día a día) + PlanPeriodizationSection (bloques).
  *
  * @author Frontend Team
  * @since Fase 1 U3
- * @updated Fase 1 U3 — estado month/week en URL
+ * @updated v8.1.0 — Restaurado PlanningTab + PlanPeriodizationSection (ambos complementarios)
  */
 
-import React, { useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import React from "react";
 import type { TrainingPlan } from "@nexia/shared/types/training";
 import { useGetActivePlanByClientQuery } from "@nexia/shared/api/trainingPlansApi";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { PlanningTab } from "@/components/trainingPlans/PlanningTab";
+import { PlanPeriodizationSection } from "@/components/trainingPlans/periodization";
 import { TYPOGRAPHY } from "@/utils/typography";
-import {
-    getDefaultPlanningMonth,
-    getDefaultPlanningWeek,
-    validatePlanningMonth,
-    validatePlanningWeek,
-} from "@/utils/planningUrl";
-
-const PLANNING_MONTH_PARAM = "month";
-const PLANNING_WEEK_PARAM = "week";
 
 interface ClientPlanningTabProps {
     clientId: number;
     trainingPlans?: TrainingPlan[];
     isLoadingPlans?: boolean;
-    /** Si no hay plan activo, el CTA "Crear plan" llama a esto (abre modal). */
     onOpenCreatePlan?: () => void;
 }
 
@@ -44,39 +32,6 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     isLoadingPlans = false,
     onOpenCreatePlan,
 }) => {
-    const [searchParams, setSearchParams] = useSearchParams();
-
-    const { month, week } = useMemo(() => {
-        const rawMonth = searchParams.get(PLANNING_MONTH_PARAM);
-        const rawWeek = searchParams.get(PLANNING_WEEK_PARAM);
-        const month = rawMonth && validatePlanningMonth(rawMonth)
-            ? rawMonth
-            : getDefaultPlanningMonth();
-        const parsedWeek = rawWeek != null ? parseInt(rawWeek, 10) : NaN;
-        const week = validatePlanningWeek(parsedWeek) ? parsedWeek : getDefaultPlanningWeek();
-        return { month, week };
-    }, [searchParams]);
-
-    const setPlanningParams = useCallback(
-        (updates: { month?: string; week?: number }) => {
-            const next = new URLSearchParams(searchParams);
-            if (updates.month != null) next.set(PLANNING_MONTH_PARAM, updates.month);
-            if (updates.week != null) next.set(PLANNING_WEEK_PARAM, String(updates.week));
-            setSearchParams(next, { replace: true });
-        },
-        [searchParams, setSearchParams]
-    );
-
-    const handleMonthChange = useCallback(
-        (newMonth: string) => setPlanningParams({ month: newMonth }),
-        [setPlanningParams]
-    );
-
-    const handleWeekChange = useCallback(
-        (newWeek: number) => setPlanningParams({ week: newWeek }),
-        [setPlanningParams]
-    );
-
     const {
         data: activePlan,
         isLoading: isLoadingActive,
@@ -101,7 +56,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 </p>
                 <p className="mb-6 text-sm text-muted-foreground">
                     Este cliente no tiene un plan de entrenamiento activo.
-                    Crea uno para ver baselines, overrides y calendario aquí.
+                    Crea uno para empezar a planificar.
                 </p>
                 {onOpenCreatePlan && (
                     <Button
@@ -117,13 +72,9 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     }
 
     return (
-        <PlanningTab
-            planId={activePlan.id}
-            clientId={clientId}
-            month={month}
-            week={week}
-            onMonthChange={handleMonthChange}
-            onWeekChange={handleWeekChange}
-        />
+        <div className="space-y-8">
+            <PlanningTab planId={activePlan.id} clientId={clientId} />
+            <PlanPeriodizationSection planId={activePlan.id} />
+        </div>
     );
 };

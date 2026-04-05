@@ -36,6 +36,7 @@ import {
     MilestonesTab,
     SessionsTab,
     PlanningTab,
+    PlanPeriodizationSection,
     AssignPlanModal,
 } from "@/components/trainingPlans";
 
@@ -232,10 +233,13 @@ export const TrainingPlanDetail: React.FC = () => {
                 return <SessionsTab planId={planId} />;
             case "planning":
                 return (
-                    <PlanningTab
-                        planId={planId}
-                        clientId={plan?.client_id ?? null}
-                    />
+                    <div className="space-y-8">
+                        <PlanningTab
+                            planId={planId}
+                            clientId={fromClientId ?? plan.client_id ?? undefined}
+                        />
+                        <PlanPeriodizationSection planId={planId} />
+                    </div>
                 );
             case "milestones":
                 return <MilestonesTab planId={planId} />;

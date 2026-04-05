@@ -135,3 +135,59 @@ export interface ResolvedDayPlan {
   resolved_intensity: number | null;
   source: ResolvedDayPlanSource | null;
 }
+
+// ---------------------------------------------------------------------------
+// Period blocks — periodización por rangos (mesociclos / fases)
+// Contrato: SPEC_BACKEND_TrainingBlocks.md
+// ---------------------------------------------------------------------------
+
+export interface PeriodBlockQuality {
+  id: number;
+  physical_quality_id: number;
+  percentage: number;
+  physical_quality_name: string | null;
+  physical_quality_slug: string | null;
+}
+
+export interface PlanPeriodBlock {
+  id: number;
+  training_plan_id: number;
+  name: string | null;
+  goal: string | null;
+  start_date: string;
+  end_date: string;
+  volume_level: number;
+  intensity_level: number;
+  sort_order: number | null;
+  qualities: PeriodBlockQuality[];
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+}
+
+export interface PeriodBlockQualityInput {
+  physical_quality_id: number;
+  percentage: number;
+}
+
+export interface PlanPeriodBlockCreate {
+  name?: string | null;
+  goal?: string | null;
+  start_date: string;
+  end_date: string;
+  volume_level: number;
+  intensity_level: number;
+  sort_order?: number | null;
+  qualities: PeriodBlockQualityInput[];
+}
+
+export interface PlanPeriodBlockUpdate {
+  name?: string | null;
+  goal?: string | null;
+  start_date?: string;
+  end_date?: string;
+  volume_level?: number;
+  intensity_level?: number;
+  sort_order?: number | null;
+  qualities?: PeriodBlockQualityInput[];
+}

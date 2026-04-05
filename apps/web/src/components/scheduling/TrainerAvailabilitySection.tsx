@@ -1,14 +1,9 @@
 /**
  * TrainerAvailabilitySection.tsx — Sección "Mi Disponibilidad" en sidebar de SchedulingPage
  *
- * Contexto:
- * - Lista slots de disponibilidad semanal del trainer
- * - CRUD: crear, editar, eliminar slots
- * - Usa schedulingApi (useGetTrainerAvailabilityQuery, mutations)
- * - day_of_week: 0=Lunes, 6=Domingo
- *
  * @author NEXIA Frontend Team
  * @since v1.0.0
+ * @updated v8.1.0 — Migrado a design tokens
  */
 
 import React, { useState } from "react";
@@ -25,13 +20,7 @@ import {
 import type { TrainerAvailabilityOut } from "@nexia/shared/types/scheduling";
 
 const DAY_NAMES = [
-    "Lunes",
-    "Martes",
-    "Miércoles",
-    "Jueves",
-    "Viernes",
-    "Sábado",
-    "Domingo",
+    "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo",
 ] as const;
 
 const DAY_OPTIONS = DAY_NAMES.map((name, idx) => ({
@@ -55,12 +44,9 @@ export const TrainerAvailabilitySection: React.FC<TrainerAvailabilitySectionProp
         { skip: trainerId <= 0 }
     );
 
-    const [createSlot, { isLoading: isCreating }] =
-        useCreateTrainerAvailabilityMutation();
-    const [updateSlot, { isLoading: isUpdating }] =
-        useUpdateTrainerAvailabilityMutation();
-    const [deleteSlot, { isLoading: isDeleting }] =
-        useDeleteTrainerAvailabilityMutation();
+    const [createSlot, { isLoading: isCreating }] = useCreateTrainerAvailabilityMutation();
+    const [updateSlot, { isLoading: isUpdating }] = useUpdateTrainerAvailabilityMutation();
+    const [deleteSlot, { isLoading: isDeleting }] = useDeleteTrainerAvailabilityMutation();
 
     const activeSlots = slots.filter((s) => s.is_active);
 
@@ -94,10 +80,7 @@ export const TrainerAvailabilitySection: React.FC<TrainerAvailabilitySectionProp
         }>
     ) => {
         try {
-            await updateSlot({
-                availabilityId: id,
-                data: values,
-            }).unwrap();
+            await updateSlot({ availabilityId: id, data: values }).unwrap();
             setEditingId(null);
         } catch (err) {
             console.error("[TrainerAvailabilitySection] Error actualizando slot:", err);
@@ -114,18 +97,18 @@ export const TrainerAvailabilitySection: React.FC<TrainerAvailabilitySectionProp
     };
 
     return (
-        <div className="bg-white rounded-lg shadow p-4">
-            <h3 className="text-sm font-semibold text-slate-600 mb-4">
+        <div className="rounded-lg bg-surface border border-border/50 p-5">
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
                 Mi Disponibilidad
             </h3>
 
             {isLoading ? (
-                <p className="text-sm text-slate-500 italic">Cargando...</p>
+                <p className="text-sm text-muted-foreground italic">Cargando...</p>
             ) : (
                 <>
                     <div className="space-y-3">
                         {activeSlots.length === 0 ? (
-                            <p className="text-sm text-slate-500 italic">
+                            <p className="text-sm text-muted-foreground italic">
                                 No hay slots de disponibilidad
                             </p>
                         ) : (
@@ -199,7 +182,6 @@ export const TrainerAvailabilitySection: React.FC<TrainerAvailabilitySectionProp
     );
 };
 
-// --- Slot card (view + inline edit) ---
 interface AvailabilitySlotCardProps {
     slot: TrainerAvailabilityOut;
     isEditing: boolean;
@@ -233,7 +215,7 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
 
     if (isEditing) {
         return (
-            <div className="border border-slate-200 rounded-lg p-3 space-y-3">
+            <div className="border border-border rounded-lg p-3 space-y-3">
                 <FormSelect
                     label="Día"
                     value={dayOfWeek.toString()}
@@ -242,46 +224,18 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
                     size="sm"
                 />
                 <div className="grid grid-cols-2 gap-2">
-                    <Input
-                        label="Desde"
-                        type="time"
-                        value={startTime}
-                        onChange={(e) => setStartTime(e.target.value)}
-                        size="sm"
-                    />
-                    <Input
-                        label="Hasta"
-                        type="time"
-                        value={endTime}
-                        onChange={(e) => setEndTime(e.target.value)}
-                        size="sm"
-                    />
+                    <Input label="Desde" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} size="sm" />
+                    <Input label="Hasta" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} size="sm" />
                 </div>
-                <Checkbox
-                    label="Recurrente (semanal)"
-                    checked={isRecurring}
-                    onChange={(e) => setIsRecurring(e.target.checked)}
-                />
+                <Checkbox label="Recurrente (semanal)" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
                 <div className="flex gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onCancelEdit}
-                        disabled={isSaving}
-                    >
+                    <Button variant="outline" size="sm" onClick={onCancelEdit} disabled={isSaving}>
                         Cancelar
                     </Button>
                     <Button
                         variant="primary"
                         size="sm"
-                        onClick={() =>
-                            onSave({
-                                day_of_week: dayOfWeek,
-                                start_time: startTime,
-                                end_time: endTime,
-                                is_recurring: isRecurring,
-                            })
-                        }
+                        onClick={() => onSave({ day_of_week: dayOfWeek, start_time: startTime, end_time: endTime, is_recurring: isRecurring })}
                         isLoading={isSaving}
                         disabled={isSaving}
                     >
@@ -293,14 +247,14 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
     }
 
     return (
-        <div className="border border-slate-200 rounded-lg p-3 flex items-center justify-between hover:border-slate-300 transition-colors">
+        <div className="border border-border/50 rounded-lg p-3 flex items-center justify-between hover:border-primary/30 transition-colors">
             <div>
-                <span className="font-medium text-slate-800">{dayName}</span>
-                <span className="text-slate-500 text-sm ml-2">
+                <span className="font-medium text-foreground">{dayName}</span>
+                <span className="text-muted-foreground text-sm ml-2">
                     {slot.start_time} – {slot.end_time}
                 </span>
                 {slot.specific_date && !slot.is_recurring && (
-                    <span className="text-xs text-slate-400 block">{slot.specific_date}</span>
+                    <span className="text-xs text-muted-foreground block">{slot.specific_date}</span>
                 )}
             </div>
             <div className="flex gap-1">
@@ -308,7 +262,7 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onStartEdit}
-                    className="text-slate-600 hover:text-slate-800 border-0 shadow-none hover:bg-slate-100"
+                    className="text-muted-foreground hover:text-foreground border-0 shadow-none hover:bg-surface-2"
                 >
                     Editar
                 </Button>
@@ -316,7 +270,7 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
                     variant="outline"
                     size="sm"
                     onClick={onDeleteClick}
-                    className="text-red-600 hover:text-red-700 border-0 shadow-none hover:bg-red-50"
+                    className="text-destructive hover:text-destructive border-0 shadow-none hover:bg-destructive/10"
                 >
                     Eliminar
                 </Button>
@@ -325,7 +279,6 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
     );
 };
 
-// --- Add slot form ---
 interface AddSlotFormValues {
     day_of_week: number;
     start_time: string;
@@ -339,18 +292,14 @@ interface AddSlotFormProps {
     isLoading: boolean;
 }
 
-const AddSlotForm: React.FC<AddSlotFormProps> = ({
-    onCancel,
-    onSubmit,
-    isLoading,
-}) => {
+const AddSlotForm: React.FC<AddSlotFormProps> = ({ onCancel, onSubmit, isLoading }) => {
     const [dayOfWeek, setDayOfWeek] = useState(0);
     const [startTime, setStartTime] = useState("09:00");
     const [endTime, setEndTime] = useState("13:00");
     const [isRecurring, setIsRecurring] = useState(true);
 
     return (
-        <div className="border border-slate-200 rounded-lg p-3 mt-3 space-y-3">
+        <div className="border border-border rounded-lg p-3 mt-3 space-y-3">
             <FormSelect
                 label="Día"
                 value={dayOfWeek.toString()}
@@ -359,46 +308,18 @@ const AddSlotForm: React.FC<AddSlotFormProps> = ({
                 size="sm"
             />
             <div className="grid grid-cols-2 gap-2">
-                <Input
-                    label="Desde"
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    size="sm"
-                />
-                <Input
-                    label="Hasta"
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    size="sm"
-                />
+                <Input label="Desde" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} size="sm" />
+                <Input label="Hasta" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} size="sm" />
             </div>
-            <Checkbox
-                label="Recurrente (semanal)"
-                checked={isRecurring}
-                onChange={(e) => setIsRecurring(e.target.checked)}
-            />
+            <Checkbox label="Recurrente (semanal)" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
             <div className="flex gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onCancel}
-                    disabled={isLoading}
-                >
+                <Button variant="outline" size="sm" onClick={onCancel} disabled={isLoading}>
                     Cancelar
                 </Button>
                 <Button
                     variant="primary"
                     size="sm"
-                    onClick={() =>
-                        onSubmit({
-                            day_of_week: dayOfWeek,
-                            start_time: startTime,
-                            end_time: endTime,
-                            is_recurring: isRecurring,
-                        })
-                    }
+                    onClick={() => onSubmit({ day_of_week: dayOfWeek, start_time: startTime, end_time: endTime, is_recurring: isRecurring })}
                     isLoading={isLoading}
                     disabled={isLoading}
                 >
