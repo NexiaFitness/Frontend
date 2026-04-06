@@ -22,7 +22,7 @@ const INITIAL_STATE: PeriodBlockFormState = {
   intensityLevel: 5,
 };
 
-export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[]) {
+export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[], excludeBlockId?: number | null) {
   const [form, setForm] = useState<PeriodBlockFormState>(INITIAL_STATE);
 
   const handleDayClick = useCallback((dateStr: string) => {
@@ -88,6 +88,20 @@ export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[]) {
     setForm((prev) => ({ ...prev, intensityLevel: v }));
   }, []);
 
+  const loadBlock = useCallback((block: PlanPeriodBlock) => {
+    setForm({
+      phase: "rangeComplete",
+      startDate: block.start_date,
+      endDate: block.end_date,
+      qualities: block.qualities.map((q) => ({
+        physical_quality_id: q.physical_quality_id,
+        percentage: q.percentage,
+      })),
+      volumeLevel: block.volume_level,
+      intensityLevel: block.intensity_level,
+    });
+  }, []);
+
   const reset = useCallback(() => {
     setForm(INITIAL_STATE);
   }, []);
@@ -99,8 +113,8 @@ export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[]) {
 
   const overlapDetected = useMemo(() => {
     if (!form.startDate || !form.endDate) return false;
-    return hasOverlap(form.startDate, form.endDate, existingBlocks);
-  }, [form.startDate, form.endDate, existingBlocks]);
+    return hasOverlap(form.startDate, form.endDate, existingBlocks, excludeBlockId ?? undefined);
+  }, [form.startDate, form.endDate, existingBlocks, excludeBlockId]);
 
   const canSubmit =
     form.phase === "rangeComplete" &&
@@ -118,6 +132,7 @@ export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[]) {
     updateQualityPct,
     setVolumeLevel,
     setIntensityLevel,
+    loadBlock,
     reset,
     qualitiesSum,
     overlapDetected,

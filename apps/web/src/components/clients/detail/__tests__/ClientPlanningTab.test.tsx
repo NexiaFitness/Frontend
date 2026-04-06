@@ -1,15 +1,13 @@
 /**
- * ClientPlanningTab Test Suite - Fase 1 U3
+ * ClientPlanningTab Test Suite
  *
  * Tests de integración para el tab Planificación desde perfil de cliente.
  * Usa GET active-by-client/{client_id}: 404 → estado vacío + CTA "Crear plan";
- * 200 con plan → PlanningTab (sin selector de modo).
- * Estado en URL: month/week leídos y escritos por ClientPlanningTab; PlanningTab recibe props.
- * MSW: getActivePlanByClientHandler (404 por defecto), getActivePlanByClientWithPlanHandler para "con plan".
+ * 200 con plan → PlanPeriodizationSection.
  *
  * @author Frontend Team
  * @since Fase 7
- * @updated Fase 1 U3 — plan activo vía API + estado month/week en URL
+ * @updated v9.0.0 — Eliminado PlanningTab legacy; tests para PlanPeriodizationSection
  */
 
 import { screen, waitFor } from "@testing-library/react";
@@ -30,7 +28,7 @@ describe("ClientPlanningTab", () => {
     });
 
     describe("Sin plan activo (404 active-by-client)", () => {
-        it("muestra estado vacío cuando no hay plan activo (sin selector de modo)", async () => {
+        it("muestra estado vacío cuando no hay plan activo", async () => {
             render(
                 <ClientPlanningTab
                     clientId={1}
@@ -46,11 +44,10 @@ describe("ClientPlanningTab", () => {
             expect(
                 screen.getByText(/Este cliente no tiene un plan de entrenamiento activo/)
             ).toBeInTheDocument();
-            expect(screen.queryByText("Modo de planificación")).not.toBeInTheDocument();
         });
 
         it(
-            "muestra CTA Crear plan y llama a onOpenCreatePlan al hacer clic cuando se pasa",
+            "muestra CTA Crear plan y llama a onOpenCreatePlan al hacer clic",
             async () => {
                 const onOpenCreatePlan = vi.fn();
                 render(
@@ -78,7 +75,7 @@ describe("ClientPlanningTab", () => {
     });
 
     describe("Con plan activo (200 active-by-client)", () => {
-        it("muestra PlanningTab (Nuevo baseline, Coherencia) sin selector de modo", async () => {
+        it("muestra sección de periodización cuando hay plan activo", async () => {
             server.use(
                 getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" })
             );
@@ -92,68 +89,9 @@ describe("ClientPlanningTab", () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
+                expect(screen.getByText("Bloques configurados")).toBeInTheDocument();
             });
-
-            expect(screen.getByText("Coherencia del plan")).toBeInTheDocument();
-            expect(screen.queryByText("Modo de planificación")).not.toBeInTheDocument();
         });
-
-        it(
-            "con plan activo renderiza PlanningTab con contenido de plan",
-            async () => {
-                server.use(
-                    getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Fuerza" })
-                );
-
-                render(
-                    <ClientPlanningTab
-                        clientId={1}
-                        trainingPlans={[]}
-                        isLoadingPlans={false}
-                    />
-                );
-
-                await waitFor(
-                    () => {
-                        expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
-                    },
-                    { timeout: 10000 }
-                );
-
-                expect(screen.getByText("Coherencia del plan")).toBeInTheDocument();
-            },
-            12000
-        );
-    });
-
-    describe("Estado en URL (month/week)", () => {
-        it("muestra selector de semana con opciones 1-4 cuando hay plan activo", async () => {
-            server.use(
-                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Test" })
-            );
-
-            render(
-                <ClientPlanningTab clientId={1} trainingPlans={[]} isLoadingPlans={false} />,
-                {
-                    initialEntries: [
-                        "/clients/1?tab=planning&month=2025-03&week=1",
-                    ],
-                }
-            );
-
-            await waitFor(
-                () => {
-                    expect(screen.getByText("Nuevo baseline mensual")).toBeInTheDocument();
-                },
-                { timeout: 10000 }
-            );
-
-            const weekSelect = screen.getByRole("combobox", { name: /semana del mes/i });
-            expect(weekSelect).toBeInTheDocument();
-            expect(["1", "2", "3", "4"]).toContain((weekSelect as HTMLSelectElement).value);
-            expect(weekSelect.querySelectorAll("option")).toHaveLength(4);
-        }, 15000);
     });
 
     describe("Loading state", () => {

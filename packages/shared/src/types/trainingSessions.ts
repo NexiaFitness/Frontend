@@ -70,7 +70,8 @@ export interface ExerciseSelectionSuggestionsResponse {
  */
 export interface TrainingSession {
     id: number;
-    training_plan_id: number | null;  // Link directo al plan (nuevo modelo)
+    training_plan_id: number | null;  // Link directo al plan
+    period_block_id: number | null;   // Link al bloque de periodización (mesociclo)
     microcycle_id: number | null;     // Link a microcycle (legacy, opcional)
     client_id: number;
     trainer_id: number;
@@ -102,7 +103,8 @@ export interface TrainingSession {
  * Requiere training_plan_id (nuevo modelo) o microcycle_id (legacy)
  */
 export interface TrainingSessionCreate {
-    training_plan_id?: number | null;   // Nuevo modelo: link directo al plan
+    training_plan_id?: number | null;   // Link directo al plan
+    period_block_id?: number | null;    // Link al bloque de periodización
     microcycle_id?: number | null;       // Legacy: link a microcycle (opcional)
     client_id: number;
     trainer_id: number;
@@ -126,6 +128,7 @@ export interface TrainingSessionCreate {
  * Payload para actualizar Training Session
  */
 export interface TrainingSessionUpdate {
+    period_block_id?: number | null;
     session_date?: string;
     session_time?: string | null;
     session_name?: string;

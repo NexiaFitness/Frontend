@@ -20,6 +20,11 @@ export {
     useCreateSessionExerciseMutation,
 } from "./api/trainingSessionsApi";
 export {
+    useGetDayExceptionsQuery,
+    useCreateDayExceptionMutation,
+    useDeleteDayExceptionMutation,
+} from "./api/dayExceptionsApi";
+export {
     useGetStandaloneSessionsByClientQuery,
     useGetStandaloneSessionQuery,
     useGetStandaloneSessionExercisesQuery,
@@ -149,6 +154,7 @@ export {
 } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
+export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
 export * from "./types/coherence";
 export * from "./types/dashboard";
 export * from "./types/testing";

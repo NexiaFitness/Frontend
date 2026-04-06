@@ -21,6 +21,8 @@ interface Props {
   currentMonth: Date;
   onMonthChange: (d: Date) => void;
   blocks: PlanPeriodBlock[];
+  sessionDates?: Set<string>;
+  exceptionDates?: Set<string>;
   formState: PeriodBlockFormState;
   onDayClick: (dateStr: string) => void;
 }
@@ -30,10 +32,14 @@ function parseLocal(s: string): Date {
   return new Date(y, m - 1, d);
 }
 
+const EMPTY_SET = new Set<string>();
+
 export const PeriodizationCalendar: React.FC<Props> = ({
   currentMonth,
   onMonthChange,
   blocks,
+  sessionDates = EMPTY_SET,
+  exceptionDates = EMPTY_SET,
   formState,
   onDayClick,
 }) => {
@@ -86,6 +92,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
     (dayInfo: CalendarDayInfo) => {
       const { dateISO, dayOfMonth, isToday } = dayInfo;
       const isPlanned = plannedSet.has(dateISO);
+      const hasSession = sessionDates.has(dateISO);
+      const isException = exceptionDates.has(dateISO);
       const inSel = isInSelection(dateISO);
       const isStart = isSelectionStart(dateISO);
       const isEnd = isSelectionEnd(dateISO);
@@ -95,7 +103,10 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       let textClass = "text-foreground";
       let roundClass = "";
 
-      if (inSel) {
+      if (isException && !inSel) {
+        bgClass = "bg-destructive/10";
+        textClass = "text-muted-foreground line-through";
+      } else if (inSel) {
         bgClass = "bg-primary/30";
         textClass = "text-foreground";
         if (isSingleDay) {
@@ -117,17 +128,23 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           type="button"
           onClick={() => onDayClick(dateISO)}
           className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringClass}`}
-          aria-label={`${dayOfMonth}`}
+          aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}`}
           aria-pressed={inSel}
         >
           <span className="z-10">{dayOfMonth}</span>
-          {isPlanned && !inSel && (
+          {isPlanned && !inSel && !hasSession && !isException && (
             <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
+          )}
+          {hasSession && !isException && (
+            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-success" />
+          )}
+          {isException && (
+            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-destructive" />
           )}
         </button>
       );
     },
-    [plannedSet, isInSelection, isSelectionStart, isSelectionEnd, onDayClick]
+    [plannedSet, sessionDates, exceptionDates, isInSelection, isSelectionStart, isSelectionEnd, onDayClick]
   );
 
   const subtitle = useMemo(
@@ -148,8 +165,16 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           <span className="text-[10px] text-muted-foreground">Planificado</span>
         </div>
         <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-success" />
+          <span className="text-[10px] text-muted-foreground">Con sesión</span>
+        </div>
+        <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary/30" />
           <span className="text-[10px] text-muted-foreground">Selección</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="h-2 w-2 rounded-full bg-destructive/30 ring-1 ring-destructive/50" />
+          <span className="text-[10px] text-muted-foreground">Descanso</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-surface ring-1 ring-primary" />

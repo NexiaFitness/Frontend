@@ -25,6 +25,7 @@ import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useCreateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
 import {
@@ -143,6 +144,12 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         includeHistory: false,
     });
 
+    // Period blocks for the selected plan (auto-fill volume/intensity from matching block)
+    const effectivePlanId = selectedPlanId ?? planId;
+    const { data: periodBlocks } = useGetPeriodBlocksQuery(effectivePlanId!, {
+        skip: !effectivePlanId,
+    });
+
     // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
     const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(
         { clientId: effectiveClientId ?? 0 },
@@ -151,6 +158,30 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
+
+    // Hook de mutación para crear sesión
+    const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
+    const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
+    const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
+
+    const [formData, setFormData] = useState({
+        sessionName: "",
+        sessionDate: new Date().toISOString().split("T")[0],
+        sessionType: "strength",
+        plannedDuration: "60",
+        plannedIntensity: "5",
+        plannedVolume: "5",
+        notes: "",
+    });
+
+    const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
+
+    const matchingBlock = useMemo(() => {
+        if (!periodBlocks || !formData.sessionDate) return null;
+        return periodBlocks.find(
+            (b) => b.start_date <= formData.sessionDate && b.end_date >= formData.sessionDate
+        ) ?? null;
+    }, [periodBlocks, formData.sessionDate]);
 
     const prefillApplied = useRef<{ clientId: number; duration: boolean; rec: boolean } | null>(null);
 
@@ -176,44 +207,33 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             state.duration = true;
         }
 
-        const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
-        if (!state.rec && rec?.status === "complete" && rec.recommendations) {
-            const levelToSlider: Record<string, string> = {
-                low: "3",
-                Low: "3",
-                medium: "6",
-                Medium: "6",
-                high: "8",
-                High: "8",
-            };
-            const volLevel = rec.recommendations.volume?.level;
-            const intLevel = rec.recommendations.intensity?.level;
-            if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
-            if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
+        if (!state.rec && matchingBlock) {
+            updates.plannedVolume = String(matchingBlock.volume_level);
+            updates.plannedIntensity = String(matchingBlock.intensity_level);
             state.rec = true;
+        } else if (!state.rec) {
+            const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
+            if (rec?.status === "complete" && rec.recommendations) {
+                const levelToSlider: Record<string, string> = {
+                    low: "3",
+                    Low: "3",
+                    medium: "6",
+                    Medium: "6",
+                    high: "8",
+                    High: "8",
+                };
+                const volLevel = rec.recommendations.volume?.level;
+                const intLevel = rec.recommendations.intensity?.level;
+                if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
+                if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
+                state.rec = true;
+            }
         }
 
         if (Object.keys(updates).length > 0) {
             setFormData((prev) => ({ ...prev, ...updates }));
         }
-    }, [effectiveClientId, displayClient, recommendationsData]);
-
-    // Hook de mutación para crear sesión
-    const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
-    const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
-    const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
-
-    const [formData, setFormData] = useState({
-        sessionName: "",
-        sessionDate: new Date().toISOString().split("T")[0],
-        sessionType: "strength",
-        plannedDuration: "60",
-        plannedIntensity: "5",
-        plannedVolume: "5",
-        notes: "",
-    });
-
-    const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
+    }, [effectiveClientId, displayClient, recommendationsData, matchingBlock]);
 
     // P2: Plan activo para la fecha seleccionada (ventana start_date..end_date contiene sessionDate)
     const hasActivePlanForDate = useMemo(() => {
@@ -402,6 +422,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 // Fase 7: TrainingSession con bloques
                 const sessionData: TrainingSessionCreate = {
                     training_plan_id: selectedPlanId!,
+                    period_block_id: matchingBlock?.id ?? null,
                     client_id: effectiveClientId,
                     trainer_id: trainerId,
                     session_name: formData.sessionName.trim(),

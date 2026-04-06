@@ -9,7 +9,8 @@ interface Props {
   qualitiesSum: number;
   overlapDetected: boolean;
   canSubmit: boolean;
-  isCreating: boolean;
+  isEditing?: boolean;
+  isSubmitting?: boolean;
   onAddQuality: (id: number) => void;
   onRemoveQuality: (id: number) => void;
   onUpdateQualityPct: (id: number, pct: number) => void;
@@ -30,7 +31,8 @@ export const PeriodizationPanel: React.FC<Props> = ({
   qualitiesSum,
   overlapDetected,
   canSubmit,
-  isCreating,
+  isEditing = false,
+  isSubmitting = false,
   onAddQuality,
   onRemoveQuality,
   onUpdateQualityPct,
@@ -53,7 +55,7 @@ export const PeriodizationPanel: React.FC<Props> = ({
           </svg>
         </div>
         <p className="text-sm font-semibold text-foreground">
-          Crear bloque de periodización
+          {isEditing ? "Editando bloque" : "Crear bloque de periodización"}
         </p>
         <p className="text-xs text-muted-foreground">
           Haz clic en una fecha del calendario para iniciar la selección del rango.
@@ -226,10 +228,10 @@ export const PeriodizationPanel: React.FC<Props> = ({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={!canSubmit || isCreating}
+          disabled={!canSubmit || isSubmitting}
           className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:pointer-events-none disabled:opacity-50"
         >
-          {isCreating ? "Creando…" : "Crear bloque"}
+          {isSubmitting ? (isEditing ? "Guardando…" : "Creando…") : (isEditing ? "Guardar cambios" : "Crear bloque")}
         </button>
         <button
           type="button"

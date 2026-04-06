@@ -1,11 +1,15 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
   useGetPeriodBlocksQuery,
   useCreatePeriodBlockMutation,
+  useUpdatePeriodBlockMutation,
   useDeletePeriodBlockMutation,
 } from "@nexia/shared/api/periodBlocksApi";
+import { useGetTrainingSessionsQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetDayExceptionsQuery } from "@nexia/shared/api/dayExceptionsApi";
+import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { BaseModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
@@ -17,9 +21,10 @@ import { usePeriodBlockForm } from "./usePeriodBlockForm";
 
 interface Props {
   planId: number;
+  clientId?: number;
 }
 
-export const PlanPeriodizationSection: React.FC<Props> = ({ planId }) => {
+export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) => {
   const navigate = useNavigate();
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
@@ -31,9 +36,45 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId }) => {
     isError,
     error,
   } = useGetPeriodBlocksQuery(planId);
+  const { data: sessions = [] } = useGetTrainingSessionsQuery(planId);
+
+  const sessionDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const s of sessions) {
+      if (s.session_date) set.add(s.session_date);
+    }
+    return set;
+  }, [sessions]);
+
+  const { data: dayExceptions = [] } = useGetDayExceptionsQuery(
+    { clientId: clientId! },
+    { skip: !clientId }
+  );
+
+  const exceptionDates = useMemo(() => {
+    const set = new Set<string>();
+    for (const ex of dayExceptions) {
+      if (!ex.is_trainable) set.add(ex.date);
+    }
+    return set;
+  }, [dayExceptions]);
+
+  const sessionsByBlock = useMemo(() => {
+    const map = new Map<number, typeof sessions>();
+    for (const s of sessions) {
+      if (s.period_block_id != null) {
+        const arr = map.get(s.period_block_id) ?? [];
+        arr.push(s);
+        map.set(s.period_block_id, arr);
+      }
+    }
+    return map;
+  }, [sessions]);
 
   const [createBlock, { isLoading: isCreating }] = useCreatePeriodBlockMutation();
+  const [updateBlock, { isLoading: isUpdating }] = useUpdatePeriodBlockMutation();
   const [deleteBlock, { isLoading: isDeleting }] = useDeletePeriodBlockMutation();
+  const [editingBlockId, setEditingBlockId] = useState<number | null>(null);
 
   const {
     form,
@@ -43,30 +84,44 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId }) => {
     updateQualityPct,
     setVolumeLevel,
     setIntensityLevel,
+    loadBlock,
     reset,
     qualitiesSum,
     overlapDetected,
     canSubmit,
-  } = usePeriodBlockForm(blocks);
+  } = usePeriodBlockForm(blocks, editingBlockId);
 
-  const handleCreate = useCallback(async () => {
+  const handleSubmitBlock = useCallback(async () => {
     if (!form.startDate || !form.endDate) return;
+    const payload = {
+      start_date: form.startDate,
+      end_date: form.endDate,
+      volume_level: form.volumeLevel,
+      intensity_level: form.intensityLevel,
+      qualities: form.qualities,
+    };
     try {
-      await createBlock({
-        planId,
-        data: {
-          start_date: form.startDate,
-          end_date: form.endDate,
-          volume_level: form.volumeLevel,
-          intensity_level: form.intensityLevel,
-          qualities: form.qualities,
-        },
-      }).unwrap();
+      if (editingBlockId) {
+        await updateBlock({ planId, blockId: editingBlockId, data: payload }).unwrap();
+        setEditingBlockId(null);
+      } else {
+        await createBlock({ planId, data: payload }).unwrap();
+      }
       reset();
     } catch {
-      /* RTK Query shows error via hook; could add toast here */
+      /* RTK Query shows error via hook */
     }
-  }, [form, planId, createBlock, reset]);
+  }, [form, planId, editingBlockId, createBlock, updateBlock, reset]);
+
+  const handleEditBlock = useCallback((block: PlanPeriodBlock) => {
+    setEditingBlockId(block.id);
+    loadBlock(block);
+  }, [loadBlock]);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingBlockId(null);
+    reset();
+  }, [reset]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -124,6 +179,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId }) => {
             currentMonth={calMonth}
             onMonthChange={setCalMonth}
             blocks={blocks}
+            sessionDates={sessionDates}
+            exceptionDates={exceptionDates}
             formState={form}
             onDayClick={handleDayClick}
           />
@@ -135,14 +192,15 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId }) => {
             qualitiesSum={qualitiesSum}
             overlapDetected={overlapDetected}
             canSubmit={canSubmit}
-            isCreating={isCreating}
             onAddQuality={addQuality}
             onRemoveQuality={removeQuality}
             onUpdateQualityPct={updateQualityPct}
             onVolumeChange={setVolumeLevel}
             onIntensityChange={setIntensityLevel}
-            onSubmit={handleCreate}
-            onReset={reset}
+            isEditing={!!editingBlockId}
+            isSubmitting={isCreating || isUpdating}
+            onSubmit={handleSubmitBlock}
+            onReset={handleCancelEdit}
           />
         </div>
       </div>
@@ -159,6 +217,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId }) => {
                 key={block.id}
                 block={block}
                 catalog={catalog}
+                sessions={sessionsByBlock.get(block.id) ?? []}
+                onEdit={handleEditBlock}
                 onDelete={(id, label) => setDeleteTarget({ id, label })}
               />
             ))}

@@ -3,11 +3,11 @@
  *
  * Obtiene el plan activo del cliente vía GET active-by-client/{client_id}.
  * Si no hay plan activo: estado vacío + CTA "Crear plan".
- * Si hay plan activo: muestra PlanningTab (cargas día a día) + PlanPeriodizationSection (bloques).
+ * Si hay plan activo: muestra PlanPeriodizationSection (bloques de periodización).
  *
  * @author Frontend Team
  * @since Fase 1 U3
- * @updated v8.1.0 — Restaurado PlanningTab + PlanPeriodizationSection (ambos complementarios)
+ * @updated v9.0.0 — Eliminado PlanningTab legacy; solo PlanPeriodizationSection
  */
 
 import React from "react";
@@ -15,7 +15,6 @@ import type { TrainingPlan } from "@nexia/shared/types/training";
 import { useGetActivePlanByClientQuery } from "@nexia/shared/api/trainingPlansApi";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
-import { PlanningTab } from "@/components/trainingPlans/PlanningTab";
 import { PlanPeriodizationSection } from "@/components/trainingPlans/periodization";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -72,9 +71,6 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     }
 
     return (
-        <div className="space-y-8">
-            <PlanningTab planId={activePlan.id} clientId={clientId} />
-            <PlanPeriodizationSection planId={activePlan.id} />
-        </div>
+        <PlanPeriodizationSection planId={activePlan.id} clientId={clientId} />
     );
 };

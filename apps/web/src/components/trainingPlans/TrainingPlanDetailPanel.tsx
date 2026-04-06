@@ -25,7 +25,6 @@ import { TYPOGRAPHY } from "@/utils/typography";
 import {
     MilestonesTab,
     SessionsTab,
-    PlanningTab,
     PlanPeriodizationSection,
 } from "@/components/trainingPlans";
 
@@ -123,12 +122,7 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
             case "sessions":
                 return <SessionsTab planId={planId} />;
             case "planning":
-                return (
-                    <div className="space-y-8">
-                        <PlanningTab planId={planId} clientId={clientId} />
-                        <PlanPeriodizationSection planId={planId} />
-                    </div>
-                );
+                return <PlanPeriodizationSection planId={planId} clientId={clientId} />;
             case "milestones":
                 return <MilestonesTab planId={planId} />;
             case "charts":
