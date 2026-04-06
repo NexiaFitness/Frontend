@@ -8,10 +8,13 @@ import {
   useDeletePeriodBlockMutation,
 } from "@nexia/shared/api/periodBlocksApi";
 import { useGetTrainingSessionsQuery } from "@nexia/shared/api/trainingSessionsApi";
-import { useGetDayExceptionsQuery } from "@nexia/shared/api/dayExceptionsApi";
+import {
+  useGetDayExceptionsQuery,
+  useCreateDayExceptionMutation,
+  useDeleteDayExceptionMutation,
+} from "@nexia/shared/api/dayExceptionsApi";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { BaseModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodizationPanel } from "./PeriodizationPanel";
@@ -74,7 +77,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
   const [createBlock, { isLoading: isCreating }] = useCreatePeriodBlockMutation();
   const [updateBlock, { isLoading: isUpdating }] = useUpdatePeriodBlockMutation();
   const [deleteBlock, { isLoading: isDeleting }] = useDeletePeriodBlockMutation();
+  const [createException, { isLoading: isCreatingException }] = useCreateDayExceptionMutation();
+  const [removeException] = useDeleteDayExceptionMutation();
   const [editingBlockId, setEditingBlockId] = useState<number | null>(null);
+  const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
+  const [exceptionNote, setExceptionNote] = useState("");
 
   const {
     form,
@@ -122,6 +129,34 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
     setEditingBlockId(null);
     reset();
   }, [reset]);
+
+  const handleDayContextMenu = useCallback((dateStr: string) => {
+    if (form.phase !== "idle") return;
+    if (!clientId) return;
+    const existing = dayExceptions.find((ex) => ex.date === dateStr && !ex.is_trainable);
+    if (existing) {
+      removeException({ clientId, date: dateStr });
+      return;
+    }
+    setExceptionNote("");
+    setExceptionModal({ date: dateStr });
+  }, [form.phase, clientId, dayExceptions, removeException]);
+
+  const handleCreateException = useCallback(async () => {
+    if (!exceptionModal || !clientId) return;
+    try {
+      await createException({
+        clientId,
+        date: exceptionModal.date,
+        is_trainable: false,
+        note: exceptionNote.trim() || undefined,
+      }).unwrap();
+    } catch {
+      /* RTK Query handles */
+    } finally {
+      setExceptionModal(null);
+    }
+  }, [exceptionModal, clientId, exceptionNote, createException]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
@@ -183,6 +218,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
             exceptionDates={exceptionDates}
             formState={form}
             onDayClick={handleDayClick}
+            onDayRightClick={handleDayContextMenu}
           />
         </div>
         <div className="lg:w-[40%]">
@@ -244,32 +280,78 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
       )}
 
       {/* Delete confirmation modal */}
-      <BaseModal
-        isOpen={deleteTarget != null}
-        onClose={() => setDeleteTarget(null)}
-        title="Eliminar bloque"
-        description={`¿Seguro que quieres eliminar el bloque "${deleteTarget?.label ?? ""}"? Esta acción no se puede deshacer.`}
-        iconType="danger"
-      >
-        <div className="flex gap-3 justify-center">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setDeleteTarget(null)}
-            disabled={isDeleting}
-          >
-            Cancelar
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleConfirmDelete}
-            disabled={isDeleting}
-          >
-            {isDeleting ? "Eliminando…" : "Eliminar"}
-          </Button>
+      {deleteTarget != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setDeleteTarget(null)} />
+          <div className="relative rounded-lg bg-surface border border-border/50 p-6 shadow-xl w-full max-w-sm space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-destructive/15 flex items-center justify-center shrink-0">
+                <svg className="h-5 w-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Eliminar bloque</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  ¿Eliminar &quot;{deleteTarget.label}&quot;? No se puede deshacer.
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setDeleteTarget(null)} disabled={isDeleting}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleConfirmDelete} disabled={isDeleting}>
+                {isDeleting ? "Eliminando…" : "Eliminar"}
+              </Button>
+            </div>
+          </div>
         </div>
-      </BaseModal>
+      )}
+
+      {/* Day exception modal */}
+      {exceptionModal != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setExceptionModal(null)} />
+          <div className="relative rounded-lg bg-surface border border-border/50 p-6 shadow-xl w-full max-w-sm space-y-4 animate-in zoom-in-95 duration-200">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-warning/15 flex items-center justify-center shrink-0">
+                <svg className="h-5 w-5 text-warning" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-foreground">Marcar descanso</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {exceptionModal.date} — no entrenable
+                </p>
+              </div>
+            </div>
+            <div>
+              <label htmlFor="exception-note" className="block text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-1.5">
+                Nota (opcional)
+              </label>
+              <input
+                id="exception-note"
+                type="text"
+                className="w-full rounded-md bg-surface-2 border border-border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="Ej: Lesión, viaje, descanso programado..."
+                value={exceptionNote}
+                onChange={(e) => setExceptionNote(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" onClick={() => setExceptionModal(null)} disabled={isCreatingException}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" size="sm" onClick={handleCreateException} disabled={isCreatingException}>
+                {isCreatingException ? "Guardando…" : "Marcar descanso"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };

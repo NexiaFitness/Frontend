@@ -88,6 +88,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Obtener parámetros: props (contexto cliente) tienen prioridad sobre query
     const clientIdFromQuery = searchParams.get("clientId");
     const planIdFromQuery = searchParams.get("planId");
+    const dateFromQuery = searchParams.get("date");
     const clientId = clientIdProp ?? (clientIdFromQuery ? Number(clientIdFromQuery) : null);
     const planId = planIdFromQuery ? Number(planIdFromQuery) : null;
 
@@ -166,7 +167,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     const [formData, setFormData] = useState({
         sessionName: "",
-        sessionDate: new Date().toISOString().split("T")[0],
+        sessionDate: dateFromQuery ?? new Date().toISOString().split("T")[0],
         sessionType: "strength",
         plannedDuration: "60",
         plannedIntensity: "5",

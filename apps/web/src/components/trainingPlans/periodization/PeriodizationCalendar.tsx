@@ -25,6 +25,7 @@ interface Props {
   exceptionDates?: Set<string>;
   formState: PeriodBlockFormState;
   onDayClick: (dateStr: string) => void;
+  onDayRightClick?: (dateStr: string) => void;
 }
 
 function parseLocal(s: string): Date {
@@ -42,6 +43,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   exceptionDates = EMPTY_SET,
   formState,
   onDayClick,
+  onDayRightClick,
 }) => {
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
@@ -127,6 +129,12 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         <button
           type="button"
           onClick={() => onDayClick(dateISO)}
+          onContextMenu={(e) => {
+            if (onDayRightClick) {
+              e.preventDefault();
+              onDayRightClick(dateISO);
+            }
+          }}
           className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringClass}`}
           aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}`}
           aria-pressed={inSel}
@@ -144,7 +152,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         </button>
       );
     },
-    [plannedSet, sessionDates, exceptionDates, isInSelection, isSelectionStart, isSelectionEnd, onDayClick]
+    [plannedSet, sessionDates, exceptionDates, isInSelection, isSelectionStart, isSelectionEnd, onDayClick, onDayRightClick]
   );
 
   const subtitle = useMemo(
@@ -180,9 +188,14 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           <span className="h-2 w-2 rounded-full bg-surface ring-1 ring-primary" />
           <span className="text-[10px] text-muted-foreground">Hoy</span>
         </div>
+        {onDayRightClick && (
+          <span className="text-[10px] text-muted-foreground/60 italic ml-auto">
+            Clic derecho para marcar descanso
+          </span>
+        )}
       </div>
     ),
-    []
+    [onDayRightClick]
   );
 
   return (
