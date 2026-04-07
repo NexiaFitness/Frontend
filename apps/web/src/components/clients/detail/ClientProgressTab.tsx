@@ -330,18 +330,13 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
     return (
         <div className="p-6 space-y-6">
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
-                        Progreso del Cliente
-                    </h2>
-                    <p className="text-muted-foreground mt-2">
-                        Evolución de métricas corporales, fatiga, energía y carga de trabajo
-                    </p>
-                </div>
-                <button className="px-4 py-2 bg-card border border-border rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                    Exportar PDF
-                </button>
+            <div>
+                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground">
+                    Progreso del Cliente
+                </h2>
+                <p className="text-muted-foreground mt-2">
+                    Evolución de métricas corporales, fatiga, energía y carga de trabajo
+                </p>
             </div>
 
             <nav aria-label="Tabs progreso" className="flex gap-1 border-b border-border">

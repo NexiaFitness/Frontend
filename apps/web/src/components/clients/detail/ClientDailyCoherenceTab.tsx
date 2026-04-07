@@ -16,12 +16,17 @@
  * @author Frontend Team
  * @since v5.2.0
  * @updated v5.5.0 - Optimizado para rendimiento (componentes memoizados, configuraciones memoizadas)
+ * @updated v5.6.0 - Bloque de entrenamiento: plan activo + bloque que contiene hoy → period_start/end
  */
 
 import React, { useState, useMemo, useCallback } from "react";
-import { useCoherence } from "@nexia/shared";
+import { Link } from "react-router-dom";
+import { CalendarRange } from "lucide-react";
+import { useCoherence, useClientActiveBlock } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
+import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import { cn } from "@/lib/utils";
 import type {
     MetricCardProps,
     MetricCardColor,
@@ -430,15 +435,36 @@ interface ClientDailyCoherenceTabProps {
 const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> = ({ clientId }) => {
     const [periodType, setPeriodType] = useState<PeriodType>("week");
     const [periodOffset, setPeriodOffset] = useState<number>(0);
-    
-    const periodRange = useMemo(() => getRangeForPeriod(periodType, periodOffset), [periodType, periodOffset]);
-    const periodDisplay = useMemo(
-        () => periodRange.start && periodRange.end 
+
+    const activeBlockCtx = useClientActiveBlock(clientId, periodType === "training_block");
+
+    const periodRange = useMemo(() => {
+        if (periodType === "training_block") {
+            const b = activeBlockCtx.activeBlock;
+            if (b) {
+                return {
+                    start: b.start_date.slice(0, 10),
+                    end: b.end_date.slice(0, 10),
+                };
+            }
+            return { start: undefined, end: undefined };
+        }
+        return getRangeForPeriod(periodType, periodOffset);
+    }, [periodType, periodOffset, activeBlockCtx.activeBlock]);
+
+    const periodDisplay = useMemo(() => {
+        if (periodType === "training_block") {
+            const b = activeBlockCtx.activeBlock;
+            if (!b || !periodRange.start || !periodRange.end) return "";
+            const name = b.name?.trim() || "Bloque";
+            const rangeLabel = formatPeriodDisplay(periodType, periodRange.start, periodRange.end);
+            return `${name} · ${rangeLabel}`;
+        }
+        return periodRange.start && periodRange.end
             ? formatPeriodDisplay(periodType, periodRange.start, periodRange.end)
-            : "",
-        [periodType, periodRange.start, periodRange.end]
-    );
-    
+            : "";
+    }, [periodType, periodRange.start, periodRange.end, activeBlockCtx.activeBlock]);
+
     const {
         data,
         adherenceData,
@@ -447,7 +473,19 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
         colors,
         isLoading,
         isError,
+        isQuerySkipped,
     } = useCoherence(clientId, undefined, periodRange.start, periodRange.end, periodType);
+
+    const blockTabEmpty =
+        periodType === "training_block" &&
+        !activeBlockCtx.isLoading &&
+        !activeBlockCtx.errorMessage &&
+        (activeBlockCtx.hasNoActivePlan ||
+            activeBlockCtx.hasNoSourcePlanForBlocks ||
+            activeBlockCtx.hasNoActiveBlock);
+
+    const resolvingActiveBlock = periodType === "training_block" && activeBlockCtx.isLoading;
+    const resolvingCoherence = !isQuerySkipped && isLoading;
 
     const [summary, setSummary] = useState<string>(data.summary || "");
 
@@ -601,17 +639,23 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
         setPeriodOffset(0);
     }, []);
 
-    // Loading state
-    if (isLoading) {
+    if (resolvingActiveBlock || resolvingCoherence) {
         return (
-            <div className="p-6 flex items-center justify-center min-h-[400px]">
+            <div className="flex min-h-[400px] items-center justify-center p-6">
                 <LoadingSpinner size="lg" />
             </div>
         );
     }
 
-    // Error state
-    if (isError) {
+    if (periodType === "training_block" && activeBlockCtx.errorMessage) {
+        return (
+            <div className="p-6">
+                <Alert variant="error">{activeBlockCtx.errorMessage}</Alert>
+            </div>
+        );
+    }
+
+    if (!isQuerySkipped && isError) {
         return (
             <div className="p-6">
                 <Alert variant="error">
@@ -623,17 +667,11 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
 
     return (
         <div className="p-6 space-y-6">
-            {/* Header con botón Export PDF */}
-            <div className="flex items-start justify-between">
-                <div>
-                    <h2 className="text-lg font-semibold text-foreground">Coherencia Diaria</h2>
-                    <p className="text-muted-foreground mt-2">
-                        Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
-                    </p>
-                </div>
-                <button className="px-4 py-2 bg-card border border-input rounded-lg text-sm font-medium text-foreground hover:bg-muted transition-colors">
-                    Exportar PDF
-                </button>
+            <div>
+                <h2 className="text-lg font-semibold text-foreground">Coherencia Diaria</h2>
+                <p className="text-muted-foreground mt-2">
+                    Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
+                </p>
             </div>
 
             {/* Sub-tabs: Week, Month, Year, Training Block */}
@@ -667,6 +705,15 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                 </nav>
 
                 {/* Selector de periodo con navegación */}
+                {periodType === "training_block" && periodDisplay && !blockTabEmpty && (
+                    <div className="rounded-lg border border-border bg-muted/30 px-4 py-3 text-center">
+                        <p className="text-sm font-semibold text-foreground">{periodDisplay}</p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                            Métricas acotadas al bloque de periodización activo para la fecha de hoy
+                        </p>
+                    </div>
+                )}
+
                 {periodType !== "training_block" && periodDisplay && (
                     <div className="flex items-center justify-between px-2">
                         <button
@@ -699,6 +746,51 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                 )}
             </div>
 
+            {blockTabEmpty && (
+                <EmptyState
+                    icon={<CalendarRange className="size-12" aria-hidden />}
+                    title={
+                        activeBlockCtx.hasNoActivePlan
+                            ? "Sin plan de entrenamiento activo"
+                            : activeBlockCtx.hasNoSourcePlanForBlocks
+                              ? "No se puede cargar la periodización"
+                              : "Sin bloque activo para hoy"
+                    }
+                    description={
+                        activeBlockCtx.hasNoActivePlan
+                            ? "Este cliente no tiene un plan de entrenamiento activo en la fecha actual, o el plan no está en curso."
+                            : activeBlockCtx.hasNoSourcePlanForBlocks
+                              ? "La instancia del plan no está vinculada a un plan fuente con bloques de periodización."
+                              : "No hay un bloque de periodización que incluya la fecha de hoy en el plan activo. Revisa las fechas de los bloques en la planificación del plan."
+                    }
+                    action={
+                        <div className="flex flex-wrap items-center justify-center gap-2">
+                            <Link
+                                to={`/dashboard/clients/${clientId}?tab=planning`}
+                                className={cn(
+                                    "inline-flex h-9 items-center justify-center rounded-md border border-primary bg-transparent px-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                )}
+                            >
+                                Ver planificación
+                            </Link>
+                            <Link
+                                to="/dashboard/training-plans"
+                                className={cn(
+                                    "inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                )}
+                            >
+                                Planes de entrenamiento
+                            </Link>
+                        </div>
+                    }
+                    className="rounded-xl border border-dashed border-border bg-card/50 py-14"
+                />
+            )}
+
+            {!blockTabEmpty && (
+            <>
             {/* Cards de métricas principales */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <MetricCard
@@ -716,7 +808,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                 <MetricCard
                     title="Monotonía"
                     value={data.monotony.toFixed(1)}
-                    subtitle={data.monotony > 2.0 ? "⚠️ Alta" : "Normal"}
+                    subtitle={data.monotony > 2.0 ? "Alta — revisar planificación" : "Normal"}
                     color={data.monotony > 2.0 ? "orange" : "green"}
                 />
                 <MetricCard
@@ -840,6 +932,8 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                     </div>
                 </div>
             </div>
+            </>
+            )}
         </div>
     );
 };
