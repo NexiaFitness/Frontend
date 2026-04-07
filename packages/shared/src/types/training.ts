@@ -114,6 +114,7 @@ export interface TrainingPlanUpdate {
     end_date?: string;
     goal?: string;
     status?: string;
+    tags?: string[] | null;
 }
 
 // ========================================
