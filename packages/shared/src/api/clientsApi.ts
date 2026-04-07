@@ -8,6 +8,7 @@
  * @updated v2.6.0 - Corregido schema de getClientStats según backend real
  */
 
+import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "./baseApi";
 import type {
     Client,
@@ -56,6 +57,10 @@ import type {
     ProgressCategoriesResponse,
 } from "../types/dashboard";
 import type { DailyCoherenceAnalyticsOut } from "../types/coherence";
+import {
+    buildCoherenceDevMockResponse,
+    shouldServeCoherenceDevMock,
+} from "../dev/coherenceDevMock";
 import type {
     PhysicalTestResultOut,
     PhysicalTestOut,
@@ -630,21 +635,27 @@ export const clientsApi = baseApi.injectEndpoints({
                 periodType?: "week" | "month" | "training_block" | "year";
             }
         >({
-            query: ({ clientId, week, periodStart, periodEnd, periodType = "week" }) => {
+            queryFn: async (arg, _api, _extraOptions, baseQuery) => {
+                const { clientId, week, periodStart, periodEnd, periodType = "week" } = arg;
+                if (shouldServeCoherenceDevMock(clientId)) {
+                    return { data: buildCoherenceDevMockResponse(arg) };
+                }
                 const params = new URLSearchParams();
                 params.append("period_type", periodType);
-                
                 if (week) {
                     params.append("week", week);
                 } else if (periodStart && periodEnd) {
                     params.append("period_start", periodStart);
                     params.append("period_end", periodEnd);
                 }
-
-                return {
+                const result = await baseQuery({
                     url: `/clients/${clientId}/coherence?${params.toString()}`,
                     method: "GET",
-                };
+                });
+                if (result.error) {
+                    return { error: result.error as FetchBaseQueryError };
+                }
+                return { data: result.data as DailyCoherenceAnalyticsOut };
             },
             providesTags: (result, error, { clientId }) => [
                 { type: "Client", id: clientId },

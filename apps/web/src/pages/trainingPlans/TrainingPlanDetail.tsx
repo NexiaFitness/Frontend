@@ -3,13 +3,13 @@
  *
  * Contexto:
  * - Vista completa del plan con tabs
- * - Tabs: Volver, Sesiones, Hitos, Gráficos
+ * - Tabs: Sesiones, Planificación, Hitos, Gráficos
  * - Layout: Breadcrumbs + Header + Tabs + Content
  *
  * Responsabilidades:
  * - Cargar datos del plan con RTK Query
  * - Gestionar navegación entre tabs
- * - Incluir tab de retorno al cliente para mejorar la UX
+ * - Retorno al cliente vía header/breadcrumbs (sin tab duplicado en la barra)
  *
  * @author Frontend Team
  * @since v3.3.0
@@ -17,11 +17,11 @@
  * @updated U13 Fase 4.3 - Breadcrumbs Cliente > Planificación > Plan y botón Volver al cliente con ?fromClient
  * @updated 2026-04 - Sin margen negativo: respeta padding de DashboardShell y navbar sticky.
  * @updated 2026-04 - Header alineado con ClientHeader; TabsBar como ClientDetail.
- * @updated 2026-04 - Con contexto de cliente: sin tab/botón "Volver"; sin "Asignar" si el plan ya tiene cliente.
+ * @updated 2026-04 - Sin tab "Volver al Cliente" en la barra (mismo acceso en header).
  * @updated 2026-04 - Editar / Eliminar plan en barra fija inferior (mismo patrón que CreateSession).
  */
 
-import React, { useState, Suspense, lazy, useMemo, useCallback } from "react";
+import React, { useState, Suspense, lazy, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useTrainingPlanQuickDescription } from "@/hooks/trainingPlans/useTrainingPlanQuickDescription";
@@ -57,29 +57,21 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-type TabId = "back" | "sessions" | "planning" | "milestones" | "charts";
+type TabId = "sessions" | "planning" | "milestones" | "charts";
 
 interface Tab {
     id: TabId;
     label: string;
-    icon?: React.ReactNode;
 }
 
 const TABS: Tab[] = [
-    { 
-        id: "back", 
-        label: "Volver al Cliente",
-        icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-        )
-    },
     { id: "sessions", label: "Sesiones" },
     { id: "planning", label: "Planificación" },
     { id: "milestones", label: "Hitos" },
     { id: "charts", label: "Gráficos" },
 ];
+
+const PLAN_DETAIL_VALID_TABS: TabId[] = ["sessions", "planning", "milestones", "charts"];
 
 export const TrainingPlanDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -99,21 +91,8 @@ export const TrainingPlanDetail: React.FC = () => {
     const returnToClientId = !isNaN(parsedReturnToClient) ? parsedReturnToClient : null;
     const contextClientId = fromClientId ?? returnToClientId;
 
-    const planValidTabs = useMemo<TabId[]>(
-        () =>
-            contextClientId != null
-                ? ["sessions", "planning", "milestones", "charts"]
-                : TABS.map((t) => t.id),
-        [contextClientId]
-    );
-
-    const tabsForBar = useMemo(
-        () => (contextClientId != null ? TABS.filter((t) => t.id !== "back") : TABS),
-        [contextClientId]
-    );
-
     const { activeTab, setActiveTab } = useTabNavigation<TabId>({
-        validTabs: planValidTabs,
+        validTabs: PLAN_DETAIL_VALID_TABS,
         defaultTab: "sessions",
     });
 
@@ -265,8 +244,6 @@ export const TrainingPlanDetail: React.FC = () => {
     // Render tab content
     const renderTabContent = () => {
         switch (activeTab) {
-            case "back":
-                return null;
             case "sessions":
                 return <SessionsTab planId={planId} />;
             case "planning":
@@ -330,26 +307,9 @@ export const TrainingPlanDetail: React.FC = () => {
             />
 
             <TabsBar
-                items={tabsForBar.map((t) => ({
-                    id: t.id,
-                    label: t.label,
-                    icon: t.icon,
-                }))}
+                items={TABS.map((t) => ({ id: t.id, label: t.label }))}
                 value={activeTab}
-                onChange={(tabId) => {
-                    if (tabId === "back") {
-                        const targetClientId = clientIdForVolver ?? assignedClient?.id;
-                        if (targetClientId) {
-                            navigate(
-                                `/dashboard/clients/${targetClientId}?tab=planificacion`
-                            );
-                        } else {
-                            navigate("/dashboard/clients");
-                        }
-                        return;
-                    }
-                    setActiveTab(tabId as TabId);
-                }}
+                onChange={(tabId) => setActiveTab(tabId as TabId)}
                 ariaLabel="Tabs del plan"
             />
 

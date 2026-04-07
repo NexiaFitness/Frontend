@@ -38,6 +38,8 @@ export interface UseClientActiveBlockResult {
     hasNoSourcePlanForBlocks: boolean;
     /** Bloques cargados pero ningún bloque contiene hoy (o lista vacía). */
     hasNoActiveBlock: boolean;
+    /** Cantidad de bloques devueltos por el API para el plan fuente (0 si no aplica). */
+    periodBlockCount: number;
 }
 
 /**
@@ -124,5 +126,6 @@ export function useClientActiveBlock(
         hasNoActivePlan,
         hasNoSourcePlanForBlocks,
         hasNoActiveBlock,
+        periodBlockCount: skipBlocks ? 0 : blocks.length,
     };
 }

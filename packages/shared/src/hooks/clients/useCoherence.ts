@@ -431,7 +431,7 @@ export const useCoherence = (
     const adherenceData: AdherenceChartData[] = useMemo(
         () => [
             { name: "Completadas", value: data.sessions_completed },
-            { name: "Pendientes", value: data.sessions_total - data.sessions_completed },
+            { name: "Perdidas", value: data.sessions_total - data.sessions_completed },
         ],
         [data.sessions_completed, data.sessions_total]
     );

@@ -19,10 +19,24 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrainingSessions } from '@nexia/shared/hooks/training/useTrainingSessions';
 import { SessionCard } from '@/components/trainingSessions';
+import {
+    PeriodBlockEmptyCallout,
+    periodBlockEmptyCalloutOutlineCtaClassName,
+} from '@/components/trainingPlans/periodization/PeriodBlockEmptyCallout';
 import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
 import { BaseModal } from '@/components/ui/modals/BaseModal';
+import { cn } from '@/lib/utils';
 import type { PlanTrainingSession } from '@nexia/shared';
+
+function sessionFilterChipClass(active: boolean): string {
+    return cn(
+        'rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors',
+        active
+            ? 'border-primary/35 bg-primary/10 text-primary'
+            : 'border-transparent bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+    );
+}
 
 interface SessionsTabProps {
     planId: number;
@@ -120,92 +134,81 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
     }
 
     return (
-        <div className="space-y-6">
-            {/* Header con estadísticas y botón crear */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="space-y-8">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                        Sesiones de Entrenamiento
-                    </h3>
-                    <p className="text-sm text-gray-500">
-                        {sessions.length} sesión{sessions.length !== 1 ? 'es' : ''} total{sessions.length !== 1 ? 'es' : ''} • {' '}
-                        {upcomingSessions.length} próxima{upcomingSessions.length !== 1 ? 's' : ''} • {' '}
-                        {completedSessions.length} completada{completedSessions.length !== 1 ? 's' : ''}
+                    <h2 className="text-lg font-semibold text-foreground">Sesiones</h2>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                        Sesiones de entrenamiento programadas en este plan
                     </p>
                 </div>
-                <Button 
-                    variant="primary" 
+                <Button
+                    variant="primary"
                     size="sm"
                     onClick={handleCreateSession}
+                    className="shrink-0 self-start sm:self-center"
                 >
                     + Nueva Sesión
                 </Button>
             </div>
 
-            {/* Filtros */}
-            <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-4">
-                <button
-                    onClick={() => setFilter('all')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        filter === 'all'
-                            ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
-                    }`}
-                >
+            {/* Filtros — línea con token de borde (misma familia visual que TabsBar / tema) */}
+            <div className="flex flex-wrap gap-2 border-b border-border pb-4">
+                <button type="button" onClick={() => setFilter('all')} className={sessionFilterChipClass(filter === 'all')}>
                     Todas ({sessions.length})
                 </button>
                 <button
+                    type="button"
                     onClick={() => setFilter('upcoming')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        filter === 'upcoming'
-                            ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
-                    }`}
+                    className={sessionFilterChipClass(filter === 'upcoming')}
                 >
                     Próximas ({upcomingSessions.length})
                 </button>
                 <button
+                    type="button"
                     onClick={() => setFilter('planned')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        filter === 'planned'
-                            ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
-                    }`}
+                    className={sessionFilterChipClass(filter === 'planned')}
                 >
                     Planificadas ({plannedSessions.length})
                 </button>
                 <button
+                    type="button"
                     onClick={() => setFilter('completed')}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                        filter === 'completed'
-                            ? 'bg-blue-100 text-blue-700 border-2 border-blue-300'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border-2 border-transparent'
-                    }`}
+                    className={sessionFilterChipClass(filter === 'completed')}
                 >
                     Completadas ({completedSessions.length})
                 </button>
             </div>
 
-            {/* Empty state */}
+            {/* Empty state — mismo patrón visual que periodización / coherencia */}
             {displayedSessions.length === 0 && (
-                <div className="text-center py-12 px-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
-                    <div className="text-4xl mb-4">🏋️</div>
-                    <p className="text-gray-600 mb-2 font-medium">
-                        {filter === 'all' && 'Aún no hay sesiones programadas para este plan'}
-                        {filter === 'upcoming' && 'No hay sesiones próximas'}
-                        {filter === 'planned' && 'No hay sesiones planificadas'}
-                        {filter === 'completed' && 'No hay sesiones completadas'}
-                    </p>
-                    <p className="text-sm text-gray-500 mb-4">
-                        {filter === 'all' && 'Crea tu primera sesión para comenzar a programar el entrenamiento'}
-                        {filter !== 'all' && 'Intenta cambiar el filtro para ver otras sesiones'}
-                    </p>
-                    {filter === 'all' && (
-                        <Button variant="primary" onClick={handleCreateSession}>
-                            Crear Primera Sesión
-                        </Button>
-                    )}
-                </div>
+                <PeriodBlockEmptyCallout
+                    primaryText={
+                        filter === 'all'
+                            ? 'Aún no hay sesiones programadas para este plan'
+                            : filter === 'upcoming'
+                              ? 'No hay sesiones próximas'
+                              : filter === 'planned'
+                                ? 'No hay sesiones planificadas'
+                                : 'No hay sesiones completadas'
+                    }
+                    secondaryText={
+                        filter === 'all'
+                            ? 'Crea tu primera sesión para comenzar a programar el entrenamiento'
+                            : 'Intenta cambiar el filtro para ver otras sesiones'
+                    }
+                    action={
+                        filter === 'all' ? (
+                            <button
+                                type="button"
+                                className={periodBlockEmptyCalloutOutlineCtaClassName}
+                                onClick={handleCreateSession}
+                            >
+                                Crear Primera Sesión
+                            </button>
+                        ) : undefined
+                    }
+                />
             )}
 
             {/* Lista de sesiones */}

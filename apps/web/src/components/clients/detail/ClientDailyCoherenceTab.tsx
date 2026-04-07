@@ -20,27 +20,29 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { CalendarRange } from "lucide-react";
 import { useCoherence, useClientActiveBlock } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import {
+    PeriodBlockEmptyCallout,
+    PeriodBlockEmptyIconDecoration,
+    periodBlockDashedShellClassName,
+} from "@/components/trainingPlans/periodization/PeriodBlockEmptyCallout";
 import { cn } from "@/lib/utils";
+import { coherenceDashboardTooltipStyle } from "@/lib/coherenceChartTheme";
 import type {
     MetricCardProps,
     MetricCardColor,
     MonotonyWeekData,
     StrainWeekData,
 } from "@nexia/shared/types/coherence";
-import { CompactChartCard } from "@/components/ui/cards";
 import {
     ResponsiveContainer,
     PieChart,
     Pie,
     Cell,
     ComposedChart,
-    LineChart,
+    BarChart,
     Line,
     Bar,
     Scatter,
@@ -58,8 +60,31 @@ import type { LegendProps } from "recharts";
 // CONSTANTES (fuera del componente para evitar recreaciones)
 // ========================================
 
-const CHART_HEIGHT = 400;
-const MIN_CHART_HEIGHT = 360;
+const ADHERENCE_CHART_HEIGHT = 250;
+
+/** Alineados con tokens Nexia (index.css) para coherencia con superficies y éxito. */
+const ADHERENCE_COMPLETED_FILL = "hsl(var(--success))";
+const ADHERENCE_LOST_FILL = "hsl(var(--border))";
+const ADHERENCE_CENTER_SUBTITLE = "hsl(var(--muted-foreground))";
+
+const ADHERENCE_SLICE_FILL: Record<string, string> = {
+    Completadas: ADHERENCE_COMPLETED_FILL,
+    Perdidas: ADHERENCE_LOST_FILL,
+    Pendientes: ADHERENCE_LOST_FILL,
+};
+
+/** Tokens Recharts alineados con index.css (sin grises #ccc fijos). */
+const CHART_GRID_STROKE = "hsl(var(--border) / 0.45)";
+const CHART_AXIS_STROKE = "hsl(var(--border))";
+const CHART_TICK_STYLE = { fill: "hsl(var(--muted-foreground))", fontSize: 12 };
+const CHART_TOOLTIP_STYLE: React.CSSProperties = {
+    backgroundColor: "hsl(var(--popover))",
+    border: "1px solid hsl(var(--border))",
+    borderRadius: "0.5rem",
+    color: "hsl(var(--foreground))",
+    fontSize: "12px",
+    boxShadow: "0 8px 30px hsl(0 0% 0% / 0.35)",
+};
 
 // ========================================
 // COMPONENTES HELPER
@@ -83,8 +108,8 @@ const MetricCardComponent: React.FC<MetricCardProps> = ({
     return (
         <div className={`rounded-lg border p-4 ${colorClasses[selectedColor]}`}>
             <p className="text-sm font-medium opacity-75">{title}</p>
-            <p className="text-2xl font-bold mt-1">{value}</p>
-            {subtitle && <p className="text-xs mt-1 opacity-75">{subtitle}</p>}
+            <p className="mt-1 text-2xl font-bold">{value}</p>
+            {subtitle && <p className="mt-1 text-xs opacity-75">{subtitle}</p>}
         </div>
     );
 };
@@ -98,49 +123,118 @@ const MetricCard = React.memo(MetricCardComponent);
 
 interface AdherenceChartProps {
     data: Array<{ name: string; value: number }>;
-    colors: readonly string[];
     adherencePercentage: number;
     sessionsCompleted: number;
     sessionsTotal: number;
 }
 
+/** Proporciones alineadas con la referencia Recharts (outer 95 / inner 70 sobre maxRadius ≈ 125 en altura 250). */
+const ADHERENCE_PIE_INNER_PCT = "56%";
+const ADHERENCE_PIE_OUTER_PCT = "76%";
+const ADHERENCE_PIE_CY = "47%";
+
 const AdherenceChartComponent: React.FC<AdherenceChartProps> = ({
     data,
-    colors,
     adherencePercentage,
     sessionsCompleted,
     sessionsTotal,
 }) => {
+    const sumValues = data.reduce((acc, d) => acc + d.value, 0);
+    /** Sin total de sesiones (p. ej. carga inicial): aro único, sin tooltip con cifras inventadas. */
+    const noSessionWindow = sessionsTotal <= 0;
+    let pieData: Array<{ name: string; value: number }>;
+    if (noSessionWindow) {
+        pieData = [{ name: "Perdidas", value: 1 }];
+    } else if (sumValues <= 0) {
+        pieData = [
+            { name: "Completadas", value: 0 },
+            { name: "Perdidas", value: Math.max(1, sessionsTotal) },
+        ];
+    } else {
+        pieData = data;
+    }
+
+    const legendFormatter: LegendProps["formatter"] = (value) => (
+        <span
+            style={{
+                color:
+                    value === "Completadas"
+                        ? ADHERENCE_COMPLETED_FILL
+                        : "hsl(var(--muted-foreground))",
+            }}
+        >
+            {value}
+        </span>
+    );
+
+    const sessionsSubtitle =
+        sessionsTotal > 0
+            ? `${sessionsCompleted}/${sessionsTotal} sesiones`
+            : "0/0 sesiones";
+
     return (
-        <div className="w-full flex items-center justify-center" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-            <div className="relative w-full" style={{ height: `${CHART_HEIGHT}px`, minHeight: `${CHART_HEIGHT}px` }}>
-                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                    <PieChart>
+        <div className="w-full min-w-0">
+            <div
+                className="relative mx-auto w-full min-w-0"
+                style={{ height: ADHERENCE_CHART_HEIGHT, maxWidth: "100%" }}
+            >
+                <ResponsiveContainer width="100%" height={ADHERENCE_CHART_HEIGHT}>
+                    <PieChart margin={{ top: 8, right: 8, bottom: 28, left: 8 }}>
                         <Pie
-                            data={data as Array<{ name: string; value: number; [key: string]: string | number }>}
+                            data={
+                                pieData as Array<{ name: string; value: number; [key: string]: string | number }>
+                            }
                             cx="50%"
-                            cy="50%"
-                            innerRadius={60}
-                            outerRadius={100}
+                            cy={ADHERENCE_PIE_CY}
+                            innerRadius={ADHERENCE_PIE_INNER_PCT}
+                            outerRadius={ADHERENCE_PIE_OUTER_PCT}
                             labelLine={false}
                             label={false}
-                            fill="#8884d8"
+                            stroke="none"
+                            paddingAngle={0}
                             dataKey="value"
                             isAnimationActive={false}
+                            startAngle={90}
+                            endAngle={-270}
                         >
-                            {data.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                            {pieData.map((entry, index) => (
+                                <Cell
+                                    key={`cell-${entry.name}-${index}`}
+                                    fill={
+                                        ADHERENCE_SLICE_FILL[entry.name] ?? ADHERENCE_LOST_FILL
+                                    }
+                                    stroke="none"
+                                />
                             ))}
                         </Pie>
-                        <Tooltip />
+                        {!noSessionWindow ? (
+                            <Tooltip contentStyle={coherenceDashboardTooltipStyle} />
+                        ) : (
+                            <Tooltip content={() => null} />
+                        )}
+                        <Legend
+                            verticalAlign="bottom"
+                            align="center"
+                            iconType="square"
+                            iconSize={14}
+                            formatter={legendFormatter}
+                            wrapperStyle={{
+                                fontSize: "11px",
+                                paddingTop: 4,
+                                width: "100%",
+                            }}
+                        />
                     </PieChart>
                 </ResponsiveContainer>
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <div className="text-4xl font-bold text-foreground">
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pb-7">
+                    <div className="text-[28px] font-bold leading-none text-white">
                         {adherencePercentage.toFixed(0)}%
                     </div>
-                    <div className="text-sm text-muted-foreground mt-1">
-                        {sessionsCompleted}/{sessionsTotal} sesiones
+                    <div
+                        className="mt-1 text-[11px] leading-tight"
+                        style={{ color: ADHERENCE_CENTER_SUBTITLE }}
+                    >
+                        {sessionsSubtitle}
                     </div>
                 </div>
             </div>
@@ -153,64 +247,93 @@ const AdherenceChart = React.memo(AdherenceChartComponent);
 interface ScatterChartProps {
     scatterData: Array<{ x: number; y: number; session: string }>;
     idealLineData: Array<{ x: number; y: number; session: string }>;
-    colors: readonly string[];
-    margin: { top: number; right: number; left: number; bottom: number };
-    xAxisLabel: { value: string; position: string; offset: number };
-    yAxisLabel: { value: string; angle: number; position: string; offset: number; style: { textAnchor: string } };
 }
 
-const ScatterChartComponent: React.FC<ScatterChartProps> = ({
-    scatterData,
-    idealLineData,
-    colors,
-    margin,
-    xAxisLabel,
-    yAxisLabel,
-}) => {
+/** orange = percibido > prescrito (sobresfuerzo); green = dentro o por debajo de lo pautado. */
+const SCATTER_DOT_OVER = "hsl(var(--warning))";
+const SCATTER_DOT_OK   = "hsl(var(--success))";
+
+const ScatterChartComponent: React.FC<ScatterChartProps> = ({ scatterData, idealLineData }) => {
     return (
-        <div className="w-full flex items-center justify-center" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-            <div className="w-full" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                    <ComposedChart margin={margin}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                            type="number"
-                            dataKey="x"
-                            name="Prescrita"
-                            domain={[0, 10]}
-                            ticks={[0, 2, 4, 6, 8, 10]}
-                            style={{ fontSize: '12px', fill: '#6b7280' }}
-                            label={xAxisLabel}
-                        />
-                        <YAxis
-                            type="number"
-                            dataKey="y"
-                            name="Percibida"
-                            domain={[0, 10]}
-                            ticks={[0, 2, 4, 6, 8, 10]}
-                            style={{ fontSize: '12px', fill: '#6b7280' }}
-                            label={yAxisLabel}
-                        />
-                        <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                        <Legend wrapperStyle={{ paddingTop: "15px" }} align="left" />
-                        <Line
-                            type="linear"
-                            dataKey="y"
-                            data={idealLineData}
-                            stroke="#ef4444"
-                            strokeDasharray="5 5"
-                            strokeWidth={2}
-                            dot={false}
-                            name="Ideal (y=x)"
-                            isAnimationActive={false}
-                        />
-                        <Scatter name="Sesiones" data={scatterData} fill="hsl(var(--primary))" isAnimationActive={false}>
-                            {scatterData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={colors[0]} />
-                            ))}
-                        </Scatter>
-                    </ComposedChart>
-                </ResponsiveContainer>
+        <div className="w-full min-w-0">
+            <ResponsiveContainer width="100%" height={250}>
+                <ComposedChart margin={{ top: 8, right: 8, bottom: 8, left: 5 }}>
+                    <CartesianGrid
+                        stroke="hsl(var(--border))"
+                        strokeDasharray="3 3"
+                        vertical={true}
+                        horizontal={true}
+                    />
+                    <XAxis
+                        type="number"
+                        dataKey="x"
+                        name="Prescrito"
+                        domain={[0, 10]}
+                        ticks={[0, 2, 4, 6, 8, 10]}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        axisLine={{ stroke: "hsl(var(--border))" }}
+                        tickLine={{ stroke: "hsl(var(--border))" }}
+                    />
+                    <YAxis
+                        type="number"
+                        dataKey="y"
+                        name="Percibido"
+                        domain={[0, 10]}
+                        ticks={[0, 2, 4, 6, 8, 10]}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        axisLine={{ stroke: "hsl(var(--border))" }}
+                        tickLine={{ stroke: "hsl(var(--border))" }}
+                        width={32}
+                    />
+                    <Tooltip
+                        contentStyle={coherenceDashboardTooltipStyle}
+                        cursor={{ strokeDasharray: "3 3" }}
+                        formatter={(value: number, name: string) => [value.toFixed(1), name]}
+                    />
+                    <Line
+                        type="linear"
+                        dataKey="y"
+                        data={idealLineData}
+                        stroke="hsl(var(--primary))"
+                        strokeDasharray="5 5"
+                        strokeWidth={1.5}
+                        dot={false}
+                        legendType="none"
+                        isAnimationActive={false}
+                    />
+                    <Scatter name="Sesiones" data={scatterData} isAnimationActive={false}>
+                        {scatterData.map((entry, index) => (
+                            <Cell
+                                key={`cell-scatter-${index}`}
+                                fill={entry.y > entry.x ? SCATTER_DOT_OVER : SCATTER_DOT_OK}
+                            />
+                        ))}
+                    </Scatter>
+                </ComposedChart>
+            </ResponsiveContainer>
+            {/* Leyenda HTML — consistente con el resto de gráficos */}
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                    <svg width="20" height="10" className="inline-block shrink-0" aria-hidden>
+                        <line x1="0" y1="5" x2="20" y2="5" stroke="hsl(var(--primary))" strokeWidth="1.5" strokeDasharray="5 3" />
+                    </svg>
+                    Ideal (prescrito = percibido)
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <svg width="10" height="10" className="inline-block shrink-0" aria-hidden>
+                        <circle cx="5" cy="5" r="4" fill="hsl(var(--success))" />
+                    </svg>
+                    Dentro del plan
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <svg width="10" height="10" className="inline-block shrink-0" aria-hidden>
+                        <circle cx="5" cy="5" r="4" fill="hsl(var(--warning))" />
+                    </svg>
+                    Sobresfuerzo (percibido &gt; prescrito)
+                </span>
+                <span className="text-muted-foreground/60">
+                    X: Prescrito · Y: Percibido
+                </span>
             </div>
         </div>
     );
@@ -220,59 +343,107 @@ const ScatterChart = React.memo(ScatterChartComponent);
 
 interface MonotonyChartProps {
     data: Array<MonotonyWeekData & { periodLabel?: string }>;
-    margin: { top: number; right: number; left: number; bottom: number };
-    xAxisLabel: { value: string; position: string; offset: number };
-    yAxisLabel: { value: string; angle: number; position: string; offset: number; style: { textAnchor: string } };
     onTooltipLabel: (label: string | number, payload?: ReadonlyArray<Payload<number, string>>) => string;
-    legendConfig: LegendProps;
 }
 
-const MonotonyChartComponent: React.FC<MonotonyChartProps> = ({
-    data,
-    margin,
-    xAxisLabel,
-    yAxisLabel,
-    onTooltipLabel,
-    legendConfig,
-}) => {
+/** Calcula dominio Y y ticks con paso 0.75; mínimo 0–3 (donde vive el umbral 2.0). */
+const useMonotonyYScale = (data: Array<MonotonyWeekData>) => {
+    return useMemo(() => {
+        const peak = Math.max(0, ...data.map((d) => Number(d.monotony) || 0));
+        const rawMax = Math.max(3, peak * 1.1);
+        const step = 0.75;
+        const yMax = Math.ceil(rawMax / step) * step;
+        const count = Math.round(yMax / step) + 1;
+        const yTicks = Array.from({ length: count }, (_, i) =>
+            Number((i * step).toFixed(2))
+        );
+        return { yMax, yTicks };
+    }, [data]);
+};
+
+const MonotonyChartComponent: React.FC<MonotonyChartProps> = ({ data, onTooltipLabel }) => {
+    const { yMax, yTicks } = useMonotonyYScale(data);
+
+    const chartData = useMemo(
+        () => data.map((row) => ({ ...row, periodLabel: row.periodLabel ?? row.week ?? "" })),
+        [data]
+    );
+
     return (
-        <div className="w-full flex items-center justify-center" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-            <div className="w-full" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                    <LineChart data={data} margin={margin}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                            dataKey="periodLabel"
-                            style={{ fontSize: '12px', fill: '#6b7280' }}
-                            label={xAxisLabel}
-                        />
-                        <YAxis
-                            domain={[0, 10]}
-                            ticks={[0, 2, 4, 6, 8, 10]}
-                            style={{ fontSize: '12px', fill: '#6b7280' }}
-                            label={yAxisLabel}
-                        />
-                        <Tooltip labelFormatter={onTooltipLabel} />
-                        <Legend {...legendConfig} />
-                        <Line
-                            type="monotone"
-                            dataKey="monotony"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={2}
-                            name="Monotonía"
-                            dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                            isAnimationActive={false}
-                            connectNulls={true}
-                        />
-                        <ReferenceLine
-                            y={2.0}
-                            stroke="#ef4444"
-                            strokeDasharray="5 5"
-                            strokeWidth={2}
-                            label={{ value: "Umbral (2.0)", position: "top" }}
-                        />
-                    </LineChart>
-                </ResponsiveContainer>
+        <div className="w-full min-w-0">
+            <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                    data={chartData}
+                    margin={{ top: 8, right: 8, bottom: 8, left: 5 }}
+                    barCategoryGap="14%"
+                >
+                    <CartesianGrid
+                        stroke="hsl(var(--border))"
+                        strokeDasharray="3 3"
+                        vertical={true}
+                        horizontal={true}
+                    />
+                    <XAxis
+                        dataKey="periodLabel"
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        axisLine={{ stroke: "hsl(var(--border))" }}
+                        tickLine={{ stroke: "hsl(var(--border))" }}
+                        interval={0}
+                    />
+                    <YAxis
+                        width={32}
+                        domain={[0, yMax]}
+                        ticks={yTicks}
+                        tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                        axisLine={{ stroke: "hsl(var(--border))" }}
+                        tickLine={{ stroke: "hsl(var(--border))" }}
+                    />
+                    <Tooltip
+                        contentStyle={coherenceDashboardTooltipStyle}
+                        labelFormatter={onTooltipLabel}
+                    />
+                    <ReferenceLine
+                        y={2}
+                        stroke="hsl(var(--warning))"
+                        strokeDasharray="5 5"
+                        strokeWidth={1.5}
+                    />
+                    <Bar
+                        dataKey="monotony"
+                        name="Monotonía"
+                        radius={[4, 4, 0, 0] as [number, number, number, number]}
+                        maxBarSize={64}
+                        isAnimationActive={false}
+                    >
+                        {chartData.map((entry, index) => (
+                            <Cell
+                                key={`cell-monotony-${index}`}
+                                fill={
+                                    Number(entry.monotony) > 2
+                                        ? "hsl(var(--destructive))"
+                                        : "hsl(var(--primary))"
+                                }
+                            />
+                        ))}
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
+            {/* Leyenda HTML — consistente con el resto de gráficos */}
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
+                    Monotonía
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm bg-destructive" />
+                    Excede umbral
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <svg width="20" height="10" className="inline-block shrink-0" aria-hidden>
+                        <line x1="0" y1="5" x2="20" y2="5" stroke="hsl(var(--warning))" strokeWidth="1.5" strokeDasharray="5 3" />
+                    </svg>
+                    Umbral (2.0)
+                </span>
             </div>
         </div>
     );
@@ -282,58 +453,75 @@ const MonotonyChart = React.memo(MonotonyChartComponent);
 
 interface StrainChartProps {
     data: Array<StrainWeekData & { periodLabel?: string; periodLoad?: number; rawStrain?: number; rawLoad?: number; load?: number; strain?: number }>;
-    margin: { top: number; right: number; left: number; bottom: number };
-    xAxisLabel: { value: string; position: string; offset: number };
-    yAxisLabel: { value: string; angle: number; position: string; offset: number; style: { textAnchor: string } };
     onTooltipLabel: (label: string | number, payload?: ReadonlyArray<Payload<number, string>>) => string;
     onTooltipFormatter: (value: number, name: string, props?: Payload<number, string>) => [string, string];
-    legendConfig: LegendProps;
 }
 
 const StrainChartComponent: React.FC<StrainChartProps> = ({
     data,
-    margin,
-    xAxisLabel,
-    yAxisLabel,
     onTooltipLabel,
     onTooltipFormatter,
-    legendConfig,
 }) => {
     return (
-        <div className="w-full flex items-center justify-center" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-            <div className="w-full" style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}>
-                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                    <ComposedChart data={data} margin={margin}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis
-                            dataKey="periodLabel"
-                            style={{ fontSize: '12px', fill: '#6b7280' }}
-                            label={xAxisLabel}
-                        />
-                        <YAxis
-                            domain={[0, 10]}
-                            ticks={[0, 2, 4, 6, 8, 10]}
-                            style={{ fontSize: '12px', fill: '#6b7280' }}
-                            label={yAxisLabel}
-                        />
-                        <Tooltip
-                            labelFormatter={onTooltipLabel}
-                            formatter={onTooltipFormatter}
-                        />
-                        <Legend {...legendConfig} />
-                        <Bar dataKey="load" fill="hsl(var(--muted-foreground))" name="Carga" />
-                        <Line
-                            type="monotone"
-                            dataKey="strain"
-                            stroke="hsl(var(--primary))"
-                            strokeWidth={2}
-                            name="Strain"
-                            dot={{ r: 4, fill: "hsl(var(--primary))" }}
-                            isAnimationActive={false}
-                            connectNulls={true}
-                        />
-                    </ComposedChart>
-                </ResponsiveContainer>
+        <div className="w-full min-w-0">
+            <ResponsiveContainer width="100%" height={250}>
+                <ComposedChart data={data} margin={{ top: 8, right: 8, bottom: 8, left: 5 }}>
+                    <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                        dataKey="periodLabel"
+                        tick={CHART_TICK_STYLE}
+                        axisLine={{ stroke: CHART_AXIS_STROKE }}
+                        tickLine={{ stroke: CHART_AXIS_STROKE }}
+                        interval={0}
+                    />
+                    <YAxis
+                        width={32}
+                        domain={[0, 10]}
+                        ticks={[0, 2, 4, 6, 8, 10]}
+                        tick={CHART_TICK_STYLE}
+                        axisLine={{ stroke: CHART_AXIS_STROKE }}
+                        tickLine={{ stroke: CHART_AXIS_STROKE }}
+                    />
+                    <Tooltip
+                        contentStyle={CHART_TOOLTIP_STYLE}
+                        labelFormatter={onTooltipLabel}
+                        formatter={onTooltipFormatter}
+                    />
+                    <Bar
+                        dataKey="load"
+                        fill="hsl(var(--primary) / 0.4)"
+                        radius={[6, 6, 0, 0]}
+                        name="Carga"
+                    />
+                    <Line
+                        type="monotone"
+                        dataKey="strain"
+                        stroke="hsl(var(--warning))"
+                        strokeWidth={2.5}
+                        name="Strain"
+                        dot={{
+                            r: 4,
+                            strokeWidth: 2,
+                            stroke: "hsl(var(--warning))",
+                            fill: "hsl(var(--card))",
+                        }}
+                        isAnimationActive={false}
+                        connectNulls={true}
+                    />
+                </ComposedChart>
+            </ResponsiveContainer>
+            {/* Leyenda HTML — consistente con el resto de gráficos */}
+            <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5">
+                    <span className="inline-block h-2.5 w-2.5 rounded-sm" style={{ backgroundColor: "hsl(var(--primary) / 0.4)" }} />
+                    Carga
+                </span>
+                <span className="flex items-center gap-1.5">
+                    <svg width="20" height="10" className="inline-block shrink-0" aria-hidden>
+                        <line x1="0" y1="5" x2="20" y2="5" stroke="hsl(var(--warning))" strokeWidth="2.5" />
+                    </svg>
+                    Strain
+                </span>
             </div>
         </div>
     );
@@ -397,6 +585,16 @@ const getRangeForPeriod = (periodType: PeriodType, offset: number = 0): PeriodRa
     }
 };
 
+/** Texto legible para el resumen (fallbacks y mensajes genéricos del API en inglés). */
+function coherenceSummaryDisplay(summary: string): string {
+    const t = summary.trim();
+    if (!t) return "Sin información disponible para este periodo.";
+    if (/no training sessions found/i.test(t)) {
+        return "No hay sesiones de entrenamiento en este periodo.";
+    }
+    return summary;
+}
+
 const formatPeriodDisplay = (periodType: PeriodType, start: string, end: string): string => {
     try {
         const startDate = new Date(start);
@@ -437,6 +635,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
     const [periodOffset, setPeriodOffset] = useState<number>(0);
 
     const activeBlockCtx = useClientActiveBlock(clientId, periodType === "training_block");
+    const { hasNoActivePlan, hasNoSourcePlanForBlocks, periodBlockCount } = activeBlockCtx;
 
     const periodRange = useMemo(() => {
         if (periodType === "training_block") {
@@ -470,7 +669,6 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
         adherenceData,
         scatterData,
         idealLineData,
-        colors,
         isLoading,
         isError,
         isQuerySkipped,
@@ -480,28 +678,38 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
         periodType === "training_block" &&
         !activeBlockCtx.isLoading &&
         !activeBlockCtx.errorMessage &&
-        (activeBlockCtx.hasNoActivePlan ||
-            activeBlockCtx.hasNoSourcePlanForBlocks ||
-            activeBlockCtx.hasNoActiveBlock);
+        (hasNoActivePlan || hasNoSourcePlanForBlocks || activeBlockCtx.hasNoActiveBlock);
+
+    const blockEmptyCalloutCopy = useMemo(() => {
+        if (hasNoActivePlan) {
+            return {
+                primaryText: "No hay plan de entrenamiento activo en la fecha de hoy.",
+                secondaryText: "Asigna un plan en curso o revisa las fechas de la instancia del plan.",
+            };
+        }
+        if (hasNoSourcePlanForBlocks) {
+            return {
+                primaryText: "No hay bloques de periodización configurados.",
+                secondaryText:
+                    "Selecciona un rango de fechas en el calendario para crear el primer bloque.",
+            };
+        }
+        if (periodBlockCount === 0) {
+            return {
+                primaryText: "No hay bloques de periodización configurados.",
+                secondaryText:
+                    "Selecciona un rango de fechas en el calendario para crear el primer bloque.",
+            };
+        }
+        return {
+            primaryText: "Ningún bloque de periodización incluye la fecha de hoy.",
+            secondaryText: "Ajusta las fechas de los bloques en la vista de planificación.",
+        };
+    }, [hasNoActivePlan, hasNoSourcePlanForBlocks, periodBlockCount]);
 
     const resolvingActiveBlock = periodType === "training_block" && activeBlockCtx.isLoading;
     const resolvingCoherence = !isQuerySkipped && isLoading;
 
-    const [summary, setSummary] = useState<string>(data.summary || "");
-
-    // Actualizar summary cuando cambien los datos
-    React.useEffect(() => {
-        if (data.summary) {
-            setSummary(data.summary);
-        }
-    }, [data.summary]);
-
-    // Memoizar objetos de configuración para evitar recreaciones innecesarias
-    const defaultChartMargin = useMemo(() => ({ top: 5, right: 10, left: 30, bottom: 60 }), []);
-    const legendConfig: LegendProps = useMemo(() => ({
-        align: "left" as const,
-        wrapperStyle: { paddingTop: "15px" },
-    }), []);
 
     // Los datos ya vienen transformados del hook con etiquetas legibles en item.week
     const enhancedMonotonyData = useMemo(() => {
@@ -550,35 +758,6 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
 
     const hasMonotonyData = enhancedMonotonyData.length > 0;
     const hasStrainData = normalizedStrainData.length > 0;
-
-    // Memoizar configuraciones de labels para evitar recreaciones
-    const xAxisPeriodLabel = useMemo(() => ({ value: "Período", position: "insideBottom" as const, offset: -5 }), []);
-    const yAxisMonotonyLabel = useMemo(() => ({ 
-        value: "Monotonía", 
-        angle: -90, 
-        position: "left" as const, 
-        offset: -5, 
-        style: { textAnchor: "middle" as const } 
-    }), []);
-    const yAxisStrainLabel = useMemo(() => ({ 
-        value: "Índice de Carga (0-10)", 
-        angle: -90, 
-        position: "left" as const, 
-        offset: -5, 
-        style: { textAnchor: "middle" as const } 
-    }), []);
-    const scatterXAxisLabel = useMemo(() => ({ 
-        value: "Intensidad Prescrita (RPE)", 
-        position: "insideBottom" as const, 
-        offset: -5 
-    }), []);
-    const scatterYAxisLabel = useMemo(() => ({ 
-        value: "Intensidad Percibida (RPE)", 
-        angle: -90, 
-        position: "left" as const, 
-        offset: -5, 
-        style: { textAnchor: "middle" as const } 
-    }), []);
 
     const renderPeriodTooltipLabel = useCallback(
         (label: string | number, payload?: ReadonlyArray<Payload<number, string>>): string => {
@@ -641,7 +820,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
 
     if (resolvingActiveBlock || resolvingCoherence) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center p-6">
+            <div className="flex min-h-[400px] w-full items-center justify-center">
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -649,7 +828,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
 
     if (periodType === "training_block" && activeBlockCtx.errorMessage) {
         return (
-            <div className="p-6">
+            <div className="w-full">
                 <Alert variant="error">{activeBlockCtx.errorMessage}</Alert>
             </div>
         );
@@ -657,7 +836,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
 
     if (!isQuerySkipped && isError) {
         return (
-            <div className="p-6">
+            <div className="w-full">
                 <Alert variant="error">
                     Error al cargar los datos de coherencia. Por favor, intenta de nuevo.
                 </Alert>
@@ -666,17 +845,20 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="w-full space-y-8">
             <div>
                 <h2 className="text-lg font-semibold text-foreground">Coherencia Diaria</h2>
-                <p className="text-muted-foreground mt-2">
+                <p className="mt-0.5 text-sm text-muted-foreground">
                     Análisis de adherencia, percepción de esfuerzo y carga de entrenamiento
                 </p>
             </div>
 
-            {/* Sub-tabs: Week, Month, Year, Training Block */}
-            <div className="space-y-4">
-                <nav aria-label="Period tabs" className="flex gap-1 border-b border-border">
+            {/* Sub-tabs: Week, Month, Year, Training Block — ancho completo como el resto de tabs del cliente */}
+            <div className="w-full space-y-4">
+                <nav
+                    aria-label="Period tabs"
+                    className="flex w-full min-w-0 gap-1 overflow-x-auto border-b border-border [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/30"
+                >
                     {[
                         { id: "week" as PeriodType, label: "Semana" },
                         { id: "month" as PeriodType, label: "Mes" },
@@ -715,7 +897,7 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                 )}
 
                 {periodType !== "training_block" && periodDisplay && (
-                    <div className="flex items-center justify-between px-2">
+                    <div className="flex w-full min-w-0 items-center justify-between gap-2">
                         <button
                             onClick={handlePreviousPeriod}
                             className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-surface-2"
@@ -747,52 +929,17 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
             </div>
 
             {blockTabEmpty && (
-                <EmptyState
-                    icon={<CalendarRange className="size-12" aria-hidden />}
-                    title={
-                        activeBlockCtx.hasNoActivePlan
-                            ? "Sin plan de entrenamiento activo"
-                            : activeBlockCtx.hasNoSourcePlanForBlocks
-                              ? "No se puede cargar la periodización"
-                              : "Sin bloque activo para hoy"
-                    }
-                    description={
-                        activeBlockCtx.hasNoActivePlan
-                            ? "Este cliente no tiene un plan de entrenamiento activo en la fecha actual, o el plan no está en curso."
-                            : activeBlockCtx.hasNoSourcePlanForBlocks
-                              ? "La instancia del plan no está vinculada a un plan fuente con bloques de periodización."
-                              : "No hay un bloque de periodización que incluya la fecha de hoy en el plan activo. Revisa las fechas de los bloques en la planificación del plan."
-                    }
-                    action={
-                        <div className="flex flex-wrap items-center justify-center gap-2">
-                            <Link
-                                to={`/dashboard/clients/${clientId}?tab=planning`}
-                                className={cn(
-                                    "inline-flex h-9 items-center justify-center rounded-md border border-primary bg-transparent px-3 text-sm font-medium text-primary transition-colors hover:bg-primary/10",
-                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                )}
-                            >
-                                Ver planificación
-                            </Link>
-                            <Link
-                                to="/dashboard/training-plans"
-                                className={cn(
-                                    "inline-flex h-9 items-center justify-center rounded-md border border-border bg-card px-3 text-sm font-medium text-foreground transition-colors hover:bg-muted",
-                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                )}
-                            >
-                                Planes de entrenamiento
-                            </Link>
-                        </div>
-                    }
-                    className="rounded-xl border border-dashed border-border bg-card/50 py-14"
+                <PeriodBlockEmptyCallout
+                    clientId={clientId}
+                    primaryText={blockEmptyCalloutCopy.primaryText}
+                    secondaryText={blockEmptyCalloutCopy.secondaryText}
                 />
             )}
 
             {!blockTabEmpty && (
             <>
             {/* Cards de métricas principales */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <MetricCard
                     title="Adherencia"
                     value={`${data.adherence_percentage}%`}
@@ -828,110 +975,126 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
             )}
 
             {/* Gráficos en 2 columnas: Adherence Overview y Scatter Plot */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Gráfico 1: Adherence Overview (Donut Chart con texto en el centro) */}
-                <CompactChartCard title="Adherencia - Sesiones Completadas">
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                {/* Gráfico 1: Adherence — donut compacto (shell surface, sin CompactChartCard) */}
+                <div className="rounded-lg bg-surface p-5">
+                    <h3 className="mb-4 text-sm font-semibold">Adherencia</h3>
                     <AdherenceChart
                         data={adherenceData}
-                        colors={colors}
                         adherencePercentage={data.adherence_percentage}
                         sessionsCompleted={data.sessions_completed}
                         sessionsTotal={data.sessions_total}
                     />
-                </CompactChartCard>
+                </div>
 
                 {/* Gráfico 2: Prescribed vs Perceived Intensity (Scatter Plot) */}
-                {scatterData && scatterData.length > 0 && (
-                    <CompactChartCard title="Intensidad Prescrita vs Percibida">
+                <div className="min-w-0 rounded-lg bg-surface p-5">
+                    <h3 className="mb-4 text-sm font-semibold">Prescrita vs Percibida</h3>
+                    {scatterData && scatterData.length > 0 ? (
                         <ScatterChart
                             scatterData={scatterData}
                             idealLineData={idealLineData}
-                            colors={colors}
-                            margin={defaultChartMargin}
-                            xAxisLabel={scatterXAxisLabel}
-                            yAxisLabel={scatterYAxisLabel}
-                        />
-                    </CompactChartCard>
-                )}
-            </div>
-
-            {/* Gráficos en 2 columnas: Monotony y Strain & Load */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Gráfico 3: Monotony (Line Chart) */}
-                <CompactChartCard title="Monotonía">
-                    {hasMonotonyData ? (
-                        <MonotonyChart
-                            data={enhancedMonotonyData}
-                            margin={defaultChartMargin}
-                            xAxisLabel={xAxisPeriodLabel}
-                            yAxisLabel={yAxisMonotonyLabel}
-                            onTooltipLabel={renderPeriodTooltipLabel}
-                            legendConfig={legendConfig}
                         />
                     ) : (
                         <div
-                            className="flex items-center justify-center w-full min-w-0 text-muted-foreground"
-                            style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}
+                            className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 text-center text-sm text-muted-foreground"
+                            style={{ minHeight: 250 }}
+                        >
+                            Sin datos de intensidad. El cliente debe completar el feedback RPE post-sesión.
+                        </div>
+                    )}
+                </div>
+            </div>
+
+            {/* Gráficos en 2 columnas: Monotonía y Carga */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+                <div className="min-w-0 rounded-lg bg-surface p-5">
+                    <h3 className="mb-4 text-sm font-semibold">Monotonía</h3>
+                    {hasMonotonyData ? (
+                        <MonotonyChart
+                            data={enhancedMonotonyData}
+                            onTooltipLabel={renderPeriodTooltipLabel}
+                        />
+                    ) : (
+                        <div
+                            className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 text-center text-sm text-muted-foreground"
+                            style={{ minHeight: 250 }}
                         >
                             No hay datos de monotonía disponibles
                         </div>
                     )}
-                </CompactChartCard>
+                </div>
 
-                {/* Gráfico 4: Strain & Load (Bar + Line Chart) */}
-                <CompactChartCard title="Carga y Volumen">
+                <div className="min-w-0 rounded-lg bg-surface p-5">
+                    <h3 className="mb-4 text-sm font-semibold">Carga y Volumen</h3>
                     {hasStrainData ? (
                         <StrainChart
                             data={normalizedStrainData}
-                            margin={defaultChartMargin}
-                            xAxisLabel={xAxisPeriodLabel}
-                            yAxisLabel={yAxisStrainLabel}
                             onTooltipLabel={renderPeriodTooltipLabel}
                             onTooltipFormatter={renderStrainTooltipFormatter}
-                            legendConfig={legendConfig}
                         />
                     ) : (
                         <div
-                            className="flex items-center justify-center w-full min-w-0 text-muted-foreground"
-                            style={{ minHeight: `${MIN_CHART_HEIGHT}px` }}
+                            className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 text-center text-sm text-muted-foreground"
+                            style={{ minHeight: 250 }}
                         >
                             No hay datos de carga y volumen disponibles
                         </div>
                     )}
-                </CompactChartCard>
+                </div>
             </div>
 
-            {/* Summary interpretativo (editable) con botón Edit */}
-            <div className="bg-card border border-border rounded-lg shadow px-4 pt-4 pb-2">
-                <div className="flex items-center justify-between mb-6">
-                    <h3 className="text-base font-semibold text-foreground">Resumen Interpretativo</h3>
-                    <button className="px-4 py-2 text-sm font-semibold text-primary border border-border rounded-lg hover:bg-muted transition-colors">
-                        Editar
-                    </button>
-                </div>
+            {/* Resumen: mismo lenguaje visual que PeriodBlockEmptyCallout (marco discontinuo + icono documento) */}
+            <section
+                className="w-full border-t border-border/80 bg-background pt-8"
+                aria-labelledby="coherence-summary-heading"
+            >
+                <div
+                    className={cn(
+                        periodBlockDashedShellClassName,
+                        "flex flex-col gap-6 text-left"
+                    )}
+                >
+                    <h3
+                        id="coherence-summary-heading"
+                        className="text-base font-semibold text-foreground"
+                    >
+                        Resumen interpretativo
+                    </h3>
 
-                <div className="space-y-5">
-                    <p className="text-foreground leading-relaxed whitespace-pre-line">
-                        {summary || "Sin información disponible."}
-                    </p>
+                    <div className="flex flex-col items-center justify-center space-y-3 text-center">
+                        <PeriodBlockEmptyIconDecoration />
+                        <p className="max-w-sm text-sm text-muted-foreground whitespace-pre-line sm:max-w-lg">
+                            {coherenceSummaryDisplay(data.summary ?? "")}
+                        </p>
+                    </div>
 
-                    <div className="bg-muted/50 border border-border rounded-xl p-5 w-full">
-                        <div className="text-xs font-semibold text-muted-foreground tracking-wide mb-3">
-                            RECOMENDACIONES PRINCIPALES
-                        </div>
-                        <ul className="space-y-3">
-                            {data.recommendations.map((rec, index) => (
-                                <li key={index} className="flex items-start">
-                                    <span className="flex-shrink-0 w-6 h-6 bg-primary/20 text-primary rounded-full flex items-center justify-center text-sm font-semibold mr-3 mt-0.5">
-                                        {index + 1}
-                                    </span>
-                                    <span className="text-foreground">{rec}</span>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="w-full space-y-4 border-t border-border/60 pt-6">
+                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Recomendaciones principales
+                        </h4>
+                        {data.recommendations.length === 0 ? (
+                            <p className="text-xs text-muted-foreground/70 sm:text-sm">
+                                No hay recomendaciones para este periodo.
+                            </p>
+                        ) : (
+                            <ul className="space-y-3 border-l-2 border-primary/25 pl-4">
+                                {data.recommendations.map((rec, index) => (
+                                    <li key={index} className="flex items-start gap-3 text-sm">
+                                        <span
+                                            className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary/15 text-xs font-semibold text-primary"
+                                            aria-hidden
+                                        >
+                                            {index + 1}
+                                        </span>
+                                        <span className="min-w-0 leading-relaxed text-foreground">{rec}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 </div>
-            </div>
+            </section>
             </>
             )}
         </div>
