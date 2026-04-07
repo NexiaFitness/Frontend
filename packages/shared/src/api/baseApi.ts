@@ -10,6 +10,8 @@
  * @updated v4.7.0 - Agregado tagType "Milestone"
  * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance", "MovementPattern", "MuscleGroup", "Equipment", "Tag", "Action"
  * @updated UX Sprint 1 - TICK-D04: interceptor refresh token en 401 (mutex, un reintento)
+ * @updated 2026-04 - Authorization: resolver access token (localStorage + Redux); evita 401 cuando la sesión
+ *   es válida en el store pero el storage no está legible o desincronizado.
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -45,6 +47,25 @@ const getTokenSafely = (key: string): string | null => {
         }
         return null;
     }
+};
+
+/**
+ * Access token efectivo para cabeceras y lógica 401.
+ * - Prioriza localStorage si hay valor: es la fuente tras POST /auth/refresh y coherente entre pestañas.
+ * - Si no hay token en storage (fallo de persistencia, cuota, timing), usa auth.token del store:
+ *   ProtectedRoute ya consideró la sesión válida; sin esto las peticiones salen sin Bearer y FastAPI devuelve 401.
+ */
+const resolveAccessToken = (getState: () => unknown): string | null => {
+    const fromStorage = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+    if (fromStorage && fromStorage.length > 0) {
+        return fromStorage;
+    }
+    const state = getState() as RootState;
+    const fromStore = state.auth?.token;
+    if (fromStore && fromStore.length > 0) {
+        return fromStore;
+    }
+    return null;
 };
 
 /** Escribe en localStorage de forma segura (solo browser). Usado tras refresh token. */
@@ -144,10 +165,10 @@ const fetchWith403Suppression = async (
 const baseQuery = fetchBaseQuery({
     baseUrl: API_CONFIG.BASE_URL,
     fetchFn: typeof window !== 'undefined' ? fetchWith403Suppression : fetch,
-    prepareHeaders: (headers, { endpoint }) => {
+    prepareHeaders: (headers, { endpoint, getState }) => {
         // Solo añadir Authorization si NO es login (login no necesita token)
         if (endpoint !== 'login') {
-            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+            const token = resolveAccessToken(getState);
             if (token) {
                 headers.set("Authorization", `Bearer ${token}`);
             }
@@ -238,7 +259,7 @@ const baseQueryWithReauth: BaseQueryFn<
                 return result;
             }
 
-            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+            const token = resolveAccessToken(api.getState);
             const state = api.getState() as RootState;
             const isAuthenticated = state.auth?.isAuthenticated ?? false;
 

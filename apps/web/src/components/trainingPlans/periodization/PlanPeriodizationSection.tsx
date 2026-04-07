@@ -14,6 +14,7 @@ import {
   useDeleteDayExceptionMutation,
 } from "@nexia/shared/api/dayExceptionsApi";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
+import { getMutationErrorMessage } from "@nexia/shared";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
@@ -180,10 +181,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
   if (isError) {
     return (
       <Alert variant="error">
-        Error al cargar los bloques de periodización:{" "}
-        {error && typeof error === "object" && "data" in error
-          ? String((error as { data?: unknown }).data)
-          : "Error desconocido"}
+        Error al cargar los bloques de periodización: {getMutationErrorMessage(error)}
       </Alert>
     );
   }
