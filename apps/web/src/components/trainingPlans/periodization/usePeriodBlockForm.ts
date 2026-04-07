@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import type { PlanPeriodBlock, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
-import { hasOverlap } from "@nexia/shared/utils/periodBlockOverlap";
+import { hasOverlap, isWithinPlanBounds } from "@nexia/shared/utils/periodBlockOverlap";
 
 type SelectionPhase = "idle" | "rangeStart" | "rangeComplete";
 
@@ -22,7 +22,12 @@ const INITIAL_STATE: PeriodBlockFormState = {
   intensityLevel: 5,
 };
 
-export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[], excludeBlockId?: number | null) {
+export function usePeriodBlockForm(
+  existingBlocks: PlanPeriodBlock[],
+  excludeBlockId?: number | null,
+  planStartDate?: string | null,
+  planEndDate?: string | null,
+) {
   const [form, setForm] = useState<PeriodBlockFormState>(INITIAL_STATE);
 
   const handleDayClick = useCallback((dateStr: string) => {
@@ -116,13 +121,19 @@ export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[], excludeBlo
     return hasOverlap(form.startDate, form.endDate, existingBlocks, excludeBlockId ?? undefined);
   }, [form.startDate, form.endDate, existingBlocks, excludeBlockId]);
 
+  const outsidePlanBounds = useMemo(() => {
+    if (!form.startDate || !form.endDate) return false;
+    return !isWithinPlanBounds(form.startDate, form.endDate, planStartDate, planEndDate);
+  }, [form.startDate, form.endDate, planStartDate, planEndDate]);
+
   const canSubmit =
     form.phase === "rangeComplete" &&
     form.startDate != null &&
     form.endDate != null &&
     form.qualities.length > 0 &&
     qualitiesSum === 100 &&
-    !overlapDetected;
+    !overlapDetected &&
+    !outsidePlanBounds;
 
   return {
     form,
@@ -136,6 +147,7 @@ export function usePeriodBlockForm(existingBlocks: PlanPeriodBlock[], excludeBlo
     reset,
     qualitiesSum,
     overlapDetected,
+    outsidePlanBounds,
     canSubmit,
   };
 }

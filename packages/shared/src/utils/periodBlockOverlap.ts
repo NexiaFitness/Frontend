@@ -43,6 +43,21 @@ export function isDateInRange(
   return d >= parseLocal(start).getTime() && d <= parseLocal(end).getTime();
 }
 
+/** True when block [blockStart, blockEnd] ⊆ plan [planStart, planEnd] (inclusive). */
+export function isWithinPlanBounds(
+  blockStart: string,
+  blockEnd: string,
+  planStart: string | null | undefined,
+  planEnd: string | null | undefined,
+): boolean {
+  if (!planStart || !planEnd) return true;
+  const bs = parseLocal(blockStart).getTime();
+  const be = parseLocal(blockEnd).getTime();
+  const ps = parseLocal(planStart).getTime();
+  const pe = parseLocal(planEnd).getTime();
+  return bs >= ps && be <= pe;
+}
+
 export function countPlannedDays(
   blocks: DateRange[],
   monthStart: Date,

@@ -251,6 +251,8 @@ export const TrainingPlanDetail: React.FC = () => {
                     <PlanPeriodizationSection
                         planId={planId}
                         clientId={contextClientId ?? plan.client_id ?? undefined}
+                        planStartDate={plan.start_date}
+                        planEndDate={plan.end_date}
                     />
                 );
             case "milestones":

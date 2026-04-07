@@ -71,6 +71,11 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     }
 
     return (
-        <PlanPeriodizationSection planId={activePlan.id} clientId={clientId} />
+        <PlanPeriodizationSection
+            planId={activePlan.id}
+            clientId={clientId}
+            planStartDate={activePlan.start_date}
+            planEndDate={activePlan.end_date}
+        />
     );
 };

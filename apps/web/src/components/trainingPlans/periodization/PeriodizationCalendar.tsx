@@ -21,6 +21,9 @@ interface Props {
   currentMonth: Date;
   onMonthChange: (d: Date) => void;
   blocks: PlanPeriodBlock[];
+  /** Vigencia del plan (fechas del training plan): se pinta en el calendario aunque aún no haya bloques. */
+  planStartDate?: string | null;
+  planEndDate?: string | null;
   sessionDates?: Set<string>;
   exceptionDates?: Set<string>;
   formState: PeriodBlockFormState;
@@ -39,6 +42,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   currentMonth,
   onMonthChange,
   blocks,
+  planStartDate,
+  planEndDate,
   sessionDates = EMPTY_SET,
   exceptionDates = EMPTY_SET,
   formState,
@@ -52,6 +57,22 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   const monthEnd = useMemo(() => new Date(year, month, daysInMonth), [year, month, daysInMonth]);
 
   const planned = useMemo(() => countPlannedDays(blocks, monthStart, monthEnd), [blocks, monthStart, monthEnd]);
+
+  const planWindowSet = useMemo(() => {
+    if (!planStartDate || !planEndDate) return EMPTY_SET;
+    const s = new Set<string>();
+    const ps = parseLocal(planStartDate);
+    const pe = parseLocal(planEndDate);
+    const start = ps > monthStart ? ps : new Date(monthStart);
+    const end = pe < monthEnd ? pe : new Date(monthEnd);
+    if (start > end) return s;
+    const cur = new Date(start);
+    while (cur <= end) {
+      s.add(toLocalISO(cur));
+      cur.setDate(cur.getDate() + 1);
+    }
+    return s;
+  }, [planStartDate, planEndDate, monthStart, monthEnd]);
 
   const plannedSet = useMemo(() => {
     const s = new Set<string>();
@@ -93,7 +114,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   const renderCell = useCallback(
     (dayInfo: CalendarDayInfo) => {
       const { dateISO, dayOfMonth, isToday } = dayInfo;
-      const isPlanned = plannedSet.has(dateISO);
+      const inBlock = plannedSet.has(dateISO);
+      const inPlanVigencia = planWindowSet.has(dateISO);
       const hasSession = sessionDates.has(dateISO);
       const isException = exceptionDates.has(dateISO);
       const inSel = isInSelection(dateISO);
@@ -101,8 +123,9 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       const isEnd = isSelectionEnd(dateISO);
       const isSingleDay = isStart && isEnd;
 
+      const outsidePlan = planStartDate && planEndDate && !inPlanVigencia;
       let bgClass = "bg-surface";
-      let textClass = "text-foreground";
+      let textClass = outsidePlan ? "text-muted-foreground/50" : "text-foreground";
       let roundClass = "";
 
       if (isException && !inSel) {
@@ -118,9 +141,12 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         } else if (isEnd) {
           roundClass = "rounded-r-md";
         }
-      } else if (isPlanned) {
+      } else if (inBlock) {
         bgClass = "bg-primary/15";
         textClass = "text-primary";
+      } else if (inPlanVigencia) {
+        bgClass = "bg-primary/10";
+        textClass = "text-foreground";
       }
 
       const ringClass = isToday ? "ring-1 ring-primary ring-inset" : "";
@@ -140,7 +166,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
           aria-pressed={inSel}
         >
           <span className="z-10">{dayOfMonth}</span>
-          {isPlanned && !inSel && !hasSession && !isException && (
+          {inBlock && !inSel && !hasSession && !isException && (
             <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
           )}
           {hasSession && !isException && (
@@ -152,25 +178,46 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         </button>
       );
     },
-    [plannedSet, sessionDates, exceptionDates, isInSelection, isSelectionStart, isSelectionEnd, onDayClick, onDayRightClick]
+    [plannedSet, planWindowSet, planStartDate, planEndDate, sessionDates, exceptionDates, isInSelection, isSelectionStart, isSelectionEnd, onDayClick, onDayRightClick]
   );
 
-  const subtitle = useMemo(
-    () => (
+  const planDaysInMonth = planWindowSet.size;
+
+  const subtitle = useMemo(() => {
+    if (planStartDate && planEndDate) {
+      return (
+        <p className="text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">{planDaysInMonth}</span> de{" "}
+          <span className="font-semibold text-foreground">{daysInMonth}</span> días en vigencia del plan
+          {planned > 0 && (
+            <span className="text-muted-foreground/90">
+              {" "}
+              · <span className="font-semibold text-foreground">{planned}</span> con bloque de periodización
+            </span>
+          )}
+        </p>
+      );
+    }
+    return (
       <p className="text-xs text-muted-foreground">
         <span className="font-semibold text-foreground">{planned}</span> de{" "}
         <span className="font-semibold text-foreground">{daysInMonth}</span> días planificados
       </p>
-    ),
-    [planned, daysInMonth]
-  );
+    );
+  }, [planDaysInMonth, daysInMonth, planned, planStartDate, planEndDate]);
 
   const footer = useMemo(
     () => (
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-2 border-t border-border/30">
+        {planStartDate && planEndDate && (
+          <div className="flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-full bg-primary/10 ring-1 ring-primary/20" />
+            <span className="text-[10px] text-muted-foreground">Vigencia del plan</span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary/15 ring-1 ring-primary/30" />
-          <span className="text-[10px] text-muted-foreground">Planificado</span>
+          <span className="text-[10px] text-muted-foreground">Bloque de periodización</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-success" />
@@ -195,7 +242,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         )}
       </div>
     ),
-    [onDayRightClick]
+    [onDayRightClick, planStartDate, planEndDate]
   );
 
   return (

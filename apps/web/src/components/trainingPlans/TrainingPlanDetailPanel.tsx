@@ -122,7 +122,14 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
             case "sessions":
                 return <SessionsTab planId={planId} />;
             case "planning":
-                return <PlanPeriodizationSection planId={planId} clientId={clientId} />;
+                return (
+                    <PlanPeriodizationSection
+                        planId={planId}
+                        clientId={clientId}
+                        planStartDate={plan.start_date}
+                        planEndDate={plan.end_date}
+                    />
+                );
             case "milestones":
                 return <MilestonesTab planId={planId} />;
             case "charts":

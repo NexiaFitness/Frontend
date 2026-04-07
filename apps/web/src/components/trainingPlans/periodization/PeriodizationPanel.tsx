@@ -18,6 +18,8 @@ interface Props {
 
   overlapDetected: boolean;
 
+  outsidePlanBounds?: boolean;
+
   canSubmit: boolean;
 
   isEditing?: boolean;
@@ -63,6 +65,8 @@ export const PeriodizationPanel: React.FC<Props> = ({
   overlapDetected,
 
   canSubmit,
+
+  outsidePlanBounds = false,
 
   isEditing = false,
 
@@ -457,6 +461,12 @@ export const PeriodizationPanel: React.FC<Props> = ({
 
 
       {/* Error messages */}
+
+      {outsidePlanBounds && (
+        <p className="text-xs text-warning font-medium">
+          El rango seleccionado excede la vigencia del plan. Ajusta las fechas para que el bloque quede dentro del período del plan.
+        </p>
+      )}
 
       {overlapDetected && (
 

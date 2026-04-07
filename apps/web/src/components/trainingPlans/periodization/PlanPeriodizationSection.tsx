@@ -15,7 +15,8 @@ import {
 } from "@nexia/shared/api/dayExceptionsApi";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import { getMutationErrorMessage } from "@nexia/shared";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
+import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodizationPanel } from "./PeriodizationPanel";
@@ -27,10 +28,19 @@ import { usePeriodBlockForm } from "./usePeriodBlockForm";
 interface Props {
   planId: number;
   clientId?: number;
+  /** Fechas de vigencia del training plan (YYYY-MM-DD) para pintar el calendario. */
+  planStartDate?: string | null;
+  planEndDate?: string | null;
 }
 
-export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) => {
+export const PlanPeriodizationSection: React.FC<Props> = ({
+  planId,
+  clientId,
+  planStartDate,
+  planEndDate,
+}) => {
   const navigate = useNavigate();
+  const { showWarning } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
 
@@ -97,8 +107,20 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
     reset,
     qualitiesSum,
     overlapDetected,
+    outsidePlanBounds,
     canSubmit,
-  } = usePeriodBlockForm(blocks, editingBlockId);
+  } = usePeriodBlockForm(blocks, editingBlockId, planStartDate, planEndDate);
+
+  const guardedDayClick = useCallback(
+    (dateStr: string) => {
+      if (planStartDate && planEndDate && !isDateInRange(dateStr, planStartDate, planEndDate)) {
+        showWarning("Solo puedes definir bloques dentro de la vigencia del plan.");
+        return;
+      }
+      handleDayClick(dateStr);
+    },
+    [planStartDate, planEndDate, handleDayClick, showWarning],
+  );
 
   const handleSubmitBlock = useCallback(async () => {
     if (!form.startDate || !form.endDate) return;
@@ -213,10 +235,12 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
             currentMonth={calMonth}
             onMonthChange={setCalMonth}
             blocks={blocks}
+            planStartDate={planStartDate}
+            planEndDate={planEndDate}
             sessionDates={sessionDates}
             exceptionDates={exceptionDates}
             formState={form}
-            onDayClick={handleDayClick}
+            onDayClick={guardedDayClick}
             onDayRightClick={handleDayContextMenu}
           />
         </div>
@@ -226,6 +250,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({ planId, clientId }) 
             catalog={catalog}
             qualitiesSum={qualitiesSum}
             overlapDetected={overlapDetected}
+            outsidePlanBounds={outsidePlanBounds}
             canSubmit={canSubmit}
             onAddQuality={addQuality}
             onRemoveQuality={removeQuality}
