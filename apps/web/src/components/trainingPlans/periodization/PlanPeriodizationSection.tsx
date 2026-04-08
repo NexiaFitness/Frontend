@@ -14,6 +14,7 @@ import {
   useDeleteDayExceptionMutation,
 } from "@nexia/shared/api/dayExceptionsApi";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
+import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
@@ -24,6 +25,37 @@ import { PeriodBlockCard } from "./PeriodBlockCard";
 import { PeriodizationCharts } from "./PeriodizationCharts";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
+
+/**
+ * Primer día YYYY-MM-DD del bloque sin sesión ya asignada en ese día (mismo bloque).
+ * Si el rango está lleno, devuelve blockStart (CreateSession puede ajustar manualmente).
+ */
+function suggestSessionDateForPeriodBlock(
+  blockStart: string,
+  blockEnd: string,
+  sessionsInBlock: TrainingSession[],
+): string {
+  const used = new Set(
+    sessionsInBlock
+      .map((s) => s.session_date)
+      .filter((d): d is string => typeof d === "string" && d.length > 0),
+  );
+  const [ys, ms, ds] = blockStart.split("-").map(Number);
+  const [ye, me, de] = blockEnd.split("-").map(Number);
+  const cursor = new Date(ys, ms - 1, ds);
+  const endTime = new Date(ye, me - 1, de).getTime();
+  while (cursor.getTime() <= endTime) {
+    const y = cursor.getFullYear();
+    const m = String(cursor.getMonth() + 1).padStart(2, "0");
+    const day = String(cursor.getDate()).padStart(2, "0");
+    const iso = `${y}-${m}-${day}`;
+    if (!used.has(iso)) {
+      return iso;
+    }
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  return blockStart;
+}
 
 interface Props {
   planId: number;
@@ -110,6 +142,27 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     outsidePlanBounds,
     canSubmit,
   } = usePeriodBlockForm(blocks, editingBlockId, planStartDate, planEndDate);
+
+  const handleCreateSessionForBlock = useCallback(
+    (block: PlanPeriodBlock) => {
+      if (clientId != null && clientId > 0) {
+        navigate(`/dashboard/clients/${clientId}?tab=sessions`);
+        return;
+      }
+      const blockSessions = sessionsByBlock.get(block.id) ?? [];
+      const date = suggestSessionDateForPeriodBlock(
+        block.start_date,
+        block.end_date,
+        blockSessions,
+      );
+      const params = new URLSearchParams({
+        planId: String(planId),
+        date,
+      });
+      navigate(`/dashboard/session-programming/create-session?${params.toString()}`);
+    },
+    [navigate, planId, clientId, sessionsByBlock],
+  );
 
   const guardedDayClick = useCallback(
     (dateStr: string) => {
@@ -280,6 +333,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                 sessions={sessionsByBlock.get(block.id) ?? []}
                 onEdit={handleEditBlock}
                 onDelete={(id, label) => setDeleteTarget({ id, label })}
+                onCreateSessionForBlock={handleCreateSessionForBlock}
               />
             ))}
           </div>

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
+import { Button } from "@/components/ui/buttons";
 
 interface Props {
   block: PlanPeriodBlock;
@@ -9,6 +10,8 @@ interface Props {
   sessions?: TrainingSession[];
   onEdit?: (block: PlanPeriodBlock) => void;
   onDelete: (id: number, label: string) => void;
+  /** Alta de sesión enlazada al plan/bloque (navegación la define el contenedor). */
+  onCreateSessionForBlock?: (block: PlanPeriodBlock) => void;
 }
 
 function parseLocal(s: string): Date {
@@ -25,7 +28,14 @@ function daysBetween(start: string, end: string): number {
   return Math.round(ms / 86400000) + 1;
 }
 
-export const PeriodBlockCard: React.FC<Props> = ({ block, catalog, sessions = [], onEdit, onDelete }) => {
+export const PeriodBlockCard: React.FC<Props> = ({
+  block,
+  catalog,
+  sessions = [],
+  onEdit,
+  onDelete,
+  onCreateSessionForBlock,
+}) => {
   const [showSessions, setShowSessions] = useState(false);
   const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
   const days = daysBetween(block.start_date, block.end_date);
@@ -100,20 +110,33 @@ export const PeriodBlockCard: React.FC<Props> = ({ block, catalog, sessions = []
         })}
       </div>
 
-      {/* Volume / Intensity footer */}
-      <div className="flex gap-6 pt-3 border-t border-border/50">
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground uppercase">Volumen</span>
-          <span className="text-sm font-bold text-primary tabular-nums">
-            {block.volume_level}/10
-          </span>
+      {/* Volume / Intensity + sesión (misma fila: métricas a la izquierda, CTA a la derecha) */}
+      <div className="flex flex-col gap-3 pt-3 border-t border-border/50 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground uppercase">Volumen</span>
+            <span className="text-sm font-bold text-primary tabular-nums">
+              {block.volume_level}/10
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[11px] text-muted-foreground uppercase">Intensidad</span>
+            <span className="text-sm font-bold text-warning tabular-nums">
+              {block.intensity_level}/10
+            </span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-[11px] text-muted-foreground uppercase">Intensidad</span>
-          <span className="text-sm font-bold text-warning tabular-nums">
-            {block.intensity_level}/10
-          </span>
-        </div>
+        {onCreateSessionForBlock != null && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full shrink-0 sm:w-auto"
+            onClick={() => onCreateSessionForBlock(block)}
+          >
+            {sessions.length === 0 ? "Crear sesión" : "Añadir sesión"}
+          </Button>
+        )}
       </div>
 
       {/* Sessions summary */}

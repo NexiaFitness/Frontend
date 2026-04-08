@@ -9,7 +9,7 @@
  */
 
 import React, { useMemo } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea, DatePickerButton, Label, FormCombobox, FormSelect } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
@@ -61,6 +61,8 @@ export interface TrainingPlanEditorFormProps {
     submitLabel: string;
     onSubmit: (e: React.FormEvent) => void;
     onCancel: () => void;
+    /** Crear plan: abre el plan fuente de la instancia activa en periodización (sin acoplar rutas en shared). */
+    onOpenActivePlan?: (instance: TrainingPlanInstance) => void;
 }
 
 export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
@@ -81,6 +83,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
     submitLabel,
     onSubmit,
     onCancel,
+    onOpenActivePlan,
 }) => {
     const sortedInstances = useMemo(() => {
         return [...existingInstances].sort((a, b) => {
@@ -89,6 +92,16 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
             return new Date(b.start_date).getTime() - new Date(a.start_date).getTime();
         });
     }, [existingInstances]);
+
+    /** Una sola tarjeta destacada: primera instancia activa (el resto va en "Planes existentes"). */
+    const featuredActiveInstance = useMemo(() => {
+        return sortedInstances.find((i) => i.status === "active") ?? null;
+    }, [sortedInstances]);
+
+    const otherInstances = useMemo(() => {
+        if (!featuredActiveInstance) return sortedInstances;
+        return sortedInstances.filter((i) => i.id !== featuredActiveInstance.id);
+    }, [sortedInstances, featuredActiveInstance]);
 
     const getInstanceStatusBadge = (status: string) => {
         switch (status) {
@@ -100,6 +113,51 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                 return { label: status, className: "text-muted-foreground" };
         }
     };
+
+    const renderInstanceBody = (instance: TrainingPlanInstance) => {
+        const statusBadge = getInstanceStatusBadge(instance.status);
+        return (
+            <>
+                <div className="flex items-center justify-between gap-2">
+                    <p className="truncate text-sm font-medium">{instance.name}</p>
+                    <span
+                        className={`inline-flex shrink-0 items-center text-xs font-medium ${statusBadge.className}`}
+                    >
+                        {statusBadge.label}
+                    </span>
+                </div>
+                <div className="text-xs text-muted-foreground">
+                    {formatDateShort(instance.start_date)} — {formatDateShort(instance.end_date)}
+                    {instance.goal ? (
+                        <>
+                            <span className="mx-1.5">·</span>
+                            {(() => {
+                                const chips = chipFromGoal(instance.goal);
+                                const chip = chips[0];
+                                if (!chip) return null;
+                                return (
+                                    <span
+                                        className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold border-transparent ${chip.toneClass}`}
+                                    >
+                                        {chip.label}
+                                    </span>
+                                );
+                            })()}
+                        </>
+                    ) : null}
+                </div>
+            </>
+        );
+    };
+
+    const renderInstanceRow = (instance: TrainingPlanInstance) => (
+        <div
+            key={instance.id}
+            className="space-y-2 rounded-lg bg-surface-2 px-4 py-2.5"
+        >
+            {renderInstanceBody(instance)}
+        </div>
+    );
 
     const renderExistingPlans = () => {
         if (isLoadingInstances) {
@@ -120,49 +178,17 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
             );
         }
 
-        return (
-            <div className="space-y-2">
-                {sortedInstances.map((instance: TrainingPlanInstance) => {
-                    const statusBadge = getInstanceStatusBadge(instance.status);
-                    return (
-                        <div
-                            key={instance.id}
-                            className="space-y-2 rounded-lg bg-surface-2 px-4 py-2.5"
-                        >
-                            <div className="flex items-center justify-between gap-2">
-                                <p className="truncate text-sm font-medium">{instance.name}</p>
-                                <span
-                                    className={`inline-flex shrink-0 items-center text-xs font-medium ${statusBadge.className}`}
-                                >
-                                    {statusBadge.label}
-                                </span>
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                                {formatDateShort(instance.start_date)} —{" "}
-                                {formatDateShort(instance.end_date)}
-                                {instance.goal ? (
-                                    <>
-                                        <span className="mx-1.5">·</span>
-                                        {(() => {
-                                            const chips = chipFromGoal(instance.goal);
-                                            const chip = chips[0];
-                                            if (!chip) return null;
-                                            return (
-                                                <span
-                                                    className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold border-transparent ${chip.toneClass}`}
-                                                >
-                                                    {chip.label}
-                                                </span>
-                                            );
-                                        })()}
-                                    </>
-                                ) : null}
-                            </div>
-                        </div>
-                    );
-                })}
-            </div>
-        );
+        if (otherInstances.length === 0) {
+            return (
+                <div className="rounded-lg bg-surface-2 px-4 py-2.5">
+                    <p className="text-sm text-muted-foreground">
+                        No hay otros planes; el activo aparece arriba.
+                    </p>
+                </div>
+            );
+        }
+
+        return <div className="space-y-2">{otherInstances.map(renderInstanceRow)}</div>;
     };
 
     return (
@@ -193,6 +219,33 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                         <p className="flex-1 text-sm font-medium">
                             {client.nombre} {client.apellidos}
                         </p>
+                    </div>
+                )}
+
+                {mode === "create" && showClientBlock && !isLoadingInstances && featuredActiveInstance && (
+                    <div className="space-y-2">
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                            Plan activo
+                        </p>
+                        <div className="space-y-3 rounded-lg border border-success/25 bg-success/5 px-4 py-3">
+                            {renderInstanceBody(featuredActiveInstance)}
+                            {onOpenActivePlan &&
+                                featuredActiveInstance.source_plan_id != null &&
+                                featuredActiveInstance.source_plan_id > 0 && (
+                                    <div className="flex flex-col gap-2 border-t border-success/20 pt-3 sm:flex-row sm:items-center sm:justify-end">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            className="w-full shrink-0 border-success/30 bg-surface hover:bg-surface-2 sm:w-auto"
+                                            onClick={() => onOpenActivePlan(featuredActiveInstance)}
+                                        >
+                                            <ExternalLink className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                                            Abrir plan activo
+                                        </Button>
+                                    </div>
+                                )}
+                        </div>
                     </div>
                 )}
 

@@ -9,8 +9,9 @@
  * @updated v8.0.0 - Editor unificado con edición (shared validation + mismo formulario)
  */
 
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
@@ -45,6 +46,21 @@ export const CreateTrainingPlan: React.FC = () => {
     const editor = useTrainingPlanEditor(
         { kind: "create", clientId, trainerId },
         { cancelPath: fallbackPath }
+    );
+
+    const handleOpenActivePlan = useCallback(
+        (instance: TrainingPlanInstance) => {
+            const planId = instance.source_plan_id;
+            if (planId == null || planId <= 0 || clientId == null || clientId <= 0) {
+                return;
+            }
+            const params = new URLSearchParams({
+                returnToClient: String(clientId),
+                tab: "planning",
+            });
+            navigate(`/dashboard/training-plans/${planId}?${params.toString()}`);
+        },
+        [navigate, clientId]
     );
 
     useEffect(() => {
@@ -82,6 +98,7 @@ export const CreateTrainingPlan: React.FC = () => {
                 submitLabel="Crear planificación"
                 onSubmit={editor.handleSubmit}
                 onCancel={() => goBack()}
+                onOpenActivePlan={clientId ? handleOpenActivePlan : undefined}
             />
 
             {editor.recommendationsClientId != null && (
