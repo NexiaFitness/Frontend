@@ -19,7 +19,7 @@ interface SegmentButtonProps {
     selected: boolean;
     onClick: () => void;
     children: React.ReactNode;
-    /** "md" = flex-1 px-4 py-3; "sm" = min-w compacto px-3 py-2 */
+    /** "md" = flex-1 px-4 py-1.5; "sm" = min-w compacto px-3 py-1.5 */
     size?: SegmentButtonSize;
     className?: string;
     type?: "button" | "submit";
@@ -33,8 +33,8 @@ const unselectedClass =
   "rounded-lg border border-border bg-background text-foreground font-medium transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
 
 const sizeClass: Record<SegmentButtonSize, string> = {
-  md: "flex-1 px-4 py-3 text-sm",
-  sm: "min-w-[2.5rem] px-3 py-2 text-sm",
+  md: "flex-1 px-4 py-1.5 text-sm",
+  sm: "min-w-[2.5rem] px-3 py-1.5 text-sm",
 };
 
 export const SegmentButton: React.FC<SegmentButtonProps> = ({

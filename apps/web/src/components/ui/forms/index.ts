@@ -16,6 +16,8 @@ export { Textarea } from "./Textarea";
 export { Checkbox } from "./Checkbox";
 export { Slider } from "./Slider";
 export { Label } from "./Label";
+export { FormSection } from "./FormSection";
+export { CollapsibleFormGroup } from "./CollapsibleFormGroup";
 
 export type { InputType, InputSize } from "./Input";
 export type { SearchBarProps } from "./SearchBar";
@@ -25,3 +27,5 @@ export type { DatePickerButtonProps } from "./DatePickerButton";
 export type { TextareaSize } from "./Textarea";
 export type { SliderProps } from "./Slider";
 export type { LabelProps } from "./Label";
+export type { FormSectionProps } from "./FormSection";
+export type { CollapsibleFormGroupProps } from "./CollapsibleFormGroup";

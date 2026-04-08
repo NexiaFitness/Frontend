@@ -17,19 +17,26 @@ import type { TrainingGoalsStepProps } from "@nexia/shared/types/clientOnboardin
 import { TRAINING_GOAL_ENUM } from "@nexia/shared";
 import { inputClass, selectClass, textareaClass, labelClass, errorClass, helperClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
 
-export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
+interface TrainingGoalsProps extends TrainingGoalsStepProps {
+    hideHeading?: boolean;
+}
+
+export const TrainingGoals: React.FC<TrainingGoalsProps> = ({
     formData,
     errors,
     updateField,
+    hideHeading = false,
 }) => {
     return (
         <div>
             {/* Sección: Parámetros de Entrenamiento */}
             <div>
-                <div className="flex items-center gap-3 mb-4">
-                    <h3 className={sectionHeadingClass}>Parámetros de Entrenamiento</h3>
-                    <div className={sectionDividerClass} />
-                </div>
+                {!hideHeading && (
+                    <div className="flex items-center gap-3 mb-4">
+                        <h3 className={sectionHeadingClass}>Parámetros de Entrenamiento</h3>
+                        <div className={sectionDividerClass} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>

@@ -1,14 +1,13 @@
 /**
  * SomatotipoChart.tsx — Gráfico triangular de somatotipo
  *
- * Contexto:
- * - Visualiza el somatotipo del cliente en un triángulo
- * - Valores: Endomorph, Mesomorph, Ectomorph (1-7 cada uno)
- * - Calcula posición del punto en el triángulo basado en los valores
- * - Muestra descripción del somatotipo dominante
+ * Visualiza el somatotipo del cliente en un triángulo SVG.
+ * Valores: Endomorfo, Mesomorfo, Ectomorfo (1-7 cada uno).
+ * Diseñado con tokens dark-mode de Nexia Sparkle Flow.
  *
  * @author Frontend Team
  * @since v6.0.0
+ * @updated v8.0.0 - Rediseño dark-mode tokens, español, sin card wrapper propio
  */
 
 import React, { useMemo } from "react";
@@ -19,225 +18,129 @@ interface SomatotipoChartProps {
     ectomorph: number | null | undefined;
 }
 
-interface SomatotypeDescription {
+interface SomatotypeInfo {
     dominant: string;
     description: string;
 }
 
-// Descripciones de somatotipos
-const SOMATOTYPE_DESCRIPTIONS: Record<string, SomatotypeDescription> = {
+const SOMATOTYPE_INFO: Record<string, SomatotypeInfo> = {
     endomorph: {
-        dominant: "Endomorfo Dominante",
-        description: "Tendencia a acumular grasa corporal con estructura ósea más grande. Responde bien a entrenamiento de resistencia y control calórico.",
+        dominant: "Endomorfo dominante",
+        description: "Tendencia a acumular grasa corporal con estructura ósea mayor. Responde bien a entrenamiento de resistencia y control calórico.",
     },
     mesomorph: {
-        dominant: "Mesomorfo Dominante",
-        description: "Estructura naturalmente muscular con músculos bien definidos y físico atlético. Responde bien al entrenamiento de resistencia y tiende a desarrollar músculo eficientemente.",
+        dominant: "Mesomorfo dominante",
+        description: "Estructura muscular natural con físico atlético. Responde eficientemente al entrenamiento de fuerza y desarrolla músculo con facilidad.",
     },
     ectomorph: {
-        dominant: "Ectomorfo Dominante",
-        description: "Estructura delgada con poca grasa corporal y músculo. Responde bien a entrenamiento de fuerza con enfoque en volumen y nutrición.",
+        dominant: "Ectomorfo dominante",
+        description: "Estructura delgada con poca grasa y músculo. Responde bien a entrenamiento de fuerza con enfoque en volumen y nutrición.",
+    },
+    balanced: {
+        dominant: "Balanceado",
+        description: "Combinación equilibrada de características endomórficas, mesomórficas y ectomórficas.",
+    },
+    unknown: {
+        dominant: "Sin datos",
+        description: "No hay datos de somatotipo disponibles todavía.",
     },
 };
+
+const TRI_TOP = 30;
+const TRI_BOTTOM = 260;
+const TRI_LEFT = 40;
+const TRI_RIGHT = 360;
+const TRI_CENTER_X = 200;
 
 export const SomatotipoChart: React.FC<SomatotipoChartProps> = ({
     endomorph,
     mesomorph,
     ectomorph,
 }) => {
-    // Calcular posición del punto en el triángulo
-    // Triángulo equilátero con vértices:
-    // - Endomorph: (0, altura) - abajo izquierda
-    // - Mesomorph: (ancho/2, 0) - arriba centro
-    // - Ectomorph: (ancho, altura) - abajo derecha
     const { x, y, dominant, description } = useMemo(() => {
-        // Valores por defecto si no hay datos
         const endo = endomorph ?? 0;
         const meso = mesomorph ?? 0;
         const ecto = ectomorph ?? 0;
-
-        // Si todos son 0, centrar el punto
-        if (endo === 0 && meso === 0 && ecto === 0) {
-            return {
-                x: 200,
-                y: 150,
-                dominant: "No definido",
-                description: "No hay datos de somatotipo disponibles.",
-            };
-        }
-
-        // Normalizar valores (suma total)
         const total = endo + meso + ecto;
+
         if (total === 0) {
-            return {
-                x: 200,
-                y: 150,
-                dominant: "No definido",
-                description: "No hay datos de somatotipo disponibles.",
-            };
+            return { x: TRI_CENTER_X, y: 150, ...SOMATOTYPE_INFO.unknown };
         }
 
-        const endoNorm = endo / total;
-        const mesoNorm = meso / total;
-        const ectoNorm = ecto / total;
+        const eN = endo / total;
+        const mN = meso / total;
+        const ecN = ecto / total;
 
-        // Dimensiones del triángulo (SVG viewBox: 0 0 400 300)
-        const width = 400;
-        const height = 300;
-        const triangleHeight = height * 0.8; // 80% de la altura
-        const triangleTop = height * 0.1; // 10% desde arriba
-        const triangleBottom = triangleTop + triangleHeight;
-        const triangleLeft = width * 0.1; // 10% desde la izquierda
-        const triangleRight = width * 0.9; // 90% desde la izquierda
-        const triangleCenterX = width / 2;
+        const px = eN * TRI_LEFT + mN * TRI_CENTER_X + ecN * TRI_RIGHT;
+        const py = eN * TRI_BOTTOM + mN * TRI_TOP + ecN * TRI_BOTTOM;
 
-        // Coordenadas de los vértices
-        const endoX = triangleLeft;
-        const endoY = triangleBottom;
-        const mesoX = triangleCenterX;
-        const mesoY = triangleTop;
-        const ectoX = triangleRight;
-        const ectoY = triangleBottom;
+        let info = SOMATOTYPE_INFO.balanced;
+        if (endo > meso && endo > ecto) info = SOMATOTYPE_INFO.endomorph;
+        else if (meso > endo && meso > ecto) info = SOMATOTYPE_INFO.mesomorph;
+        else if (ecto > endo && ecto > meso) info = SOMATOTYPE_INFO.ectomorph;
 
-        // Calcular posición usando coordenadas baricéntricas
-        const x = endoNorm * endoX + mesoNorm * mesoX + ectoNorm * ectoX;
-        const y = endoNorm * endoY + mesoNorm * mesoY + ectoNorm * ectoY;
-
-        // Determinar dominante
-        let dominant = "Balanceado";
-        let description = "Combinación equilibrada de características endomórficas, mesomórficas y ectomórficas.";
-
-        if (endo > meso && endo > ecto) {
-            dominant = SOMATOTYPE_DESCRIPTIONS.endomorph.dominant;
-            description = SOMATOTYPE_DESCRIPTIONS.endomorph.description;
-        } else if (meso > endo && meso > ecto) {
-            dominant = SOMATOTYPE_DESCRIPTIONS.mesomorph.dominant;
-            description = SOMATOTYPE_DESCRIPTIONS.mesomorph.description;
-        } else if (ecto > endo && ecto > meso) {
-            dominant = SOMATOTYPE_DESCRIPTIONS.ectomorph.dominant;
-            description = SOMATOTYPE_DESCRIPTIONS.ectomorph.description;
-        }
-
-        return { x, y, dominant, description };
+        return { x: px, y: py, ...info };
     }, [endomorph, mesomorph, ectomorph]);
 
     return (
-        <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-3 mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Somatotipo</h3>
-                <div className="flex-1 h-0.5 bg-gray-900"></div>
-            </div>
+        <div className="space-y-5">
+            {/* Chart + values */}
+            <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
+                {/* SVG triangle */}
+                <div className="w-full max-w-[260px] shrink-0">
+                    <svg viewBox="0 0 400 300" className="h-auto w-full" xmlns="http://www.w3.org/2000/svg">
+                        {/* Grid lines (subtle) */}
+                        <line x1={TRI_LEFT} y1={TRI_BOTTOM} x2={TRI_CENTER_X} y2={TRI_TOP} stroke="hsl(var(--primary) / .12)" strokeWidth="1" />
+                        <line x1={TRI_CENTER_X} y1={TRI_TOP} x2={TRI_RIGHT} y2={TRI_BOTTOM} stroke="hsl(var(--primary) / .12)" strokeWidth="1" />
+                        <line x1={TRI_RIGHT} y1={TRI_BOTTOM} x2={TRI_LEFT} y2={TRI_BOTTOM} stroke="hsl(var(--primary) / .12)" strokeWidth="1" />
 
-            {/* Layout: Gráfico a la izquierda, valores a la derecha */}
-            <div className="flex flex-col md:flex-row gap-6 items-start mb-4">
-                {/* Gráfico SVG - Izquierda */}
-                <div className="flex-shrink-0">
-                    <svg
-                        viewBox="0 0 400 300"
-                        className="w-full max-w-xs h-auto"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        {/* Triángulo principal */}
+                        {/* Main triangle */}
                         <polygon
-                            points="40,260 200,30 360,260"
-                            fill="none"
-                            stroke="#4A67B3"
+                            points={`${TRI_LEFT},${TRI_BOTTOM} ${TRI_CENTER_X},${TRI_TOP} ${TRI_RIGHT},${TRI_BOTTOM}`}
+                            fill="hsl(var(--primary) / .06)"
+                            stroke="hsl(var(--primary))"
                             strokeWidth="2"
+                            strokeLinejoin="round"
                         />
 
-                        {/* Etiquetas de vértices */}
-                        <text
-                            x="40"
-                            y="280"
-                            textAnchor="middle"
-                            className="text-xs font-medium fill-gray-700"
-                        >
-                            Endomorph
-                        </text>
-                        <text
-                            x="200"
-                            y="20"
-                            textAnchor="middle"
-                            className="text-xs font-medium fill-gray-700"
-                        >
-                            Mesomorph
-                        </text>
-                        <text
-                            x="360"
-                            y="280"
-                            textAnchor="middle"
-                            className="text-xs font-medium fill-gray-700"
-                        >
-                            Ectomorph
-                        </text>
+                        {/* Inner labels */}
+                        <text x="120" y="205" textAnchor="middle" fontSize="11" fill="hsl(var(--muted-foreground))">Suave</text>
+                        <text x={TRI_CENTER_X} y="105" textAnchor="middle" fontSize="11" fill="hsl(var(--muted-foreground))">Muscular</text>
+                        <text x="280" y="205" textAnchor="middle" fontSize="11" fill="hsl(var(--muted-foreground))">Delgado</text>
 
-                        {/* Etiquetas internas */}
-                        <text
-                            x="120"
-                            y="200"
-                            textAnchor="middle"
-                            className="text-xs fill-gray-500"
-                        >
-                            Soft
-                        </text>
-                        <text
-                            x="200"
-                            y="100"
-                            textAnchor="middle"
-                            className="text-xs fill-gray-500"
-                        >
-                            Muscular
-                        </text>
-                        <text
-                            x="280"
-                            y="200"
-                            textAnchor="middle"
-                            className="text-xs fill-gray-500"
-                        >
-                            Lean
-                        </text>
+                        {/* Vertex labels */}
+                        <text x={TRI_LEFT} y="285" textAnchor="middle" fontSize="12" fontWeight="500" fill="hsl(var(--foreground))">Endomorfo</text>
+                        <text x={TRI_CENTER_X} y="18" textAnchor="middle" fontSize="12" fontWeight="500" fill="hsl(var(--foreground))">Mesomorfo</text>
+                        <text x={TRI_RIGHT} y="285" textAnchor="middle" fontSize="12" fontWeight="500" fill="hsl(var(--foreground))">Ectomorfo</text>
 
-                        {/* Punto del somatotipo */}
-                        <circle
-                            cx={x}
-                            cy={y}
-                            r="6"
-                            fill="#4A67B3"
-                            stroke="white"
-                            strokeWidth="2"
-                        />
+                        {/* Data point with glow */}
+                        <circle cx={x} cy={y} r="12" fill="hsl(var(--primary) / .25)" />
+                        <circle cx={x} cy={y} r="6" fill="hsl(var(--primary))" stroke="hsl(var(--background))" strokeWidth="2" />
                     </svg>
                 </div>
 
-                {/* Valores numéricos - Derecha */}
-                <div className="flex-1 space-y-3">
-                    <div>
-                        <p className="text-sm text-gray-600 mb-1">Endomorph</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                            {endomorph ?? "—"}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600 mb-1">Mesomorph</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                            {mesomorph ?? "—"}
-                        </p>
-                    </div>
-                    <div>
-                        <p className="text-sm text-gray-600 mb-1">Ectomorph</p>
-                        <p className="text-lg font-semibold text-gray-900">
-                            {ectomorph ?? "—"}
-                        </p>
-                    </div>
+                {/* Numeric values */}
+                <div className="flex w-full gap-6 sm:flex-col sm:gap-4">
+                    <ValuePill label="Endomorfo" value={endomorph} />
+                    <ValuePill label="Mesomorfo" value={mesomorph} />
+                    <ValuePill label="Ectomorfo" value={ectomorph} />
                 </div>
             </div>
 
-            {/* Descripción del somatotipo dominante */}
-            <div className="bg-primary-50 border border-primary-200 rounded-lg p-4">
-                <p className="font-semibold text-primary-900 mb-2">{dominant}</p>
-                <p className="text-sm text-primary-800">{description}</p>
+            {/* Dominant description */}
+            <div className="rounded-lg border border-primary/20 bg-primary/10 px-4 py-3">
+                <p className="text-sm font-semibold text-primary">{dominant}</p>
+                <p className="mt-1 text-xs leading-relaxed text-primary/80">{description}</p>
             </div>
         </div>
     );
 };
 
+function ValuePill({ label, value }: { label: string; value: number | null | undefined }) {
+    return (
+        <div className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-center sm:text-left">
+            <p className="text-xs text-muted-foreground">{label}</p>
+            <p className="text-base font-semibold text-foreground">{value ?? "—"}</p>
+        </div>
+    );
+}

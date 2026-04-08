@@ -119,8 +119,6 @@ export const ClientDetail: React.FC = () => {
     // Cargar todos los datos del cliente
     const {
         client,
-        progressHistory,
-        progressAnalytics,
         trainingPlans,
         isLoadingPlans,
         isLoading,
@@ -299,12 +297,7 @@ export const ClientDetail: React.FC = () => {
             case "progress":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
-                        <ClientProgressTab
-                            clientId={clientId}
-                            client={client}
-                            progressHistory={progressHistory}
-                            progressAnalytics={progressAnalytics}
-                        />
+                        <ClientProgressTab clientId={clientId} client={client} />
                     </Suspense>
                 );
             case "planning":

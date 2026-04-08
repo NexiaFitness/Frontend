@@ -851,38 +851,29 @@ const ClientDailyCoherenceTabComponent: React.FC<ClientDailyCoherenceTabProps> =
                 </p>
             </div>
 
-            {/* Sub-tabs: Week, Month, Year, Training Block — ancho completo como el resto de tabs del cliente */}
             <div className="w-full space-y-4">
-                <nav
-                    aria-label="Period tabs"
-                    className="flex w-full min-w-0 gap-1 overflow-x-auto border-b border-border [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-primary/30"
-                >
-                    {[
+                <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Periodo">
+                    {([
                         { id: "week" as PeriodType, label: "Semana" },
                         { id: "month" as PeriodType, label: "Mes" },
                         { id: "year" as PeriodType, label: "Año" },
-                        { id: "training_block" as PeriodType, label: "Bloque de Entrenamiento" },
-                    ].map((tab) => {
-                        const isActive = periodType === tab.id;
-                        return (
-                            <button
-                                key={tab.id}
-                                onClick={() => handlePeriodChange(tab.id)}
-                                className={`
-                                    relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex-none min-w-[120px] text-center
-                                    ${isActive
-                                        ? "text-primary"
-                                        : "text-muted-foreground hover:text-foreground"
-                                    }
-                                    cursor-pointer
-                                `}
-                                aria-current={isActive ? "page" : undefined}
-                            >
-                                {tab.label}
-                            </button>
-                        );
-                    })}
-                </nav>
+                        { id: "training_block" as PeriodType, label: "Bloque" },
+                    ] as const).map((opt) => (
+                        <button
+                            key={opt.id}
+                            type="button"
+                            onClick={() => handlePeriodChange(opt.id)}
+                            className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                                periodType === opt.id
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border text-muted-foreground hover:border-input hover:text-foreground"
+                            }`}
+                            aria-pressed={periodType === opt.id}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
 
                 {/* Selector de periodo con navegación */}
                 {periodType === "training_block" && periodDisplay && !blockTabEmpty && (

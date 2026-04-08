@@ -1,8 +1,8 @@
 /**
- * PageTitle — Título de página reutilizable (mismo patrón que tabs cliente / listados dashboard)
+ * PageTitle — Título de página reutilizable.
  *
- * Alineado con TYPOGRAPHY.dashboardViewHeading: text-base font-semibold (p. ej. «Sesiones del cliente»).
- * Subtítulo opcional: text-sm text-muted-foreground.
+ * h1 → TYPOGRAPHY.pageTitle  (text-xl font-bold sm:text-2xl) para vistas principales.
+ * h2/h3 → TYPOGRAPHY.dashboardViewHeading (text-base font-semibold) para tabs/secciones.
  *
  * @author Frontend Team
  * @since v5.x
@@ -33,11 +33,14 @@ export const PageTitle: React.FC<PageTitleProps> = ({
     subtitleClassName,
 }) => {
     const Heading = titleAs;
+    const isPageLevel = titleAs === "h1";
+    const headingClass = isPageLevel ? TYPOGRAPHY.pageTitle : TYPOGRAPHY.dashboardViewHeading;
+
     return (
         <div className={cn(className)}>
-            <Heading className={cn(TYPOGRAPHY.dashboardViewHeading, "text-foreground")}>{title}</Heading>
+            <Heading className={cn(headingClass, "text-foreground")}>{title}</Heading>
             {subtitle != null && subtitle !== "" && (
-                <p className={cn("mt-0.5 text-sm text-muted-foreground", subtitleClassName)}>
+                <p className={cn(isPageLevel ? "mt-1" : "mt-0.5", "text-sm text-muted-foreground", subtitleClassName)}>
                     {subtitle}
                 </p>
             )}

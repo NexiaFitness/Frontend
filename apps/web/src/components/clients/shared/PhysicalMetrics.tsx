@@ -17,10 +17,15 @@ import type { PhysicalMetricsStepProps } from "@nexia/shared/types/clientOnboard
 import { calculateBMI } from "@nexia/shared";
 import { inputClass, labelClass, errorClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
 
-export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({
+interface PhysicalMetricsProps extends PhysicalMetricsStepProps {
+    hideHeading?: boolean;
+}
+
+export const PhysicalMetrics: React.FC<PhysicalMetricsProps> = ({
     formData,
     errors,
     updateField,
+    hideHeading = false,
 }) => {
     const bmi = useMemo(() => {
         if (formData.peso && formData.altura) {
@@ -35,10 +40,12 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsStepProps> = ({
         <div>
             {/* Sección: Datos Antropométricos */}
             <div>
-                <div className="flex items-center gap-3 mb-4">
-                    <h3 className={sectionHeadingClass}>Datos Antropométricos</h3>
-                    <div className={sectionDividerClass} />
-                </div>
+                {!hideHeading && (
+                    <div className="flex items-center gap-3 mb-4">
+                        <h3 className={sectionHeadingClass}>Datos Antropométricos</h3>
+                        <div className={sectionDividerClass} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
