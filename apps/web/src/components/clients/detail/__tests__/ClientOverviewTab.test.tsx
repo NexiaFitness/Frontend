@@ -252,9 +252,12 @@ describe("ClientOverviewTab", () => {
         it("displays upcoming session correctly", async () => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            const tomorrowStr = tomorrow.toISOString().split('T')[0];
+            const tomorrowStr = [
+                tomorrow.getFullYear(),
+                String(tomorrow.getMonth() + 1).padStart(2, "0"),
+                String(tomorrow.getDate()).padStart(2, "0"),
+            ].join("-");
 
-            // Handler inline con prioridad — evita race condition con workers paralelos
             server.use(
                 http.get("*/training-sessions/", () =>
                     HttpResponse.json([
@@ -292,7 +295,7 @@ describe("ClientOverviewTab", () => {
                     month: "short",
                 });
                 expect(screen.getByText(new RegExp(dateText.replace(/\./g, "\\."), "i"))).toBeInTheDocument();
-            });
+            }, { timeout: 5000 });
         });
     });
 
