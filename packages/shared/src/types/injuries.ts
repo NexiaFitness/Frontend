@@ -39,6 +39,7 @@ export type PainLevel = (typeof PAIN_LEVEL)[keyof typeof PAIN_LEVEL];
 export interface Joint {
     id: number;
     name: string;
+    name_es?: string | null;
     description?: string | null;
     created_at: string;
     updated_at: string;
@@ -46,8 +47,10 @@ export interface Joint {
 
 export interface Movement {
     id: number;
-    joint_id: number;
+    joint_id?: number;
     name: string;
+    name_en?: string | null;
+    name_es?: string | null;
     description?: string | null;
     created_at: string;
     updated_at: string;
@@ -56,6 +59,7 @@ export interface Movement {
 export interface Muscle {
     id: number;
     name: string;
+    name_es?: string | null;
     joint_id?: number | null;
     description?: string | null;
     created_at: string;
@@ -69,19 +73,23 @@ export interface Muscle {
 export interface ClientInjury {
     id: number;
     client_id: number;
-    trainer_id: number;
     joint_id: number;
-    painful_movement_id: number; // ⚠️ CRÍTICO: es painful_movement_id, no movement_id
+    painful_movement_id: number;
     affected_muscle_id?: number | null;
     pain_level: PainLevel;
-    severity?: "mild" | "moderate" | "severe"; // Backend ClientInjuryOut
-    status: InjuryStatus;
-    restrictions?: string | null;
+    severity?: "mild" | "moderate" | "severe";
+    is_active: boolean;
+    restrictions?: string[] | string | null;
     notes?: string | null;
-    injury_date: string; // ISO date
-    resolution_date?: string | null;
+    start_date: string; // ISO date (maps to DB start_date)
     created_at: string;
     updated_at: string;
+    /** @deprecated Use is_active to derive status. DB has no status column. */
+    status?: InjuryStatus;
+    /** @deprecated Alias for start_date */
+    injury_date?: string;
+    /** @deprecated Not stored in DB — resolved = is_active:false */
+    resolution_date?: string | null;
 }
 
 // ============================================================================
@@ -102,12 +110,13 @@ export interface CreateInjuryRequest {
 }
 
 export interface UpdateInjuryRequest {
+    joint_id?: number;
+    painful_movement_id?: number;
     pain_level?: PainLevel;
     severity?: "mild" | "moderate" | "severe";
-    status?: InjuryStatus;
-    restrictions?: string | null;
+    restrictions?: string[] | null;
     notes?: string | null;
-    resolution_date?: string | null;
+    is_active?: boolean;
 }
 
 // ============================================================================
@@ -116,8 +125,11 @@ export interface UpdateInjuryRequest {
 
 export interface InjuryWithDetails extends ClientInjury {
     joint_name?: string;
+    joint_name_es?: string;
     movement_name?: string;
+    movement_name_es?: string;
     muscle_name?: string;
+    muscle_name_es?: string;
 }
 
 

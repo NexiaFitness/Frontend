@@ -16,8 +16,10 @@ import {
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getMutationErrorMessage } from "@nexia/shared";
+import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodizationPanel } from "./PeriodizationPanel";
@@ -72,9 +74,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   planEndDate,
 }) => {
   const navigate = useNavigate();
-  const { showWarning } = useToast();
+  const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
+
+  const { data: clientProfile } = useGetClientQuery(clientId!, { skip: !clientId });
 
   const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
   const {
@@ -188,14 +192,25 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       if (editingBlockId) {
         await updateBlock({ planId, blockId: editingBlockId, data: payload }).unwrap();
         setEditingBlockId(null);
+        showSuccess("Bloque de periodización actualizado correctamente.");
       } else {
         await createBlock({ planId, data: payload }).unwrap();
+        showSuccess("Bloque de periodización creado correctamente.");
       }
       reset();
-    } catch {
-      /* RTK Query shows error via hook */
+    } catch (err) {
+      showError(getMutationErrorMessage(err));
     }
-  }, [form, planId, editingBlockId, createBlock, updateBlock, reset]);
+  }, [
+    form,
+    planId,
+    editingBlockId,
+    createBlock,
+    updateBlock,
+    reset,
+    showSuccess,
+    showError,
+  ]);
 
   const handleEditBlock = useCallback((block: PlanPeriodBlock) => {
     setEditingBlockId(block.id);
@@ -212,12 +227,19 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     if (!clientId) return;
     const existing = dayExceptions.find((ex) => ex.date === dateStr && !ex.is_trainable);
     if (existing) {
-      removeException({ clientId, date: dateStr });
+      void removeException({ clientId, date: dateStr })
+        .unwrap()
+        .then(() => {
+          showSuccess("Descanso eliminado. El día vuelve a contar como entrenable.");
+        })
+        .catch((err: unknown) => {
+          showError(getMutationErrorMessage(err));
+        });
       return;
     }
     setExceptionNote("");
     setExceptionModal({ date: dateStr });
-  }, [form.phase, clientId, dayExceptions, removeException]);
+  }, [form.phase, clientId, dayExceptions, removeException, showSuccess, showError]);
 
   const handleCreateException = useCallback(async () => {
     if (!exceptionModal || !clientId) return;
@@ -228,23 +250,25 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         is_trainable: false,
         note: exceptionNote.trim() || undefined,
       }).unwrap();
-    } catch {
-      /* RTK Query handles */
+      showSuccess("Día marcado como descanso (no entrenable).");
+    } catch (err) {
+      showError(getMutationErrorMessage(err));
     } finally {
       setExceptionModal(null);
     }
-  }, [exceptionModal, clientId, exceptionNote, createException]);
+  }, [exceptionModal, clientId, exceptionNote, createException, showSuccess, showError]);
 
   const handleConfirmDelete = useCallback(async () => {
     if (!deleteTarget) return;
     try {
       await deleteBlock({ planId, blockId: deleteTarget.id }).unwrap();
-    } catch {
-      /* handled by RTK Query */
+      showSuccess("Bloque de periodización eliminado.");
+    } catch (err) {
+      showError(getMutationErrorMessage(err));
     } finally {
       setDeleteTarget(null);
     }
-  }, [deleteTarget, planId, deleteBlock]);
+  }, [deleteTarget, planId, deleteBlock, showSuccess, showError]);
 
   if (isLoading) {
     return (
@@ -266,9 +290,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     <section className="space-y-6">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-base font-semibold text-foreground">
-          Editor de periodización del plan
-        </h3>
+        <PageTitle titleAs="h3" title="Editor de periodización del plan" />
         <button
           type="button"
           onClick={() => navigate(`/dashboard/training-plans/${planId}`)}
@@ -295,6 +317,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             formState={form}
             onDayClick={guardedDayClick}
             onDayRightClick={handleDayContextMenu}
+            habitualTrainingDays={clientProfile?.training_days ?? null}
           />
         </div>
         <div className="lg:w-[40%]">

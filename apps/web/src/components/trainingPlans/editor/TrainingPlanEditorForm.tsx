@@ -10,6 +10,7 @@
 
 import React, { useMemo } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea, DatePickerButton, Label, FormCombobox, FormSelect } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
@@ -387,10 +388,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                 </form>
             </div>
 
-            <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
-                style={{ left: "var(--sidebar-width, 0)" }}
-            >
+            <DashboardFixedFooter>
                 <div className="flex items-center justify-end gap-3">
                     <Button
                         type="button"
@@ -412,7 +410,7 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                         {submitLabel}
                     </Button>
                 </div>
-            </div>
+            </DashboardFixedFooter>
         </div>
     );
 };

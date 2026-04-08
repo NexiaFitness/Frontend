@@ -4,7 +4,7 @@
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión manualmente
  * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
- * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta clients/:id/sessions/new)
+ * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta …/sessions/new/constructor)
  * - Añadir ejercicio: botón abre ExercisePickerPanel (panel lateral, lista por letra)
  * - P2: Si no hay plan activo para la fecha seleccionada → StandaloneSession (sesión libre)
  *
@@ -16,15 +16,19 @@
  * @updated P2 - StandaloneSession cuando no hay plan activo en la fecha
  */
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation, Link } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
-import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
+import {
+    useGetTrainingPlanQuery,
+    useGetTrainingPlanRecommendationsQuery,
+    useGetActivePlanByClientQuery,
+} from "@nexia/shared/api/trainingPlansApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useCreateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
@@ -50,7 +54,7 @@ import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload"
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
-import { PageTitle } from "@/components/dashboard/shared";
+import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import type { RootState } from "@nexia/shared/store";
@@ -102,6 +106,13 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     });
     const trainerId = trainerProfile?.id ?? 0;
 
+    /** Plan activo del cliente (Instance); solo en ruta anidada con `clientIdProp`. */
+    const { data: activePlanForClient, isLoading: isLoadingActivePlan } = useGetActivePlanByClientQuery(
+        resolvedClientId || 0,
+        { skip: !clientIdProp || !resolvedClientId || resolvedClientId <= 0 }
+    );
+    const clientForcedPlan = Boolean(clientIdProp && activePlanForClient);
+
     // Obtener datos según el flujo
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(resolvedClientId || 0, { skip: !resolvedClientId });
     const { data: plan, isLoading: isLoadingPlan } = useGetTrainingPlanQuery(planId || 0, { skip: !planId });
@@ -121,8 +132,15 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(planId);
 
-    // Autoseleccionar plan si solo hay uno activo
     useEffect(() => {
+        if (clientForcedPlan && activePlanForClient) {
+            setSelectedPlanId(activePlanForClient.id);
+        }
+    }, [clientForcedPlan, activePlanForClient]);
+
+    // Autoseleccionar plan si solo hay uno activo (no pisar plan activo forzado en contexto cliente)
+    useEffect(() => {
+        if (clientForcedPlan) return;
         if (!planId && clientPlans && clientPlans.length > 0) {
             const activePlans = clientPlans.filter((p) => p.status === "active");
             if (activePlans.length === 1) {
@@ -131,7 +149,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 setSelectedPlanId(clientPlans[0].id);
             }
         }
-    }, [clientPlans, planId]);
+    }, [clientPlans, planId, clientForcedPlan]);
 
     // Si viene planId, obtener clientId del plan y cargar el cliente del plan
     const effectiveClientId = planId && plan ? plan.client_id : resolvedClientId;
@@ -174,6 +192,23 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         plannedVolume: "5",
         notes: "",
     });
+
+    useEffect(() => {
+        if (!dateFromQuery || !/^\d{4}-\d{2}-\d{2}$/.test(dateFromQuery)) return;
+        setFormData((prev) =>
+            prev.sessionDate === dateFromQuery ? prev : { ...prev, sessionDate: dateFromQuery }
+        );
+    }, [dateFromQuery]);
+
+    useEffect(() => {
+        if (!activePlanForClient || !clientIdProp) return;
+        const { start_date, end_date } = activePlanForClient;
+        setFormData((prev) => {
+            if (!prev.sessionDate) return prev;
+            if (prev.sessionDate >= start_date && prev.sessionDate <= end_date) return prev;
+            return { ...prev, sessionDate: start_date };
+        });
+    }, [activePlanForClient, clientIdProp]);
 
     const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
@@ -247,8 +282,13 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         );
     }, [clientPlans, formData.sessionDate]);
 
-    // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
-    const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
+    // P2: Standalone solo si no forzamos el plan activo (ruta cliente + GET active-by-client)
+    const useStandaloneSession =
+        !clientForcedPlan &&
+        !planId &&
+        !!resolvedClientId &&
+        !isLoadingPlans &&
+        !hasActivePlanForDate;
 
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
@@ -266,6 +306,18 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         SessionCoherenceWarning[] | null
     >(null);
     const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
+
+    /** Flujo clients/.../sessions/new/constructor: el <main> del dashboard conserva scroll; alinear con "Nueva Sesión". */
+    const clientFlowTitleAnchorRef = useRef<HTMLDivElement>(null);
+    const embedLoadingScreen =
+        isLoadingClient || isLoadingPlan || isLoadingPlans || (Boolean(clientIdProp) && isLoadingActivePlan);
+
+    useLayoutEffect(() => {
+        if (!clientIdProp) return;
+        if (embedLoadingScreen) return;
+        if (postCreateCoherenceWarnings != null && postCreateCoherenceWarnings.length > 0) return;
+        clientFlowTitleAnchorRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+    }, [clientIdProp, embedLoadingScreen, dateFromQuery, postCreateCoherenceWarnings]);
 
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
@@ -523,7 +575,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         }
     };
 
-    if (isLoadingClient || isLoadingPlan || isLoadingPlans) {
+    if (isLoadingClient || isLoadingPlan || isLoadingPlans || (Boolean(clientIdProp) && isLoadingActivePlan)) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner size="lg" />
@@ -563,8 +615,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         <>
             <div className="space-y-6 pb-24">
                 {/* Header + Volver — mismo patrón que dashboard */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <PageTitle title="Nueva Sesión" />
+                <div
+                    ref={clientFlowTitleAnchorRef}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 scroll-mt-2"
+                >
+                    <PageTitle title="Nueva Sesión" titleAs={clientIdProp ? "h2" : "h1"} />
                     <Button
                         variant="outline"
                         size="sm"
@@ -656,6 +711,18 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             disabled
                                             className="bg-muted"
                                         />
+                                    ) : clientForcedPlan ? (
+                                        <Input
+                                            type="text"
+                                            value={
+                                                activePlanForClient?.display_name ||
+                                                activePlanForClient?.name ||
+                                                "Plan activo"
+                                            }
+                                            disabled
+                                            className="bg-muted"
+                                            aria-label="Plan de entrenamiento activo (no modificable)"
+                                        />
                                     ) : planId ? (
                                         <Input
                                             type="text"
@@ -704,7 +771,24 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         value={formData.sessionDate}
                                         onChange={(v) => setFormData({ ...formData, sessionDate: v })}
                                         variant="form"
+                                        disabled={clientForcedPlan}
+                                        aria-label={
+                                            clientForcedPlan
+                                                ? "Fecha de la sesión: elige el día en el calendario de periodización"
+                                                : "Fecha de la sesión"
+                                        }
                                     />
+                                    {clientForcedPlan && clientIdProp != null && (
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            <Link
+                                                to={`/dashboard/clients/${clientIdProp}/sessions/new?date=${encodeURIComponent(formData.sessionDate)}`}
+                                                className="text-primary underline-offset-2 hover:underline font-medium"
+                                            >
+                                                Elegir otra fecha en el calendario
+                                            </Link>
+                                            <span className="text-muted-foreground"> (vigencia del plan activo).</span>
+                                        </p>
+                                    )}
                                 </div>
                                 <div>
                                     <label htmlFor="create-session-type" className="block text-xs font-medium text-muted-foreground mb-1.5">
@@ -890,11 +974,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 </form>
             </div>
 
-            {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
-            <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
-                style={{ left: "var(--sidebar-width, 0)" }}
-            >
+            <DashboardFixedFooter>
                 <div className="flex items-center justify-between gap-3">
                     <Button
                         type="button"
@@ -960,7 +1040,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         </Button>
                     </div>
                 </div>
-            </div>
+            </DashboardFixedFooter>
         </>
     );
 };

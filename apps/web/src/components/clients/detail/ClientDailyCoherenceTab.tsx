@@ -23,11 +23,9 @@ import React, { useState, useMemo, useCallback } from "react";
 import { useCoherence, useClientActiveBlock } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import {
-    PeriodBlockEmptyCallout,
-    PeriodBlockEmptyIconDecoration,
-    periodBlockDashedShellClassName,
-} from "@/components/trainingPlans/periodization/PeriodBlockEmptyCallout";
+import { PeriodBlockEmptyCallout } from "@/components/trainingPlans/periodization/PeriodBlockEmptyCallout";
+import { PeriodBlockEmptyIconDecoration } from "@/components/trainingPlans/periodization/PeriodBlockEmptyIconDecoration";
+import { periodBlockDashedShellClassName } from "@/components/trainingPlans/periodization/periodBlockEmptyCallout.styles";
 import { cn } from "@/lib/utils";
 import { coherenceDashboardTooltipStyle } from "@/lib/coherenceChartTheme";
 import type {

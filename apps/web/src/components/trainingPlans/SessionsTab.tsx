@@ -19,10 +19,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTrainingSessions } from '@nexia/shared/hooks/training/useTrainingSessions';
 import { SessionCard } from '@/components/trainingSessions';
-import {
-    PeriodBlockEmptyCallout,
-    periodBlockEmptyCalloutOutlineCtaClassName,
-} from '@/components/trainingPlans/periodization/PeriodBlockEmptyCallout';
+import { PeriodBlockEmptyCallout } from '@/components/trainingPlans/periodization/PeriodBlockEmptyCallout';
+import { periodBlockEmptyCalloutOutlineCtaClassName } from '@/components/trainingPlans/periodization/periodBlockEmptyCallout.styles';
 import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
 import { BaseModal } from '@/components/ui/modals/BaseModal';

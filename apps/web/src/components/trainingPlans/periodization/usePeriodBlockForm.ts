@@ -13,7 +13,8 @@ export interface PeriodBlockFormState {
   intensityLevel: number;
 }
 
-const INITIAL_STATE: PeriodBlockFormState = {
+/** Estado inicial exportable (p. ej. calendario de periodización en solo lectura / selector de fecha). */
+export const IDLE_PERIOD_BLOCK_FORM_STATE: PeriodBlockFormState = {
   phase: "idle",
   startDate: null,
   endDate: null,
@@ -21,6 +22,8 @@ const INITIAL_STATE: PeriodBlockFormState = {
   volumeLevel: 5,
   intensityLevel: 5,
 };
+
+const INITIAL_STATE = IDLE_PERIOD_BLOCK_FORM_STATE;
 
 export function usePeriodBlockForm(
   existingBlocks: PlanPeriodBlock[],

@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/buttons";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
 import { Input, FormSelect, DatePickerButton } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
+import { PageTitle } from "@/components/dashboard/shared";
 
 type PlansTabId = "planning" | "templates";
 
@@ -329,16 +330,14 @@ export const TrainingPlansPage: React.FC = () => {
             )}
 
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">
-                        {activeTab === "planning" ? "Planificación" : "Plantillas"}
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {activeTab === "planning"
+                <PageTitle
+                    title={activeTab === "planning" ? "Planificación" : "Plantillas"}
+                    subtitle={
+                        activeTab === "planning"
                             ? `${filteredAssignedPlans.length} planes activos`
-                            : `${filteredTemplates.length} plantillas disponibles`}
-                    </p>
-                </div>
+                            : `${filteredTemplates.length} plantillas disponibles`
+                    }
+                />
                 {activeTab === "planning" ? (
                     <Button size="sm" onClick={handleCreatePlan}>
                         <Plus className="mr-1 h-4 w-4" aria-hidden />

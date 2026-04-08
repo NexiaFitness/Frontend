@@ -15,7 +15,7 @@
  * @updated Marzo 2026 - Eliminado CreatePlanModal; navegación a /training-plans/create para crear planes
  */
 
-import React, { Suspense, lazy, useState, useCallback } from "react";
+import React, { Suspense, lazy, useState, useCallback, useRef, useLayoutEffect } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { useClientQuickNote } from "@/hooks/clients/useClientQuickNote";
@@ -65,6 +65,8 @@ const TABS: Tab[] = [
 export const ClientDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    /** Anclaje visual: al cambiar de tab el `<main>` del dashboard conserva scroll; alineamos la fila de pestañas al inicio del viewport de scroll. */
+    const clientTabsAnchorRef = useRef<HTMLDivElement>(null);
 
     // Tab navigation con query parameters
     const { activeTab, setActiveTab } = useTabNavigation<TabId>({
@@ -178,6 +180,11 @@ export const ClientDetail: React.FC = () => {
         refetchAll();
         setActiveTab("planning");
     }, [refetchAll, setActiveTab]);
+
+    useLayoutEffect(() => {
+        if (isLoading) return;
+        clientTabsAnchorRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
+    }, [activeTab, isLoading]);
 
     const clientName = client ? `${client.nombre} ${client.apellidos}` : undefined;
 
@@ -332,13 +339,15 @@ export const ClientDetail: React.FC = () => {
                 isSavingQuickNote={isSavingQuickNote}
             />
 
-            {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}
-            <TabsBar
-                items={TABS}
-                value={activeTab}
-                onChange={(id) => setActiveTab(id as TabId)}
-                ariaLabel="Tabs del cliente"
-            />
+            {/* Tabs — barra de pestañas; ancla scroll en el <main> del dashboard al cambiar tab / ?tab= */}
+            <div ref={clientTabsAnchorRef} className="scroll-mt-1">
+                <TabsBar
+                    items={TABS}
+                    value={activeTab}
+                    onChange={(id) => setActiveTab(id as TabId)}
+                    ariaLabel="Tabs del cliente"
+                />
+            </div>
 
             {/* Tab Content — espacio vertical según spec (pb-8 ya en main) */}
             <div className="pt-2 pb-8">

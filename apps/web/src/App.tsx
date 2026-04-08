@@ -305,7 +305,7 @@ function App() {
             }
           />
           <Route
-            path="clients/:id/sessions/new"
+            path="clients/:id/sessions/new/*"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <ClientNewSessionPage />

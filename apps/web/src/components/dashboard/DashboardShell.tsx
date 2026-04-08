@@ -77,6 +77,7 @@ export const DashboardShell: React.FC = () => {
             />
 
             <main
+                id="dashboard-main-scroll"
                 className={cn(
                     "min-h-screen min-w-0 overflow-y-auto px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
                     sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded"

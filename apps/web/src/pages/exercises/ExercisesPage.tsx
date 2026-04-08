@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/forms";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
+import { PageTitle } from "@/components/dashboard/shared";
 import { ExerciseCard } from "@/components/exercises/ExerciseCard";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 import {
@@ -211,14 +212,7 @@ export const ExercisesPage: React.FC = () => {
         <div className="space-y-6">
             {/* Cabecera */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">
-                        Ejercicios
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {exercises.length} ejercicios disponibles
-                    </p>
-                </div>
+                <PageTitle title="Ejercicios" subtitle={`${exercises.length} ejercicios disponibles`} />
                 <Button
                     type="button"
                     variant="primary"

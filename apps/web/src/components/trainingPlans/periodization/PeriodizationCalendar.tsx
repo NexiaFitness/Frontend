@@ -12,8 +12,13 @@
  */
 
 import React, { useMemo, useCallback } from "react";
+import { Dumbbell } from "lucide-react";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import { isDateInRange, countPlannedDays, toLocalISO } from "@nexia/shared/utils/periodBlockOverlap";
+import {
+  isoLocalDateToTrainingDayValue,
+  parseHabitualTrainingDaySet,
+} from "@nexia/shared/utils/clientTrainingDays";
 import { BaseMonthCalendar, type CalendarDayInfo } from "@/components/ui/calendar/BaseMonthCalendar";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 
@@ -29,6 +34,13 @@ interface Props {
   formState: PeriodBlockFormState;
   onDayClick: (dateStr: string) => void;
   onDayRightClick?: (dateStr: string) => void;
+  /** Con `formState.phase === "idle"`, resalta un único día (p. ej. fecha de sesión en creación). */
+  sessionPickerDate?: string | null;
+  /**
+   * Días de la semana habituales de entreno del cliente (`Client.training_days`, inglés).
+   * Si hay valores válidos, las celdas en bloque con ese weekday muestran icono y la leyenda incluye “Día de entreno”.
+   */
+  habitualTrainingDays?: readonly string[] | null;
 }
 
 function parseLocal(s: string): Date {
@@ -49,7 +61,15 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   formState,
   onDayClick,
   onDayRightClick,
+  sessionPickerDate = null,
+  habitualTrainingDays = null,
 }) => {
+  const habitualDaySet = useMemo(
+    () => parseHabitualTrainingDaySet(habitualTrainingDays ?? undefined),
+    [habitualTrainingDays]
+  );
+  const showHabitualLegend = habitualDaySet.size > 0;
+
   const year = currentMonth.getFullYear();
   const month = currentMonth.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -118,9 +138,18 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       const inPlanVigencia = planWindowSet.has(dateISO);
       const hasSession = sessionDates.has(dateISO);
       const isException = exceptionDates.has(dateISO);
-      const inSel = isInSelection(dateISO);
-      const isStart = isSelectionStart(dateISO);
-      const isEnd = isSelectionEnd(dateISO);
+      const weekday = isoLocalDateToTrainingDayValue(dateISO);
+      const isHabitualTrainingWeekday =
+        weekday !== null && habitualDaySet.has(weekday);
+      const showHabitualInBlockIcon = inBlock && !isException && isHabitualTrainingWeekday;
+      const sessionPickHighlight =
+        Boolean(sessionPickerDate) &&
+        sessionPickerDate === dateISO &&
+        formState.phase === "idle";
+      const rangeInSel = isInSelection(dateISO);
+      const inSel = rangeInSel || sessionPickHighlight;
+      const isStart = sessionPickHighlight || isSelectionStart(dateISO);
+      const isEnd = sessionPickHighlight || isSelectionEnd(dateISO);
       const isSingleDay = isStart && isEnd;
 
       const outsidePlan = planStartDate && planEndDate && !inPlanVigencia;
@@ -149,7 +178,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         textClass = "text-foreground";
       }
 
-      const ringClass = isToday ? "ring-1 ring-primary ring-inset" : "";
+      const ringTodayClass = isToday ? "ring-1 ring-primary ring-inset" : "";
 
       return (
         <button
@@ -161,11 +190,17 @@ export const PeriodizationCalendar: React.FC<Props> = ({
               onDayRightClick(dateISO);
             }
           }}
-          className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringClass}`}
-          aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}`}
+          className={`relative aspect-[4/3] flex flex-col items-center justify-center text-xs font-medium transition-all hover:bg-surface-2 ${bgClass} ${textClass} ${roundClass} ${ringTodayClass}`}
+          aria-label={`${dayOfMonth}${isException ? " (descanso)" : ""}${showHabitualInBlockIcon ? ", día habitual de entreno" : ""}`}
           aria-pressed={inSel}
         >
           <span className="z-10">{dayOfMonth}</span>
+          {showHabitualInBlockIcon && (
+            <Dumbbell
+              className="pointer-events-none absolute bottom-1 right-1 h-3 w-3 shrink-0 text-primary z-[11]"
+              aria-hidden
+            />
+          )}
           {inBlock && !inSel && !hasSession && !isException && (
             <span className="absolute bottom-1 h-1 w-1 rounded-full bg-primary" />
           )}
@@ -178,7 +213,22 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         </button>
       );
     },
-    [plannedSet, planWindowSet, planStartDate, planEndDate, sessionDates, exceptionDates, isInSelection, isSelectionStart, isSelectionEnd, onDayClick, onDayRightClick]
+    [
+      plannedSet,
+      planWindowSet,
+      planStartDate,
+      planEndDate,
+      sessionDates,
+      exceptionDates,
+      isInSelection,
+      isSelectionStart,
+      isSelectionEnd,
+      onDayClick,
+      onDayRightClick,
+      formState.phase,
+      sessionPickerDate,
+      habitualDaySet,
+    ]
   );
 
   const planDaysInMonth = planWindowSet.size;
@@ -215,6 +265,12 @@ export const PeriodizationCalendar: React.FC<Props> = ({
             <span className="text-[10px] text-muted-foreground">Vigencia del plan</span>
           </div>
         )}
+        {showHabitualLegend && (
+          <div className="flex items-center gap-1.5">
+            <Dumbbell className="h-3 w-3 text-primary shrink-0" aria-hidden />
+            <span className="text-[10px] text-muted-foreground">Día de entreno</span>
+          </div>
+        )}
         <div className="flex items-center gap-1.5">
           <span className="h-2 w-2 rounded-full bg-primary/15 ring-1 ring-primary/30" />
           <span className="text-[10px] text-muted-foreground">Bloque de periodización</span>
@@ -242,7 +298,7 @@ export const PeriodizationCalendar: React.FC<Props> = ({
         )}
       </div>
     ),
-    [onDayRightClick, planStartDate, planEndDate]
+    [onDayRightClick, planStartDate, planEndDate, showHabitualLegend]
   );
 
   return (

@@ -1,121 +1,83 @@
 /**
  * useClientInjuries.ts — Hook principal para gestión de lesiones del cliente
  *
- * Orquesta:
- * - Historial completo
- * - Lesiones activas
- * - Enriquecimiento con nombres de joints/movements/muscles
+ * Consume getClientInjuries (active_only=false) que ya devuelve
+ * joint_name_es y movement_name_es desde el backend.
+ * Solo enriquece muscle_name_es desde la query de músculos.
  *
  * @author Nelson Valero
  * @since v5.7.0
+ * @updated v7.1.0 — Query unificada, name_es nativo del backend
  */
 
 import { useMemo } from "react";
 import {
     useGetClientInjuriesQuery,
-    useGetClientActiveInjuriesQuery,
-    useGetJointsQuery,
     useGetMusclesQuery,
 } from "../../api/injuriesApi";
-import type { ClientInjury, InjuryWithDetails } from "../../types/injuries";
+import type { InjuryWithDetails } from "../../types/injuries";
 
 interface UseClientInjuriesParams {
     clientId: number;
+    /** @deprecated No longer used — all injuries are fetched in a single query */
     includeHistory?: boolean;
 }
 
 interface UseClientInjuriesResult {
-    // Datos
+    injuries: InjuryWithDetails[];
     activeInjuries: InjuryWithDetails[];
-    historyInjuries: InjuryWithDetails[];
-
-    // Estados
+    isLoading: boolean;
+    /** @deprecated Alias for isLoading */
     isLoadingActive: boolean;
+    /** @deprecated Alias for isLoading */
     isLoadingHistory: boolean;
-
-    // Flags
+    activeCount: number;
     hasActiveInjuries: boolean;
+    totalCount: number;
+    /** @deprecated Alias for totalCount */
     totalInjuries: number;
 }
 
 export const useClientInjuries = ({
     clientId,
-    includeHistory = true,
 }: UseClientInjuriesParams): UseClientInjuriesResult => {
-    // =========================================================================
-    // QUERIES
-    // =========================================================================
-
     const {
-        data: activeInjuriesRaw,
-        isLoading: isLoadingActive,
-    } = useGetClientActiveInjuriesQuery(clientId);
+        data: injuriesRaw,
+        isLoading,
+    } = useGetClientInjuriesQuery({ clientId, activeOnly: false });
 
-    const {
-        data: historyInjuriesRaw,
-        isLoading: isLoadingHistory,
-    } = useGetClientInjuriesQuery(clientId, {
-        skip: !includeHistory,
-    });
-
-    const { data: jointsData } = useGetJointsQuery();
     const { data: musclesData } = useGetMusclesQuery();
 
-    const joints = Array.isArray(jointsData) ? jointsData : [];
     const muscles = Array.isArray(musclesData) ? musclesData : [];
-    const activeInjuriesList = Array.isArray(activeInjuriesRaw) ? activeInjuriesRaw : [];
-    const historyInjuriesList = Array.isArray(historyInjuriesRaw) ? historyInjuriesRaw : [];
+    const injuriesList = Array.isArray(injuriesRaw) ? injuriesRaw : [];
 
-    // =========================================================================
-    // ENRIQUECIMIENTO DE DATOS
-    // =========================================================================
-
-    const enrichInjury = (injury: ClientInjury): InjuryWithDetails => {
-        const joint = joints.find((j) => j.id === injury.joint_id);
-        const muscle = muscles.find((m) => m.id === injury.affected_muscle_id);
-
-        return {
-            ...injury,
-            joint_name: joint?.name,
-            muscle_name: muscle?.name,
-            // movement_name se podría enriquecer si cacheamos movements
-        };
-    };
+    const injuries: InjuryWithDetails[] = useMemo(() => {
+        return injuriesList.map((injury) => {
+            const muscle = injury.affected_muscle_id
+                ? muscles.find((m) => m.id === injury.affected_muscle_id)
+                : undefined;
+            return {
+                ...injury,
+                muscle_name: muscle?.name ?? injury.muscle_name,
+                muscle_name_es: muscle?.name_es ?? muscle?.name ?? injury.muscle_name_es,
+            };
+        });
+    }, [injuriesList, muscles]);
 
     const activeInjuries = useMemo(
-        () => activeInjuriesList.map(enrichInjury),
-        [activeInjuriesList, joints, muscles]
+        () => injuries.filter((i) => i.is_active),
+        [injuries],
     );
-
-    const historyInjuries = useMemo(
-        () => historyInjuriesList.map(enrichInjury),
-        [historyInjuriesList, joints, muscles]
-    );
-
-    // =========================================================================
-    // COMPUTED VALUES
-    // =========================================================================
-
-    const hasActiveInjuries = activeInjuries.length > 0;
-    const totalInjuries = historyInjuries.length;
 
     return {
+        injuries,
         activeInjuries,
-        historyInjuries,
-        isLoadingActive,
-        isLoadingHistory,
-        hasActiveInjuries,
-        totalInjuries,
+        isLoading,
+        isLoadingActive: isLoading,
+        isLoadingHistory: isLoading,
+        activeCount: activeInjuries.length,
+        hasActiveInjuries: activeInjuries.length > 0,
+        totalCount: injuries.length,
+        totalInjuries: injuries.length,
     };
 };
-
-
-
-
-
-
-
-
-
-
-

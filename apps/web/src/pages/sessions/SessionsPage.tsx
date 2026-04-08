@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/buttons";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { PaginationBar } from "@/components/ui/pagination";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
+import { PageTitle } from "@/components/dashboard/shared";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -181,16 +182,14 @@ export const SessionsPage: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">
-                        {activeTab === "sessions" ? "Sesiones" : "Plantillas"}
-                    </h1>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {activeTab === "sessions"
+                <PageTitle
+                    title={activeTab === "sessions" ? "Sesiones" : "Plantillas"}
+                    subtitle={
+                        activeTab === "sessions"
                             ? `${total} sesiones programadas`
-                            : `${templatesTotal} plantillas disponibles`}
-                    </p>
-                </div>
+                            : `${templatesTotal} plantillas disponibles`
+                    }
+                />
                 {activeTab === "sessions" ? (
                     <Button size="sm" onClick={() => navigate("/dashboard/session-programming/create-session")}>
                         <Plus className="mr-1 h-4 w-4" aria-hidden />

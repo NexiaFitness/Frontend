@@ -324,6 +324,10 @@ export {
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
+export {
+    isoLocalDateToTrainingDayValue,
+    parseHabitualTrainingDaySet,
+} from "./utils/clientTrainingDays";
 
 // Components
 export * from "./components/SmartNavigation";
