@@ -26,6 +26,7 @@ import {
     errorClass,
     textareaClass,
 } from "@/components/clients/shared/formFieldStyles";
+import { Input } from "@/components/ui/forms";
 
 interface ProgressFormProps {
     clientId: number;
@@ -145,12 +146,13 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                                 Peso <span className="text-destructive">*</span>
                             </label>
                             <div className="relative">
-                                <input
+                                <Input
                                     type="number"
+                                    size="sm"
                                     step="0.1"
                                     value={formData.peso ?? ""}
                                     onChange={(e) => updateField("peso", Number(e.target.value))}
-                                    className={`${inputClass} pr-12`}
+                                    className="pr-12"
                                     placeholder="20-300"
                                 />
                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
@@ -165,12 +167,13 @@ export const ProgressForm: React.FC<ProgressFormProps> = ({ clientId }) => {
                                 Altura <span className="text-destructive">*</span>
                             </label>
                             <div className="relative">
-                                <input
+                                <Input
                                     type="number"
+                                    size="sm"
                                     step="0.1"
                                     value={formData.altura ?? ""}
                                     onChange={(e) => updateField("altura", Number(e.target.value))}
-                                    className={`${inputClass} pr-12`}
+                                    className="pr-12"
                                     placeholder="100-250"
                                 />
                                 <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">

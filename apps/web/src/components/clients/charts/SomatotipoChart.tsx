@@ -58,9 +58,18 @@ export const SomatotipoChart: React.FC<SomatotipoChartProps> = ({
     ectomorph,
 }) => {
     const { x, y, dominant, description } = useMemo(() => {
-        const endo = endomorph ?? 0;
-        const meso = mesomorph ?? 0;
-        const ecto = ectomorph ?? 0;
+        // Si falta algún componente, no se puede representar un somatotipo válido.
+        if (
+            endomorph == null ||
+            mesomorph == null ||
+            ectomorph == null
+        ) {
+            return { x: TRI_CENTER_X, y: 150, ...SOMATOTYPE_INFO.unknown };
+        }
+
+        const endo = endomorph;
+        const meso = mesomorph;
+        const ecto = ectomorph;
         const total = endo + meso + ecto;
 
         if (total === 0) {

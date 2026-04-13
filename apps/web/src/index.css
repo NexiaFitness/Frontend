@@ -72,6 +72,17 @@
     caret-color: hsl(var(--foreground));
     transition: background-color 5000s ease-in-out 0s;
   }
+
+  /* Ocultar spinners nativos en inputs number que usan botones custom */
+  .nexia-no-native-spinners::-webkit-inner-spin-button,
+  .nexia-no-native-spinners::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .nexia-no-native-spinners[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 /* Scrollbar ExercisePickerPanel: track transparente, thumb y botones azul primary */

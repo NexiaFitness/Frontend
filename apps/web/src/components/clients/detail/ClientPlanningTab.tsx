@@ -23,6 +23,7 @@ interface ClientPlanningTabProps {
     trainingPlans?: TrainingPlan[];
     isLoadingPlans?: boolean;
     onOpenCreatePlan?: () => void;
+    onOpenUseTemplate?: () => void;
 }
 
 export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({

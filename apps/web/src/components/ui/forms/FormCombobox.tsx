@@ -2,13 +2,15 @@
  * FormCombobox.tsx — Select estilo botón con dropdown popover
  *
  * Diseño: Botón con borde, flecha derecha, popover con opciones.
- * Reemplaza el select nativo para un look más moderno tipo shadcn/ui.
+ * El listado se renderiza con portal + position fixed para no quedar recortado
+ * por ancestros con overflow-hidden (p. ej. tarjetas del constructor de sesión).
  *
  * @author Frontend Team
  * @since v2.2.0
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -33,6 +35,8 @@ const sizeStyles = {
     lg: "h-12 px-4 text-base",
 };
 
+type PopoverCoords = { top: number; left: number; width: number; maxHeight: number };
+
 export const FormCombobox: React.FC<FormComboboxProps> = ({
     value,
     onChange,
@@ -43,20 +47,69 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     size = "md",
 }) => {
     const [open, setOpen] = useState(false);
+    const [coords, setCoords] = useState<PopoverCoords>({
+        top: 0,
+        left: 0,
+        width: 0,
+        maxHeight: 240,
+    });
     const containerRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
     const selectedOption = options.find((opt) => opt.value === value);
     const displayText = selectedOption?.label || placeholder;
 
+    const updatePopoverPosition = useCallback(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const gap = 4;
+        const viewportPad = 8;
+        const belowTop = r.bottom + gap;
+        const spaceBelow = window.innerHeight - belowTop - viewportPad;
+        const spaceAbove = r.top - viewportPad;
+        const preferBelow = spaceBelow >= Math.min(120, spaceAbove);
+        const rawMax = preferBelow ? spaceBelow : spaceAbove - gap;
+        const maxHeight = Math.min(240, Math.max(1, rawMax));
+        if (preferBelow) {
+            setCoords({
+                top: belowTop,
+                left: r.left,
+                width: r.width,
+                maxHeight,
+            });
+        } else {
+            setCoords({
+                top: Math.max(viewportPad, r.top - gap - maxHeight),
+                left: r.left,
+                width: r.width,
+                maxHeight,
+            });
+        }
+    }, []);
+
+    useLayoutEffect(() => {
+        if (!open) return;
+        updatePopoverPosition();
+        const onReposition = () => updatePopoverPosition();
+        window.addEventListener("resize", onReposition);
+        window.addEventListener("scroll", onReposition, true);
+        return () => {
+            window.removeEventListener("resize", onReposition);
+            window.removeEventListener("scroll", onReposition, true);
+        };
+    }, [open, updatePopoverPosition]);
+
     useEffect(() => {
         if (!open) return;
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
+        const handlePointerDown = (e: PointerEvent) => {
+            const t = e.target as Node;
+            if (containerRef.current?.contains(t)) return;
+            if (popoverRef.current?.contains(t)) return;
+            setOpen(false);
         };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("pointerdown", handlePointerDown);
+        return () => document.removeEventListener("pointerdown", handlePointerDown);
     }, [open]);
 
     const handleSelect = (optionValue: string) => {
@@ -82,29 +135,47 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
             </button>
 
-            {open && (
-                <div className="absolute z-50 mt-1 w-full rounded-md border border-border bg-popover p-1 shadow-lg">
-                    <div className="max-h-60 overflow-auto py-1 scrollbar-primary">
-                        {options.map((option) => (
-                            <button
-                                key={option.value}
-                                type="button"
-                                onClick={() => handleSelect(option.value)}
-                                className={cn(
-                                    "relative flex w-full cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none",
-                                    "hover:bg-accent hover:text-accent-foreground",
-                                    value === option.value && "bg-accent"
-                                )}
-                            >
-                                <span className="flex-1 truncate text-left">{option.label}</span>
-                                {value === option.value && (
-                                    <Check className="ml-2 h-4 w-4 shrink-0" />
-                                )}
-                            </button>
-                        ))}
-                    </div>
-                </div>
-            )}
+            {open &&
+                typeof document !== "undefined" &&
+                createPortal(
+                    <div
+                        ref={popoverRef}
+                        role="listbox"
+                        className="fixed z-[200] w-max rounded-md border border-border bg-popover p-1 shadow-lg"
+                        style={{
+                            top: coords.top,
+                            left: coords.left,
+                            minWidth: coords.width,
+                            maxHeight: coords.maxHeight + 8,
+                        }}
+                    >
+                        <div
+                            className="overflow-auto py-1 scrollbar-primary"
+                            style={{ maxHeight: coords.maxHeight }}
+                        >
+                            {options.map((option) => (
+                                <button
+                                    key={option.value}
+                                    type="button"
+                                    role="option"
+                                    aria-selected={value === option.value}
+                                    onClick={() => handleSelect(option.value)}
+                                    className={cn(
+                                        "relative flex w-full cursor-pointer select-none items-center rounded-sm px-3 py-2 text-sm outline-none",
+                                        "hover:bg-accent hover:text-accent-foreground",
+                                        value === option.value && "bg-accent"
+                                    )}
+                                >
+                                    <span className="flex-1 truncate text-left">{option.label}</span>
+                                    {value === option.value && (
+                                        <Check className="ml-2 h-4 w-4 shrink-0" />
+                                    )}
+                                </button>
+                            ))}
+                        </div>
+                    </div>,
+                    document.body
+                )}
         </div>
     );
 };

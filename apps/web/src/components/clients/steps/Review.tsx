@@ -18,6 +18,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { FormSection } from "@/components/ui/forms";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { User, Ruler, Target, StickyNote, Activity } from "lucide-react";
+import { EmptyState } from "@/components/ui/feedback";
 
 interface ExtendedReviewProps extends ReviewStepProps {
     onBack?: () => void;
@@ -146,6 +147,26 @@ export const Review: React.FC<ExtendedReviewProps> = ({
         return days.map((d) => TRAINING_DAY_LABELS[d as TrainingDayValue] ?? d).join(", ");
     }, [formData.training_days]);
 
+    const hasSomatotypeData = useMemo(() => {
+        const hasManualValues =
+            formData.somatotype_endomorph != null ||
+            formData.somatotype_mesomorph != null ||
+            formData.somatotype_ectomorph != null;
+
+        const hasAnthropometricData = !!(
+            formData.skinfold_triceps &&
+            formData.skinfold_subscapular &&
+            formData.skinfold_supraspinal &&
+            formData.skinfold_calf &&
+            formData.girth_flexed_contracted_arm &&
+            formData.girth_maximum_calf &&
+            formData.diameter_humerus_biepicondylar &&
+            formData.diameter_femur_bicondylar
+        );
+
+        return hasManualValues || hasAnthropometricData;
+    }, [formData]);
+
     return (
         <>
             <div className="space-y-6 pb-24">
@@ -227,15 +248,38 @@ export const Review: React.FC<ExtendedReviewProps> = ({
 
                     {/* Somatotipo */}
                     <FormSection icon={<Activity className="h-4 w-4" />} title="Somatotipo">
-                        <SomatotipoChart
-                            endomorph={formData.somatotype_endomorph ?? preview?.somatotype?.endomorph ?? null}
-                            mesomorph={formData.somatotype_mesomorph ?? preview?.somatotype?.mesomorph ?? null}
-                            ectomorph={formData.somatotype_ectomorph ?? preview?.somatotype?.ectomorph ?? null}
-                        />
-                        {isLoadingPreview && (
-                            <p className="mt-2 text-center text-xs text-muted-foreground">
-                                Calculando somatotipo…
-                            </p>
+                        {hasSomatotypeData ? (
+                            <>
+                                <SomatotipoChart
+                                    endomorph={formData.somatotype_endomorph ?? preview?.somatotype?.endomorph ?? null}
+                                    mesomorph={formData.somatotype_mesomorph ?? preview?.somatotype?.mesomorph ?? null}
+                                    ectomorph={formData.somatotype_ectomorph ?? preview?.somatotype?.ectomorph ?? null}
+                                />
+                                {isLoadingPreview && (
+                                    <p className="mt-2 text-center text-xs text-muted-foreground">
+                                        Calculando somatotipo…
+                                    </p>
+                                )}
+                            </>
+                        ) : (
+                            <EmptyState
+                                icon={<Activity className="h-12 w-12" />}
+                                title="Somatotipo no disponible"
+                                description="Añade las medidas corporales del cliente para calcular su somatotipo."
+                                action={
+                                    onBack ? (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={onBack}
+                                            disabled={isSubmitting}
+                                        >
+                                            Completar medidas antropométricas
+                                        </Button>
+                                    ) : undefined
+                                }
+                                className="py-8"
+                            />
                         )}
                     </FormSection>
                 </div>

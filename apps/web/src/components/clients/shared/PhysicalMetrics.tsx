@@ -15,7 +15,8 @@
 import React, { useMemo } from "react";
 import type { PhysicalMetricsStepProps } from "@nexia/shared/types/clientOnboarding";
 import { calculateBMI } from "@nexia/shared";
-import { inputClass, labelClass, errorClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
+import { labelClass, errorClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
+import { Input } from "@/components/ui/forms";
 
 interface PhysicalMetricsProps extends PhysicalMetricsStepProps {
     hideHeading?: boolean;
@@ -51,12 +52,13 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsProps> = ({
                     <div>
                         <label className={labelClass}>Peso <span className="text-destructive">*</span></label>
                         <div className="relative">
-                            <input
+                            <Input
                                 type="number"
+                                size="sm"
                                 step="0.1"
                                 value={formData.peso ?? ""}
                                 onChange={(e) => updateField("peso", Number(e.target.value))}
-                                className={`${inputClass} pr-12`}
+                                className="pr-12"
                                 placeholder="Ej: 75.5"
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kg</span>
@@ -66,12 +68,13 @@ export const PhysicalMetrics: React.FC<PhysicalMetricsProps> = ({
                     <div>
                         <label className={labelClass}>Altura <span className="text-destructive">*</span></label>
                         <div className="relative">
-                            <input
+                            <Input
                                 type="number"
+                                size="sm"
                                 step="0.1"
                                 value={formData.altura ?? ""}
                                 onChange={(e) => updateField("altura", Number(e.target.value))}
-                                className={`${inputClass} pr-12`}
+                                className="pr-12"
                                 placeholder="Ej: 175"
                             />
                             <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">cm</span>

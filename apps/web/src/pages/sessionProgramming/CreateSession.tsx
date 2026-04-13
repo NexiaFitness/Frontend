@@ -4,7 +4,7 @@
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión manualmente
  * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
- * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta …/sessions/new/constructor)
+ * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta clients/:id/sessions/new)
  * - Añadir ejercicio: botón abre ExercisePickerPanel (panel lateral, lista por letra)
  * - P2: Si no hay plan activo para la fecha seleccionada → StandaloneSession (sesión libre)
  *
@@ -14,22 +14,20 @@
  * @updated Fase 1 U4 - Props opcionales para contexto cliente (no salir del cliente)
  * @updated Fase 3 - Coherencia tras crear: avisos en pantalla + Entendido, luego redirigir
  * @updated P2 - StandaloneSession cuando no hay plan activo en la fecha
+ * @updated 2026-03-24 - Adaptado para TrainingPlanInstance[]
+ *   Usa instance.source_plan_id para crear sesiones (training_plan_id)
+ *   El selector muestra instances pero usa source_plan_id como value
  */
 
-import React, { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback } from "react";
+import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
-import { useNavigate, useSearchParams, useLocation, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
-import {
-    useGetTrainingPlanQuery,
-    useGetTrainingPlanRecommendationsQuery,
-    useGetActivePlanByClientQuery,
-} from "@nexia/shared/api/trainingPlansApi";
-import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
+import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useCreateTrainingSessionMutation } from "@nexia/shared/api/trainingSessionsApi";
 import {
@@ -54,7 +52,7 @@ import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload"
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
-import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
+import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import type { RootState } from "@nexia/shared/store";
@@ -66,6 +64,7 @@ import type {
     TrainingSessionCreate,
     SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
+import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
 
@@ -92,7 +91,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Obtener parámetros: props (contexto cliente) tienen prioridad sobre query
     const clientIdFromQuery = searchParams.get("clientId");
     const planIdFromQuery = searchParams.get("planId");
-    const dateFromQuery = searchParams.get("date");
     const clientId = clientIdProp ?? (clientIdFromQuery ? Number(clientIdFromQuery) : null);
     const planId = planIdFromQuery ? Number(planIdFromQuery) : null;
 
@@ -105,13 +103,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         skip: !user || user.role !== "trainer",
     });
     const trainerId = trainerProfile?.id ?? 0;
-
-    /** Plan activo del cliente (Instance); solo en ruta anidada con `clientIdProp`. */
-    const { data: activePlanForClient, isLoading: isLoadingActivePlan } = useGetActivePlanByClientQuery(
-        resolvedClientId || 0,
-        { skip: !clientIdProp || !resolvedClientId || resolvedClientId <= 0 }
-    );
-    const clientForcedPlan = Boolean(clientIdProp && activePlanForClient);
 
     // Obtener datos según el flujo
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(resolvedClientId || 0, { skip: !resolvedClientId });
@@ -132,24 +123,19 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(planId);
 
+    // Autoseleccionar plan si solo hay uno activo
+    // Usar source_plan_id para crear sesiones (training_plan_id espera el Plan ID, no Instance ID)
     useEffect(() => {
-        if (clientForcedPlan && activePlanForClient) {
-            setSelectedPlanId(activePlanForClient.id);
-        }
-    }, [clientForcedPlan, activePlanForClient]);
-
-    // Autoseleccionar plan si solo hay uno activo (no pisar plan activo forzado en contexto cliente)
-    useEffect(() => {
-        if (clientForcedPlan) return;
         if (!planId && clientPlans && clientPlans.length > 0) {
             const activePlans = clientPlans.filter((p) => p.status === "active");
             if (activePlans.length === 1) {
-                setSelectedPlanId(activePlans[0].id);
+                setSelectedPlanId(activePlans[0].source_plan_id ?? activePlans[0].id);
             } else if (activePlans.length === 0 && clientPlans.length === 1) {
-                setSelectedPlanId(clientPlans[0].id);
+                const plan = clientPlans[0];
+                setSelectedPlanId(plan.source_plan_id ?? plan.id);
             }
         }
-    }, [clientPlans, planId, clientForcedPlan]);
+    }, [clientPlans, planId]);
 
     // Si viene planId, obtener clientId del plan y cargar el cliente del plan
     const effectiveClientId = planId && plan ? plan.client_id : resolvedClientId;
@@ -163,12 +149,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         includeHistory: false,
     });
 
-    // Period blocks for the selected plan (auto-fill volume/intensity from matching block)
-    const effectivePlanId = selectedPlanId ?? planId;
-    const { data: periodBlocks } = useGetPeriodBlocksQuery(effectivePlanId!, {
-        skip: !effectivePlanId,
-    });
-
     // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
     const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(
         { clientId: effectiveClientId ?? 0 },
@@ -177,47 +157,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
-
-    // Hook de mutación para crear sesión
-    const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
-    const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
-    const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
-
-    const [formData, setFormData] = useState({
-        sessionName: "",
-        sessionDate: dateFromQuery ?? new Date().toISOString().split("T")[0],
-        sessionType: "strength",
-        plannedDuration: "60",
-        plannedIntensity: "5",
-        plannedVolume: "5",
-        notes: "",
-    });
-
-    useEffect(() => {
-        if (!dateFromQuery || !/^\d{4}-\d{2}-\d{2}$/.test(dateFromQuery)) return;
-        setFormData((prev) =>
-            prev.sessionDate === dateFromQuery ? prev : { ...prev, sessionDate: dateFromQuery }
-        );
-    }, [dateFromQuery]);
-
-    useEffect(() => {
-        if (!activePlanForClient || !clientIdProp) return;
-        const { start_date, end_date } = activePlanForClient;
-        setFormData((prev) => {
-            if (!prev.sessionDate) return prev;
-            if (prev.sessionDate >= start_date && prev.sessionDate <= end_date) return prev;
-            return { ...prev, sessionDate: start_date };
-        });
-    }, [activePlanForClient, clientIdProp]);
-
-    const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
-
-    const matchingBlock = useMemo(() => {
-        if (!periodBlocks || !formData.sessionDate) return null;
-        return periodBlocks.find(
-            (b) => b.start_date <= formData.sessionDate && b.end_date >= formData.sessionDate
-        ) ?? null;
-    }, [periodBlocks, formData.sessionDate]);
 
     const prefillApplied = useRef<{ clientId: number; duration: boolean; rec: boolean } | null>(null);
 
@@ -243,33 +182,44 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             state.duration = true;
         }
 
-        if (!state.rec && matchingBlock) {
-            updates.plannedVolume = String(matchingBlock.volume_level);
-            updates.plannedIntensity = String(matchingBlock.intensity_level);
+        const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
+        if (!state.rec && rec?.status === "complete" && rec.recommendations) {
+            const levelToSlider: Record<string, string> = {
+                low: "3",
+                Low: "3",
+                medium: "6",
+                Medium: "6",
+                high: "8",
+                High: "8",
+            };
+            const volLevel = rec.recommendations.volume?.level;
+            const intLevel = rec.recommendations.intensity?.level;
+            if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
+            if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
             state.rec = true;
-        } else if (!state.rec) {
-            const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
-            if (rec?.status === "complete" && rec.recommendations) {
-                const levelToSlider: Record<string, string> = {
-                    low: "3",
-                    Low: "3",
-                    medium: "6",
-                    Medium: "6",
-                    high: "8",
-                    High: "8",
-                };
-                const volLevel = rec.recommendations.volume?.level;
-                const intLevel = rec.recommendations.intensity?.level;
-                if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
-                if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
-                state.rec = true;
-            }
         }
 
         if (Object.keys(updates).length > 0) {
             setFormData((prev) => ({ ...prev, ...updates }));
         }
-    }, [effectiveClientId, displayClient, recommendationsData, matchingBlock]);
+    }, [effectiveClientId, displayClient, recommendationsData]);
+
+    // Hook de mutación para crear sesión
+    const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
+    const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
+    const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
+
+    const [formData, setFormData] = useState({
+        sessionName: "",
+        sessionDate: new Date().toISOString().split("T")[0],
+        sessionType: "strength",
+        plannedDuration: "60",
+        plannedIntensity: "5",
+        plannedVolume: "5",
+        notes: "",
+    });
+
+    const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
     // P2: Plan activo para la fecha seleccionada (ventana start_date..end_date contiene sessionDate)
     const hasActivePlanForDate = useMemo(() => {
@@ -282,13 +232,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         );
     }, [clientPlans, formData.sessionDate]);
 
-    // P2: Standalone solo si no forzamos el plan activo (ruta cliente + GET active-by-client)
-    const useStandaloneSession =
-        !clientForcedPlan &&
-        !planId &&
-        !!resolvedClientId &&
-        !isLoadingPlans &&
-        !hasActivePlanForDate;
+    // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
+    const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
 
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
@@ -306,18 +251,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         SessionCoherenceWarning[] | null
     >(null);
     const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
-
-    /** Flujo clients/.../sessions/new/constructor: el <main> del dashboard conserva scroll; alinear con "Nueva Sesión". */
-    const clientFlowTitleAnchorRef = useRef<HTMLDivElement>(null);
-    const embedLoadingScreen =
-        isLoadingClient || isLoadingPlan || isLoadingPlans || (Boolean(clientIdProp) && isLoadingActivePlan);
-
-    useLayoutEffect(() => {
-        if (!clientIdProp) return;
-        if (embedLoadingScreen) return;
-        if (postCreateCoherenceWarnings != null && postCreateCoherenceWarnings.length > 0) return;
-        clientFlowTitleAnchorRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
-    }, [clientIdProp, embedLoadingScreen, dateFromQuery, postCreateCoherenceWarnings]);
 
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
@@ -475,7 +408,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 // Fase 7: TrainingSession con bloques
                 const sessionData: TrainingSessionCreate = {
                     training_plan_id: selectedPlanId!,
-                    period_block_id: matchingBlock?.id ?? null,
                     client_id: effectiveClientId,
                     trainer_id: trainerId,
                     session_name: formData.sessionName.trim(),
@@ -575,7 +507,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         }
     };
 
-    if (isLoadingClient || isLoadingPlan || isLoadingPlans || (Boolean(clientIdProp) && isLoadingActivePlan)) {
+    if (isLoadingClient || isLoadingPlan || isLoadingPlans) {
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner size="lg" />
@@ -615,11 +547,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         <>
             <div className="space-y-6 pb-24">
                 {/* Header + Volver — mismo patrón que dashboard */}
-                <div
-                    ref={clientFlowTitleAnchorRef}
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 scroll-mt-2"
-                >
-                    <PageTitle title="Nueva Sesión" titleAs={clientIdProp ? "h2" : "h1"} />
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <PageTitle title="Nueva Sesión" />
                     <Button
                         variant="outline"
                         size="sm"
@@ -711,18 +640,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             disabled
                                             className="bg-muted"
                                         />
-                                    ) : clientForcedPlan ? (
-                                        <Input
-                                            type="text"
-                                            value={
-                                                activePlanForClient?.display_name ||
-                                                activePlanForClient?.name ||
-                                                "Plan activo"
-                                            }
-                                            disabled
-                                            className="bg-muted"
-                                            aria-label="Plan de entrenamiento activo (no modificable)"
-                                        />
                                     ) : planId ? (
                                         <Input
                                             type="text"
@@ -738,8 +655,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                                 required={!!resolvedClientId && !useStandaloneSession}
                                                 options={[
                                                     { value: "", label: "Selecciona un plan" },
-                                                    ...(clientPlans || []).map((p) => ({
-                                                        value: p.id.toString(),
+                                                    // Usar source_plan_id como value para crear sesiones correctamente
+                                                    ...(clientPlans || []).map((p: TrainingPlanInstance) => ({
+                                                        value: (p.source_plan_id ?? p.id).toString(),
                                                         label: `${p.name} (${p.status === "active" ? "Activo" : "Inactivo"})`,
                                                     })),
                                                 ]}
@@ -771,24 +689,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         value={formData.sessionDate}
                                         onChange={(v) => setFormData({ ...formData, sessionDate: v })}
                                         variant="form"
-                                        disabled={clientForcedPlan}
-                                        aria-label={
-                                            clientForcedPlan
-                                                ? "Fecha de la sesión: elige el día en el calendario de periodización"
-                                                : "Fecha de la sesión"
-                                        }
                                     />
-                                    {clientForcedPlan && clientIdProp != null && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            <Link
-                                                to={`/dashboard/clients/${clientIdProp}/sessions/new?date=${encodeURIComponent(formData.sessionDate)}`}
-                                                className="text-primary underline-offset-2 hover:underline font-medium"
-                                            >
-                                                Elegir otra fecha en el calendario
-                                            </Link>
-                                            <span className="text-muted-foreground"> (vigencia del plan activo).</span>
-                                        </p>
-                                    )}
                                 </div>
                                 <div>
                                     <label htmlFor="create-session-type" className="block text-xs font-medium text-muted-foreground mb-1.5">
@@ -974,7 +875,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 </form>
             </div>
 
-            <DashboardFixedFooter>
+            {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
+            <div
+                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
+                style={{ left: "var(--sidebar-width, 0)" }}
+            >
                 <div className="flex items-center justify-between gap-3">
                     <Button
                         type="button"
@@ -1040,7 +945,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         </Button>
                     </div>
                 </div>
-            </DashboardFixedFooter>
+            </div>
         </>
     );
 };

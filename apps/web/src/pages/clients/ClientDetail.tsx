@@ -2,23 +2,24 @@
  * ClientDetail.tsx — Página de detalle del cliente
  *
  * Contexto:
- * - Vista completa del cliente con 6 tabs (Ola 2 S03: tab unificado "Sesiones").
- * - Tabs: Resumen, Sesiones, Coherencia Diaria, Tests, Progreso, Lesiones.
- * - Layout: Header + Tabs + Content.
+ * - Vista completa del cliente con 7 tabs.
+ * - Tabs: Resumen, Sesiones, Coherencia Diaria, Tests, Progreso, Planificación, Lesiones.
+ * - Layout: Header + TabsBar + Content.
+ *
+ * Navegación de planes:
+ * - "Ver plan" desde cualquier tab navega a ?tab=planning&plan=:id (detalle inline).
+ * - "Crear plan" navega a /training-plans/create?clientId=:id; al crear vuelve aquí.
+ * - El detalle de plan (sesiones, planificación, hitos, gráficos) vive en ClientPlanningTab.
  *
  * @author Frontend Team
  * @since v3.1.0
- * @updated v6.0.0 - Integración de Breadcrumbs jerárquicos.
- * @updated v6.2.0 - Ola 2 S03: swap a 6 tabs; "Sesiones" reemplaza Programación de Sesiones + Entrenamientos.
- * @updated Fase 6 - Tab Planificación (planificación client-only o por plan asociado).
- * @updated U4 paso 1.5 - PlanDetailDrawer para "Ver plan" sin salir de clients/:id
- * @updated Marzo 2026 - Eliminado CreatePlanModal; navegación a /training-plans/create para crear planes
+ * @updated v6.2.0 - Tab unificado "Sesiones".
+ * @updated 2026-03-31 - Eliminado PlanDetailDrawer; detalle de plan inline en tab Planificación.
  */
 
-import React, { Suspense, lazy, useState, useCallback, useRef, useLayoutEffect } from "react";
+import React, { Suspense, lazy, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
-import { useClientQuickNote } from "@/hooks/clients/useClientQuickNote";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -33,7 +34,6 @@ import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
-import { PlanDetailDrawer } from "@/components/clients/detail/PlanDetailDrawer";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 
@@ -65,8 +65,6 @@ const TABS: Tab[] = [
 export const ClientDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    /** Anclaje visual: al cambiar de tab el `<main>` del dashboard conserva scroll; alineamos la fila de pestañas al inicio del viewport de scroll. */
-    const clientTabsAnchorRef = useRef<HTMLDivElement>(null);
 
     // Tab navigation con query parameters
     const { activeTab, setActiveTab } = useTabNavigation<TabId>({
@@ -83,33 +81,13 @@ export const ClientDetail: React.FC = () => {
         }
     }, [searchParams, setActiveTab]);
 
-    // U4 paso 1.5: drawer de detalle de plan (estado + sync con ?viewPlan)
-    const [viewPlanId, setViewPlanId] = React.useState<number | null>(() => {
-        const v = searchParams.get("viewPlan");
-        const parsed = v ? parseInt(v, 10) : NaN;
-        return !isNaN(parsed) ? parsed : null;
-    });
-
-    React.useEffect(() => {
-        const v = searchParams.get("viewPlan");
-        const parsed = v ? parseInt(v, 10) : NaN;
-        setViewPlanId(!isNaN(parsed) ? parsed : null);
-    }, [searchParams]);
-
+    // Navega al tab Planificación con el plan seleccionado abierto inline
     const handleViewPlan = useCallback((planId: number) => {
-        setViewPlanId(planId);
         setSearchParams((prev) => {
             const next = new URLSearchParams(prev);
-            next.set("viewPlan", String(planId));
-            return next;
-        }, { replace: true });
-    }, [setSearchParams]);
-
-    const handleClosePlanDrawer = useCallback(() => {
-        setViewPlanId(null);
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            next.delete("viewPlan");
+            next.set("tab", "planning");
+            next.set("plan", String(planId));
+            next.delete("planTab");
             return next;
         }, { replace: true });
     }, [setSearchParams]);
@@ -132,8 +110,6 @@ export const ClientDetail: React.FC = () => {
         includeSessions: true,
     });
 
-    const { saveQuickNote, isSavingQuickNote } = useClientQuickNote(client, clientId);
-
     // Fase 4.1: plan activo para CTA "Planificar" (si hay plan → tab Planificación; si no → modal crear plan)
     const { data: activePlan } = useGetActivePlanByClientQuery(clientId, {
         skip: !clientId || clientId <= 0,
@@ -152,7 +128,7 @@ export const ClientDetail: React.FC = () => {
         }
     }, [hasActivePlan, setActiveTab, navigate, clientId, location.pathname]);
 
-    // Fase 1.1: modales de planificación desde cliente (sin navegar a training-plans)
+    // Modales de planificación: Seleccionar plantilla → Asignar plantilla al cliente
     const [selectTemplateModalOpen, setSelectTemplateModalOpen] = useState(false);
     const [assignTemplateModalOpen, setAssignTemplateModalOpen] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
@@ -178,11 +154,6 @@ export const ClientDetail: React.FC = () => {
         refetchAll();
         setActiveTab("planning");
     }, [refetchAll, setActiveTab]);
-
-    useLayoutEffect(() => {
-        if (isLoading) return;
-        clientTabsAnchorRef.current?.scrollIntoView({ behavior: "auto", block: "start" });
-    }, [activeTab, isLoading]);
 
     const clientName = client ? `${client.nombre} ${client.apellidos}` : undefined;
 
@@ -297,7 +268,10 @@ export const ClientDetail: React.FC = () => {
             case "progress":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
-                        <ClientProgressTab clientId={clientId} client={client} />
+                        <ClientProgressTab
+                            clientId={clientId}
+                            client={client}
+                        />
                     </Suspense>
                 );
             case "planning":
@@ -309,6 +283,7 @@ export const ClientDetail: React.FC = () => {
                         onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
                             state: { from: location.pathname },
                         })}
+                        onOpenUseTemplate={handleOpenUseTemplate}
                     />
                 );
             case "injuries":
@@ -328,19 +303,15 @@ export const ClientDetail: React.FC = () => {
                 hasActivePlan={hasActivePlan}
                 onPlanificar={handlePlanificar}
                 onOpenUseTemplate={handleOpenUseTemplate}
-                onSaveQuickNote={saveQuickNote}
-                isSavingQuickNote={isSavingQuickNote}
             />
 
-            {/* Tabs — barra de pestañas; ancla scroll en el <main> del dashboard al cambiar tab / ?tab= */}
-            <div ref={clientTabsAnchorRef} className="scroll-mt-1">
-                <TabsBar
-                    items={TABS}
-                    value={activeTab}
-                    onChange={(id) => setActiveTab(id as TabId)}
-                    ariaLabel="Tabs del cliente"
-                />
-            </div>
+            {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}
+            <TabsBar
+                items={TABS}
+                value={activeTab}
+                onChange={(id) => setActiveTab(id as TabId)}
+                ariaLabel="Tabs del cliente"
+            />
 
             {/* Tab Content — espacio vertical según spec (pb-8 ya en main) */}
             <div className="pt-2 pb-8">
@@ -366,14 +337,6 @@ export const ClientDetail: React.FC = () => {
                 onSuccess={handleAssignTemplateSuccess}
             />
 
-            {/* U4 paso 1.5: drawer detalle de plan (sin salir de clients/:id) */}
-            {viewPlanId && (
-                <PlanDetailDrawer
-                    planId={viewPlanId}
-                    clientId={clientId}
-                    onClose={handleClosePlanDrawer}
-                />
-            )}
         </div>
     );
 };

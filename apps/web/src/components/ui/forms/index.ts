@@ -13,6 +13,8 @@ export { FormSelect } from "./FormSelect";
 export { FormCombobox } from "./FormCombobox";
 export { DatePickerButton } from "./DatePickerButton";
 export { Textarea } from "./Textarea";
+export { InlineNumberInput } from "./InlineNumberInput";
+export type { InlineNumberSize } from "./InlineNumberInput";
 export { Checkbox } from "./Checkbox";
 export { Slider } from "./Slider";
 export { Label } from "./Label";
