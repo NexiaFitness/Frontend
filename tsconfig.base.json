@@ -13,16 +13,15 @@
         "allowSyntheticDefaultImports": true,
         "skipLibCheck": true,
         "forceConsistentCasingInFileNames": true,
-        "baseUrl": ".",
         "paths": {
             "@/*": [
-                "apps/web/src/*"
+                "./apps/web/src/*"
             ],
             "@nexia/shared": [
-                "packages/shared/src"
+                "./packages/shared/src"
             ],
             "@nexia/shared/*": [
-                "packages/shared/src/*"
+                "./packages/shared/src/*"
             ]
         }
     }

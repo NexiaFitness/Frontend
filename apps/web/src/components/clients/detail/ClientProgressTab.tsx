@@ -1074,5 +1074,3 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 };
 
 export const ClientProgressTab = React.memo(ClientProgressTabComponent, arePropsEqual);
-
-const SummaryCard = React.memo(SummaryCardComponent);

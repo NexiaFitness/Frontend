@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
-import { Badge } from "@/components/ui/Badge";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import {

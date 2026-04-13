@@ -41,6 +41,7 @@ import type {
 
 import type {
     TrainingPlan,
+    TrainingPlanInstance,
     TrainingSession,
     ClientFeedback,
     FatigueAnalysis,
@@ -524,7 +525,7 @@ export const clientsApi = baseApi.injectEndpoints({
         /**
          * Training plans del cliente
          */
-        getClientTrainingPlans: builder.query<TrainingPlan[], { clientId: number; skip?: number; limit?: number }>({
+        getClientTrainingPlans: builder.query<TrainingPlanInstance[], { clientId: number; skip?: number; limit?: number }>({
             query: ({ clientId, skip = 0, limit = 100 }) => ({
                 url: `/training-plans/?client_id=${clientId}&skip=${skip}&limit=${limit}`,
                 method: "GET",
