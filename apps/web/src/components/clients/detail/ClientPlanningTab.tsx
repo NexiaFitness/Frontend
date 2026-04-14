@@ -77,6 +77,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
             clientId={clientId}
             planStartDate={activePlan.start_date}
             planEndDate={activePlan.end_date}
+            activePlan={activePlan}
         />
     );
 };

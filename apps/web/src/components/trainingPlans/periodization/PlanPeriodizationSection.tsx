@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { CalendarDays, Target } from "lucide-react";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
   useGetPeriodBlocksQuery,
@@ -13,6 +14,7 @@ import {
   useCreateDayExceptionMutation,
   useDeleteDayExceptionMutation,
 } from "@nexia/shared/api/dayExceptionsApi";
+import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getMutationErrorMessage } from "@nexia/shared";
@@ -20,6 +22,7 @@ import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
+import { GOAL_LABEL_ES, toneFromGoal } from "@/components/trainingPlans/goalLabels";
 import { Button } from "@/components/ui/buttons";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodizationPanel } from "./PeriodizationPanel";
@@ -27,6 +30,45 @@ import { PeriodBlockCard } from "./PeriodBlockCard";
 import { PeriodizationCharts } from "./PeriodizationCharts";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
+
+// ---------------------------------------------------------------------------
+// Helpers — plan summary card
+// ---------------------------------------------------------------------------
+
+const STATUS_LABELS: Record<string, string> = {
+  active: "Activo",
+  completed: "Completado",
+  paused: "Pausado",
+  cancelled: "Cancelado",
+};
+
+const STATUS_STYLES: Record<string, string> = {
+  active: "bg-success/10 text-success border-success/30",
+  completed: "bg-primary/10 text-primary border-primary/30",
+  paused: "bg-warning/10 text-warning border-warning/30",
+  cancelled: "bg-destructive/10 text-destructive border-destructive/30",
+};
+
+function formatDateShort(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function durationLabel(start: string, end: string): string {
+  const ms =
+    new Date(end.replace(/-/g, "/")).getTime() -
+    new Date(start.replace(/-/g, "/")).getTime();
+  const weeks = Math.ceil(ms / (1000 * 60 * 60 * 24 * 7));
+  if (weeks < 4) return `${weeks} sem`;
+  const months = Math.floor(weeks / 4);
+  return `${months} ${months === 1 ? "mes" : "meses"}`;
+}
+
+// ---------------------------------------------------------------------------
 
 /**
  * Primer día YYYY-MM-DD del bloque sin sesión ya asignada en ese día (mismo bloque).
@@ -65,6 +107,8 @@ interface Props {
   /** Fechas de vigencia del training plan (YYYY-MM-DD) para pintar el calendario. */
   planStartDate?: string | null;
   planEndDate?: string | null;
+  /** Plan activo para mostrar resumen en el panel lateral (opcional). */
+  activePlan?: ActivePlanByClientOut;
 }
 
 export const PlanPeriodizationSection: React.FC<Props> = ({
@@ -72,6 +116,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   clientId,
   planStartDate,
   planEndDate,
+  activePlan,
 }) => {
   const navigate = useNavigate();
   const { showWarning, showSuccess, showError } = useToast();
@@ -320,7 +365,47 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             habitualTrainingDays={clientProfile?.training_days ?? null}
           />
         </div>
-        <div className="lg:w-[40%]">
+        <div className="lg:w-[40%] space-y-4">
+          {activePlan && (
+            <div className="rounded-lg border border-border bg-surface p-5 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                    Plan activo
+                  </p>
+                  <h4 className="text-sm font-bold text-foreground mt-0.5 truncate">
+                    {activePlan.display_name || activePlan.name}
+                  </h4>
+                </div>
+                <span
+                  className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_STYLES[activePlan.status] ?? "bg-muted text-muted-foreground border-border"}`}
+                >
+                  {STATUS_LABELS[activePlan.status] ?? activePlan.status}
+                </span>
+              </div>
+
+              {(() => {
+                const goalKey = activePlan.display_goal ?? activePlan.goal;
+                const label = GOAL_LABEL_ES[goalKey] ?? goalKey;
+                const tone = toneFromGoal(goalKey);
+                return label ? (
+                  <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${tone}`}>
+                    <Target className="h-3 w-3 shrink-0" aria-hidden />
+                    {label}
+                  </span>
+                ) : null;
+              })()}
+
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                <span>
+                  {formatDateShort(activePlan.start_date)} – {formatDateShort(activePlan.end_date)}
+                </span>
+                <span className="text-muted-foreground/60">·</span>
+                <span>{durationLabel(activePlan.start_date, activePlan.end_date)}</span>
+              </div>
+            </div>
+          )}
           <PeriodizationPanel
             formState={form}
             catalog={catalog}

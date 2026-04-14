@@ -107,8 +107,9 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
                 return;
             }
+            const qs = new URLSearchParams({ date: dateStr, planId: String(activePlanForClient.id) });
             navigate(
-                `/dashboard/clients/${clientId}/sessions/new/constructor?date=${encodeURIComponent(dateStr)}`,
+                `/dashboard/clients/${clientId}/sessions/new/constructor?${qs.toString()}`,
                 { replace: false }
             );
         },
