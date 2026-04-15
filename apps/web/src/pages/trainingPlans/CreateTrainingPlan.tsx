@@ -76,14 +76,6 @@ const GOAL_OPTIONS = [
 // UTILS
 // ============================================================================
 
-function planOverlapsDateRange(plan: { start_date?: string | null; end_date?: string | null }, dateFrom: string, dateTo: string): boolean {
-    const start = plan.start_date?.slice(0, 10) ?? "";
-    const end = plan.end_date?.slice(0, 10) ?? "";
-    if (dateFrom && end < dateFrom) return false;
-    if (dateTo && start > dateTo) return false;
-    return true;
-}
-
 /**
  * Mapea el objetivo del cliente (texto libre en español) al goal del plan.
  * Retorna valores snake_case alineados con TrainingGoalEnum del backend.
@@ -180,7 +172,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
     const [formErrors, setFormErrors] = useState<FormErrors>({});
     const [isOverlapModalOpen, setIsOverlapModalOpen] = useState(false);
-    const [overlappingPlan, setOverlappingPlan] = useState<{ name: string; start_date: string; end_date: string } | null>(null);
+    const [planToReplace, setPlanToReplace] = useState<{ name: string; start_date: string; end_date: string } | null>(null);
     const [pendingPlanData, setPendingPlanData] = useState<TrainingPlanCreate | null>(null);
 
     // ============================================================================
@@ -276,16 +268,13 @@ export const CreateTrainingPlan: React.FC = () => {
             tags: null,
         };
 
-        // Detectar solapamiento con instancias existentes
-        const overlapping = sortedInstances.find((p) =>
-            planOverlapsDateRange(p, formData.start_date, formData.end_date)
-        );
-
-        if (overlapping) {
-            setOverlappingPlan({
-                name: overlapping.name,
-                start_date: formatDate(overlapping.start_date),
-                end_date: formatDate(overlapping.end_date),
+        // Regla negocio: solo 1 plan "active" por cliente. Crear uno nuevo sustituye el actual.
+        const activeExisting = sortedInstances.find((p) => p.status === "active");
+        if (activeExisting) {
+            setPlanToReplace({
+                name: activeExisting.name,
+                start_date: formatDate(activeExisting.start_date),
+                end_date: formatDate(activeExisting.end_date),
             });
             setPendingPlanData(planData);
             setIsOverlapModalOpen(true);
@@ -322,13 +311,13 @@ export const CreateTrainingPlan: React.FC = () => {
         setIsOverlapModalOpen(false);
         await doCreatePlan(pendingPlanData);
         setPendingPlanData(null);
-        setOverlappingPlan(null);
+        setPlanToReplace(null);
     };
 
     const handleCancelOverlap = () => {
         setIsOverlapModalOpen(false);
         setPendingPlanData(null);
-        setOverlappingPlan(null);
+        setPlanToReplace(null);
     };
 
     // ============================================================================
@@ -616,14 +605,14 @@ export const CreateTrainingPlan: React.FC = () => {
                 </div>
             </div>
 
-            {/* Modal de solapamiento de fechas */}
+            {/* Modal de confirmación: sustituye el plan activo actual */}
             <PlanOverlapModal
                 isOpen={isOverlapModalOpen}
                 onClose={handleCancelOverlap}
                 onConfirm={handleConfirmOverlap}
-                planName={overlappingPlan?.name || ""}
-                planStartDate={overlappingPlan?.start_date || ""}
-                planEndDate={overlappingPlan?.end_date || ""}
+                planName={planToReplace?.name || ""}
+                planStartDate={planToReplace?.start_date || ""}
+                planEndDate={planToReplace?.end_date || ""}
                 isLoading={isCreating}
             />
         </div>

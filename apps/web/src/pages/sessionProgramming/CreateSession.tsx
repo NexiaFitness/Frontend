@@ -274,7 +274,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     : r
             )
         );
-        /* targetRowIdForPicker se mantiene: panel abierto para añadir más a la misma fila */
+        setShowExercisePickerModal(false);
+        setTargetRowIdForPicker(null);
     };
 
     /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */

@@ -80,7 +80,13 @@ export function findActivePlanPeriodBlock(
 
 /**
  * Elige la instancia operativa para el cliente en la fecha dada:
- * status === "active", rango de instancia contiene referenceDate, mayor id si hay empate.
+ * Regla (spec): solo puede existir 1 instancia status="active" por cliente; puede ser futura.
+ *
+ * Prioridad:
+ * 1) instancia "active" cuyo rango contiene referenceDate (si existe)
+ * 2) si no existe, instancia "active" futura más cercana (start_date asc)
+ *
+ * Nota: en el caso 1) si hay varias por data inconsistente, se elige mayor id.
  */
 export function pickActiveTrainingPlanInstanceForToday(
     instances: TrainingPlanInstance[],
@@ -91,14 +97,30 @@ export function pickActiveTrainingPlanInstanceForToday(
     const day = formatLocalDateOnly(referenceDate);
     if (!day) return undefined;
 
-    const matching = instances.filter(
+    const covering = instances.filter(
         (inst) =>
             inst.client_id === clientId &&
             inst.status === "active" &&
             isDateInClosedInterval(day, inst.start_date, inst.end_date)
     );
 
-    if (matching.length === 0) return undefined;
+    if (covering.length > 0) {
+        return covering.reduce((best, cur) => (cur.id > best.id ? cur : best));
+    }
 
-    return matching.reduce((best, cur) => (cur.id > best.id ? cur : best));
+    // No coverage today: choose nearest future active instance (start_date asc, tie id asc)
+    const future = instances
+        .filter((inst) => inst.client_id === clientId && inst.status === "active")
+        .filter((inst) => {
+            const start = toDateOnlyString(inst.start_date);
+            return start !== "" && start > day;
+        })
+        .sort((a, b) => {
+            const sa = toDateOnlyString(a.start_date);
+            const sb = toDateOnlyString(b.start_date);
+            if (sa !== sb) return sa < sb ? -1 : 1;
+            return a.id - b.id;
+        });
+
+    return future[0];
 }

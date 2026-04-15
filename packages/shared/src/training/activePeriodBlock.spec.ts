@@ -141,6 +141,28 @@ describe("pickActiveTrainingPlanInstanceForToday", () => {
         expect(pickActiveTrainingPlanInstanceForToday(instances, 52, day)).toBeUndefined();
     });
 
+    it("si no cubre hoy, elige el futuro active más cercano", () => {
+        const day = new Date(2026, 3, 15); // 2026-04-15 local
+        const instances = [
+            instance({
+                id: 10,
+                client_id: 52,
+                status: "active",
+                start_date: "2026-05-01",
+                end_date: "2026-05-31",
+            }),
+            instance({
+                id: 11,
+                client_id: 52,
+                status: "active",
+                start_date: "2026-06-01",
+                end_date: "2026-06-30",
+            }),
+        ];
+        const picked = pickActiveTrainingPlanInstanceForToday(instances, 52, day);
+        expect(picked?.id).toBe(10);
+    });
+
     it("usa fecha local para validación de rango", () => {
         const y = 2026;
         const m = 3;

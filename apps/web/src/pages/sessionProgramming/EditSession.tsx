@@ -279,7 +279,8 @@ export const EditSession: React.FC = () => {
                         : r
                 )
             );
-            /* Panel permanece abierto para añadir más a la misma fila */
+            setShowExercisePickerModal(false);
+            setTargetRowIdForPicker(null);
         },
         [targetRowIdForPicker]
     );

@@ -1,9 +1,11 @@
 /**
- * PlanOverlapModal.tsx — Modal de confirmación por solapamiento de fechas
+ * PlanOverlapModal.tsx — Modal de confirmación para sustituir plan activo
  *
  * Contexto:
- * - Aparece al intentar crear un plan cuyas fechas se solapan con uno existente
- * - Muestra el plan afectado y pregunta si continuar (archiva el anterior)
+ * - Al crear una nueva planificación, el backend aplica la regla de negocio:
+ *   solo puede existir 1 instancia status="active" por cliente.
+ * - Por tanto, si existe una instancia activa previa, se archivará (status="completed")
+ *   al crear la nueva planificación (sustitución inmediata).
  *
  * Diseño:
  * - Basado en el patrón canónico de SelectClientModal (tema oscuro, bordes redondeados)
@@ -113,14 +115,14 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                         id="plan-overlap-title"
                         className="text-lg font-semibold leading-none tracking-tight text-foreground"
                     >
-                        Solapamiento de fechas
+                        Sustituir planificación activa
                     </h2>
                 </div>
 
                 {/* Body */}
                 <div className="space-y-3 p-6 pt-2">
                     <p className="text-sm text-muted-foreground">
-                        Las fechas del nuevo plan se solapan con el plan existente:
+                        Ya existe una planificación activa para este cliente:
                     </p>
 
                     {/* Plan info block */}
@@ -138,7 +140,8 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                     </div>
 
                     <p className="text-sm text-muted-foreground">
-                        Se cerrará el plan anterior. ¿Desea continuar?
+                        Al continuar, se archivará la planificación activa actual y se creará la nueva.
+                        ¿Desea continuar?
                     </p>
                 </div>
 
