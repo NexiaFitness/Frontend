@@ -16,8 +16,6 @@ on:
 env:
   NODE_VERSION: '22.19.0'
   PNPM_VERSION: '10.15.0'
-  # Vercel API requires CLI >= 47.2.2 (default in vercel-action is too old)
-  VERCEL_CLI_VERSION: '47.2.2'
 
 jobs:
   build-and-test:
@@ -87,28 +85,24 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-and-test
     if: github.event_name == 'push' && needs.build-and-test.outputs.build-success == 'true'
-    
+    # Official Vercel CLI (replaces amondnet/vercel-action). Bump VERCEL_CLI_PIN deliberately.
+    env:
+      VERCEL_CLI_PIN: '51.8.0'
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel@${{ env.VERCEL_CLI_PIN }}
+
       - name: Deploy to Vercel Staging
         if: github.ref == 'refs/heads/develop'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-version: ${{ env.VERCEL_CLI_VERSION }}
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./
-          
+        run: vercel --yes
+
       - name: Deploy to Vercel Production
         if: github.ref == 'refs/heads/main'
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-version: ${{ env.VERCEL_CLI_VERSION }}
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
-          working-directory: ./
+        run: vercel --prod --yes
