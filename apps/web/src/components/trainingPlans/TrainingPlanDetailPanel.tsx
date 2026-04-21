@@ -128,6 +128,7 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
                         clientId={clientId}
                         planStartDate={plan.start_date}
                         planEndDate={plan.end_date}
+                        planGoalForRecommendations={plan.goal}
                     />
                 );
             case "milestones":

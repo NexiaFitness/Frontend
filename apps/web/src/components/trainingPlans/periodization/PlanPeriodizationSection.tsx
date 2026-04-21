@@ -30,6 +30,7 @@ import { PeriodBlockCard } from "./PeriodBlockCard";
 import { PeriodizationCharts } from "./PeriodizationCharts";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
+import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 
 // ---------------------------------------------------------------------------
 // Helpers — plan summary card
@@ -109,6 +110,11 @@ interface Props {
   planEndDate?: string | null;
   /** Plan activo para mostrar resumen en el panel lateral (opcional). */
   activePlan?: ActivePlanByClientOut;
+  /**
+   * Objetivo del plan para GET /recommendations (?plan_goal=), cuando no hay `activePlan`
+   * (p. ej. edición de plan desde detalle). Debe coincidir con el plan en pantalla.
+   */
+  planGoalForRecommendations?: string;
 }
 
 export const PlanPeriodizationSection: React.FC<Props> = ({
@@ -117,6 +123,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   planStartDate,
   planEndDate,
   activePlan,
+  planGoalForRecommendations,
 }) => {
   const navigate = useNavigate();
   const { showWarning, showSuccess, showError } = useToast();
@@ -191,6 +198,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     outsidePlanBounds,
     canSubmit,
   } = usePeriodBlockForm(blocks, editingBlockId, planStartDate, planEndDate);
+
+  const planGoalResolved =
+    activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
+
+  const volumeNominal = usePeriodizationVolumeRecommendations(clientId, planGoalResolved);
 
   const handleCreateSessionForBlock = useCallback(
     (block: PlanPeriodBlock) => {
@@ -422,6 +434,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             isSubmitting={isCreating || isUpdating}
             onSubmit={handleSubmitBlock}
             onReset={handleCancelEdit}
+            volumeNominalPhase={volumeNominal.phase}
+            volumeNominalLabel={volumeNominal.labelForVolumeLevel(form.volumeLevel)}
+            volumeNominalHint={volumeNominal.auxiliaryHint}
           />
         </div>
       </div>
@@ -442,6 +457,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                 onEdit={handleEditBlock}
                 onDelete={(id, label) => setDeleteTarget({ id, label })}
                 onCreateSessionForBlock={handleCreateSessionForBlock}
+                volumeNominalPhase={volumeNominal.phase}
+                volumeNominalLabel={volumeNominal.labelForVolumeLevel(block.volume_level)}
               />
             ))}
           </div>

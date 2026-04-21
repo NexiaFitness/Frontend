@@ -3,6 +3,7 @@ import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/plann
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { Button } from "@/components/ui/buttons";
+import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 
 interface Props {
   block: PlanPeriodBlock;
@@ -12,6 +13,8 @@ interface Props {
   onDelete: (id: number, label: string) => void;
   /** Alta de sesión enlazada al plan/bloque (navegación la define el contenedor). */
   onCreateSessionForBlock?: (block: PlanPeriodBlock) => void;
+  volumeNominalPhase?: PeriodizationVolumeNominalPhase;
+  volumeNominalLabel?: string | null;
 }
 
 function parseLocal(s: string): Date {
@@ -35,6 +38,8 @@ export const PeriodBlockCard: React.FC<Props> = ({
   onEdit,
   onDelete,
   onCreateSessionForBlock,
+  volumeNominalPhase,
+  volumeNominalLabel,
 }) => {
   const [showSessions, setShowSessions] = useState(false);
   const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
@@ -113,11 +118,23 @@ export const PeriodBlockCard: React.FC<Props> = ({
       {/* Volume / Intensity + sesión (misma fila: métricas a la izquierda, CTA a la derecha) */}
       <div className="flex flex-col gap-3 pt-3 border-t border-border/50 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-4">
         <div className="flex flex-wrap items-center gap-x-6 gap-y-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-muted-foreground uppercase">Volumen</span>
-            <span className="text-sm font-bold text-primary tabular-nums">
-              {block.volume_level}/10
-            </span>
+          <div className="flex flex-col items-start gap-0.5 min-w-0">
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-muted-foreground uppercase">Volumen</span>
+              <span className="text-sm font-bold text-primary tabular-nums">
+                {block.volume_level}/10
+              </span>
+            </div>
+            {volumeNominalPhase === "complete" &&
+              volumeNominalLabel != null &&
+              volumeNominalLabel !== "" && (
+                <p className="text-[10px] text-muted-foreground leading-tight max-w-[14rem]">
+                  {volumeNominalLabel}
+                </p>
+              )}
+            {volumeNominalPhase === "loading" && (
+              <p className="text-[10px] text-muted-foreground/80">Referencia…</p>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground uppercase">Intensidad</span>

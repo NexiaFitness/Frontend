@@ -6,7 +6,9 @@
   "types": "dist/src/index.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test": "vitest run",
+    "lint:no-js-in-src": "node ./scripts/noJsInSrc.mjs"
   },
   "keywords": [],
   "author": "",

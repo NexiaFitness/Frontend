@@ -134,6 +134,7 @@ export * from "./types/progress";
 export * from "./types/training";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
+export * from "./training/weeklyVolumeTarget";
 export * from "./types/trainingAnalytics";
 export * from "./types/trainingRecommendations";
 export * from "./types/sessionRecommendations";

@@ -253,6 +253,7 @@ export const TrainingPlanDetail: React.FC = () => {
                         clientId={contextClientId ?? plan.client_id ?? undefined}
                         planStartDate={plan.start_date}
                         planEndDate={plan.end_date}
+                        planGoalForRecommendations={plan.goal}
                     />
                 );
             case "milestones":

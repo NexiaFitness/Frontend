@@ -5,6 +5,7 @@ import type { PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
+import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 
 
 
@@ -39,6 +40,10 @@ interface Props {
   onSubmit: () => void;
 
   onReset: () => void;
+
+  volumeNominalPhase?: PeriodizationVolumeNominalPhase;
+  volumeNominalLabel?: string | null;
+  volumeNominalHint?: string | null;
 
 }
 
@@ -85,6 +90,12 @@ export const PeriodizationPanel: React.FC<Props> = ({
   onSubmit,
 
   onReset,
+
+  volumeNominalPhase,
+
+  volumeNominalLabel,
+
+  volumeNominalHint,
 
 }) => {
 
@@ -405,6 +416,22 @@ export const PeriodizationPanel: React.FC<Props> = ({
           <span className="text-[10px] text-muted-foreground">Alto</span>
 
         </div>
+
+        {volumeNominalPhase != null && (
+          <div className="mt-2 space-y-1">
+            {volumeNominalPhase === "loading" && (
+              <p className="text-[10px] text-muted-foreground">Cargando referencia de volumen…</p>
+            )}
+            {volumeNominalPhase === "complete" && volumeNominalLabel != null && volumeNominalLabel !== "" && (
+              <p className="text-[10px] text-foreground/90 leading-snug">{volumeNominalLabel}</p>
+            )}
+            {(volumeNominalPhase === "incomplete" || volumeNominalPhase === "error") &&
+              volumeNominalHint != null &&
+              volumeNominalHint !== "" && (
+                <p className="text-[10px] text-muted-foreground leading-snug">{volumeNominalHint}</p>
+              )}
+          </div>
+        )}
 
       </div>
 
