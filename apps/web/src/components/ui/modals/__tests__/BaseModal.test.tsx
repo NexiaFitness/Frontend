@@ -54,22 +54,22 @@ describe("BaseModal", () => {
     describe("Iconos", () => {
         it("muestra icono de warning", () => {
             render(<BaseModal {...defaultProps} iconType="warning" />);
-            expect(document.querySelector(".text-amber-600")).toBeInTheDocument();
+            expect(document.querySelector("svg.text-warning")).toBeInTheDocument();
         });
 
         it("muestra icono de danger", () => {
             render(<BaseModal {...defaultProps} iconType="danger" />);
-            expect(document.querySelector(".text-red-600")).toBeInTheDocument();
+            expect(document.querySelector("svg.text-destructive")).toBeInTheDocument();
         });
 
         it("muestra icono de info", () => {
             render(<BaseModal {...defaultProps} iconType="info" />);
-            expect(document.querySelector(".text-blue-600")).toBeInTheDocument();
+            expect(document.querySelector("svg.text-primary")).toBeInTheDocument();
         });
 
         it("muestra icono de success", () => {
             render(<BaseModal {...defaultProps} iconType="success" />);
-            expect(document.querySelector(".text-green-600")).toBeInTheDocument();
+            expect(document.querySelector("svg.text-success")).toBeInTheDocument();
         });
     });
 

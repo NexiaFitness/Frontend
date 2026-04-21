@@ -2,7 +2,7 @@
  * DatePickerButton — Botón desplegable para selección de fecha
  *
  * Diseño: outline transparente, borde cyan neón, hover con glow.
- * Al hacer clic abre un popover con calendario (react-day-picker).
+ * Al hacer clic abre un popover con calendario (react-day-picker v9).
  * Reutilizable en filtros, dashboards, formularios.
  *
  * @example
@@ -16,6 +16,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { es } from "react-day-picker/locale";
 import "react-day-picker/style.css";
 import { cn } from "@/lib/utils";
 
@@ -49,11 +50,11 @@ function toDate(value: string): Date | undefined {
 }
 
 function toYYYYMMDD(d: Date): string {
-    return d.toISOString().slice(0, 10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 }
-
-const cyanButton =
-    "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50 border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)] bg-transparent p-0 opacity-50 hover:opacity-100 h-7 w-7";
 
 export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
     label,
@@ -65,6 +66,7 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
     variant = "default",
 }) => {
     const [open, setOpen] = useState(false);
+    const [month, setMonth] = useState<Date>(toDate(value) ?? new Date());
     const containerRef = useRef<HTMLDivElement>(null);
 
     const selectedDate = toDate(value);
@@ -81,6 +83,14 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, [open]);
 
+    // Sincronizar mes mostrado con el valor seleccionado
+    useEffect(() => {
+        const date = toDate(value);
+        if (date) {
+            setMonth(date);
+        }
+    }, [value]);
+
     const handleSelect = (d: Date | undefined) => {
         if (d) {
             onChange(toYYYYMMDD(d));
@@ -89,6 +99,26 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
     };
 
     const isFormVariant = variant === "form";
+
+    // Navegación manual para el caption personalizado
+    const handlePreviousMonth = () => {
+        setMonth(prev => {
+            const newMonth = new Date(prev);
+            newMonth.setMonth(newMonth.getMonth() - 1);
+            return newMonth;
+        });
+    };
+
+    const handleNextMonth = () => {
+        setMonth(prev => {
+            const newMonth = new Date(prev);
+            newMonth.setMonth(newMonth.getMonth() + 1);
+            return newMonth;
+        });
+    };
+
+    // Formato del mes en español (ej: "marzo 2026")
+    const monthLabel = month.toLocaleDateString("es-ES", { month: "long", year: "numeric" }).replace(/\bde\b/gi, "").trim();
 
     return (
         <div ref={containerRef} className={cn("relative", isFormVariant ? "w-full" : "inline-flex")}>
@@ -122,24 +152,49 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
 
             {open && (
                 <div
-                    className="absolute left-0 top-full z-50 mt-1 rounded-md border border-border bg-popover p-3 shadow-lg"
+                    className="absolute left-0 top-full z-50 mt-1 max-h-[70vh] overflow-auto rounded-md border border-border bg-popover p-3 shadow-lg scrollbar-primary"
                     role="dialog"
                     aria-label="Seleccionar fecha"
                 >
+                    {/* Header personalizado: flecha izq, mes/año, flecha der */}
+                    <div className="flex items-center justify-between gap-2 px-2 py-1 mb-2">
+                        <button
+                            type="button"
+                            onClick={handlePreviousMonth}
+                            aria-label="Mes anterior"
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50 border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)] bg-transparent p-0 opacity-50 hover:opacity-100 h-7 w-7"
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </button>
+                        <span className="flex-1 text-center text-sm font-medium capitalize select-none">
+                            {monthLabel}
+                        </span>
+                        <button
+                            type="button"
+                            onClick={handleNextMonth}
+                            aria-label="Mes siguiente"
+                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50 border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)] bg-transparent p-0 opacity-50 hover:opacity-100 h-7 w-7"
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </button>
+                    </div>
+
                     <DayPicker
                         mode="single"
                         selected={selectedDate}
                         onSelect={handleSelect}
-                        defaultMonth={selectedDate ?? new Date()}
+                        month={month}
+                        onMonthChange={setMonth}
+                        locale={es}
+                        showOutsideDays={false}
                         classNames={{
                             root: "rdp p-0",
                             months: "flex flex-col",
-                            month: "space-y-4",
-                            month_caption: "flex justify-center pt-1 relative items-center",
-                            caption_label: "text-sm font-medium",
-                            nav: "flex items-center gap-1",
-                            button_previous: cn(cyanButton, "absolute left-1"),
-                            button_next: cn(cyanButton, "absolute right-1"),
+                            month: "",
+                            caption: "hidden",
+                            caption_label: "hidden",
+                            nav: "hidden",
+                            month_caption: "hidden",
                             month_grid: "w-full border-collapse space-y-1",
                             weekdays: "flex",
                             weekday: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
@@ -152,14 +207,6 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
                             day_selected: "bg-accent text-accent-foreground",
                             day_disabled: "opacity-50",
                             day_hidden: "invisible",
-                        }}
-                        components={{
-                            Chevron: ({ orientation }) =>
-                                orientation === "left" ? (
-                                    <ChevronLeft className="h-4 w-4" />
-                                ) : (
-                                    <ChevronRight className="h-4 w-4" />
-                                ),
                         }}
                     />
                 </div>

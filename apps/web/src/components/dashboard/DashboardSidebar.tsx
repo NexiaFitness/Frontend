@@ -63,7 +63,21 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         onNavigate: (path) => navigate(path, { replace: true }),
     });
 
-    const isActive = (path: string) => location.pathname === path;
+    const isActive = (path: string) => {
+        if (
+            path === "/dashboard/sessions" &&
+            (
+                location.pathname.startsWith("/dashboard/session-programming") ||
+                location.pathname.startsWith("/dashboard/standalone-sessions")
+            )
+        ) {
+            return true;
+        }
+        if (path === "/dashboard") {
+            return location.pathname === "/dashboard";
+        }
+        return location.pathname === path || location.pathname.startsWith(`${path}/`);
+    };
 
     useEffect(() => {
         const mql = window.matchMedia("(hover: hover)");

@@ -6,6 +6,7 @@
  * - Backend: API en VITE_API_BASE_URL (por defecto http://127.0.0.1:8000/api/v1)
  * - Cuenta de prueba: nexiafitness.demo@gmail.com / Nexia.1234 (ver frontend/.env.example)
  * - Opcional: al menos un plan de entrenamiento para el flujo de planificación
+ * - Recomendado E2E: backend con backend/.env.e2e (BD nexia_e2e); reset: bash backend/scripts/reset_e2e_db.sh
  *
  * @see frontend/README.md § E2E
  * @see FASE7_ROADMAP_IMPLEMENTACION.md Fase 7.3
@@ -17,6 +18,7 @@ import { defineConfig, devices } from "@playwright/test";
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://localhost:5173";
 
 export default defineConfig({
+  globalSetup: "./e2e/global-setup.ts",
   testDir: "./e2e",
   fullyParallel: false,
   forbidOnly: !!process.env.CI,

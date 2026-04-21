@@ -17,7 +17,10 @@
 
 // Valores extraídos de vistas de referencia; solo tamaño/peso, sin color
 export const TYPOGRAPHY = {
-    // Títulos de página (ClientList: "Clientes")
+    /** Encabezado de vistas dashboard listado/tab (misma línea que «Sesiones del cliente», PlanPeriodizationSection). */
+    dashboardViewHeading: "text-base font-semibold",
+
+    // Títulos de página (auth, marketing; no confundir con dashboardViewHeading)
     pageTitle: "text-xl font-bold sm:text-2xl",
 
     // Título principal en detalle (ClientHeader: nombre cliente)
@@ -42,8 +45,8 @@ export const TYPOGRAPHY = {
     metricLabel: "text-base md:text-lg lg:text-xl font-semibold",
 
     // Modales (BaseModal y contenido)
-    modalTitle: "text-lg sm:text-xl lg:text-2xl font-bold",
-    modalDescription: "text-sm sm:text-base",
+    modalTitle: "text-lg font-semibold leading-none tracking-tight",
+    modalDescription: "text-sm",
 
     // Formularios (labels, errores, helpers)
     inputLabel: "text-sm font-medium",

@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { BaseModal } from "@/components/ui/modals";
+import { Input } from "@/components/ui/forms";
 import {
     useGetClientEquipmentQuery,
     useCreateClientEquipmentMutation,
@@ -208,13 +209,14 @@ export const ClientEquipmentSection: React.FC<ClientEquipmentSectionProps> = ({ 
                         <label htmlFor="eq-quantity" className="block text-sm font-medium text-foreground mb-1">
                             Cantidad
                         </label>
-                        <input
+                        <Input
                             id="eq-quantity"
                             type="number"
+                            size="sm"
                             min={1}
                             value={form.quantity ?? 1}
                             onChange={(e) => setForm((f) => ({ ...f, quantity: parseInt(e.target.value, 10) || 1 }))}
-                            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                            className="w-full"
                         />
                     </div>
                     <div>

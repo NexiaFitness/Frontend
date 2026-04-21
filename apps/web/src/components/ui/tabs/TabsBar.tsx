@@ -1,10 +1,11 @@
 /**
  * TabsBar.tsx — Barra de pestañas horizontal reutilizable
  *
- * Especificación: contenedor flex, gap-1, overflow-x-auto, border-b border-border, pb-px.
- * Cada botón: flex items-center gap-2, whitespace-nowrap, px-4 py-2.5, text-sm font-medium,
- * transition-colors, border-b-2 -mb-px. Activo: border-primary text-primary.
+ * Estilo: contenedor flex, gap-1, overflow-x-auto, border-b border-border, pb-px.
+ * Cada botón: whitespace-nowrap, px-4 py-2.5, text-sm font-medium, transition-colors,
+ * border-b-2 -mb-px. Activo: border-primary text-primary.
  * Inactivo: border-transparent text-muted-foreground hover:text-foreground.
+ * Icono opcional por item (gap-2); sin contenedor tipo “segmented”.
  *
  * @author Frontend Team
  * @since v6.x
@@ -16,19 +17,15 @@ import { cn } from "@/lib/utils";
 export interface TabsBarItem {
     id: string;
     label: string;
+    icon?: React.ReactNode;
     disabled?: boolean;
 }
 
 export interface TabsBarProps {
-    /** Lista de pestañas */
     items: TabsBarItem[];
-    /** Id de la pestaña activa */
     value: string;
-    /** Callback al seleccionar una pestaña */
     onChange: (id: string) => void;
-    /** aria-label del nav (accesibilidad) */
     ariaLabel?: string;
-    /** Clases adicionales para el contenedor */
     className?: string;
 }
 
@@ -60,12 +57,13 @@ export const TabsBar: React.FC<TabsBarProps> = ({
                         disabled={isDisabled}
                         aria-current={isActive ? "page" : undefined}
                         className={cn(
-                            "flex flex-shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
+                            "flex shrink-0 items-center gap-2 whitespace-nowrap border-b-2 px-4 py-2.5 text-sm font-medium transition-colors -mb-px",
                             isActive && "border-primary text-primary",
                             !isActive && "border-transparent text-muted-foreground hover:text-foreground",
                             isDisabled && "cursor-not-allowed opacity-50"
                         )}
                     >
+                        {tab.icon ? <span className="shrink-0 [&_svg]:h-4 [&_svg]:w-4">{tab.icon}</span> : null}
                         {tab.label}
                     </button>
                 );

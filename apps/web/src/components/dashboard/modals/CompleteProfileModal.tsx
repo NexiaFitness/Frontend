@@ -51,19 +51,11 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                     {missingFieldsLabels.map((label: string) => (
                         <li
                             key={label}
-                            className="flex items-center text-gray-700 text-sm sm:text-base"
+                            className="flex items-center text-sm text-foreground sm:text-base"
                         >
-                            <svg
-                                className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 mr-3 flex-shrink-0"
-                                fill="currentColor"
-                                viewBox="0 0 20 20"
-                            >
-                                <path
-                                    fillRule="evenodd"
-                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-11a1 1 0 10-2 0v2H7a1 1 0 100 2h2v2a1 1 0 102 0v-2h2a1 1 0 100-2h-2V7z"
-                                    clipRule="evenodd"
-                                />
-                            </svg>
+                            <span className="mr-3 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-warning/15 text-warning text-xs font-bold">
+                                +
+                            </span>
                             {label}
                         </li>
                     ))}
@@ -71,9 +63,9 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
             </div>
 
             {/* Info adicional */}
-            <div className="mb-6 sm:mb-8 p-4 bg-amber-50 rounded-lg">
-                <p className="text-sm text-amber-800">
-                    ℹ️ Completar tu perfil te tomará solo 2 minutos.
+            <div className="mb-6 rounded-lg border border-warning/20 bg-warning/10 p-4 sm:mb-8">
+                <p className="text-sm text-warning">
+                    Completar tu perfil te tomará solo 2 minutos.
                 </p>
             </div>
 

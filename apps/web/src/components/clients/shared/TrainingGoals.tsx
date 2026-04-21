@@ -17,19 +17,26 @@ import type { TrainingGoalsStepProps } from "@nexia/shared/types/clientOnboardin
 import { TRAINING_GOAL_ENUM } from "@nexia/shared";
 import { inputClass, selectClass, textareaClass, labelClass, errorClass, helperClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
 
-export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
+interface TrainingGoalsProps extends TrainingGoalsStepProps {
+    hideHeading?: boolean;
+}
+
+export const TrainingGoals: React.FC<TrainingGoalsProps> = ({
     formData,
     errors,
     updateField,
+    hideHeading = false,
 }) => {
     return (
         <div>
             {/* Sección: Parámetros de Entrenamiento */}
             <div>
-                <div className="flex items-center gap-3 mb-4">
-                    <h3 className={sectionHeadingClass}>Parámetros de Entrenamiento</h3>
-                    <div className={sectionDividerClass} />
-                </div>
+                {!hideHeading && (
+                    <div className="flex items-center gap-3 mb-4">
+                        <h3 className={sectionHeadingClass}>Parámetros de Entrenamiento</h3>
+                        <div className={sectionDividerClass} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -42,9 +49,14 @@ export const TrainingGoals: React.FC<TrainingGoalsStepProps> = ({
                             className={selectClass}
                         >
                             <option value="">Selecciona un objetivo</option>
-                            <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
-                            <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
-                            <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
+                            <option value={TRAINING_GOAL_ENUM.HIPERTROFIA}>Hipertrofia muscular</option>
+                            <option value={TRAINING_GOAL_ENUM.FUERZA}>Fuerza máxima</option>
+                            <option value={TRAINING_GOAL_ENUM.POTENCIA}>Potencia / explosividad</option>
+                            <option value={TRAINING_GOAL_ENUM.RESISTENCIA}>Resistencia cardiovascular</option>
+                            <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso / definición</option>
+                            <option value={TRAINING_GOAL_ENUM.REHABILITACION}>Rehabilitación / readaptación</option>
+                            <option value={TRAINING_GOAL_ENUM.FITNESS_GENERAL}>Fitness general / salud</option>
+                            <option value={TRAINING_GOAL_ENUM.RENDIMIENTO_DEPORTIVO}>Rendimiento deportivo</option>
                         </select>
                         {errors.objetivo_entrenamiento && <p className={errorClass}>{errors.objetivo_entrenamiento}</p>}
                     </div>

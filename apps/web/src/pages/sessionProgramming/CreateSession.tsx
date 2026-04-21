@@ -14,6 +14,9 @@
  * @updated Fase 1 U4 - Props opcionales para contexto cliente (no salir del cliente)
  * @updated Fase 3 - Coherencia tras crear: avisos en pantalla + Entendido, luego redirigir
  * @updated P2 - StandaloneSession cuando no hay plan activo en la fecha
+ * @updated 2026-03-24 - Adaptado para TrainingPlanInstance[]
+ *   Usa instance.source_plan_id para crear sesiones (training_plan_id)
+ *   El selector muestra instances pero usa source_plan_id como value
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
@@ -21,7 +24,7 @@ import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
-import { useToast, LoadingSpinner } from "@/components/ui/feedback";
+import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -38,6 +41,7 @@ import {
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
@@ -45,13 +49,12 @@ import { SessionConstructor } from "@/components/sessionProgramming/SessionConst
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { buildExercisePayload } from "./buildExercisePayload";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
-import { ClipboardList } from "lucide-react";
+import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import { TriangleAlert } from "lucide-react";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -61,16 +64,9 @@ import type {
     TrainingSessionCreate,
     SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
+import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import type { LocationStateReturnTo } from "@nexia/shared";
-
-const SESSION_TYPES = [
-    { value: "training", label: "Entrenamiento" },
-    { value: "cardio", label: "Cardio" },
-    { value: "strength", label: "Fuerza" },
-    { value: "endurance", label: "Resistencia" },
-    { value: "flexibility", label: "Flexibilidad" },
-    { value: "recovery", label: "Recuperación" },
-];
+import { SESSION_TYPES } from "./sessionFormConstants";
 
 export interface CreateSessionProps {
     /** Cuando se usa desde clients/:id/sessions/new; prioridad sobre query. */
@@ -95,6 +91,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Obtener parámetros: props (contexto cliente) tienen prioridad sobre query
     const clientIdFromQuery = searchParams.get("clientId");
     const planIdFromQuery = searchParams.get("planId");
+    const dateFromQuery = searchParams.get("date");
     const clientId = clientIdProp ?? (clientIdFromQuery ? Number(clientIdFromQuery) : null);
     const planId = planIdFromQuery ? Number(planIdFromQuery) : null;
 
@@ -128,13 +125,15 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(planId);
 
     // Autoseleccionar plan si solo hay uno activo
+    // Usar source_plan_id para crear sesiones (training_plan_id espera el Plan ID, no Instance ID)
     useEffect(() => {
         if (!planId && clientPlans && clientPlans.length > 0) {
             const activePlans = clientPlans.filter((p) => p.status === "active");
             if (activePlans.length === 1) {
-                setSelectedPlanId(activePlans[0].id);
+                setSelectedPlanId(activePlans[0].source_plan_id ?? activePlans[0].id);
             } else if (activePlans.length === 0 && clientPlans.length === 1) {
-                setSelectedPlanId(clientPlans[0].id);
+                const plan = clientPlans[0];
+                setSelectedPlanId(plan.source_plan_id ?? plan.id);
             }
         }
     }, [clientPlans, planId]);
@@ -152,9 +151,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     });
 
     // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
-    const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(effectiveClientId ?? 0, {
-        skip: !effectiveClientId || effectiveClientId <= 0,
-    });
+    const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(
+        { clientId: effectiveClientId ?? 0 },
+        { skip: !effectiveClientId || effectiveClientId <= 0 }
+    );
 
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
@@ -212,7 +212,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     const [formData, setFormData] = useState({
         sessionName: "",
-        sessionDate: new Date().toISOString().split("T")[0],
+        sessionDate: dateFromQuery || new Date().toISOString().split("T")[0],
         sessionType: "strength",
         plannedDuration: "60",
         plannedIntensity: "5",
@@ -259,7 +259,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         const newEx: ConstructorExercise = {
             id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
             exerciseId: exercise.id,
-            exerciseName: exercise.nombre,
+            exerciseName: exerciseDisplayName(exercise),
             plannedReps: "10",
             plannedWeight: null,
             plannedDuration: null,
@@ -274,7 +274,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     : r
             )
         );
-        /* targetRowIdForPicker se mantiene: panel abierto para añadir más a la misma fila */
+        setShowExercisePickerModal(false);
+        setTargetRowIdForPicker(null);
     };
 
     /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */
@@ -566,6 +567,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             }
                         }}
                     >
+                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
                     </Button>
                 </div>
@@ -605,8 +607,13 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
                 <form id="create-session-form" onSubmit={handleSubmit}>
                 {/* Grid: 3 primeras filas (nombre, fecha, duración) + columna derecha con plan — solo cuando hay cliente */}
-                <div className={`grid grid-cols-1 gap-6 ${effectiveClientId ? "lg:grid-cols-[1fr_420px]" : ""}`}>
-                    <div className="space-y-5">
+                <div
+                    className={cn(
+                        "grid grid-cols-1 items-stretch gap-6",
+                        effectiveClientId ? "lg:grid-cols-[1fr_420px]" : "",
+                    )}
+                >
+                    <div className="min-h-0 space-y-5">
                             {/* Nombre de la Sesión + Plan de Entrenamiento (misma línea cuando hay cliente) */}
                             <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
                                 <div>
@@ -650,8 +657,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                                 required={!!resolvedClientId && !useStandaloneSession}
                                                 options={[
                                                     { value: "", label: "Selecciona un plan" },
-                                                    ...(clientPlans || []).map((p) => ({
-                                                        value: p.id.toString(),
+                                                    // Usar source_plan_id como value para crear sesiones correctamente
+                                                    ...(clientPlans || []).map((p: TrainingPlanInstance) => ({
+                                                        value: (p.source_plan_id ?? p.id).toString(),
                                                         label: `${p.name} (${p.status === "active" ? "Activo" : "Inactivo"})`,
                                                     })),
                                                 ]}
@@ -699,7 +707,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </div>
                             </div>
 
-                            {/* Fila Duración + Intensidad + Volumen (grid 3 cols, spec 4.1.3) */}
+                            {/* Fila Duración + Volumen + Intensidad (grid 3 cols, spec 4.1.3) */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
@@ -715,17 +723,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </div>
                                 <div className="mt-3 md:mt-0">
                                     <Slider
-                                        label="Intensidad (5/10)"
-                                        value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
-                                        min={1}
-                                        max={10}
-                                        color="primary"
-                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
-                                    />
-                                </div>
-                                <div className="mt-3 md:mt-0">
-                                    <Slider
-                                        label="Volumen (5/10)"
+                                        label="Volumen"
+                                        labelIcon={<Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />}
                                         value={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
                                         min={1}
                                         max={10}
@@ -733,14 +732,26 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
                                     />
                                 </div>
+                                <div className="mt-3 md:mt-0">
+                                    <Slider
+                                        label="Intensidad"
+                                        labelIcon={<Flame className="h-3.5 w-3.5 text-warning" aria-hidden />}
+                                        value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
+                                        min={1}
+                                        max={10}
+                                        color="warning"
+                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
+                                    />
+                                </div>
                             </div>
                     </div>
 
                     {/* Columna derecha: Plan del día — solo cuando hay cliente seleccionado */}
                     {effectiveClientId != null && effectiveClientId > 0 && (
-                    <div className="lg:self-stretch">
+                    <div className="flex h-full min-h-0 flex-col lg:self-stretch">
                         {useStandaloneSession ? (
                                 <EmptyStateCard
+                                    className="h-full min-h-0 flex-1"
                                     icon={<ClipboardList aria-hidden />}
                                     title="Sin plan asignado"
                                     description="Este cliente no tiene un plan de entrenamiento activo."
@@ -752,7 +763,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
                                             onClick={() =>
                                                 navigate(
-                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`
+                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`,
+                                                    {
+                                                        state: { from: location.pathname },
+                                                    }
                                                 )
                                             }
                                         >
@@ -781,14 +795,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 <div className="mt-6 space-y-5 w-full">
                             {/* Alerta lesiones activas — solo cuando hay cliente seleccionado */}
                             {effectiveClientId && hasActiveInjuries && displayClient && (
-                                <div className="flex items-center gap-3 rounded-lg border border-[hsl(var(--warning))]/30 bg-[hsl(var(--warning))]/10 p-4">
-                                    <TriangleAlert className="h-5 w-5 shrink-0 text-[hsl(var(--warning))]" aria-hidden />
-                                    <p className="text-sm text-[hsl(var(--warning))]">
-                                        Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
-                                        {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
-                                        ). Los ejercicios contraindicados están marcados en la lista.
-                                    </p>
-                                </div>
+                                <Alert variant="warning">
+                                    Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
+                                    {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
+                                    ). Los ejercicios contraindicados están marcados en la lista.
+                                </Alert>
                             )}
 
                             {/* Recomendaciones de plan (Lovable) — solo cuando hay cliente asignado */}

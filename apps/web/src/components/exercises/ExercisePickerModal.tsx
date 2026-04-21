@@ -117,6 +117,7 @@ export const ExercisePickerModal: React.FC<ExercisePickerModalProps> = ({
                                     key={exercise.id}
                                     exercise={exercise}
                                     onSelect={handleSelect}
+                                    className="border-slate-200 bg-white hover:bg-slate-50"
                                 />
                             ))}
                         </div>

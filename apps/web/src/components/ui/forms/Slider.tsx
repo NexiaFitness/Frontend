@@ -22,6 +22,7 @@ import React from "react";
 
 export interface SliderProps {
     label: string;
+    labelIcon?: React.ReactNode;
     value: number;
     min: number;
     max: number;
@@ -34,6 +35,7 @@ export interface SliderProps {
 
 export const Slider: React.FC<SliderProps> = ({
     label,
+    labelIcon,
     value,
     min,
     max,
@@ -64,8 +66,9 @@ export const Slider: React.FC<SliderProps> = ({
     return (
         <div className="w-full">
             <div className="flex items-center justify-between mb-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                    {label}
+                <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                    {labelIcon}
+                    <span>{label}</span>
                 </label>
                 <span className="text-sm font-medium text-foreground">
                     {value}/{max}

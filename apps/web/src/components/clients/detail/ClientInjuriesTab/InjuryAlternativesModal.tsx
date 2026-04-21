@@ -16,6 +16,7 @@ import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
 import { FormSelect } from "@/components/ui/forms";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import { useGetAutoSuggestedAlternativesQuery } from "@nexia/shared/api/exerciseAlternativesApi";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 
@@ -102,7 +103,8 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                 {selectedExerciseId && (
                     <div className="pt-2 border-t border-border">
                         <p className="text-sm font-semibold text-foreground mb-2">
-                            Alternativas para &quot;{selectedExercise?.nombre ?? "..."}&quot;
+                            Alternativas para &quot;
+                            {selectedExercise ? exerciseDisplayName(selectedExercise) : "..."}&quot;
                         </p>
                         {isLoadingAlternatives ? (
                             <div className="flex justify-center py-6">

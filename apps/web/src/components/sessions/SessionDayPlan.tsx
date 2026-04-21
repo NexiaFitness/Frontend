@@ -6,6 +6,7 @@
  * - Muestra plan del día (volumen, intensidad, cualidad) y coherence_warnings
  * - Se usa en CreateSession y EditSession
  * - No bloquea el guardado
+ * - Altura: mismo patrón que EmptyStateCard (columna derecha h-full / flex-1)
  *
  * @author Frontend Team
  * @since Fase 3 - Alineación documento canónico
@@ -16,6 +17,15 @@ import React from "react";
 import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { cn } from "@/lib/utils";
+
+/** Alineado con EmptyStateCard: borde, barra primary, sombra, ocupa altura de la columna. */
+const dayPlanCardShell = cn(
+    "flex min-h-0 flex-1 flex-col rounded-lg border border-border border-l-2 border-l-primary",
+    "bg-card p-5 text-card-foreground shadow-sm",
+);
+
+const dayPlanRoot = "flex h-full min-h-0 flex-1 flex-col gap-3";
 
 interface SessionDayPlanProps {
     clientId: number | null;
@@ -43,9 +53,13 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
     if (isLoading) {
         return (
-            <div className="flex items-center gap-2 p-4 bg-primary/10 border border-primary/30 rounded-lg">
-                <LoadingSpinner size="sm" />
-                <span className="text-sm text-primary">Cargando plan del día...</span>
+            <div className={dayPlanRoot}>
+                <div className={cn(dayPlanCardShell, "items-center justify-center py-8")}>
+                    <div className="flex items-center gap-2">
+                        <LoadingSpinner size="sm" />
+                        <span className="text-sm text-primary">Cargando plan del día...</span>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -58,16 +72,17 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
     if (!response.has_active_plan) {
         return (
-            <div className="space-y-3">
-                <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-600">
-                        Sin plan activo para esta fecha. La sesión se creará sin referencia de planificación.
+            <div className={dayPlanRoot}>
+                <div className={cn(dayPlanCardShell, "justify-center text-center")}>
+                    <p className="text-sm text-muted-foreground">
+                        Sin plan activo para esta fecha. La sesión se creará sin referencia de
+                        planificación.
                     </p>
                 </div>
                 {warnings.length > 0 && (
-                    <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
-                        <h4 className="text-sm font-semibold text-amber-900 mb-1">Avisos de coherencia</h4>
-                        <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
+                    <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                        <h4 className="mb-1 text-sm font-semibold text-warning">Avisos de coherencia</h4>
+                        <ul className="list-inside list-disc space-y-1 text-sm text-warning">
                             {warnings.map((w, i) => (
                                 <li key={i}>{w}</li>
                             ))}
@@ -80,16 +95,16 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
 
     if (!("has_planned_values" in response) || !response.has_planned_values || !response.recommendations) {
         return (
-            <div className="space-y-3">
-                <div className="p-4 bg-muted/50 border border-border rounded-lg">
+            <div className={dayPlanRoot}>
+                <div className={cn(dayPlanCardShell, "justify-center text-center")}>
                     <p className="text-sm text-muted-foreground">
                         Plan activo sin valores planificados para este día.
                     </p>
                 </div>
                 {warnings.length > 0 && (
-                    <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
-                        <h4 className="text-sm font-semibold text-warning mb-1">Avisos de coherencia</h4>
-                        <ul className="list-disc list-inside text-sm text-warning space-y-1">
+                    <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                        <h4 className="mb-1 text-sm font-semibold text-warning">Avisos de coherencia</h4>
+                        <ul className="list-inside list-disc space-y-1 text-sm text-warning">
                             {warnings.map((w, i) => (
                                 <li key={i}>{w}</li>
                             ))}
@@ -103,32 +118,37 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
     const rec = response.recommendations;
 
     return (
-        <div className="space-y-3">
-            {/* Bloque Hoy toca — card lateral con border-l-primary */}
-            <div className="p-5 border-l-2 border-l-primary bg-card rounded-lg">
-                <h4 className="text-sm font-semibold text-foreground mb-2">
-                    Plan del día
-                </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+        <div className={dayPlanRoot}>
+            <div className={dayPlanCardShell}>
+                <h4 className="mb-2 text-sm font-semibold text-foreground">Plan del día</h4>
+                <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
                     <div>
-                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Cualidad</span>
-                        <p className="text-foreground font-medium">{rec.physical_quality}</p>
+                        <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                            Cualidad
+                        </span>
+                        <p className="font-medium text-foreground">{rec.physical_quality}</p>
                     </div>
                     <div>
-                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Volumen</span>
-                        <p className="text-foreground font-medium">
+                        <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                            Volumen
+                        </span>
+                        <p className="font-medium text-foreground">
                             {rec.planned_volume_scale.toFixed(1)}/10
                         </p>
                     </div>
                     <div>
-                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Intensidad</span>
-                        <p className="text-foreground font-medium">
+                        <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                            Intensidad
+                        </span>
+                        <p className="font-medium text-foreground">
                             {rec.planned_intensity_scale.toFixed(1)}/10
                         </p>
                     </div>
                     <div>
-                        <span className="text-muted-foreground text-xs uppercase tracking-wide block">Vol. diario rec.</span>
-                        <p className="text-foreground font-medium">
+                        <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                            Vol. diario rec.
+                        </span>
+                        <p className="font-medium text-foreground">
                             {rec.recommended_daily_volume_units.toFixed(1)}{" "}
                             {rec.weekly_volume_unit_type === "series"
                                 ? "series por grupo muscular"
@@ -137,19 +157,16 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
                     </div>
                 </div>
                 {rec.day_inherited && (
-                    <p className="text-xs text-muted-foreground mt-2">
+                    <p className="mt-auto pt-4 text-xs text-muted-foreground">
                         Valores heredados del plan semanal/mensual.
                     </p>
                 )}
             </div>
 
-            {/* Warnings */}
             {warnings.length > 0 && (
-                <div className="p-4 bg-warning/10 border border-warning/30 rounded-lg">
-                    <h4 className="text-sm font-semibold text-warning mb-1">
-                        Avisos de coherencia
-                    </h4>
-                    <ul className="list-disc list-inside text-sm text-warning space-y-1">
+                <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
+                    <h4 className="mb-1 text-sm font-semibold text-warning">Avisos de coherencia</h4>
+                    <ul className="list-inside list-disc space-y-1 text-sm text-warning">
                         {warnings.map((w, i) => (
                             <li key={i}>{w}</li>
                         ))}

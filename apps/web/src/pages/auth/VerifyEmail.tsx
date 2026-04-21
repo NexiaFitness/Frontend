@@ -46,29 +46,30 @@ const VerifyEmailForm: React.FC = () => {
     return (
         <AuthLayout>
             <div className="space-y-6 text-center">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary">
+                <h1 className="text-xl font-bold text-foreground sm:text-2xl">
                     Verificación de correo electrónico
                 </h1>
 
                 {isLoading && (
-                    <p className="text-sm sm:text-base text-muted-foreground">
+                    <p className="text-sm text-muted-foreground">
                         Verificando tu cuenta, por favor espera...
                     </p>
                 )}
 
                 {isSuccess && (
-                    <div className="bg-success/10 border border-success/30 rounded-lg p-6">
-                        <h2 className="text-success font-semibold mb-2">
+                    <div className="rounded-lg border border-success/30 bg-success/10 p-6">
+                        <h2 className="mb-2 font-semibold text-success">
                             ¡Correo verificado correctamente!
                         </h2>
-                        <p className="text-muted-foreground mb-4">
+                        <p className="mb-4 text-sm text-muted-foreground">
                             Serás redirigido a tu panel en unos segundos.
                         </p>
                         <Button
                             type="button"
                             onClick={() => navigate("/dashboard")}
                             variant="primary"
-                            className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3"
+                            size="md"
+                            className="w-full"
                         >
                             Ir al Dashboard
                         </Button>
@@ -87,8 +88,9 @@ const VerifyEmailForm: React.FC = () => {
                         <Button
                             type="button"
                             onClick={() => navigate("/auth/login")}
-                            variant="secondary"
-                            className="w-full text-sm px-3 py-2 sm:text-base sm:px-4 sm:py-2.5"
+                            variant="outline"
+                            size="md"
+                            className="w-full"
                         >
                             Volver al login
                         </Button>

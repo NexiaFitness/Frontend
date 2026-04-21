@@ -20,6 +20,7 @@
 import React from "react";
 import type { UniversalMetricsFormData } from "@nexia/shared/types/forms";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { Input } from "@/components/ui/forms";
 
 interface ClientMetricsFieldsProps {
     formData: UniversalMetricsFormData;
@@ -80,13 +81,14 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                         <label className={TYPOGRAPHY.inputLabel}>
                             Edad {isRequired("edad") && "*"}
                         </label>
-                        <input
+                        <Input
                             type="number"
+                            size="sm"
                             min={13}
                             max={100}
                             value={formData.edad ?? ""}
                             onChange={(e) => updateField("edad", Number(e.target.value) || null)}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full"
                             placeholder="13-100 años"
                         />
                         {errors.edad && (
@@ -99,14 +101,15 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                         <label className={TYPOGRAPHY.inputLabel}>
                             Peso (kg) {isRequired("peso") && "*"}
                         </label>
-                        <input
+                        <Input
                             type="number"
+                            size="sm"
                             step="0.1"
                             min={20}
                             max={300}
                             value={formData.peso ?? ""}
                             onChange={(e) => updateField("peso", Number(e.target.value) || null)}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full"
                             placeholder="20-300 kg"
                         />
                         {errors.peso && (
@@ -119,14 +122,15 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                         <label className={TYPOGRAPHY.inputLabel}>
                             Altura (cm) {isRequired("altura") && "*"}
                         </label>
-                        <input
+                        <Input
                             type="number"
+                            size="sm"
                             step={0.1}
                             min={100}
                             max={250}
                             value={formData.altura ?? ""}
                             onChange={(e) => updateField("altura", Number(e.target.value) || null)}
-                            className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                            className="w-full"
                             placeholder="100-250 cm"
                         />
                         {errors.altura && (
@@ -215,14 +219,15 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                             ].map(({ field, label }) => (
                                 <div key={field}>
                                     <label className={TYPOGRAPHY.inputLabel}>{label}</label>
-                                    <input
+                                    <Input
                                         type="number"
+                                        size="sm"
                                         step="0.1"
                                         min="0"
                                         max="50"
                                         value={formData[field as keyof typeof formData] ?? ""}
                                         onChange={(e) => updateField(field as keyof UniversalMetricsFormData, Number(e.target.value) || null)}
-                                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                                        className="w-full"
                                         placeholder="0-50 mm"
                                     />
                                     {errors[field] && (
@@ -249,14 +254,15 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                             ].map(({ field, label }) => (
                                 <div key={field}>
                                     <label className={TYPOGRAPHY.inputLabel}>{label}</label>
-                                    <input
+                                    <Input
                                         type="number"
+                                        size="sm"
                                         step="0.1"
                                         min="10"
                                         max="200"
                                         value={formData[field as keyof typeof formData] ?? ""}
                                         onChange={(e) => updateField(field as keyof UniversalMetricsFormData, Number(e.target.value) || null)}
-                                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                                        className="w-full"
                                         placeholder="10-200 cm"
                                     />
                                     {errors[field] && (
@@ -280,14 +286,15 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                             ].map(({ field, label, min, max }) => (
                                 <div key={field}>
                                     <label className={TYPOGRAPHY.inputLabel}>{label}</label>
-                                    <input
+                                    <Input
                                         type="number"
+                                        size="sm"
                                         step="0.1"
                                         min={min}
                                         max={max}
                                         value={formData[field as keyof typeof formData] ?? ""}
                                         onChange={(e) => updateField(field as keyof UniversalMetricsFormData, Number(e.target.value) || null)}
-                                        className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                                        className="w-full"
                                         placeholder={`${min}-${max} cm`}
                                     />
                                     {errors[field] && (

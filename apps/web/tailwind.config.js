@@ -2,11 +2,18 @@
 /**
  * Nexia Sparkle Flow — Design tokens en :root (index.css).
  * Breakpoints: escala Tailwind por defecto (sm:640, md:768, lg:1024, xl:1280, 2xl:1536).
+ * Rutas absolutas para evitar fallos de resolución en monorepo.
+ *
+ * @author Frontend Team
+ * @since v5.0.0
  */
-module.exports = {
+import path from "path";
+import forms from "@tailwindcss/forms";
+
+export default {
     content: [
-        "./src/**/*.{js,ts,jsx,tsx}",
-        "../../packages/shared/src/**/*.{ts,tsx}"
+        path.resolve(__dirname, "src/**/*.{js,ts,jsx,tsx}"),
+        path.resolve(__dirname, "../../packages/shared/src/**/*.{ts,tsx}"),
     ],
     theme: {
         extend: {
@@ -118,5 +125,5 @@ module.exports = {
             },
         },
     },
-    plugins: [require("@tailwindcss/forms")],
+    plugins: [forms],
 };

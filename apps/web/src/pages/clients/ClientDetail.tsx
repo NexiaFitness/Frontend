@@ -2,20 +2,23 @@
  * ClientDetail.tsx — Página de detalle del cliente
  *
  * Contexto:
- * - Vista completa del cliente con 6 tabs (Ola 2 S03: tab unificado "Sesiones").
- * - Tabs: Resumen, Sesiones, Coherencia Diaria, Tests, Progreso, Lesiones.
- * - Layout: Header + Tabs + Content.
+ * - Vista completa del cliente con 7 tabs.
+ * - Tabs: Resumen, Sesiones, Coherencia Diaria, Tests, Progreso, Planificación, Lesiones.
+ * - Layout: Header + TabsBar + Content.
+ *
+ * Navegación de planes:
+ * - "Ver plan" desde cualquier tab navega a ?tab=planning&plan=:id (detalle inline).
+ * - "Crear plan" navega a /training-plans/create?clientId=:id; al crear vuelve aquí.
+ * - El detalle de plan (sesiones, planificación, hitos, gráficos) vive en ClientPlanningTab.
  *
  * @author Frontend Team
  * @since v3.1.0
- * @updated v6.0.0 - Integración de Breadcrumbs jerárquicos.
- * @updated v6.2.0 - Ola 2 S03: swap a 6 tabs; "Sesiones" reemplaza Programación de Sesiones + Entrenamientos.
- * @updated Fase 6 - Tab Planificación (planificación client-only o por plan asociado).
- * @updated U4 paso 1.5 - PlanDetailDrawer para "Ver plan" sin salir de clients/:id
+ * @updated v6.2.0 - Tab unificado "Sesiones".
+ * @updated 2026-03-31 - Eliminado PlanDetailDrawer; detalle de plan inline en tab Planificación.
  */
 
 import React, { Suspense, lazy, useState, useCallback } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -31,8 +34,6 @@ import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
-import { PlanDetailDrawer } from "@/components/clients/detail/PlanDetailDrawer";
-import { CreatePlanModal } from "@/components/clients/detail/modals/CreatePlanModal";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 
@@ -80,33 +81,13 @@ export const ClientDetail: React.FC = () => {
         }
     }, [searchParams, setActiveTab]);
 
-    // U4 paso 1.5: drawer de detalle de plan (estado + sync con ?viewPlan)
-    const [viewPlanId, setViewPlanId] = React.useState<number | null>(() => {
-        const v = searchParams.get("viewPlan");
-        const parsed = v ? parseInt(v, 10) : NaN;
-        return !isNaN(parsed) ? parsed : null;
-    });
-
-    React.useEffect(() => {
-        const v = searchParams.get("viewPlan");
-        const parsed = v ? parseInt(v, 10) : NaN;
-        setViewPlanId(!isNaN(parsed) ? parsed : null);
-    }, [searchParams]);
-
+    // Navega al tab Planificación con el plan seleccionado abierto inline
     const handleViewPlan = useCallback((planId: number) => {
-        setViewPlanId(planId);
         setSearchParams((prev) => {
             const next = new URLSearchParams(prev);
-            next.set("viewPlan", String(planId));
-            return next;
-        }, { replace: true });
-    }, [setSearchParams]);
-
-    const handleClosePlanDrawer = useCallback(() => {
-        setViewPlanId(null);
-        setSearchParams((prev) => {
-            const next = new URLSearchParams(prev);
-            next.delete("viewPlan");
+            next.set("tab", "planning");
+            next.set("plan", String(planId));
+            next.delete("planTab");
             return next;
         }, { replace: true });
     }, [setSearchParams]);
@@ -116,8 +97,6 @@ export const ClientDetail: React.FC = () => {
     // Cargar todos los datos del cliente
     const {
         client,
-        progressHistory,
-        progressAnalytics,
         trainingPlans,
         isLoadingPlans,
         isLoading,
@@ -137,25 +116,25 @@ export const ClientDetail: React.FC = () => {
     });
     const hasActivePlan = activePlan != null && activePlan.id != null;
 
+    const location = useLocation();
+
     const handlePlanificar = useCallback(() => {
         if (hasActivePlan) {
             setActiveTab("planning");
         } else {
-            setCreatePlanModalOpen(true);
+            navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+                state: { from: location.pathname },
+            });
         }
-    }, [hasActivePlan, setActiveTab]);
+    }, [hasActivePlan, setActiveTab, navigate, clientId, location.pathname]);
 
-    // Fase 1.1: modales de planificación desde cliente (sin navegar a training-plans)
-    const [createPlanModalOpen, setCreatePlanModalOpen] = useState(false);
+    // Modales de planificación: Seleccionar plantilla → Asignar plantilla al cliente
     const [selectTemplateModalOpen, setSelectTemplateModalOpen] = useState(false);
     const [assignTemplateModalOpen, setAssignTemplateModalOpen] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
 
-    const handleCreatePlanSuccess = useCallback(() => {
-        refetchAll();
-        setActiveTab("planning");
-    }, [refetchAll, setActiveTab]);
+
 
     const handleOpenUseTemplate = useCallback(() => {
         setSelectTemplateModalOpen(true);
@@ -224,40 +203,42 @@ export const ClientDetail: React.FC = () => {
                 : null;
 
         return (
-            <div className="space-y-8">
-                <Alert variant="error">
-                    {isForbiddenError ? (
-                        <>
-                            <p className="mb-2 font-semibold text-foreground">No tienes acceso a este cliente</p>
-                            <p className="text-sm text-muted-foreground">
-                                Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
-                            </p>
-                        </>
-                    ) : (
-                        <>
-                            <p className="mb-2 font-semibold text-foreground">Error al cargar los datos del cliente</p>
-                            <p className="mb-2 text-sm text-muted-foreground">Por favor, intenta de nuevo.</p>
-                            {errorMessage && (
-                                <div className="mt-2 font-mono text-label text-destructive">{errorMessage}</div>
-                            )}
-                        </>
-                    )}
-                </Alert>
-                <div className="flex flex-wrap gap-3">
-                    {isForbiddenError ? (
-                        <Button variant="primary" onClick={() => navigate("/dashboard/clients")}>
-                            Volver a Clientes
+            <Alert
+                variant="error"
+                action={
+                    <>
+                        {isForbiddenError ? (
+                            <Button variant="primary" size="sm" onClick={() => navigate("/dashboard/clients")}>
+                                Volver a Clientes
+                            </Button>
+                        ) : (
+                            <Button variant="outline-destructive" size="sm" onClick={refetchAll}>
+                                Reintentar
+                            </Button>
+                        )}
+                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                            Ir al Dashboard
                         </Button>
-                    ) : (
-                        <Button variant="primary" onClick={refetchAll}>
-                            Reintentar
-                        </Button>
-                    )}
-                    <Button variant="outline" onClick={() => navigate("/dashboard")}>
-                        Ir al Dashboard
-                    </Button>
-                </div>
-            </div>
+                    </>
+                }
+            >
+                {isForbiddenError ? (
+                    <>
+                        <p className="mb-2 font-semibold text-foreground">No tienes acceso a este cliente</p>
+                        <p className="text-sm text-muted-foreground">
+                            Este cliente no está asignado a tu cuenta o no tienes permisos para verlo.
+                        </p>
+                    </>
+                ) : (
+                    <>
+                        <p className="mb-2 font-semibold text-foreground">Error al cargar los datos del cliente</p>
+                        <p className="mb-2 text-sm text-muted-foreground">Por favor, intenta de nuevo.</p>
+                        {errorMessage && (
+                            <div className="mt-2 font-mono text-label text-destructive">{errorMessage}</div>
+                        )}
+                    </>
+                )}
+            </Alert>
         );
     }
 
@@ -271,7 +252,9 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
-                        onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
+                        onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+                            state: { from: location.pathname },
+                        })}
                         onOpenUseTemplate={handleOpenUseTemplate}
                         onViewPlan={handleViewPlan}
                     />
@@ -288,8 +271,6 @@ export const ClientDetail: React.FC = () => {
                         <ClientProgressTab
                             clientId={clientId}
                             client={client}
-                            progressHistory={progressHistory}
-                            progressAnalytics={progressAnalytics}
                         />
                     </Suspense>
                 );
@@ -299,7 +280,10 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
-                        onOpenCreatePlan={() => setCreatePlanModalOpen(true)}
+                        onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+                            state: { from: location.pathname },
+                        })}
+                        onOpenUseTemplate={handleOpenUseTemplate}
                     />
                 );
             case "injuries":
@@ -334,13 +318,6 @@ export const ClientDetail: React.FC = () => {
                 {renderTabContent()}
             </div>
 
-            <CreatePlanModal
-                open={createPlanModalOpen}
-                onClose={() => setCreatePlanModalOpen(false)}
-                clientId={clientId}
-                clientName={clientName}
-                onSuccess={handleCreatePlanSuccess}
-            />
             <SelectTemplateModal
                 open={selectTemplateModalOpen}
                 onClose={() => setSelectTemplateModalOpen(false)}
@@ -360,14 +337,6 @@ export const ClientDetail: React.FC = () => {
                 onSuccess={handleAssignTemplateSuccess}
             />
 
-            {/* U4 paso 1.5: drawer detalle de plan (sin salir de clients/:id) */}
-            {viewPlanId && (
-                <PlanDetailDrawer
-                    planId={viewPlanId}
-                    clientId={clientId}
-                    onClose={handleClosePlanDrawer}
-                />
-            )}
         </div>
     );
 };

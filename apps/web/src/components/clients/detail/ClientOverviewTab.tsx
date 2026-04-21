@@ -524,7 +524,10 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                         </span>
                                     </div>
                                     <p className="text-sm text-muted-foreground mt-2">
-                                        Inicio: {new Date(injury.injury_date).toLocaleDateString("es-ES")}
+                                        Inicio:{" "}
+                                        {injury.injury_date
+                                            ? new Date(injury.injury_date).toLocaleDateString("es-ES")
+                                            : "—"}
                                     </p>
                                     {injury.notes && (
                                         <p className="text-sm text-muted-foreground mt-1 line-clamp-2">

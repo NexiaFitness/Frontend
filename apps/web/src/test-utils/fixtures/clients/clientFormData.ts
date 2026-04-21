@@ -58,7 +58,7 @@ export const createCompleteValidFormData = (overrides: Partial<ClientFormData> =
     girth_hips_maximum: 95,
     
     // Step 3: TrainingGoals
-    objetivo_entrenamiento: "Aumentar masa muscular",
+    objetivo_entrenamiento: "hypertrophy",
     fecha_definicion_objetivo: "2025-01-01",
     descripcion_objetivos: "Ganar 5kg de masa muscular",
     

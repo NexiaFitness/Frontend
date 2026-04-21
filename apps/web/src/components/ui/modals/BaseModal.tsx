@@ -16,9 +16,20 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 import { TYPOGRAPHY } from "@/utils/typography";
 
+const maxWidthStyles: Record<ModalMaxWidth, string> = {
+    sm: "sm:max-w-sm",
+    md: "sm:max-w-md",
+    lg: "sm:max-w-lg",
+    xl: "sm:max-w-xl",
+    "2xl": "sm:max-w-2xl",
+};
+
 export type ModalIconType = "warning" | "danger" | "info" | "success";
+
+export type ModalMaxWidth = "sm" | "md" | "lg" | "xl" | "2xl";
 
 interface BaseModalProps {
     isOpen: boolean;
@@ -31,6 +42,9 @@ interface BaseModalProps {
 
     // Icon
     iconType?: ModalIconType;
+
+    // Layout
+    maxWidth?: ModalMaxWidth;
 
     // Accessibility
     titleId?: string;
@@ -48,8 +62,8 @@ const iconConfig: Record<
     { bgColor: string; iconColor: string; svg: React.ReactNode }
 > = {
     danger: {
-        bgColor: "bg-red-100",
-        iconColor: "text-red-600",
+        bgColor: "bg-destructive/10",
+        iconColor: "text-destructive",
         svg: (
             <path
                 strokeLinecap="round"
@@ -60,8 +74,8 @@ const iconConfig: Record<
         ),
     },
     warning: {
-        bgColor: "bg-amber-100",
-        iconColor: "text-amber-600",
+        bgColor: "bg-warning/10",
+        iconColor: "text-warning",
         svg: (
             <path
                 strokeLinecap="round"
@@ -72,8 +86,8 @@ const iconConfig: Record<
         ),
     },
     info: {
-        bgColor: "bg-blue-100",
-        iconColor: "text-blue-600",
+        bgColor: "bg-primary/10",
+        iconColor: "text-primary",
         svg: (
             <path
                 strokeLinecap="round"
@@ -84,8 +98,8 @@ const iconConfig: Record<
         ),
     },
     success: {
-        bgColor: "bg-green-100",
-        iconColor: "text-green-600",
+        bgColor: "bg-success/10",
+        iconColor: "text-success",
         svg: (
             <path
                 strokeLinecap="round"
@@ -104,6 +118,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
     description,
     children,
     iconType,
+    maxWidth = "md",
     titleId = "modal-title",
     descriptionId = "modal-description",
     closeOnBackdrop = true,
@@ -158,22 +173,25 @@ export const BaseModal: React.FC<BaseModalProps> = ({
 
             <div
                 ref={modalRef}
-                className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[calc(100vw-2rem)] sm:max-w-md transform transition-all animate-in zoom-in-95 duration-200 focus:outline-none"
+                className={cn(
+                    "relative rounded-lg border border-border bg-card text-card-foreground shadow-lg w-full max-w-[calc(100vw-2rem)] transform transition-all animate-in zoom-in-95 duration-200 focus:outline-none max-h-[90vh] overflow-y-auto",
+                    maxWidthStyles[maxWidth],
+                )}
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby={titleId}
                 aria-describedby={description ? descriptionId : undefined}
                 tabIndex={-1}
             >
-                <div className="p-4 sm:p-8">
+                <div className="p-5 sm:p-6">
                     {/* Icon */}
                     {icon && (
-                        <div className="flex justify-center mb-4 sm:mb-6">
+                        <div className="flex justify-center mb-3">
                             <div
-                                className={`w-12 h-12 sm:w-16 sm:h-16 ${icon.bgColor} rounded-full flex items-center justify-center`}
+                                className={`h-10 w-10 ${icon.bgColor} rounded-full flex items-center justify-center`}
                             >
                                 <svg
-                                    className={`w-6 h-6 sm:w-8 sm:h-8 ${icon.iconColor}`}
+                                    className={`h-5 w-5 ${icon.iconColor}`}
                                     fill="none"
                                     stroke="currentColor"
                                     viewBox="0 0 24 24"
@@ -185,17 +203,17 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                     )}
 
                     {/* Title + Description */}
-                    <div className="text-center mb-6 sm:mb-8">
+                    <div className="text-center mb-4">
                         <h3
                             id={titleId}
-                            className={`${TYPOGRAPHY.modalTitle} text-gray-900 mb-2 sm:mb-3`}
+                            className={`${TYPOGRAPHY.modalTitle} text-foreground mb-1.5`}
                         >
                             {title}
                         </h3>
                         {description && (
                             <p
                                 id={descriptionId}
-                                className={`${TYPOGRAPHY.modalDescription} text-gray-600`}
+                                className={`${TYPOGRAPHY.modalDescription} text-muted-foreground`}
                             >
                                 {description}
                             </p>

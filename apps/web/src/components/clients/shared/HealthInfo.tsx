@@ -15,19 +15,26 @@ import React from "react";
 import type { HealthInfoStepProps } from "@nexia/shared/types/clientOnboarding";
 import { textareaClass, labelClass, errorClass, sectionHeadingClass, sectionDividerClass } from "./formFieldStyles";
 
-export const HealthInfo: React.FC<HealthInfoStepProps> = ({
+interface HealthInfoProps extends HealthInfoStepProps {
+    hideHeading?: boolean;
+}
+
+export const HealthInfo: React.FC<HealthInfoProps> = ({
     formData,
     errors,
     updateField,
+    hideHeading = false,
 }) => {
     return (
         <div>
             {/* Sección: Notas */}
             <div>
-                <div className="flex items-center gap-3 mb-4">
-                    <h3 className={sectionHeadingClass}>Notas</h3>
-                    <div className={sectionDividerClass} />
-                </div>
+                {!hideHeading && (
+                    <div className="flex items-center gap-3 mb-4">
+                        <h3 className={sectionHeadingClass}>Notas</h3>
+                        <div className={sectionDividerClass} />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>

@@ -186,10 +186,10 @@ export const RegisterForm: React.FC = () => {
     return (
         <div className="space-y-6">
             <div className="text-center">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 text-primary">
+                <h1 className="text-xl font-bold text-foreground sm:text-2xl">
                     Únete a NEXIA
                 </h1>
-                <p className="text-sm sm:text-base text-muted-foreground">
+                <p className="mt-1 text-sm text-muted-foreground">
                     Crea tu cuenta para empezar a entrenar de forma profesional
                 </p>
             </div>
@@ -200,6 +200,7 @@ export const RegisterForm: React.FC = () => {
                 <Input
                     type="email"
                     label="Correo electrónico"
+                    size="sm"
                     value={formData.email}
                     onChange={handleInputChange("email")}
                     error={errors.email}
@@ -208,10 +209,11 @@ export const RegisterForm: React.FC = () => {
                     disabled={isLoading}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Input
                         type="text"
                         label="Nombre"
+                        size="sm"
                         value={formData.nombre}
                         onChange={handleInputChange("nombre")}
                         error={errors.nombre}
@@ -223,6 +225,7 @@ export const RegisterForm: React.FC = () => {
                     <Input
                         type="text"
                         label="Apellidos"
+                        size="sm"
                         value={formData.apellidos}
                         onChange={handleInputChange("apellidos")}
                         error={errors.apellidos}
@@ -234,6 +237,7 @@ export const RegisterForm: React.FC = () => {
 
                 <FormSelect
                     label="Tipo de cuenta"
+                    size="sm"
                     value={formData.role}
                     onChange={handleInputChange("role")}
                     options={roleOptions}
@@ -246,6 +250,7 @@ export const RegisterForm: React.FC = () => {
                 <Input
                     type="password"
                     label="Contraseña"
+                    size="sm"
                     value={formData.password}
                     onChange={handleInputChange("password")}
                     error={errors.password}
@@ -257,6 +262,7 @@ export const RegisterForm: React.FC = () => {
                 <Input
                     type="password"
                     label="Confirmar contraseña"
+                    size="sm"
                     value={formData.confirmPassword}
                     onChange={handleInputChange("confirmPassword")}
                     error={errors.confirmPassword}
@@ -271,7 +277,7 @@ export const RegisterForm: React.FC = () => {
                     size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3"
+                    className="w-full"
                 >
                     {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
@@ -281,7 +287,7 @@ export const RegisterForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleLogin}
-                        className="text-sm sm:text-base font-medium text-primary underline underline-offset-4 hover:text-primary/90 disabled:opacity-50"
+                        className="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors disabled:opacity-50"
                         disabled={isLoading}
                     >
                         Inicia sesión

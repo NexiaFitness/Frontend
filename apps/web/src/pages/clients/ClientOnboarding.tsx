@@ -58,44 +58,10 @@ export const ClientOnboarding: React.FC = () => {
     };
 
     return (
-        <>
-            {/* ClientOnboardingForm con wizard */}
-                <ClientOnboardingForm
-                    initialData={initialFormData}
-                    onSubmitSuccess={handleSuccess}
-                    onBackToDashboard={() => navigate("/dashboard/trainer")}
-                />
-
-                {/* Help Section */}
-                <div className="px-4 lg:px-8">
-                    <div className="max-w-4xl mx-auto text-center space-y-3">
-                        <div className="flex items-center justify-center space-x-2 text-muted-foreground text-sm">
-                            <svg
-                                className="w-5 h-5"
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    strokeWidth={2}
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                                />
-                            </svg>
-                            <span>Puedes volver atrás en cualquier momento para editar</span>
-                        </div>
-                        <p className="text-muted-foreground text-sm">
-                            ¿Necesitas ayuda?{" "}
-                            <a
-                                href="mailto:support@nexia.app"
-                                className="text-primary hover:text-primary/80 underline transition-colors"
-                            >
-                                Contacta con soporte
-                            </a>
-                        </p>
-                    </div>
-                </div>
-        </>
+        <ClientOnboardingForm
+            initialData={initialFormData}
+            onSubmitSuccess={handleSuccess}
+            onBackToDashboard={() => navigate("/dashboard/trainer")}
+        />
     );
 };

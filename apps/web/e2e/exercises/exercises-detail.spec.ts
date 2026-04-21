@@ -20,17 +20,14 @@ test.describe("Exercises — Detail", () => {
     await loginAsTrainer(page);
     await navigateToExercises(page);
 
-    await expect(
-      page.getByRole("heading", { name: /base de datos de ejercicios/i })
-    ).toBeVisible({ timeout: 15_000 });
+    await expect(page.getByRole("heading", { name: /ejercicios ·/i })).toBeVisible({
+      timeout: 15_000,
+    });
 
-    await page
-      .getByText(/cargando ejercicios/i)
-      .waitFor({ state: "hidden", timeout: 20_000 })
-      .catch(() => {});
+    await page.locator(".animate-spin").first().waitFor({ state: "hidden", timeout: 25_000 }).catch(() => {});
 
     // Si hay lista vacía, no hay card que clicar
-    const emptyMessage = page.getByText(/aún no hay ejercicios|no se encontraron ejercicios/i);
+    const emptyMessage = page.getByText(/tu biblioteca está vacía/i);
     const isEmpty = await emptyMessage.isVisible().catch(() => false);
     if (isEmpty) {
       test.skip();

@@ -16,15 +16,8 @@ import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import { useCreateTemplate } from "@nexia/shared";
-
-const SESSION_TYPES = [
-    { value: "training", label: "Entrenamiento" },
-    { value: "cardio", label: "Cardio" },
-    { value: "strength", label: "Fuerza" },
-    { value: "endurance", label: "Resistencia" },
-    { value: "flexibility", label: "Flexibilidad" },
-    { value: "recovery", label: "Recuperación" },
-];
+import { ArrowLeft } from "lucide-react";
+import { SESSION_TYPES } from "./sessionFormConstants";
 
 const DIFFICULTY_LEVELS = [
     { value: "beginner", label: "Principiante" },
@@ -103,6 +96,7 @@ export const CreateTemplate: React.FC = () => {
                             </p>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al Dashboard
                         </Button>
                     </div>

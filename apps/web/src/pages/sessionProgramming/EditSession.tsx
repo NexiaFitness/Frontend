@@ -13,13 +13,14 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
-import { useToast } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea, Slider } from "@/components/ui/forms";
-import { LoadingSpinner } from "@/components/ui/feedback";
+import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Input, FormSelect, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
     useGetTrainingSessionQuery,
     useUpdateTrainingSessionMutation,
@@ -36,9 +37,10 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
-import type { AppDispatch } from "@nexia/shared/store";
+import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
@@ -56,21 +58,33 @@ import {
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { ArrowLeft, Flame, Gauge } from "lucide-react";
+import { PageTitle } from "@/components/dashboard/shared";
+import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
+import { SESSION_TYPES } from "./sessionFormConstants";
 
-const SESSION_TYPES = [
-    { value: "training", label: "Entrenamiento" },
-    { value: "cardio", label: "Cardio" },
-    { value: "strength", label: "Fuerza" },
-    { value: "endurance", label: "Resistencia" },
-    { value: "flexibility", label: "Flexibilidad" },
-    { value: "recovery", label: "Recuperación" },
-];
+/** Escala 1–10 del slider; el API a veces devuelve floats o valores fuera de rango. */
+function clampIntSlider1to10(value: unknown, fallback: number): string {
+    const n = Number(value);
+    if (Number.isNaN(n)) return String(fallback);
+    return String(Math.min(10, Math.max(1, Math.round(n))));
+}
+
+function sliderDisplay1to10(raw: string, fallback: number): number {
+    const n = Math.round(Number(raw));
+    if (Number.isNaN(n)) return fallback;
+    return Math.min(10, Math.max(1, n));
+}
 
 export const EditSession: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
     const { showSuccess, showError } = useToast();
+    const { user } = useSelector((state: RootState) => state.auth);
+    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+        skip: !user || user.role !== "trainer",
+    });
 
     // Cargar sesión
     const { 
@@ -89,7 +103,7 @@ export const EditSession: React.FC = () => {
     const { data: client } = useGetClientQuery(session?.client_id ?? 0, {
         skip: !session?.client_id,
     });
-    const { activeInjuries: clientActiveInjuries = [] } = useClientInjuries({
+    const { activeInjuries: clientActiveInjuries = [], hasActiveInjuries } = useClientInjuries({
         clientId: session?.client_id ?? 0,
         includeHistory: false,
     });
@@ -117,10 +131,13 @@ export const EditSession: React.FC = () => {
 
     const dispatch = useDispatch<AppDispatch>();
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
-    const { data: exercisesData } = useGetExercisesQuery({ skip: 0, limit: 500 });
-    const { data: blocks = [] } = useGetSessionBlocksQuery(sessionId, {
-        skip: !sessionId || isNaN(sessionId),
-    });
+    const { data: exercisesData } = useGetExercisesQuery({ skip: 0, limit: 1000 });
+    const { data: blocks = [], isLoading: isLoadingSessionBlocks } = useGetSessionBlocksQuery(
+        sessionId,
+        {
+            skip: !sessionId || isNaN(sessionId),
+        },
+    );
     const [createSessionBlock] = useCreateSessionBlockMutation();
     const [updateSessionBlock] = useUpdateSessionBlockMutation();
     const [deleteSessionBlock] = useDeleteSessionBlockMutation();
@@ -128,27 +145,67 @@ export const EditSession: React.FC = () => {
     const [updateSessionBlockExercise] = useUpdateSessionBlockExerciseMutation();
     const [deleteSessionBlockExercise] = useDeleteSessionBlockExerciseMutation();
 
-    /** Fase 8: Cargar bloques + ejercicios y popular Constructor */
+    /** Al cambiar de sesión, vaciar constructor hasta que lleguen los bloques (evita mezclar sesiones). */
     useEffect(() => {
-        if (!blocks.length) return;
+        setConstructorRows([]);
+    }, [sessionId]);
+
+    /**
+     * Hidratar constructor desde API: orden de bloques y ejercicios como en backend.
+     * Si la sesión no tiene bloques, el constructor queda vacío (p. ej. sesión solo con cabecera).
+     */
+    useEffect(() => {
+        if (!sessionId || isNaN(sessionId)) return;
+        if (isLoadingSessionBlocks) return;
+
+        if (blocks.length === 0) {
+            setConstructorRows([]);
+            return;
+        }
+
+        const sortedBlocks = [...blocks].sort((a, b) => a.order_in_session - b.order_in_session);
+
+        let cancelled = false;
+
         const load = async () => {
-            const exercisesByBlock: Record<number, { id: number; exercise_id: number; planned_reps: string | null; planned_weight: number | null; planned_rest: number | null; planned_sets: number | null; effort_character: unknown; effort_value: number | null; notes: string | null; planned_duration: number | null }[]> = {};
-            for (const b of blocks) {
+            const exercisesByBlock: Record<
+                number,
+                {
+                    id: number;
+                    exercise_id: number;
+                    planned_reps: string | null;
+                    planned_weight: number | null;
+                    planned_rest: number | null;
+                    planned_sets: number | null;
+                    effort_character: unknown;
+                    effort_value: number | null;
+                    notes: string | null;
+                    planned_duration: number | null;
+                    order_in_block: number;
+                }[]
+            > = {};
+
+            for (const b of sortedBlocks) {
                 const result = await dispatch(
-                    sessionProgrammingApi.endpoints.getSessionBlockExercises.initiate(b.id)
+                    sessionProgrammingApi.endpoints.getSessionBlockExercises.initiate(b.id),
                 );
                 if ("data" in result && result.data) {
-                    exercisesByBlock[b.id] = result.data;
+                    exercisesByBlock[b.id] = [...result.data].sort(
+                        (x, y) => x.order_in_block - y.order_in_block,
+                    );
                 }
             }
+
+            if (cancelled) return;
+
             const inferRepsTipo = (
-                ex: { planned_reps: string | null; planned_duration: number | null }
+                ex: { planned_reps: string | null; planned_duration: number | null },
             ): RepsTipo => {
                 if (ex.planned_duration != null && !ex.planned_reps?.trim()) return "tiempo";
                 return "reps";
             };
 
-            const rows: ConstructorRow[] = blocks.map((b, i) => {
+            const rows: ConstructorRow[] = sortedBlocks.map((b, i) => {
                 const exs = exercisesByBlock[b.id] ?? [];
                 const firstEx = exs[0];
                 return {
@@ -176,12 +233,14 @@ export const EditSession: React.FC = () => {
                     })),
                 };
             });
+
             const nameMap: Record<number, string> = {};
             if (exercisesData?.exercises) {
                 for (const ex of exercisesData.exercises) {
                     nameMap[ex.id] = ex.nombre;
                 }
             }
+
             setConstructorRows(
                 rows.map((row) => ({
                     ...row,
@@ -189,11 +248,15 @@ export const EditSession: React.FC = () => {
                         ...ex,
                         exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
                     })),
-                }))
+                })),
             );
         };
-        load();
-    }, [blocks, dispatch, exercisesData]);
+
+        void load();
+        return () => {
+            cancelled = true;
+        };
+    }, [sessionId, blocks, isLoadingSessionBlocks, dispatch, exercisesData]);
 
     const handleSelectFromPicker = useCallback(
         (exercise: Exercise) => {
@@ -201,7 +264,7 @@ export const EditSession: React.FC = () => {
             const newEx: ConstructorExercise = {
                 id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
                 exerciseId: exercise.id,
-                exerciseName: exercise.nombre,
+                exerciseName: exerciseDisplayName(exercise),
                 plannedReps: "10",
                 plannedWeight: null,
                 plannedDuration: null,
@@ -216,7 +279,8 @@ export const EditSession: React.FC = () => {
                         : r
                 )
             );
-            /* Panel permanece abierto para añadir más a la misma fila */
+            setShowExercisePickerModal(false);
+            setTargetRowIdForPicker(null);
         },
         [targetRowIdForPicker]
     );
@@ -229,8 +293,8 @@ export const EditSession: React.FC = () => {
                 sessionDate: session.session_date ? session.session_date.split("T")[0] : new Date().toISOString().split("T")[0],
                 sessionType: session.session_type || "training",
                 plannedDuration: session.planned_duration?.toString() || "",
-                plannedIntensity: session.planned_intensity?.toString() || "5",
-                plannedVolume: session.planned_volume?.toString() || "5",
+                plannedIntensity: clampIntSlider1to10(session.planned_intensity, 5),
+                plannedVolume: clampIntSlider1to10(session.planned_volume, 5),
                 notes: session.notes || "",
             });
         }
@@ -283,8 +347,12 @@ export const EditSession: React.FC = () => {
                 session_date: formData.sessionDate,
                 session_type: formData.sessionType,
                 planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
-                planned_intensity: formData.plannedIntensity ? Number(formData.plannedIntensity) : null,
-                planned_volume: formData.plannedVolume ? Number(formData.plannedVolume) : null,
+                planned_intensity: formData.plannedIntensity
+                    ? sliderDisplay1to10(formData.plannedIntensity, 5)
+                    : null,
+                planned_volume: formData.plannedVolume
+                    ? sliderDisplay1to10(formData.plannedVolume, 5)
+                    : null,
                 notes: formData.notes.trim() || null,
             };
 
@@ -403,6 +471,8 @@ export const EditSession: React.FC = () => {
         }
     };
 
+    const trainerIdForDayPlan = trainerProfile?.id ?? session?.trainer_id ?? 0;
+
     if (isLoadingSession) {
         return (
             <div className="flex items-center justify-center min-h-screen">
@@ -418,17 +488,14 @@ export const EditSession: React.FC = () => {
     return (
         <>
             <div className="space-y-6 pb-24">
-                {/* Header + Volver */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground">
-                        Editar Sesión
-                    </h2>
+                    <PageTitle title="Editar Sesión" />
                     <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
+                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
                     </Button>
                 </div>
 
-                {/* Tarjeta contexto cliente */}
                 {session.client_id && client && (
                     <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-4">
                         <ClientAvatar
@@ -445,212 +512,272 @@ export const EditSession: React.FC = () => {
                     </div>
                 )}
 
-                {/* Flex: form + SessionDayPlan + ExercisePickerPanel (cuando abierto) */}
-                <div className="flex flex-col lg:flex-row gap-6 min-w-0">
-                    <div className={`flex-1 min-w-0 ${showExercisePickerModal ? "lg:max-w-[calc(100%-324px)]" : ""}`}>
-                    <div className="bg-card border border-border rounded-lg p-6 lg:p-8">
-                        <form id="edit-session-form" onSubmit={handleSubmit} className="space-y-5">
-                            {/* Nombre de la Sesión */}
-                            <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Nombre de la Sesión *
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={formData.sessionName}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, sessionName: e.target.value })
-                                    }
-                                    required
-                                    placeholder="Ej: Entrenamiento de Fuerza - Piernas"
-                                />
-                                {formErrors.sessionName && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.sessionName}</p>
+                <form id="edit-session-form" onSubmit={handleSubmit}>
+                    <div
+                        className={cn(
+                            "grid grid-cols-1 items-stretch gap-6",
+                            session.client_id ? "lg:grid-cols-[1fr_420px]" : "",
+                        )}
+                    >
+                        <div className="min-h-0 space-y-5">
+                            <div
+                                className={cn(
+                                    "grid gap-4",
+                                    session.client_id ? "grid-cols-1 md:grid-cols-2" : "",
                                 )}
-                            </div>
-
-                            {/* Plan (read-only, si tiene training_plan_id) */}
-                            {session.training_plan_id && plan && (
+                            >
                                 <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Plan de Entrenamiento
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Nombre de la Sesión *
                                     </label>
                                     <Input
                                         type="text"
-                                        value={plan.name || "Cargando..."}
-                                        disabled
-                                        className="bg-muted"
+                                        value={formData.sessionName}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, sessionName: e.target.value })
+                                        }
+                                        required
+                                        placeholder="Ej: Fuerza — Tren superior A"
+                                        className="bg-surface"
+                                    />
+                                    {formErrors.sessionName && (
+                                        <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>
+                                    )}
+                                </div>
+                                {session.client_id ? (
+                                    <div>
+                                        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                            Plan de Entrenamiento
+                                        </label>
+                                        {session.training_plan_id && plan ? (
+                                            <Input
+                                                type="text"
+                                                value={plan.name || "Cargando..."}
+                                                disabled
+                                                className="bg-muted"
+                                            />
+                                        ) : (
+                                            <Input
+                                                type="text"
+                                                value="Sesión libre"
+                                                disabled
+                                                className="bg-muted"
+                                            />
+                                        )}
+                                        {session.training_plan_id && plan ? (
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                La sesión está vinculada a este plan para el seguimiento de
+                                                carga.
+                                            </p>
+                                        ) : null}
+                                    </div>
+                                ) : null}
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label
+                                        htmlFor="edit-session-date"
+                                        className="block text-xs font-medium text-muted-foreground mb-1.5"
+                                    >
+                                        Fecha de la Sesión *
+                                    </label>
+                                    <DatePickerButton
+                                        label="Seleccionar fecha"
+                                        value={formData.sessionDate}
+                                        onChange={(v) => setFormData({ ...formData, sessionDate: v })}
+                                        variant="form"
+                                    />
+                                    {formErrors.sessionDate && (
+                                        <p className="mt-1 text-xs text-destructive">{formErrors.sessionDate}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <label
+                                        htmlFor="edit-session-type"
+                                        className="block text-xs font-medium text-muted-foreground mb-1.5"
+                                    >
+                                        Tipo de Sesión *
+                                    </label>
+                                    <FormSelect
+                                        id="edit-session-type"
+                                        value={formData.sessionType}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, sessionType: e.target.value })
+                                        }
+                                        required
+                                        options={SESSION_TYPES}
+                                    />
+                                    {formErrors.sessionType && (
+                                        <p className="text-destructive text-xs mt-1">{formErrors.sessionType}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Duración (min)
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        value={formData.plannedDuration}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, plannedDuration: e.target.value })
+                                        }
+                                        placeholder="60"
+                                        className="bg-surface"
                                     />
                                 </div>
-                            )}
-
-                            {/* Fecha */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Fecha de la Sesión *
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={formData.sessionDate}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, sessionDate: e.target.value })
-                                    }
-                                    required
-                                />
-                                {formErrors.sessionDate && (
-                                    <p className="text-destructive text-xs mt-1">{formErrors.sessionDate}</p>
-                                )}
+                                <div className="mt-3 md:mt-0">
+                                    <Slider
+                                        label="Volumen"
+                                        labelIcon={<Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />}
+                                        value={sliderDisplay1to10(formData.plannedVolume, 5)}
+                                        min={1}
+                                        max={10}
+                                        color="primary"
+                                        onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
+                                    />
+                                </div>
+                                <div className="mt-3 md:mt-0">
+                                    <Slider
+                                        label="Intensidad"
+                                        labelIcon={<Flame className="h-3.5 w-3.5 text-warning" aria-hidden />}
+                                        value={sliderDisplay1to10(formData.plannedIntensity, 5)}
+                                        min={1}
+                                        max={10}
+                                        color="warning"
+                                        onChange={(v) =>
+                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))
+                                        }
+                                    />
+                                </div>
                             </div>
-
-                            {/* Tipo de Sesión */}
-                            <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Tipo de Sesión *
-                                </label>
-                                <FormSelect
-                                    value={formData.sessionType}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, sessionType: e.target.value })
-                                    }
-                                    required
-                                    options={SESSION_TYPES}
-                                />
-                                {formErrors.sessionType && (
-                                    <p className="text-destructive text-xs mt-1">{formErrors.sessionType}</p>
-                                )}
-                            </div>
-
-                            {/* Duración */}
-                            <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Duración (min)
-                                </label>
-                                <Input
-                                    type="number"
-                                    value={formData.plannedDuration}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, plannedDuration: e.target.value })
-                                    }
-                                    min={1}
-                                    max={300}
-                                    placeholder="60"
-                                />
-                            </div>
-
-                            {/* Intensidad y Volumen — Slider */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <Slider
-                                    label="Intensidad (5/10)"
-                                    value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
-                                    min={1}
-                                    max={10}
-                                    color="warning"
-                                    onChange={(v) => setFormData({ ...formData, plannedIntensity: String(v) })}
-                                />
-                                <Slider
-                                    label="Volumen (5/10)"
-                                    value={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
-                                    min={1}
-                                    max={10}
-                                    color="primary"
-                                    onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
-                                />
-                            </div>
-
-                            {/* Notas */}
-                            <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                    Notas
-                                </label>
-                                <Textarea
-                                    value={formData.notes}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, notes: e.target.value })
-                                    }
-                                    rows={4}
-                                    placeholder="Notas adicionales sobre la sesión..."
-                                />
-                            </div>
-
-                            {/* Bloques + Constructor — space-y-5 (20px) entre cards */}
-                            <div className="mt-8 pt-8 border-t border-border space-y-5">
-                                <TrainingBlockSelector
-                                    selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
-                                    onSelect={(blockTypeId) => {
-                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
-                                        const newRow: ConstructorRow = {
-                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                                            blockTypeId: blockTypeId,
-                                            setType: SET_TYPE.SINGLE_SET,
-                                            sets: 3,
-                                            rounds: null,
-                                            timeCap: null,
-                                            intervalSeconds: null,
-                                            exercises: [],
-                                            rest: 60,
-                                            repsTipo: "reps",
-                                        };
-                                        setConstructorRows((prev) => [...prev, newRow]);
-                                    }}
-                                />
-                                <SessionConstructor
-                                    rows={constructorRows}
-                                    blockTypes={blockTypes}
-                                    onRowsChange={setConstructorRows}
-                                    onAddExerciseRequest={(rowId) => {
-                                        setTargetRowIdForPicker(rowId);
-                                        setShowExercisePickerModal(true);
-                                    }}
-                                />
-                            </div>
-                        </form>
-                    </div>
-                    </div>
-
-                    {/* Columna derecha: Plan del día */}
-                    {session.client_id && (
-                        <div className="lg:w-[380px] shrink-0 lg:self-start">
-                            <SessionDayPlan
-                                clientId={session.client_id}
-                                sessionDate={formData.sessionDate}
-                                trainerId={session.trainer_id ?? 0}
-                            />
                         </div>
-                    )}
 
-                    {showExercisePickerModal && (
-                        <ExercisePickerPanel
-                            isOpen={true}
-                            onClose={() => {
-                                setShowExercisePickerModal(false);
-                                setTargetRowIdForPicker(null);
-                            }}
-                            onSelect={handleSelectFromPicker}
-                            clientId={session.client_id ?? undefined}
-                            activeInjuries={clientActiveInjuries}
-                        />
-                    )}
-                </div>
+                        {session.client_id ? (
+                            <div className="flex h-full min-h-0 flex-col lg:self-stretch">
+                                <SessionDayPlan
+                                    clientId={session.client_id}
+                                    sessionDate={formData.sessionDate}
+                                    trainerId={trainerIdForDayPlan}
+                                />
+                            </div>
+                        ) : null}
+                    </div>
+
+                    <div className="mt-6 space-y-5 w-full">
+                        {session.client_id && hasActiveInjuries && client ? (
+                            <Alert variant="warning">
+                                Atención: {client.nombre} {client.apellidos} tiene lesiones activas (
+                                {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") ||
+                                    "ver ficha del cliente"}
+                                ). Los ejercicios contraindicados están marcados en la lista.
+                            </Alert>
+                        ) : null}
+
+                        {session.client_id ? (
+                            <RecommendationsCards clientId={session.client_id} />
+                        ) : null}
+
+                        <div className="flex gap-6">
+                            <div
+                                className={cn(
+                                    "min-w-0 flex-1 space-y-5",
+                                    showExercisePickerModal && "lg:max-w-[calc(100%-324px)]",
+                                )}
+                            >
+                                <div className="space-y-5">
+                                    <TrainingBlockSelector
+                                        selectedBlockTypeIds={[
+                                            ...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean)),
+                                        ]}
+                                        onSelect={(blockTypeId) => {
+                                            if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId))
+                                                return;
+                                            const newRow: ConstructorRow = {
+                                                id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                                blockTypeId: blockTypeId,
+                                                setType: SET_TYPE.SINGLE_SET,
+                                                sets: 3,
+                                                rounds: null,
+                                                timeCap: null,
+                                                intervalSeconds: null,
+                                                exercises: [],
+                                                rest: 60,
+                                                repsTipo: "reps",
+                                            };
+                                            setConstructorRows((prev) => [...prev, newRow]);
+                                        }}
+                                    />
+                                    <SessionConstructor
+                                        rows={constructorRows}
+                                        blockTypes={blockTypes}
+                                        onRowsChange={setConstructorRows}
+                                        onAddExerciseRequest={(rowId) => {
+                                            setTargetRowIdForPicker(rowId);
+                                            setShowExercisePickerModal(true);
+                                        }}
+                                    />
+                                </div>
+
+                                <div className="border-t border-border pt-6">
+                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                        Notas de la Sesión
+                                    </label>
+                                    <Textarea
+                                        value={formData.notes}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, notes: e.target.value })
+                                        }
+                                        rows={3}
+                                        placeholder="Instrucciones generales para la sesión..."
+                                    />
+                                </div>
+                            </div>
+
+                            {showExercisePickerModal ? (
+                                <ExercisePickerPanel
+                                    isOpen={true}
+                                    onClose={() => {
+                                        setShowExercisePickerModal(false);
+                                        setTargetRowIdForPicker(null);
+                                    }}
+                                    onSelect={handleSelectFromPicker}
+                                    clientId={session.client_id ?? undefined}
+                                    activeInjuries={clientActiveInjuries}
+                                />
+                            ) : null}
+                        </div>
+                    </div>
+                </form>
             </div>
 
-            {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
             <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4 flex justify-end gap-3"
+                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
-                <Button type="button" variant="outline" size="sm" onClick={() => navigate(-1)}>
-                    Cancelar
-                </Button>
-                <Button
-                    type="submit"
-                    form="edit-session-form"
-                    variant="primary"
-                    size="sm"
-                    disabled={isUpdatingSession}
-                    isLoading={isUpdatingSession}
-                >
-                    Actualizar Sesión
-                </Button>
+                <div className="flex items-center justify-end gap-3">
+                    <Button
+                        type="button"
+                        variant="outline-destructive"
+                        size="sm"
+                        onClick={() => navigate(-1)}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="edit-session-form"
+                        variant="primary"
+                        size="sm"
+                        disabled={isUpdatingSession}
+                        isLoading={isUpdatingSession}
+                    >
+                        Actualizar Sesión
+                    </Button>
+                </div>
             </div>
         </>
     );

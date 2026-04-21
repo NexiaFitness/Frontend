@@ -5,6 +5,7 @@
  * - Alertas para diferentes contextos: info, success, warning, error.
  * - Usa tokens de diseño de la app (primary, success, warning, destructive).
  * - Botón de cierre opcional (onDismiss).
+ * - Prop opcional `action` para botones (ej. Reintentar) con gap y alineación respecto al texto.
  * - Iconos SVG integrados por variante.
  * - Accesibilidad con role="alert"
  *
@@ -13,12 +14,15 @@
  */
 
 import React from "react";
+import { cn } from "@/lib/utils";
 
 interface AlertProps {
     variant?: "info" | "success" | "warning" | "error";
     children: React.ReactNode;
     className?: string;
     onDismiss?: () => void;
+    /** Botones u otras acciones: se separan del mensaje con gap y alineación vertical */
+    action?: React.ReactNode;
 }
 
 /** Estilos por variante usando tokens de la app (sin fondos blancos) */
@@ -93,16 +97,35 @@ export const Alert: React.FC<AlertProps> = ({
     children,
     className = "",
     onDismiss,
+    action,
 }) => {
     const styles = variantStyles[variant];
 
     return (
         <div
-            className={`flex items-start gap-3 p-4 border rounded-lg relative ${styles.container} ${className}`}
+            className={cn(
+                "relative flex items-start gap-3 rounded-lg border p-4",
+                styles.container,
+                className
+            )}
             role="alert"
         >
-            <div className={styles.icon}>{icons[variant]}</div>
-            <div className={`flex-1 ${styles.text}`}>{children}</div>
+            <div className={cn("mt-0.5 shrink-0", styles.icon)}>{icons[variant]}</div>
+            {action ? (
+                <div
+                    className={cn(
+                        "flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4",
+                        styles.text
+                    )}
+                >
+                    <div className="min-w-0 flex-1 text-sm leading-snug">{children}</div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2 sm:justify-end">
+                        {action}
+                    </div>
+                </div>
+            ) : (
+                <div className={cn("min-w-0 flex-1 text-sm leading-snug", styles.text)}>{children}</div>
+            )}
             {onDismiss && (
                 <button
                     type="button"

@@ -20,6 +20,11 @@ export {
     useCreateSessionExerciseMutation,
 } from "./api/trainingSessionsApi";
 export {
+    useGetDayExceptionsQuery,
+    useCreateDayExceptionMutation,
+    useDeleteDayExceptionMutation,
+} from "./api/dayExceptionsApi";
+export {
     useGetStandaloneSessionsByClientQuery,
     useGetStandaloneSessionQuery,
     useGetStandaloneSessionExercisesQuery,
@@ -127,6 +132,9 @@ export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
+export * from "./training/trainingPlanEditor";
+export * from "./training/activePeriodBlock";
+export * from "./training/weeklyVolumeTarget";
 export * from "./types/trainingAnalytics";
 export * from "./types/trainingRecommendations";
 export * from "./types/sessionRecommendations";
@@ -149,6 +157,7 @@ export {
 } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
+export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
 export * from "./types/coherence";
 export * from "./types/dashboard";
 export * from "./types/testing";
@@ -297,6 +306,7 @@ export { initStorage, storage } from './storage/IStorage';
 export type { IStorage } from './storage/IStorage';
 
 // Utils
+export * from "./utils/exerciseNames";
 export * from "./utils/charts/chartParsers";
 export * from "./utils/charts/chartAggregators";
 export * from "./utils/validations";
@@ -313,6 +323,12 @@ export {
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
+export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
+export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
+export {
+    isoLocalDateToTrainingDayValue,
+    parseHabitualTrainingDaySet,
+} from "./utils/clientTrainingDays";
 
 // Components
 export * from "./components/SmartNavigation";

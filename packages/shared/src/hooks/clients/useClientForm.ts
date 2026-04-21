@@ -84,9 +84,15 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
         }
 
         try {
+            // Sincronizar campo legacy 'objective' con 'objetivo_entrenamiento' antes de enviar
+            const payload = {
+                ...formData,
+                objective: formData.objetivo_entrenamiento ?? null,
+            };
+
             if (mode === "create") {
                 // Crear nuevo cliente
-                const client = await createClient(formData).unwrap();
+                const client = await createClient(payload).unwrap();
                 // Actualizar formData con la respuesta del backend (incluye somatotipo calculado)
                 setFormData((prev) => ({
                     ...prev,
@@ -102,7 +108,7 @@ export function useClientForm(options: UseClientFormOptions): UseClientFormResul
                 }
                 
                 // Excluir confirmEmail del payload (solo validación frontend)
-                const { confirmEmail, ...updateData } = formData;
+                const { confirmEmail, ...updateData } = payload;
                 
                 const updatedClient = await updateClient({ id: clientId, data: updateData }).unwrap();
                 // Actualizar formData con la respuesta del backend (incluye somatotipo recalculado)

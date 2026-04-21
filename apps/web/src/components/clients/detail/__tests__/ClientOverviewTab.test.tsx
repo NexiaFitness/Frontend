@@ -252,30 +252,50 @@ describe("ClientOverviewTab", () => {
         it("displays upcoming session correctly", async () => {
             const tomorrow = new Date();
             tomorrow.setDate(tomorrow.getDate() + 1);
-            const sessions = [
-                createMockTrainingSession({
-                    client_id: 1,
-                    session_date: tomorrow.toISOString().split('T')[0],
-                    status: "scheduled",
-                }),
-            ];
+            const tomorrowStr = [
+                tomorrow.getFullYear(),
+                String(tomorrow.getMonth() + 1).padStart(2, "0"),
+                String(tomorrow.getDate()).padStart(2, "0"),
+            ].join("-");
 
             server.use(
-                http.get("*/training-sessions/", async () => {
-                    return HttpResponse.json(sessions, { status: 200 });
-                })
+                http.get("*/training-sessions/", () =>
+                    HttpResponse.json([
+                        {
+                            id: 99,
+                            client_id: 1,
+                            session_date: tomorrowStr,
+                            status: "scheduled",
+                            session_name: "Test session",
+                            session_type: "strength",
+                            planned_duration: 60,
+                            planned_intensity: 7,
+                            planned_volume: 8,
+                            actual_duration: null,
+                            actual_intensity: null,
+                            actual_volume: null,
+                            trainer_id: 1,
+                            microcycle_id: null,
+                            training_day_number: null,
+                            is_generic_session: false,
+                            notes: null,
+                            is_active: true,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                        },
+                    ], { status: 200 })
+                )
             );
 
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
             await waitFor(() => {
-                // Verificar que se muestra la fecha de la próxima sesión
                 const dateText = tomorrow.toLocaleDateString("es-ES", {
                     day: "numeric",
                     month: "short",
                 });
                 expect(screen.getByText(new RegExp(dateText.replace(/\./g, "\\."), "i"))).toBeInTheDocument();
-            });
+            }, { timeout: 5000 });
         });
     });
 

@@ -1,125 +1,177 @@
 /**
- * TrainingPlansPage.tsx — Gestión completa de Training Plans
+ * TrainingPlansPage.tsx — Gestión de planificación y plantillas de planes
  *
- * Contexto:
- * - Vista principal con tres secciones: Templates, Planes Activos, Archivados
- * - Integra hooks reutilizables de packages/shared
- * - Diseño consistente con otros dashboards
- *
- * Features:
- * - Biblioteca de plantillas (templates) reutilizables
- * - Planes activos asignados a clientes
- * - Historial de planes archivados
- * - Acciones contextuales según tipo
+ * Vista con pestañas (mismo patrón que Sesiones): Planificación | Plantillas,
+ * paginación independiente por pestaña y CTA principal arriba a la derecha.
+ * ?tab=templates abre la pestaña Plantillas (p. ej. vuelta desde detalle plantilla).
  *
  * @author Frontend Team
  * @since v3.2.0
- * @updated v5.0.0 - Rediseño completo con templates e instances
+ * @updated v6.x - TabsBar, URL sync, CTA "Nueva planificación"
+ * @updated v6.5.0 - Modal SelectClientModal para flujo unificado de creación de planes
  */
 
-import React, { useState, useMemo, useEffect, useRef } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { Plus, Search } from "lucide-react";
 import {
     useGetTrainingPlansQuery,
     useGetTrainingPlanTemplatesQuery,
-    useDeleteTrainingPlanMutation,
-    useDeleteTrainingPlanTemplateMutation,
-    useUpdateTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import {
-    useTrainingPlanTemplates,
-    useConvertPlanToTemplate,
-} from "@nexia/shared/hooks/training";
 import { usePagination } from "@nexia/shared/hooks/common";
 import type { RootState } from "@nexia/shared/store";
+import {
+    TRAINING_PLAN_GOAL,
+    TEMPLATE_LEVEL,
+    type TrainingPlan,
+    type TrainingPlanTemplate,
+} from "@nexia/shared/types/training";
 
-// Components
-import { PageTitle } from "@/components/dashboard/shared";
-import { TrainingPlansSection, AssignTemplateModal, AssignPlanModal, TemplatePreviewModal } from "@/components/trainingPlans";
+import { TrainingPlansSection } from "@/components/trainingPlans";
+import { SelectClientModal } from "@/components/trainingPlans/modals/SelectClientModal";
 import { Alert } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
+import { Button } from "@/components/ui/buttons";
+import { TabsBar } from "@/components/ui/tabs/TabsBar";
+import { Input, FormSelect, DatePickerButton } from "@/components/ui/forms";
+import { cn } from "@/lib/utils";
+import { PageTitle } from "@/components/dashboard/shared";
+
+type PlansTabId = "planning" | "templates";
+
+/** Objetivos del backend → etiqueta en español (alineado con TrainingPlanCard). */
+const PLAN_GOAL_LABEL_ES: Record<(typeof TRAINING_PLAN_GOAL)[keyof typeof TRAINING_PLAN_GOAL], string> = {
+    [TRAINING_PLAN_GOAL.HYPERTROPHY]: "Hipertrofia",
+    [TRAINING_PLAN_GOAL.STRENGTH]: "Fuerza",
+    [TRAINING_PLAN_GOAL.POWER]: "Potencia",
+    [TRAINING_PLAN_GOAL.ENDURANCE]: "Resistencia",
+    [TRAINING_PLAN_GOAL.WEIGHT_LOSS]: "Pérdida de peso",
+    [TRAINING_PLAN_GOAL.GENERAL_FITNESS]: "Fitness general",
+    [TRAINING_PLAN_GOAL.REHABILITATION]: "Rehabilitación",
+    [TRAINING_PLAN_GOAL.SPORT_PERFORMANCE]: "Rendimiento deportivo",
+};
+
+const PLAN_GOAL_SELECT_OPTIONS: { value: string; label: string }[] = [
+    { value: "all", label: "Todos" },
+    ...Object.values(TRAINING_PLAN_GOAL).map((goal) => ({
+        value: goal,
+        label: PLAN_GOAL_LABEL_ES[goal],
+    })),
+];
+
+function planOverlapsDateRange(plan: TrainingPlan, dateFrom: string, dateTo: string): boolean {
+    if (!dateFrom && !dateTo) return true;
+    const start = plan.start_date?.slice(0, 10) ?? "";
+    const end = plan.end_date?.slice(0, 10) ?? "";
+    if (dateFrom && end < dateFrom) return false;
+    if (dateTo && start > dateTo) return false;
+    return true;
+}
+
+function templateCreatedInRange(
+    template: TrainingPlanTemplate,
+    dateFrom: string,
+    dateTo: string
+): boolean {
+    if (!dateFrom && !dateTo) return true;
+    const created = template.created_at?.slice(0, 10) ?? "";
+    if (dateFrom && created < dateFrom) return false;
+    if (dateTo && created > dateTo) return false;
+    return true;
+}
 
 export const TrainingPlansPage: React.FC = () => {
     const navigate = useNavigate();
-    const [searchParams] = useSearchParams();
-    const tabFromUrl = searchParams.get("tab");
+    const [searchParams, setSearchParams] = useSearchParams();
+    const tabParam = searchParams.get("tab");
     const user = useSelector((state: RootState) => state.auth.user);
-    const templatesSectionRef = useRef<HTMLDivElement>(null);
-    
-    // Obtener perfil del trainer
+
+    const [activeTab, setActiveTab] = useState<PlansTabId>(() =>
+        tabParam === "templates" ? "templates" : "planning"
+    );
+
+    useEffect(() => {
+        if (tabParam === "templates") {
+            setActiveTab("templates");
+        } else if (tabParam == null || tabParam === "") {
+            setActiveTab("planning");
+        }
+    }, [tabParam]);
+
+    const handleTabChange = useCallback(
+        (id: string) => {
+            if (id !== "planning" && id !== "templates") return;
+            setActiveTab(id);
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev);
+                    if (id === "templates") {
+                        next.set("tab", "templates");
+                    } else {
+                        next.delete("tab");
+                    }
+                    return next;
+                },
+                { replace: true }
+            );
+        },
+        [setSearchParams]
+    );
+
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
     });
     const trainerId = trainerProfile?.id;
 
-    // Estado del modal de asignación
-    const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
-    const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
+    const [planStatusFilter, setPlanStatusFilter] = useState<string>("all");
+    const [planGoalFilter, setPlanGoalFilter] = useState<string>("all");
+    const [planDateFrom, setPlanDateFrom] = useState("");
+    const [planDateTo, setPlanDateTo] = useState("");
+    const [searchPlans, setSearchPlans] = useState("");
+    const [searchPlansDebounced, setSearchPlansDebounced] = useState("");
 
-    // Estado del modal de preview
-    const [previewModalOpen, setPreviewModalOpen] = useState(false);
-    const [previewTemplateId, setPreviewTemplateId] = useState<number | null>(null);
-
-    // Modal asignar plan a cliente (desde lista o detalle)
-    const [planIdForAssignModal, setPlanIdForAssignModal] = useState<number | null>(null);
-
-    // Estados de feedback
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
-    const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-    // Búsqueda por módulo
-    const [searchActivePlans, setSearchActivePlans] = useState("");
+    const [templateLevelFilter, setTemplateLevelFilter] = useState<string>("all");
+    const [templateGoalFilter, setTemplateGoalFilter] = useState<string>("all");
+    const [templateDateFrom, setTemplateDateFrom] = useState("");
+    const [templateDateTo, setTemplateDateTo] = useState("");
     const [searchTemplates, setSearchTemplates] = useState("");
-
-    // Auto-dismiss de mensajes después de 5 segundos
-    useEffect(() => {
-        if (successMessage) {
-            const timer = setTimeout(() => setSuccessMessage(null), 5000);
-            return () => clearTimeout(timer);
-        }
-    }, [successMessage]);
+    const [searchTemplatesDebounced, setSearchTemplatesDebounced] = useState("");
 
     useEffect(() => {
-        if (errorMessage) {
-            const timer = setTimeout(() => setErrorMessage(null), 7000);
-            return () => clearTimeout(timer);
-        }
-    }, [errorMessage]);
+        const t = setTimeout(() => setSearchPlansDebounced(searchPlans), 300);
+        return () => clearTimeout(t);
+    }, [searchPlans]);
 
-    // Scroll a la sección de templates cuando ?tab=templates (p. ej. desde ClientList "Gestionar Plantillas")
     useEffect(() => {
-        if (tabFromUrl === "templates" && templatesSectionRef.current) {
-            templatesSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-    }, [tabFromUrl]);
+        const t = setTimeout(() => setSearchTemplatesDebounced(searchTemplates), 300);
+        return () => clearTimeout(t);
+    }, [searchTemplates]);
 
-    // Hooks de datos con refetch
-    // IMPORTANTE: No usar non-null assertion (!) cuando el valor puede ser undefined
-    // RTK Query puede ejecutar query() antes de evaluar skip, causando errores
+    const ITEMS_PER_PAGE = 9;
+    const API_LIMIT = 500;
+
     const {
         data: templates = [],
         isLoading: isLoadingTemplates,
-        refetch: refetchTemplates,
     } = useGetTrainingPlanTemplatesQuery(
-        // Solo pasar parámetros si trainerId existe
-        trainerId ? { trainerId } : { trainerId: 0 },
+        trainerId ? { trainerId, skip: 0, limit: API_LIMIT } : { trainerId: 0 },
         { skip: !trainerId }
     );
 
     const {
         data: plans = [],
         isLoading: isLoadingPlans,
-        refetch: refetchPlans,
     } = useGetTrainingPlansQuery(
-        trainerId ? { trainer_id: trainerId } : { trainer_id: 0 },
-        { skip: !trainerId }
+        trainerId ? { trainer_id: trainerId, skip: 0, limit: API_LIMIT } : { trainer_id: 0 },
+        {
+            skip: !trainerId,
+            refetchOnMountOrArgChange: true,
+        }
     );
 
-    // Obtener clientes para nombres
     const { data: clientsData } = useGetTrainerClientsQuery(
         {
             trainerId: trainerId!,
@@ -130,9 +182,8 @@ export const TrainingPlansPage: React.FC = () => {
         { skip: !trainerId }
     );
 
-    // Map de client_id -> nombre
     const clientNamesMap = useMemo(() => {
-    const clients = clientsData?.items ?? [];
+        const clients = clientsData?.items ?? [];
         const map: Record<number, string> = {};
         clients.forEach((client) => {
             map[client.id] = `${client.nombre} ${client.apellidos}`;
@@ -140,41 +191,67 @@ export const TrainingPlansPage: React.FC = () => {
         return map;
     }, [clientsData?.items]);
 
-    // Hooks de acciones
-    const {
-        duplicateTemplate,
-    } = useTrainingPlanTemplates({
-        trainerId: trainerId!,
-    });
-    const { convertPlan } = useConvertPlanToTemplate();
-    const [deletePlan] = useDeleteTrainingPlanMutation();
-    const [deleteTemplateMutation] = useDeleteTrainingPlanTemplateMutation();
-    const [updatePlan] = useUpdateTrainingPlanMutation();
-
-    // Filtrar planes por estado
-    const activePlans = useMemo(() => {
-        return plans.filter((plan) => plan.status === "active" && plan.is_active);
+    /** Planes asignados a cliente (pestaña Planificación); el estado se filtra con las pastillas. */
+    const assignedPlans = useMemo(() => {
+        return plans.filter((plan) => plan.client_id != null);
     }, [plans]);
 
-    // Filtrar por búsqueda (nombre de plan/template o cliente)
-    const filteredActivePlans = useMemo(() => {
-        const q = searchActivePlans.trim().toLowerCase();
-        if (!q) return activePlans;
-        return activePlans.filter((plan) => {
-            const nameMatch = plan.name?.toLowerCase().includes(q);
-            const clientName = plan.client_id ? clientNamesMap[plan.client_id] : "";
-            const clientMatch = clientName?.toLowerCase().includes(q);
-            return nameMatch || clientMatch;
-        });
-    }, [activePlans, searchActivePlans, clientNamesMap]);
+    const filteredAssignedPlans = useMemo(() => {
+        let list = assignedPlans;
+        if (planStatusFilter !== "all") {
+            list = list.filter((p) => p.status === planStatusFilter);
+        }
+        if (planGoalFilter !== "all") {
+            list = list.filter((p) => (p.goal ?? "").trim() === planGoalFilter);
+        }
+        list = list.filter((p) => planOverlapsDateRange(p, planDateFrom, planDateTo));
+        const q = searchPlansDebounced.trim().toLowerCase();
+        if (q) {
+            list = list.filter((plan) => {
+                const nameMatch = plan.name?.toLowerCase().includes(q);
+                const clientName = plan.client_id ? clientNamesMap[plan.client_id] : "";
+                const clientMatch = clientName?.toLowerCase().includes(q);
+                return nameMatch || clientMatch;
+            });
+        }
+        return list;
+    }, [
+        assignedPlans,
+        planStatusFilter,
+        planGoalFilter,
+        planDateFrom,
+        planDateTo,
+        searchPlansDebounced,
+        clientNamesMap,
+    ]);
 
     const filteredTemplates = useMemo(() => {
-        const q = searchTemplates.trim().toLowerCase();
-        if (!q) return templates;
-        return templates.filter((t) => t.name?.toLowerCase().includes(q));
-    }, [templates, searchTemplates]);
+        let list = templates;
+        if (templateLevelFilter !== "all") {
+            list = list.filter((t) => t.level === templateLevelFilter);
+        }
+        if (templateGoalFilter !== "all") {
+            list = list.filter((t) => (t.goal ?? "").trim() === templateGoalFilter);
+        }
+        list = list.filter((t) => templateCreatedInRange(t, templateDateFrom, templateDateTo));
+        const q = searchTemplatesDebounced.trim().toLowerCase();
+        if (q) {
+            list = list.filter((t) => {
+                const name = t.name?.toLowerCase().includes(q);
+                const desc = t.description?.toLowerCase().includes(q);
+                return name || desc;
+            });
+        }
+        return list;
+    }, [
+        templates,
+        templateLevelFilter,
+        templateGoalFilter,
+        templateDateFrom,
+        templateDateTo,
+        searchTemplatesDebounced,
+    ]);
 
-    // Paginación para programas activos
     const ACTIVE_PLANS_PER_PAGE = 6;
     const {
         currentPage: activePlansPage,
@@ -183,18 +260,20 @@ export const TrainingPlansPage: React.FC = () => {
         totalItems: totalActivePlans,
         setPage: setActivePlansPage,
     } = usePagination({
-        items: filteredActivePlans,
+        items: filteredAssignedPlans,
         itemsPerPage: ACTIVE_PLANS_PER_PAGE,
         resetOnItemsChange: true,
     });
 
-    const handleActivePlansPageChange = (page: number): void => {
+    const handleAssignedPlansPageChange = (page: number): void => {
         setActivePlansPage(page);
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    // Paginación para Biblioteca de Templates
-    const TEMPLATES_PER_PAGE = 9;
+    const resetPlanningPage = useCallback(() => {
+        setActivePlansPage(1);
+    }, [setActivePlansPage]);
+
     const {
         currentPage: templatesPage,
         totalPages: totalTemplatesPages,
@@ -203,351 +282,297 @@ export const TrainingPlansPage: React.FC = () => {
         setPage: setTemplatesPage,
     } = usePagination({
         items: filteredTemplates,
-        itemsPerPage: TEMPLATES_PER_PAGE,
+        itemsPerPage: ITEMS_PER_PAGE,
         resetOnItemsChange: true,
     });
 
     const handleTemplatesPageChange = (page: number): void => {
         setTemplatesPage(page);
-        templatesSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
-    // Map de plan_id -> array de clientes (para mostrar múltiples avatares)
-    // Agrupa planes con el mismo nombre o template_id para mostrar múltiples clientes
+    const resetTemplatesPage = useCallback(() => {
+        setTemplatesPage(1);
+    }, [setTemplatesPage]);
+
     const clientsMap = useMemo(() => {
         const clients = clientsData?.items ?? [];
-        const map: Record<number, typeof clients> = {};
-        
-        // Primero, crear un mapa de nombre/template_id -> array de planes
-        const plansByKey = new Map<string, typeof activePlans>();
-        
-        filteredActivePlans.forEach((plan) => {
-            // Usar template_id si existe, sino usar nombre
-            const key = plan.template_id ? `template_${plan.template_id}` : `name_${plan.name}`;
-            if (!plansByKey.has(key)) {
-                plansByKey.set(key, []);
+        const map: Record<number, (typeof clients)[number][]> = {};
+        paginatedActivePlans.forEach((plan) => {
+            if (plan.client_id) {
+                const client = clients.find((c) => c.id === plan.client_id);
+                map[plan.id] = client ? [client] : [];
+            } else {
+                map[plan.id] = [];
             }
-            plansByKey.get(key)!.push(plan);
         });
-        
-        // Para cada grupo de planes, agregar todos los clientes únicos
-        plansByKey.forEach((planGroup) => {
-            const uniqueClients = new Map<number, typeof clients[0]>();
-            
-            planGroup.forEach((plan) => {
-                if (plan.client_id) {
-                    const client = clients.find((c) => c.id === plan.client_id);
-                    if (client && !uniqueClients.has(client.id)) {
-                        uniqueClients.set(client.id, client);
-                    }
-                }
-            });
-            
-            // Asignar los clientes a todos los planes del grupo
-            const clientsArray = Array.from(uniqueClients.values());
-            planGroup.forEach((plan) => {
-                map[plan.id] = clientsArray;
-            });
-        });
-        
         return map;
-    }, [filteredActivePlans, clientsData?.items]);
-
-    // Handlers
-    const handleAssignTemplate = (templateId: number) => {
-        const template = templates.find((t) => t.id === templateId);
-        setSelectedTemplateId(templateId);
-        setSelectedTemplateName(template?.name || "");
-        setAssignModalOpen(true);
-    };
-
-    const handleAssignSuccess = () => {
-        setAssignModalOpen(false);
-        setSelectedTemplateId(null);
-        setSelectedTemplateName("");
-        setSuccessMessage("Plantilla asignada exitosamente al cliente");
-        // Refetch automático por RTK Query, pero forzamos para asegurar
-        refetchPlans();
-        refetchTemplates();
-    };
-
-    // Estados de procesamiento por ID
-    const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
-
-    const addProcessingId = (id: number) => {
-        setProcessingIds((prev) => new Set(prev).add(id));
-    };
-
-    const removeProcessingId = (id: number) => {
-        setProcessingIds((prev) => {
-            const newSet = new Set(prev);
-            newSet.delete(id);
-            return newSet;
-        });
-    };
-
-    const handleDuplicateTemplate = async (templateId: number) => {
-        addProcessingId(templateId);
-        try {
-            await duplicateTemplate(templateId);
-            setSuccessMessage("Plantilla duplicada exitosamente");
-            refetchTemplates();
-        } catch (err) {
-            console.error("Error duplicating template:", err);
-            setErrorMessage("Error al duplicar la plantilla. Intenta de nuevo.");
-        } finally {
-            removeProcessingId(templateId);
-        }
-    };
-
-    const handleDeleteTemplate = async (templateId: number) => {
-        const template = templates.find((t) => t.id === templateId);
-        if (!window.confirm(`¿Estás seguro de eliminar la plantilla "${template?.name || ""}"?`)) return;
-
-        addProcessingId(templateId);
-        try {
-            await deleteTemplateMutation(templateId).unwrap();
-            setSuccessMessage("Plantilla eliminada exitosamente");
-            refetchTemplates();
-        } catch (err) {
-            console.error("Error deleting template:", err);
-            setErrorMessage("Error al eliminar la plantilla. Intenta de nuevo.");
-        } finally {
-            removeProcessingId(templateId);
-        }
-    };
-
-    const handleConvertToTemplate = async (planId: number) => {
-        const plan = plans.find((p) => p.id === planId);
-        if (!plan) return;
-
-        const templateName = window.prompt(
-            "Ingresa un nombre para la plantilla:",
-            `${plan.name} (Plantilla)`
-        );
-        if (!templateName || !templateName.trim()) return;
-
-        addProcessingId(planId);
-        try {
-            await convertPlan({
-                plan_id: planId,
-                template_data: {
-                    trainer_id: trainerId!,
-                    name: templateName.trim(),
-                    goal: plan.goal,
-                    description: plan.description || undefined,
-                },
-            });
-            setSuccessMessage("Plan convertido a plantilla exitosamente");
-            refetchPlans();
-            refetchTemplates();
-        } catch (err) {
-            console.error("Error converting plan to template:", err);
-            setErrorMessage("Error al convertir el plan a plantilla. Intenta de nuevo.");
-        } finally {
-            removeProcessingId(planId);
-        }
-    };
-
-    const handleDeletePlan = async (planId: number) => {
-        const plan = plans.find((p) => p.id === planId);
-        if (!window.confirm(`¿Estás seguro de eliminar el plan "${plan?.name || ""}"?`)) return;
-
-        addProcessingId(planId);
-        try {
-            await deletePlan(planId).unwrap();
-            setSuccessMessage("Plan eliminado exitosamente");
-            refetchPlans();
-        } catch (err) {
-            console.error("Error deleting plan:", err);
-            setErrorMessage("Error al eliminar el plan. Intenta de nuevo.");
-        } finally {
-            removeProcessingId(planId);
-        }
-    };
-
-    const handleEditPlan = (planId: number) => {
-        navigate(`/dashboard/training-plans/${planId}`);
-    };
-
-    const handleViewPlan = (planId: number) => {
-        navigate(`/dashboard/training-plans/${planId}`);
-    };
-
-    const handlePreviewTemplate = (templateId: number) => {
-        setPreviewTemplateId(templateId);
-        setPreviewModalOpen(true);
-    };
-
-    const handleUseTemplateFromPreview = () => {
-        if (previewTemplateId) {
-            setPreviewModalOpen(false);
-            handleAssignTemplate(previewTemplateId);
-        }
-    };
-
-    const handleAddClientToPlan = (planId: number): void => {
-        setPlanIdForAssignModal(planId);
-    };
-
-    const handleStatusChange = async (planId: number, status: string) => {
-        addProcessingId(planId);
-        try {
-            await updatePlan({
-                id: planId,
-                data: { status },
-            }).unwrap();
-            setSuccessMessage("Estado del plan actualizado exitosamente");
-            refetchPlans();
-        } catch (err) {
-            console.error("Error updating plan status:", err);
-            setErrorMessage("Error al actualizar el estado del plan");
-        } finally {
-            removeProcessingId(planId);
-        }
-    };
+    }, [paginatedActivePlans, clientsData?.items]);
 
     const handleCreateTemplate = () => {
         navigate("/dashboard/training-plans/templates/create");
     };
 
+    const [isSelectClientModalOpen, setIsSelectClientModalOpen] = useState(false);
+
     const handleCreatePlan = () => {
-        navigate("/dashboard/training-plans/create");
+        setIsSelectClientModalOpen(true);
     };
 
     const isLoading = isLoadingTemplates || isLoadingPlans;
 
     return (
-        <div className="space-y-6 sm:space-y-8">
-            <PageTitle
-                title="Planificación de Entrenamiento"
-                subtitle="Crea y gestiona programas de entrenamiento y plantillas de sesiones"
-                className="mb-6"
-            />
-
-                {/* Mensajes de feedback */}
-                {successMessage && (
-                <div className="px-4 lg:px-8 mb-6">
-                        <Alert variant="success" onDismiss={() => setSuccessMessage(null)}>
-                            {successMessage}
-                                    </Alert>
-                        </div>
-                    )}
-
-                {errorMessage && (
-                    <div className="px-4 lg:px-8 mb-6">
-                        <Alert variant="error" onDismiss={() => setErrorMessage(null)}>
-                            {errorMessage}
-                        </Alert>
-                    </div>
-                    )}
-
-                {/* Error si no hay trainerId */}
-                    {!trainerId && !isLoading && user?.role === "trainer" && (
-                    <div className="px-4 lg:px-8 mb-6">
-                        <Alert variant="error">
-                            No se pudo cargar tu perfil de trainer. Por favor, completa tu perfil primero.
-                        </Alert>
-                        </div>
-                    )}
-
-                {/* Sección 1: Programas Activos */}
-                <TrainingPlansSection
-                    title="Programas Activos"
-                    description="Programas de entrenamiento asignados a clientes actualmente"
-                    totalCount={filteredActivePlans.length}
-                    searchValue={searchActivePlans}
-                    onSearchChange={setSearchActivePlans}
-                    searchPlaceholder="Buscar por nombre de plan o cliente..."
-                    searchAriaLabel="Buscar programa activo"
-                    items={paginatedActivePlans}
-                    type="active"
-                    clientNames={clientNamesMap}
-                    clientsMap={clientsMap}
-                    onCreate={handleCreatePlan}
-                    onConvert={handleConvertToTemplate}
-                    onDelete={handleDeletePlan}
-                    onEdit={handleEditPlan}
-                    onView={handleViewPlan}
-                    onAddClient={handleAddClientToPlan}
-                    onStatusChange={handleStatusChange}
-                    isLoading={isLoadingPlans}
-                    processingIds={processingIds}
-                />
-
-            {totalActivePlansPages > 1 && (
-                <PaginationBar
-                    currentPage={activePlansPage}
-                    totalPages={totalActivePlansPages}
-                    totalItems={totalActivePlans}
-                    pageSize={ACTIVE_PLANS_PER_PAGE}
-                    onPageChange={handleActivePlansPageChange}
-                />
+        <div className="space-y-6">
+            {!trainerId && !isLoading && user?.role === "trainer" && (
+                <Alert variant="error">
+                    No se pudo cargar tu perfil de trainer. Por favor, completa tu perfil primero.
+                </Alert>
             )}
 
-            <div id="section-templates" ref={templatesSectionRef}>
-                <TrainingPlansSection
-                    title="Biblioteca de Templates"
-                    description="Plantillas reutilizables que puedes asignar a múltiples clientes"
-                    totalCount={filteredTemplates.length}
-                    searchValue={searchTemplates}
-                    onSearchChange={setSearchTemplates}
-                    searchPlaceholder="Buscar por nombre de plantilla..."
-                    searchAriaLabel="Buscar plantilla"
-                    items={paginatedTemplates}
-                    type="template"
-                    onCreate={handleCreateTemplate}
-                    onAssign={handleAssignTemplate}
-                    onDuplicate={handleDuplicateTemplate}
-                    onDelete={handleDeleteTemplate}
-                    onView={handleViewPlan}
-                    onPreview={handlePreviewTemplate}
-                    isLoading={isLoadingTemplates}
-                    processingIds={processingIds}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <PageTitle
+                    title={activeTab === "planning" ? "Planificación" : "Plantillas"}
+                    subtitle={
+                        activeTab === "planning"
+                            ? `${filteredAssignedPlans.length} planes activos`
+                            : `${filteredTemplates.length} plantillas disponibles`
+                    }
                 />
-                {totalTemplatesPages > 1 && (
-                    <PaginationBar
-                        currentPage={templatesPage}
-                        totalPages={totalTemplatesPages}
-                        totalItems={totalTemplates}
-                        pageSize={TEMPLATES_PER_PAGE}
-                        onPageChange={handleTemplatesPageChange}
-                    />
+                {activeTab === "planning" ? (
+                    <Button size="sm" onClick={handleCreatePlan}>
+                        <Plus className="mr-1 h-4 w-4" aria-hidden />
+                        Nueva planificación
+                    </Button>
+                ) : (
+                    <Button size="sm" onClick={handleCreateTemplate}>
+                        <Plus className="mr-1 h-4 w-4" aria-hidden />
+                        Nueva plantilla
+                    </Button>
                 )}
             </div>
 
-            {/* Modal de Asignar Plantilla */}
-                <AssignTemplateModal
-                    open={assignModalOpen}
-                    onClose={() => {
-                        setAssignModalOpen(false);
-                        setSelectedTemplateId(null);
-                        setSelectedTemplateName("");
-                    }}
-                    templateId={selectedTemplateId}
-                    templateName={selectedTemplateName}
-                    onSuccess={handleAssignSuccess}
+            <TabsBar
+                ariaLabel="Planificación y plantillas"
+                value={activeTab}
+                onChange={handleTabChange}
+                items={[
+                    { id: "planning", label: "Planificación" },
+                    { id: "templates", label: "Plantillas" },
+                ]}
             />
 
-            <AssignPlanModal
-                    open={!!planIdForAssignModal}
-                    onClose={() => setPlanIdForAssignModal(null)}
-                    planId={planIdForAssignModal ?? 0}
-                    planName={activePlans.find((p) => p.id === planIdForAssignModal)?.name ?? ""}
-                    onSuccess={() => {
-                        setPlanIdForAssignModal(null);
-                        refetchPlans();
-                    }}
-            />
+            {activeTab === "planning" && (
+                <>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap gap-1.5">
+                            {[
+                                { value: "all", label: "Todas" },
+                                { value: "active", label: "Activos" },
+                                { value: "completed", label: "Completados" },
+                                { value: "paused", label: "Pausados" },
+                                { value: "cancelled", label: "Cancelados" },
+                            ].map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => {
+                                        setPlanStatusFilter(value);
+                                        resetPlanningPage();
+                                    }}
+                                    className={cn(
+                                        "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                                        planStatusFilter === value
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="w-44 min-w-[176px]">
+                            <FormSelect
+                                value={planGoalFilter}
+                                onChange={(e) => {
+                                    setPlanGoalFilter(e.target.value);
+                                    resetPlanningPage();
+                                }}
+                                options={PLAN_GOAL_SELECT_OPTIONS}
+                                placeholder="Todos"
+                                size="sm"
+                                className="w-full"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <DatePickerButton
+                                label="Desde"
+                                value={planDateFrom}
+                                onChange={(v) => {
+                                    setPlanDateFrom(v);
+                                    resetPlanningPage();
+                                }}
+                                aria-label="Desde"
+                            />
+                            <span className="text-muted-foreground text-sm">–</span>
+                            <DatePickerButton
+                                label="Hasta"
+                                value={planDateTo}
+                                onChange={(v) => {
+                                    setPlanDateTo(v);
+                                    resetPlanningPage();
+                                }}
+                                aria-label="Hasta"
+                            />
+                        </div>
+                        <div className="relative ml-auto">
+                            <Search
+                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden
+                            />
+                            <Input
+                                type="text"
+                                size="sm"
+                                placeholder="Buscar plan o cliente..."
+                                value={searchPlans}
+                                onChange={(e) => {
+                                    setSearchPlans(e.target.value);
+                                    resetPlanningPage();
+                                }}
+                                className="w-56 pl-8"
+                                aria-label="Buscar plan o cliente"
+                            />
+                        </div>
+                    </div>
 
-            <TemplatePreviewModal
-                    isOpen={previewModalOpen}
-                    onClose={() => {
-                        setPreviewModalOpen(false);
-                        setPreviewTemplateId(null);
-                    }}
-                    templateId={previewTemplateId}
-                onUseTemplate={handleUseTemplateFromPreview}
+                    <TrainingPlansSection
+                        title="Planificación"
+                        description="Programas de entrenamiento asignados a clientes actualmente"
+                        showHeading={false}
+                        items={paginatedActivePlans}
+                        type="active"
+                        clientNames={clientNamesMap}
+                        clientsMap={clientsMap}
+                        onCreate={handleCreatePlan}
+                        isLoading={isLoadingPlans}
+                    />
+                    {totalActivePlansPages > 1 && (
+                        <PaginationBar
+                            currentPage={activePlansPage}
+                            totalPages={totalActivePlansPages}
+                            totalItems={totalActivePlans}
+                            pageSize={ACTIVE_PLANS_PER_PAGE}
+                            onPageChange={handleAssignedPlansPageChange}
+                        />
+                    )}
+                </>
+            )}
+
+            {activeTab === "templates" && (
+                <>
+                    <div className="flex flex-wrap items-center gap-3">
+                        <div className="flex flex-wrap gap-1.5">
+                            {[
+                                { value: "all", label: "Todas" },
+                                { value: TEMPLATE_LEVEL.BEGINNER, label: "Principiante" },
+                                { value: TEMPLATE_LEVEL.INTERMEDIATE, label: "Intermedio" },
+                                { value: TEMPLATE_LEVEL.ADVANCED, label: "Avanzado" },
+                            ].map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    type="button"
+                                    onClick={() => {
+                                        setTemplateLevelFilter(value);
+                                        resetTemplatesPage();
+                                    }}
+                                    className={cn(
+                                        "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
+                                        templateLevelFilter === value
+                                            ? "bg-primary text-primary-foreground"
+                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
+                                    )}
+                                >
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+                        <div className="w-44 min-w-[176px]">
+                            <FormSelect
+                                value={templateGoalFilter}
+                                onChange={(e) => {
+                                    setTemplateGoalFilter(e.target.value);
+                                    resetTemplatesPage();
+                                }}
+                                options={PLAN_GOAL_SELECT_OPTIONS}
+                                placeholder="Todos"
+                                size="sm"
+                                className="w-full"
+                            />
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <DatePickerButton
+                                label="Desde"
+                                value={templateDateFrom}
+                                onChange={(v) => {
+                                    setTemplateDateFrom(v);
+                                    resetTemplatesPage();
+                                }}
+                                aria-label="Plantilla creada desde"
+                            />
+                            <span className="text-muted-foreground text-sm">–</span>
+                            <DatePickerButton
+                                label="Hasta"
+                                value={templateDateTo}
+                                onChange={(v) => {
+                                    setTemplateDateTo(v);
+                                    resetTemplatesPage();
+                                }}
+                                aria-label="Plantilla creada hasta"
+                            />
+                        </div>
+                        <div className="relative ml-auto">
+                            <Search
+                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                aria-hidden
+                            />
+                            <Input
+                                type="text"
+                                size="sm"
+                                placeholder="Buscar plantilla..."
+                                value={searchTemplates}
+                                onChange={(e) => {
+                                    setSearchTemplates(e.target.value);
+                                    resetTemplatesPage();
+                                }}
+                                className="w-56 pl-8"
+                                aria-label="Buscar plantilla"
+                            />
+                        </div>
+                    </div>
+
+                    <TrainingPlansSection
+                        title="Plantillas"
+                        description="Plantillas reutilizables que puedes asignar a múltiples clientes"
+                        showHeading={false}
+                        items={paginatedTemplates}
+                        type="template"
+                        onCreate={handleCreateTemplate}
+                        isLoading={isLoadingTemplates}
+                    />
+                    {totalTemplates > ITEMS_PER_PAGE && (
+                        <PaginationBar
+                            currentPage={templatesPage}
+                            totalPages={totalTemplatesPages}
+                            totalItems={totalTemplates}
+                            pageSize={ITEMS_PER_PAGE}
+                            onPageChange={handleTemplatesPageChange}
+                        />
+                    )}
+                </>
+            )}
+
+            <SelectClientModal
+                isOpen={isSelectClientModalOpen}
+                onClose={() => setIsSelectClientModalOpen(false)}
             />
         </div>
     );

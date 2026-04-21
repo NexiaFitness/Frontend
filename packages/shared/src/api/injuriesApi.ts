@@ -21,6 +21,7 @@ import type {
     Movement,
     Muscle,
     ClientInjury,
+    InjuryWithDetails,
     CreateInjuryRequest,
     UpdateInjuryRequest,
 } from "../types/injuries";
@@ -80,23 +81,13 @@ export const injuriesApi = baseApi.injectEndpoints({
             ],
         }),
 
-        getClientInjuries: builder.query<ClientInjury[], number>({
-            query: (clientId) => ({
-                url: `/injuries/clients/${clientId}`,
+        getClientInjuries: builder.query<InjuryWithDetails[], { clientId: number; activeOnly?: boolean }>({
+            query: ({ clientId, activeOnly = false }) => ({
+                url: `/injuries/clients/${clientId}${activeOnly ? "?active_only=true" : "?active_only=false"}`,
                 method: "GET",
             }),
-            providesTags: (result, error, clientId) => [
+            providesTags: (result, error, { clientId }) => [
                 { type: "Injuries", id: `CLIENT-${clientId}` },
-            ],
-        }),
-
-        getClientActiveInjuries: builder.query<ClientInjury[], number>({
-            query: (clientId) => ({
-                url: `/injuries/clients/${clientId}?active_only=true`,
-                method: "GET",
-            }),
-            providesTags: (result, error, clientId) => [
-                { type: "Injuries", id: `CLIENT-${clientId}-ACTIVE` },
             ],
         }),
 
@@ -135,7 +126,6 @@ export const {
     useGetMusclesQuery,
     useCreateClientInjuryMutation,
     useGetClientInjuriesQuery,
-    useGetClientActiveInjuriesQuery,
     useUpdateInjuryMutation,
     useDeleteInjuryMutation,
 } = injuriesApi;

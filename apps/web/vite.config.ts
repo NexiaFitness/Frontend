@@ -1,15 +1,22 @@
 /**
  * Vite Configuration - Setup para desarrollo y testing
- * 
+ *
  * Configuración combinada para Vite + Vitest que incluye aliases,
  * optimizaciones y setup de testing environment.
+ *
+ * @author Frontend Team
+ * @since v5.0.0
  */
 
-import { defineConfig } from "vitest/config";
+import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
+  root: path.resolve(__dirname),
   plugins: [react()],
   resolve: {
     alias: {
@@ -67,8 +74,8 @@ export default defineConfig({
     chunkSizeWarningLimit: 600,
   },
   test: {
-    environment: 'jsdom',
+    environment: "jsdom",
     globals: true,
-    setupFiles: ['./src/test-utils/setup.ts'],
+    setupFiles: [path.resolve(__dirname, "src/test-utils/setup.ts")],
   },
 });

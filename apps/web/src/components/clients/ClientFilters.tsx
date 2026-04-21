@@ -129,9 +129,14 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
                     >
                         <option value="">Todos</option>
-                        <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso</option>
-                        <option value={TRAINING_GOAL_ENUM.AUMENTAR_MASA}>Ganancia muscular</option>
-                        <option value={TRAINING_GOAL_ENUM.RENDIMIENTO}>Rendimiento deportivo</option>
+                        <option value={TRAINING_GOAL_ENUM.HIPERTROFIA}>Hipertrofia muscular</option>
+                        <option value={TRAINING_GOAL_ENUM.FUERZA}>Fuerza máxima</option>
+                        <option value={TRAINING_GOAL_ENUM.POTENCIA}>Potencia / explosividad</option>
+                        <option value={TRAINING_GOAL_ENUM.RESISTENCIA}>Resistencia cardiovascular</option>
+                        <option value={TRAINING_GOAL_ENUM.PERDIDA_PESO}>Pérdida de peso / definición</option>
+                        <option value={TRAINING_GOAL_ENUM.REHABILITACION}>Rehabilitación / readaptación</option>
+                        <option value={TRAINING_GOAL_ENUM.FITNESS_GENERAL}>Fitness general / salud</option>
+                        <option value={TRAINING_GOAL_ENUM.RENDIMIENTO_DEPORTIVO}>Rendimiento deportivo</option>
                     </select>
                 </div>
 

@@ -8,7 +8,7 @@
  * @since v1.0.0
  */
 
-import { getClientsHandler } from "./list"
+import { getClientsHandler, getClientHandler } from "./list"
 import { createClientHandler } from "./create"
 import { deleteClientHandler } from "./delete"
 import { createClientPreviewHandler } from "./preview"
@@ -30,6 +30,7 @@ export * from "./tests"
 
 export const clientsHandlers = [
     getClientsHandler,
+    getClientHandler,
     createClientHandler,
     deleteClientHandler,
     createClientPreviewHandler,

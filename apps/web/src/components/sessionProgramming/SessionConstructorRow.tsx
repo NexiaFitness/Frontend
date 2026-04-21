@@ -8,9 +8,10 @@
  * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
  */
 
-import React, { useRef } from "react";
+import React from "react";
 import { Plus, X, Timer } from "lucide-react";
-import { Input, FormSelect, FormCombobox } from "@/components/ui/forms";
+import { FormSelect, FormCombobox } from "@/components/ui/forms";
+import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorRow, ConstructorExercise, RepsTipo } from "./constructorTypes";
 import {
     getCaracterTipoFromEffortCharacter,
@@ -84,52 +85,32 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
         row.setType === "giant_set";
     const showRoundsInSeriesCol = row.setType === "circuit";
 
-    const blockOptions = [
-        { value: "", label: "Seleccionar" },
-        ...blockTypes.map((bt) => ({
-            value: bt.id.toString(),
-            label: getBlockDisplayName(bt.name),
-        })),
-    ];
-
-    const activeBlock = blockTypes.find((bt) => bt.id === row.blockTypeId);
-    const blockDisplayName = activeBlock ? getBlockDisplayName(activeBlock.name) : "Seleccionar";
-    const blockSelectRef = useRef<HTMLSelectElement>(null);
+    const blockSelectOptions = blockTypes.map((bt) => ({
+        value: String(bt.id),
+        label: getBlockDisplayName(bt.name),
+    }));
 
     return (
         <div
             className="grid grid-cols-[170px_110px_70px_minmax(140px,1fr)_140px_160px_100px] gap-2 px-4 py-2 items-start hover:bg-surface/30 transition-colors group border-b border-border"
             role="row"
         >
-            {/* BLOQUE — chip compacto h-8, misma altura que resto de inputs */}
-            <div className="relative flex min-w-0 items-center">
-                <div className={`inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary min-w-0 shrink-0 ${INPUT_H}`}>
-                    <span className="truncate">{blockDisplayName}</span>
-                    <button
-                        type="button"
-                        onClick={() => blockSelectRef.current?.click()}
-                        className="h-6 w-6 shrink-0 rounded opacity-0 transition-opacity group-hover:opacity-100 hover:bg-accent hover:text-accent-foreground text-muted-foreground hover:text-destructive flex items-center justify-center"
-                        aria-label="Cambiar bloque"
-                    >
-                        <X className="h-3 w-3" aria-hidden />
-                    </button>
-                </div>
-                <select
-                    ref={blockSelectRef}
-                    value={row.blockTypeId ? row.blockTypeId.toString() : ""}
+            {/* BLOQUE — mismo patrón visual que Tipo serie (FormSelect xs, h-8) */}
+            <div className="min-w-0 h-8 flex items-center [&_select]:!h-8 [&_select]:!min-h-8">
+                <FormSelect
+                    size="xs"
+                    value={row.blockTypeId ? String(row.blockTypeId) : ""}
                     onChange={(e) => {
-                        const v = Number(e.target.value);
-                        onUpdate(row.id, { blockTypeId: v || 0 });
+                        const v = e.target.value;
+                        onUpdate(row.id, {
+                            blockTypeId: v ? Number(v) : 0,
+                        });
                     }}
-                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                    aria-label="Cambiar bloque"
-                >
-                    {blockOptions.map((opt) => (
-                        <option key={opt.value} value={opt.value || "0"}>
-                            {opt.label}
-                        </option>
-                    ))}
-                </select>
+                    options={blockSelectOptions}
+                    placeholder="Seleccionar"
+                    aria-label="Bloque de entrenamiento"
+                    className="!h-8 !min-h-8 shrink-0 w-full min-w-0"
+                />
             </div>
 
             {/* TIPO SERIE — h-8 forzado, alineado con Series */}
@@ -146,9 +127,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
             {/* SERIES — h-8 forzado, alineado con Tipo Serie */}
             <div className="h-8 flex items-center [&_input]:!h-8 [&_input]:!min-h-8">
                 {showSetsInput ? (
-                    <Input
+                    <InlineNumberInput
                         size="xs"
-                        type="number"
                         value={row.sets ?? ""}
                         onChange={(e) =>
                             onUpdate(row.id, {
@@ -156,12 +136,11 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             })
                         }
                         min={1}
-                        className="w-14 h-8 text-center text-xs"
+                        className="w-14"
                     />
                 ) : showRoundsInSeriesCol ? (
-                    <Input
+                    <InlineNumberInput
                         size="xs"
-                        type="number"
                         value={row.rounds ?? ""}
                         onChange={(e) =>
                             onUpdate(row.id, {
@@ -169,7 +148,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             })
                         }
                         min={1}
-                        className="w-14 text-center"
+                        className="w-14"
                     />
                 ) : (
                     <span className="text-[10px] text-muted-foreground pt-2 block text-center">—</span>
@@ -216,7 +195,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                         <div key={ex.id} className="flex items-center gap-1 min-h-8">
                             {showCombobox ? (
                                 <FormCombobox
-                                    size="sm8"
+                                    size="sm"
                                     value={repsTipo}
                                     onChange={(v) => onUpdate(row.id, { repsTipo: v as RepsTipo })}
                                     options={REPS_TIPO_OPTIONS}
@@ -295,11 +274,10 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
             <div className="min-w-[120px] flex flex-col gap-1 items-stretch">
                 {row.exercises.map((ex) => {
                     const caracterTipo = getCaracterTipoFromEffortCharacter(ex.effortCharacter);
-                    const inputClassName = `flex ${INPUT_H} w-[50px] shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0`;
                     return (
                         <div key={ex.id} className="flex items-center gap-1">
                             <FormCombobox
-                                size="sm62_8"
+                                size="sm"
                                 value={caracterTipo}
                                 onChange={(v) => {
                                     const val = v as CaracterTipo;
@@ -328,8 +306,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                 aria-label="Carácter"
                             />
                             {caracterTipo === "rpe" ? (
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="xs"
                                     min={1}
                                     max={10}
                                     value={ex.effortValue ?? ""}
@@ -342,11 +320,11 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         });
                                     }}
                                     placeholder="1-10"
-                                    className={inputClassName}
+                                    className="w-[50px] shrink-0"
                                 />
                             ) : caracterTipo === "rir" ? (
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="xs"
                                     min={0}
                                     max={5}
                                     value={ex.effortValue ?? ""}
@@ -359,11 +337,11 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         });
                                     }}
                                     placeholder="0-5"
-                                    className={inputClassName}
+                                    className="w-[50px] shrink-0"
                                 />
                             ) : (
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="xs"
                                     min={1}
                                     max={100}
                                     value={ex.effortValue ?? ""}
@@ -376,7 +354,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         });
                                     }}
                                     placeholder="0-100"
-                                    className={inputClassName}
+                                    className="w-[50px] shrink-0"
                                 />
                             )}
                         </div>
@@ -395,8 +373,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                 {row.exercises.length > 0 ? (
                     row.exercises.map((ex) => (
                         <div key={ex.id} className="flex items-center gap-0.5 min-h-8">
-                            <input
-                                type="number"
+                            <InlineNumberInput
+                                size="xs"
                                 value={row.rest ?? ""}
                                 onChange={(e) =>
                                     onUpdate(row.id, {
@@ -404,15 +382,15 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     })
                                 }
                                 placeholder="60"
-                                className={`${INPUT_H} w-14 shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0`}
+                                className="w-14 shrink-0"
                             />
                             <span className="text-[10px] text-muted-foreground shrink-0">seg</span>
                         </div>
                     ))
                 ) : (
                     <div className="flex items-center gap-0.5 min-h-8">
-                        <input
-                            type="number"
+                        <InlineNumberInput
+                            size="xs"
                             value={row.rest ?? ""}
                             onChange={(e) =>
                                 onUpdate(row.id, {
@@ -420,7 +398,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                 })
                             }
                             placeholder="60"
-                            className={`${INPUT_H} w-14 shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0`}
+                            className="w-14 shrink-0"
                         />
                         <span className="text-[10px] text-muted-foreground shrink-0">seg</span>
                     </div>
@@ -441,8 +419,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             <div className="flex items-center gap-1.5">
                                 <Timer className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden />
                                 <span className="text-[11px] text-muted-foreground">Time Cap:</span>
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="compact"
                                     min={1}
                                     value={
                                         row.timeCap != null
@@ -456,7 +434,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         });
                                     }}
                                     placeholder="12"
-                                    className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                    className="w-14"
                                 />
                                 <span className="text-[10px] text-muted-foreground">min</span>
                             </div>
@@ -472,8 +450,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             </span>
                             <div className="flex items-center gap-1.5">
                                 <span className="text-[11px] text-muted-foreground">Rondas:</span>
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="compact"
                                     min={1}
                                     value={row.rounds ?? ""}
                                     onChange={(e) =>
@@ -482,14 +460,14 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         })
                                     }
                                     placeholder="3"
-                                    className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                    className="w-14"
                                 />
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <Timer className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden />
                                 <span className="text-[11px] text-muted-foreground">Time Cap:</span>
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="compact"
                                     min={1}
                                     value={
                                         row.timeCap != null
@@ -503,7 +481,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         });
                                     }}
                                     placeholder="12"
-                                    className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                    className="w-14"
                                 />
                                 <span className="text-[10px] text-muted-foreground">min</span>
                             </div>
@@ -519,8 +497,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             </span>
                             <div className="flex items-center gap-1.5">
                                 <span className="text-[11px] text-muted-foreground">Cada:</span>
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="compact"
                                     min={1}
                                     value={
                                         row.intervalSeconds != null
@@ -534,14 +512,14 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         });
                                     }}
                                     placeholder="1"
-                                    className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                    className="w-14"
                                 />
                                 <span className="text-[10px] text-muted-foreground">min</span>
                             </div>
                             <div className="flex items-center gap-1.5">
                                 <span className="text-[11px] text-muted-foreground">Rondas:</span>
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="compact"
                                     min={1}
                                     value={row.rounds ?? ""}
                                     onChange={(e) =>
@@ -550,15 +528,15 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         })
                                     }
                                     placeholder="10"
-                                    className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                    className="w-14"
                                 />
                             </div>
                             {row.rounds != null && row.rounds > 0 && (
                                 <div className="flex items-center gap-1.5">
                                     <Timer className="h-3 w-3 text-muted-foreground shrink-0" aria-hidden />
                                     <span className="text-[11px] text-muted-foreground">Time Cap:</span>
-                                    <input
-                                        type="number"
+                                    <InlineNumberInput
+                                        size="compact"
                                         min={1}
                                         value={
                                             row.timeCap != null
@@ -572,7 +550,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                             });
                                         }}
                                         placeholder="12"
-                                        className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                        className="w-14"
                                     />
                                     <span className="text-[10px] text-muted-foreground">min</span>
                                 </div>
@@ -586,8 +564,8 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             </span>
                             <div className="flex items-center gap-1.5">
                                 <span className="text-[11px] text-muted-foreground">Rondas:</span>
-                                <input
-                                    type="number"
+                                <InlineNumberInput
+                                    size="compact"
                                     min={1}
                                     value={row.rounds ?? ""}
                                     onChange={(e) =>
@@ -596,7 +574,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                         })
                                     }
                                     placeholder="3"
-                                    className="h-7 w-14 bg-surface border border-border/60 rounded-md text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0"
+                                    className="w-14"
                                 />
                             </div>
                         </>

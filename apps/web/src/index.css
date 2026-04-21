@@ -59,6 +59,30 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Prevent Chrome autofill from overriding dark background */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  select:-webkit-autofill,
+  textarea:-webkit-autofill {
+    -webkit-box-shadow: 0 0 0 1000px hsl(var(--background)) inset !important;
+    -webkit-text-fill-color: hsl(var(--foreground)) !important;
+    caret-color: hsl(var(--foreground));
+    transition: background-color 5000s ease-in-out 0s;
+  }
+
+  /* Ocultar spinners nativos en inputs number que usan botones custom */
+  .nexia-no-native-spinners::-webkit-inner-spin-button,
+  .nexia-no-native-spinners::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .nexia-no-native-spinners[type="number"] {
+    -moz-appearance: textfield;
+  }
 }
 
 /* Scrollbar ExercisePickerPanel: track transparente, thumb y botones azul primary */

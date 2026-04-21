@@ -17,6 +17,7 @@ import React, { useMemo, useState } from "react";
 import { X, Search, Plus, TriangleAlert } from "lucide-react";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
+import { exerciseDisplayName } from "@nexia/shared";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/forms";
@@ -47,7 +48,7 @@ function isContraindicated(
 function groupExercisesByLetter(exercises: Exercise[]): [string, Exercise[]][] {
     const map = new Map<string, Exercise[]>();
     for (const ex of exercises) {
-        const letter = (ex.nombre?.[0] ?? "?").toUpperCase();
+        const letter = (exerciseDisplayName(ex)[0] ?? "?").toUpperCase();
         const list = map.get(letter) ?? [];
         list.push(ex);
         map.set(letter, list);
@@ -81,9 +82,11 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const filteredAndGrouped = useMemo(() => {
         const term = search.trim().toLowerCase();
         const filtered = term
-            ? exercises.filter((ex) =>
-                  (ex.nombre ?? "").toLowerCase().includes(term)
-              )
+            ? exercises.filter((ex) => {
+                  const n = exerciseDisplayName(ex).toLowerCase();
+                  const en = (ex.nombre_ingles ?? "").toLowerCase();
+                  return n.includes(term) || en.includes(term);
+              })
             : exercises;
         return groupExercisesByLetter(filtered);
     }, [exercises, search]);
@@ -186,7 +189,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                                             {contra && (
                                                 <TriangleAlert className="h-3 w-3 shrink-0 text-destructive" />
                                             )}
-                                            <span className="flex-1 truncate text-xs">{ex.nombre}</span>
+                                            <span className="flex-1 truncate text-xs">{exerciseDisplayName(ex)}</span>
                                             {!contra && (
                                                 <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                                             )}

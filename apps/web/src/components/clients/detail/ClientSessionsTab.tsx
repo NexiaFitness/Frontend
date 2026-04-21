@@ -6,7 +6,7 @@
  * - Calendario mensual para sesiones de entrenamiento.
  * - Sección "Citas agendadas" como lista ordenada de cards (sin calendario).
  * - Lista cronológica unificada con filtros.
- * - Botones: Crear sesión, Agendar cita.
+ * - Acciones en barra fija inferior (DashboardFixedFooter): Cancelar, Agendar cita, Crear sesión.
  *
  * Contexto:
  * - Ola 1 TICK-S01/S02: reúne datos de sesiones y entrenamientos del cliente.
@@ -19,50 +19,56 @@
  * @since v6.2.0 - Ola 1 Sesiones unificadas
  */
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
+import { ChevronDown, Calendar } from "lucide-react";
+import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
+import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
 import type { PlanTrainingSession } from "@nexia/shared";
-import {
-    SCHEDULED_SESSION_TYPE,
-    SESSION_STATUS,
-} from "@nexia/shared/types/scheduling";
 import { SessionCalendar, type SessionCalendarSession } from "@/components/sessionProgramming";
+import { ClientActivePlanScheduleLayout } from "@/components/clients/session/ClientActivePlanScheduleLayout";
+import { ClientActivePlanSummaryPanel } from "@/components/clients/session/ClientActivePlanSummaryPanel";
+import { useClientActivePlanSessionSchedule } from "@/hooks/clients/useClientActivePlanSessionSchedule";
 import { SessionCard } from "@/components/trainingSessions";
+import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
+import { PaginationBar } from "@/components/ui/pagination";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
+import { useToast } from "@/components/ui/feedback";
 
 interface ClientSessionsTabProps {
     clientId: number;
 }
 
-type ListFilterType = "all" | "session" | "appointment";
-type SessionStatusFilter = "all" | "planned" | "completed" | "cancelled";
+type ListFilter = "all" | "planned" | "completed" | "cancelled" | "appointment";
 
-const SESSION_TYPE_LABELS: Record<string, string> = {
-    [SCHEDULED_SESSION_TYPE.TRAINING]: "Entrenamiento",
-    [SCHEDULED_SESSION_TYPE.CONSULTATION]: "Consulta",
-    [SCHEDULED_SESSION_TYPE.ASSESSMENT]: "Evaluación",
+const LIST_PAGE_SIZE = 9;
+
+const LIST_FILTER_OPTIONS: { value: ListFilter; label: string }[] = [
+    { value: "all", label: "Todo" },
+    { value: "planned", label: "Planificadas" },
+    { value: "completed", label: "Completadas" },
+    { value: "cancelled", label: "Canceladas" },
+    { value: "appointment", label: "Citas" },
+];
+
+const SCHED_TYPE_LABEL: Record<string, string> = {
+    training: "Entrenamiento",
+    consultation: "Consulta",
+    assessment: "Evaluación",
 };
 
-const SESSION_STATUS_LABELS: Record<string, string> = {
-    [SESSION_STATUS.SCHEDULED]: "Agendada",
-    [SESSION_STATUS.CONFIRMED]: "Confirmada",
-    [SESSION_STATUS.COMPLETED]: "Completada",
-    [SESSION_STATUS.CANCELLED]: "Cancelada",
-};
-
-const SESSION_STATUS_STYLES: Record<string, string> = {
-    [SESSION_STATUS.SCHEDULED]: "bg-primary/10 text-primary border-primary/30",
-    [SESSION_STATUS.CONFIRMED]: "bg-success/10 text-success border-success/30",
-    [SESSION_STATUS.COMPLETED]: "bg-muted text-muted-foreground border-border",
-    [SESSION_STATUS.CANCELLED]: "bg-destructive/10 text-destructive border-destructive/30",
+const SCHED_STATUS_BADGE: Record<string, { cls: string; label: string }> = {
+    scheduled: { cls: "bg-primary/10 text-primary border-primary/30", label: "Agendada" },
+    confirmed: { cls: "bg-success/10 text-success border-success/30", label: "Confirmada" },
+    completed: { cls: "bg-muted text-muted-foreground border-border", label: "Completada" },
+    cancelled: { cls: "bg-destructive/10 text-destructive border-destructive/30", label: "Cancelada" },
 };
 
 /** Fecha del mes en formato YYYY-MM-DD para el rango de scheduled */
@@ -79,13 +85,50 @@ function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
 
 export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }) => {
     const navigate = useNavigate();
+    const { showWarning } = useToast();
     const [currentMonth, setCurrentMonth] = useState(() => new Date());
-    const [listFilterType, setListFilterType] = useState<ListFilterType>("all");
-    const [sessionStatusFilter, setSessionStatusFilter] = useState<SessionStatusFilter>("all");
+    const [periodCalMonth, setPeriodCalMonth] = useState(() => new Date());
+
+    const {
+        activePlanForClient,
+        isLoadingActivePlan,
+        periodBlocks,
+        planSessions,
+        sessionDatesInPlan,
+        exceptionDates,
+    } = useClientActivePlanSessionSchedule(clientId);
+
+    const { data: clientProfile } = useGetClientQuery(clientId);
+
+    const handlePeriodCalendarDay = useCallback(
+        (dateStr: string) => {
+            if (!activePlanForClient) return;
+            if (!isDateInRange(dateStr, activePlanForClient.start_date, activePlanForClient.end_date)) {
+                showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
+                return;
+            }
+            const qs = new URLSearchParams({ date: dateStr, planId: String(activePlanForClient.id) });
+            navigate(
+                `/dashboard/clients/${clientId}/sessions/new/constructor?${qs.toString()}`,
+                { replace: false }
+            );
+        },
+        [activePlanForClient, clientId, navigate, showWarning]
+    );
+    const [listFilter, setListFilter] = useState<ListFilter>("all");
+    const [listPage, setListPage] = useState(1);
+    const [listOpen, setListOpen] = useState(true);
+
+    const handleFilterChange = useCallback((f: ListFilter) => {
+        setListFilter(f);
+        setListPage(1);
+    }, []);
+
+    const activeCalMonth = activePlanForClient ? periodCalMonth : currentMonth;
 
     const { start_date: startDate, end_date: endDate } = useMemo(
-        () => monthToStartEnd(currentMonth),
-        [currentMonth]
+        () => monthToStartEnd(activeCalMonth),
+        [activeCalMonth]
     );
 
     const {
@@ -119,7 +162,8 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         limit: 500,
     });
 
-    const isLoading = isLoadingSessions || isLoadingStandalone || isLoadingScheduled;
+    const isLoading =
+        isLoadingSessions || isLoadingStandalone || isLoadingScheduled || isLoadingActivePlan;
     const isError = isErrorSessions || isErrorStandalone || isErrorScheduled;
     const errorMessage =
         sessionsError && typeof sessionsError === "object" && "data" in sessionsError
@@ -132,6 +176,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
     const handleScheduleAppointment = () => {
         navigate(`/dashboard/scheduling/new?clientId=${clientId}`);
+    };
+
+    const handleFooterCancel = () => {
+        navigate(`/dashboard/clients/${clientId}`);
     };
 
     const handleDateClickSession = (
@@ -167,7 +215,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         standaloneSessions.forEach((s) => {
             list.push({ ...s, session_kind: "standalone" as const });
         });
-        list.sort((a, b) => (a.session_date ?? "").localeCompare(b.session_date ?? ""));
+        list.sort((a, b) => (b.session_date ?? "").localeCompare(a.session_date ?? ""));
         return list;
     }, [trainingSessions, standaloneSessions]);
 
@@ -184,22 +232,29 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         scheduledSessions.forEach((s) => {
             items.push({ type: "appointment", date: s.scheduled_date, item: s });
         });
-        items.sort((a, b) => a.date.localeCompare(b.date) || 0);
+        items.sort((a, b) => b.date.localeCompare(a.date) || 0);
         return items;
     }, [allSessions, scheduledSessions]);
 
     const filteredList = useMemo(() => {
-        return mergedList.filter((entry) => {
-            if (listFilterType === "session" && entry.type !== "session") return false;
-            if (listFilterType === "appointment" && entry.type !== "appointment") return false;
-            if (entry.type === "session") {
-                const s = entry.item as PlanTrainingSession | TrainingSession;
-                if (sessionStatusFilter === "all") return true;
-                return s.status === sessionStatusFilter;
-            }
-            return true;
-        });
-    }, [mergedList, listFilterType, sessionStatusFilter]);
+        if (listFilter === "all") return mergedList;
+        if (listFilter === "appointment") return mergedList.filter((e) => e.type === "appointment");
+        return mergedList.filter(
+            (e) => e.type === "session" && (e.item as PlanTrainingSession | TrainingSession).status === listFilter,
+        );
+    }, [mergedList, listFilter]);
+
+    const listTotalPages = Math.max(1, Math.ceil(filteredList.length / LIST_PAGE_SIZE));
+    const safeListPage = Math.min(listPage, listTotalPages);
+
+    const paginatedList = useMemo(
+        () => filteredList.slice((safeListPage - 1) * LIST_PAGE_SIZE, safeListPage * LIST_PAGE_SIZE),
+        [filteredList, safeListPage],
+    );
+
+    const handleListPageChange = useCallback((page: number) => {
+        setListPage(page);
+    }, []);
 
     if (isLoading) {
         return (
@@ -217,200 +272,195 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         );
     }
 
+    const sessionCount = mergedList.filter((e) => e.type === "session").length;
+    const appointmentCount = mergedList.filter((e) => e.type === "appointment").length;
+
     return (
-        <div className="space-y-8">
-            <div>
-                <h2 className="text-lg font-semibold text-foreground">
-                    Sesiones
-                </h2>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                    Sesiones de entrenamiento y citas agendadas del cliente
-                </p>
+        <section className="space-y-6 pb-24">
+            {/* Header — same pattern as PlanPeriodizationSection */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+                <PageTitle titleAs="h3" title="Sesiones del cliente" />
+                <div className="flex items-center gap-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleScheduleAppointment}
+                    >
+                        + Agendar cita
+                    </Button>
+                    <Button type="button" variant="primary" size="sm" onClick={handleAddSession}>
+                        + Crear sesión
+                    </Button>
+                </div>
             </div>
 
-            <div className="flex flex-wrap gap-2">
-                <Button variant="primary" size="sm" onClick={handleAddSession}>
-                    + Crear sesión
-                </Button>
-                <Button variant="outline" size="sm" onClick={handleScheduleAppointment}>
-                    + Agendar cita
-                </Button>
-            </div>
-
-            {/* Calendario de sesiones de entrenamiento */}
-            <section className="rounded-xl border border-border p-4 sm:p-6">
-                <h3 className="text-base font-semibold text-foreground mb-4">
-                    Sesiones de entrenamiento
-                </h3>
+            {/* Calendar + Panel — directly in the tab, no wrapper div */}
+            {activePlanForClient ? (
+                <ClientActivePlanScheduleLayout
+                    activePlan={activePlanForClient}
+                    periodBlocks={periodBlocks}
+                    sessionDates={sessionDatesInPlan}
+                    exceptionDates={exceptionDates}
+                    currentMonth={periodCalMonth}
+                    onMonthChange={setPeriodCalMonth}
+                    onDayClick={handlePeriodCalendarDay}
+                    habitualTrainingDays={clientProfile?.training_days ?? null}
+                    panelContent={
+                        <ClientActivePlanSummaryPanel
+                            clientId={clientId}
+                            activePlan={activePlanForClient}
+                            periodBlocks={periodBlocks}
+                            planSessions={planSessions}
+                            scheduledSessions={scheduledSessions}
+                            onScheduledSessionClick={handleSessionClickScheduled}
+                        />
+                    }
+                />
+            ) : (
                 <SessionCalendar
                     sessions={allSessions}
                     currentMonth={currentMonth}
                     onMonthChange={setCurrentMonth}
                     onDateClick={handleDateClickSession}
                 />
-            </section>
+            )}
 
-            {/* Citas agendadas — lista ordenada por fecha, sin calendario */}
-            <section className="rounded-xl border border-border p-4 sm:p-6">
-                <h3 className="text-base font-semibold text-foreground mb-4">
-                    Citas agendadas
-                </h3>
-                {scheduledSessions.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic py-4">
-                        No hay citas agendadas para este mes.
-                    </p>
-                ) : (
-                    <ul
-                        className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-                        role="list"
-                        aria-label="Lista de citas agendadas"
-                    >
-                        {[...scheduledSessions]
-                            .sort(
-                                (a, b) =>
-                                    a.scheduled_date.localeCompare(b.scheduled_date) ||
-                                    a.start_time.localeCompare(b.start_time)
-                            )
-                            .map((s) => (
-                                <li key={s.id}>
-                                    <button
-                                        type="button"
-                                        onClick={() => handleSessionClickScheduled(s)}
-                                        className="w-full text-left rounded-lg border border-border bg-transparent p-4 transition-colors hover:border-primary hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background"
-                                    >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="min-w-0 flex-1">
-                                                <p className="font-semibold text-foreground truncate">
-                                                    {s.scheduled_date} · {s.start_time}–{s.end_time}
-                                                </p>
-                                                <p className="text-sm text-muted-foreground mt-0.5">
-                                                    {SESSION_TYPE_LABELS[s.session_type] ?? s.session_type}
-                                                </p>
-                                            </div>
-                                            <span
-                                                className={`flex-shrink-0 text-xs font-medium px-2 py-1 rounded-md border ${SESSION_STATUS_STYLES[s.status] ?? "bg-muted text-muted-foreground border-border"}`}
-                                            >
-                                                {SESSION_STATUS_LABELS[s.status] ?? s.status}
-                                            </span>
-                                        </div>
-                                        <span className="inline-block mt-2 text-xs text-muted-foreground">
-                                            Ver / Editar →
-                                        </span>
-                                    </button>
-                                </li>
-                            ))}
-                    </ul>
-                )}
-            </section>
+            {/* Collapsible chronological list */}
+            <div>
+                <button
+                    type="button"
+                    onClick={() => setListOpen((v) => !v)}
+                    className="flex w-full items-center gap-2 group"
+                >
+                    <ChevronDown
+                        className={`h-4 w-4 text-muted-foreground transition-transform ${listOpen ? "" : "-rotate-90"}`}
+                        aria-hidden
+                    />
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                        Lista cronológica
+                    </h4>
+                    <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+                        {sessionCount > 0 && `${sessionCount} sesión${sessionCount !== 1 ? "es" : ""}`}
+                        {sessionCount > 0 && appointmentCount > 0 && " · "}
+                        {appointmentCount > 0 && `${appointmentCount} cita${appointmentCount !== 1 ? "s" : ""}`}
+                        {sessionCount === 0 && appointmentCount === 0 && "vacía"}
+                    </span>
+                </button>
 
-            {/* Lista cronológica con filtros */}
-            <section className="rounded-xl border border-border p-4 sm:p-6">
-                <h3 className="text-base font-semibold text-foreground mb-4">
-                    Lista cronológica
-                </h3>
-
-                <div className="flex flex-wrap gap-2 mb-4">
-                    <span className="text-sm font-medium text-muted-foreground">Tipo:</span>
-                    {(
-                        [
-                            { value: "all" as const, label: "Todos" },
-                            { value: "session" as const, label: "Sesiones" },
-                            { value: "appointment" as const, label: "Citas" },
-                        ] as const
-                    ).map(({ value, label }) => (
-                        <button
-                            key={value}
-                            onClick={() => setListFilterType(value)}
-                            className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                                listFilterType === value
-                                    ? "border-primary text-primary bg-primary/10"
-                                    : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                            }`}
-                        >
-                            {label}
-                        </button>
-                    ))}
-                </div>
-
-                {listFilterType === "all" || listFilterType === "session" ? (
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        <span className="text-sm font-medium text-muted-foreground">Estado sesión:</span>
-                        {(
-                            [
-                                { value: "all" as const, label: "Todos" },
-                                { value: "planned" as const, label: "Planificadas" },
-                                { value: "completed" as const, label: "Completadas" },
-                                { value: "cancelled" as const, label: "Canceladas" },
-                            ] as const
-                        ).map(({ value, label }) => (
-                            <button
-                                key={value}
-                                onClick={() => setSessionStatusFilter(value)}
-                                className={`px-3 py-1.5 text-sm font-medium rounded-lg border transition-colors ${
-                                    sessionStatusFilter === value
-                                        ? "border-primary text-primary bg-primary/10"
-                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                                }`}
-                            >
-                                {label}
-                            </button>
-                        ))}
-                    </div>
-                ) : null}
-
-                {filteredList.length === 0 ? (
-                    <p className="text-sm text-muted-foreground italic py-4">
-                        No hay sesiones ni citas que coincidan con los filtros.
-                    </p>
-                ) : (
-                    <ul className="space-y-3">
-                        {filteredList.map((entry) => {
-                            if (entry.type === "session") {
-                                const s = entry.item as SessionListItem;
-                                return (
-                                    <li key={`s-${s.session_kind}-${s.id}`}>
-                                        <SessionCard
-                                            session={s}
-                                            onViewDetail={handleViewSessionDetail}
-                                        />
-                                    </li>
-                                );
-                            }
-                            const s = entry.item;
-                            return (
-                                <li
-                                    key={`a-${s.id}`}
-                                    className="rounded-lg border border-border p-4 transition-colors hover:border-primary hover:bg-primary/5 cursor-pointer"
-                                    onClick={() => handleSessionClickScheduled(s)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter" || e.key === " ") {
-                                            e.preventDefault();
-                                            handleSessionClickScheduled(s);
-                                        }
-                                    }}
-                                    role="button"
-                                    tabIndex={0}
+                {listOpen && (
+                    <div className="mt-3 space-y-3">
+                        {/* Filters */}
+                        <div className="flex flex-wrap items-center gap-1.5">
+                            {LIST_FILTER_OPTIONS.map(({ value, label }) => (
+                                <button
+                                    key={value}
+                                    onClick={() => handleFilterChange(value)}
+                                    className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
+                                        listFilter === value
+                                            ? "border-primary text-primary bg-primary/10"
+                                            : "border-border text-muted-foreground hover:border-input hover:text-foreground"
+                                    }`}
                                 >
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                                Cita
-                                            </span>
-                                            <p className="font-semibold text-foreground mt-0.5">
-                                                {s.scheduled_date} · {s.start_time} - {s.end_time}
-                                            </p>
-                                            <p className="text-sm text-muted-foreground">
-                                                {s.session_type} · {s.status}
-                                            </p>
-                                        </div>
-                                        <span className="text-sm text-muted-foreground">Ver / Editar</span>
-                                    </div>
-                                </li>
-                            );
-                        })}
-                    </ul>
+                                    {label}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Items */}
+                        {filteredList.length === 0 ? (
+                            <p className="text-xs text-muted-foreground italic py-3">
+                                No hay sesiones ni citas que coincidan con los filtros.
+                            </p>
+                        ) : (
+                            <>
+                                <ul className="space-y-3">
+                                    {paginatedList.map((entry) => {
+                                        if (entry.type === "session") {
+                                            const s = entry.item as SessionListItem;
+                                            return (
+                                                <li key={`s-${s.session_kind}-${s.id}`}>
+                                                    <SessionCard
+                                                        session={s}
+                                                        onViewDetail={handleViewSessionDetail}
+                                                    />
+                                                </li>
+                                            );
+                                        }
+                                        const s = entry.item;
+                                        const badge = SCHED_STATUS_BADGE[s.status] ?? SCHED_STATUS_BADGE.scheduled;
+                                        return (
+                                            <li key={`a-${s.id}`}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => handleSessionClickScheduled(s)}
+                                                    className="w-full text-left rounded-lg border border-border p-4 transition-colors hover:border-primary/50 hover:bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary"
+                                                >
+                                                    <div className="flex items-start justify-between mb-1">
+                                                        <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                                            <h4 className="text-base font-semibold text-foreground truncate">
+                                                                {SCHED_TYPE_LABEL[s.session_type] ?? s.session_type}
+                                                            </h4>
+                                                            <span className={`shrink-0 px-2 py-1 text-xs font-medium rounded border ${badge.cls}`}>
+                                                                {badge.label}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                                                        <Calendar className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                                                        {new Date(s.scheduled_date + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
+                                                        {" · "}
+                                                        {s.start_time}–{s.end_time}
+                                                    </p>
+                                                    {s.notes && (
+                                                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                                                            {s.notes}
+                                                        </p>
+                                                    )}
+                                                    <span className="inline-block mt-2 text-xs font-medium text-primary">
+                                                        Ver / Editar →
+                                                    </span>
+                                                </button>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                <PaginationBar
+                                    currentPage={safeListPage}
+                                    totalPages={listTotalPages}
+                                    totalItems={filteredList.length}
+                                    pageSize={LIST_PAGE_SIZE}
+                                    onPageChange={handleListPageChange}
+                                />
+                            </>
+                        )}
+                    </div>
                 )}
-            </section>
-        </div>
+            </div>
+
+            <DashboardFixedFooter>
+                <div className="flex items-center justify-end gap-3">
+                    <Button
+                        type="button"
+                        variant="outline-destructive"
+                        size="sm"
+                        onClick={handleFooterCancel}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleScheduleAppointment}
+                    >
+                        + Agendar cita
+                    </Button>
+                    <Button type="button" variant="primary" size="sm" onClick={handleAddSession}>
+                        + Crear sesión
+                    </Button>
+                </div>
+            </DashboardFixedFooter>
+        </section>
     );
 };

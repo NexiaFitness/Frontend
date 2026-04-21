@@ -3,40 +3,52 @@
  *
  * Contexto:
  * - Vista completa del plan con tabs
- * - Tabs: Volver, Sesiones, Hitos, Gráficos
+ * - Tabs: Sesiones, Planificación, Hitos, Gráficos
  * - Layout: Breadcrumbs + Header + Tabs + Content
  *
  * Responsabilidades:
  * - Cargar datos del plan con RTK Query
  * - Gestionar navegación entre tabs
- * - Incluir tab de retorno al cliente para mejorar la UX
+ * - Retorno al cliente vía header/breadcrumbs (sin tab duplicado en la barra)
  *
  * @author Frontend Team
  * @since v3.3.0
  * @updated v6.2.1 - Corregido bucle de navegación al usar el tab 'Volver'.
  * @updated U13 Fase 4.3 - Breadcrumbs Cliente > Planificación > Plan y botón Volver al cliente con ?fromClient
+ * @updated 2026-04 - Sin margen negativo: respeta padding de DashboardShell y navbar sticky.
+ * @updated 2026-04 - Header alineado con ClientHeader; TabsBar como ClientDetail.
+ * @updated 2026-04 - Sin tab "Volver al Cliente" en la barra (mismo acceso en header).
+ * @updated 2026-04 - Editar / Eliminar plan en barra fija inferior (mismo patrón que CreateSession).
  */
 
-import React, { useState, Suspense, lazy } from "react";
+import React, { useState, Suspense, lazy, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
-import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
+import { useTrainingPlanQuickDescription } from "@/hooks/trainingPlans/useTrainingPlanQuickDescription";
+import {
+    useGetTrainingPlanQuery,
+    useDeleteTrainingPlanMutation,
+} from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainerClientsQuery, useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { getMutationErrorMessage } from "@nexia/shared";
+import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { Button } from "@/components/ui/buttons";
 import type { BreadcrumbItem } from "@/components/ui/Breadcrumbs";
+import { TabsBar } from "@/components/ui/tabs";
 
 // Tabs components - estáticos (carga inmediata)
 import {
     TrainingPlanHeader,
     MilestonesTab,
     SessionsTab,
-    PlanningTab,
+    PlanPeriodizationSection,
     AssignPlanModal,
 } from "@/components/trainingPlans";
+import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
 
 // Lazy loading para tabs pesados (carga bajo demanda)
 const ChartsTab = lazy(() => 
@@ -45,44 +57,42 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-type TabId = "back" | "sessions" | "planning" | "milestones" | "charts";
+type TabId = "sessions" | "planning" | "milestones" | "charts";
 
 interface Tab {
     id: TabId;
     label: string;
-    icon?: React.ReactNode;
 }
 
 const TABS: Tab[] = [
-    { 
-        id: "back", 
-        label: "Volver al Cliente",
-        icon: (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-        )
-    },
     { id: "sessions", label: "Sesiones" },
     { id: "planning", label: "Planificación" },
     { id: "milestones", label: "Hitos" },
     { id: "charts", label: "Gráficos" },
 ];
 
+const PLAN_DETAIL_VALID_TABS: TabId[] = ["sessions", "planning", "milestones", "charts"];
+
 export const TrainingPlanDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const user = useSelector((state: RootState) => state.auth.user);
+    const { showError } = useToast();
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deletePlan, { isLoading: isDeletingPlan }] = useDeleteTrainingPlanMutation();
 
-    // U13 Fase 4.3: origen cliente vía query param ?fromClient={client_id}
+    // U13 Fase 4.3: origen cliente ?fromClient= | ?returnToClient= (lista de planes / flujos legacy)
     const fromClientParam = searchParams.get("fromClient");
+    const returnToClientParam = searchParams.get("returnToClient");
     const parsedFromClient = fromClientParam ? parseInt(fromClientParam, 10) : NaN;
+    const parsedReturnToClient = returnToClientParam ? parseInt(returnToClientParam, 10) : NaN;
     const fromClientId = !isNaN(parsedFromClient) ? parsedFromClient : null;
+    const returnToClientId = !isNaN(parsedReturnToClient) ? parsedReturnToClient : null;
+    const contextClientId = fromClientId ?? returnToClientId;
 
-    // Tab navigation con query parameters - Sesiones por defecto
     const { activeTab, setActiveTab } = useTabNavigation<TabId>({
-        validTabs: TABS.map((t) => t.id),
+        validTabs: PLAN_DETAIL_VALID_TABS,
         defaultTab: "sessions",
     });
 
@@ -100,6 +110,25 @@ export const TrainingPlanDetail: React.FC = () => {
         skip: !id || isNaN(planId),
     });
 
+    const { saveDescriptionNote, isSavingDescription } = useTrainingPlanQuickDescription(plan, planId);
+
+    const handleDeletePlanConfirm = useCallback(async () => {
+        if (!plan) return;
+        try {
+            await deletePlan(plan.id).unwrap();
+            if (plan.client_id) {
+                navigate(`/dashboard/clients/${plan.client_id}?tab=sessions`);
+            } else {
+                navigate("/dashboard/training-plans");
+            }
+        } catch (err: unknown) {
+            console.error("Error deleting plan:", err);
+            showError(getMutationErrorMessage(err));
+        } finally {
+            setDeleteModalOpen(false);
+        }
+    }, [plan, deletePlan, navigate, showError]);
+
     // Cargar clientes del trainer para obtener el nombre del cliente asignado
     const { data: clientsData } = useGetTrainerClientsQuery(
         {
@@ -115,31 +144,19 @@ export const TrainingPlanDetail: React.FC = () => {
 
     const clients = clientsData?.items ?? [];
     const assignedClient = clients.find((c: Client) => c.id === plan?.client_id);
-    const clientName = assignedClient
-        ? `${assignedClient.nombre} ${assignedClient.apellidos}`
-        : undefined;
 
-    // U13: cliente para breadcrumbs/Volver cuando fromClient en URL (fallback: plan.client_id)
-    const { data: fromClientData } = useGetClientQuery(fromClientId!, {
-        skip: !fromClientId || (!!assignedClient && assignedClient.id === fromClientId),
+    // U13: cliente para breadcrumbs/Volver cuando fromClient / returnToClient en URL
+    const { data: fromClientData } = useGetClientQuery(contextClientId!, {
+        skip: !contextClientId || (!!assignedClient && assignedClient.id === contextClientId),
     });
     const fromClientClient =
-        assignedClient?.id === fromClientId ? assignedClient : fromClientData;
-    const clientIdForVolver = fromClientId ?? plan?.client_id ?? null;
+        assignedClient?.id === contextClientId ? assignedClient : fromClientData;
+    const clientIdForVolver = contextClientId ?? plan?.client_id ?? null;
 
-    // Manejador para cambiar de tab
-    const handleTabChange = (tabId: TabId) => {
-        if (tabId === "back") {
-            const targetClientId = clientIdForVolver ?? assignedClient?.id;
-            if (targetClientId) {
-                navigate(`/dashboard/clients/${targetClientId}?tab=planificacion`);
-            } else {
-                navigate("/dashboard/clients");
-            }
-            return;
-        }
-        setActiveTab(tabId);
-    };
+    const clientForHeader = fromClientClient ?? assignedClient ?? null;
+    const clientName = clientForHeader
+        ? `${clientForHeader.nombre} ${clientForHeader.apellidos}`
+        : undefined;
 
     // U13 Fase 4.3: Breadcrumbs según origen (fromClient → Cliente > Planificación > Plan)
     const breadcrumbItems: BreadcrumbItem[] = [
@@ -147,8 +164,8 @@ export const TrainingPlanDetail: React.FC = () => {
         { label: "Clientes", path: "/dashboard/clients" },
     ];
 
-    const clientForBreadcrumb = fromClientId ? fromClientClient : assignedClient;
-    const clientIdForBreadcrumb = fromClientId ?? assignedClient?.id;
+    const clientForBreadcrumb = contextClientId ? fromClientClient : assignedClient;
+    const clientIdForBreadcrumb = contextClientId ?? assignedClient?.id;
     const clientLabel = clientForBreadcrumb
         ? `${clientForBreadcrumb.nombre} ${clientForBreadcrumb.apellidos}`
         : clientIdForBreadcrumb
@@ -162,8 +179,8 @@ export const TrainingPlanDetail: React.FC = () => {
         });
     }
 
-    // Con fromClient: añadir "Planificación" antes del plan
-    if (fromClientId && clientIdForBreadcrumb) {
+    // Con contexto cliente (fromClient / returnToClient): añadir "Planificación" antes del plan
+    if (contextClientId && clientIdForBreadcrumb) {
         breadcrumbItems.push({
             label: "Planificación",
             path: `/dashboard/clients/${clientIdForBreadcrumb}?tab=planificacion`,
@@ -201,28 +218,26 @@ export const TrainingPlanDetail: React.FC = () => {
 
         return (
             <div className="p-6">
-                        <Alert variant="error">
-                            {isNotFound 
-                                ? "El plan de entrenamiento solicitado no existe o ha sido eliminado." 
-                                : "Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo."}
-                        </Alert>
-                        <div className="flex gap-3 mt-4">
+                <Alert
+                    variant="error"
+                    action={
+                        <>
                             {!isNotFound && (
-                                <button
-                                    onClick={() => refetch()}
-                                    className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                                >
+                                <Button variant="outline-destructive" size="sm" onClick={() => refetch()}>
                                     Reintentar
-                                </button>
+                                </Button>
                             )}
-                            <button
-                                onClick={() => navigate("/dashboard/training-plans")}
-                                className="px-4 py-2 bg-card border border-border text-foreground rounded-lg hover:bg-muted transition-colors"
-                            >
+                            <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/training-plans")}>
                                 Volver a Planes
-                            </button>
-                        </div>
-                    </div>
+                            </Button>
+                        </>
+                    }
+                >
+                    {isNotFound
+                        ? "El plan de entrenamiento solicitado no existe o ha sido eliminado."
+                        : "Error al cargar el plan de entrenamiento. Por favor, intenta de nuevo."}
+                </Alert>
+            </div>
         );
     }
 
@@ -233,9 +248,12 @@ export const TrainingPlanDetail: React.FC = () => {
                 return <SessionsTab planId={planId} />;
             case "planning":
                 return (
-                    <PlanningTab
+                    <PlanPeriodizationSection
                         planId={planId}
-                        clientId={plan?.client_id ?? null}
+                        clientId={contextClientId ?? plan.client_id ?? undefined}
+                        planStartDate={plan.start_date}
+                        planEndDate={plan.end_date}
+                        planGoalForRecommendations={plan.goal}
                     />
                 );
             case "milestones":
@@ -256,71 +274,73 @@ export const TrainingPlanDetail: React.FC = () => {
     };
 
     return (
-        <div
-                    className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20"
-                    data-testid="training-plan-detail"
-                >
-                    {/* Header con info del plan y contexto del atleta */}
-                    <TrainingPlanHeader
-                        plan={plan}
-                        clientName={clientName}
-                        breadcrumbItems={breadcrumbItems}
-                        onRefresh={refetch}
-                        onAssignPlan={() => setAssignModalOpen(true)}
-                        volverAlClienteClientId={clientIdForVolver ?? undefined}
-                    />
+        <div className="space-y-8 pb-28" data-testid="training-plan-detail">
+            <TrainingPlanHeader
+                plan={plan}
+                client={clientForHeader}
+                clientName={clientName}
+                breadcrumbItems={breadcrumbItems}
+                onAssignPlan={
+                    plan.client_id ? undefined : () => setAssignModalOpen(true)
+                }
+                volverAlClienteClientId={
+                    contextClientId != null ? undefined : (clientIdForVolver ?? undefined)
+                }
+                onSaveDescriptionNote={saveDescriptionNote}
+                isSavingDescription={isSavingDescription}
+            />
 
-                    {/* Modal asignar plan a cliente (desde detalle) */}
-                    <AssignPlanModal
-                        open={assignModalOpen}
-                        onClose={() => setAssignModalOpen(false)}
-                        planId={planId}
-                        planName={plan.name}
-                        onSuccess={() => {
-                            setAssignModalOpen(false);
-                            refetch();
-                        }}
-                    />
+            <AssignPlanModal
+                open={assignModalOpen}
+                onClose={() => setAssignModalOpen(false)}
+                planId={planId}
+                planName={plan.name}
+                onSuccess={() => {
+                    setAssignModalOpen(false);
+                    refetch();
+                }}
+            />
 
-                    {/* Tabs Navigation */}
-                    <div className="mt-6 px-4 sm:px-6 lg:px-8">
-                        <div className="bg-card border border-border rounded-xl shadow px-2 sm:px-4 py-1.5 w-full">
-                            <nav 
-                                className="flex gap-3 sm:gap-4 lg:gap-6 overflow-x-auto px-1 sm:px-2 py-1 w-full justify-start lg:justify-center" 
-                                aria-label="Tabs"
-                            >
-                                {TABS.map((tab) => {
-                                    const isActive = activeTab === tab.id;
-                                    const isBack = tab.id === "back";
-                                    return (
-                                        <button
-                                            key={tab.id}
-                                            onClick={() => handleTabChange(tab.id)}
-                                            className={`
-                                                relative py-2 pb-3 px-3 sm:px-4 font-semibold text-sm sm:text-base transition-all whitespace-nowrap flex items-center justify-center flex-none min-w-[140px] text-center
-                                                ${isActive
-                                                    ? "text-primary border-b-2 border-primary"
-                                                    : isBack
-                                                        ? "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-                                                        : "text-muted-foreground hover:text-foreground border-b-2 border-transparent"
-                                                }
-                                                cursor-pointer
-                                            `}
-                                            aria-current={isActive ? "page" : undefined}
-                                        >
-                                            {tab.icon}
-                                            {tab.label}
-                                        </button>
-                                    );
-                                })}
-                            </nav>
-                        </div>
-                    </div>
+            <DeleteTrainingPlanModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDeletePlanConfirm}
+                plan={plan}
+                isLoading={isDeletingPlan}
+            />
 
-                    {/* Tab Content */}
-                    <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
-                        {renderTabContent()}
-                    </div>
+            <TabsBar
+                items={TABS.map((t) => ({ id: t.id, label: t.label }))}
+                value={activeTab}
+                onChange={(tabId) => setActiveTab(tabId as TabId)}
+                ariaLabel="Tabs del plan"
+            />
+
+            <div className="pt-2 pb-8">{renderTabContent()}</div>
+
+            <div
+                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
+                style={{ left: "var(--sidebar-width, 0)" }}
+            >
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/dashboard/training-plans/${plan.id}/edit`)}
+                    >
+                        Editar Plan
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline-destructive"
+                        size="sm"
+                        onClick={() => setDeleteModalOpen(true)}
+                    >
+                        Eliminar Plan
+                    </Button>
                 </div>
+            </div>
+        </div>
     );
 };

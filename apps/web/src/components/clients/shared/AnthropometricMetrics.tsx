@@ -13,6 +13,7 @@
 
 import React from "react";
 import type { AnthropometricMetricsStepProps } from "@nexia/shared/types/clientOnboarding";
+import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import {
     inputClass,
     labelClass,
@@ -26,6 +27,7 @@ import {
 
 interface ExtendedAnthropometricMetricsProps extends AnthropometricMetricsStepProps {
     isEditMode?: boolean;
+    collapsible?: boolean;
 }
 
 export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps> = ({
@@ -33,6 +35,7 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
     errors,
     updateField,
     isEditMode = false,
+    collapsible = false,
 }) => {
     // En modo edit, sin cards internas, solo títulos con líneas
     if (isEditMode) {
@@ -470,19 +473,34 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
         );
     }
 
-    // Modo onboarding: con cards internas
+    // Modo onboarding: con cards internas o collapsible
+    const SkinfoldsWrapper: React.ElementType = collapsible ? CollapsibleFormGroup : "div";
+    const skinfoldsProps = collapsible
+        ? { title: "Pliegues cutáneos", badge: "mm · Opcional" }
+        : { className: sectionCardClass };
+    const GirthsWrapper: React.ElementType = collapsible ? CollapsibleFormGroup : "div";
+    const girthsProps = collapsible
+        ? { title: "Perímetros", badge: "cm · Opcional" }
+        : { className: sectionCardClass };
+    const DiametersWrapper: React.ElementType = collapsible ? CollapsibleFormGroup : "div";
+    const diametersProps = collapsible
+        ? { title: "Diámetros óseos", badge: "cm · Opcional" }
+        : { className: sectionCardClass };
+
     return (
-        <div className="space-y-6">
+        <div className={collapsible ? "mt-6 space-y-0" : "space-y-6"}>
             {/* ============================================ */}
-            {/* SKINFOLDS (Pliegues cutáneos, mm) - EN CARD */}
+            {/* SKINFOLDS (Pliegues cutáneos, mm) */}
             {/* ============================================ */}
-            <div className={sectionCardClass}>
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className={sectionHeadingClass}>
-                        Pliegues cutáneos (mm)
-                    </h3>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Opcional</span>
-                </div>
+            <SkinfoldsWrapper {...skinfoldsProps}>
+                {!collapsible && (
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className={sectionHeadingClass}>
+                            Pliegues cutáneos (mm)
+                        </h3>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Opcional</span>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Triceps */}
                     <div>
@@ -628,18 +646,20 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
                         )}
                     </div>
                 </div>
-            </div>
+            </SkinfoldsWrapper>
 
             {/* ============================================ */}
-            {/* GIRTHS (Perímetros, cm) - EN CARD */}
+            {/* GIRTHS (Perímetros, cm) */}
             {/* ============================================ */}
-            <div className={sectionCardClass}>
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className={sectionHeadingClass}>
-                        Perímetros (cm)
-                    </h3>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Opcional</span>
-                </div>
+            <GirthsWrapper {...girthsProps}>
+                {!collapsible && (
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className={sectionHeadingClass}>
+                            Perímetros (cm)
+                        </h3>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Opcional</span>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Arm Girth Relaxed */}
                     <div>
@@ -749,18 +769,20 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
                         )}
                     </div>
                 </div>
-            </div>
+            </GirthsWrapper>
 
             {/* ============================================ */}
-            {/* DIAMETERS (Diámetros óseos, cm) - EN CARD */}
+            {/* DIAMETERS (Diámetros óseos, cm) */}
             {/* ============================================ */}
-            <div className={sectionCardClass}>
-                <div className="flex items-center justify-between mb-4">
-                    <h3 className={sectionHeadingClass}>
-                        Diámetros óseos (cm)
-                    </h3>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">Opcional</span>
-                </div>
+            <DiametersWrapper {...diametersProps}>
+                {!collapsible && (
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className={sectionHeadingClass}>
+                            Diámetros óseos (cm)
+                        </h3>
+                        <span className="text-xs text-muted-foreground uppercase tracking-wide">Opcional</span>
+                    </div>
+                )}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Wrist Diameter */}
                     <div>
@@ -816,7 +838,7 @@ export const AnthropometricMetrics: React.FC<ExtendedAnthropometricMetricsProps>
                         )}
                     </div>
                 </div>
-            </div>
+            </DiametersWrapper>
 
             {/* ============================================ */}
             {/* SOMATOTIPO - SOLO LECTURA (Calculado automáticamente) */}

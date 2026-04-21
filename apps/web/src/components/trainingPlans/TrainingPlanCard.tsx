@@ -1,452 +1,201 @@
 /**
- * TrainingPlanCard.tsx — Card individual para plan o plantilla
- *
- * Tokens: bg-card, border-border, text-foreground, text-muted-foreground
- * Estilo: rounded-lg border border-border border-l-2 border-l-primary
- *
- * @author Frontend Team
- * @since v5.0.0
- * @updated v6.x - Tokens, diseño consistente con app
+ * TrainingPlanCard — Card de plan activo asignado a un cliente.
+ * Muestra avatar, nombre, chips de foco (tags/goal), estado y progreso de sesiones.
+ * Contexto: usado en TrainingPlansPage pestaña Planificación.
+ * Notas: avatar con ClientAvatar (color por client_id). Requiere clientsMap para nombre.
+ * @author NEXIA Dev Team
+ * @since v2.2.0
  */
 
-import React, { useState, useRef, useEffect } from "react";
-import { MoreVertical, Pencil, Copy, Trash2, FileStack } from "lucide-react";
+import React, { useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { ClientAvatarsGroup } from "@/components/ui/avatar";
-import { FormSelect } from "@/components/ui/forms";
+import { ClientAvatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
-import type { TrainingPlan, TrainingPlanTemplate } from "@nexia/shared/types/training";
+import type { TrainingPlan } from "@nexia/shared/types/training";
 import type { Client } from "@nexia/shared/types/client";
-
-interface TrainingPlanCardProps {
-    item: TrainingPlan | TrainingPlanTemplate;
-    type: "template" | "active" | "archived";
-    clientName?: string;
-    clients?: Client[];
-    onEdit?: () => void;
-    onAssign?: () => void;
-    onDuplicate?: () => void;
-    onConvert?: () => void;
-    onDelete?: () => void;
-    onView?: () => void;
-    onPreview?: () => void;
-    onAddClient?: () => void;
-    onStatusChange?: (status: string) => void;
-    isProcessing?: boolean;
-}
+import { categoryChipsFromTrainingPlan } from "./goalLabels";
 
 const CARD_BASE =
-    "rounded-lg border border-border border-l-2 border-l-primary bg-card p-5 text-card-foreground shadow-sm transition-all duration-200 hover:shadow-md";
+    "rounded-xl border border-border bg-card p-5 text-card-foreground shadow-lg transition-all duration-200 hover:shadow-xl";
+
+function endDatePassed(endIso: string): boolean {
+    const end = new Date(endIso);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    return end < today;
+}
+
+/** Solo color de texto, sin fondo (arriba a la derecha). */
+const PLAN_STATUS_BADGE_CLASS: Record<string, string> = {
+    active: "text-success",
+    completed: "text-primary",
+    paused: "text-warning",
+    cancelled: "text-destructive",
+};
+
+const PLAN_STATUS_LABEL: Record<string, string> = {
+    active: "Activo",
+    completed: "Completado",
+    paused: "Pausado",
+    cancelled: "Cancelado",
+};
+
+export interface TrainingPlanCardProps {
+    plan: TrainingPlan;
+    client: Client | null;
+    clientDisplayName: string;
+}
 
 export const TrainingPlanCard: React.FC<TrainingPlanCardProps> = ({
-    item,
-    type,
-    clientName: _clientName,
-    clients = [],
-    onEdit,
-    onAssign,
-    onDuplicate,
-    onConvert,
-    onDelete,
-    onView,
-    onPreview,
-    onAddClient,
-    onStatusChange,
-    isProcessing = false,
+    plan,
+    client,
+    clientDisplayName,
 }) => {
-    const [menuOpen, setMenuOpen] = useState(false);
-    const menuRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
 
-    useEffect(() => {
-        const handleClickOutside = (e: MouseEvent) => {
-            if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-                setMenuOpen(false);
-            }
-        };
-        if (menuOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, [menuOpen]);
-    const isTemplate = "usage_count" in item;
-    const template = isTemplate ? (item as TrainingPlanTemplate) : null;
-    const plan = !isTemplate ? (item as TrainingPlan) : null;
+    const sessionsTotal = plan.sessions_total ?? 0;
+    const sessionsCompleted = plan.sessions_completed ?? 0;
+    const progressPct =
+        sessionsTotal > 0 ? Math.round((sessionsCompleted / sessionsTotal) * 100) : 0;
 
-    const getDuration = (): string => {
-        if (template) {
-            if (template.duration_value && template.duration_unit) {
-                const unitLabels: Record<string, string> = {
-                    days: "días",
-                    weeks: "semanas",
-                    months: "meses",
-                };
-                return `${template.duration_value} ${unitLabels[template.duration_unit] || template.duration_unit}`;
-            }
-            if (template.estimated_duration_weeks) {
-                return `${template.estimated_duration_weeks} semanas`;
-            }
-        }
-        if (plan?.start_date && plan?.end_date) {
-            const start = new Date(plan.start_date);
-            const end = new Date(plan.end_date);
-            const weeks = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
-            return `${weeks} semanas`;
-        }
-        return "Duración no especificada";
-    };
+    const categoryChips = useMemo(() => categoryChipsFromTrainingPlan(plan), [plan]);
 
-    const getFrequency = (): string | null => {
-        if (template?.training_days_per_week) {
-            return `${template.training_days_per_week}x/semana`;
-        }
-        return null;
-    };
-
-    const getBadge = (): React.ReactNode => {
-        if (type === "archived") {
+    const statusBadge = useMemo(() => {
+        if (sessionsTotal === 0) {
             return (
-                <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-muted text-muted-foreground">
-                    Archivado
+                <span className="inline-flex shrink-0 items-center text-xs font-medium text-muted-foreground">
+                    Sin sesiones
                 </span>
             );
         }
-        if (type === "active" && plan?.status) {
-            const statusMap: Record<string, string> = {
-                active: "bg-success/10 text-success",
-                completed: "bg-primary/10 text-primary",
-                paused: "bg-warning/10 text-warning",
-                cancelled: "bg-destructive/10 text-destructive",
-            };
-            const labels: Record<string, string> = {
-                active: "Activo",
-                completed: "Completado",
-                paused: "Pausado",
-                cancelled: "Cancelado",
-            };
+        if (endDatePassed(plan.end_date)) {
             return (
-                <span
-                    className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        statusMap[plan.status] ?? "bg-muted text-muted-foreground"
-                    )}
-                >
-                    {labels[plan.status] ?? plan.status}
+                <span className="inline-flex shrink-0 items-center text-xs font-medium text-destructive">
+                    Vencido
                 </span>
             );
         }
-        if (isTemplate && template?.level) {
-            const levelMap: Record<string, string> = {
-                beginner: "bg-success/10 text-success",
-                intermediate: "bg-warning/10 text-warning",
-                advanced: "bg-destructive/10 text-destructive",
-            };
-            const labels: Record<string, string> = {
-                beginner: "Principiante",
-                intermediate: "Intermedio",
-                advanced: "Avanzado",
-            };
+        if (sessionsCompleted >= sessionsTotal) {
             return (
-                <span
-                    className={cn(
-                        "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium",
-                        levelMap[template.level] ?? "bg-muted text-muted-foreground"
-                    )}
-                >
-                    {labels[template.level] ?? template.level}
+                <span className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-success">
+                    <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} aria-hidden />
+                    Mes completo
                 </span>
             );
         }
-        return null;
-    };
-
-    const duration = getDuration();
-    const frequency = getFrequency();
-
-    if (type === "active") {
+        const statusClass =
+            PLAN_STATUS_BADGE_CLASS[plan.status] ?? "text-muted-foreground";
+        const statusLabel = PLAN_STATUS_LABEL[plan.status] ?? plan.status;
         return (
-            <article className={cn(CARD_BASE, "flex flex-col")}>
-                <div className="mb-3 flex flex-wrap items-center gap-2">
-                    <h3 className="text-lg font-semibold text-foreground">{item.name}</h3>
-                    {getBadge()}
-                </div>
-
-                <div className="mb-4 flex flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div className="min-w-0 flex-1">
-                        {item.description && (
-                            <p className="line-clamp-2 text-sm text-muted-foreground">
-                                {item.description}
-                            </p>
-                        )}
-                    </div>
-
-                    <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-                        <span>{duration}</span>
-                        {frequency && (
-                            <>
-                                <span className="text-border">•</span>
-                                <span>{frequency}</span>
-                            </>
-                        )}
-                        {clients.length > 0 && (
-                            <>
-                                <span className="text-border">•</span>
-                                <div className="flex items-center gap-2">
-                                    <ClientAvatarsGroup clients={clients} maxVisible={3} size="sm" />
-                                    <span className="text-muted-foreground">
-                                        {clients.length} {clients.length === 1 ? "cliente" : "clientes"}
-                                    </span>
-                                </div>
-                            </>
-                        )}
-                        {plan && onStatusChange && (
-                            <>
-                                <span className="text-border">•</span>
-                                <div className="min-w-[120px]">
-                                    <FormSelect
-                                        value={plan.status || "active"}
-                                        onChange={(e) => onStatusChange(e.target.value)}
-                                        options={[
-                                            { value: "active", label: "Progreso" },
-                                            { value: "paused", label: "Pausado" },
-                                            { value: "completed", label: "Completado" },
-                                            { value: "cancelled", label: "Cancelado" },
-                                        ]}
-                                        className="text-sm"
-                                    />
-                                </div>
-                            </>
-                        )}
-                        <div className="relative" ref={menuRef}>
-                            <button
-                                type="button"
-                                onClick={() => setMenuOpen((o) => !o)}
-                                className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                                disabled={isProcessing}
-                                title="Más opciones"
-                                aria-label="Más opciones"
-                                aria-haspopup="menu"
-                                aria-expanded={menuOpen}
-                            >
-                                <MoreVertical className="h-5 w-5" />
-                            </button>
-                            {menuOpen && (
-                                <div
-                                    role="menu"
-                                    className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-md border border-border bg-popover py-1 shadow-lg"
-                                >
-                                    {onEdit && (
-                                        <button
-                                            type="button"
-                                            role="menuitem"
-                                            onClick={() => {
-                                                onEdit();
-                                                setMenuOpen(false);
-                                            }}
-                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
-                                        >
-                                            <Pencil className="h-4 w-4 shrink-0" aria-hidden />
-                                            Editar
-                                        </button>
-                                    )}
-                                    {onConvert && (
-                                        <button
-                                            type="button"
-                                            role="menuitem"
-                                            onClick={() => {
-                                                onConvert();
-                                                setMenuOpen(false);
-                                            }}
-                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
-                                        >
-                                            <FileStack className="h-4 w-4 shrink-0" aria-hidden />
-                                            Convertir a plantilla
-                                        </button>
-                                    )}
-                                    {onDelete && (
-                                        <button
-                                            type="button"
-                                            role="menuitem"
-                                            onClick={() => {
-                                                onDelete();
-                                                setMenuOpen(false);
-                                            }}
-                                            className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
-                                        >
-                                            <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
-                                            Eliminar
-                                        </button>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-
-                <div className="flex gap-2 border-t border-border pt-4">
-                    {onView && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onView}
-                            disabled={isProcessing}
-                            className="flex-1"
-                        >
-                            Ver detalles
-                        </Button>
-                    )}
-                    {onAddClient && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={onAddClient}
-                            disabled={isProcessing}
-                            className="flex-1"
-                        >
-                            Agregar cliente
-                        </Button>
-                    )}
-                </div>
-            </article>
+            <span
+                className={cn(
+                    "inline-flex shrink-0 items-center text-xs font-medium",
+                    statusClass
+                )}
+            >
+                {statusLabel}
+            </span>
         );
-    }
+    }, [plan.end_date, plan.status, sessionsCompleted, sessionsTotal]);
+
+    const displayName =
+        clientDisplayName.trim() ||
+        (client ? `${client.nombre} ${client.apellidos}`.trim() : "Cliente sin asignar");
+
+    const avatarNombre = useMemo(() => {
+        if (client) {
+            return { nombre: client.nombre, apellidos: client.apellidos };
+        }
+        const parts = displayName.trim().split(/\s+/).filter(Boolean);
+        return {
+            nombre: parts[0] ?? "",
+            apellidos: parts.slice(1).join(" ") || undefined,
+        };
+    }, [client, displayName]);
+
+    const handleViewClient = (): void => {
+        if (plan.client_id == null) return;
+        navigate(`/dashboard/clients/${plan.client_id}?tab=planning`);
+    };
 
     return (
-        <article className={cn(CARD_BASE, "flex h-full flex-col")}>
-            <div className="mb-3 flex items-start justify-between">
-                <div className="min-w-0 flex-1">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <h3 className="line-clamp-2 text-lg font-semibold text-foreground">
-                            {item.name}
-                        </h3>
-                        {getBadge()}
-                    </div>
-                </div>
-            </div>
-
-            <div className="mb-4 min-h-[2.5rem]">
-                {item.description ? (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{item.description}</p>
+        <article className={cn(CARD_BASE, "flex h-full flex-col gap-4")}>
+            <div className="flex min-h-0 flex-1 flex-col gap-4">
+                <div className="flex gap-3">
+                {plan.client_id != null ? (
+                    <ClientAvatar
+                        clientId={plan.client_id}
+                        nombre={avatarNombre.nombre}
+                        apellidos={avatarNombre.apellidos}
+                        size="md"
+                        className="shrink-0 text-xs sm:h-10 sm:w-10"
+                    />
                 ) : (
-                    <p className="text-sm italic text-muted-foreground/70">Sin descripción</p>
-                )}
-            </div>
-
-            <div className="mb-4 flex items-center gap-2 text-sm text-muted-foreground">
-                <span>{duration}</span>
-                {frequency && (
-                    <>
-                        <span className="text-border">•</span>
-                        <span>{frequency}</span>
-                    </>
-                )}
-            </div>
-
-            {isTemplate && template?.tags && template.tags.length > 0 && (
-                <div className="mb-4 flex flex-wrap gap-2">
-                    {template.tags.slice(0, 3).map((tag, i) => (
-                        <span
-                            key={i}
-                            className="inline-flex rounded-md px-2.5 py-1 text-xs font-medium bg-surface-2 text-muted-foreground"
-                        >
-                            {tag}
-                        </span>
-                    ))}
-                    {template.tags.length > 3 && (
-                        <span className="inline-flex rounded-md px-2.5 py-1 text-xs font-medium bg-surface-2 text-muted-foreground">
-                            +{template.tags.length - 3}
-                        </span>
-                    )}
-                </div>
-            )}
-
-            <div className="mt-auto flex-1" />
-
-            <div className="flex items-center gap-2 border-t border-border pt-4">
-                {type === "template" && onPreview && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={onPreview}
-                        disabled={isProcessing}
-                        className="flex-1"
+                    <div
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground shadow-md sm:h-10 sm:w-10"
+                        aria-hidden
                     >
-                        Vista previa
-                    </Button>
+                        —
+                    </div>
                 )}
-                {type === "template" && onAssign && (
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={onAssign}
-                        disabled={isProcessing}
-                        className="flex-1"
-                    >
-                        Usar plantilla
-                    </Button>
-                )}
-                <div className="relative shrink-0" ref={menuRef}>
-                    <button
-                        type="button"
-                        onClick={() => setMenuOpen((o) => !o)}
-                        className="rounded-lg p-2 text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                        disabled={isProcessing}
-                        title="Más opciones"
-                        aria-label="Más opciones"
-                        aria-haspopup="menu"
-                        aria-expanded={menuOpen}
-                    >
-                        <MoreVertical className="h-5 w-5" />
-                    </button>
-                    {menuOpen && (
-                        <div
-                            role="menu"
-                            className="absolute right-0 top-full z-50 mt-1 min-w-[180px] rounded-md border border-border bg-popover py-1 shadow-lg"
-                        >
-                            {onEdit && (
-                                <button
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => {
-                                        onEdit();
-                                        setMenuOpen(false);
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
+                <div className="min-w-0 flex-1">
+                    <div className="flex items-start justify-between gap-2">
+                        <p className="truncate text-base font-semibold text-foreground">{displayName}</p>
+                        {statusBadge}
+                    </div>
+                    {categoryChips.length > 0 ? (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                            {categoryChips.map((chip, i) => (
+                                <span
+                                    key={`${chip.label}-${i}`}
+                                    className={cn(
+                                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                                        chip.toneClass
+                                    )}
                                 >
-                                    <Pencil className="h-4 w-4 shrink-0" aria-hidden />
-                                    Editar
-                                </button>
-                            )}
-                            {onDuplicate && (
-                                <button
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => {
-                                        onDuplicate();
-                                        setMenuOpen(false);
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-foreground hover:bg-accent hover:text-accent-foreground"
-                                >
-                                    <Copy className="h-4 w-4 shrink-0" aria-hidden />
-                                    Duplicar
-                                </button>
-                            )}
-                            {onDelete && (
-                                <button
-                                    type="button"
-                                    role="menuitem"
-                                    onClick={() => {
-                                        onDelete();
-                                        setMenuOpen(false);
-                                    }}
-                                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-destructive hover:bg-destructive/10"
-                                >
-                                    <Trash2 className="h-4 w-4 shrink-0" aria-hidden />
-                                    Eliminar
-                                </button>
-                            )}
+                                    {chip.label}
+                                </span>
+                            ))}
                         </div>
-                    )}
+                    ) : null}
                 </div>
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Sesiones</span>
+                    <span className="tabular-nums text-foreground">
+                        {sessionsCompleted} / {sessionsTotal}
+                    </span>
+                </div>
+                <div
+                    className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                    role="progressbar"
+                    aria-valuenow={progressPct}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                >
+                    <div
+                        className="h-full rounded-full bg-primary transition-all duration-300"
+                        style={{ width: `${progressPct}%` }}
+                    />
+                </div>
+            </div>
+            </div>
+
+            <div className="mt-auto shrink-0 border-t border-border pt-4">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                    onClick={handleViewClient}
+                    disabled={plan.client_id == null}
+                >
+                    Ver cliente
+                </Button>
             </div>
         </article>
     );

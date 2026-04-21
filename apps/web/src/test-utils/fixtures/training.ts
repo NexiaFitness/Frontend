@@ -26,6 +26,8 @@ export function createMockTrainingPlan(
         goal: "Strength",
         status: "active",
         is_active: true,
+        sessions_completed: 0,
+        sessions_total: 0,
         created_at: now,
         updated_at: now,
         ...overrides,

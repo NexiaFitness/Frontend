@@ -17,10 +17,11 @@ import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { useCreateSessionFromTemplate } from "@nexia/shared";
-import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetClientQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlansQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
+import { ArrowLeft } from "lucide-react";
 
 export const CreateSessionFromTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -32,15 +33,30 @@ export const CreateSessionFromTemplate: React.FC = () => {
         skip: user?.role !== "trainer",
     });
     const clientIdFromQuery = searchParams.get("clientId");
-    const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
+    const clientIdFromUrl =
+        clientIdFromQuery && !Number.isNaN(Number(clientIdFromQuery))
+            ? Number(clientIdFromQuery)
+            : 0;
+    const [pickedClientId, setPickedClientId] = useState(0);
+    const clientId = clientIdFromUrl > 0 ? clientIdFromUrl : pickedClientId;
+
+    const parsedTemplateId = Number(templateId);
+    const effectiveTemplateId =
+        Number.isFinite(parsedTemplateId) && parsedTemplateId > 0 ? parsedTemplateId : 0;
+
     const trainerId = trainerProfile?.id ?? 0;
 
     const { createSession, isCreating, isError, error, template, isLoadingTemplate } =
         useCreateSessionFromTemplate({
-            templateId: Number(templateId || 0),
+            templateId: effectiveTemplateId,
             clientId,
             trainerId,
         });
+
+    const { data: trainerClients } = useGetTrainerClientsQuery(
+        { trainerId, page: 1, per_page: 50 },
+        { skip: !trainerId || clientIdFromUrl > 0 }
+    );
 
     const { data: client } = useGetClientQuery(clientId, { skip: !clientId });
     const { data: trainingPlans } = useGetTrainingPlansQuery(
@@ -57,10 +73,10 @@ export const CreateSessionFromTemplate: React.FC = () => {
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
-        if (!templateId || !clientId) {
+        if (!templateId || !effectiveTemplateId) {
             navigate("/dashboard");
         }
-    }, [templateId, clientId, navigate]);
+    }, [templateId, effectiveTemplateId, navigate]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,6 +84,9 @@ export const CreateSessionFromTemplate: React.FC = () => {
         setSuccess(false);
 
         const errors: Record<string, string> = {};
+        if (!clientId) {
+            errors.clientId = "Seleccione un cliente";
+        }
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
         }
@@ -131,6 +150,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                             </p>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al Dashboard
                         </Button>
                     </div>
@@ -179,17 +199,43 @@ export const CreateSessionFromTemplate: React.FC = () => {
                         </h3>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Cliente (read-only) */}
+                            {/* Cliente: query param fija el cliente; si no, selector desde la lista del trainer */}
                             <div>
                                 <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Cliente
+                                    Cliente{clientIdFromUrl <= 0 ? " *" : ""}
                                 </label>
-                                <Input
-                                    type="text"
-                                    value={client ? `${client.nombre} ${client.apellidos}` : "Cargando..."}
-                                    disabled
-                                    className="bg-muted"
-                                />
+                                {clientIdFromUrl > 0 ? (
+                                    <Input
+                                        type="text"
+                                        value={
+                                            client
+                                                ? `${client.nombre} ${client.apellidos}`
+                                                : "Cargando..."
+                                        }
+                                        disabled
+                                        className="bg-muted"
+                                    />
+                                ) : (
+                                    <FormSelect
+                                        value={pickedClientId > 0 ? String(pickedClientId) : ""}
+                                        onChange={(e) =>
+                                            setPickedClientId(
+                                                e.target.value ? Number(e.target.value) : 0
+                                            )
+                                        }
+                                        options={[
+                                            { value: "", label: "Seleccione un cliente" },
+                                            ...(trainerClients?.items ?? []).map((c) => ({
+                                                value: String(c.id),
+                                                label: `${c.nombre} ${c.apellidos}`.trim(),
+                                            })),
+                                        ]}
+                                        required
+                                    />
+                                )}
+                                {formErrors.clientId && (
+                                    <p className="text-red-600 text-xs mt-1">{formErrors.clientId}</p>
+                                )}
                             </div>
 
                             {/* Fecha */}
@@ -250,7 +296,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                     type="submit"
                                     variant="primary"
                                     size="lg"
-                                    disabled={isCreating || !trainerId}
+                                    disabled={isCreating || !trainerId || !clientId}
                                     className="w-full sm:w-auto sm:ml-auto"
                                 >
                                     {isCreating ? "Creando..." : "Crear Sesión"}

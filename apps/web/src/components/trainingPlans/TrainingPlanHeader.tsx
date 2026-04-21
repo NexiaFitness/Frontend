@@ -2,58 +2,67 @@
  * TrainingPlanHeader.tsx — Header del detalle del training plan
  *
  * Contexto:
- * - Header con info básica del plan y actions principales
- * - Alineado visualmente con ClientHeader (Figma)
- * - Proporciona contexto del atleta y link de retorno
- * - Incluye breadcrumbs integrados para evitar filtraciones del fondo azul del layout
- *
- * Responsabilidades:
- * - Mostrar info básica del plan (nombre, fechas, goal, status)
- * - Vínculo al perfil del cliente (rompe el bucle de navegación)
- * - Botones de acción rápida (Editar/Eliminar)
- * - Navegación jerárquica integrada
+ * - Misma estructura visual que ClientHeader: space-y-6, breadcrumbs, avatar + título + acciones,
+ *   rejilla 6 columnas, separadores border-border, bloque de notas.
+ * - Avatar: ClientAvatar cuando hay cliente asignado; iniciales del plan si no.
  *
  * @author Frontend Team
  * @since v3.3.0
- * @updated v6.1.0 - Eliminación de duplicidad: métricas movidas al header. Mejora de intuitividad en link de cliente.
- * @updated U13 Fase 4.3 - Botón "Volver al cliente" cuando volverAlClienteClientId está presente.
+ * @updated 2026-04 — Layout unificado con ClientDetail / ClientHeader (TabsBar fuera, en página).
+ * @updated 2026-04 — Editar / Eliminar plan en barra fija inferior (TrainingPlanDetail), no en header.
+ * @updated 2026-04 — Descripción / notas: añadir descripción inline (PUT description), sin duplicar “editar plan”.
  */
 
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import type { TrainingPlan } from "@nexia/shared/types/training";
-import { useDeleteTrainingPlanMutation } from "@nexia/shared/api/trainingPlansApi";
+import type { Client } from "@nexia/shared/types/client";
+import { getClientInitials } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
-import { Avatar } from "@/components/ui/avatar";
-import { useToast } from "@/components/ui/feedback";
-import { DeleteTrainingPlanModal } from "./DeleteTrainingPlanModal";
+import { Textarea } from "@/components/ui/forms";
+import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
 interface TrainingPlanHeaderProps {
     plan: TrainingPlan;
+    /** Cliente asignado — datos para ClientAvatar y subtítulo */
+    client?: Client | null;
     clientName?: string;
     breadcrumbItems: BreadcrumbItem[];
-    onRefresh: () => void;
     /** Abre el modal de asignar plan a cliente (desde detalle) */
     onAssignPlan?: () => void;
-    /** U13 Fase 4.3: si existe, muestra botón "Volver al cliente" que navega a /dashboard/clients/:id */
+    /** Si existe, muestra botón "Volver al cliente" */
     volverAlClienteClientId?: number;
+    /** Guardar nota en description (append si ya hay texto) — PUT /training-plans/{id} */
+    onSaveDescriptionNote?: (text: string) => Promise<boolean>;
+    isSavingDescription?: boolean;
 }
+
+const statusLabels: Record<string, string> = {
+    active: "Activo",
+    completed: "Completado",
+    paused: "Pausado",
+    cancelled: "Cancelado",
+};
 
 export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
     plan,
+    client,
     clientName,
     breadcrumbItems,
-    onRefresh: _onRefresh,
     onAssignPlan,
     volverAlClienteClientId,
+    onSaveDescriptionNote,
+    isSavingDescription = false,
 }) => {
     const navigate = useNavigate();
-    const { showError } = useToast();
-    const [deletePlan, { isLoading: isDeleting }] = useDeleteTrainingPlanMutation();
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [descriptionOpen, setDescriptionOpen] = useState(false);
+    const [descriptionDraft, setDescriptionDraft] = useState("");
 
-    // Formatear fechas
+    const displayClientName = client
+        ? `${client.nombre} ${client.apellidos}`
+        : clientName;
+
     const formatDate = (dateStr: string): string => {
         const date = new Date(dateStr);
         return date.toLocaleDateString("es-ES", {
@@ -63,18 +72,16 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
         });
     };
 
-    // Calcular duración del plan
     const getDuration = (): string => {
         const start = new Date(plan.start_date);
         const end = new Date(plan.end_date);
         const weeks = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
-        
+
         if (weeks < 4) return `${weeks} semanas`;
         const months = Math.floor(weeks / 4);
         return `${months} ${months === 1 ? "mes" : "meses"}`;
     };
 
-    // Badge de status
     const getStatusBadge = () => {
         const statusColors: Record<string, string> = {
             active: "bg-success/10 text-success border border-success/30",
@@ -82,199 +89,245 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             paused: "bg-warning/10 text-warning border border-warning/30",
             cancelled: "bg-destructive/10 text-destructive border border-destructive/30",
         };
-
-        const statusLabels: Record<string, string> = {
-            active: "Activo",
-            completed: "Completado",
-            paused: "Pausado",
-            cancelled: "Cancelado",
-        };
-
         const color = statusColors[plan.status] || "bg-muted text-muted-foreground border border-border";
         const label = statusLabels[plan.status] || plan.status;
-
         return (
-            <span className={`px-2 py-1 rounded-full text-xs font-medium ${color}`}>
+            <span className={`inline-flex shrink-0 px-2 py-1 rounded-full text-xs font-medium ${color}`}>
                 {label}
             </span>
         );
     };
 
-    const handleEdit = () => {
-        navigate(`/dashboard/training-plans/${plan.id}/edit`);
-    };
+    const statusLabelPlain = statusLabels[plan.status] || plan.status;
 
-    const handleDeleteConfirm = async () => {
-        try {
-            await deletePlan(plan.id).unwrap();
-            if (plan.client_id) {
-                navigate(`/dashboard/clients/${plan.client_id}?tab=sessions`);
-            } else {
-                navigate("/dashboard/training-plans");
-            }
-        } catch (error: unknown) {
-            console.error("Error deleting plan:", error);
-            const message =
-                error && typeof error === "object" && "data" in error
-                    ? String((error as { data?: { detail?: string } }).data?.detail ?? "No se pudo eliminar el plan.")
-                    : "No se pudo eliminar el plan. Intenta de nuevo.";
-            showError(message);
-        } finally {
-            setIsDeleteModalOpen(false);
+    const descTrimmed = (plan.description ?? "").trim();
+    const hasDescription = Boolean(descTrimmed);
+
+    const handleSaveDescription = async () => {
+        if (!onSaveDescriptionNote || !descriptionDraft.trim()) return;
+        const ok = await onSaveDescriptionNote(descriptionDraft);
+        if (ok) {
+            setDescriptionDraft("");
+            setDescriptionOpen(false);
         }
     };
 
+    const subtitleParts = [
+        `${formatDate(plan.start_date)} – ${formatDate(plan.end_date)}`,
+        getDuration(),
+        displayClientName ?? "Sin cliente asignado",
+    ];
+
     return (
-        <div className="bg-card border-b border-border">
-            {/* Breadcrumbs integrados + Volver al cliente (U13 Fase 4.3) */}
-            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <Breadcrumbs items={breadcrumbItems} />
-                {volverAlClienteClientId && (
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                            navigate(
-                                `/dashboard/clients/${volverAlClienteClientId}?tab=planificacion`
-                            )
-                        }
-                        className="shrink-0"
-                        aria-label="Volver al cliente"
-                    >
-                        <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            className="h-4 w-4 mr-2"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            aria-hidden
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                            />
-                        </svg>
-                        Volver al cliente
-                    </Button>
-                )}
-            </div>
+        <div className="space-y-6">
+            {breadcrumbItems.length > 0 && (
+                <Breadcrumbs items={breadcrumbItems} className="mb-1" />
+            )}
 
-            <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">
-                {/* Fila 1: Nombre + Métricas + Actions */}
-                <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
-                    <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-4">
-                            <h1 className="text-lg font-semibold text-foreground">
-                                {plan.name}
-                            </h1>
-                            {getStatusBadge()}
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
-                            <div>
-                                <span className="text-xs uppercase tracking-wide text-primary">Inicio</span>
-                                <p className="text-foreground font-medium">{formatDate(plan.start_date)}</p>
-                            </div>
-                            <div>
-                                <span className="text-xs uppercase tracking-wide text-primary">Fin</span>
-                                <p className="text-foreground font-medium">{formatDate(plan.end_date)}</p>
-                            </div>
-                            <div>
-                                <span className="text-xs uppercase tracking-wide text-primary">Duración Total</span>
-                                <p className="text-foreground font-medium">{getDuration()}</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Actions */}
-                    <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                        {onAssignPlan && (
-                            <Button variant="primary" size="sm" onClick={onAssignPlan}>
-                                Asignar a cliente
-                            </Button>
-                        )}
-                        <Button variant="outline" size="sm" onClick={handleEdit}>
-                            Editar Plan
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={() => setIsDeleteModalOpen(true)}
-                            disabled={isDeleting}
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
-                        >
-                            Eliminar Plan
-                        </Button>
-                    </div>
-                </div>
-
-                {/* Línea separadora */}
-                <div className="border-b border-primary/30 mb-4" />
-
-                {/* Fila 2: Contexto del Atleta y Objetivo */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-4">
-                    {plan.client_id && (
-                        <div className="flex items-center gap-3">
-                            <Link 
-                                to={`/dashboard/clients/${plan.client_id}`}
-                                className="flex items-center gap-3 group"
-                            >
-                                <Avatar 
-                                    nombre={clientName?.split(' ')[0]} 
-                                    apellidos={clientName?.split(' ').slice(1).join(' ')} 
-                                    size="sm" 
-                                    className="group-hover:ring-2 group-hover:ring-primary transition-all"
-                                />
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide block text-primary">Atleta</span>
-                                    <span className="text-primary font-bold group-hover:underline transition-colors">
-                                        {clientName || "Ver Perfil"}
-                                    </span>
-                                </div>
-                            </Link>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+                <div className="flex-shrink-0">
+                    {plan.client_id && (client || clientName) ? (
+                        <ClientAvatar
+                            clientId={plan.client_id}
+                            nombre={client?.nombre ?? clientName?.split(" ")[0]}
+                            apellidos={client?.apellidos ?? clientName?.split(" ").slice(1).join(" ")}
+                            size="lg"
+                        />
+                    ) : (
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted font-bold text-muted-foreground shadow-md text-base">
+                            {getClientInitials(plan.name, null)}
                         </div>
                     )}
+                </div>
+                <div className="min-w-0 flex-1 space-y-1">
+                    <div className="flex flex-wrap items-center gap-3 gap-y-2">
+                        <h1 className="text-2xl font-bold text-foreground">{plan.name}</h1>
+                        {getStatusBadge()}
+                        <div className="ml-auto flex flex-shrink-0 flex-row flex-wrap items-center gap-2">
+                            {volverAlClienteClientId != null && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() =>
+                                        navigate(
+                                            `/dashboard/clients/${volverAlClienteClientId}?tab=planificacion`
+                                        )
+                                    }
+                                    aria-label="Volver al cliente"
+                                >
+                                    <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        className="h-4 w-4 mr-2"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        stroke="currentColor"
+                                        aria-hidden
+                                    >
+                                        <path
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                            strokeWidth={2}
+                                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                                        />
+                                    </svg>
+                                    Volver al cliente
+                                </Button>
+                            )}
+                            {onAssignPlan && (
+                                <Button variant="primary" size="sm" onClick={onAssignPlan}>
+                                    Asignar a cliente
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{subtitleParts.join(" · ")}</p>
+                </div>
+            </div>
 
+            <div className="border-b border-border" />
+
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                        Inicio
+                    </span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">
+                        {formatDate(plan.start_date)}
+                    </p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                        Fin
+                    </span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">
+                        {formatDate(plan.end_date)}
+                    </p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                        Duración total
+                    </span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{getDuration()}</p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                        Estado
+                    </span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{statusLabelPlain}</p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                        Objetivo
+                    </span>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{plan.goal ?? "—"}</p>
+                </div>
+                <div className="min-w-0 py-0.5 text-center">
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
+                        Atleta
+                    </span>
+                    {plan.client_id ? (
+                        <Link
+                            to={`/dashboard/clients/${plan.client_id}`}
+                            className="mt-0.5 block break-words font-medium text-primary hover:underline"
+                        >
+                            {displayClientName ?? "Ver perfil"}
+                        </Link>
+                    ) : (
+                        <p className="mt-0.5 font-medium text-foreground break-words">—</p>
+                    )}
+                </div>
+            </div>
+
+            {plan.tags && plan.tags.length > 0 && (
+                <>
                     <div>
-                        <span className="text-xs uppercase tracking-wide text-primary">Objetivo del Plan</span>
-                        <p className="text-foreground font-medium">{plan.goal}</p>
-                    </div>
-
-                    {plan.tags && plan.tags.length > 0 && (
-                        <div className="lg:col-span-2">
-                            <span className="text-xs uppercase tracking-wide block mb-1 text-primary">Etiquetas</span>
-                            <div className="flex flex-wrap gap-1">
-                                {plan.tags.map((tag, i) => (
-                                    <span key={i} className="px-2 py-0.5 bg-muted text-muted-foreground rounded text-xs">
-                                        {tag}
-                                    </span>
-                                ))}
-                            </div>
+                        <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
+                            Etiquetas
+                        </span>
+                        <div className="flex flex-wrap gap-1">
+                            {plan.tags.map((tag, i) => (
+                                <span
+                                    key={i}
+                                    className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                                >
+                                    {tag}
+                                </span>
+                            ))}
                         </div>
+                    </div>
+                </>
+            )}
+
+            <div className="border-b border-border" />
+
+            <div className="mb-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Descripción / notas
+                    </span>
+                    {onSaveDescriptionNote && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setDescriptionOpen((o) => {
+                                    if (o) setDescriptionDraft("");
+                                    return !o;
+                                });
+                            }}
+                            className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
+                        >
+                            {descriptionOpen ? "Cerrar" : "+ Añadir descripción"}
+                        </button>
                     )}
                 </div>
 
-                {plan.description && (
-                    <>
-                        <div className="border-b border-primary/30 mb-4" />
-                        <div>
-                            <span className="text-xs uppercase tracking-wide text-primary">Descripción / Notas del Entrenador</span>
-                            <p className="text-muted-foreground text-sm mt-1 leading-relaxed">{plan.description}</p>
+                {onSaveDescriptionNote && descriptionOpen && (
+                    <div className="mb-4 space-y-2 rounded-md border border-border bg-muted/30 p-3">
+                        <Textarea
+                            value={descriptionDraft}
+                            onChange={(e) => setDescriptionDraft(e.target.value)}
+                            placeholder="Escribe la descripción…"
+                            rows={3}
+                            className="text-foreground"
+                            disabled={isSavingDescription}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="primary"
+                                onClick={handleSaveDescription}
+                                disabled={isSavingDescription || !descriptionDraft.trim()}
+                                isLoading={isSavingDescription}
+                            >
+                                Guardar
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    setDescriptionOpen(false);
+                                    setDescriptionDraft("");
+                                }}
+                                disabled={isSavingDescription}
+                            >
+                                Cancelar
+                            </Button>
                         </div>
-                    </>
+                    </div>
                 )}
-            </div>
 
-            {/* Modal de confirmación de eliminación */}
-            <DeleteTrainingPlanModal
-                isOpen={isDeleteModalOpen}
-                onClose={() => setIsDeleteModalOpen(false)}
-                onConfirm={handleDeleteConfirm}
-                plan={plan}
-                isLoading={isDeleting}
-            />
+                <div className="space-y-2">
+                    {hasDescription ? (
+                        <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground">
+                            {plan.description}
+                        </p>
+                    ) : (
+                        <p className="text-sm text-foreground">Sin descripción.</p>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

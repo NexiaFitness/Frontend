@@ -57,13 +57,14 @@ describe("ProgressForm", () => {
                 expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
             });
 
-            // Título del formulario
-            expect(screen.getByText(/añadir nuevo registro de progreso/i)).toBeInTheDocument();
+            // Secciones del formulario (FormSection)
+            expect(screen.getByRole("heading", { name: /mediciones corporales/i })).toBeInTheDocument();
+            expect(screen.getByRole("heading", { name: /fecha y observaciones/i })).toBeInTheDocument();
 
-            // Campos del formulario (los labels no tienen htmlFor, usar placeholder o role)
-            expect(screen.getByPlaceholderText(/20-300 kg/i)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText(/100-250 cm/i)).toBeInTheDocument();
-            expect(screen.getByText(/fecha de medición \*/i)).toBeInTheDocument();
+            // Campos (placeholders sin unidad en el input; kg/cm están como sufijo)
+            expect(screen.getByPlaceholderText(/^20-300$/)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/^100-250$/)).toBeInTheDocument();
+            expect(screen.getByText(/fecha de medición/i)).toBeInTheDocument();
             expect(screen.getByPlaceholderText(/observaciones sobre este registro/i)).toBeInTheDocument();
 
             // Botón de submit
@@ -75,7 +76,7 @@ describe("ProgressForm", () => {
 
             // Esperar a que cargue el cliente y se prellene la altura
             await waitFor(() => {
-                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                const alturaInput = screen.getByPlaceholderText(/^100-250$/) as HTMLInputElement;
                 expect(alturaInput.value).toBe("180");
             });
         });
@@ -118,7 +119,7 @@ describe("ProgressForm", () => {
             });
 
             // Limpiar peso si está prellenado
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
 
             // Intentar submit
@@ -142,12 +143,12 @@ describe("ProgressForm", () => {
 
             // Esperar a que se prellene la altura desde el cliente
             await waitFor(() => {
-                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                const alturaInput = screen.getByPlaceholderText(/^100-250$/) as HTMLInputElement;
                 expect(alturaInput.value).toBe("180");
             });
 
             // Llenar peso con valor fuera de rango
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "15");
 
@@ -184,7 +185,7 @@ describe("ProgressForm", () => {
             });
 
             // Llenar peso pero dejar altura vacía
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "80");
 
@@ -207,12 +208,12 @@ describe("ProgressForm", () => {
             });
 
             // Llenar peso primero (requerido)
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "80");
 
             // Establecer altura fuera de rango
-            const alturaInput = screen.getByPlaceholderText(/100-250 cm/i);
+            const alturaInput = screen.getByPlaceholderText(/^100-250$/);
             await user.clear(alturaInput);
             await user.type(alturaInput, "90");
 
@@ -242,7 +243,7 @@ describe("ProgressForm", () => {
             await user.type(fechaInput, tomorrow.toISOString().split("T")[0]);
 
             // Llenar otros campos válidos
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "80");
 
@@ -270,7 +271,7 @@ describe("ProgressForm", () => {
             await user.type(fechaInput, "2024-12-31"); // Antes de fecha_alta (2025-01-01)
 
             // Llenar otros campos válidos
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "80");
 
@@ -304,12 +305,12 @@ describe("ProgressForm", () => {
 
             // Esperar a que se prellene la altura desde el cliente
             await waitFor(() => {
-                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                const alturaInput = screen.getByPlaceholderText(/^100-250$/) as HTMLInputElement;
                 expect(alturaInput.value).toBe("180");
             });
 
             // Llenar formulario
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "82");
 
@@ -341,12 +342,12 @@ describe("ProgressForm", () => {
 
             // Esperar a que se prellene la altura
             await waitFor(() => {
-                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                const alturaInput = screen.getByPlaceholderText(/^100-250$/) as HTMLInputElement;
                 expect(alturaInput.value).toBe("180");
             });
 
             // Llenar formulario
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "82");
 
@@ -371,12 +372,12 @@ describe("ProgressForm", () => {
 
             // Esperar altura prefilled (evita flakiness en CI donde el mock puede ser más lento)
             await waitFor(() => {
-                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                const alturaInput = screen.getByPlaceholderText(/^100-250$/) as HTMLInputElement;
                 expect(alturaInput.value).toBe("180");
             });
 
             // Llenar formulario
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "82");
 
@@ -395,7 +396,7 @@ describe("ProgressForm", () => {
 
             // Verificar que el formulario se reseteó (peso y notas vacíos, fecha de hoy)
             await waitFor(() => {
-                const pesoInputAfter = screen.getByPlaceholderText(/20-300 kg/i) as HTMLInputElement;
+                const pesoInputAfter = screen.getByPlaceholderText(/^20-300$/) as HTMLInputElement;
                 expect(pesoInputAfter.value).toBe("");
                 
                 const notasInputAfter = screen.getByPlaceholderText(/observaciones sobre este registro/i) as HTMLTextAreaElement;
@@ -415,12 +416,12 @@ describe("ProgressForm", () => {
 
             // Esperar a que altura se prellene desde el perfil del cliente
             await waitFor(() => {
-                const alturaInput = screen.getByPlaceholderText(/100-250 cm/i) as HTMLInputElement;
+                const alturaInput = screen.getByPlaceholderText(/^100-250$/) as HTMLInputElement;
                 expect(alturaInput.value).toBe("180");
             });
 
             // Llenar peso (altura ya viene prefilled)
-            const pesoInput = screen.getByPlaceholderText(/20-300 kg/i);
+            const pesoInput = screen.getByPlaceholderText(/^20-300$/);
             await user.clear(pesoInput);
             await user.type(pesoInput, "82");
 
@@ -481,18 +482,17 @@ describe("ProgressForm", () => {
         });
     });
 
-    describe("ClientMetricsFields Integration", () => {
-        it("renders ClientMetricsFields with correct props", async () => {
+    describe("Form sections", () => {
+        it("renders mediciones and fecha sections with weight/height inputs", async () => {
             render(<ProgressForm clientId={1} />);
 
             await waitFor(() => {
                 expect(screen.queryByRole("status", { name: /cargando/i })).not.toBeInTheDocument();
             });
 
-            // Verificar que ClientMetricsFields está renderizado con los campos correctos
-            expect(screen.getByText(/métricas físicas básicas/i)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText(/20-300 kg/i)).toBeInTheDocument();
-            expect(screen.getByPlaceholderText(/100-250 cm/i)).toBeInTheDocument();
+            expect(screen.getByRole("heading", { name: /mediciones corporales/i })).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/^20-300$/)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/^100-250$/)).toBeInTheDocument();
         });
     });
 });

@@ -32,9 +32,14 @@ export const GENDER_ENUM = {
 export type Gender = (typeof GENDER_ENUM)[keyof typeof GENDER_ENUM];
 
 export const TRAINING_GOAL_ENUM = {
-    AUMENTAR_MASA: "Aumentar masa muscular",
-    PERDIDA_PESO: "Pérdida de peso",
-    RENDIMIENTO: "Rendimiento deportivo",
+    HIPERTROFIA: "hypertrophy",
+    FUERZA: "strength",
+    POTENCIA: "power",
+    RESISTENCIA: "endurance",
+    PERDIDA_PESO: "weight_loss",
+    REHABILITACION: "rehabilitation",
+    FITNESS_GENERAL: "general_fitness",
+    RENDIMIENTO_DEPORTIVO: "sport_performance",
 } as const;
 
 export type TrainingGoal = (typeof TRAINING_GOAL_ENUM)[keyof typeof TRAINING_GOAL_ENUM];
@@ -529,9 +534,14 @@ export interface ClientRatingOut {
 
 /** @deprecated Use TRAINING_GOAL_ENUM */
 export const CLIENT_GOALS = {
-    WEIGHT_LOSS: "Pérdida de peso",
-    MUSCLE_GAIN: "Aumentar masa muscular",
-    PERFORMANCE: "Rendimiento deportivo",
+    HIPERTROFIA: "hypertrophy",
+    FUERZA: "strength",
+    POTENCIA: "power",
+    RESISTENCIA: "endurance",
+    PERDIDA_PESO: "weight_loss",
+    REHABILITACION: "rehabilitation",
+    FITNESS_GENERAL: "general_fitness",
+    RENDIMIENTO_DEPORTIVO: "sport_performance",
 } as const;
 
 /** @deprecated Use Experience */

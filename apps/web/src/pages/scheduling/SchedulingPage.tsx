@@ -76,12 +76,13 @@ export const SchedulingPage: React.FC = () => {
 
     // Obtener templates
     const {
-        data: templates = [],
+        data: templatesData,
         isLoading: isLoadingTemplates,
     } = useGetSessionTemplatesQuery({
         skip: 0,
         limit: 100,
     });
+    const templates = templatesData?.items ?? [];
 
     const handleDateClick = (date: Date) => {
         const dateStr = date.toISOString().split("T")[0];

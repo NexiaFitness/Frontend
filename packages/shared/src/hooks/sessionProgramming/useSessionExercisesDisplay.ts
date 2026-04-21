@@ -200,7 +200,11 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
                 Object.keys(blockExercisesByBlock).length < blocks.length;
             const flat: SessionExerciseDisplay[] = [];
             let order = 0;
-            for (const block of blocks.sort((a, b) => a.order_in_session - b.order_in_session)) {
+            // blocks viene de RTK Query (array inmutable); no usar .sort() in-place
+            const sortedBlocks = [...blocks].sort(
+                (a, b) => a.order_in_session - b.order_in_session
+            );
+            for (const block of sortedBlocks) {
                 const exs = blockExercisesByBlock[block.id] ?? [];
                 const blockType = blockTypes.find((bt) => bt.id === block.block_type_id);
                 const blockName = blockType ? getBlockDisplayName(blockType.name) : "Bloque";

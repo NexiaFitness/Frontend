@@ -9,6 +9,7 @@
  */
 import React from "react";
 import type { LucideIcon } from "lucide-react";
+import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export type KPICardColor = "primary" | "success" | "warning" | "destructive" | "info";
@@ -85,7 +86,22 @@ export const KPICard: React.FC<KPICardProps> = ({
                     <p className="mt-1 text-3xl font-bold text-foreground">{value}</p>
                     <p className="mt-1 text-xs text-muted-foreground">{description}</p>
                     {trend && (
-                        <span className="mt-1 inline-block text-xs font-semibold text-success">{trend}</span>
+                        <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold">
+                            {(() => {
+                                const num = parseFloat(String(trend).replace(/[^0-9.-]/g, "")) || 0;
+                                if (num > 0) return <ArrowUpRight className="h-3.5 w-3.5 text-success" aria-hidden />;
+                                if (num < 0) return <ArrowDownRight className="h-3.5 w-3.5 text-destructive" aria-hidden />;
+                                return <Minus className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />;
+                            })()}
+                            <span className={(() => {
+                                const num = parseFloat(String(trend).replace(/[^0-9.-]/g, "")) || 0;
+                                if (num > 0) return "text-success";
+                                if (num < 0) return "text-destructive";
+                                return "text-muted-foreground";
+                            })()}>
+                                {trend}
+                            </span>
+                        </span>
                     )}
                 </div>
                 <div className={cn("shrink-0 rounded-lg bg-surface-2 p-2.5", colorMap[color])}>

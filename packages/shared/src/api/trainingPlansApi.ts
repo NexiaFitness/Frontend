@@ -136,18 +136,20 @@ export const trainingPlansApi = baseApi.injectEndpoints({
 
         /**
          * Obtener recomendaciones 3-card para un cliente (Volume, Intensidad, Selección de ejercicios)
-         * Backend: GET /api/v1/training-plans/recommendations/{client_id}
+         * Backend: GET /api/v1/training-plans/recommendations/{client_id}?plan_goal={goal}
+         * 
+         * Cache key includes planGoal to ensure recommendations update when objective changes.
          */
         getTrainingPlanRecommendations: builder.query<
             TrainingPlanRecommendationsResponse,
-            number
+            { clientId: number; planGoal?: string }
         >({
-            query: (clientId) => ({
-                url: `/training-plans/recommendations/${clientId}`,
+            query: ({ clientId, planGoal }) => ({
+                url: `/training-plans/recommendations/${clientId}${planGoal ? `?plan_goal=${encodeURIComponent(planGoal)}` : ""}`,
                 method: "GET",
             }),
-            providesTags: (result, error, clientId) => [
-                { type: "TrainingPlan", id: `RECOMMENDATIONS_${clientId}` },
+            providesTags: (result, error, { clientId, planGoal }) => [
+                { type: "TrainingPlan", id: `RECOMMENDATIONS_${clientId}_${planGoal || "client_default"}` },
             ],
         }),
 

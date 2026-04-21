@@ -13,7 +13,6 @@ import { AuthState, User } from "@nexia/shared/types/auth";
 import { AUTH_CONFIG } from "@nexia/shared/config/constants";
 import { storage } from '@nexia/shared/storage/IStorage';
 import { authApi } from '@nexia/shared/api/authApi';
-import { baseApi } from '@nexia/shared/api/baseApi';
 
 /**
  * Carga estado inicial desde storage de forma async.

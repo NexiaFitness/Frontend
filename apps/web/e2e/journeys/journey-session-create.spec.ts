@@ -6,8 +6,8 @@
  * - "Crear plan" abre MODAL (no navega a training-plans/create) →
  * - Rellenar modal (nombre, objetivo, fechas) → Crear plan →
  * - Modal cierra, tab cambia a Planificación, se permanece en clients/:id →
- * - Tab Sesiones → "+ Crear sesión" → clients/:id/sessions/new →
- * - Rellenar sesión (nombre, fecha, tipo) → Crear sesión →
+ * - Tab Sesiones → "+ Crear sesión" → clients/:id/sessions/new (elegir día en calendario) →
+ * - …/sessions/new/constructor?date= → Rellenar sesión → Crear sesión →
  * - Redirección a clients/:id?tab=sessions (no sale del cliente).
  *
  * Regla: Crear plan y nueva sesión desde cliente NO redirigen a /dashboard/training-plans.
@@ -93,6 +93,17 @@ test.describe("Journey — Create session (client → modal plan → create sess
 
     await expect(page).toHaveURL(
       new RegExp(`/dashboard/clients/${clientId}/sessions/new`),
+      { timeout: 10_000 }
+    );
+
+    // Plan activo: paso calendario; elegir hoy (vigente en el plan recién creado) y abrir constructor
+    await expect(
+      page.getByRole("heading", { name: /elegir día/i })
+    ).toBeVisible({ timeout: 10_000 });
+    const dayOfMonth = String(new Date().getDate());
+    await page.getByRole("button", { name: dayOfMonth }).click();
+    await expect(page).toHaveURL(
+      new RegExp(`/dashboard/clients/${clientId}/sessions/new/constructor\\?date=`),
       { timeout: 10_000 }
     );
 

@@ -3,3 +3,4 @@ export { TrainingPlanDetail } from "./TrainingPlanDetail";
 export { TrainingPlanEdit } from "./TrainingPlanEdit";
 export { CreateTrainingPlan } from "./CreateTrainingPlan";
 export { CreateTrainingPlanTemplate } from "./CreateTrainingPlanTemplate";
+export { TrainingPlanTemplateDetail } from "./TrainingPlanTemplateDetail";

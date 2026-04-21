@@ -12,34 +12,68 @@
 
 import React, { useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
+import { ArrowLeft, Calendar, ChevronRight, Clock, Timer } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { Badge } from "@/components/ui/Badge";
 import {
     useGetStandaloneSessionQuery,
     useGetStandaloneSessionExercisesQuery,
 } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import {
-    formatSetsMetric,
-    computeSessionSetsTotals,
-} from "@/utils/sessionExerciseUtils";
+import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramming";
+import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
+import { cn } from "@/lib/utils";
 
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
     cancelled: "Cancelada",
-    skipped: "Saltada",
-    in_progress: "En progreso",
+    skipped: "Cancelada",
+    in_progress: "Planificada",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-    planned: "bg-primary/10 text-primary border border-primary/30",
-    completed: "bg-success/10 text-success border border-success/30",
-    cancelled: "bg-destructive/10 text-destructive border border-destructive/30",
-    skipped: "bg-muted text-muted-foreground border border-border",
-    in_progress: "bg-warning/10 text-warning border border-warning/30",
+const STATUS_STYLES: Record<string, string> = {
+    planned: "bg-primary/15 text-primary",
+    completed: "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]",
+    cancelled: "bg-destructive/15 text-destructive",
+    skipped: "bg-destructive/15 text-destructive",
+    in_progress: "bg-primary/15 text-primary",
 };
+
+const TYPE_LABELS: Record<string, string> = {
+    strength: "Fuerza",
+    cardio: "Cardio",
+    technique: "Tecnica",
+    assessment: "Evaluacion",
+};
+
+const TYPE_STYLES: Record<string, string> = {
+    strength: "bg-primary/20 text-primary",
+    cardio: "bg-warning/20 text-warning",
+    technique: "bg-info/20 text-info",
+    assessment: "bg-[hsl(270,60%,60%)]/20 text-[hsl(270,60%,60%)]",
+};
+
+function getInitials(fullName: string): string {
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "--";
+    const first = parts[0]?.[0] ?? "";
+    const last = parts.length > 1 ? parts[parts.length - 1]?.[0] ?? "" : "";
+    return `${first}${last}`.toUpperCase();
+}
+
+function formatLongDate(dateStr: string | null | undefined): string {
+    if (!dateStr) return "Sin fecha";
+    return new Date(`${dateStr}T12:00:00`)
+        .toLocaleDateString("es-ES", {
+            weekday: "long",
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+        })
+        .replace(",", "");
+}
 
 export const StandaloneSessionDetail: React.FC = () => {
     const navigate = useNavigate();
@@ -62,31 +96,25 @@ export const StandaloneSessionDetail: React.FC = () => {
         skip: !session?.client_id,
     });
 
-    const breadcrumbItems: BreadcrumbItem[] = useMemo(() => {
-        const items: BreadcrumbItem[] = [
-            { label: "Dashboard", path: "/dashboard" },
-            { label: "Clientes", path: "/dashboard/clients" },
-        ];
-
-        if (client) {
-            items.push({
-                label: `${client.nombre} ${client.apellidos}`,
-                path: `/dashboard/clients/${client.id}`,
-            });
-        }
-
-        if (session) {
-            items.push({
-                label: session.session_name,
-                active: true,
-            });
-        }
-
-        return items;
-    }, [client, session]);
-
-    const setsTotals = useMemo(
-        () => computeSessionSetsTotals(exercises),
+    const displayExercises: SessionExerciseDisplay[] = useMemo(
+        () =>
+            exercises.map((exercise) => ({
+                id: exercise.id,
+                exerciseId: exercise.exercise_id,
+                exerciseName: `Ejercicio #${exercise.exercise_id}`,
+                order: exercise.order_in_session,
+                plannedSets: exercise.planned_sets,
+                plannedReps:
+                    exercise.planned_reps != null ? String(exercise.planned_reps) : null,
+                plannedDuration: exercise.planned_duration,
+                plannedWeight: exercise.planned_weight,
+                plannedRest: exercise.planned_rest,
+                effortCharacter: null,
+                effortValue: null,
+                actualSets: exercise.actual_sets,
+                actualReps: exercise.actual_reps != null ? String(exercise.actual_reps) : null,
+                notes: exercise.notes,
+            })),
         [exercises]
     );
 
@@ -124,190 +152,124 @@ export const StandaloneSessionDetail: React.FC = () => {
         );
     }
 
-    const statusLabel = STATUS_LABELS[session.status] || session.status;
-    const statusColor = STATUS_COLORS[session.status] || "bg-muted text-muted-foreground border border-border";
-
-    const formatDate = (dateStr: string | null | undefined): string => {
-        if (!dateStr) return "Sin fecha";
-        return new Date(dateStr).toLocaleDateString("es-ES", {
-            day: "2-digit",
-            month: "short",
-            year: "numeric",
-        });
-    };
+    const statusLabel = STATUS_LABELS[session.status] || "Planificada";
+    const statusStyle = STATUS_STYLES[session.status] || "bg-primary/15 text-primary";
+    const sessionTypeKey = String(session.session_type || "").toLowerCase();
+    const typeLabel = TYPE_LABELS[sessionTypeKey] || session.session_type || "--";
+    const typeStyle = TYPE_STYLES[sessionTypeKey] || "bg-primary/20 text-primary";
+    const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
 
     return (
-        <div className="min-h-screen -mt-16 md:-mt-18 lg:-mt-20">
-            <div className="bg-white border-b border-gray-200">
-                <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-2">
-                    <Breadcrumbs items={breadcrumbItems} />
-                </div>
-
-                <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-6">
-                    <div className="flex flex-col lg:flex-row lg:items-start gap-8 lg:gap-12 mb-6">
-                        <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-4">
-                                <h1 className="text-lg font-semibold text-foreground">
-                                    {session.session_name}
-                                </h1>
-                                <span className="px-2 py-1 rounded-full text-xs font-medium bg-muted text-muted-foreground border border-border">
-                                    Sesión libre
-                                </span>
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}>
-                                    {statusLabel}
-                                </span>
-                            </div>
-                            <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm">
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">Fecha</span>
-                                    <p className="text-foreground font-medium">{formatDate(session.session_date)}</p>
-                                </div>
-                                <div>
-                                    <span className="text-xs uppercase tracking-wide text-primary">Tipo</span>
-                                    <p className="text-foreground font-medium">{session.session_type}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="flex flex-col sm:flex-row lg:flex-col gap-2">
-                            {session.client_id && (
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() =>
-                                        navigate(`/dashboard/clients/${session.client_id}?tab=sessions`)
-                                    }
-                                >
-                                    Volver al cliente
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="border-b border-primary/30 mb-4" />
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div>
-                            <span className="text-xs uppercase tracking-wide text-primary">
-                                Duración planificada
-                            </span>
-                            <p className="text-foreground font-medium">
-                                {session.planned_duration ? `${session.planned_duration} min` : "—"}
-                            </p>
-                        </div>
-                        <div>
-                            <span className="text-xs uppercase tracking-wide text-primary">Cliente</span>
-                            <p className="text-foreground font-medium">
-                                {client ? `${client.nombre} ${client.apellidos}` : "—"}
-                            </p>
-                        </div>
-                    </div>
-                </div>
+        <div className="space-y-6">
+            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <button
+                    type="button"
+                    className="hover:text-foreground"
+                    onClick={() => navigate("/dashboard/sessions")}
+                >
+                    Sesiones
+                </button>
+                <ChevronRight className="h-3.5 w-3.5" aria-hidden />
+                <span className="truncate font-medium text-foreground">{session.session_name}</span>
             </div>
 
-            <div className="px-4 sm:px-6 lg:px-8 pt-8 pb-12 lg:pb-20">
-                <div className="grid grid-cols-1 gap-6">
-                    <div className="bg-card rounded-xl border border-border p-6">
-                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
-                            <h2 className="text-lg font-semibold text-foreground">
-                                Ejercicios de la sesión
-                            </h2>
-                            {!isLoadingExercises &&
-                                !isErrorExercises &&
-                                exercises.length > 0 &&
-                                (setsTotals.totalPlanned > 0 || setsTotals.totalActual > 0) && (
-                                    <div
-                                        className="text-sm text-muted-foreground"
-                                        aria-label="Total series programadas vs realizadas"
-                                    >
-                                        Total:{" "}
-                                        <span className="font-medium text-foreground">
-                                            {setsTotals.totalActual}/{setsTotals.totalPlanned}{" "}
-                                            series
-                                        </span>
-                                    </div>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-start gap-4">
+                    <span className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-full">
+                        <span className="flex h-full w-full items-center justify-center rounded-full bg-success/20 text-lg font-bold text-success">
+                            {getInitials(clientName)}
+                        </span>
+                    </span>
+                    <div>
+                        <div className="flex flex-wrap items-center gap-3">
+                            <h1 className="text-xl font-bold">{session.session_name}</h1>
+                            <Badge
+                                className={cn(
+                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0",
+                                    statusStyle
                                 )}
+                            >
+                                {statusLabel}
+                            </Badge>
+                            <Badge
+                                className={cn(
+                                    "inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0",
+                                    typeStyle
+                                )}
+                            >
+                                {typeLabel}
+                            </Badge>
+                            <Badge className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0 bg-muted text-muted-foreground">
+                                Sesion libre
+                            </Badge>
                         </div>
-
-                        {isLoadingExercises && (
-                            <div className="flex items-center justify-center py-8">
-                                <LoadingSpinner size="md" />
-                            </div>
-                        )}
-
-                        {isErrorExercises && (
-                            <Alert variant="error">No se pudieron cargar los ejercicios</Alert>
-                        )}
-
-                        {!isLoadingExercises && !isErrorExercises && exercises.length === 0 && (
-                            <div className="text-sm text-muted-foreground">No hay ejercicios registrados.</div>
-                        )}
-
-                        {!isLoadingExercises && !isErrorExercises && exercises.length > 0 && (
-                            <div className="space-y-3">
-                                {exercises.map((exercise) => (
-                                    <div
-                                        key={exercise.id}
-                                        className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border border-border rounded-lg p-4"
-                                    >
-                                        <div>
-                                            <p className="text-sm font-semibold text-foreground">
-                                                Ejercicio #{exercise.exercise_id}
-                                            </p>
-                                            <p className="text-xs text-muted-foreground">
-                                                Orden: {exercise.order_in_session}
-                                            </p>
-                                        </div>
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs text-muted-foreground">
-                                            <div>
-                                                <span className="block uppercase">Series</span>
-                                                {(() => {
-                                                    const metric = formatSetsMetric(
-                                                        exercise.planned_sets,
-                                                        exercise.actual_sets
-                                                    );
-                                                    return (
-                                                        <span
-                                                            className={`inline-block px-2 py-0.5 rounded-md text-xs font-medium ${metric.badgeClass}`}
-                                                            title="Programadas / realizadas"
-                                                        >
-                                                            {metric.label}
-                                                        </span>
-                                                    );
-                                                })()}
-                                            </div>
-                                            <div>
-                                                <span className="block uppercase">Reps</span>
-                                                <span className="font-medium">{exercise.planned_reps ?? "—"}</span>
-                                            </div>
-                                            <div>
-                                                <span className="block uppercase">Peso</span>
-                                                <span className="font-medium">{exercise.planned_weight ?? "—"}</span>
-                                            </div>
-                                            <div>
-                                                <span className="block uppercase">Descanso</span>
-                                                <span className="font-medium">{exercise.planned_rest ?? "—"}</span>
-                                            </div>
-                                        </div>
-                                        {exercise.notes && (
-                                            <div className="text-xs text-muted-foreground md:text-right">
-                                                {exercise.notes}
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <p className="mt-1 text-sm text-muted-foreground">{clientName}</p>
+                        <div className="mt-2 flex items-center gap-4 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1.5">
+                                <Calendar className="h-3.5 w-3.5" aria-hidden />
+                                {formatLongDate(session.session_date)}
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <Clock className="h-3.5 w-3.5" aria-hidden />
+                                --
+                            </span>
+                            <span className="flex items-center gap-1.5">
+                                <Timer className="h-3.5 w-3.5" aria-hidden />
+                                {session.planned_duration ?? 0} min
+                            </span>
+                        </div>
                     </div>
-
-                    {session.notes && (
-                        <div className="bg-card rounded-xl border border-border p-6">
-                            <h2 className="text-lg font-semibold text-foreground mb-3">Notas</h2>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">{session.notes}</p>
-                        </div>
-                    )}
+                </div>
+                <div className="flex shrink-0 items-center gap-2">
+                    <Button variant="outline" onClick={() => navigate("/dashboard/sessions")}>
+                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                        Volver
+                    </Button>
+                    {session.client_id ? (
+                        <Button
+                            variant="primary"
+                            onClick={() =>
+                                navigate(`/dashboard/clients/${session.client_id}?tab=sessions`)
+                            }
+                        >
+                            Ver cliente
+                        </Button>
+                    ) : null}
                 </div>
             </div>
+
+            <div>
+                <div className="flex items-center gap-2 mb-4">
+                    <h2 className="text-lg font-semibold">Ejercicios</h2>
+                    <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                        {displayExercises.length}
+                    </span>
+                </div>
+                {isLoadingExercises ? (
+                    <div className="flex items-center justify-center py-8">
+                        <LoadingSpinner size="md" />
+                    </div>
+                ) : isErrorExercises ? (
+                    <Alert variant="error">No se pudieron cargar los ejercicios</Alert>
+                ) : displayExercises.length === 0 ? (
+                    <div className="text-sm text-muted-foreground">No hay ejercicios registrados.</div>
+                ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {displayExercises.map((exercise) => (
+                            <SessionDetailExerciseCard key={exercise.id} exercise={exercise} />
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {session.notes && (
+                <div className="rounded-xl bg-card p-5">
+                    <h3 className="mb-3 text-sm font-semibold">Notas</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                        {session.notes}
+                    </p>
+                </div>
+            )}
         </div>
     );
 };

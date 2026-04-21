@@ -10,6 +10,8 @@
  * @updated v4.7.0 - Agregado tagType "Milestone"
  * @updated v5.0.0 - Agregados tagTypes "TrainingPlanTemplate", "TrainingPlanInstance", "MovementPattern", "MuscleGroup", "Equipment", "Tag", "Action"
  * @updated UX Sprint 1 - TICK-D04: interceptor refresh token en 401 (mutex, un reintento)
+ * @updated 2026-04 - Authorization: resolver access token (localStorage + Redux); evita 401 cuando la sesión
+ *   es válida en el store pero el storage no está legible o desincronizado.
  */
 
 import { createApi, fetchBaseQuery } from "@reduxjs/toolkit/query/react";
@@ -47,6 +49,25 @@ const getTokenSafely = (key: string): string | null => {
     }
 };
 
+/**
+ * Access token efectivo para cabeceras y lógica 401.
+ * - Prioriza localStorage si hay valor: es la fuente tras POST /auth/refresh y coherente entre pestañas.
+ * - Si no hay token en storage (fallo de persistencia, cuota, timing), usa auth.token del store:
+ *   ProtectedRoute ya consideró la sesión válida; sin esto las peticiones salen sin Bearer y FastAPI devuelve 401.
+ */
+const resolveAccessToken = (getState: () => unknown): string | null => {
+    const fromStorage = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+    if (fromStorage && fromStorage.length > 0) {
+        return fromStorage;
+    }
+    const state = getState() as RootState;
+    const fromStore = state.auth?.token;
+    if (fromStore && fromStore.length > 0) {
+        return fromStore;
+    }
+    return null;
+};
+
 /** Escribe en localStorage de forma segura (solo browser). Usado tras refresh token. */
 const setStorageSafely = (key: string, value: string): void => {
     if (typeof window === 'undefined' || typeof window.localStorage === 'undefined') return;
@@ -60,17 +81,37 @@ const setStorageSafely = (key: string, value: string): void => {
 /** Mutex: solo una petición de refresh a la vez (TICK-D04). */
 let refreshPromise: Promise<boolean> | null = null;
 
+/** Evita que POST /auth/refresh cuelgue indefinidamente y bloquee otras peticiones (p. ej. login). */
+const REFRESH_FETCH_TIMEOUT_MS = 20_000;
+
+/**
+ * Mutaciones donde 401 significa credenciales/token inválidos en esa petición, no "access caducado".
+ * No deben disparar refresh+retry (riesgo de bloqueo si /auth/refresh no responde).
+ */
+const ENDPOINTS_401_SKIP_REFRESH = new Set<string>([
+    "login",
+    "register",
+    "verifyEmail",
+    "resendVerification",
+    "forgotPassword",
+    "resetPassword",
+    "logout",
+]);
+
 /**
  * Llama a POST /auth/refresh con el refresh_token, persiste nuevos tokens y user.
  * No usa authApi para evitar dependencia circular (authApi extiende baseApi).
  */
 const doRefresh = async (refreshToken: string): Promise<boolean> => {
     const url = `${API_CONFIG.BASE_URL}/auth/refresh`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), REFRESH_FETCH_TIMEOUT_MS);
     try {
         const res = await fetch(url, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ refresh_token: refreshToken }),
+            signal: controller.signal,
         });
         if (!res.ok) return false;
         const data = (await res.json()) as {
@@ -84,6 +125,8 @@ const doRefresh = async (refreshToken: string): Promise<boolean> => {
         return true;
     } catch {
         return false;
+    } finally {
+        clearTimeout(timeoutId);
     }
 };
 
@@ -122,10 +165,10 @@ const fetchWith403Suppression = async (
 const baseQuery = fetchBaseQuery({
     baseUrl: API_CONFIG.BASE_URL,
     fetchFn: typeof window !== 'undefined' ? fetchWith403Suppression : fetch,
-    prepareHeaders: (headers, { endpoint }) => {
+    prepareHeaders: (headers, { endpoint, getState }) => {
         // Solo añadir Authorization si NO es login (login no necesita token)
         if (endpoint !== 'login') {
-            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+            const token = resolveAccessToken(getState);
             if (token) {
                 headers.set("Authorization", `Bearer ${token}`);
             }
@@ -138,29 +181,46 @@ const baseQuery = fetchBaseQuery({
 });
 
 /**
- * Interceptor para suprimir logs de errores 401/403 en consola.
- * 401: manejado por refresh token; 403: manejado por componentes.
+ * Endpoints donde 404 es un resultado válido (no un error).
+ * Estos endpoints retornan 404 cuando el recurso no existe, lo cual
+ * es manejado gracefulmente por el frontend (ej: data: null).
  */
-const suppressAuthConsoleErrors = (): (() => void) => {
+const ENDPOINTS_404_EXPECTED = new Set([
+    'active-by-client',  // GET /training-plans/active-by-client/{id} - no hay plan activo
+]);
+
+/**
+ * Interceptor para suprimir logs de errores esperados en consola.
+ * - 401: manejado por refresh token
+ * - 403: manejado por componentes
+ * - 404: manejado como data: null en endpoints específicos
+ */
+const suppressExpectedConsoleErrors = (): (() => void) => {
     if (typeof window === 'undefined') return () => {};
 
     const originalError = console.error;
     const originalWarn = console.warn;
+    
     const isOurApi = (s: string) =>
         s.includes(API_CONFIG.BASE_URL) || s.includes('/api/v1');
+    
     const is401Or403 = (s: string) =>
         s.includes('401') || s.includes('403') ||
         s.includes('Unauthorized') || s.includes('Forbidden');
+    
+    const is404Expected = (s: string) =>
+        s.includes('404') && 
+        Array.from(ENDPOINTS_404_EXPECTED).some(endpoint => s.includes(endpoint));
 
     const errorInterceptor = (...args: unknown[]): void => {
         const s = String(args.join(' '));
-        if (is401Or403(s) && isOurApi(s)) return;
+        if ((is401Or403(s) || is404Expected(s)) && isOurApi(s)) return;
         originalError.apply(console, args);
     };
 
     const warnInterceptor = (...args: unknown[]): void => {
         const s = String(args.join(' '));
-        if (is401Or403(s) && isOurApi(s)) return;
+        if ((is401Or403(s) || is404Expected(s)) && isOurApi(s)) return;
         originalWarn.apply(console, args);
     };
 
@@ -176,6 +236,7 @@ const suppressAuthConsoleErrors = (): (() => void) => {
  * BaseQuery con manejo profesional de errores HTTP
  * - 401 (Unauthorized): Silencioso si no hay token/isAuthenticated (después de logout)
  * - 403 (Forbidden): Se propaga para que los componentes lo manejen, pero se suprimen logs en consola
+ * - 404 (Not Found): Silencioso en endpoints donde es resultado válido (ej: active-by-client)
  * - Otros errores: Se propagan normalmente
  */
 const baseQueryWithReauth: BaseQueryFn<
@@ -183,15 +244,22 @@ const baseQueryWithReauth: BaseQueryFn<
     unknown,
     FetchBaseQueryError
 > = async (args, api, extraOptions) => {
-    // Suprimir logs de 401/403 durante la ejecución de la query
-    const restoreConsole = suppressAuthConsoleErrors();
+    // Suprimir logs de errores esperados durante la ejecución de la query
+    const restoreConsole = suppressExpectedConsoleErrors();
     
     try {
         const result = await baseQuery(args, api, extraOptions);
         
         // Manejo de errores 401 (Unauthorized) - TICK-D04: intentar refresh y reintentar una vez
         if (result.error && result.error.status === 401) {
-            const token = getTokenSafely(AUTH_CONFIG.TOKEN_KEY);
+            const endpointName = api.endpoint ?? "";
+
+            if (ENDPOINTS_401_SKIP_REFRESH.has(endpointName)) {
+                restoreConsole();
+                return result;
+            }
+
+            const token = resolveAccessToken(api.getState);
             const state = api.getState() as RootState;
             const isAuthenticated = state.auth?.isAuthenticated ?? false;
 
@@ -206,18 +274,21 @@ const baseQueryWithReauth: BaseQueryFn<
                 return { data: undefined };
             }
 
-            if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
-            const refreshed = await refreshPromise;
-            refreshPromise = null;
+            try {
+                if (!refreshPromise) refreshPromise = doRefresh(refreshToken);
+                const refreshed = await refreshPromise;
 
-            if (!refreshed) {
+                if (!refreshed) {
+                    restoreConsole();
+                    return { data: undefined };
+                }
+
+                const retryResult = await baseQuery(args, api, extraOptions);
                 restoreConsole();
-                return { data: undefined };
+                return retryResult;
+            } finally {
+                refreshPromise = null;
             }
-
-            const retryResult = await baseQuery(args, api, extraOptions);
-            restoreConsole();
-            return retryResult;
         }
         
         // Errores 403 (Forbidden) se propagan para que los componentes los manejen
@@ -271,5 +342,7 @@ export const baseApi = createApi({
         "Metrics",
         "Injuries",
         "HabitInsights",
+        "PlanPeriodBlock",
+        "DayException",
     ],
 });

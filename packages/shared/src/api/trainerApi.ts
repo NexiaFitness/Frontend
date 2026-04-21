@@ -58,9 +58,12 @@ export const trainerApi = baseApi.injectEndpoints({
                 url: `/trainers/${trainerId}/clients/${clientId}`,
                 method: "DELETE",
             }),
-            invalidatesTags: [
+            invalidatesTags: (result, error, { clientId }) => [
+                { type: "Client", id: clientId },
                 { type: "Client", id: "LIST" },
+                { type: "Client", id: "LIST_WITH_METRICS" },
                 { type: "Client", id: "STATS" },
+                { type: "Client", id: "RECENT_ACTIVITY" },
             ],
         }),
     }),

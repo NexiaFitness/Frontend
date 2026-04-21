@@ -8,13 +8,16 @@
  * @author Frontend Team
  * @since v3.1.0
  * @updated v6.0.0 - Integración de Breadcrumbs para navegación profesional.
+ * @updated 2026-04 - Preferencias: solo días de entreno (training_days); sin duplicar frecuencia enum ni exact_training_frequency.
+ * @updated 2026-04 - Observaciones siempre visibles; texto en foreground; añadir nota inline + PUT (desde página con onSaveQuickNote).
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
+import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 
@@ -29,6 +32,9 @@ interface ClientHeaderProps {
     onPlanificar?: () => void;
     /** Fase 1.1: abrir flujo "Usar plantilla" (solo cuando no hay plan activo). */
     onOpenUseTemplate?: () => void;
+    /** Guardar nota rápida (notes_1…3 u observaciones) vía PUT /clients — sin navegar. */
+    onSaveQuickNote?: (text: string) => Promise<boolean>;
+    isSavingQuickNote?: boolean;
 }
 
 export const ClientHeader: React.FC<ClientHeaderProps> = ({
@@ -39,8 +45,12 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     hasActivePlan = false,
     onPlanificar,
     onOpenUseTemplate,
+    onSaveQuickNote,
+    isSavingQuickNote = false,
 }) => {
     const navigate = useNavigate();
+    const [quickNoteOpen, setQuickNoteOpen] = useState(false);
+    const [quickNoteDraft, setQuickNoteDraft] = useState("");
     const clientId = clientIdProp ?? client.id;
 
     // Calcular edad desde birthdate si no está disponible directamente
@@ -85,17 +95,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
         return exp;
     };
 
-    // Traducir frecuencia semanal
-    const translateFrequency = (freq?: string | null): string => {
-        if (!freq) return "No especificada";
-        const translations: Record<string, string> = {
-            "Baja": "1-2 veces por semana",
-            "Media": "3-4 veces por semana",
-            "Alta": "5-7 veces por semana",
-        };
-        return translations[freq] || freq;
-    };
-
     // Traducir duración de sesión
     const translateSessionDuration = (duration?: string | null): string => {
         if (!duration) return "No especificada";
@@ -107,12 +106,28 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
         return translations[duration] || duration;
     };
 
-    // Días concretos (training_days) como "L, X, V"
+    // Días de entreno (training_days), ej. "L, X, V"
     const formatTrainingDays = (days?: string[] | null): string => {
         if (!days || days.length === 0) return "—";
         return days
             .map((d) => TRAINING_DAY_LABELS[d as TrainingDayValue] ?? d)
             .join(", ");
+    };
+
+    const hasAnyNote = Boolean(
+        (client.notes_1 ?? "").trim() ||
+            (client.notes_2 ?? "").trim() ||
+            (client.notes_3 ?? "").trim() ||
+            (client.observaciones ?? "").trim()
+    );
+
+    const handleSaveQuickNote = async () => {
+        if (!onSaveQuickNote || !quickNoteDraft.trim()) return;
+        const ok = await onSaveQuickNote(quickNoteDraft);
+        if (ok) {
+            setQuickNoteDraft("");
+            setQuickNoteOpen(false);
+        }
     };
 
     return (
@@ -199,7 +214,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             <div className="border-b border-border" />
 
             {/* Preferencias de entrenamiento — contenido centrado por columna, títulos en una línea */}
-            <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="min-w-0 py-0.5 text-center">
                     <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Objetivo</span>
                     <p className="mt-0.5 font-medium text-foreground break-words">{translateObjective(client.objetivo_entrenamiento)}</p>
@@ -209,23 +224,11 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     <p className="mt-0.5 font-medium text-foreground break-words">{translateExperience(client.experiencia)}</p>
                 </div>
                 <div className="min-w-0 py-0.5 text-center">
-                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Frecuencia</span>
-                    <p className="mt-0.5 font-medium text-foreground break-words">{translateFrequency(client.frecuencia_semanal)}</p>
-                </div>
-                <div className="min-w-0 py-0.5 text-center">
                     <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Duración sesiones</span>
                     <p className="mt-0.5 font-medium text-foreground break-words">{translateSessionDuration(client.session_duration)}</p>
                 </div>
                 <div className="min-w-0 py-0.5 text-center">
-                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Días/semana</span>
-                    <p className="mt-0.5 font-medium text-foreground break-words">
-                        {client.exact_training_frequency != null
-                            ? `${client.exact_training_frequency} día${client.exact_training_frequency === 1 ? "" : "s"}/semana`
-                            : "—"}
-                    </p>
-                </div>
-                <div className="min-w-0 py-0.5 text-center">
-                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Días concretos</span>
+                    <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">Días de entreno</span>
                     <p className="mt-0.5 font-medium text-foreground break-words">{formatTrainingDays(client.training_days)}</p>
                 </div>
             </div>
@@ -233,48 +236,109 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             {/* Línea separadora */}
             <div className="border-b border-border" />
 
-                {/* Fila 3: Notas */}
-                {(client.notes_1 || client.notes_2 || client.notes_3 || client.observaciones || onEditProfile) && (
-                    <div className="mb-4">
-                        <div className="mb-3 flex items-center justify-between">
-                            <span className="text-xs uppercase tracking-wide text-muted-foreground">Observaciones</span>
-                            {onEditProfile && (
-                                <button
-                                    onClick={onEditProfile}
-                                    className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
-                                >
-                                    + Añadir Nota
-                                </button>
-                            )}
-                        </div>
-                        <div className="space-y-2">
-                            {client.notes_1 && (
-                                <div>
-                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Nota 1</span>
-                                    <p className="text-foreground font-medium text-sm">{client.notes_1}</p>
-                                </div>
-                            )}
-                            {client.notes_2 && (
-                                <div>
-                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Nota 2</span>
-                                    <p className="text-foreground font-medium text-sm">{client.notes_2}</p>
-                                </div>
-                            )}
-                            {client.notes_3 && (
-                                <div>
-                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Nota 3</span>
-                                    <p className="text-foreground font-medium text-sm">{client.notes_3}</p>
-                                </div>
-                            )}
-                            {client.observaciones && (
-                                <div>
-                                    <span className="text-muted-foreground text-xs uppercase tracking-wide block mb-1">Observaciones</span>
-                                    <p className="text-foreground font-medium text-sm">{client.observaciones}</p>
-                                </div>
-                            )}
-                    </div>
+            {/* Observaciones / notas — siempre visible debajo del bloque de preferencias */}
+            <div className="mb-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Observaciones
+                    </span>
+                    {onSaveQuickNote && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setQuickNoteOpen((o) => !o);
+                                if (quickNoteOpen) setQuickNoteDraft("");
+                            }}
+                            className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
+                        >
+                            {quickNoteOpen ? "Cerrar" : "+ Añadir nota"}
+                        </button>
+                    )}
                 </div>
-            )}
+
+                {onSaveQuickNote && quickNoteOpen && (
+                    <div className="mb-4 space-y-2 rounded-md border border-border bg-muted/30 p-3">
+                        <Textarea
+                            value={quickNoteDraft}
+                            onChange={(e) => setQuickNoteDraft(e.target.value)}
+                            placeholder="Escribe la nota…"
+                            rows={3}
+                            className="text-foreground"
+                            disabled={isSavingQuickNote}
+                        />
+                        <div className="flex flex-wrap gap-2">
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="primary"
+                                onClick={handleSaveQuickNote}
+                                disabled={isSavingQuickNote || !quickNoteDraft.trim()}
+                                isLoading={isSavingQuickNote}
+                            >
+                                Guardar
+                            </Button>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                    setQuickNoteOpen(false);
+                                    setQuickNoteDraft("");
+                                }}
+                                disabled={isSavingQuickNote}
+                            >
+                                Cancelar
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                <div className="space-y-3">
+                    {!hasAnyNote && (
+                        <p className="text-sm text-foreground">Sin observaciones.</p>
+                    )}
+                    {client.notes_1?.trim() && (
+                        <div>
+                            <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
+                                Nota 1
+                            </span>
+                            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground">
+                                {client.notes_1}
+                            </p>
+                        </div>
+                    )}
+                    {client.notes_2?.trim() && (
+                        <div>
+                            <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
+                                Nota 2
+                            </span>
+                            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground">
+                                {client.notes_2}
+                            </p>
+                        </div>
+                    )}
+                    {client.notes_3?.trim() && (
+                        <div>
+                            <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
+                                Nota 3
+                            </span>
+                            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground">
+                                {client.notes_3}
+                            </p>
+                        </div>
+                    )}
+                    {client.observaciones?.trim() && (
+                        <div>
+                            <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
+                                Nota libre
+                            </span>
+                            <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground">
+                                {client.observaciones}
+                            </p>
+                        </div>
+                    )}
+                </div>
+            </div>
         </div>
     );
 };

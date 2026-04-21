@@ -10,6 +10,7 @@
  * @author Frontend Team
  * @since v5.2.0
  * @updated v5.4.0 - Reemplazado mock por RTK Query
+ * @updated v5.6.0 - Skip si training_block sin ventana (period_start+period_end o week); evita 400
  */
 
 import { useMemo } from "react";
@@ -35,6 +36,8 @@ export interface UseCoherenceReturn {
     colors: readonly string[];
     isLoading: boolean;
     isError: boolean;
+    /** True cuando la query RTK va en skip (p. ej. training_block sin fechas válidas o clientId inválido). */
+    isQuerySkipped: boolean;
 }
 
 /**
@@ -380,6 +383,13 @@ export const useCoherence = (
     const effectivePeriodStart = periodStart || (dateRanges.start || undefined);
     const effectivePeriodEnd = periodEnd || (dateRanges.end || undefined);
 
+    const hasWeek = Boolean(week?.trim());
+    const hasDateRange =
+        Boolean(effectivePeriodStart?.trim()) && Boolean(effectivePeriodEnd?.trim());
+    const hasValidBackendWindow = hasWeek || hasDateRange;
+    const skipForTrainingBlock = periodType === "training_block" && !hasValidBackendWindow;
+    const skipQuery = clientId <= 0 || skipForTrainingBlock;
+
     const { data: backendData, isLoading, isError } = useGetClientCoherenceQuery(
         {
             clientId,
@@ -389,6 +399,7 @@ export const useCoherence = (
             periodType,
         },
         {
+            skip: skipQuery,
             refetchOnMountOrArgChange: 30, // Refetch solo si los datos tienen más de 30 segundos
             refetchOnFocus: false,
             refetchOnReconnect: true,
@@ -420,7 +431,7 @@ export const useCoherence = (
     const adherenceData: AdherenceChartData[] = useMemo(
         () => [
             { name: "Completadas", value: data.sessions_completed },
-            { name: "Pendientes", value: data.sessions_total - data.sessions_completed },
+            { name: "Perdidas", value: data.sessions_total - data.sessions_completed },
         ],
         [data.sessions_completed, data.sessions_total]
     );
@@ -465,8 +476,9 @@ export const useCoherence = (
         idealLineData,
         monotonyThresholdData,
         colors,
-        isLoading,
-        isError,
+        isLoading: skipQuery ? false : isLoading,
+        isError: skipQuery ? false : isError,
+        isQuerySkipped: skipQuery,
     };
 };
 

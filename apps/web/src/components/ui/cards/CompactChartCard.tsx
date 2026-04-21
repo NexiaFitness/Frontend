@@ -1,22 +1,11 @@
 /**
- * CompactChartCard.tsx — Wrapper compacto para gráficos Recharts
+ * CompactChartCard.tsx — Wrapper para gráficos Recharts (dashboard / coherencia)
  *
- * Contexto:
- * - Componente reutilizable para contener gráficos con padding reducido
- * - Diseñado específicamente para gráficos Recharts en tabs de cliente
- * - Estilos optimizados para visualización de datos (px-4 pt-4 pb-2)
- *
- * Responsabilidades:
- * - Proporcionar contenedor consistente para gráficos con espaciado compacto
- * - Mostrar título del gráfico con tipografía estándar
- * - Prevenir overflow con min-w-0
- * - Permitir personalización con className
- *
- * @author Frontend Team
- * @since v5.5.0
+ * Estilo Nexia: tarjeta oscura, borde sutil, cabecera tipo “panel”, área de trazado ligeramente contrastada.
  */
 
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export interface CompactChartCardProps {
     title: string;
@@ -30,10 +19,21 @@ export const CompactChartCard: React.FC<CompactChartCardProps> = ({
     className,
 }) => {
     return (
-        <div className={`bg-card border border-border rounded-lg shadow px-4 pt-4 pb-2 min-w-0 ${className ?? ""}`}>
-            <h3 className="text-base font-semibold text-foreground mb-6">{title}</h3>
-            <div className="w-full min-w-0 min-h-[360px]">{children}</div>
+        <div
+            className={cn(
+                "min-w-0 overflow-hidden rounded-xl",
+                "border border-border/60 bg-card/95",
+                "shadow-none ring-1 ring-inset ring-white/[0.04]",
+                "p-5 sm:p-6",
+                className
+            )}
+        >
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground sm:mb-5">
+                {title}
+            </h3>
+            <div className="min-h-[360px] w-full min-w-0 rounded-lg border border-border/30 bg-muted/15 p-2 sm:p-3">
+                {children}
+            </div>
         </div>
     );
 };
-
