@@ -16,6 +16,8 @@ on:
 env:
   NODE_VERSION: '22.19.0'
   PNPM_VERSION: '10.15.0'
+  # Vercel API requires CLI >= 47.2.2 (default in vercel-action is too old)
+  VERCEL_CLI_VERSION: '47.2.2'
 
 jobs:
   build-and-test:
@@ -94,6 +96,7 @@ jobs:
         if: github.ref == 'refs/heads/develop'
         uses: amondnet/vercel-action@v25
         with:
+          vercel-version: ${{ env.VERCEL_CLI_VERSION }}
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
@@ -103,6 +106,7 @@ jobs:
         if: github.ref == 'refs/heads/main'
         uses: amondnet/vercel-action@v25
         with:
+          vercel-version: ${{ env.VERCEL_CLI_VERSION }}
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
