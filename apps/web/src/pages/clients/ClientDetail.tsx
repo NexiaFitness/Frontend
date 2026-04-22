@@ -74,6 +74,13 @@ export const ClientDetail: React.FC = () => {
 
     // S03: si la URL trae tab legacy, abrir "sessions" (enlaces antiguos)
     const [searchParams, setSearchParams] = useSearchParams();
+
+    const planningFocusPlanId = React.useMemo(() => {
+        const raw = searchParams.get("plan");
+        if (raw == null || raw === "") return null;
+        const n = parseInt(raw, 10);
+        return Number.isFinite(n) && n > 0 ? n : null;
+    }, [searchParams]);
     React.useEffect(() => {
         const tab = searchParams.get("tab");
         if (tab === "workouts" || tab === "session-programming") {
@@ -280,6 +287,7 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
+                        focusPlanId={planningFocusPlanId}
                         onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
                             state: { from: location.pathname },
                         })}
