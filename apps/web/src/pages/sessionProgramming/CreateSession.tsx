@@ -48,13 +48,16 @@ import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingB
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { buildExercisePayload } from "./buildExercisePayload";
+import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
+import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
+import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -65,6 +68,7 @@ import type {
     SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
+import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
 
@@ -220,6 +224,17 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         notes: "",
     });
 
+    const volumeRecComplete =
+        recommendationsData?.status === "complete"
+            ? (recommendationsData as TrainingPlanRecommendationsComplete)
+            : null;
+    const volumeMaxSets = volumeRecComplete?.recommendations.volume.max_sets;
+
+    const plannedVolumeInt = Math.min(
+        10,
+        Math.max(1, Math.round(Number(formData.plannedVolume) || 5))
+    );
+
     const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
     // P2: Plan activo para la fecha seleccionada (ventana start_date..end_date contiene sessionDate)
@@ -241,6 +256,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     /** Fase 4+7: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
+
+    const draftExercisesForVolumePanel = useMemo(
+        () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
+        [constructorRows]
+    );
+
+    const weeklyVolumePanel = useWeeklyClientVolumePanel({
+        clientId: effectiveClientId,
+        sessionDateYmd: formData.sessionDate,
+        plannedVolume1to10: plannedVolumeInt,
+        recommendationsComplete: recommendationsData?.status === "complete",
+        volumeMaxSets,
+        includeStandalone: true,
+        draftExercises: draftExercisesForVolumePanel,
+    });
 
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
     const [createSessionBlock] = useCreateSessionBlockMutation();
@@ -804,7 +834,18 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
                             {/* Recomendaciones de plan (Lovable) — solo cuando hay cliente asignado */}
                             {effectiveClientId && (
-                                <RecommendationsCards clientId={effectiveClientId} />
+                                <>
+                                    <RecommendationsCards clientId={effectiveClientId} />
+                                    <WeeklyClientVolumePanel
+                                        weekLabel={weeklyVolumePanel.weekLabel}
+                                        rows={weeklyVolumePanel.rows}
+                                        summary={weeklyVolumePanel.summary}
+                                        isLoading={weeklyVolumePanel.isLoading}
+                                        isError={weeklyVolumePanel.isError}
+                                        hasClient={weeklyVolumePanel.hasClient}
+                                        usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
+                                    />
+                                </>
                             )}
 
                             {/* Bloques + Constructor + Panel lateral — flex cuando panel abierto */}

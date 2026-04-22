@@ -2,6 +2,7 @@
 export * from "./api/authApi";
 export * from "./api/baseApi";
 export * from "./api/clientsApi";
+export * from "./api/sessionLoadApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
@@ -135,6 +136,12 @@ export * from "./types/training";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
 export * from "./training/weeklyVolumeTarget";
+export * from "./training/weeklyVolumePanelModel";
+export {
+    mondayOfIsoWeekContaining,
+    formatWeekRangeLabelEs,
+    sundayOfWeekFromMondayYmd,
+} from "./utils/isoWeekRange";
 export * from "./types/trainingAnalytics";
 export * from "./types/trainingRecommendations";
 export * from "./types/sessionRecommendations";
@@ -156,6 +163,7 @@ export {
     TRAINING_SESSION_STATUS_LABELS,
 } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
+export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
 export * from "./types/coherence";

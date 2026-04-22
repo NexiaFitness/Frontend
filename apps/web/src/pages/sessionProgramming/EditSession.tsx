@@ -11,7 +11,7 @@
  * @since v6.0.0
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
@@ -55,12 +56,16 @@ import {
     buildExercisePayload,
     buildExerciseUpdatePayload,
 } from "./buildExercisePayload";
+import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, Flame, Gauge } from "lucide-react";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
+import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
+import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import { SESSION_TYPES } from "./sessionFormConstants";
 
 /** Escala 1–10 del slider; el API a veces devuelve floats o valores fuera de rango. */
@@ -108,6 +113,11 @@ export const EditSession: React.FC = () => {
         includeHistory: false,
     });
 
+    const { data: editRecommendationsData } = useGetTrainingPlanRecommendationsQuery(
+        { clientId: session?.client_id ?? 0 },
+        { skip: !session?.client_id }
+    );
+
     // Hook de mutación para actualizar sesión
     const [updateTrainingSession, { isLoading: isUpdatingSession }] = useUpdateTrainingSessionMutation();
 
@@ -122,12 +132,35 @@ export const EditSession: React.FC = () => {
         notes: "",
     });
 
+    const editVolumeRecComplete =
+        editRecommendationsData?.status === "complete"
+            ? (editRecommendationsData as TrainingPlanRecommendationsComplete)
+            : null;
+    const editVolumeMaxSets = editVolumeRecComplete?.recommendations.volume.max_sets;
+    const editPlannedVolumeInt = sliderDisplay1to10(formData.plannedVolume, 5);
+
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
+
+    const draftExercisesForVolumePanel = useMemo(
+        () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
+        [constructorRows]
+    );
+
+    const weeklyVolumePanel = useWeeklyClientVolumePanel({
+        clientId: session?.client_id,
+        sessionDateYmd: formData.sessionDate,
+        plannedVolume1to10: editPlannedVolumeInt,
+        recommendationsComplete: editRecommendationsData?.status === "complete",
+        volumeMaxSets: editVolumeMaxSets,
+        excludeTrainingSessionId: sessionId > 0 ? sessionId : undefined,
+        includeStandalone: true,
+        draftExercises: draftExercisesForVolumePanel,
+    });
 
     const dispatch = useDispatch<AppDispatch>();
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
@@ -678,7 +711,18 @@ export const EditSession: React.FC = () => {
                         ) : null}
 
                         {session.client_id ? (
-                            <RecommendationsCards clientId={session.client_id} />
+                            <>
+                                <RecommendationsCards clientId={session.client_id} />
+                                <WeeklyClientVolumePanel
+                                    weekLabel={weeklyVolumePanel.weekLabel}
+                                    rows={weeklyVolumePanel.rows}
+                                    summary={weeklyVolumePanel.summary}
+                                    isLoading={weeklyVolumePanel.isLoading}
+                                    isError={weeklyVolumePanel.isError}
+                                    hasClient={weeklyVolumePanel.hasClient}
+                                    usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
+                                />
+                            </>
                         ) : null}
 
                         <div className="flex gap-6">

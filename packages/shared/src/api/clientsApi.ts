@@ -58,6 +58,10 @@ import type {
     ProgressCategoriesResponse,
 } from "../types/dashboard";
 import type { DailyCoherenceAnalyticsOut } from "../types/coherence";
+import type {
+    GetWeeklySessionLoadByMuscleArg,
+    WeeklyMusclePlannedLoadOut,
+} from "../types/sessionLoad";
 import {
     buildCoherenceDevMockResponse,
     shouldServeCoherenceDevMock,
@@ -939,6 +943,49 @@ export const clientsApi = baseApi.injectEndpoints({
             providesTags: [{ type: "Client", id: "RECENT_ACTIVITY" }],
         }),
 
+        /**
+         * Suma de series planificadas por grupo muscular en la semana (plan + opcional standalone).
+         * GET /api/v1/clients/{client_id}/session-load/weekly-by-muscle
+         */
+        getWeeklySessionLoadByMuscle: builder.query<
+            WeeklyMusclePlannedLoadOut,
+            GetWeeklySessionLoadByMuscleArg
+        >({
+            query: ({
+                clientId,
+                weekStart,
+                excludeTrainingSessionId,
+                excludeStandaloneSessionId,
+                includeStandalone,
+            }) => {
+                const params = new URLSearchParams();
+                params.append("week_start", weekStart);
+                if (excludeTrainingSessionId != null) {
+                    params.append(
+                        "exclude_training_session_id",
+                        excludeTrainingSessionId.toString()
+                    );
+                }
+                if (excludeStandaloneSessionId != null) {
+                    params.append(
+                        "exclude_standalone_session_id",
+                        excludeStandaloneSessionId.toString()
+                    );
+                }
+                if (includeStandalone === false) {
+                    params.append("include_standalone", "false");
+                }
+                return {
+                    url: `/clients/${clientId}/session-load/weekly-by-muscle?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (result, error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "TrainingSession" as const, id: "LIST" },
+            ],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -997,4 +1044,5 @@ export const {
     // Dashboard hooks
     useGetClientsWithMetricsQuery,
     useGetRecentActivityQuery,
+    useGetWeeklySessionLoadByMuscleQuery,
 } = clientsApi;

@@ -9,5 +9,6 @@ export * from "./useCreateSessionFromTemplate";
 export * from "./useCreateSession";
 export * from "./useCreateTemplate";
 export * from "./useSessionExercisesDisplay";
+export * from "./useWeeklyClientVolumePanel";
 
 
