@@ -8,22 +8,43 @@
  * @author Frontend Team
  * @since v3.3.0
  * @updated Plan de cargas Fase 5 — Coherencia y alignment
+ * @updated P-02 — Empty state cuando no hay baselines (mes/semana/día en 0) para no mostrar
+ *   métricas en cero sin contexto; CTA a Planificación (URL o callback según contenedor).
  */
 
-import React from "react";
+import React, { useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useTrainingPlanCoherence, useTrainingPlanAlignment } from "@nexia/shared/hooks/training";
 import { MetricCard } from "@/components/ui/cards";
 import { LoadingSpinner } from "@/components/ui/feedback";
+import { Button } from "@/components/ui/buttons";
 
 interface ChartsTabProps {
     planId: number;
     planStartDate: string;
     planEndDate: string;
+    /**
+     * P.ej. `TrainingPlanDetailPanel`: tabs en estado local; al pulsar Planificación debe
+     * cambiar el tab del padre. Si no se pasa, se usa `?tab=planning` (página de detalle con URL).
+     */
+    onGoToPlanningTab?: () => void;
 }
 
 export const ChartsTab: React.FC<ChartsTabProps> = ({
     planId,
+    onGoToPlanningTab,
 }) => {
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const handleGoToPlanningTab = useCallback(() => {
+        if (onGoToPlanningTab) {
+            onGoToPlanningTab();
+            return;
+        }
+        const next = new URLSearchParams(searchParams);
+        next.set("tab", "planning");
+        setSearchParams(next, { replace: true });
+    }, [onGoToPlanningTab, searchParams, setSearchParams]);
     const {
         data: coherenceData,
         isLoading: coherenceLoading,
@@ -76,6 +97,29 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                 </h3>
                 {coherenceData ? (
                     <>
+                        {coherenceData.month_coherence.length === 0 &&
+                        coherenceData.week_coherence.length === 0 &&
+                        coherenceData.day_coherence.length === 0 ? (
+                            <div
+                                className="rounded-lg border border-border bg-muted/40 p-6 space-y-4"
+                                role="status"
+                                aria-live="polite"
+                            >
+                                <p className="text-sm text-foreground leading-relaxed">
+                                    Este plan no tiene baselines de planificación todavía. Ve a la
+                                    pestaña Planificación para crear el baseline mensual.
+                                </p>
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={handleGoToPlanningTab}
+                                >
+                                    Ir a Planificación
+                                </Button>
+                            </div>
+                        ) : (
+                            <>
                         <div className="flex flex-wrap gap-4 mb-4">
                             <MetricCard
                                 title="Coherencia global"
@@ -193,6 +237,8 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                             <div className="rounded-lg border border-success/30 bg-success/10 p-3 text-sm text-success">
                                 Sin desviaciones. Todas las escalas de volumen e intensidad están dentro del umbral del {coherenceData.deviation_threshold}%.
                             </div>
+                        )}
+                            </>
                         )}
                     </>
                 ) : (

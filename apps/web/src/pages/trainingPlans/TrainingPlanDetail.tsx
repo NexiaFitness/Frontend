@@ -265,6 +265,7 @@ export const TrainingPlanDetail: React.FC = () => {
                             planId={planId}
                             planStartDate={plan.start_date}
                             planEndDate={plan.end_date}
+                            onGoToPlanningTab={() => setActiveTab("planning")}
                         />
                     </Suspense>
                 );
