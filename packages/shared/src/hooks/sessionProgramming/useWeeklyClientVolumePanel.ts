@@ -13,7 +13,7 @@ import {
     type WeeklyVolumePanelRowModel,
     type WeeklyVolumeSummaryCounts,
 } from "../../training/weeklyVolumePanelModel";
-import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut } from "../../types/sessionLoad";
+import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut, SessionLoadHintOut } from "../../types/sessionLoad";
 import { formatWeekRangeLabelEs, mondayOfIsoWeekContaining, sundayOfWeekFromMondayYmd } from "../../utils/isoWeekRange";
 
 function useDebouncedDraftKey(draft: SessionLoadDraftExerciseIn[] | undefined, delay: number): string {
@@ -53,6 +53,8 @@ export interface UseWeeklyClientVolumePanelResult {
     hasClient: boolean;
     /** True cuando la fila del panel usa proyección borrador + guardado (Fase B). */
     usesDraftProjection: boolean;
+    /** Fase C: hints dinámicos del backend (vacío si no hay borrador o no hay objetivo). */
+    hints: SessionLoadHintOut[];
 }
 
 export function useWeeklyClientVolumePanel(
@@ -123,6 +125,7 @@ export function useWeeklyClientVolumePanel(
         }
         const id = ++reqId.current;
         setDraftError(false);
+        const volumeLevel = Math.min(10, Math.max(1, Math.round(params.plannedVolume1to10)));
         validateDraft({
             client_id: clientId,
             week_start: weekStart,
@@ -130,6 +133,7 @@ export function useWeeklyClientVolumePanel(
             exclude_standalone_session_id: params.excludeStandaloneSessionId ?? null,
             include_standalone: params.includeStandalone !== false,
             draft_exercises: debouncedDraft,
+            volume_level: volumeLevel,
         })
             .unwrap()
             .then((res) => {
@@ -191,6 +195,13 @@ export function useWeeklyClientVolumePanel(
         (!hasDebouncedDraft && q.isLoading) ||
         (hasDebouncedDraft && !draftProjection && !draftError && isValidatingDraft);
 
+    const hints = useMemo((): SessionLoadHintOut[] => {
+        if (!usesDraftProjection || !draftProjection) {
+            return [];
+        }
+        return draftProjection.hints ?? [];
+    }, [usesDraftProjection, draftProjection]);
+
     return {
         weekStart,
         weekEnd,
@@ -202,5 +213,6 @@ export function useWeeklyClientVolumePanel(
         isError: q.isError || draftError,
         hasClient: !!clientId && clientId > 0,
         usesDraftProjection,
+        hints,
     };
 }

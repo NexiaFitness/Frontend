@@ -844,6 +844,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         isError={weeklyVolumePanel.isError}
                                         hasClient={weeklyVolumePanel.hasClient}
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
+                                        hints={weeklyVolumePanel.hints}
                                     />
                                 </>
                             )}

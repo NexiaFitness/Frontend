@@ -37,6 +37,8 @@ export interface SessionLoadDraftValidateIn {
     exclude_standalone_session_id?: number | null;
     include_standalone?: boolean;
     draft_exercises: SessionLoadDraftExerciseIn[];
+    /** Fase C: session volume slider 1-10. When set, backend returns hints. */
+    volume_level?: number | null;
 }
 
 /** Respuesta: solo sumas; deficit/on_target/excess lo calcula el frontend (shared). */
@@ -48,9 +50,18 @@ export interface SessionLoadDraftRowOut {
     projected_total: number;
 }
 
+/** Fase C: hint textual dinámico por grupo muscular. */
+export interface SessionLoadHintOut {
+    muscle_group_id: number;
+    name_es: string;
+    message: string;
+    severity: "info" | "warning" | "excess";
+}
+
 export interface SessionLoadDraftValidateOut {
     client_id: number;
     week_start: string;
     week_end: string;
     rows: SessionLoadDraftRowOut[];
+    hints: SessionLoadHintOut[];
 }

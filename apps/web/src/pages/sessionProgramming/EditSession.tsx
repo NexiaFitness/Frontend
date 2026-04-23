@@ -721,6 +721,7 @@ export const EditSession: React.FC = () => {
                                     isError={weeklyVolumePanel.isError}
                                     hasClient={weeklyVolumePanel.hasClient}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
+                                    hints={weeklyVolumePanel.hints}
                                 />
                             </>
                         ) : null}

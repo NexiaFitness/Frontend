@@ -9,6 +9,7 @@ import { LoadingSpinner } from "@/components/ui/feedback";
 import type {
     WeeklyVolumePanelRowModel,
     WeeklyVolumeSummaryCounts,
+    SessionLoadHintOut,
 } from "@nexia/shared";
 
 export interface WeeklyClientVolumePanelProps {
@@ -20,6 +21,8 @@ export interface WeeklyClientVolumePanelProps {
     hasClient: boolean;
     /** Fase B: el valor mostrado incluye borrador del constructor (POST validate-draft). */
     usesDraftProjection?: boolean;
+    /** Fase C: hints dinámicos de volumen. */
+    hints?: SessionLoadHintOut[];
 }
 
 function statusLabel(status: WeeklyVolumePanelRowModel["status"]): string {
@@ -79,6 +82,19 @@ function ratioText(row: WeeklyVolumePanelRowModel): string {
     return `${row.accumulated} series`;
 }
 
+function hintSeverityClass(severity: SessionLoadHintOut["severity"]): string {
+    switch (severity) {
+        case "info":
+            return "text-blue-600 bg-blue-500/10";
+        case "warning":
+            return "text-amber-600 bg-amber-500/10";
+        case "excess":
+            return "text-rose-600 bg-rose-500/10";
+        default:
+            return "text-muted-foreground bg-muted";
+    }
+}
+
 export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = ({
     weekLabel,
     rows,
@@ -87,6 +103,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     isError,
     hasClient,
     usesDraftProjection = false,
+    hints = [],
 }) => {
     const [open, setOpen] = useState(true);
 
@@ -198,6 +215,18 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                             ))}
                         </div>
                     )}
+                    {hints.length > 0 ? (
+                        <div className="mt-4 space-y-1.5">
+                            {hints.map((h) => (
+                                <div
+                                    key={h.muscle_group_id}
+                                    className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${hintSeverityClass(h.severity)}`}
+                                >
+                                    {h.message}
+                                </div>
+                            ))}
+                        </div>
+                    ) : null}
                     <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
                         {usesDraftProjection
                             ? "Proyección con el borrador actual (sin guardar) más el resto de sesiones de la semana. No bloquea el guardado."
