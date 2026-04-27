@@ -7,7 +7,7 @@
  */
 
 import React from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
     ArrowLeft,
     Calendar,
@@ -32,6 +32,7 @@ import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useSessionExercisesDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { cn } from "@/lib/utils";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
+import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
@@ -100,8 +101,19 @@ function formatShortDate(dateStr: string | null | undefined): string {
     });
 }
 
+const DEFAULT_BACK_TO_SESSIONS = "/dashboard/sessions";
+
 export const SessionDetail: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const backTarget = readSafeReturnTo(location.state) ?? null;
+    const goBack = () => {
+        if (backTarget) {
+            navigate(backTarget);
+        } else {
+            navigate(DEFAULT_BACK_TO_SESSIONS);
+        }
+    };
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -156,10 +168,10 @@ export const SessionDetail: React.FC = () => {
                     <Button
                         variant="outline"
                         className="mt-4"
-                        onClick={() => navigate("/dashboard/sessions")}
+                        onClick={goBack}
                     >
                         <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                        Volver a sesiones
+                        {backTarget ? "Volver" : "Volver a sesiones"}
                     </Button>
                 </div>
             </div>
@@ -203,9 +215,11 @@ export const SessionDetail: React.FC = () => {
                 <button
                     type="button"
                     className="hover:text-foreground"
-                    onClick={() => navigate("/dashboard/sessions")}
+                    onClick={goBack}
                 >
-                    Sesiones
+                    {backTarget?.includes("/clients/") && !backTarget.includes("/sessions/new")
+                        ? "Cliente"
+                        : "Sesiones"}
                 </button>
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                 <span className="truncate font-medium text-foreground">{session.session_name}</span>
@@ -253,7 +267,7 @@ export const SessionDetail: React.FC = () => {
                 <div className="flex shrink-0 items-center gap-2">
                     <Button
                         variant="outline"
-                        onClick={() => navigate("/dashboard/sessions")}
+                        onClick={goBack}
                     >
                         <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver

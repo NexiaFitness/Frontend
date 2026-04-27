@@ -78,6 +78,18 @@ export default {
                     border: "hsl(var(--sidebar-border))",
                     ring: "hsl(var(--sidebar-ring))",
                 },
+                bucket: {
+                    lower: "hsl(var(--bucket-lower))",
+                    "lower-foreground": "hsl(var(--bucket-lower-foreground))",
+                    upper: "hsl(var(--bucket-upper))",
+                    "upper-foreground": "hsl(var(--bucket-upper-foreground))",
+                    core: "hsl(var(--bucket-core))",
+                    "core-foreground": "hsl(var(--bucket-core-foreground))",
+                    power: "hsl(var(--bucket-power))",
+                    "power-foreground": "hsl(var(--bucket-power-foreground))",
+                    accessory: "hsl(var(--bucket-accessory))",
+                    "accessory-foreground": "hsl(var(--bucket-accessory-foreground))",
+                },
                 /* Legacy: compatibilidad hasta migración en fases posteriores */
                 "primary-600": "#4A67B3",
                 "sidebar-header": "rgba(4, 21, 32, 1)",

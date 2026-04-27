@@ -1,9 +1,8 @@
 /**
  * SessionConstructor.tsx — Tabla principal del Constructor de Sesión
- *
- * Dos estados: placeholder (sin filas) vs tabla (con cabeceras, filas, pie por bloque).
- * Filas agrupadas por blockTypeId; cada grupo tiene su pie: + Añadir serie | Eliminar bloque.
- *
+ * Contexto: aplica actualizaciones sobre filas (series, descanso, AMRAP, etc.) hacia el padre.
+ * Notas: todas las transiciones de estado usan setState en forma funcional para no perder
+ * el último `prev` (clics rápidos, múltiples orígenes) cuando `onRowsChange` es un setter.
  * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
  * @spec Lovable — Bloques + Constructor dinámico
  */
@@ -22,7 +21,8 @@ function generateId(): string {
 export interface SessionConstructorProps {
     rows: ConstructorRow[];
     blockTypes: TrainingBlockType[];
-    onRowsChange: (rows: ConstructorRow[]) => void;
+    /** Típico: `setConstructorRows` de useState, admite array o updater funcional. */
+    onRowsChange: (action: React.SetStateAction<ConstructorRow[]>) => void;
     onAddExerciseRequest: (rowId: string) => void;
 }
 
@@ -33,8 +33,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     onAddExerciseRequest,
 }) => {
     const handleUpdateRow = (rowId: string, updates: Partial<ConstructorRow>) => {
-        onRowsChange(
-            rows.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
+        onRowsChange((prev) =>
+            prev.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
         );
     };
 
@@ -43,8 +43,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     };
 
     const handleRemoveExercise = (rowId: string, exerciseId: string) => {
-        onRowsChange(
-            rows.map((r) => {
+        onRowsChange((prev) =>
+            prev.map((r) => {
                 if (r.id !== rowId) return r;
                 const exercises = r.exercises.filter((ex) => ex.id !== exerciseId);
                 return { ...r, exercises };
@@ -57,8 +57,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         exerciseId: string,
         updates: Partial<ConstructorExercise>
     ) => {
-        onRowsChange(
-            rows.map((r) => {
+        onRowsChange((prev) =>
+            prev.map((r) => {
                 if (r.id !== rowId) return r;
                 const exercises = r.exercises.map((ex) =>
                     ex.id === exerciseId ? { ...ex, ...updates } : ex
@@ -81,15 +81,15 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
             rest: 60,
             repsTipo: "reps",
         };
-        onRowsChange([...rows, newRow]);
+        onRowsChange((prev) => [...prev, newRow]);
     };
 
     const handleRemoveRow = (rowId: string) => {
-        onRowsChange(rows.filter((r) => r.id !== rowId));
+        onRowsChange((prev) => prev.filter((r) => r.id !== rowId));
     };
 
     const handleRemoveBlock = (blockTypeId: number) => {
-        onRowsChange(rows.filter((r) => r.blockTypeId !== blockTypeId));
+        onRowsChange((prev) => prev.filter((r) => r.blockTypeId !== blockTypeId));
     };
 
     /** Agrupar filas por blockTypeId para mostrar pie por bloque */

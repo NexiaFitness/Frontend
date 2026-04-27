@@ -12,6 +12,7 @@ import React from "react";
 import { Plus, X, Timer } from "lucide-react";
 import { FormSelect, FormCombobox } from "@/components/ui/forms";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
+import { cn } from "@/lib/utils";
 import type { ConstructorRow, ConstructorExercise, RepsTipo } from "./constructorTypes";
 import {
     getCaracterTipoFromEffortCharacter,
@@ -109,7 +110,15 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                     options={blockSelectOptions}
                     placeholder="Seleccionar"
                     aria-label="Bloque de entrenamiento"
-                    className="!h-8 !min-h-8 shrink-0 w-full min-w-0"
+                    className={cn(
+                        "!h-8 !min-h-8 shrink-0 w-full min-w-0",
+                        "font-medium",
+                        "border border-primary/40 !bg-primary/10 !shadow-none",
+                        "focus:!border-primary/50 focus:ring-2 focus:ring-primary/25",
+                        row.blockTypeId
+                            ? "!text-primary"
+                            : "!text-muted-foreground"
+                    )}
                 />
             </div>
 

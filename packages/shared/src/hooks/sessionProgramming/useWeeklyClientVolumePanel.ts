@@ -152,6 +152,7 @@ export function useWeeklyClientVolumePanel(
         weekStart,
         debouncedDraftKey,
         validateDraft,
+        params.plannedVolume1to10,
         params.excludeTrainingSessionId,
         params.excludeStandaloneSessionId,
         params.includeStandalone,

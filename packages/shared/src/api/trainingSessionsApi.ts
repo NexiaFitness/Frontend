@@ -22,6 +22,24 @@ import type {
     SessionRecommendationsParams,
 } from '../types/sessionRecommendations';
 
+/** Arg del listado por plan: número (primera página, limit 1000) o objeto con paginación. */
+export type GetTrainingSessionsQueryArg =
+    | number
+    | { trainingPlanId: number; skip?: number; limit?: number };
+
+function normalizeGetTrainingSessionsArg(
+    arg: GetTrainingSessionsQueryArg
+): { trainingPlanId: number; skip: number; limit: number } {
+    if (typeof arg === "number") {
+        return { trainingPlanId: arg, skip: 0, limit: 1000 };
+    }
+    return {
+        trainingPlanId: arg.trainingPlanId,
+        skip: arg.skip ?? 0,
+        limit: arg.limit ?? 1000,
+    };
+}
+
 export const trainingSessionsApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         /**
@@ -43,15 +61,19 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * GET /training-sessions/?training_plan_id={id}
-         * Obtener todas las sesiones de un Training Plan
+         * GET /training-sessions/?training_plan_id={id}&skip=&limit=
+         * Listado por plan (paginación opcional; por defecto primera página hasta 1000).
          */
-        getTrainingSessions: builder.query<TrainingSession[], number>({
-            query: (trainingPlanId) => ({
-                url: '/training-sessions/',
-                params: { training_plan_id: trainingPlanId },
-            }),
-            providesTags: (result, _error, trainingPlanId) => {
+        getTrainingSessions: builder.query<TrainingSession[], GetTrainingSessionsQueryArg>({
+            query: (arg) => {
+                const { trainingPlanId, skip, limit } = normalizeGetTrainingSessionsArg(arg);
+                return {
+                    url: '/training-sessions/',
+                    params: { training_plan_id: trainingPlanId, skip, limit },
+                };
+            },
+            providesTags: (result, _error, arg) => {
+                const { trainingPlanId } = normalizeGetTrainingSessionsArg(arg);
                 const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan'; id: string | number }> = [];
                 if (result) {
                     tags.push(
@@ -252,6 +274,7 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
 export const {
     useGetSessionRecommendationsQuery,
     useGetTrainingSessionsQuery,
+    useLazyGetTrainingSessionsQuery,
     useGetTrainingSessionsByClientQuery,
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,

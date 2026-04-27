@@ -16,7 +16,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTrainingSessions } from '@nexia/shared/hooks/training/useTrainingSessions';
 import { SessionCard } from '@/components/trainingSessions';
 import { PeriodBlockEmptyCallout } from '@/components/trainingPlans/periodization/PeriodBlockEmptyCallout';
@@ -25,6 +25,7 @@ import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
 import { BaseModal } from '@/components/ui/modals/BaseModal';
 import { cn } from '@/lib/utils';
+import { returnToStateFromView } from '@/lib/sessionDetailNavigation';
 import type { PlanTrainingSession } from '@nexia/shared';
 
 function sessionFilterChipClass(active: boolean): string {
@@ -42,6 +43,7 @@ interface SessionsTabProps {
 
 export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const {
         sessions,
         upcomingSessions,
@@ -92,7 +94,9 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
     };
 
     const handleViewDetail = (session: PlanTrainingSession | { id: number }) => {
-        navigate(`/dashboard/session-programming/sessions/${session.id}`);
+        navigate(`/dashboard/session-programming/sessions/${session.id}`, {
+            state: returnToStateFromView(location),
+        });
     };
 
     // Determinar qué sesiones mostrar según filtro

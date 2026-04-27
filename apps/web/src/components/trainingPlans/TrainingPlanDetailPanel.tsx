@@ -9,7 +9,7 @@
  * Responsabilidades:
  * - Cargar datos del plan con RTK Query
  * - Header compacto: breadcrumb Cliente > Planificación > [Plan], botón Cerrar
- * - Tabs: Sesiones, Planificación, Hitos, Gráficos
+ * - Tabs: Sesiones, Planificación, Hitos, Analítica
  *
  * @author Frontend Team
  * @since U4 paso 1.5
@@ -34,13 +34,13 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-type TabId = "sessions" | "planning" | "milestones" | "charts";
+type TabId = "sessions" | "planning" | "milestones" | "analytics";
 
 const TABS: { id: TabId; label: string }[] = [
     { id: "sessions", label: "Sesiones" },
     { id: "planning", label: "Planificación" },
     { id: "milestones", label: "Hitos" },
-    { id: "charts", label: "Gráficos" },
+    { id: "analytics", label: "Analítica" },
 ];
 
 export interface TrainingPlanDetailPanelProps {
@@ -133,7 +133,7 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
                 );
             case "milestones":
                 return <MilestonesTab planId={planId} />;
-            case "charts":
+            case "analytics":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
                         <ChartsTab

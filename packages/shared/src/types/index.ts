@@ -90,6 +90,8 @@ export * from "./training";
 export * from "./trainingAnalytics";
 export * from "./trainingRecommendations";
 export * from "./sessionRecommendations";
+export * from "./weeklyStructure";
+export * from "./sessionValidation";
 
 
 

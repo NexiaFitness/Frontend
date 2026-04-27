@@ -47,6 +47,7 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
+import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
 import type {
     ConstructorRow,
     ConstructorExercise,
@@ -140,6 +141,7 @@ export const EditSession: React.FC = () => {
     const editPlannedVolumeInt = sliderDisplay1to10(formData.plannedVolume, 5);
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
 
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
@@ -485,13 +487,7 @@ export const EditSession: React.FC = () => {
 
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
-            setTimeout(() => {
-                if (session.training_plan_id) {
-                    navigate(`/dashboard/training-plans/${session.training_plan_id}?tab=sessions`);
-                } else {
-                    navigate("/dashboard");
-                }
-            }, 1500);
+            setValidationPanelOpen(true);
         } catch (err) {
             console.error("Error actualizando sesión:", err);
             const errorMessage =
@@ -824,6 +820,21 @@ export const EditSession: React.FC = () => {
                     </Button>
                 </div>
             </div>
+
+            <SessionValidationPanel
+                trainingSessionId={sessionId}
+                isOpen={validationPanelOpen}
+                onClose={() => setValidationPanelOpen(false)}
+                onEdit={() => setValidationPanelOpen(false)}
+                onContinue={() => {
+                    setValidationPanelOpen(false);
+                    if (session?.training_plan_id) {
+                        navigate(`/dashboard/training-plans/${session.training_plan_id}?tab=sessions`);
+                    } else {
+                        navigate("/dashboard");
+                    }
+                }}
+            />
         </>
     );
 };

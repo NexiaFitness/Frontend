@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import type { PlanPeriodBlock, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
+import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 import { hasOverlap, isWithinPlanBounds } from "@nexia/shared/utils/periodBlockOverlap";
 
 type SelectionPhase = "idle" | "rangeStart" | "rangeComplete";
@@ -11,6 +12,7 @@ export interface PeriodBlockFormState {
   qualities: PeriodBlockQualityInput[];
   volumeLevel: number;
   intensityLevel: number;
+  weeklyStructure: WeeklyStructureWeekCreate[];
 }
 
 /** Estado inicial exportable (p. ej. calendario de periodización en solo lectura / selector de fecha). */
@@ -21,6 +23,7 @@ export const IDLE_PERIOD_BLOCK_FORM_STATE: PeriodBlockFormState = {
   qualities: [],
   volumeLevel: 5,
   intensityLevel: 5,
+  weeklyStructure: [],
 };
 
 const INITIAL_STATE = IDLE_PERIOD_BLOCK_FORM_STATE;
@@ -36,7 +39,7 @@ export function usePeriodBlockForm(
   const handleDayClick = useCallback((dateStr: string) => {
     setForm((prev) => {
       if (prev.phase === "idle" || prev.phase === "rangeComplete") {
-        return { ...INITIAL_STATE, phase: "rangeStart", startDate: dateStr };
+        return { ...IDLE_PERIOD_BLOCK_FORM_STATE, phase: "rangeStart", startDate: dateStr };
       }
       if (prev.phase === "rangeStart" && prev.startDate) {
         const s = new Date(prev.startDate).getTime();
@@ -107,11 +110,16 @@ export function usePeriodBlockForm(
       })),
       volumeLevel: block.volume_level,
       intensityLevel: block.intensity_level,
+      weeklyStructure: [],
     });
   }, []);
 
+  const setWeeklyStructure = useCallback((draft: WeeklyStructureWeekCreate[]) => {
+    setForm((prev) => ({ ...prev, weeklyStructure: draft }));
+  }, []);
+
   const reset = useCallback(() => {
-    setForm(INITIAL_STATE);
+    setForm(IDLE_PERIOD_BLOCK_FORM_STATE);
   }, []);
 
   const qualitiesSum = useMemo(
@@ -146,6 +154,7 @@ export function usePeriodBlockForm(
     updateQualityPct,
     setVolumeLevel,
     setIntensityLevel,
+    setWeeklyStructure,
     loadBlock,
     reset,
     qualitiesSum,

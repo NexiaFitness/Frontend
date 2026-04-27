@@ -1,0 +1,100 @@
+
+> web@0.0.0 build C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\apps\web
+> pnpm --filter @nexia/shared run build && tsc -b && vite build
+
+
+> @nexia/shared@1.0.1 build C:\Users\Nelson\Desktop\NEXIA\NexiaFitness\frontend\packages\shared
+> tsc -p tsconfig.json
+
+[36mvite v7.2.1 [32mbuilding client environment for production...[36m[39m
+transforming...
+[32m✓[39m 4306 modules transformed.
+rendering chunks...
+computing gzip size...
+[2mdist/[22m[32mindex.html                                             [39m[1m[2m  1.01 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+[2mdist/[22m[35massets/vendor-xiMy4gMA.css                             [39m[1m[2m  8.16 kB[22m[1m[22m[2m │ gzip:   1.68 kB[22m
+[2mdist/[22m[35massets/index-DWbdoNip.css                              [39m[1m[2m 92.70 kB[22m[1m[22m[2m │ gzip:  15.92 kB[22m
+[2mdist/[22m[36massets/exerciseNames-DmVThdak.js                       [39m[1m[2m  0.06 kB[22m[1m[22m[2m │ gzip:   0.08 kB[22m
+[2mdist/[22m[36massets/weeklyVolumeTarget-CjXdVfU_.js                  [39m[1m[2m  0.20 kB[22m[1m[22m[2m │ gzip:   0.15 kB[22m
+[2mdist/[22m[36massets/useToast-BoAiuDXq.js                            [39m[1m[2m  0.22 kB[22m[1m[22m[2m │ gzip:   0.19 kB[22m
+[2mdist/[22m[36massets/sessionDetailNavigation-B5zujTMe.js             [39m[1m[2m  0.23 kB[22m[1m[22m[2m │ gzip:   0.18 kB[22m
+[2mdist/[22m[36massets/Label-D6C3xaVa.js                               [39m[1m[2m  0.24 kB[22m[1m[22m[2m │ gzip:   0.20 kB[22m
+[2mdist/[22m[36massets/sessionFormConstants-DMCFYK4R.js                [39m[1m[2m  0.26 kB[22m[1m[22m[2m │ gzip:   0.17 kB[22m
+[2mdist/[22m[36massets/scheduling-D1WPji7h.js                          [39m[1m[2m  0.27 kB[22m[1m[22m[2m │ gzip:   0.23 kB[22m
+[2mdist/[22m[36massets/DashboardFixedFooter-nazvHA9_.js                [39m[1m[2m  0.29 kB[22m[1m[22m[2m │ gzip:   0.24 kB[22m
+[2mdist/[22m[36massets/useAssignTemplate-DQ_yfj2H.js                   [39m[1m[2m  0.38 kB[22m[1m[22m[2m │ gzip:   0.26 kB[22m
+[2mdist/[22m[36massets/periodBlockEmptyCallout.styles-BcO44EFy.js      [39m[1m[2m  0.41 kB[22m[1m[22m[2m │ gzip:   0.27 kB[22m
+[2mdist/[22m[36massets/useReturnToOrigin-Bg2_EEXm.js                   [39m[1m[2m  0.41 kB[22m[1m[22m[2m │ gzip:   0.28 kB[22m
+[2mdist/[22m[36massets/PageTitle-ChJQZT9-.js                           [39m[1m[2m  0.46 kB[22m[1m[22m[2m │ gzip:   0.30 kB[22m
+[2mdist/[22m[36massets/training-FJkklkY2.js                            [39m[1m[2m  0.51 kB[22m[1m[22m[2m │ gzip:   0.38 kB[22m
+[2mdist/[22m[36massets/NotFound-CaYOwhfy.js                            [39m[1m[2m  0.51 kB[22m[1m[22m[2m │ gzip:   0.31 kB[22m
+[2mdist/[22m[36massets/FormSection-C3LPwINI.js                         [39m[1m[2m  0.52 kB[22m[1m[22m[2m │ gzip:   0.32 kB[22m
+[2mdist/[22m[36massets/MetricCard-BrOHQXH1.js                          [39m[1m[2m  0.63 kB[22m[1m[22m[2m │ gzip:   0.34 kB[22m
+[2mdist/[22m[36massets/useClientInjuries-DLKCxQBp.js                   [39m[1m[2m  0.68 kB[22m[1m[22m[2m │ gzip:   0.39 kB[22m
+[2mdist/[22m[36massets/EmptyStateCard-Cn4__PoD.js                      [39m[1m[2m  0.77 kB[22m[1m[22m[2m │ gzip:   0.40 kB[22m
+[2mdist/[22m[36massets/Badge-DqcmCy_a.js                               [39m[1m[2m  0.80 kB[22m[1m[22m[2m │ gzip:   0.42 kB[22m
+[2mdist/[22m[36massets/Breadcrumbs-DnbEa0ay.js                         [39m[1m[2m  0.82 kB[22m[1m[22m[2m │ gzip:   0.47 kB[22m
+[2mdist/[22m[36massets/useScheduleSession-DCEBqn3t.js                  [39m[1m[2m  0.87 kB[22m[1m[22m[2m │ gzip:   0.48 kB[22m
+[2mdist/[22m[36massets/ClientAvatar-DAhTJYRI.js                        [39m[1m[2m  0.90 kB[22m[1m[22m[2m │ gzip:   0.55 kB[22m
+[2mdist/[22m[36massets/TabsBar-zgs7sdiL.js                             [39m[1m[2m  0.97 kB[22m[1m[22m[2m │ gzip:   0.59 kB[22m
+[2mdist/[22m[36massets/useCompleteProfile-BzHfK4_D.js                  [39m[1m[2m  1.04 kB[22m[1m[22m[2m │ gzip:   0.54 kB[22m
+[2mdist/[22m[36massets/formFieldStyles-BMYyA0je.js                     [39m[1m[2m  1.12 kB[22m[1m[22m[2m │ gzip:   0.46 kB[22m
+[2mdist/[22m[36massets/errorMessage-CT3eVkMS.js                        [39m[1m[2m  1.24 kB[22m[1m[22m[2m │ gzip:   0.57 kB[22m
+[2mdist/[22m[36massets/TrendIcon-D1yBv_v7.js                           [39m[1m[2m  1.35 kB[22m[1m[22m[2m │ gzip:   0.55 kB[22m
+[2mdist/[22m[36massets/VerifyEmail-DcMMeWWN.js                         [39m[1m[2m  1.71 kB[22m[1m[22m[2m │ gzip:   0.89 kB[22m
+[2mdist/[22m[36massets/PaginationBar-CwguqJlv.js                       [39m[1m[2m  1.75 kB[22m[1m[22m[2m │ gzip:   0.79 kB[22m
+[2mdist/[22m[36massets/CompleteProfileModal-bW0Gl8Xq.js                [39m[1m[2m  2.00 kB[22m[1m[22m[2m │ gzip:   0.98 kB[22m
+[2mdist/[22m[36massets/ForgotPassword-BzvmjjW_.js                      [39m[1m[2m  2.45 kB[22m[1m[22m[2m │ gzip:   1.03 kB[22m
+[2mdist/[22m[36massets/BaseMonthCalendar-B64C9qUp.js                   [39m[1m[2m  2.45 kB[22m[1m[22m[2m │ gzip:   1.12 kB[22m
+[2mdist/[22m[36massets/FormCombobox-CMZSgLAt.js                        [39m[1m[2m  2.63 kB[22m[1m[22m[2m │ gzip:   1.23 kB[22m
+[2mdist/[22m[36massets/goalLabels-zar86BIK.js                          [39m[1m[2m  2.70 kB[22m[1m[22m[2m │ gzip:   0.99 kB[22m
+[2mdist/[22m[36massets/EmailVerificationBanner-CeYY8iN0.js             [39m[1m[2m  2.81 kB[22m[1m[22m[2m │ gzip:   1.06 kB[22m
+[2mdist/[22m[36massets/Alert-B39vPqLC.js                               [39m[1m[2m  2.92 kB[22m[1m[22m[2m │ gzip:   1.04 kB[22m
+[2mdist/[22m[36massets/PlanOverlapModal-C-Vs6LAM.js                    [39m[1m[2m  3.03 kB[22m[1m[22m[2m │ gzip:   1.25 kB[22m
+[2mdist/[22m[36massets/SessionDetailExerciseCard-DW2Mt3mz.js           [39m[1m[2m  3.11 kB[22m[1m[22m[2m │ gzip:   1.25 kB[22m
+[2mdist/[22m[36massets/ResetPassword-BQAUazso.js                       [39m[1m[2m  3.23 kB[22m[1m[22m[2m │ gzip:   1.31 kB[22m
+[2mdist/[22m[36massets/TrainingPlanTemplateDetail-ZTXTEtsJ.js          [39m[1m[2m  3.56 kB[22m[1m[22m[2m │ gzip:   1.33 kB[22m
+[2mdist/[22m[36massets/AssignTemplateModal-BB44M7Tx.js                 [39m[1m[2m  4.18 kB[22m[1m[22m[2m │ gzip:   1.68 kB[22m
+[2mdist/[22m[36massets/AthleteDashboard-Dr4eshjX.js                    [39m[1m[2m  4.45 kB[22m[1m[22m[2m │ gzip:   1.20 kB[22m
+[2mdist/[22m[36massets/AdminDashboard-dKRZV8lx.js                      [39m[1m[2m  4.45 kB[22m[1m[22m[2m │ gzip:   1.21 kB[22m
+[2mdist/[22m[36massets/RecommendationsCards-DuBXkbzt.js                [39m[1m[2m  4.50 kB[22m[1m[22m[2m │ gzip:   1.35 kB[22m
+[2mdist/[22m[36massets/ClientNewSessionPage-B7ObjSnL.js                [39m[1m[2m  4.59 kB[22m[1m[22m[2m │ gzip:   1.90 kB[22m
+[2mdist/[22m[36massets/GenerateReports-Bocqm3Ae.js                     [39m[1m[2m  5.35 kB[22m[1m[22m[2m │ gzip:   2.02 kB[22m
+[2mdist/[22m[36massets/CreateTemplate-BEnx6mW8.js                      [39m[1m[2m  5.93 kB[22m[1m[22m[2m │ gzip:   2.07 kB[22m
+[2mdist/[22m[36massets/StandaloneSessionDetail-Csb0X4kx.js             [39m[1m[2m  6.28 kB[22m[1m[22m[2m │ gzip:   2.21 kB[22m
+[2mdist/[22m[36massets/index-Cc5AMMHl.js                               [39m[1m[2m  6.64 kB[22m[1m[22m[2m │ gzip:   2.37 kB[22m
+[2mdist/[22m[36massets/CreateSessionFromTemplate-CWlec-9L.js           [39m[1m[2m  6.77 kB[22m[1m[22m[2m │ gzip:   2.48 kB[22m
+[2mdist/[22m[36massets/EditScheduledSessionPage-CoUDcgay.js            [39m[1m[2m  7.00 kB[22m[1m[22m[2m │ gzip:   2.49 kB[22m
+[2mdist/[22m[36massets/Account-CmDapsRI.js                             [39m[1m[2m  7.09 kB[22m[1m[22m[2m │ gzip:   2.49 kB[22m
+[2mdist/[22m[36massets/useClientActivePlanSessionSchedule-CF9nce-W.js  [39m[1m[2m  7.61 kB[22m[1m[22m[2m │ gzip:   2.47 kB[22m
+[2mdist/[22m[36massets/usePeriodBlockForm-C1FqncNc.js                  [39m[1m[2m  8.24 kB[22m[1m[22m[2m │ gzip:   2.74 kB[22m
+[2mdist/[22m[36massets/TrainingPlansPage-D93LdDQo.js                   [39m[1m[2m  9.15 kB[22m[1m[22m[2m │ gzip:   3.36 kB[22m
+[2mdist/[22m[36massets/NewScheduledSessionPage-D-RDV_qX.js             [39m[1m[2m  9.17 kB[22m[1m[22m[2m │ gzip:   3.04 kB[22m
+[2mdist/[22m[36massets/CreateTrainingPlanTemplate-C0nFgpdB.js          [39m[1m[2m  9.63 kB[22m[1m[22m[2m │ gzip:   2.97 kB[22m
+[2mdist/[22m[36massets/CreateTrainingPlan-DAwavouO.js                  [39m[1m[2m  9.84 kB[22m[1m[22m[2m │ gzip:   3.46 kB[22m
+[2mdist/[22m[36massets/SessionsPage-DhSIseMT.js                        [39m[1m[2m 10.05 kB[22m[1m[22m[2m │ gzip:   3.18 kB[22m
+[2mdist/[22m[36massets/CompleteProfile-Ch2WP6E5.js                     [39m[1m[2m 10.43 kB[22m[1m[22m[2m │ gzip:   3.55 kB[22m
+[2mdist/[22m[36massets/router-vendor-DRgLqyhf.js                       [39m[1m[2m 12.13 kB[22m[1m[22m[2m │ gzip:   4.48 kB[22m
+[2mdist/[22m[36massets/SessionDetail-BuHBejdc.js                       [39m[1m[2m 12.71 kB[22m[1m[22m[2m │ gzip:   3.91 kB[22m
+[2mdist/[22m[36massets/EditSession-D_6JfIv7.js                         [39m[1m[2m 13.03 kB[22m[1m[22m[2m │ gzip:   4.79 kB[22m
+[2mdist/[22m[36massets/SelectClientModal-2BsiirKv.js                   [39m[1m[2m 14.09 kB[22m[1m[22m[2m │ gzip:   4.43 kB[22m
+[2mdist/[22m[36massets/ClientEdit-B7tPLfNR.js                          [39m[1m[2m 14.17 kB[22m[1m[22m[2m │ gzip:   3.79 kB[22m
+[2mdist/[22m[36massets/ClientList-DsRE9MZ7.js                          [39m[1m[2m 14.82 kB[22m[1m[22m[2m │ gzip:   4.30 kB[22m
+[2mdist/[22m[36massets/SchedulingPage-BwBAwm57.js                      [39m[1m[2m 15.60 kB[22m[1m[22m[2m │ gzip:   4.67 kB[22m
+[2mdist/[22m[36massets/TrainingPlanEdit-KaHYKa9a.js                    [39m[1m[2m 15.82 kB[22m[1m[22m[2m │ gzip:   5.18 kB[22m
+[2mdist/[22m[36massets/TrainerDashboard-B26VvpDl.js                    [39m[1m[2m 17.48 kB[22m[1m[22m[2m │ gzip:   5.03 kB[22m
+[2mdist/[22m[36massets/CreateSession-DyVVj_ey.js                       [39m[1m[2m 17.90 kB[22m[1m[22m[2m │ gzip:   6.43 kB[22m
+[2mdist/[22m[36massets/ClientOnboarding-C7WBk9t3.js                    [39m[1m[2m 18.48 kB[22m[1m[22m[2m │ gzip:   5.81 kB[22m
+[2mdist/[22m[36massets/index-BbfB28KA.js                               [39m[1m[2m 18.98 kB[22m[1m[22m[2m │ gzip:   4.66 kB[22m
+[2mdist/[22m[36massets/TrainingPlanDetail-C3-AuQK_.js                  [39m[1m[2m 29.64 kB[22m[1m[22m[2m │ gzip:   8.97 kB[22m
+[2mdist/[22m[36massets/Experience-BXR7iFTZ.js                          [39m[1m[2m 34.72 kB[22m[1m[22m[2m │ gzip:   6.12 kB[22m
+[2mdist/[22m[36massets/index-ByAjLHNV.js                               [39m[1m[2m 37.12 kB[22m[1m[22m[2m │ gzip:   9.20 kB[22m
+[2mdist/[22m[36massets/WeeklyClientVolumePanel-C2bhVcuA.js             [39m[1m[2m 37.38 kB[22m[1m[22m[2m │ gzip:   9.66 kB[22m
+[2mdist/[22m[36massets/useTabNavigation-CuOja1en.js                    [39m[1m[2m 39.67 kB[22m[1m[22m[2m │ gzip:  11.14 kB[22m
+[2mdist/[22m[36massets/ClientProgressTab-xiqHZvnr.js                   [39m[1m[2m 42.72 kB[22m[1m[22m[2m │ gzip:  11.44 kB[22m
+[2mdist/[22m[36massets/redux-vendor-n_gvDXHD.js                        [39m[1m[2m 60.03 kB[22m[1m[22m[2m │ gzip:  21.10 kB[22m
+[2mdist/[22m[36massets/ClientDetail-D51QWVz5.js                        [39m[1m[2m118.68 kB[22m[1m[22m[2m │ gzip:  31.26 kB[22m
+[2mdist/[22m[36massets/index-BH-xTrg-.js                               [39m[1m[2m174.22 kB[22m[1m[22m[2m │ gzip:  42.70 kB[22m
+[2mdist/[22m[36massets/recharts-vendor-oZdBNMdN.js                     [39m[1m[2m267.24 kB[22m[1m[22m[2m │ gzip:  67.71 kB[22m
+[2mdist/[22m[36massets/vendor-B4ajQWWq.js                              [39m[1m[2m384.76 kB[22m[1m[22m[2m │ gzip: 125.00 kB[22m
+[32m✓ built in 16.23s[39m

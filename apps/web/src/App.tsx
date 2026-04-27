@@ -78,6 +78,11 @@ const TrainingPlanTemplateDetail = lazy(() =>
     default: m.TrainingPlanTemplateDetail,
   }))
 );
+const WeeklyStructurePage = lazy(() =>
+  import("./pages/trainingPlans/WeeklyStructurePage").then((m) => ({
+    default: m.WeeklyStructurePage,
+  }))
+);
 const ExerciseList = lazy(() =>
   import("./pages/exercises").then((m) => ({ default: m.ExerciseList }))
 );
@@ -249,6 +254,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <TrainingPlanDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/:planId/period-blocks/:blockId/weekly-structure"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <WeeklyStructurePage />
               </RoleProtectedRoute>
             }
           />

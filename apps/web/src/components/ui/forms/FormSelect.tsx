@@ -110,7 +110,11 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                     {...props}
                 >
                     {placeholder && (
-                        <option value="" disabled className="text-muted-foreground">
+                        <option
+                            value=""
+                            disabled
+                            className="bg-surface-2 text-muted-foreground"
+                        >
                             {placeholder}
                         </option>
                     )}

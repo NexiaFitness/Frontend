@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Vista completa del plan con tabs
- * - Tabs: Sesiones, Planificación, Hitos, Gráficos
+ * - Tabs: Sesiones, Planificación, Hitos, Analítica
  * - Layout: Breadcrumbs + Header + Tabs + Content
  *
  * Responsabilidades:
@@ -57,7 +57,7 @@ const ChartsTab = lazy(() =>
     }))
 );
 
-type TabId = "sessions" | "planning" | "milestones" | "charts";
+type TabId = "sessions" | "planning" | "milestones" | "analytics";
 
 interface Tab {
     id: TabId;
@@ -68,10 +68,10 @@ const TABS: Tab[] = [
     { id: "sessions", label: "Sesiones" },
     { id: "planning", label: "Planificación" },
     { id: "milestones", label: "Hitos" },
-    { id: "charts", label: "Gráficos" },
+    { id: "analytics", label: "Analítica" },
 ];
 
-const PLAN_DETAIL_VALID_TABS: TabId[] = ["sessions", "planning", "milestones", "charts"];
+const PLAN_DETAIL_VALID_TABS: TabId[] = ["sessions", "planning", "milestones", "analytics"];
 
 export const TrainingPlanDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -258,7 +258,7 @@ export const TrainingPlanDetail: React.FC = () => {
                 );
             case "milestones":
                 return <MilestonesTab planId={planId} />;
-            case "charts":
+            case "analytics":
                 return (
                     <Suspense fallback={<LoadingSpinner size="lg" />}>
                         <ChartsTab

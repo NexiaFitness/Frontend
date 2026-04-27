@@ -55,11 +55,20 @@ export type EquipmentRole = 'primary' | 'secondary';
  * Backend schema: MovementPatternOut
  * Endpoint: /exercise-catalog/movement-patterns/
  */
+/** Valores backend `movement_patterns.ui_bucket` — FEATURE_UX_MEJORA_ESTRUCTURA_SEMANAL §9 */
+export type MovementPatternUiBucket =
+    | "LOWER"
+    | "UPPER"
+    | "CORE"
+    | "POWER_LOCOMOTION"
+    | "ACCESSORY";
+
 export interface MovementPattern {
     id: number;
     name_en: string;
     name_es: string | null;
     description: string | null;
+    ui_bucket: MovementPatternUiBucket | string;
     is_active: boolean;
     created_at: string;
     updated_at: string;
@@ -292,6 +301,7 @@ export interface MovementPatternCreate {
     name_en: string;
     name_es?: string | null;
     description?: string | null;
+    ui_bucket?: MovementPatternUiBucket | string | null;
 }
 
 /**
@@ -447,6 +457,7 @@ export interface MovementPatternUpdate {
     name_es?: string | null;
     description?: string | null;
     is_active?: boolean | null;
+    ui_bucket?: MovementPatternUiBucket | string | null;
 }
 
 /**

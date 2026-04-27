@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, Target } from "lucide-react";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
@@ -9,6 +9,12 @@ import {
   useDeletePeriodBlockMutation,
 } from "@nexia/shared/api/periodBlocksApi";
 import { useGetTrainingSessionsQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
+import {
+  useGetWeeklyStructureQuery,
+  useCreateWeeklyStructureWeekMutation,
+  useDeleteWeeklyStructureWeekMutation,
+} from "@nexia/shared/api/weeklyStructureApi";
 import {
   useGetDayExceptionsQuery,
   useCreateDayExceptionMutation,
@@ -17,6 +23,7 @@ import {
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
@@ -182,6 +189,18 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const [editingBlockId, setEditingBlockId] = useState<number | null>(null);
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
+  const [hasLoadedWeeklyStructure, setHasLoadedWeeklyStructure] = useState(false);
+
+  const {
+    data: patternsCatalog,
+    isLoading: isLoadingPatterns,
+    isError: isErrorPatterns,
+  } = useGetMovementPatternsQuery({ limit: 100, is_active: true });
+
+  const { data: existingStructure } = useGetWeeklyStructureQuery(
+    { planId, blockId: editingBlockId! },
+    { skip: !editingBlockId }
+  );
 
   const {
     form,
@@ -191,6 +210,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     updateQualityPct,
     setVolumeLevel,
     setIntensityLevel,
+    setWeeklyStructure,
     loadBlock,
     reset,
     qualitiesSum,
@@ -198,6 +218,27 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     outsidePlanBounds,
     canSubmit,
   } = usePeriodBlockForm(blocks, editingBlockId, planStartDate, planEndDate);
+
+  const [createWeek] = useCreateWeeklyStructureWeekMutation();
+  const [deleteWeek] = useDeleteWeeklyStructureWeekMutation();
+
+  // Cargar estructura semanal existente al entrar en modo edición (solo una vez)
+  useEffect(() => {
+    if (!editingBlockId || !existingStructure || hasLoadedWeeklyStructure) return;
+    const draft: WeeklyStructureWeekCreate[] = existingStructure.weeks.map((w) => ({
+      week_ordinal: w.week_ordinal,
+      label: w.label ?? null,
+      days: w.days.map((d) => ({
+        day_of_week: d.day_of_week,
+        patterns: d.patterns.map((p) => ({
+          movement_pattern_id: p.movement_pattern_id,
+          sub_pattern: p.sub_pattern ?? null,
+        })),
+      })),
+    }));
+    setWeeklyStructure(draft);
+    setHasLoadedWeeklyStructure(true);
+  }, [editingBlockId, existingStructure, hasLoadedWeeklyStructure, setWeeklyStructure]);
 
   const planGoalResolved =
     activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
@@ -248,10 +289,43 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     try {
       if (editingBlockId) {
         await updateBlock({ planId, blockId: editingBlockId, data: payload }).unwrap();
+        // Recrear estructura semanal: eliminar semanas existentes y crear las del draft
+        if (form.weeklyStructure.length > 0 && existingStructure) {
+          const existingWeekIds = existingStructure.weeks
+            .map((w) => w.id)
+            .filter((id): id is number => id != null);
+          await Promise.all(
+            existingWeekIds.map((weekId) =>
+              deleteWeek({ planId, blockId: editingBlockId, weekId }).unwrap().catch(() => {})
+            )
+          );
+          await Promise.all(
+            form.weeklyStructure.map((week) =>
+              createWeek({ planId, blockId: editingBlockId, body: week }).unwrap()
+            )
+          );
+        }
         setEditingBlockId(null);
+        setHasLoadedWeeklyStructure(false);
         showSuccess("Bloque de periodización actualizado correctamente.");
       } else {
-        await createBlock({ planId, data: payload }).unwrap();
+        const created = await createBlock({ planId, data: payload }).unwrap();
+        if (form.weeklyStructure.length > 0 && created?.id) {
+          try {
+            await Promise.all(
+              form.weeklyStructure.map((week) =>
+                createWeek({ planId, blockId: created.id, body: week }).unwrap()
+              )
+            );
+          } catch {
+            showError(
+              "Bloque creado, pero la estructura semanal no se pudo guardar. " +
+                "Puedes configurarla desde la tarjeta del bloque."
+            );
+            reset();
+            return;
+          }
+        }
         showSuccess("Bloque de periodización creado correctamente.");
       }
       reset();
@@ -262,8 +336,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     form,
     planId,
     editingBlockId,
+    existingStructure,
     createBlock,
     updateBlock,
+    createWeek,
+    deleteWeek,
     reset,
     showSuccess,
     showError,
@@ -271,11 +348,13 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
 
   const handleEditBlock = useCallback((block: PlanPeriodBlock) => {
     setEditingBlockId(block.id);
+    setHasLoadedWeeklyStructure(false);
     loadBlock(block);
   }, [loadBlock]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingBlockId(null);
+    setHasLoadedWeeklyStructure(false);
     reset();
   }, [reset]);
 
@@ -437,6 +516,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             volumeNominalPhase={volumeNominal.phase}
             volumeNominalLabel={volumeNominal.labelForVolumeLevel(form.volumeLevel)}
             volumeNominalHint={volumeNominal.auxiliaryHint}
+            trainingDays={clientProfile?.training_days ?? null}
+            patternsCatalog={patternsCatalog ?? []}
+            patternsLoading={isLoadingPatterns}
+            patternsError={isErrorPatterns}
+            onWeeklyStructureChange={setWeeklyStructure}
           />
         </div>
       </div>

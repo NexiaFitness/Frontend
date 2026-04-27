@@ -1,50 +1,42 @@
 import React from "react";
 
 import type { PhysicalQuality } from "@nexia/shared/types/planningCargas";
+import type { MovementPattern } from "@nexia/shared/types/exercise";
+import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
+import { PeriodizationWeeklyStructureDraft } from "./PeriodizationWeeklyStructureDraft";
 
 
 
 interface Props {
-
   formState: PeriodBlockFormState;
-
   catalog: PhysicalQuality[];
-
   qualitiesSum: number;
-
   overlapDetected: boolean;
-
   outsidePlanBounds?: boolean;
-
   canSubmit: boolean;
-
   isEditing?: boolean;
-
   isSubmitting?: boolean;
-
   onAddQuality: (id: number) => void;
-
   onRemoveQuality: (id: number) => void;
-
   onUpdateQualityPct: (id: number, pct: number) => void;
-
   onVolumeChange: (v: number) => void;
-
   onIntensityChange: (v: number) => void;
-
   onSubmit: () => void;
-
   onReset: () => void;
-
   volumeNominalPhase?: PeriodizationVolumeNominalPhase;
   volumeNominalLabel?: string | null;
   volumeNominalHint?: string | null;
-
+  // Estructura semanal inline
+  trainingDays?: readonly string[] | null;
+  patternsCatalog?: MovementPattern[];
+  patternsLoading?: boolean;
+  patternsError?: boolean;
+  onWeeklyStructureChange?: (draft: WeeklyStructureWeekCreate[]) => void;
 }
 
 
@@ -92,11 +84,13 @@ export const PeriodizationPanel: React.FC<Props> = ({
   onReset,
 
   volumeNominalPhase,
-
   volumeNominalLabel,
-
   volumeNominalHint,
-
+  trainingDays,
+  patternsCatalog,
+  patternsLoading,
+  patternsError,
+  onWeeklyStructureChange,
 }) => {
 
   const assignedIds = formState.qualities.map((q) => q.physical_quality_id);
@@ -371,16 +365,44 @@ export const PeriodizationPanel: React.FC<Props> = ({
 
 
 
+      {/* Weekly structure */}
+      {formState.phase === "rangeComplete" && formState.startDate && formState.endDate && (
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Estructura semanal
+            </p>
+            {(() => {
+              const totalTrainable = trainingDays?.length ?? 0;
+              const withPatterns = formState.weeklyStructure.reduce(
+                (acc, w) => acc + w.days.filter((d) => d.patterns.length > 0).length,
+                0
+              );
+              return (
+                <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
+                  {withPatterns}/{totalTrainable} días
+                </span>
+              );
+            })()}
+          </div>
+          <PeriodizationWeeklyStructureDraft
+            startDate={formState.startDate}
+            endDate={formState.endDate}
+            trainingDays={trainingDays}
+            patternsCatalog={patternsCatalog ?? []}
+            patternsLoading={patternsLoading}
+            patternsError={patternsError}
+            value={formState.weeklyStructure}
+            onChange={onWeeklyStructureChange ?? (() => {})}
+          />
+        </div>
+      )}
+
       {/* Volume */}
-
       <div>
-
         <div className="flex items-center justify-between mb-2">
-
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-
             Volumen
-
           </p>
 
           <span className="text-sm font-bold text-primary tabular-nums">

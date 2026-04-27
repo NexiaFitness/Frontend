@@ -25,7 +25,7 @@
  * @since v5.2.0
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 
 export interface UseTabNavigationOptions<T extends string> {
@@ -45,6 +45,11 @@ export interface UseTabNavigationOptions<T extends string> {
      * Si debe actualizar la URL al cambiar tab (default: true)
      */
     updateUrl?: boolean;
+    /**
+     * Valores de URL legacy → tab canónico (p. ej. charts → analytics).
+     * Si el query coincide con una clave, se reemplaza en la URL por el valor canónico.
+     */
+    tabAliases?: Partial<Record<string, T>>;
 }
 
 export interface UseTabNavigationReturn<T extends string> {
@@ -84,10 +89,23 @@ export function useTabNavigation<T extends string>(
         defaultTab,
         paramName = "tab",
         updateUrl = true,
+        tabAliases,
     } = options;
 
     const [searchParams, setSearchParams] = useSearchParams();
     const location = useLocation();
+
+    const resolveQueryTab = useCallback(
+        (raw: string | null): T | null => {
+            if (!raw) return null;
+            const mapped =
+                tabAliases && Object.prototype.hasOwnProperty.call(tabAliases, raw)
+                    ? tabAliases[raw]
+                    : (raw as T);
+            return mapped && validTabs.includes(mapped) ? mapped : null;
+        },
+        [tabAliases, validTabs]
+    );
 
     // Función para obtener tab inicial desde query params o location.state
     const getInitialTab = useCallback((): T => {
@@ -97,15 +115,43 @@ export function useTabNavigation<T extends string>(
             return stateTab;
         }
 
-        // 2. Intentar desde query params
-        const queryTab = searchParams.get(paramName) as T | null;
-        if (queryTab && validTabs.includes(queryTab)) {
-            return queryTab;
+        // 2. Intentar desde query params (incl. alias → tab canónico)
+        const raw = searchParams.get(paramName);
+        const fromAlias = resolveQueryTab(raw);
+        if (fromAlias) {
+            return fromAlias;
         }
 
         // 3. Default
         return defaultTab;
-    }, [location.state, searchParams, paramName, validTabs, defaultTab]);
+    }, [location.state, searchParams, paramName, validTabs, defaultTab, resolveQueryTab]);
+
+    const aliasCanonicalPairs = useMemo(() => {
+        if (!tabAliases) return [] as Array<{ raw: string; canonical: T }>;
+        return Object.entries(tabAliases).map(([raw, canonical]) => ({
+            raw,
+            canonical: canonical as T,
+        }));
+    }, [tabAliases]);
+
+    useEffect(() => {
+        if (!updateUrl || !tabAliases || aliasCanonicalPairs.length === 0) return;
+        const raw = searchParams.get(paramName);
+        if (!raw) return;
+        const pair = aliasCanonicalPairs.find((p) => p.raw === raw);
+        if (!pair || !validTabs.includes(pair.canonical)) return;
+        const next = new URLSearchParams(searchParams);
+        next.set(paramName, pair.canonical);
+        setSearchParams(next, { replace: true });
+    }, [
+        updateUrl,
+        tabAliases,
+        aliasCanonicalPairs,
+        searchParams,
+        paramName,
+        setSearchParams,
+        validTabs,
+    ]);
 
     const [activeTab, setActiveTabState] = useState<T>(getInitialTab);
 

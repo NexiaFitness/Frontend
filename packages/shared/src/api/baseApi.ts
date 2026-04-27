@@ -343,6 +343,7 @@ export const baseApi = createApi({
         "Injuries",
         "HabitInsights",
         "PlanPeriodBlock",
+        "WeeklyStructure",
         "DayException",
     ],
 });

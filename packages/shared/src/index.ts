@@ -1,3 +1,6 @@
+// Analytics (lógica pura plan / bloques)
+export * from "./analytics/planBlockAnalytics";
+
 // API
 export * from "./api/authApi";
 export * from "./api/baseApi";
@@ -12,6 +15,7 @@ export {
 // Training Sessions API - exported separately to avoid conflicts
 export {
     useGetTrainingSessionsQuery,
+    useLazyGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
@@ -20,6 +24,7 @@ export {
     useDeleteTrainingSessionMutation,
     useCreateSessionExerciseMutation,
 } from "./api/trainingSessionsApi";
+export type { GetTrainingSessionsQueryArg } from "./api/trainingSessionsApi";
 export {
     useGetDayExceptionsQuery,
     useCreateDayExceptionMutation,
@@ -331,6 +336,7 @@ export {
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
+export * from "./utils/exerciseUiBucket";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
 export {

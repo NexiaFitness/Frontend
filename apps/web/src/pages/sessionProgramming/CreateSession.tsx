@@ -56,6 +56,7 @@ import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
+import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import type { RootState } from "@nexia/shared/store";
@@ -282,6 +283,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         SessionCoherenceWarning[] | null
     >(null);
     const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
+    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
+    const [createdSessionId, setCreatedSessionId] = useState<number | null>(null);
 
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
@@ -453,6 +456,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
 
                 const createdSession = await createTrainingSession(sessionData).unwrap();
+                setCreatedSessionId(createdSession.id);
 
                 if (constructorRows.length > 0) {
                     let blocksSaved = 0;
@@ -525,7 +529,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     setPostCreateCoherenceWarnings(warnings);
                     setPostCreateRedirectPath(redirectTo);
                 } else {
-                    setTimeout(() => navigate(redirectTo), 1500);
+                    setValidationPanelOpen(true);
                 }
             }
         } catch (err) {
@@ -564,8 +568,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         variant="primary"
                         onClick={() => {
                             setPostCreateCoherenceWarnings(null);
-                            setPostCreateRedirectPath(null);
-                            navigate(postCreateRedirectPath);
+                            setValidationPanelOpen(true);
                         }}
                     >
                         Entendido
@@ -990,6 +993,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     </div>
                 </div>
             </div>
+
+            <SessionValidationPanel
+                trainingSessionId={createdSessionId}
+                isOpen={validationPanelOpen}
+                onClose={() => {
+                    setValidationPanelOpen(false);
+                    const target = postCreateRedirectPath || backPath;
+                    if (target) {
+                        navigate(target);
+                    } else {
+                        const state = location.state as LocationStateReturnTo | null;
+                        if (state?.from) {
+                            navigate(state.from);
+                        } else {
+                            navigate(-1);
+                        }
+                    }
+                }}
+                onEdit={() => {
+                    setValidationPanelOpen(false);
+                }}
+            />
         </>
     );
 };

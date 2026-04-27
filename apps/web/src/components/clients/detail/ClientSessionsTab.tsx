@@ -20,7 +20,7 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { ChevronDown, Calendar } from "lucide-react";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
@@ -41,6 +41,7 @@ import { PaginationBar } from "@/components/ui/pagination";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useToast } from "@/components/ui/feedback";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 
 interface ClientSessionsTabProps {
     clientId: number;
@@ -85,6 +86,7 @@ function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
 
 export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { showWarning } = useToast();
     const [currentMonth, setCurrentMonth] = useState(() => new Date());
     const [periodCalMonth, setPeriodCalMonth] = useState(() => new Date());
@@ -191,7 +193,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             const path = "session_kind" in s && s.session_kind === "standalone"
                 ? `/dashboard/standalone-sessions/${s.id}`
                 : `/dashboard/session-programming/sessions/${s.id}`;
-            navigate(path);
+            navigate(path, { state: returnToStateFromView(location) });
         }
     };
 
@@ -203,7 +205,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         const path = "session_kind" in session && session.session_kind === "standalone"
             ? `/dashboard/standalone-sessions/${session.id}`
             : `/dashboard/session-programming/sessions/${session.id}`;
-        navigate(path);
+        navigate(path, { state: returnToStateFromView(location) });
     };
 
     // P2: Merge training + standalone en lista unificada para calendario y lista
