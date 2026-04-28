@@ -31,7 +31,7 @@ export interface FormComboboxProps {
 
 const sizeStyles = {
     sm: "h-9 px-3 text-xs",
-    md: "h-10 px-3 text-sm",
+    md: "min-h-[44px] px-3 text-sm sm:px-4 sm:text-base",
     lg: "h-12 px-4 text-base",
 };
 
@@ -125,7 +125,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 disabled={disabled}
                 className={cn(
                     "flex w-full items-center justify-between rounded-md border border-input bg-background py-2 ring-offset-background",
-                    "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    "placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     !value && "text-muted-foreground",
                     sizeStyles[size]

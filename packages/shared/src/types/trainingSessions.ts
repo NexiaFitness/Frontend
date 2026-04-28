@@ -202,6 +202,49 @@ export const TRAINING_SESSION_STATUS_LABELS: Record<TrainingSessionStatus, strin
 };
 
 /**
+ * Input minimo para evaluar si una sesion es eliminable.
+ * Compatible con TrainingSession, StandaloneSessionOut y SessionListItem.
+ */
+export interface SessionDeletableInput {
+    status: string;
+    actual_duration?: number | null;
+    actual_volume?: number | null;
+    actual_intensity?: number | null;
+}
+
+/**
+ * Determina si una sesion puede ser eliminada fisicamente.
+ *
+ * Reglas de negocio:
+ * - Status debe ser 'planned' (no completada, archivada, cancelada, etc.)
+ * - No debe tener datos reales registrados (actual_duration, actual_volume, actual_intensity)
+ *
+ * @param session - Sesion de entrenamiento
+ * @returns true si la sesion puede ser eliminada
+ */
+export function isSessionDeletable(session: SessionDeletableInput): boolean {
+    const nonDeletableStatuses: TrainingSessionStatus[] = ['completed', 'skipped', 'modified'];
+
+    if (nonDeletableStatuses.includes(session.status as TrainingSessionStatus)) {
+        return false;
+    }
+
+    if (session.actual_duration !== null && session.actual_duration !== undefined) {
+        return false;
+    }
+
+    if (session.actual_volume !== null && session.actual_volume !== undefined) {
+        return false;
+    }
+
+    if (session.actual_intensity !== null && session.actual_intensity !== undefined) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
  * Session Exercise - Ejercicio asociado directamente a una Training Session
  * Vinculado directamente a la sesión (sin pasar por SessionBlocks)
  * 

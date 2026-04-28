@@ -159,7 +159,7 @@ export const InlineNumberInput = forwardRef<HTMLInputElement, InlineNumberInputP
                 <input
                     ref={innerRef}
                     className={cn(
-                        "block w-full rounded-md border text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50 text-center",
+                        "block w-full rounded-md border text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:cursor-not-allowed disabled:opacity-50 text-center",
                         sizeStyles[size],
                         "nexia-no-native-spinners"
                     )}

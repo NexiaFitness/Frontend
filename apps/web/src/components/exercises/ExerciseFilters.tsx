@@ -117,13 +117,13 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
     const selectedMovementPatternId = filters.movement_pattern_ids?.[0]?.toString() ?? "";
 
     return (
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
+        <div className="rounded-lg border border-border bg-surface p-4">
             <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900">Filtros</h3>
+                <h3 className="text-sm font-semibold text-foreground">Filtros</h3>
                 {hasActiveFilters && (
                     <button
                         onClick={handleReset}
-                        className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                        className="text-xs text-primary hover:text-primary/80 font-medium"
                     >
                         Limpiar
                     </button>
@@ -135,7 +135,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                 <div>
                     <label
                         htmlFor="exercise-filter-muscle-group"
-                        className="block text-xs font-medium text-slate-700 mb-2"
+                        className="block text-xs font-medium text-muted-foreground mb-2"
                     >
                         Grupo Muscular
                     </label>
@@ -144,7 +144,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                         value={selectedMuscleGroupId}
                         onChange={handleMuscleGroupChange}
                         disabled={isLoadingMuscleGroups}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value="">
                             {isLoadingMuscleGroups ? "Cargando..." : "Todos"}
@@ -161,7 +161,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                 <div>
                     <label
                         htmlFor="exercise-filter-equipment"
-                        className="block text-xs font-medium text-slate-700 mb-2"
+                        className="block text-xs font-medium text-muted-foreground mb-2"
                     >
                         Equipamiento
                     </label>
@@ -170,7 +170,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                         value={selectedEquipmentId}
                         onChange={handleEquipmentChange}
                         disabled={isLoadingEquipment}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value="">
                             {isLoadingEquipment ? "Cargando..." : "Todos"}
@@ -187,7 +187,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                 <div>
                     <label
                         htmlFor="exercise-filter-level"
-                        className="block text-xs font-medium text-slate-700 mb-2"
+                        className="block text-xs font-medium text-muted-foreground mb-2"
                     >
                         Nivel
                     </label>
@@ -195,7 +195,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                         id="exercise-filter-level"
                         value={filters.nivel || ""}
                         onChange={handleLevelChange}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
                     >
                         <option value="">Todos</option>
                         {levelOptions.map((level) => (
@@ -210,7 +210,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                 <div>
                     <label
                         htmlFor="exercise-filter-movement-pattern"
-                        className="block text-xs font-medium text-slate-700 mb-2"
+                        className="block text-xs font-medium text-muted-foreground mb-2"
                     >
                         Patrón de movimiento
                     </label>
@@ -219,7 +219,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                         value={selectedMovementPatternId}
                         onChange={handleMovementPatternChange}
                         disabled={isLoadingMovementPatterns}
-                        className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         <option value="">
                             {isLoadingMovementPatterns ? "Cargando..." : "Todos"}

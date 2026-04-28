@@ -66,8 +66,11 @@ function dotClass(status: WeeklyVolumePanelRowModel["status"]): string {
 
 function barWidthPct(row: WeeklyVolumePanelRowModel): number {
     if (row.status === "no_target") {
-        const cap = Math.max(row.accumulated, 10);
-        return Math.min(100, (row.accumulated / cap) * 100);
+        const cap = Math.max(row.draftSets, 10);
+        return Math.min(100, (row.draftSets / cap) * 100);
+    }
+    if (row.targetToday != null && row.targetToday > 0) {
+        return Math.min(100, (row.draftSets / row.targetToday) * 100);
     }
     if (row.rangeMax != null && row.rangeMax > 0) {
         return Math.min(100, (row.accumulated / row.rangeMax) * 100);
@@ -76,6 +79,9 @@ function barWidthPct(row: WeeklyVolumePanelRowModel): number {
 }
 
 function ratioText(row: WeeklyVolumePanelRowModel): string {
+    if (row.targetToday != null && row.targetToday > 0) {
+        return `${row.draftSets} / ${row.targetToday}`;
+    }
     if (row.rangeMin != null && row.rangeMax != null) {
         return `${row.accumulated} / ${row.rangeMin}–${row.rangeMax}`;
     }
@@ -124,11 +130,11 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
             >
                 <div className="min-w-0 space-y-0.5">
                     <h3 className="text-sm font-semibold text-foreground truncate">
-                        Volumen semanal del cliente
+                        Volumen objetivo de hoy
                     </h3>
                     <p className="text-xs text-muted-foreground truncate">
                         {usesDraftProjection
-                            ? "Series proyectadas (guardadas en la semana + borrador)"
+                            ? "Series del borrador vs objetivo diario"
                             : "Series acumuladas"}
                         {weekLabel ? ` · Semana del ${weekLabel}` : ""}
                     </p>
@@ -229,7 +235,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                     ) : null}
                     <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
                         {usesDraftProjection
-                            ? "Proyección con el borrador actual (sin guardar) más el resto de sesiones de la semana. No bloquea el guardado."
+                            ? "Objetivo diario calculado a partir de la estructura semanal del plan. No bloquea el guardado."
                             : "Acumulado de todas las sesiones guardadas esta semana. Información orientativa, no bloquea el guardado."}
                     </p>
                 </div>

@@ -32,7 +32,7 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 }
 
 const baseStyles =
-    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:cursor-not-allowed disabled:opacity-50";
+    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:cursor-not-allowed disabled:opacity-50";
 
 // Mobile-first responsive sizes — compact = paneles estrechos (ExercisePickerPanel); xs = chips; sm = pills
 const sizeStyles: Record<InputSize, string> = {
@@ -81,9 +81,9 @@ const numberIconSizeStyles: Record<InputSize, string> = {
 };
 
 const stateStyles = {
-    default: "border-input focus-visible:border-primary focus-visible:ring-primary",
-    defaultXs: "border-border/60 bg-surface focus-visible:border-primary focus-visible:ring-primary",
-    error: "border-destructive focus-visible:ring-destructive",
+    default: "border-input focus:border-primary",
+    defaultXs: "border-border/60 bg-surface focus:border-primary",
+    error: "border-destructive focus:border-destructive",
 };
 
 const labelStyles = "block text-sm font-medium text-foreground mb-1";

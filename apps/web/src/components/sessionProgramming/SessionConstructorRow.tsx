@@ -114,7 +114,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                         "!h-8 !min-h-8 shrink-0 w-full min-w-0",
                         "font-medium",
                         "border border-primary/40 !bg-primary/10 !shadow-none",
-                        "focus:!border-primary/50 focus:ring-2 focus:ring-primary/25",
+                        "focus:!border-primary/50 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
                         row.blockTypeId
                             ? "!text-primary"
                             : "!text-muted-foreground"
@@ -199,7 +199,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                 {row.exercises.map((ex, idx) => {
                     const repsTipo = row.repsTipo ?? "reps";
                     const showCombobox = idx === 0;
-                    const inputCls = `flex ${INPUT_H} w-[50px] shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0`;
+                    const inputCls = `flex ${INPUT_H} w-[50px] shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]`;
                     return (
                         <div key={ex.id} className="flex items-center gap-1 min-h-8">
                             {showCombobox ? (

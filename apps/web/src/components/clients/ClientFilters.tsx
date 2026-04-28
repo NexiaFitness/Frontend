@@ -21,6 +21,7 @@
  */
 
 import React, { useState, useEffect } from "react";
+import { Search } from "lucide-react";
 import type { ClientFilters as ClientFiltersType } from "@nexia/shared/types/client";
 import { TRAINING_GOAL_ENUM, EXPERIENCE_ENUM } from "@nexia/shared";
 
@@ -85,11 +86,11 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
         filters.search || filters.objetivo_entrenamiento || filters.experiencia || filters.activo !== undefined;
 
     return (
-        <div className="bg-white/95 backdrop-blur-sm rounded-xl shadow-lg p-4 lg:p-6">
+        <div className="rounded-xl border border-border bg-surface p-4 lg:p-6">
             <div className="flex flex-col lg:flex-row gap-4">
                 {/* Búsqueda */}
                 <div className="flex-1">
-                    <label htmlFor="search" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="search" className="block text-sm font-medium text-foreground mb-2">
                         Buscar cliente
                     </label>
                     <div className="relative">
@@ -99,34 +100,22 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                             placeholder="Nombre, apellidos o mail..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="w-full px-4 py-2.5 pl-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors"
+                            className="w-full px-4 py-2.5 pl-10 rounded-lg border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors"
                         />
-                        <svg
-                            className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                        >
-                            <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                            />
-                        </svg>
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                     </div>
                 </div>
 
                 {/* Filtro Objetivo */}
                 <div className="w-full lg:w-48">
-                    <label htmlFor="objetivo_entrenamiento" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="objetivo_entrenamiento" className="block text-sm font-medium text-foreground mb-2">
                         Objetivo
                     </label>
                     <select
                         id="objetivo_entrenamiento"
                         value={filters.objetivo_entrenamiento || ""}
                         onChange={handleObjetivoChange}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors"
                     >
                         <option value="">Todos</option>
                         <option value={TRAINING_GOAL_ENUM.HIPERTROFIA}>Hipertrofia muscular</option>
@@ -142,14 +131,14 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
 
                 {/* Filtro Experiencia */}
                 <div className="w-full lg:w-48">
-                    <label htmlFor="experiencia" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="experiencia" className="block text-sm font-medium text-foreground mb-2">
                         Experiencia
                     </label>
                     <select
                         id="experiencia"
                         value={filters.experiencia || ""}
                         onChange={handleExperienciaChange}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors"
                     >
                         <option value="">Todos</option>
                         <option value={EXPERIENCE_ENUM.BAJA}>Principiante (Baja)</option>
@@ -160,14 +149,14 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
 
                 {/* Filtro Activo */}
                 <div className="w-full lg:w-40">
-                    <label htmlFor="activo" className="block text-sm font-medium text-slate-700 mb-2">
+                    <label htmlFor="activo" className="block text-sm font-medium text-foreground mb-2">
                         Estado
                     </label>
                     <select
                         id="activo"
                         value={filters.activo === undefined ? "" : filters.activo.toString()}
                         onChange={handleActivoChange}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                        className="w-full px-4 py-2.5 rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors"
                     >
                         <option value="">Todos</option>
                         <option value="true">Activos</option>
@@ -180,7 +169,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                     <div className="w-full lg:w-auto lg:self-end">
                         <button
                             onClick={handleReset}
-                            className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-lg transition-colors"
+                            className="w-full lg:w-auto px-4 py-2.5 text-sm font-medium text-muted-foreground bg-muted hover:bg-muted/80 rounded-lg transition-colors"
                         >
                             Limpiar filtros
                         </button>

@@ -20,7 +20,7 @@ interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaEl
 }
 
 const baseStyles =
-    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:ring-2 focus:ring-ring focus:border-primary focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed resize-y";
+    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed resize-y";
 
 const sizeStyles: Record<TextareaSize, string> = {
     sm: "px-2.5 py-1.5 text-xs",

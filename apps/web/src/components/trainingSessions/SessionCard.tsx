@@ -13,6 +13,7 @@ import { Calendar } from "lucide-react";
 import type { PlanTrainingSession } from "@nexia/shared";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
+import { isSessionDeletable } from "@nexia/shared/types/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 
 // Union type: TrainingSession + StandaloneSession (P2)
@@ -151,7 +152,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                         Editar
                     </Button>
                 )}
-                {onDelete && (
+                {onDelete && isSessionDeletable(session) && (
                     <Button
                         variant="danger"
                         size="sm"

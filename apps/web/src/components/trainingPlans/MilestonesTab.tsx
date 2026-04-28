@@ -1,39 +1,145 @@
 /**
- * MilestonesTab.tsx — Gestión de milestones del training plan
+ * MilestonesTab.tsx — Hitos del training plan
  *
- * UI: Header + Formulario colapsable + Lista ordenada por fecha
- * Estructura: Siguiendo Figma pero con paleta azul del proyecto
+ * UI: cabecera + formulario colapsable + lista ordenada por fecha.
+ * La confirmación de borrado usa BaseModal (no confirm() nativo).
+ * Errores de red renderizados con Alert (no alert() nativo).
  *
- * TICK-P06: Se mantiene como tab independiente en TrainingPlanDetail (Sesiones, Planificación, Hitos, Gráficos).
- *
- * @author Nelson Valero
+ * @author Frontend Team
  * @since v4.7.0 - Training Planning FASE 3A
+ * @updated 2026-04 — Reescritura completa alineada con DESIGN.md / Sparkle Flow
  */
 
-import React, { useState } from 'react';
-import { useMilestones } from '@nexia/shared/hooks/training/useMilestones';
-import { MILESTONE_TYPES, MILESTONE_IMPORTANCE, type MilestoneType, type MilestoneImportance } from '@nexia/shared/types/training';
-import type { Milestone } from '@nexia/shared/types/training';
+import React, { useState } from "react";
+import {
+    Calendar,
+    Check,
+    Flag,
+    CheckCircle2,
+    Trophy,
+    ClipboardList,
+    Bookmark,
+    Plus,
+    X,
+    Trash2,
+} from "lucide-react";
+import { cn } from "@/lib/utils";
+import { useMilestones } from "@nexia/shared/hooks/training/useMilestones";
+import {
+    MILESTONE_TYPES,
+    MILESTONE_IMPORTANCE,
+    type MilestoneType,
+    type MilestoneImportance,
+} from "@nexia/shared/types/training";
+import type { Milestone } from "@nexia/shared/types/training";
+import { Button } from "@/components/ui/buttons";
+import { Input, FormSelect, Textarea, DatePickerButton } from "@/components/ui/forms";
+import { Alert, LoadingSpinner, EmptyState } from "@/components/ui/feedback";
+import { BaseModal } from "@/components/ui/modals";
 
 interface MilestonesTabProps {
     planId: number;
 }
 
-export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
-    const [isCreating, setIsCreating] = useState(false);
-    const [formData, setFormData] = useState<{
-        title: string;
-        milestone_date: string;
-        type: MilestoneType;
-        importance: MilestoneImportance;
-        notes: string;
-    }>({
-        title: '',
-        milestone_date: '',
-        type: MILESTONE_TYPES.CUSTOM,
-        importance: MILESTONE_IMPORTANCE.MEDIUM,
-        notes: '',
+const TYPE_CONFIG: Record<
+    MilestoneType,
+    { icon: React.ReactNode; label: string; badgeClass: string }
+> = {
+    start: {
+        icon: <Flag className="size-3" />,
+        label: "Inicio",
+        badgeClass: "bg-primary/15 text-primary border-primary/30",
+    },
+    end: {
+        icon: <CheckCircle2 className="size-3" />,
+        label: "Fin",
+        badgeClass: "bg-muted text-muted-foreground border-border",
+    },
+    competition: {
+        icon: <Trophy className="size-3" />,
+        label: "Competición",
+        badgeClass: "bg-warning/15 text-warning border-warning/30",
+    },
+    test: {
+        icon: <ClipboardList className="size-3" />,
+        label: "Prueba",
+        badgeClass: "bg-secondary text-secondary-foreground border-border",
+    },
+    custom: {
+        icon: <Bookmark className="size-3" />,
+        label: "Personalizado",
+        badgeClass: "bg-muted text-muted-foreground border-border",
+    },
+};
+
+const IMPORTANCE_CONFIG: Record<
+    MilestoneImportance,
+    { label: string; filled: number; activeClass: string }
+> = {
+    low: { label: "Baja", filled: 1, activeClass: "bg-muted-foreground/60" },
+    medium: { label: "Media", filled: 2, activeClass: "bg-warning" },
+    high: { label: "Alta", filled: 3, activeClass: "bg-destructive" },
+};
+
+const TYPE_OPTIONS = [
+    { value: MILESTONE_TYPES.START, label: "Inicio" },
+    { value: MILESTONE_TYPES.END, label: "Fin" },
+    { value: MILESTONE_TYPES.COMPETITION, label: "Competición" },
+    { value: MILESTONE_TYPES.TEST, label: "Prueba" },
+    { value: MILESTONE_TYPES.CUSTOM, label: "Personalizado" },
+];
+
+const IMPORTANCE_OPTIONS = [
+    { value: MILESTONE_IMPORTANCE.LOW, label: "Baja" },
+    { value: MILESTONE_IMPORTANCE.MEDIUM, label: "Media" },
+    { value: MILESTONE_IMPORTANCE.HIGH, label: "Alta" },
+];
+
+const DEFAULT_FORM = {
+    title: "",
+    milestone_date: "",
+    type: MILESTONE_TYPES.CUSTOM as MilestoneType,
+    importance: MILESTONE_IMPORTANCE.MEDIUM as MilestoneImportance,
+    notes: "",
+};
+
+const formatMilestoneDate = (dateStr: string): string =>
+    new Date(dateStr).toLocaleDateString("es-ES", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
     });
+
+const ImportanceDots: React.FC<{ importance: MilestoneImportance }> = ({
+    importance,
+}) => {
+    const config = IMPORTANCE_CONFIG[importance];
+    return (
+        <div
+            className="flex items-center gap-0.5"
+            title={`Importancia: ${config.label}`}
+            aria-label={`Importancia ${config.label}`}
+        >
+            {[1, 2, 3].map((i) => (
+                <span
+                    key={i}
+                    className={cn(
+                        "h-1.5 w-1.5 rounded-full transition-colors",
+                        i <= config.filled ? config.activeClass : "bg-border"
+                    )}
+                />
+            ))}
+        </div>
+    );
+};
+
+export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
+    const [formOpen, setFormOpen] = useState(false);
+    const [formData, setFormData] = useState(DEFAULT_FORM);
+    const [formError, setFormError] = useState<string | null>(null);
+    const [topError, setTopError] = useState<string | null>(null);
+    const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const {
         milestones,
@@ -44,266 +150,372 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
         isCreating: isSubmitting,
     } = useMilestones({ planId });
 
+    const openForm = () => {
+        setFormData(DEFAULT_FORM);
+        setFormError(null);
+        setFormOpen(true);
+    };
+
+    const closeForm = () => {
+        setFormOpen(false);
+        setFormError(null);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
-        if (!formData.title || !formData.milestone_date) {
-            alert('El título y la fecha son obligatorios');
+        if (!formData.title.trim() || !formData.milestone_date) {
+            setFormError("El nombre y la fecha son obligatorios.");
             return;
         }
-
         try {
             await createMilestone(formData);
-            setFormData({
-                title: '',
-                milestone_date: '',
-                type: MILESTONE_TYPES.CUSTOM,
-                importance: MILESTONE_IMPORTANCE.MEDIUM,
-                notes: '',
-            });
-            setIsCreating(false);
-        } catch (error) {
-            console.error('Failed to create milestone:', error);
-            alert('Error al crear el hito');
+            setFormData(DEFAULT_FORM);
+            setFormOpen(false);
+            setFormError(null);
+        } catch {
+            setFormError("No se pudo guardar el hito. Inténtalo de nuevo.");
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!confirm('¿Eliminar este hito?')) return;
-
+    const handleDeleteConfirm = async () => {
+        if (deleteTargetId === null) return;
+        setIsDeleting(true);
         try {
-            await deleteMilestone(id);
-        } catch (error) {
-            console.error('Failed to delete milestone:', error);
-            alert('Error al eliminar el hito');
+            await deleteMilestone(deleteTargetId);
+            setDeleteTargetId(null);
+        } catch {
+            setTopError("No se pudo eliminar el hito. Inténtalo de nuevo.");
+            setDeleteTargetId(null);
+        } finally {
+            setIsDeleting(false);
         }
     };
 
     const handleToggle = async (milestone: Milestone) => {
         try {
             await toggleComplete(milestone);
-        } catch (error) {
-            console.error('Failed to toggle milestone:', error);
+        } catch {
+            setTopError("No se pudo actualizar el hito. Inténtalo de nuevo.");
         }
-    };
-
-    const getImportanceStars = (importance: string) => {
-        const levels = {
-            low: '⭐',
-            medium: '⭐⭐',
-            high: '⭐⭐⭐',
-        };
-        return levels[importance as keyof typeof levels] || '⭐⭐';
-    };
-
-    const getTypeLabel = (type: string) => {
-        const labels = {
-            start: 'Fecha de Inicio',
-            end: 'Fecha de Fin',
-            competition: 'Competición',
-            test: 'Prueba',
-            custom: 'Personalizado',
-        };
-        return labels[type as keyof typeof labels] || type;
     };
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center h-64">
-                <div className="text-gray-500">Cargando hitos...</div>
+            <div className="flex min-h-[300px] items-center justify-center">
+                <LoadingSpinner size="md" />
             </div>
         );
     }
 
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const sorted = [...milestones].sort(
+        (a, b) =>
+            new Date(a.milestone_date).getTime() -
+            new Date(b.milestone_date).getTime()
+    );
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-5">
+            {topError && (
+                <Alert variant="error" onDismiss={() => setTopError(null)}>
+                    {topError}
+                </Alert>
+            )}
+
             {/* Header */}
-            <div className="bg-white border border-gray-200 rounded-lg p-6">
-                <div className="flex justify-between items-start mb-2">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Hitos Importantes</h2>
-                        <p className="text-sm text-gray-600 mt-1">
-                            Añade eventos importantes (competiciones, pruebas, fechas de inicio/fin) para guiar tu planificación.
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => setIsCreating(!isCreating)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-full hover:bg-gray-50 transition-colors"
-                    >
-                        <span className="text-lg">{isCreating ? '−' : '+'}</span>
-                    </button>
+            <div className="flex items-start justify-between gap-4">
+                <div>
+                    <h2 className="text-base font-semibold text-foreground">
+                        Hitos del plan
+                    </h2>
+                    <p className="mt-0.5 text-sm text-muted-foreground">
+                        Registra eventos clave: competiciones, pruebas y fechas
+                        importantes.
+                    </p>
                 </div>
-
-                {/* Create Form */}
-                {isCreating && (
-                    <form onSubmit={handleSubmit} className="mt-6 space-y-4 border-t pt-4">
-                        {/* Milestone Type */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Tipo de Hito
-                            </label>
-                            <select
-                                value={formData.type}
-                                onChange={(e) => setFormData({ ...formData, type: e.target.value as MilestoneType })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value={MILESTONE_TYPES.START}>Fecha de Inicio</option>
-                                <option value={MILESTONE_TYPES.END}>Fecha de Fin</option>
-                                <option value={MILESTONE_TYPES.COMPETITION}>Competición</option>
-                                <option value={MILESTONE_TYPES.TEST}>Prueba</option>
-                                <option value={MILESTONE_TYPES.CUSTOM}>Personalizado</option>
-                            </select>
-                        </div>
-
-                        {/* Name & Date */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Nombre
-                                </label>
-                                <input
-                                    type="text"
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    placeholder="ej., Final 100m sprint, Prueba de Peso, Inicio de Temporada"
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    Fecha
-                                </label>
-                                <input
-                                    type="date"
-                                    value={formData.milestone_date}
-                                    onChange={(e) => setFormData({ ...formData, milestone_date: e.target.value })}
-                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Importance */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Importancia
-                            </label>
-                            <select
-                                value={formData.importance}
-                                onChange={(e) => setFormData({ ...formData, importance: e.target.value as MilestoneImportance })}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value={MILESTONE_IMPORTANCE.LOW}>Baja ⭐</option>
-                                <option value={MILESTONE_IMPORTANCE.MEDIUM}>Media ⭐⭐</option>
-                                <option value={MILESTONE_IMPORTANCE.HIGH}>Alta ⭐⭐⭐</option>
-                            </select>
-                        </div>
-
-                        {/* Notes */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Notas (opcional)
-                            </label>
-                            <textarea
-                                value={formData.notes || ''}
-                                onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                                rows={3}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                            />
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            {isSubmitting ? 'Añadiendo...' : 'Añadir Hito'}
-                        </button>
-                    </form>
-                )}
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={formOpen ? closeForm : openForm}
+                    className="shrink-0"
+                >
+                    {formOpen ? (
+                        <X className="size-4" />
+                    ) : (
+                        <Plus className="size-4" />
+                    )}
+                    {formOpen ? "Cancelar" : "Nuevo hito"}
+                </Button>
             </div>
 
-            {/* Milestones List */}
-            {milestones.length === 0 ? (
-                <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
-                    <div className="max-w-md mx-auto">
-                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                            </svg>
+            {/* Create form */}
+            {formOpen && (
+                <div className="rounded-lg border border-border bg-card p-5">
+                    <p className="mb-4 text-sm font-semibold text-foreground">
+                        Nuevo hito
+                    </p>
+                    {formError && (
+                        <Alert
+                            variant="error"
+                            className="mb-4"
+                            onDismiss={() => setFormError(null)}
+                        >
+                            {formError}
+                        </Alert>
+                    )}
+                    <form onSubmit={handleSubmit} className="space-y-4">
+                        <FormSelect
+                            label="Tipo"
+                            value={formData.type}
+                            options={TYPE_OPTIONS}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    type: e.target.value as MilestoneType,
+                                })
+                            }
+                            size="sm"
+                        />
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                            <Input
+                                label="Nombre"
+                                value={formData.title}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        title: e.target.value,
+                                    })
+                                }
+                                placeholder="ej. Competición final, Test de fuerza"
+                                size="sm"
+                                autoFocus
+                                isRequired
+                            />
+                            <div className="w-full">
+                                <label className="block text-sm font-medium text-foreground mb-1">
+                                    Fecha{" "}
+                                    <span className="text-destructive ml-1">*</span>
+                                </label>
+                                <DatePickerButton
+                                    label="Seleccionar"
+                                    value={formData.milestone_date}
+                                    onChange={(v) =>
+                                        setFormData({
+                                            ...formData,
+                                            milestone_date: v,
+                                        })
+                                    }
+                                    variant="form"
+                                    aria-label="Fecha del hito"
+                                />
+                            </div>
                         </div>
-                        <p className="text-gray-500 mb-2">Aún no hay hitos</p>
-                        <p className="text-sm text-gray-400">
-                            Haz clic en el botón + de arriba para añadir tu primer hito
-                        </p>
-                    </div>
+                        <FormSelect
+                            label="Importancia"
+                            value={formData.importance}
+                            options={IMPORTANCE_OPTIONS}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    importance: e.target.value as MilestoneImportance,
+                                })
+                            }
+                            size="sm"
+                        />
+                        <Textarea
+                            label="Notas"
+                            value={formData.notes}
+                            onChange={(e) =>
+                                setFormData({
+                                    ...formData,
+                                    notes: e.target.value,
+                                })
+                            }
+                            placeholder="Contexto adicional o instrucciones..."
+                            rows={3}
+                            size="sm"
+                        />
+                        <div className="flex justify-end gap-2 pt-1">
+                            <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={closeForm}
+                                disabled={isSubmitting}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="submit"
+                                variant="primary"
+                                size="sm"
+                                isLoading={isSubmitting}
+                                disabled={isSubmitting}
+                            >
+                                Guardar hito
+                            </Button>
+                        </div>
+                    </form>
                 </div>
+            )}
+
+            {/* Milestone list */}
+            {sorted.length === 0 ? (
+                <EmptyState
+                    icon={<Calendar />}
+                    title="Sin hitos registrados"
+                    description="Añade competiciones, pruebas de evaluación o fechas clave para guiar tu planificación."
+                    action={
+                        !formOpen ? (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={openForm}
+                            >
+                                <Plus className="size-4" />
+                                Añadir primer hito
+                            </Button>
+                        ) : undefined
+                    }
+                />
             ) : (
-                <div className="space-y-3">
-                    {[...milestones]
-                        .sort((a, b) => new Date(a.milestone_date).getTime() - new Date(b.milestone_date).getTime())
-                        .map((milestone) => (
+                <div className="space-y-2">
+                    {sorted.map((milestone) => {
+                        const isPast =
+                            new Date(milestone.milestone_date) < today;
+                        const typeConfig = TYPE_CONFIG[milestone.type];
+
+                        return (
                             <div
                                 key={milestone.id}
-                                className={`bg-white border rounded-lg p-4 transition-all ${milestone.done
-                                        ? 'border-green-300 bg-green-50'
-                                        : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                className={cn(
+                                    "rounded-lg border p-4 transition-all",
+                                    milestone.done
+                                        ? "border-success/30 bg-success/10"
+                                        : "border-border bg-card hover:border-border/80"
+                                )}
                             >
-                                <div className="flex items-start gap-4">
-                                    {/* Checkbox */}
-                                    <input
-                                        type="checkbox"
-                                        checked={milestone.done}
-                                        onChange={() => handleToggle(milestone)}
-                                        className="mt-1 w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    />
+                                <div className="flex items-start gap-3">
+                                    {/* Custom checkbox */}
+                                    <button
+                                        type="button"
+                                        role="checkbox"
+                                        aria-checked={milestone.done}
+                                        onClick={() => handleToggle(milestone)}
+                                        className={cn(
+                                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all duration-150",
+                                            milestone.done
+                                                ? "border-success bg-success/20 text-success"
+                                                : "border-border hover:border-primary"
+                                        )}
+                                        aria-label={
+                                            milestone.done
+                                                ? "Marcar como pendiente"
+                                                : "Marcar como completado"
+                                        }
+                                    >
+                                        {milestone.done && (
+                                            <Check className="size-3" />
+                                        )}
+                                    </button>
 
                                     {/* Content */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center gap-3 mb-1">
-                                            <h3
-                                                className={`text-lg font-semibold ${milestone.done ? 'line-through text-gray-500' : 'text-gray-900'
-                                                    }`}
-                                            >
-                                                {milestone.title}
-                                            </h3>
-                                            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded-full">
-                                                {getTypeLabel(milestone.type)}
-                                            </span>
-                                            <span className="text-sm">{getImportanceStars(milestone.importance)}</span>
-                                        </div>
-
-                                        <p className="text-sm text-gray-600 mb-2">
-                                            {new Date(milestone.milestone_date).toLocaleDateString("es-ES", {
-                                                weekday: "long",
-                                                year: "numeric",
-                                                month: "long",
-                                                day: "numeric",
-                                            })}
+                                    <div className="min-w-0 flex-1 space-y-1.5">
+                                        <p
+                                            className={cn(
+                                                "text-sm font-semibold leading-tight",
+                                                milestone.done
+                                                    ? "text-muted-foreground line-through"
+                                                    : "text-foreground"
+                                            )}
+                                        >
+                                            {milestone.title}
                                         </p>
-
+                                        <p className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                                            {formatMilestoneDate(
+                                                milestone.milestone_date
+                                            )}
+                                            {isPast && !milestone.done && (
+                                                <span className="inline-flex items-center rounded-full border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">
+                                                    Vencido
+                                                </span>
+                                            )}
+                                        </p>
+                                        <div className="flex flex-wrap items-center gap-1.5">
+                                            <span
+                                                className={cn(
+                                                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold",
+                                                    typeConfig.badgeClass
+                                                )}
+                                            >
+                                                {typeConfig.icon}
+                                                {typeConfig.label}
+                                            </span>
+                                            <ImportanceDots
+                                                importance={
+                                                    milestone.importance
+                                                }
+                                            />
+                                        </div>
                                         {milestone.notes && (
-                                            <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                                            <p className="rounded-md bg-surface/50 px-2.5 py-1.5 text-xs leading-relaxed text-muted-foreground">
                                                 {milestone.notes}
                                             </p>
                                         )}
                                     </div>
 
-                                    {/* Delete Button */}
-                                    <button
-                                        onClick={() => handleDelete(milestone.id)}
-                                        className="text-red-600 hover:text-red-700 font-medium text-sm px-3 py-1 hover:bg-red-50 rounded transition-colors"
+                                    {/* Delete button */}
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                            setDeleteTargetId(milestone.id)
+                                        }
+                                        className="h-7 w-7 shrink-0 text-muted-foreground/40 hover:bg-destructive/10 hover:text-destructive"
+                                        aria-label={`Eliminar hito ${milestone.title}`}
                                     >
-                                        Eliminar
-                                    </button>
+                                        <Trash2 className="size-3.5" />
+                                    </Button>
                                 </div>
                             </div>
-                        ))}
+                        );
+                    })}
                 </div>
             )}
+
+            {/* Delete confirmation modal */}
+            <BaseModal
+                isOpen={deleteTargetId !== null}
+                onClose={() => {
+                    if (!isDeleting) setDeleteTargetId(null);
+                }}
+                title="Eliminar hito"
+                description="Esta acción no se puede deshacer. ¿Seguro que quieres eliminar este hito?"
+                iconType="danger"
+                maxWidth="sm"
+                isLoading={isDeleting}
+            >
+                <div className="flex justify-center gap-3">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setDeleteTargetId(null)}
+                        disabled={isDeleting}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={handleDeleteConfirm}
+                        isLoading={isDeleting}
+                    >
+                        Eliminar
+                    </Button>
+                </div>
+            </BaseModal>
         </div>
     );
 };
-

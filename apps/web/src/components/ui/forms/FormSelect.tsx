@@ -36,7 +36,7 @@ interface FormSelectProps
 }
 
 const baseStyles =
-    "block w-full rounded-md border bg-surface-2 text-foreground transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-0 disabled:opacity-50 disabled:cursor-not-allowed caret-primary";
+    "block w-full rounded-md border bg-surface-2 text-foreground transition-colors placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed caret-primary";
 
 // Mobile-first responsive sizes — xs = compact (Constructor, chips); sm = pills
 const sizeStyles: Record<SelectSize, string> = {
@@ -47,9 +47,9 @@ const sizeStyles: Record<SelectSize, string> = {
 };
 
 const stateStyles = {
-    default: "border-border focus:border-primary focus:ring-primary",
-    defaultXs: "border-border/60 bg-surface focus:border-primary focus:ring-primary",
-    error: "border-destructive focus:border-destructive focus:ring-destructive",
+    default: "border-border focus:border-primary",
+    defaultXs: "border-border/60 bg-surface focus:border-primary",
+    error: "border-destructive focus:border-destructive",
 };
 
 const labelStyles = "block text-sm font-medium text-foreground mb-1";

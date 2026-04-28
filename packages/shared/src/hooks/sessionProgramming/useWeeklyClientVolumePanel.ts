@@ -134,6 +134,7 @@ export function useWeeklyClientVolumePanel(
             include_standalone: params.includeStandalone !== false,
             draft_exercises: debouncedDraft,
             volume_level: volumeLevel,
+            session_date: params.sessionDateYmd,
         })
             .unwrap()
             .then((res) => {
@@ -170,14 +171,23 @@ export function useWeeklyClientVolumePanel(
                 muscle_group_id: r.muscle_group_id,
                 name_es: r.name_es,
                 planned_sets_sum: r.projected_total,
+                draft_sets: r.draft_sets,
+                daily_target: r.daily_target,
             }));
         }
         return [];
     }, [hasDebouncedDraft, draftProjection, q.data?.rows]);
 
+    const effectiveTargetCenter = useMemo(() => {
+        if (draftProjection?.weekly_target) {
+            return draftProjection.weekly_target;
+        }
+        return targetCenter;
+    }, [draftProjection?.weekly_target, targetCenter]);
+
     const rows = useMemo(() => {
-        return buildWeeklyVolumePanelRows(apiRowsForPanel, targetCenter);
-    }, [apiRowsForPanel, targetCenter]);
+        return buildWeeklyVolumePanelRows(apiRowsForPanel, effectiveTargetCenter);
+    }, [apiRowsForPanel, effectiveTargetCenter]);
 
     const summary = useMemo(() => summarizeVolumeRowStatuses(rows), [rows]);
 

@@ -72,7 +72,7 @@ const emptyForm = (): NewExerciseFormState => ({
 });
 
 const selectClass =
-    "h-9 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-ring";
+    "h-9 rounded-md border border-border bg-surface px-2 text-xs text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]";
 
 export const ExercisesPage: React.FC = () => {
     const navigate = useNavigate();

@@ -3,18 +3,19 @@
  *
  * Contexto:
  * - Misma estructura visual que ClientHeader: space-y-6, breadcrumbs, avatar + título + acciones,
- *   rejilla 6 columnas, separadores border-border, bloque de notas.
- * - Avatar: ClientAvatar cuando hay cliente asignado; iniciales del plan si no.
+ *   rejilla 6 columnas, separadores border-border.
+ * - Descripción inline: mínima huella visual. Solo ocupa espacio cuando el editor está abierto.
  *
  * @author Frontend Team
  * @since v3.3.0
  * @updated 2026-04 — Layout unificado con ClientDetail / ClientHeader (TabsBar fuera, en página).
  * @updated 2026-04 — Editar / Eliminar plan en barra fija inferior (TrainingPlanDetail), no en header.
- * @updated 2026-04 — Descripción / notas: añadir descripción inline (PUT description), sin duplicar “editar plan”.
+ * @updated 2026-04 — Descripción inline compact: sin label pesado, sin "Sin descripción.", sin borde caja.
  */
 
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { ArrowLeft, Pencil } from "lucide-react";
 import type { TrainingPlan } from "@nexia/shared/types/training";
 import type { Client } from "@nexia/shared/types/client";
 import { getClientInitials } from "@nexia/shared";
@@ -33,16 +34,23 @@ interface TrainingPlanHeaderProps {
     onAssignPlan?: () => void;
     /** Si existe, muestra botón "Volver al cliente" */
     volverAlClienteClientId?: number;
-    /** Guardar nota en description (append si ya hay texto) — PUT /training-plans/{id} */
+    /** Guardar nota en description — PUT /training-plans/{id} */
     onSaveDescriptionNote?: (text: string) => Promise<boolean>;
     isSavingDescription?: boolean;
 }
 
-const statusLabels: Record<string, string> = {
+const STATUS_LABELS: Record<string, string> = {
     active: "Activo",
     completed: "Completado",
     paused: "Pausado",
     cancelled: "Cancelado",
+};
+
+const STATUS_COLORS: Record<string, string> = {
+    active: "bg-success/10 text-success border border-success/30",
+    completed: "bg-primary/10 text-primary border border-primary/30",
+    paused: "bg-warning/10 text-warning border border-warning/30",
+    cancelled: "bg-destructive/10 text-destructive border border-destructive/30",
 };
 
 export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
@@ -63,42 +71,25 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
         ? `${client.nombre} ${client.apellidos}`
         : clientName;
 
-    const formatDate = (dateStr: string): string => {
-        const date = new Date(dateStr);
-        return date.toLocaleDateString("es-ES", {
+    const formatDate = (dateStr: string): string =>
+        new Date(dateStr).toLocaleDateString("es-ES", {
             day: "2-digit",
             month: "short",
             year: "numeric",
         });
-    };
 
     const getDuration = (): string => {
         const start = new Date(plan.start_date);
         const end = new Date(plan.end_date);
         const weeks = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 7));
-
         if (weeks < 4) return `${weeks} semanas`;
         const months = Math.floor(weeks / 4);
         return `${months} ${months === 1 ? "mes" : "meses"}`;
     };
 
-    const getStatusBadge = () => {
-        const statusColors: Record<string, string> = {
-            active: "bg-success/10 text-success border border-success/30",
-            completed: "bg-primary/10 text-primary border border-primary/30",
-            paused: "bg-warning/10 text-warning border border-warning/30",
-            cancelled: "bg-destructive/10 text-destructive border border-destructive/30",
-        };
-        const color = statusColors[plan.status] || "bg-muted text-muted-foreground border border-border";
-        const label = statusLabels[plan.status] || plan.status;
-        return (
-            <span className={`inline-flex shrink-0 px-2 py-1 rounded-full text-xs font-medium ${color}`}>
-                {label}
-            </span>
-        );
-    };
-
-    const statusLabelPlain = statusLabels[plan.status] || plan.status;
+    const statusColor =
+        STATUS_COLORS[plan.status] ?? "bg-muted text-muted-foreground border border-border";
+    const statusLabel = STATUS_LABELS[plan.status] ?? plan.status;
 
     const descTrimmed = (plan.description ?? "").trim();
     const hasDescription = Boolean(descTrimmed);
@@ -110,6 +101,16 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             setDescriptionDraft("");
             setDescriptionOpen(false);
         }
+    };
+
+    const openEditor = () => {
+        setDescriptionDraft(hasDescription ? descTrimmed : "");
+        setDescriptionOpen(true);
+    };
+
+    const closeEditor = () => {
+        setDescriptionOpen(false);
+        setDescriptionDraft("");
     };
 
     const subtitleParts = [
@@ -124,13 +125,16 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                 <Breadcrumbs items={breadcrumbItems} className="mb-1" />
             )}
 
+            {/* Avatar + nombre + acciones */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
                 <div className="flex-shrink-0">
                     {plan.client_id && (client || clientName) ? (
                         <ClientAvatar
                             clientId={plan.client_id}
                             nombre={client?.nombre ?? clientName?.split(" ")[0]}
-                            apellidos={client?.apellidos ?? clientName?.split(" ").slice(1).join(" ")}
+                            apellidos={
+                                client?.apellidos ?? clientName?.split(" ").slice(1).join(" ")
+                            }
                             size="lg"
                         />
                     ) : (
@@ -139,11 +143,17 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                         </div>
                     )}
                 </div>
+
                 <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-3 gap-y-2">
                         <h1 className="text-2xl font-bold text-foreground">{plan.name}</h1>
-                        {getStatusBadge()}
-                        <div className="ml-auto flex flex-shrink-0 flex-row flex-wrap items-center gap-2">
+                        <span
+                            className={`inline-flex shrink-0 px-2 py-1 rounded-full text-xs font-medium ${statusColor}`}
+                        >
+                            {statusLabel}
+                        </span>
+
+                        <div className="ml-auto flex shrink-0 flex-row flex-wrap items-center gap-2">
                             {volverAlClienteClientId != null && (
                                 <Button
                                     variant="outline"
@@ -155,21 +165,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                                     }
                                     aria-label="Volver al cliente"
                                 >
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        className="h-4 w-4 mr-2"
-                                        fill="none"
-                                        viewBox="0 0 24 24"
-                                        stroke="currentColor"
-                                        aria-hidden
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                                        />
-                                    </svg>
+                                    <ArrowLeft className="size-4" />
                                     Volver al cliente
                                 </Button>
                             )}
@@ -186,6 +182,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
 
             <div className="border-b border-border" />
 
+            {/* Metadata grid */}
             <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 lg:grid-cols-6">
                 <div className="min-w-0 py-0.5 text-center">
                     <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
@@ -213,13 +210,15 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                     <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                         Estado
                     </span>
-                    <p className="mt-0.5 font-medium text-foreground break-words">{statusLabelPlain}</p>
+                    <p className="mt-0.5 font-medium text-foreground break-words">{statusLabel}</p>
                 </div>
                 <div className="min-w-0 py-0.5 text-center">
                     <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
                         Objetivo
                     </span>
-                    <p className="mt-0.5 font-medium text-foreground break-words">{plan.goal ?? "—"}</p>
+                    <p className="mt-0.5 font-medium text-foreground break-words">
+                        {plan.goal ?? "—"}
+                    </p>
                 </div>
                 <div className="min-w-0 py-0.5 text-center">
                     <span className="block text-xs uppercase tracking-wide text-muted-foreground whitespace-nowrap">
@@ -239,59 +238,39 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             </div>
 
             {plan.tags && plan.tags.length > 0 && (
-                <>
-                    <div>
-                        <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
-                            Etiquetas
-                        </span>
-                        <div className="flex flex-wrap gap-1">
-                            {plan.tags.map((tag, i) => (
-                                <span
-                                    key={i}
-                                    className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground"
-                                >
-                                    {tag}
-                                </span>
-                            ))}
-                        </div>
+                <div>
+                    <span className="mb-1 block text-xs uppercase tracking-wide text-muted-foreground">
+                        Etiquetas
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                        {plan.tags.map((tag, i) => (
+                            <span
+                                key={i}
+                                className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                            >
+                                {tag}
+                            </span>
+                        ))}
                     </div>
-                </>
+                </div>
             )}
 
             <div className="border-b border-border" />
 
-            <div className="mb-4">
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-xs uppercase tracking-wide text-muted-foreground">
-                        Descripción / notas
-                    </span>
-                    {onSaveDescriptionNote && (
-                        <button
-                            type="button"
-                            onClick={() => {
-                                setDescriptionOpen((o) => {
-                                    if (o) setDescriptionDraft("");
-                                    return !o;
-                                });
-                            }}
-                            className="text-xs font-medium text-primary hover:text-primary/80 hover:underline"
-                        >
-                            {descriptionOpen ? "Cerrar" : "+ Añadir descripción"}
-                        </button>
-                    )}
-                </div>
-
-                {onSaveDescriptionNote && descriptionOpen && (
-                    <div className="mb-4 space-y-2 rounded-md border border-border bg-muted/30 p-3">
+            {/* Descripción — inline compact */}
+            <div>
+                {descriptionOpen ? (
+                    /* Editor abierto */
+                    <div className="space-y-2">
                         <Textarea
                             value={descriptionDraft}
                             onChange={(e) => setDescriptionDraft(e.target.value)}
-                            placeholder="Escribe la descripción…"
+                            placeholder="Descripción o notas del plan…"
                             rows={3}
-                            className="text-foreground"
                             disabled={isSavingDescription}
+                            autoFocus
                         />
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex gap-2">
                             <Button
                                 type="button"
                                 size="sm"
@@ -305,28 +284,43 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                             <Button
                                 type="button"
                                 size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                    setDescriptionOpen(false);
-                                    setDescriptionDraft("");
-                                }}
+                                variant="ghost"
+                                onClick={closeEditor}
                                 disabled={isSavingDescription}
                             >
                                 Cancelar
                             </Button>
                         </div>
                     </div>
-                )}
-
-                <div className="space-y-2">
-                    {hasDescription ? (
-                        <p className="whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground">
+                ) : hasDescription ? (
+                    /* Descripción existente — con botón editar on hover */
+                    <div className="group flex items-start gap-2">
+                        <p className="flex-1 whitespace-pre-wrap text-sm text-muted-foreground leading-relaxed">
                             {plan.description}
                         </p>
-                    ) : (
-                        <p className="text-sm text-foreground">Sin descripción.</p>
-                    )}
-                </div>
+                        {onSaveDescriptionNote && (
+                            <button
+                                type="button"
+                                onClick={openEditor}
+                                className="mt-0.5 shrink-0 rounded p-1 text-muted-foreground/40 transition-colors hover:bg-primary/10 hover:text-primary opacity-0 group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                aria-label="Editar descripción"
+                            >
+                                <Pencil className="size-3.5" />
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    /* Sin descripción — link sutil */
+                    onSaveDescriptionNote && (
+                        <button
+                            type="button"
+                            onClick={openEditor}
+                            className="text-xs text-muted-foreground/50 transition-colors hover:text-primary"
+                        >
+                            + Añadir descripción
+                        </button>
+                    )
+                )}
             </div>
         </div>
     );

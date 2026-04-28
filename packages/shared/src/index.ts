@@ -166,7 +166,9 @@ export {
     SESSION_TYPE_LABELS,
     INTENSITY_LABELS,
     TRAINING_SESSION_STATUS_LABELS,
+    isSessionDeletable,
 } from "./types/trainingSessions";
+export type { SessionDeletableInput } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
 export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";

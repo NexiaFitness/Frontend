@@ -20,6 +20,7 @@ import {
     BarChart,
     Bar,
 } from "recharts";
+import { ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import {
     useGetTrainingPlanQuery,
     useGetTrainingPlanCoherenceQuery,
@@ -27,9 +28,29 @@ import {
 } from "@nexia/shared/api/trainingPlansApi";
 import { computeD6AdherencePct, PLAN_ANALYTICS_SESSION_FETCH_MAX } from "@nexia/shared";
 import { usePlanBlockAnalytics } from "@nexia/shared/hooks/training/usePlanBlockAnalytics";
-import { MetricCard } from "@/components/ui/cards";
-import { LoadingSpinner } from "@/components/ui/feedback";
+import { MetricCard, EmptyStateCard } from "@/components/ui/cards";
+import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
+import { Badge } from "@/components/ui/Badge";
+
+// Shared chart styles per DESIGN.md §5.17
+const CHART_TOOLTIP_STYLE: React.CSSProperties = {
+    backgroundColor: "hsl(var(--popover))",
+    border: "1px solid hsl(var(--border))",
+    borderRadius: "0.5rem",
+    color: "hsl(var(--foreground))",
+    boxShadow: "0 8px 30px hsl(0 0% 0% / 0.35)",
+};
+
+const CHART_LEGEND_STYLE: React.CSSProperties = {
+    color: "hsl(var(--muted-foreground))",
+    fontSize: 12,
+};
+
+const CHART_TICK = {
+    fill: "hsl(var(--muted-foreground))",
+    fontSize: 12,
+};
 
 interface ChartsTabProps {
     planId: number;
@@ -145,7 +166,7 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
 
     if (isLoading) {
         return (
-            <div className="flex justify-center items-center py-12">
+            <div className="flex items-center justify-center min-h-[400px]">
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -156,89 +177,85 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
             (planErr as { data?: { detail?: string } })?.data?.detail ??
             (planErr as Error)?.message ??
             "No se pudo cargar el plan.";
-        return (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive text-sm">
-                <p className="font-medium">Error</p>
-                <p>{String(msg)}</p>
-            </div>
-        );
+        return <Alert variant="error">{String(msg)}</Alert>;
     }
 
     if (blockAnalyticsError) {
         return (
-            <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-4 text-destructive text-sm">
-                <p className="font-medium">Error al cargar analítica</p>
-                <p>{String(blockErrorMessage || "Error desconocido")}</p>
-            </div>
+            <Alert variant="error">
+                {String(blockErrorMessage || "Error al cargar analítica")}
+            </Alert>
         );
     }
 
     return (
         <div className="space-y-8">
-            <h2 className="text-lg font-semibold text-foreground">Analítica</h2>
-
             {!showBlockMode ? (
-                <div
-                    className="rounded-lg border border-border bg-muted/40 p-6 space-y-4"
-                    role="status"
-                    aria-live="polite"
-                >
-                    {noSessionsInPlan ? (
-                        <p className="text-sm text-foreground leading-relaxed">
-                            Aún no hay sesiones en este plan.
-                        </p>
-                    ) : (
-                        <p className="text-sm text-foreground leading-relaxed">
-                            Añade un bloque de periodización en Planificación o vincula sesiones a un
-                            bloque para ver coherencia por bloques, desviación de carga y gráficos.
-                        </p>
-                    )}
-                    <Button
-                        type="button"
-                        variant="primary"
-                        size="sm"
-                        onClick={handleGoToPlanningTab}
-                    >
-                        Ir a Planificación
-                    </Button>
-                </div>
+                <EmptyStateCard
+                    icon={<BarChart3 />}
+                    title={
+                        noSessionsInPlan
+                            ? "Sin sesiones en el plan"
+                            : "Sin bloques de periodización"
+                    }
+                    description={
+                        noSessionsInPlan
+                            ? "Aún no hay sesiones en este plan."
+                            : "Añade un bloque de periodización en Planificación o vincula sesiones a un bloque para ver coherencia por bloques, desviación de carga y gráficos."
+                    }
+                    action={
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={handleGoToPlanningTab}
+                        >
+                            Ir a Planificación
+                        </Button>
+                    }
+                />
             ) : (
                 <>
-                    <div className="flex flex-wrap gap-4">
+                    {/* KPI grid — responsive 1→2→4 cols */}
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                         <MetricCard
-                            title="Coherencia global (bloques)"
+                            title="Coherencia de bloques"
                             value={formatPct1(analytics?.d1CoherenceGlobalPct)}
-                            subtitle="Sesiones completadas con V e I planificados dentro del 20 % respecto al bloque (U1)."
+                            subtitle="Sesiones que ejecutaron el volumen e intensidad planificados dentro del margen del 20%."
                             color={
-                                (analytics?.d1CoherenceGlobalPct ?? 0) >= 80
-                                    ? "green"
-                                    : (analytics?.d1CoherenceGlobalPct ?? 0) >= 60
-                                      ? "orange"
-                                      : "blue"
+                                analytics?.d1CoherenceGlobalPct == null
+                                    ? "blue"
+                                    : analytics.d1CoherenceGlobalPct >= 80
+                                      ? "green"
+                                      : analytics.d1CoherenceGlobalPct >= 60
+                                        ? "orange"
+                                        : "blue"
                             }
                         />
                         <MetricCard
-                            title="Desviación de carga (volumen)"
+                            title="Desviación de carga"
                             value={formatPct1(analytics?.d2LoadDeviationPct)}
-                            subtitle="Media de |planificado − bloque| / bloque (volumen), todas las sesiones con bloque. Umbral referencia 20 %."
+                            subtitle="Diferencia media entre la carga ejecutada y la planificada por bloque. Objetivo: menos del 20%."
                             color="blue"
                         />
                         <MetricCard
                             title="Sesiones"
                             value={`${plan.sessions_completed} / ${plan.sessions_total}`}
-                            subtitle="Completadas / planificadas (activas)."
+                            subtitle="Sesiones realizadas del total planificado en el plan."
                             color="green"
                         />
                         <MetricCard
                             title="Adherencia"
                             value={formatPct1(adherencePct)}
-                            subtitle="Completadas / planificadas según el plan (D6)."
+                            subtitle="Porcentaje de sesiones completadas respecto al total del plan."
                             color={
-                                (adherencePct ?? 0) >= 80
-                                    ? "green"
-                                    : (adherencePct ?? 0) >= 60
-                                      ? "orange"
-                                      : "red"
+                                adherencePct == null
+                                    ? "blue"
+                                    : adherencePct >= 80
+                                      ? "green"
+                                      : adherencePct >= 60
+                                        ? "orange"
+                                        : "red"
                             }
                         />
                     </div>
@@ -254,35 +271,39 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                         <p className="text-xs text-muted-foreground">
                             {analytics.genericWithoutDateCount} sesión
                             {analytics.genericWithoutDateCount === 1 ? "" : "es"} genérica
-                            sin fecha no entran en gráficos temporales ni en semanas ISO.
+                            sin fecha no entra en gráficos temporales ni en semanas ISO.
                         </p>
                     ) : null}
 
+                    {/* Chart: Volumen e intensidad — Surface Card */}
                     <section aria-labelledby="heading-vi-chart">
-                        <h3
-                            id="heading-vi-chart"
-                            className="text-md font-medium text-foreground mb-3"
-                        >
-                            Volumen e intensidad — Plan vs real (0–10)
-                        </h3>
-                        <div className="h-72 w-full rounded-lg border border-border bg-card p-2">
+                        <div className="bg-surface rounded-lg p-5">
+                            <h3
+                                id="heading-vi-chart"
+                                className="text-sm font-semibold text-foreground mb-4"
+                            >
+                                Volumen e intensidad — Plan vs real (0–10)
+                            </h3>
                             {lineData.length === 0 ? (
-                                <p className="text-sm text-muted-foreground p-4">
-                                    Sin puntos con fecha y bloque para este gráfico.
-                                </p>
+                                <div className="border border-dashed border-border/50 bg-muted/10 rounded-lg flex items-center justify-center min-h-[250px]">
+                                    <p className="text-sm text-muted-foreground">
+                                        Sin puntos con fecha y bloque para este gráfico.
+                                    </p>
+                                </div>
                             ) : (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <LineChart data={lineData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                                        <YAxis domain={[0, 10]} stroke="hsl(var(--muted-foreground))" />
-                                        <Tooltip
-                                            contentStyle={{
-                                                background: "hsl(var(--card))",
-                                                border: "1px solid hsl(var(--border))",
-                                            }}
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <LineChart
+                                        data={lineData}
+                                        margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                                    >
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            stroke="hsl(var(--border) / 0.45)"
                                         />
-                                        <Legend />
+                                        <XAxis dataKey="name" tick={CHART_TICK} />
+                                        <YAxis domain={[0, 10]} tick={CHART_TICK} />
+                                        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
+                                        <Legend wrapperStyle={CHART_LEGEND_STYLE} />
                                         <Line
                                             type="monotone"
                                             dataKey="planVol"
@@ -323,30 +344,34 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                         </div>
                     </section>
 
+                    {/* Chart: Alineación semanal — Surface Card */}
                     <section aria-labelledby="heading-weekly-align">
-                        <h3
-                            id="heading-weekly-align"
-                            className="text-md font-medium text-foreground mb-3"
-                        >
-                            Alineación semanal (%)
-                        </h3>
-                        <div className="h-72 w-full rounded-lg border border-border bg-card p-2">
+                        <div className="bg-surface rounded-lg p-5">
+                            <h3
+                                id="heading-weekly-align"
+                                className="text-sm font-semibold text-foreground mb-4"
+                            >
+                                Alineación semanal (%)
+                            </h3>
                             {barData.length === 0 ? (
-                                <p className="text-sm text-muted-foreground p-4">
-                                    Sin semanas en el rango del plan.
-                                </p>
+                                <div className="border border-dashed border-border/50 bg-muted/10 rounded-lg flex items-center justify-center min-h-[250px]">
+                                    <p className="text-sm text-muted-foreground">
+                                        Sin semanas en el rango del plan.
+                                    </p>
+                                </div>
                             ) : (
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={barData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                                        <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" />
-                                        <YAxis domain={[0, 100]} stroke="hsl(var(--muted-foreground))" />
-                                        <Tooltip
-                                            contentStyle={{
-                                                background: "hsl(var(--card))",
-                                                border: "1px solid hsl(var(--border))",
-                                            }}
+                                <ResponsiveContainer width="100%" height={250}>
+                                    <BarChart
+                                        data={barData}
+                                        margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+                                    >
+                                        <CartesianGrid
+                                            strokeDasharray="3 3"
+                                            stroke="hsl(var(--border) / 0.45)"
                                         />
+                                        <XAxis dataKey="name" tick={CHART_TICK} />
+                                        <YAxis domain={[0, 100]} tick={CHART_TICK} />
+                                        <Tooltip contentStyle={CHART_TOOLTIP_STYLE} />
                                         <Bar dataKey="pct" name="Alineación %" fill="hsl(var(--primary))" />
                                     </BarChart>
                                 </ResponsiveContainer>
@@ -354,10 +379,11 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                         </div>
                     </section>
 
+                    {/* Section: Desviaciones */}
                     <section aria-labelledby="heading-deviations">
                         <h3
                             id="heading-deviations"
-                            className="text-md font-medium text-foreground mb-3"
+                            className="text-sm font-semibold text-foreground mb-3"
                         >
                             Desviaciones (planificado vs bloque, umbral 20 %)
                         </h3>
@@ -366,51 +392,78 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                                 Ninguna sesión supera el 20 % en volumen o intensidad respecto al bloque.
                             </p>
                         ) : (
-                            <ul className="divide-y divide-border rounded-lg border border-border bg-card text-sm">
-                                {analytics.d4Deviations.map((row) => (
-                                    <li key={row.sessionId} className="flex flex-wrap gap-2 px-3 py-2">
-                                        <span className="font-medium text-foreground">
-                                            {row.sessionName}
-                                        </span>
-                                        <span className="text-muted-foreground">
-                                            {row.sessionDate ?? "Sin fecha"}
-                                        </span>
-                                        <span className="text-warning">
-                                            {row.deviationKind === "volume"
-                                                ? `Volumen +${row.volumeDeviationPct.toFixed(1)}%`
-                                                : row.deviationKind === "intensity"
-                                                  ? `Intensidad +${row.intensityDeviationPct.toFixed(1)}%`
-                                                  : `Volumen +${row.volumeDeviationPct.toFixed(1)}% · Intensidad +${row.intensityDeviationPct.toFixed(1)}%`}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
+                            <div className="rounded-lg border border-border bg-card overflow-hidden">
+                                <div className="grid grid-cols-[1fr_auto_auto] gap-x-6 px-4 py-2.5 bg-surface/50 border-b border-border">
+                                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                        Sesión
+                                    </span>
+                                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                        Fecha
+                                    </span>
+                                    <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                        Desviación
+                                    </span>
+                                </div>
+                                <ul className="divide-y divide-border">
+                                    {analytics.d4Deviations.map((row) => (
+                                        <li
+                                            key={row.sessionId}
+                                            className="grid grid-cols-[1fr_auto_auto] gap-x-6 px-4 py-3 text-sm hover:bg-surface/50 transition-colors"
+                                        >
+                                            <span className="font-medium text-foreground truncate">
+                                                {row.sessionName}
+                                            </span>
+                                            <span className="text-muted-foreground whitespace-nowrap">
+                                                {row.sessionDate ?? "Sin fecha"}
+                                            </span>
+                                            <span className="text-warning whitespace-nowrap">
+                                                {row.deviationKind === "volume"
+                                                    ? `Vol +${row.volumeDeviationPct.toFixed(1)}%`
+                                                    : row.deviationKind === "intensity"
+                                                      ? `Int +${row.intensityDeviationPct.toFixed(1)}%`
+                                                      : `Vol +${row.volumeDeviationPct.toFixed(1)}% · Int +${row.intensityDeviationPct.toFixed(1)}%`}
+                                            </span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
                         )}
                     </section>
                 </>
             )}
 
+            {/* Legacy section — colapsable per DESIGN.md §6.5 */}
             {hasLegacyLists ? (
                 <section className="rounded-lg border border-border">
                     <button
                         type="button"
-                        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium text-foreground hover:bg-muted/50"
+                        className="flex w-full items-center gap-2 group px-4 py-3"
                         onClick={() => setLegacyOpen((o) => !o)}
                         aria-expanded={legacyOpen}
                     >
-                        <span>Planificación clásica (mensual)</span>
-                        <span className="text-muted-foreground">{legacyOpen ? "Ocultar" : "Mostrar"}</span>
+                        {legacyOpen ? (
+                            <ChevronUp className="size-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                        ) : (
+                            <ChevronDown className="size-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
+                        )}
+                        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
+                            Planificación clásica (mensual)
+                        </span>
+                        <div className="flex-1 border-t border-border ml-2" />
                     </button>
+
                     {legacyOpen ? (
                         <div className="border-t border-border p-4 space-y-6">
                             {coherenceError ? (
-                                <p className="text-sm text-destructive">
-                                    {(coherenceErr as Error)?.message ?? "Error coherencia legacy"}
-                                </p>
+                                <Alert variant="error">
+                                    {(coherenceErr as Error)?.message ?? "Error al cargar coherencia legacy"}
+                                </Alert>
                             ) : coherenceData ? (
-                                <div className="space-y-4">
-                                    <h4 className="text-sm font-medium text-foreground">Coherencia del plan</h4>
-                                    <div className="flex flex-wrap gap-4">
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground">
+                                        Coherencia del plan
+                                    </h4>
+                                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <MetricCard
                                             title="Coherencia global"
                                             value={`${coherenceData.overall_coherence.toFixed(1)}%`}
@@ -428,100 +481,98 @@ export const ChartsTab: React.FC<ChartsTabProps> = ({
                             ) : null}
 
                             {alignmentLoading ? (
-                                <div className="flex justify-center py-6">
+                                <div className="flex items-center justify-center py-6">
                                     <LoadingSpinner size="md" />
                                 </div>
                             ) : alignmentError ? (
-                                <p className="text-sm text-destructive">
-                                    {(alignmentErr as Error)?.message ?? "Error alignment"}
-                                </p>
+                                <Alert variant="error">
+                                    {(alignmentErr as Error)?.message ?? "Error al cargar alignment"}
+                                </Alert>
                             ) : alignmentData?.alignment_graph?.length ? (
-                                <div>
-                                    <h4 className="text-sm font-medium text-foreground mb-2">Alignment</h4>
-                                    <div className="overflow-x-auto rounded-lg border border-border">
-                                        <table className="min-w-full divide-y divide-border text-sm">
-                                            <thead className="bg-muted">
-                                                <tr>
-                                                    <th className="px-3 py-2 text-left font-medium text-foreground">
-                                                        Nivel
-                                                    </th>
-                                                    <th className="px-3 py-2 text-left font-medium text-foreground">
-                                                        Nombre
-                                                    </th>
-                                                    <th className="px-3 py-2 text-left font-medium text-foreground">
-                                                        Fecha
-                                                    </th>
-                                                    <th className="px-3 py-2 text-left font-medium text-foreground">
-                                                        Calidad
-                                                    </th>
-                                                    <th className="px-3 py-2 text-right font-medium text-foreground">
-                                                        Volumen
-                                                    </th>
-                                                    <th className="px-3 py-2 text-right font-medium text-foreground">
-                                                        Intensidad
-                                                    </th>
-                                                    <th className="px-3 py-2 text-center font-medium text-foreground">
-                                                        Estado
-                                                    </th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-border bg-card">
-                                                {alignmentData.alignment_graph.map((point) => {
-                                                    const isOverride =
-                                                        point.cycle_type === "week" ||
-                                                        point.cycle_type === "day";
-                                                    const typeLabel =
-                                                        point.cycle_type === "month"
-                                                            ? "Mes"
-                                                            : point.cycle_type === "week"
-                                                              ? "Semana"
-                                                              : point.cycle_type === "day"
-                                                                ? "Día"
-                                                                : point.cycle_type;
+                                <div className="space-y-3">
+                                    <h4 className="text-sm font-semibold text-foreground">Alignment</h4>
+                                    <div className="rounded-lg border border-border bg-card overflow-hidden">
+                                        <div className="overflow-x-auto">
+                                            <table className="min-w-full divide-y divide-border text-sm">
+                                                <thead>
+                                                    <tr className="bg-surface/50">
+                                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Nivel
+                                                        </th>
+                                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Nombre
+                                                        </th>
+                                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Fecha
+                                                        </th>
+                                                        <th className="px-4 py-2.5 text-left text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Calidad
+                                                        </th>
+                                                        <th className="px-4 py-2.5 text-right text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Volumen
+                                                        </th>
+                                                        <th className="px-4 py-2.5 text-right text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Intensidad
+                                                        </th>
+                                                        <th className="px-4 py-2.5 text-center text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                                                            Estado
+                                                        </th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-border bg-card">
+                                                    {alignmentData.alignment_graph.map((point) => {
+                                                        const isOverride =
+                                                            point.cycle_type === "week" ||
+                                                            point.cycle_type === "day";
+                                                        const typeLabel =
+                                                            point.cycle_type === "month"
+                                                                ? "Mes"
+                                                                : point.cycle_type === "week"
+                                                                  ? "Semana"
+                                                                  : point.cycle_type === "day"
+                                                                    ? "Día"
+                                                                    : point.cycle_type;
 
-                                                    return (
-                                                        <tr
-                                                            key={`${point.cycle_type}-${point.cycle_id}`}
-                                                            className={isOverride ? "bg-primary/5" : ""}
-                                                        >
-                                                            <td className="px-3 py-2 text-muted-foreground">
-                                                                {typeLabel}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-foreground">
-                                                                {point.cycle_name}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-muted-foreground">
-                                                                {point.date}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-muted-foreground">
-                                                                {point.physical_quality ?? "—"}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-right text-foreground">
-                                                                {point.volume != null
-                                                                    ? point.volume.toFixed(1)
-                                                                    : "—"}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-right text-foreground">
-                                                                {point.intensity != null
-                                                                    ? point.intensity.toFixed(1)
-                                                                    : "—"}
-                                                            </td>
-                                                            <td className="px-3 py-2 text-center">
-                                                                <span
-                                                                    className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                                                                        isOverride
-                                                                            ? "bg-primary/10 text-primary"
-                                                                            : "bg-muted text-muted-foreground"
-                                                                    }`}
-                                                                >
-                                                                    {isOverride ? "Override" : "Heredado"}
-                                                                </span>
-                                                            </td>
-                                                        </tr>
-                                                    );
-                                                })}
-                                            </tbody>
-                                        </table>
+                                                        return (
+                                                            <tr
+                                                                key={`${point.cycle_type}-${point.cycle_id}`}
+                                                                className={`hover:bg-surface/50 transition-colors${isOverride ? " bg-primary/5" : ""}`}
+                                                            >
+                                                                <td className="px-4 py-3 text-muted-foreground">
+                                                                    {typeLabel}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-foreground">
+                                                                    {point.cycle_name}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-muted-foreground">
+                                                                    {point.date}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-muted-foreground">
+                                                                    {point.physical_quality ?? "—"}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right text-foreground tabular-nums">
+                                                                    {point.volume != null
+                                                                        ? point.volume.toFixed(1)
+                                                                        : "—"}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-right text-foreground tabular-nums">
+                                                                    {point.intensity != null
+                                                                        ? point.intensity.toFixed(1)
+                                                                        : "—"}
+                                                                </td>
+                                                                <td className="px-4 py-3 text-center">
+                                                                    <Badge
+                                                                        variant={isOverride ? "subtle" : "outline"}
+                                                                    >
+                                                                        {isOverride ? "Override" : "Heredado"}
+                                                                    </Badge>
+                                                                </td>
+                                                            </tr>
+                                                        );
+                                                    })}
+                                                </tbody>
+                                            </table>
+                                        </div>
                                     </div>
                                 </div>
                             ) : (

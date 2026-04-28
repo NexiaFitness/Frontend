@@ -103,15 +103,15 @@ export const ResolveAlertModal: React.FC<ResolveAlertModalProps> = ({
                         onKeyDown={handleTextareaKeyDown}
                         rows={4}
                         placeholder="Agrega notas sobre cómo se resolvió esta alerta..."
-                        className="w-full border border-gray-300 rounded-lg px-3 py-2 bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                        className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] resize-none"
                         disabled={isResolving}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-muted-foreground mt-1">
                         Presiona Ctrl+Enter para resolver rápidamente
                     </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row gap-3 justify-end pt-4 border-t border-border">
                     <Button
                         type="button"
                         variant="secondary"

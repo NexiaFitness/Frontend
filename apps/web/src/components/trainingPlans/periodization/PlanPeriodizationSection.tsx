@@ -614,7 +614,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
               <input
                 id="exception-note"
                 type="text"
-                className="w-full rounded-md bg-surface-2 border border-border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-full rounded-md bg-surface-2 border border-border px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
                 placeholder="Ej: Lesión, viaje, descanso programado..."
                 value={exceptionNote}
                 onChange={(e) => setExceptionNote(e.target.value)}
