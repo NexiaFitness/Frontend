@@ -339,6 +339,10 @@ export {
 } from "./utils/fatigueAlertActions";
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
 export * from "./utils/exerciseUiBucket";
+export {
+    generateSyntheticWeeks,
+    mergeWeeklyStructureWeeks,
+} from "./utils/weeklyStructure";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
 export {

@@ -39,7 +39,7 @@ import type {
     WeeklyStructureDayPatternInput,
 } from "@nexia/shared/types/weeklyStructure";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
-import { getMutationErrorMessage, UI_BUCKET_LABELS, UI_BUCKET_ORDER } from "@nexia/shared";
+import { getMutationErrorMessage, UI_BUCKET_LABELS, UI_BUCKET_ORDER, generateSyntheticWeeks, mergeWeeklyStructureWeeks } from "@nexia/shared";
 import { PatternBadge } from "./PatternBadge";
 
 import { Button } from "@/components/ui/buttons";
@@ -258,24 +258,6 @@ const DayEditor: React.FC<DayEditorProps> = ({ day, patternsCatalog, patternsLoa
 // Main component
 // ---------------------------------------------------------------------------
 
-function generateSyntheticWeeks(startDate: string, endDate: string): WeeklyStructureWeek[] {
-    const [sy, sm, sd] = startDate.split("-").map(Number);
-    const [ey, em, ed] = endDate.split("-").map(Number);
-    const start = new Date(sy, sm - 1, sd);
-    const end = new Date(ey, em - 1, ed);
-    const totalDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const numWeeks = Math.ceil(totalDays / 7);
-
-    return Array.from({ length: numWeeks }, (_, i) => ({
-        week_ordinal: i + 1,
-        label: null,
-        days: Array.from({ length: 7 }, (_, d) => ({
-            day_of_week: d + 1,
-            patterns: [],
-        })),
-    }));
-}
-
 export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ planId, blockId, block }) => {
     const { showSuccess, showError } = useToast();
 
@@ -317,12 +299,10 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
         return generateSyntheticWeeks(block.start_date, block.end_date);
     }, [realWeeks.length, block]);
 
-    const weeks = useMemo(() => {
-        if (realWeeks.length === 0) return syntheticWeeks;
-        const realOrdinals = new Set(realWeeks.map((w) => w.week_ordinal));
-        const missing = syntheticWeeks.filter((w) => !realOrdinals.has(w.week_ordinal));
-        return [...realWeeks, ...missing].sort((a, b) => a.week_ordinal - b.week_ordinal);
-    }, [realWeeks, syntheticWeeks]);
+    const weeks = useMemo(
+        () => mergeWeeklyStructureWeeks(realWeeks, syntheticWeeks),
+        [realWeeks, syntheticWeeks]
+    );
 
     const tabItems = useMemo(() => {
         const items = weeks.map((w) => ({
