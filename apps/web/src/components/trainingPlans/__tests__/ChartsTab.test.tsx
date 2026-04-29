@@ -113,12 +113,12 @@ describe("ChartsTab (Analítica)", () => {
 
             await waitFor(
                 () => {
-                    expect(screen.getByRole("heading", { name: /^Analítica$/i })).toBeInTheDocument();
+                    expect(screen.getByText("Coherencia de bloques")).toBeInTheDocument();
                 },
                 { timeout: 15000 }
             );
 
-            expect(screen.getByText("Coherencia global (bloques)")).toBeInTheDocument();
+            expect(screen.getByText("Coherencia de bloques")).toBeInTheDocument();
             expect(screen.queryByText(/baseline mensual/i)).not.toBeInTheDocument();
             expect(screen.queryByText(/Añade baseline mensual/i)).not.toBeInTheDocument();
             expect(screen.queryByText(/Planificación clásica \(mensual\)/)).not.toBeInTheDocument();
