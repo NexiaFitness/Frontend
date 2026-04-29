@@ -115,7 +115,7 @@ export const TrainingPlanDetail: React.FC = () => {
     const handleDeletePlanConfirm = useCallback(async () => {
         if (!plan) return;
         try {
-            await deletePlan(plan.id).unwrap();
+            await deletePlan({ id: plan.id, clientId: plan.client_id ?? undefined }).unwrap();
             if (plan.client_id) {
                 navigate(`/dashboard/clients/${plan.client_id}?tab=sessions`);
             } else {

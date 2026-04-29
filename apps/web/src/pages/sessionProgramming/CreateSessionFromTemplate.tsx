@@ -286,7 +286,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                 <Button
                                     type="button"
                                     variant="outline"
-                                    size="lg"
+                                    size="sm"
                                     onClick={() => navigate(-1)}
                                     className="w-full sm:w-auto"
                                 >
@@ -295,7 +295,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                 <Button
                                     type="submit"
                                     variant="primary"
-                                    size="lg"
+                                    size="sm"
                                     disabled={isCreating || !trainerId || !clientId}
                                     className="w-full sm:w-auto sm:ml-auto"
                                 >

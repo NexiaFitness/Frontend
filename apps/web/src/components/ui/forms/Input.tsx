@@ -34,32 +34,32 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
 const baseStyles =
     "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:cursor-not-allowed disabled:opacity-50";
 
-// Mobile-first responsive sizes — compact = paneles estrechos (ExercisePickerPanel); xs = chips; sm = pills
+// compact = paneles estrechos (ExercisePickerPanel); xs = chips; sm/md/lg = todos h-9 (slim unificado)
 const sizeStyles: Record<InputSize, string> = {
     compact:
         "h-7 min-w-0 px-2 py-1 text-[11px] rounded-md border border-border/60 bg-surface",
     xs: "h-8 px-2.5 py-1.5 text-xs rounded-md border border-border/60 bg-surface",
-    sm: "px-3 py-1.5 text-sm min-h-9 h-9",
-    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
-    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
+    sm: "h-9 px-3 py-1.5 text-sm",
+    md: "h-9 px-4 py-1.5 text-sm",
+    lg: "h-9 px-5 py-1.5 text-sm",
 };
 
 // Para inputs password con icono → padding derecho extra
 const passwordSizeStyles: Record<InputSize, string> = {
     compact: "h-7 px-2 py-1 pr-9 text-[11px]",
     xs: "h-8 px-2.5 py-1.5 pr-9 text-xs",
-    sm: "px-3 py-1.5 pr-10 text-sm min-h-9 h-9",
-    md: "px-3 py-2 pr-12 text-sm sm:px-4 sm:py-2.5 sm:pr-12 sm:text-base sm:min-h-[44px]",
-    lg: "px-4 py-2.5 pr-14 text-base sm:px-5 sm:py-3 sm:pr-14 sm:text-lg sm:min-h-[48px]",
+    sm: "h-9 px-3 py-1.5 pr-10 text-sm",
+    md: "h-9 px-4 py-1.5 pr-12 text-sm",
+    lg: "h-9 px-5 py-1.5 pr-14 text-sm",
 };
 
 // Para inputs number con botones custom → padding derecho extra
 const numberSizeStyles: Record<InputSize, string> = {
     compact: "h-7 px-2 py-1 pr-3 text-[11px]",
     xs: "h-8 px-2 py-1.5 pr-3.5 text-xs",
-    sm: "px-3 py-1.5 pr-4 text-sm min-h-9 h-9",
-    md: "px-3 py-2 pr-5 text-sm sm:px-4 sm:py-2.5 sm:pr-5 sm:text-base sm:min-h-[44px]",
-    lg: "px-4 py-2.5 pr-6 text-base sm:px-5 sm:py-3 sm:pr-6 sm:text-lg sm:min-h-[48px]",
+    sm: "h-9 px-3 py-1.5 pr-4 text-sm",
+    md: "h-9 px-4 py-1.5 pr-5 text-sm",
+    lg: "h-9 px-5 py-1.5 pr-6 text-sm",
 };
 
 // Ancho del contenedor de botones Up/Down según tamaño (mimético a spinners nativos)
@@ -94,7 +94,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
         {
             type = "text",
-            size = "md",
+            size = "sm",
             label,
             error,
             isRequired = false,

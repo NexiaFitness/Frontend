@@ -38,12 +38,12 @@ interface FormSelectProps
 const baseStyles =
     "block w-full rounded-md border bg-surface-2 text-foreground transition-colors placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed caret-primary";
 
-// Mobile-first responsive sizes — xs = compact (Constructor, chips); sm = pills
+// xs = compact (Constructor, chips); sm/md/lg = todos h-9 (slim unificado)
 const sizeStyles: Record<SelectSize, string> = {
     xs: "h-8 px-2.5 py-1.5 text-[11px] rounded-md border border-border/60 bg-surface",
-    sm: "px-3 py-1.5 text-sm min-h-9 h-9",
-    md: "px-3 py-2 text-sm sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]",
-    lg: "px-4 py-2.5 text-base sm:px-5 sm:py-3 sm:text-lg sm:min-h-[48px]",
+    sm: "h-9 px-3 py-1.5 text-sm",
+    md: "h-9 px-4 py-1.5 text-sm",
+    lg: "h-9 px-5 py-1.5 text-sm",
 };
 
 const stateStyles = {
@@ -59,7 +59,7 @@ const helperStyles = "mt-1 text-sm text-muted-foreground";
 export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
     (
         {
-            size = "md",
+            size = "sm",
             label,
             error,
             isRequired = false,

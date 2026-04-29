@@ -37,7 +37,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="min-h-touch w-full rounded-md border border-border bg-surface py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] sm:min-h-0 sm:py-2"
+            className="h-9 w-full rounded-md border border-border bg-surface py-1.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
             aria-label={ariaLabel}
         />
     </div>

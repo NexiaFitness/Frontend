@@ -215,7 +215,7 @@ export const CreateFatigueAlertModal: React.FC<CreateFatigueAlertModalProps> = (
                                 value={formData.message}
                                 onChange={handleChange("message")}
                                 rows={4}
-                                className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] resize-y"
                                 placeholder="Describe la situación de fatiga..."
                             />
                             {errors.message && (
@@ -232,7 +232,7 @@ export const CreateFatigueAlertModal: React.FC<CreateFatigueAlertModalProps> = (
                                 value={formData.recommendations}
                                 onChange={handleChange("recommendations")}
                                 rows={3}
-                                className="w-full border rounded-lg p-2 bg-white text-slate-800"
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] resize-y"
                                 placeholder="Sugerencias para el cliente..."
                             />
                         </div>

@@ -4,7 +4,7 @@
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión manualmente
  * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
- * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta clients/:id/sessions/new)
+ * - Uso embebido: clientIdProp + returnToPath + backPath desde contexto cliente (navegación directa).
  * - Añadir ejercicio: botón abre ExercisePickerPanel (panel lateral, lista por letra)
  * - P2: Si no hay plan activo para la fecha seleccionada → StandaloneSession (sesión libre)
  *

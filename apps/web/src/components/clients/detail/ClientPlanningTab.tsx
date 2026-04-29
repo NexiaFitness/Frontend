@@ -16,6 +16,7 @@
 import React, { useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import type { ActivePlanByClientOut, TrainingPlan } from "@nexia/shared/types/training";
+import { getMutationErrorMessage } from "@nexia/shared";
 import {
     useGetActivePlanByClientQuery,
     useGetTrainingPlanQuery,
@@ -95,12 +96,18 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                     return { kind: "loading" as const };
                 }
                 if (isFocusedError || !focusedPlan) {
+                    const isNotFound =
+                        focusedError &&
+                        typeof focusedError === "object" &&
+                        (("status" in focusedError && (focusedError.status === 404 || focusedError.status === "PARSING_ERROR")) ||
+                            getMutationErrorMessage(focusedError).toLowerCase().includes("not found"));
                     return {
                         kind: "error" as const,
-                        message:
-                            focusedError && typeof focusedError === "object" && "data" in focusedError
-                                ? String((focusedError as { data?: unknown }).data ?? "No se pudo cargar el plan.")
-                                : "No se pudo cargar el plan.",
+                        message: isNotFound
+                            ? "El plan de entrenamiento no existe o ha sido eliminado."
+                            : (focusedError && typeof focusedError === "object" && "data" in focusedError
+                                ? getMutationErrorMessage(focusedError)
+                                : "No se pudo cargar el plan."),
                     };
                 }
                 if (focusedPlan.client_id !== clientId) {

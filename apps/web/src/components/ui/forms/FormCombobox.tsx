@@ -30,9 +30,9 @@ export interface FormComboboxProps {
 }
 
 const sizeStyles = {
-    sm: "h-9 px-3 text-xs",
-    md: "min-h-[44px] px-3 text-sm sm:px-4 sm:text-base",
-    lg: "h-12 px-4 text-base",
+    sm: "h-9 px-3 text-sm",
+    md: "h-9 px-4 text-sm",
+    lg: "h-9 px-5 text-sm",
 };
 
 type PopoverCoords = { top: number; left: number; width: number; maxHeight: number };
@@ -44,7 +44,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     placeholder = "Seleccionar",
     disabled = false,
     className,
-    size = "md",
+    size = "sm",
 }) => {
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<PopoverCoords>({

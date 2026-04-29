@@ -102,28 +102,30 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
                             : "Asigna un plan de entrenamiento para estructurar el programa del cliente."}
                     </p>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
-                    {onOpenCreatePlan && (
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={onOpenCreatePlan}
-                            aria-label="Crear plan desde cero"
-                        >
-                            Crear plan desde cero
-                        </Button>
-                    )}
-                    {onOpenUseTemplate && (
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={onOpenUseTemplate}
-                            aria-label="Usar plantilla"
-                        >
-                            Usar plantilla
-                        </Button>
-                    )}
-                </div>
+                {hasPlans && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        {onOpenCreatePlan && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={onOpenCreatePlan}
+                                aria-label="Crear plan desde cero"
+                            >
+                                Crear plan desde cero
+                            </Button>
+                        )}
+                        {onOpenUseTemplate && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={onOpenUseTemplate}
+                                aria-label="Usar plantilla"
+                            >
+                                Usar plantilla
+                            </Button>
+                        )}
+                    </div>
+                )}
             </div>
 
             {hasPlans ? (

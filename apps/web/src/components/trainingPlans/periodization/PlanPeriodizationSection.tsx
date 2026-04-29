@@ -415,9 +415,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   }
 
   if (isError) {
+    const isNotFound =
+      error &&
+      typeof error === "object" &&
+      (("status" in error && (error.status === 404 || error.status === "PARSING_ERROR")) ||
+        getMutationErrorMessage(error).toLowerCase().includes("not found"));
     return (
       <Alert variant="error">
-        Error al cargar los bloques de periodización: {getMutationErrorMessage(error)}
+        {isNotFound
+          ? "El plan de entrenamiento no existe o ha sido eliminado."
+          : `Error al cargar los bloques de periodización: ${getMutationErrorMessage(error)}`}
       </Alert>
     );
   }

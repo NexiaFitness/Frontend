@@ -179,9 +179,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                         </p>
                     ) : rows.length === 0 ? (
                         <p className="py-4 text-sm text-muted-foreground leading-relaxed">
-                            No hay series acumuladas para esta semana: o no hay sesiones guardadas en el
-                            rango mostrado, o las sesiones usan ejercicios sin vínculo de catálogo
-                            prime_mover activo (el backend no agrupa carga en ese caso, D4).
+                            Sin datos de volumen esta semana. Se mostrarán cuando guardes sesiones con ejercicios del catálogo.
                         </p>
                     ) : (
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -233,11 +231,6 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                             ))}
                         </div>
                     ) : null}
-                    <p className="mt-4 text-[11px] leading-relaxed text-muted-foreground">
-                        {usesDraftProjection
-                            ? "Objetivo diario calculado a partir de la estructura semanal del plan. No bloquea el guardado."
-                            : "Acumulado de todas las sesiones guardadas esta semana. Información orientativa, no bloquea el guardado."}
-                    </p>
                 </div>
             ) : null}
         </section>

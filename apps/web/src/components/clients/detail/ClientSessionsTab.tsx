@@ -109,9 +109,9 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
                 return;
             }
-            const qs = new URLSearchParams({ date: dateStr, planId: String(activePlanForClient.id) });
+            const qs = new URLSearchParams({ clientId: String(clientId), date: dateStr, planId: String(activePlanForClient.id) });
             navigate(
-                `/dashboard/clients/${clientId}/sessions/new/constructor?${qs.toString()}`,
+                `/dashboard/session-programming/create-session?${qs.toString()}`,
                 { replace: false }
             );
         },
@@ -173,15 +173,11 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             : "No se pudieron cargar los datos";
 
     const handleAddSession = () => {
-        navigate(`/dashboard/clients/${clientId}/sessions/new`);
+        navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`);
     };
 
     const handleScheduleAppointment = () => {
         navigate(`/dashboard/scheduling/new?clientId=${clientId}`);
-    };
-
-    const handleFooterCancel = () => {
-        navigate(`/dashboard/clients/${clientId}`);
     };
 
     const handleDateClickSession = (
@@ -279,23 +275,8 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
     return (
         <section className="space-y-6 pb-24">
-            {/* Header — same pattern as PlanPeriodizationSection */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-                <PageTitle titleAs="h3" title="Sesiones del cliente" />
-                <div className="flex items-center gap-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={handleScheduleAppointment}
-                    >
-                        + Agendar cita
-                    </Button>
-                    <Button type="button" variant="primary" size="sm" onClick={handleAddSession}>
-                        + Crear sesión
-                    </Button>
-                </div>
-            </div>
+            {/* Header */}
+            <PageTitle titleAs="h3" title="Sesiones del cliente" />
 
             {/* Calendar + Panel — directly in the tab, no wrapper div */}
             {activePlanForClient ? (
@@ -442,14 +423,6 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
             <DashboardFixedFooter>
                 <div className="flex items-center justify-end gap-3">
-                    <Button
-                        type="button"
-                        variant="outline-destructive"
-                        size="sm"
-                        onClick={handleFooterCancel}
-                    >
-                        Cancelar
-                    </Button>
                     <Button
                         type="button"
                         variant="outline"

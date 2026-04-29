@@ -41,7 +41,7 @@ interface UseTrainingPlansReturn {
     // Actions
     createPlan: (data: TrainingPlanCreate) => Promise<TrainingPlan>;
     updatePlan: (id: number, data: TrainingPlanUpdate) => Promise<TrainingPlan>;
-    deletePlan: (id: number) => Promise<void>;
+    deletePlan: ({ id, clientId }: { id: number; clientId?: number }) => Promise<void>;
     refetch: () => void;
 
     // State
@@ -100,8 +100,8 @@ export const useTrainingPlans = ({
     );
 
     const deletePlan = useCallback(
-        async (id: number): Promise<void> => {
-            await deleteMutation(id).unwrap();
+        async ({ id, clientId }: { id: number; clientId?: number }): Promise<void> => {
+            await deleteMutation({ id, clientId }).unwrap();
         },
         [deleteMutation]
     );
