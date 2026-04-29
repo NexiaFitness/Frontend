@@ -346,8 +346,14 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
 
     const handleStartEdit = useCallback((week: WeeklyStructureWeek) => {
         setDraft(cloneWeekCreate(week));
-        setMode("edit");
-        setEditingWeekId(week.id ?? null);
+        // Si la semana no tiene id persistido, tratamos como creación
+        if (week.id == null) {
+            setMode("create");
+            setEditingWeekId(null);
+        } else {
+            setMode("edit");
+            setEditingWeekId(week.id);
+        }
     }, []);
 
     const handleCancel = useCallback(() => {
