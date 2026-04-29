@@ -100,7 +100,7 @@ export const WeeklyStructurePage: React.FC = () => {
             </div>
 
             {/* Editor */}
-            <WeeklyStructureEditor planId={planId} blockId={blockId} />
+            <WeeklyStructureEditor planId={planId} blockId={blockId} block={block} />
         </div>
     );
 };

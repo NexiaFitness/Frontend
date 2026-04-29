@@ -110,6 +110,10 @@ function cloneWeekCreate(week: WeeklyStructureWeek): WeeklyStructureWeekCreate {
 interface WeeklyStructureEditorProps {
     planId: number;
     blockId: number;
+    block?: {
+        start_date: string;
+        end_date: string;
+    } | null;
 }
 
 type EditorMode = "view" | "create" | "edit";
@@ -254,7 +258,25 @@ const DayEditor: React.FC<DayEditorProps> = ({ day, patternsCatalog, patternsLoa
 // Main component
 // ---------------------------------------------------------------------------
 
-export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ planId, blockId }) => {
+function generateSyntheticWeeks(startDate: string, endDate: string): WeeklyStructureWeek[] {
+    const [sy, sm, sd] = startDate.split("-").map(Number);
+    const [ey, em, ed] = endDate.split("-").map(Number);
+    const start = new Date(sy, sm - 1, sd);
+    const end = new Date(ey, em - 1, ed);
+    const totalDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    const numWeeks = Math.ceil(totalDays / 7);
+
+    return Array.from({ length: numWeeks }, (_, i) => ({
+        week_ordinal: i + 1,
+        label: null,
+        days: Array.from({ length: 7 }, (_, d) => ({
+            day_of_week: d + 1,
+            patterns: [],
+        })),
+    }));
+}
+
+export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ planId, blockId, block }) => {
     const { showSuccess, showError } = useToast();
 
     const {
@@ -289,7 +311,18 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
     const [forceRepeat, setForceRepeat] = useState(false);
     const [repeatConflictMessage, setRepeatConflictMessage] = useState<string | null>(null);
 
-    const weeks = useMemo(() => structure?.weeks ?? [], [structure]);
+    const realWeeks = useMemo(() => structure?.weeks ?? [], [structure]);
+    const syntheticWeeks = useMemo(() => {
+        if (realWeeks.length > 0 || !block?.start_date || !block?.end_date) return [];
+        return generateSyntheticWeeks(block.start_date, block.end_date);
+    }, [realWeeks.length, block]);
+
+    const weeks = useMemo(() => {
+        if (realWeeks.length === 0) return syntheticWeeks;
+        const realOrdinals = new Set(realWeeks.map((w) => w.week_ordinal));
+        const missing = syntheticWeeks.filter((w) => !realOrdinals.has(w.week_ordinal));
+        return [...realWeeks, ...missing].sort((a, b) => a.week_ordinal - b.week_ordinal);
+    }, [realWeeks, syntheticWeeks]);
 
     const tabItems = useMemo(() => {
         const items = weeks.map((w) => ({
@@ -477,7 +510,7 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
             )}
 
             {/* Empty state */}
-            {!isEditing && weeks.length === 0 && (
+            {!isEditing && realWeeks.length === 0 && syntheticWeeks.length === 0 && (
                 <div className="rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
                     <p className="text-sm text-muted-foreground">
                         No hay semanas definidas en este bloque.
