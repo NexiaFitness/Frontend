@@ -11,6 +11,10 @@ export interface WeeklyVolumePanelRowModel {
     muscleGroupId: number;
     nameEs: string;
     accumulated: number;
+    /** Decisión D1: sets directos (prime_mover) */
+    directSets?: number;
+    /** Decisión D1: sets indirectos (synergist) */
+    indirectSets?: number;
     draftSets: number;
     targetToday: number | null;
     rangeMin: number | null;
@@ -24,6 +28,8 @@ export function buildWeeklyVolumePanelRows(
         muscle_group_id: number;
         name_es: string;
         planned_sets_sum: number;
+        direct_sets?: number;
+        indirect_sets?: number;
         draft_sets?: number;
         daily_target?: number | null;
     }>,
@@ -47,6 +53,8 @@ export function buildWeeklyVolumePanelRows(
                 muscleGroupId: r.muscle_group_id,
                 nameEs,
                 accumulated: r.planned_sets_sum,
+                directSets: r.direct_sets,
+                indirectSets: r.indirect_sets,
                 draftSets,
                 targetToday,
                 rangeMin,
@@ -63,6 +71,8 @@ export function buildWeeklyVolumePanelRows(
                 muscleGroupId: r.muscle_group_id,
                 nameEs,
                 accumulated: acc,
+                directSets: r.direct_sets,
+                indirectSets: r.indirect_sets,
                 draftSets,
                 targetToday: null,
                 rangeMin: null,
@@ -81,6 +91,8 @@ export function buildWeeklyVolumePanelRows(
             muscleGroupId: r.muscle_group_id,
             nameEs,
             accumulated: acc,
+            directSets: r.direct_sets,
+            indirectSets: r.indirect_sets,
             draftSets,
             targetToday: null,
             rangeMin,

@@ -171,6 +171,8 @@ export function useWeeklyClientVolumePanel(
                 muscle_group_id: r.muscle_group_id,
                 name_es: r.name_es,
                 planned_sets_sum: r.projected_total,
+                direct_sets: r.accumulated_direct != null ? r.accumulated_direct + (r.draft_direct ?? 0) : undefined,
+                indirect_sets: r.accumulated_indirect != null ? r.accumulated_indirect + (r.draft_indirect ?? 0) : undefined,
                 draft_sets: r.draft_sets,
                 daily_target: r.daily_target,
             }));

@@ -24,6 +24,23 @@ describe("buildWeeklyVolumePanelRows", () => {
         expect(rows[0].targetToday).toBeNull();
     });
 
+    it("preserves D1 breakdown fields when provided", () => {
+        const rows = buildWeeklyVolumePanelRows(
+            [{
+                muscle_group_id: 1,
+                name_es: "Pecho",
+                planned_sets_sum: 15,
+                direct_sets: 10,
+                indirect_sets: 5,
+            }],
+            16
+        );
+        expect(rows[0].accumulated).toBe(15);
+        expect(rows[0].directSets).toBe(10);
+        expect(rows[0].indirectSets).toBe(5);
+        expect(rows[0].status).toBe("on_target");
+    });
+
     it("classifies deficit and excess with ±10% band (weekly fallback)", () => {
         const target = 10;
         const rows = buildWeeklyVolumePanelRows(

@@ -6,6 +6,10 @@ export interface WeeklyMusclePlannedLoadRowOut {
     muscle_group_id: number;
     name_es: string;
     planned_sets_sum: number;
+    /** Decisión D1: desglose directo/indirecto/total */
+    direct_sets?: number;
+    indirect_sets?: number;
+    total_sets?: number;
 }
 
 export interface WeeklyMusclePlannedLoadOut {
@@ -47,7 +51,13 @@ export interface SessionLoadDraftRowOut {
     muscle_group_id: number;
     name_es: string;
     accumulated_saved_without_session: number;
+    /** Decisión D1: desglose acumulado */
+    accumulated_direct?: number;
+    accumulated_indirect?: number;
     draft_sets: number;
+    /** Decisión D1: desglose borrador */
+    draft_direct?: number;
+    draft_indirect?: number;
     projected_total: number;
     daily_target: number;
 }

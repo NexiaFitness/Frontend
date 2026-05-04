@@ -183,40 +183,57 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                         </p>
                     ) : (
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                            {rows.map((row) => (
-                                <div key={row.muscleGroupId} className="space-y-1.5 min-w-0">
-                                    <div className="flex items-center justify-between gap-2 text-xs">
-                                        <span className="font-medium text-foreground truncate">
-                                            {row.nameEs || `Grupo ${row.muscleGroupId}`}
-                                        </span>
-                                    </div>
-                                    <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                                        <div
-                                            className={cn(
-                                                "h-full rounded-full transition-all duration-300",
-                                                barColorClass(row.status)
-                                            )}
-                                            style={{ width: `${barWidthPct(row)}%` }}
-                                        />
-                                    </div>
-                                    <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
-                                        <span className="tabular-nums">{ratioText(row)}</span>
-                                        <span
-                                            className={cn(
-                                                "inline-flex items-center gap-1 shrink-0",
-                                                dotClass(row.status)
-                                            )}
-                                        >
-                                            <span className="text-current" aria-hidden>
-                                                ●
+                            {rows.map((row) => {
+                                const hasBreakdown =
+                                    row.directSets != null || row.indirectSets != null;
+                                return (
+                                    <div key={row.muscleGroupId} className="space-y-1.5 min-w-0">
+                                        <div className="flex items-center justify-between gap-2 text-xs">
+                                            <span className="font-medium text-foreground truncate">
+                                                {row.nameEs || `Grupo ${row.muscleGroupId}`}
                                             </span>
-                                            <span className="text-foreground/90">
-                                                {statusLabel(row.status)}
+                                        </div>
+                                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                                            <div
+                                                className={cn(
+                                                    "h-full rounded-full transition-all duration-300",
+                                                    barColorClass(row.status)
+                                                )}
+                                                style={{ width: `${barWidthPct(row)}%` }}
+                                            />
+                                        </div>
+                                        <div className="flex items-center justify-between gap-2 text-[11px] text-muted-foreground">
+                                            <span className="tabular-ums">{ratioText(row)}</span>
+                                            <span
+                                                className={cn(
+                                                    "inline-flex items-center gap-1 shrink-0",
+                                                    dotClass(row.status)
+                                                )}
+                                            >
+                                                <span className="text-current" aria-hidden>
+                                                    ●
+                                                </span>
+                                                <span className="text-foreground/90">
+                                                    {statusLabel(row.status)}
+                                                </span>
                                             </span>
-                                        </span>
+                                        </div>
+                                        {hasBreakdown ? (
+                                            <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80 pt-0.5">
+                                                <span className="tabular-nums">
+                                                    Directo: <span className="font-medium text-foreground/70">{row.directSets ?? 0}</span>
+                                                </span>
+                                                <span className="tabular-nums">
+                                                    Indirecto: <span className="font-medium text-foreground/70">{row.indirectSets ?? 0}</span>
+                                                </span>
+                                                <span className="tabular-nums">
+                                                    Total: <span className="font-medium text-foreground/70">{row.accumulated}</span>
+                                                </span>
+                                            </div>
+                                        ) : null}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     )}
                     {hints.length > 0 ? (
