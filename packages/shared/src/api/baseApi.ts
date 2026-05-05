@@ -345,5 +345,6 @@ export const baseApi = createApi({
         "PlanPeriodBlock",
         "WeeklyStructure",
         "DayException",
+        "ExerciseSafety",
     ],
 });

@@ -607,6 +607,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
             {/* Modal de confirmación: sustituye el plan activo actual */}
             <PlanOverlapModal
+                variant="create"
                 isOpen={isOverlapModalOpen}
                 onClose={handleCancelOverlap}
                 onConfirm={handleConfirmOverlap}

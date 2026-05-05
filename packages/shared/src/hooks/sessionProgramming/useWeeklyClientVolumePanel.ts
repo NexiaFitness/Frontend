@@ -9,11 +9,9 @@ import { useValidateSessionLoadDraftMutation } from "../../api/sessionLoadApi";
 import { computeTargetWeeklySets } from "../../training/weeklyVolumeTarget";
 import {
     buildWeeklyVolumePanelRows,
-    summarizeVolumeRowStatuses,
     type WeeklyVolumePanelRowModel,
-    type WeeklyVolumeSummaryCounts,
 } from "../../training/weeklyVolumePanelModel";
-import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut, SessionLoadHintOut } from "../../types/sessionLoad";
+import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut } from "../../types/sessionLoad";
 import { formatWeekRangeLabelEs, mondayOfIsoWeekContaining, sundayOfWeekFromMondayYmd } from "../../utils/isoWeekRange";
 
 function useDebouncedDraftKey(draft: SessionLoadDraftExerciseIn[] | undefined, delay: number): string {
@@ -46,15 +44,18 @@ export interface UseWeeklyClientVolumePanelResult {
     weekEnd: string | null;
     weekLabel: string;
     rows: WeeklyVolumePanelRowModel[];
-    summary: WeeklyVolumeSummaryCounts;
     isLoading: boolean;
     isFetching: boolean;
     isError: boolean;
     hasClient: boolean;
     /** True cuando la fila del panel usa proyección borrador + guardado (Fase B). */
     usesDraftProjection: boolean;
-    /** Fase C: hints dinámicos del backend (vacío si no hay borrador o no hay objetivo). */
-    hints: SessionLoadHintOut[];
+    /** Fase 4 — Intelligent Training Engine: axial load score for the draft */
+    axialScore: import("../../types/engineSafety").AxialScoreResponse | null;
+    /** Fase 4 — safety flags per exercise in the draft */
+    safetyFlags: import("../../types/engineSafety").ExerciseSafetyResponse[];
+    /** Objetivo semanal numérico usado en el panel (slider × max_sets o weekly_target del validate-draft). */
+    weeklyTarget: number | null;
 }
 
 export function useWeeklyClientVolumePanel(
@@ -171,10 +172,16 @@ export function useWeeklyClientVolumePanel(
                 muscle_group_id: r.muscle_group_id,
                 name_es: r.name_es,
                 planned_sets_sum: r.projected_total,
-                direct_sets: r.accumulated_direct != null ? r.accumulated_direct + (r.draft_direct ?? 0) : undefined,
-                indirect_sets: r.accumulated_indirect != null ? r.accumulated_indirect + (r.draft_indirect ?? 0) : undefined,
+                direct_sets:
+                    r.accumulated_direct != null ? r.accumulated_direct + (r.draft_direct ?? 0) : undefined,
+                indirect_sets:
+                    r.accumulated_indirect != null
+                        ? r.accumulated_indirect + (r.draft_indirect ?? 0)
+                        : undefined,
                 draft_sets: r.draft_sets,
                 daily_target: r.daily_target,
+                accumulated_saved_without_session: r.accumulated_saved_without_session,
+                pattern_session_days: r.pattern_session_days,
             }));
         }
         return [];
@@ -191,8 +198,6 @@ export function useWeeklyClientVolumePanel(
         return buildWeeklyVolumePanelRows(apiRowsForPanel, effectiveTargetCenter);
     }, [apiRowsForPanel, effectiveTargetCenter]);
 
-    const summary = useMemo(() => summarizeVolumeRowStatuses(rows), [rows]);
-
     const weekEnd =
         draftProjection?.week_end ??
         q.data?.week_end ??
@@ -208,24 +213,18 @@ export function useWeeklyClientVolumePanel(
         (!hasDebouncedDraft && q.isLoading) ||
         (hasDebouncedDraft && !draftProjection && !draftError && isValidatingDraft);
 
-    const hints = useMemo((): SessionLoadHintOut[] => {
-        if (!usesDraftProjection || !draftProjection) {
-            return [];
-        }
-        return draftProjection.hints ?? [];
-    }, [usesDraftProjection, draftProjection]);
-
     return {
         weekStart,
         weekEnd,
         weekLabel,
         rows,
-        summary,
         isLoading,
         isFetching: q.isFetching || (hasDebouncedDraft && isValidatingDraft),
         isError: q.isError || draftError,
         hasClient: !!clientId && clientId > 0,
         usesDraftProjection,
-        hints,
+        axialScore: draftProjection?.axial_score ?? null,
+        safetyFlags: draftProjection?.safety_flags ?? [],
+        weeklyTarget: effectiveTargetCenter,
     };
 }

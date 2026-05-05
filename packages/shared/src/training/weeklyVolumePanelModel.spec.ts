@@ -31,7 +31,7 @@ describe("buildWeeklyVolumePanelRows", () => {
                 name_es: "Pecho",
                 planned_sets_sum: 15,
                 direct_sets: 10,
-                indirect_sets: 5,
+                indirect_sets: 5, // e.g. 10 synergist sets * 0.5 floor = 5
             }],
             16
         );
@@ -70,8 +70,27 @@ describe("buildWeeklyVolumePanelRows", () => {
         expect(rows[0].status).toBe("deficit");   // 3 < 4
         expect(rows[0].targetToday).toBe(5);
         expect(rows[0].draftSets).toBe(3);
+        expect(rows[0].savedWeekWithoutSession).toBeNull();
         expect(rows[1].status).toBe("on_target"); // 5 within 4–6
         expect(rows[2].status).toBe("on_target"); // 6 === 6 => on_target
+    });
+
+    it("passes through accumulated_saved_without_session in daily mode", () => {
+        const rows = buildWeeklyVolumePanelRows(
+            [
+                {
+                    muscle_group_id: 1,
+                    name_es: "Bíceps",
+                    planned_sets_sum: 10,
+                    draft_sets: 3,
+                    daily_target: 11,
+                    accumulated_saved_without_session: 7,
+                },
+            ],
+            20
+        );
+        expect(rows[0].savedWeekWithoutSession).toBe(7);
+        expect(rows[0].targetToday).toBe(11);
     });
 
     it("daily mode: excess when strictly above ceil band", () => {
@@ -89,8 +108,32 @@ describe("buildWeeklyVolumePanelRows", () => {
 describe("summarizeVolumeRowStatuses", () => {
     it("counts statuses", () => {
         const s = summarizeVolumeRowStatuses([
-            { muscleGroupId: 1, nameEs: "", accumulated: 1, draftSets: 1, targetToday: null, rangeMin: 1, rangeMax: 2, targetCenter: 1, status: "deficit" },
-            { muscleGroupId: 2, nameEs: "", accumulated: 2, draftSets: 2, targetToday: null, rangeMin: 1, rangeMax: 2, targetCenter: 1, status: "on_target" },
+            {
+                muscleGroupId: 1,
+                nameEs: "",
+                accumulated: 1,
+                savedWeekWithoutSession: null,
+                draftSets: 1,
+                targetToday: null,
+                rangeMin: 1,
+                rangeMax: 2,
+                targetCenter: 1,
+                status: "deficit",
+                patternSessionDays: null,
+            },
+            {
+                muscleGroupId: 2,
+                nameEs: "",
+                accumulated: 2,
+                savedWeekWithoutSession: null,
+                draftSets: 2,
+                targetToday: null,
+                rangeMin: 1,
+                rangeMax: 2,
+                targetCenter: 1,
+                status: "on_target",
+                patternSessionDays: null,
+            },
         ]);
         expect(s.deficit).toBe(1);
         expect(s.on_target).toBe(1);

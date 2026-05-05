@@ -116,6 +116,7 @@ export const TrainingPlanEdit: React.FC = () => {
             />
 
             <PlanOverlapModal
+                variant="edit"
                 isOpen={editor.isOverlapModalOpen}
                 onClose={editor.handleCancelOverlap}
                 onConfirm={editor.handleConfirmOverlap}

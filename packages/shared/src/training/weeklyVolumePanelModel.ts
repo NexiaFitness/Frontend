@@ -3,14 +3,17 @@
  * Sin React. Umbrales alineados con SPEC tracking carga semanal (Fase A / Fase B).
  */
 
-import type { WeeklyMusclePlannedLoadRowOut } from "../types/sessionLoad";
-
 export type WeeklyVolumeRowStatus = "deficit" | "on_target" | "excess" | "no_target";
 
 export interface WeeklyVolumePanelRowModel {
     muscleGroupId: number;
     nameEs: string;
     accumulated: number;
+    /**
+     * Sets ya guardados esta semana sin contar esta sesión (Fase B),
+     * solo cuando el backend lo envía; sirve para no confundir con el objetivo semanal total.
+     */
+    savedWeekWithoutSession: number | null;
     /** Decisión D1: sets directos (prime_mover) */
     directSets?: number;
     /** Decisión D1: sets indirectos (synergist) */
@@ -21,6 +24,10 @@ export interface WeeklyVolumePanelRowModel {
     rangeMax: number | null;
     targetCenter: number | null;
     status: WeeklyVolumeRowStatus;
+    /**
+     * Sesiones semanales con este patrón para el grupo (validate-draft); null si no aplica o no llegó del API.
+     */
+    patternSessionDays: number | null;
 }
 
 export function buildWeeklyVolumePanelRows(
@@ -32,6 +39,8 @@ export function buildWeeklyVolumePanelRows(
         indirect_sets?: number;
         draft_sets?: number;
         daily_target?: number | null;
+        accumulated_saved_without_session?: number;
+        pattern_session_days?: number | null;
     }>,
     targetCenter: number | null
 ): WeeklyVolumePanelRowModel[] {
@@ -39,6 +48,14 @@ export function buildWeeklyVolumePanelRows(
         const nameEs = r.name_es ?? "";
         const draftSets = r.draft_sets ?? 0;
         const targetToday = r.daily_target ?? null;
+        const savedWeek =
+            typeof r.accumulated_saved_without_session === "number"
+                ? r.accumulated_saved_without_session
+                : null;
+        const patternSessionDays =
+            typeof r.pattern_session_days === "number" && r.pattern_session_days > 0
+                ? r.pattern_session_days
+                : null;
 
         // MODO DIARIO: si tenemos targetToday valido
         if (targetToday != null && targetToday > 0) {
@@ -53,6 +70,7 @@ export function buildWeeklyVolumePanelRows(
                 muscleGroupId: r.muscle_group_id,
                 nameEs,
                 accumulated: r.planned_sets_sum,
+                savedWeekWithoutSession: savedWeek,
                 directSets: r.direct_sets,
                 indirectSets: r.indirect_sets,
                 draftSets,
@@ -61,6 +79,7 @@ export function buildWeeklyVolumePanelRows(
                 rangeMax,
                 targetCenter,
                 status,
+                patternSessionDays,
             };
         }
 
@@ -71,6 +90,7 @@ export function buildWeeklyVolumePanelRows(
                 muscleGroupId: r.muscle_group_id,
                 nameEs,
                 accumulated: acc,
+                savedWeekWithoutSession: savedWeek,
                 directSets: r.direct_sets,
                 indirectSets: r.indirect_sets,
                 draftSets,
@@ -79,6 +99,7 @@ export function buildWeeklyVolumePanelRows(
                 rangeMax: null,
                 targetCenter: null,
                 status: "no_target",
+                patternSessionDays,
             };
         }
         const rangeMin = Math.max(1, Math.floor(targetCenter * 0.9));
@@ -91,6 +112,7 @@ export function buildWeeklyVolumePanelRows(
             muscleGroupId: r.muscle_group_id,
             nameEs,
             accumulated: acc,
+            savedWeekWithoutSession: savedWeek,
             directSets: r.direct_sets,
             indirectSets: r.indirect_sets,
             draftSets,
@@ -99,6 +121,7 @@ export function buildWeeklyVolumePanelRows(
             rangeMax,
             targetCenter,
             status,
+            patternSessionDays,
         };
     });
 }

@@ -79,4 +79,8 @@ export interface SessionValidationOut {
     volume: VolumeValidation | null;
     qualities: QualityValidation | null;
     intensity: IntensityValidation | null;
+    /** Fase 4 — Intelligent Training Engine: axial load score */
+    axial_score?: import("./engineSafety").AxialScoreResponse;
+    /** Fase 4 — safety summary for all exercises in the session */
+    safety_summary?: import("./engineSafety").SessionSafetySummaryOut;
 }

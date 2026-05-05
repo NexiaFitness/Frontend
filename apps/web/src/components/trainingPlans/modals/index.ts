@@ -6,4 +6,4 @@
  */
 
 export { SelectClientModal } from "./SelectClientModal";
-export { PlanOverlapModal } from "./PlanOverlapModal";
+export { PlanOverlapModal, type PlanOverlapModalVariant } from "./PlanOverlapModal";

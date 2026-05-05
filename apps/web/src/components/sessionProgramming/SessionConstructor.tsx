@@ -24,6 +24,8 @@ export interface SessionConstructorProps {
     /** Típico: `setConstructorRows` de useState, admite array o updater funcional. */
     onRowsChange: (action: React.SetStateAction<ConstructorRow[]>) => void;
     onAddExerciseRequest: (rowId: string) => void;
+    /** Misma línea que el título, alineado a la derecha (p. ej. carga axial). */
+    titleAccessory?: React.ReactNode;
 }
 
 export const SessionConstructor: React.FC<SessionConstructorProps> = ({
@@ -31,6 +33,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     blockTypes,
     onRowsChange,
     onAddExerciseRequest,
+    titleAccessory,
 }) => {
     const handleUpdateRow = (rowId: string, updates: Partial<ConstructorRow>) => {
         onRowsChange((prev) =>
@@ -109,9 +112,14 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     return (
         <div className="rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
             <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground">
-                    Constructor de Sesión
-                </h3>
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                    <h3 className="text-sm font-semibold text-foreground truncate">
+                        Constructor de Sesión
+                    </h3>
+                    {titleAccessory ? (
+                        <div className="shrink-0 flex items-center">{titleAccessory}</div>
+                    ) : null}
+                </div>
             </div>
 
             {!showTable ? (

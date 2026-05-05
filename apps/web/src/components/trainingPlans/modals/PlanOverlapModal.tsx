@@ -1,11 +1,11 @@
 /**
- * PlanOverlapModal.tsx — Modal de confirmación para sustituir plan activo
+ * PlanOverlapModal.tsx — Confirmación ante solape de fechas entre planificaciones
  *
  * Contexto:
- * - Al crear una nueva planificación, el backend aplica la regla de negocio:
- *   solo puede existir 1 instancia status="active" por cliente.
- * - Por tanto, si existe una instancia activa previa, se archivará (status="completed")
- *   al crear la nueva planificación (sustitución inmediata).
+ * - `variant="create"`: al crear, el backend puede archivar instancias activas que solapen
+ *   y aplicar la regla de una instancia activa por cliente (sustitución).
+ * - `variant="edit"`: guardar solo actualiza este plan vía API; no replica la sustitución
+ *   del flujo de creación. El aviso informa del solape sin afirmar que se archivará otra planificación.
  *
  * Diseño:
  * - Basado en el patrón canónico de SelectClientModal (tema oscuro, bordes redondeados)
@@ -19,6 +19,8 @@ import { X, TriangleAlert } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 
+export type PlanOverlapModalVariant = "create" | "edit";
+
 export interface PlanOverlapModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -27,6 +29,8 @@ export interface PlanOverlapModalProps {
     planStartDate: string;
     planEndDate: string;
     isLoading?: boolean;
+    /** Por defecto `create` (sustitución / nuevo plan). En edición usar `edit`. */
+    variant?: PlanOverlapModalVariant;
 }
 
 export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
@@ -37,6 +41,7 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
     planStartDate,
     planEndDate,
     isLoading = false,
+    variant = "create",
 }) => {
     const modalRef = useRef<HTMLDivElement>(null);
 
@@ -115,14 +120,18 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                         id="plan-overlap-title"
                         className="text-lg font-semibold leading-none tracking-tight text-foreground"
                     >
-                        Sustituir planificación activa
+                        {variant === "edit"
+                            ? "Solape de fechas con otra planificación"
+                            : "Sustituir planificación activa"}
                     </h2>
                 </div>
 
                 {/* Body */}
                 <div className="space-y-3 p-6 pt-2">
                     <p className="text-sm text-muted-foreground">
-                        Ya existe una planificación activa para este cliente:
+                        {variant === "edit"
+                            ? "El rango de fechas elegido se cruza con otra planificación de este cliente:"
+                            : "Ya existe una planificación activa para este cliente:"}
                     </p>
 
                     {/* Plan info block */}
@@ -139,9 +148,21 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                         </div>
                     </div>
 
-                    <p className="text-sm text-muted-foreground">
-                        Al continuar, se archivará la planificación activa actual y se creará la nueva.
-                        ¿Desea continuar?
+                    <p id="plan-overlap-description" className="text-sm text-muted-foreground">
+                        {variant === "edit" ? (
+                            <>
+                                Al guardar solo se actualizan los datos de{" "}
+                                <span className="font-medium text-foreground">esta</span>{" "}
+                                planificación. No se archiva ni borra automáticamente la otra ni sus
+                                sesiones o bloques. Si quieres evitar solapes en el calendario, ajusta
+                                las fechas de uno de los dos planes. ¿Guardar de todas formas?
+                            </>
+                        ) : (
+                            <>
+                                Al continuar, se archivará la planificación activa actual y se creará
+                                la nueva. ¿Desea continuar?
+                            </>
+                        )}
                     </p>
                 </div>
 
@@ -164,7 +185,7 @@ export const PlanOverlapModal: React.FC<PlanOverlapModalProps> = ({
                         isLoading={isLoading}
                         className="flex-1"
                     >
-                        Continuar
+                        {variant === "edit" ? "Guardar cambios" : "Continuar"}
                     </Button>
                 </div>
             </div>

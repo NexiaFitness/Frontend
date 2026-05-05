@@ -60,6 +60,8 @@ export interface SessionLoadDraftRowOut {
     draft_indirect?: number;
     projected_total: number;
     daily_target: number;
+    /** Sesiones de la semana que tocan este músculo según patrón del bloque; 0 si no se resolvió. */
+    pattern_session_days?: number;
 }
 
 /** Fase C: hint textual dinámico por grupo muscular. */
@@ -77,4 +79,8 @@ export interface SessionLoadDraftValidateOut {
     weekly_target: number;
     rows: SessionLoadDraftRowOut[];
     hints: SessionLoadHintOut[];
+    /** Fase 4 — Intelligent Training Engine: axial load score for the draft */
+    axial_score?: import("./engineSafety").AxialScoreResponse;
+    /** Fase 4 — safety flags per exercise in the draft */
+    safety_flags?: import("./engineSafety").ExerciseSafetyResponse[];
 }

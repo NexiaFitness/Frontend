@@ -26,6 +26,13 @@ import { useState, useMemo, useCallback } from "react";
 import type { FetchBaseQueryError } from "@reduxjs/toolkit/query";
 import { baseApi } from "../../api/baseApi";
 import { EXERCISES_LIST_MAX_LIMIT } from "../../config/constants";
+import type {
+    ExerciseSafetyResponse,
+    ExerciseSafetyCheckRequest,
+    ExerciseSafetyBatchRequest,
+    ExerciseSafetyBatchResponse,
+    SafeAlternativesResponse,
+} from "../../types/engineSafety";
 
 // ========================================
 // TIPOS TEMPORALES PARA MÓDULO EXERCISES LEGACY
@@ -392,6 +399,38 @@ const exercisesListApi = baseApi.injectEndpoints({
                 { type: "Exercise", id: "LIST" },
             ],
         }),
+        // -----------------------------------------------------------------
+        // Intelligent Training Engine — safety endpoints (Fase 4)
+        // -----------------------------------------------------------------
+        checkExerciseSafety: builder.mutation<ExerciseSafetyResponse, ExerciseSafetyCheckRequest>({
+            query: (body) => ({
+                url: "/exercises/safety-check",
+                method: "POST",
+                body,
+                headers: { "Content-Type": "application/json" },
+            }),
+        }),
+        checkExerciseSafetyBatch: builder.mutation<ExerciseSafetyBatchResponse, ExerciseSafetyBatchRequest>({
+            query: (body) => ({
+                url: "/exercises/safety-check/batch",
+                method: "POST",
+                body,
+                headers: { "Content-Type": "application/json" },
+            }),
+        }),
+        getSafeAlternatives: builder.query<SafeAlternativesResponse, { exerciseId: number; clientId: number }>({
+            query: ({ exerciseId, clientId }) => ({
+                url: `/exercises/${exerciseId}/safe-alternatives?client_id=${clientId}`,
+                method: "GET",
+            }),
+            providesTags: (result) =>
+                result
+                    ? [
+                        { type: "ExerciseSafety" as const, id: result.original_exercise_id },
+                        { type: "ExerciseSafety", id: "LIST" },
+                    ]
+                    : [{ type: "ExerciseSafety", id: "LIST" }],
+        }),
     }),
     overrideExisting: false,
 });
@@ -404,6 +443,9 @@ export const {
     useCreateExerciseMutation,
     useUpdateExerciseMutation,
     useDeleteExerciseMutation,
+    useCheckExerciseSafetyMutation,
+    useCheckExerciseSafetyBatchMutation,
+    useGetSafeAlternativesQuery,
 } = exercisesListApi;
 
 // ========================================

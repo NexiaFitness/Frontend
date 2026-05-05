@@ -21,6 +21,7 @@ import { X, CheckCircle2, AlertTriangle, XCircle, Info, ArrowLeft } from "lucide
 
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import type { SessionValidationOut, ValidationStatus } from "@nexia/shared/types/sessionValidation";
+import type { AxialScoreResponse, SessionSafetySummaryOut, ExerciseSafetyResponse } from "@nexia/shared/types/engineSafety";
 import { getMutationErrorMessage } from "@nexia/shared";
 
 import { SidePanel } from "@/components/ui/layout/SidePanel";
@@ -184,13 +185,88 @@ const VolumeSection: React.FC<{ data: SessionValidationOut["volume"] }> = ({ dat
     );
 };
 
-const PlaceholderSection: React.FC<{ title: string }> = ({ title }) => (
-    <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">
-            La validación de {title} está reservada para una versión futura (V2).
-        </p>
-    </div>
-);
+const AxialLoadSection: React.FC<{ data: AxialScoreResponse | undefined }> = ({ data }) => {
+    if (!data) return <p className="text-sm text-muted-foreground">Sin datos de carga axial.</p>;
+    const { total_score, threshold, exceeds_threshold, exercises_breakdown } = data;
+    return (
+        <div className="space-y-3">
+            <div className="flex items-center justify-between">
+                <span className={cn("text-sm font-medium", exceeds_threshold ? "text-destructive" : "text-success")}>
+                    {total_score} / {threshold}
+                </span>
+                <span className={cn("text-xs font-medium", exceeds_threshold ? "text-destructive" : "text-success")}>
+                    {exceeds_threshold ? "Excede umbral" : "Dentro del umbral"}
+                </span>
+            </div>
+            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+                <div
+                    className={cn("h-full rounded-full transition-all", exceeds_threshold ? "bg-destructive" : "bg-success")}
+                    style={{ width: `${Math.min((total_score / Math.max(threshold, 1)) * 100, 100)}%` }}
+                />
+            </div>
+            {exercises_breakdown.length > 0 && (
+                <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">Desglose por ejercicio</p>
+                    {exercises_breakdown.map((item) => (
+                        <div key={item.exercise_id} className="flex items-center justify-between text-xs">
+                            <span className="text-foreground truncate flex-1">{item.exercise_name}</span>
+                            <span className="text-muted-foreground tabular-nums w-16 text-right">{item.score} pts</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
+const SafetySummarySection: React.FC<{ data: SessionSafetySummaryOut | undefined }> = ({ data }) => {
+    if (!data) return <p className="text-sm text-muted-foreground">Sin datos de seguridad.</p>;
+    const { blocking_count, warning_count, safe_count, details } = data;
+    return (
+        <div className="space-y-3">
+            <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-md border border-success/30 bg-success/10 p-2 text-center">
+                    <p className="text-lg font-bold text-success">{safe_count}</p>
+                    <p className="text-[10px] text-success/80">Seguros</p>
+                </div>
+                <div className="rounded-md border border-warning/30 bg-warning/10 p-2 text-center">
+                    <p className="text-lg font-bold text-warning">{warning_count}</p>
+                    <p className="text-[10px] text-warning/80">Advertencias</p>
+                </div>
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-2 text-center">
+                    <p className="text-lg font-bold text-destructive">{blocking_count}</p>
+                    <p className="text-[10px] text-destructive/80">Bloqueantes</p>
+                </div>
+            </div>
+            {blocking_count > 0 && (
+                <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-destructive">Ejercicios bloqueantes</p>
+                    {details.filter((d: ExerciseSafetyResponse) => d.blocking).map((d, i) => (
+                        <div key={i} className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2">
+                            <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-destructive" />
+                            <div className="min-w-0">
+                                <p className="text-xs font-medium text-destructive">{d.reason ?? "Contraindicado"}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+            {warning_count > 0 && (
+                <div className="space-y-1.5">
+                    <p className="text-xs font-medium text-warning">Advertencias</p>
+                    {details.filter((d: ExerciseSafetyResponse) => !d.blocking && !d.is_safe).map((d, i) => (
+                        <div key={i} className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2">
+                            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-warning" />
+                            <div className="min-w-0">
+                                <p className="text-xs font-medium text-warning">{d.reason ?? "Precaución"}</p>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 // ---------------------------------------------------------------------------
 // Props
@@ -285,12 +361,12 @@ export const SessionValidationPanel: React.FC<SessionValidationPanelProps> = ({
                             <VolumeSection data={data.volume} />
                         </CollapsibleFormGroup>
 
-                        <CollapsibleFormGroup title="Cualidades físicas" badge={data.qualities?.status ?? "V2"}>
-                            <PlaceholderSection title="cualidades físicas" />
+                        <CollapsibleFormGroup title="Carga axial" badge={data.axial_score ? (data.axial_score.exceeds_threshold ? "alerta" : "ok") : "N/A"}>
+                            <AxialLoadSection data={data.axial_score} />
                         </CollapsibleFormGroup>
 
-                        <CollapsibleFormGroup title="Intensidad" badge={data.intensity?.status ?? "V2"}>
-                            <PlaceholderSection title="intensidad" />
+                        <CollapsibleFormGroup title="Seguridad" badge={data.safety_summary ? `${data.safety_summary.blocking_count} bloqueos` : "N/A"}>
+                            <SafetySummarySection data={data.safety_summary} />
                         </CollapsibleFormGroup>
                     </>
                 )}

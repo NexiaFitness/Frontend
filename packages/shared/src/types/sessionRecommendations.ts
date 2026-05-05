@@ -58,6 +58,10 @@ export interface SessionRecommendationsWithValues {
     has_planned_values: true;
     recommendations: SessionDayRecommendations;
     coherence_warnings: string[];
+    /** Fase 4 — Intelligent Training Engine */
+    axial_threshold?: number;
+    client_has_injuries?: boolean;
+    injury_regions?: string[];
 }
 
 export type SessionRecommendationsResponse =

@@ -42,6 +42,9 @@ export * from "./coherence";
 // Dashboard types
 export * from "./dashboard";
 
+// Engine safety types (Intelligent Training Engine)
+export * from "./engineSafety";
+
 // Exercise alternatives types
 export * from "./exerciseAlternatives";
 

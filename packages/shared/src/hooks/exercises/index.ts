@@ -29,6 +29,9 @@ export {
     useCreateExerciseMutation,
     useUpdateExerciseMutation,
     useDeleteExerciseMutation,
+    useCheckExerciseSafetyMutation,
+    useCheckExerciseSafetyBatchMutation,
+    useGetSafeAlternativesQuery,
     useExercises,
     // Types
     type Exercise,

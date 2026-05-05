@@ -57,6 +57,7 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
+import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import type { RootState } from "@nexia/shared/store";
@@ -842,12 +843,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     <WeeklyClientVolumePanel
                                         weekLabel={weeklyVolumePanel.weekLabel}
                                         rows={weeklyVolumePanel.rows}
-                                        summary={weeklyVolumePanel.summary}
                                         isLoading={weeklyVolumePanel.isLoading}
                                         isError={weeklyVolumePanel.isError}
                                         hasClient={weeklyVolumePanel.hasClient}
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
-                                        hints={weeklyVolumePanel.hints}
+                                        weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                     />
                                 </>
                             )}
@@ -888,6 +888,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                                 setTargetRowIdForPicker(rowId);
                                                 setShowExercisePickerModal(true);
                                             }}
+                                            titleAccessory={
+                                                constructorRows.length > 0 ? (
+                                                    <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                                ) : undefined
+                                            }
                                         />
                                     </div>
 

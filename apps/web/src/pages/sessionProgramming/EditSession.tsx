@@ -66,6 +66,7 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import { SESSION_TYPES } from "./sessionFormConstants";
 
@@ -712,12 +713,11 @@ export const EditSession: React.FC = () => {
                                 <WeeklyClientVolumePanel
                                     weekLabel={weeklyVolumePanel.weekLabel}
                                     rows={weeklyVolumePanel.rows}
-                                    summary={weeklyVolumePanel.summary}
                                     isLoading={weeklyVolumePanel.isLoading}
                                     isError={weeklyVolumePanel.isError}
                                     hasClient={weeklyVolumePanel.hasClient}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
-                                    hints={weeklyVolumePanel.hints}
+                                    weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                 />
                             </>
                         ) : null}
@@ -760,6 +760,11 @@ export const EditSession: React.FC = () => {
                                             setTargetRowIdForPicker(rowId);
                                             setShowExercisePickerModal(true);
                                         }}
+                                        titleAccessory={
+                                            constructorRows.length > 0 ? (
+                                                <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                            ) : undefined
+                                        }
                                     />
                                 </div>
 
