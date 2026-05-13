@@ -9,7 +9,7 @@
  */
 
 import React, { useId } from "react";
-import { AlertTriangle, Calendar } from "lucide-react";
+import { AlertTriangle, Calendar, Copy } from "lucide-react";
 import type { PlanTrainingSession } from "@nexia/shared";
 import { isSessionDeletable, SESSION_TYPE_LABELS } from "@nexia/shared";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
@@ -24,6 +24,7 @@ interface SessionCardProps {
     onEdit?: (session: SessionCardSession) => void;
     onDelete?: (session: SessionCardSession) => void;
     onViewDetail?: (session: SessionCardSession) => void;
+    onReplicate?: (session: SessionCardSession) => void;
 }
 
 const COHERENCE_PREFIX = "[Coherence Warnings:";
@@ -76,6 +77,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     onEdit,
     onDelete,
     onViewDetail,
+    onReplicate,
 }) => {
     const titleId = useId();
     const { coherenceBody, trainerNotes } = parseSessionNotes(
@@ -248,7 +250,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
             ) : null}
 
             {/* Acciones — jerarquía: secundario → primario del bloque → destructivo */}
-            {(onViewDetail ?? onEdit ?? onDelete) ? (
+            {(onViewDetail ?? onEdit ?? onDelete ?? onReplicate) ? (
                 <div className="mt-4 flex flex-col gap-2 border-t border-border pt-4 sm:flex-row sm:flex-wrap sm:justify-end">
                     {onViewDetail ? (
                         <Button
@@ -258,6 +260,17 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                             className="w-full sm:w-auto sm:min-w-[9rem]"
                         >
                             Ver detalles
+                        </Button>
+                    ) : null}
+                    {onReplicate && "period_block_id" in session && session.period_block_id ? (
+                        <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => onReplicate(session)}
+                            className="w-full sm:w-auto sm:min-w-[9rem]"
+                        >
+                            <Copy className="mr-1.5 h-4 w-4" />
+                            Replicar
                         </Button>
                     ) : null}
                     {onEdit ? (

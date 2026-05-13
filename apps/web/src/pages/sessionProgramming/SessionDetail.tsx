@@ -14,6 +14,7 @@ import {
     CheckCircle,
     ChevronRight,
     Clock,
+    Copy,
     Dumbbell,
     Flame,
     Gauge,
@@ -33,6 +34,9 @@ import { useSessionExercisesDisplay } from "@nexia/shared/hooks/sessionProgrammi
 import { cn } from "@/lib/utils";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
+import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
+import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
     completed: "Completada",
@@ -137,6 +141,18 @@ export const SessionDetail: React.FC = () => {
     const { data: client } = useGetClientQuery(session?.client_id || 0, {
         skip: !session?.client_id,
     });
+
+    const replicateFlow = useReplicateSessionFlow(
+        session
+            ? {
+                  id: session.id,
+                  session_date: session.session_date,
+                  session_name: session.session_name,
+                  training_plan_id: session.training_plan_id ?? null,
+                  period_block_id: session.period_block_id ?? null,
+              }
+            : { id: 0, session_date: null, session_name: "", training_plan_id: null, period_block_id: null }
+    );
 
     if (!sessionId || Number.isNaN(sessionId)) {
         return (
@@ -272,6 +288,15 @@ export const SessionDetail: React.FC = () => {
                         <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
                     </Button>
+                    {session.period_block_id ? (
+                        <Button
+                            variant="secondary"
+                            onClick={replicateFlow.openModal}
+                        >
+                            <Copy className="mr-1 h-4 w-4" aria-hidden />
+                            Replicar
+                        </Button>
+                    ) : null}
                     <Button
                         variant="primary"
                         onClick={() => navigate(`/dashboard/session-programming/edit-session/${session.id}`)}
@@ -375,6 +400,27 @@ export const SessionDetail: React.FC = () => {
                     </div>
                 )}
             </div>
+
+            <ReplicateSessionModal
+                isOpen={replicateFlow.isOpen}
+                onClose={() => replicateFlow.setIsOpen(false)}
+                weeks={replicateFlow.weeks}
+                selectedWeeks={replicateFlow.selectedWeeks}
+                onToggleWeek={replicateFlow.toggleWeek}
+                onReplicate={replicateFlow.handleReplicate}
+                isLoading={replicateFlow.isReplicating}
+                sessionName={session.session_name}
+                hasBlock={replicateFlow.hasBlock}
+                isBlockLoading={replicateFlow.isBlockLoading}
+            />
+            <ReplicateSessionConflictModal
+                isOpen={replicateFlow.isConflictOpen}
+                onClose={replicateFlow.handleCancelConflict}
+                onConfirmReplace={replicateFlow.handleConfirmReplace}
+                conflicts={replicateFlow.pendingConflicts}
+                createdCount={replicateFlow.createdCount}
+                isLoading={replicateFlow.isReplicating}
+            />
 
             {session.status === "completed" && session.notes && (
                 <div className="rounded-xl bg-card p-5">
