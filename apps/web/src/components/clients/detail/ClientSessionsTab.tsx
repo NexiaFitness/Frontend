@@ -42,6 +42,9 @@ import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useToast } from "@/components/ui/feedback";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
+import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
+import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
 
 interface ClientSessionsTabProps {
     clientId: number;
@@ -119,6 +122,19 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     );
     const [listFilter, setListFilter] = useState<ListFilter>("all");
     const [listPage, setListPage] = useState(1);
+    const [replicateSession, setReplicateSession] = useState<SessionListItem | null>(null);
+
+    const replicateFlow = useReplicateSessionFlow(
+        replicateSession && replicateSession.session_kind === "training"
+            ? {
+                  id: replicateSession.id,
+                  session_date: replicateSession.session_date,
+                  session_name: replicateSession.session_name,
+                  training_plan_id: replicateSession.training_plan_id ?? null,
+                  period_block_id: replicateSession.period_block_id ?? null,
+              }
+            : { id: 0, session_date: null, session_name: '', training_plan_id: null, period_block_id: null }
+    );
     const [listOpen, setListOpen] = useState(true);
 
     const handleFilterChange = useCallback((f: ListFilter) => {
@@ -202,6 +218,13 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
             ? `/dashboard/standalone-sessions/${session.id}`
             : `/dashboard/session-programming/sessions/${session.id}`;
         navigate(path, { state: returnToStateFromView(location) });
+    };
+
+    const handleReplicate = (session: SessionListItem | PlanTrainingSession | TrainingSession) => {
+        if ("session_kind" in session && session.session_kind === "training" && session.period_block_id) {
+            setReplicateSession(session as SessionListItem);
+            setTimeout(() => replicateFlow.openModal(), 0);
+        }
     };
 
     // P2: Merge training + standalone en lista unificada para calendario y lista
@@ -366,6 +389,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                                     <SessionCard
                                                         session={s}
                                                         onViewDetail={handleViewSessionDetail}
+                                                        onReplicate={s.session_kind === "training" ? handleReplicate : undefined}
                                                     />
                                                 </li>
                                             );
@@ -420,6 +444,27 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     </div>
                 )}
             </div>
+
+            <ReplicateSessionModal
+                isOpen={replicateFlow.isOpen}
+                onClose={() => replicateFlow.setIsOpen(false)}
+                weeks={replicateFlow.weeks}
+                selectedWeeks={replicateFlow.selectedWeeks}
+                onToggleWeek={replicateFlow.toggleWeek}
+                onReplicate={replicateFlow.handleReplicate}
+                isLoading={replicateFlow.isReplicating}
+                sessionName={replicateSession?.session_name ?? ''}
+                hasBlock={replicateFlow.hasBlock}
+                isBlockLoading={replicateFlow.isBlockLoading}
+            />
+            <ReplicateSessionConflictModal
+                isOpen={replicateFlow.isConflictOpen}
+                onClose={replicateFlow.handleCancelConflict}
+                onConfirmReplace={replicateFlow.handleConfirmReplace}
+                conflicts={replicateFlow.pendingConflicts}
+                createdCount={replicateFlow.createdCount}
+                isLoading={replicateFlow.isReplicating}
+            />
 
             <DashboardFixedFooter>
                 <div className="flex items-center justify-end gap-3">
