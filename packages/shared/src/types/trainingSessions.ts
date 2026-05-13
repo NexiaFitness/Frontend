@@ -283,9 +283,47 @@ export interface SessionExercise {
 }
 
 /**
+ * Request para replicar una sesion a otras semanas del bloque
+ */
+export interface TrainingSessionReplicateRequest {
+    target_week_ordinals?: number[] | null;
+    force?: boolean;
+}
+
+/**
+ * Item de sesion creada en la replicacion
+ */
+export interface ReplicatedSessionItem {
+    id: number;
+    session_date: string | null;
+    session_name: string;
+    week_ordinal: number;
+    period_block_id: number;
+}
+
+/**
+ * Item de conflicto omitido en la replicacion
+ */
+export interface SkippedConflictItem {
+    week_ordinal: number;
+    period_block_id: number;
+    session_date: string | null;
+    reason: string;
+}
+
+/**
+ * Response de replicar sesion
+ */
+export interface TrainingSessionReplicateResponse {
+    created_sessions: ReplicatedSessionItem[];
+    conflicts_skipped: SkippedConflictItem[];
+    count: number;
+}
+
+/**
  * Payload para crear Session Exercise
  * training_session_id es opcional porque se usa del URL param
- * 
+ *
  * @author Frontend Team - NEXIA
  * @since v6.1.0
  */

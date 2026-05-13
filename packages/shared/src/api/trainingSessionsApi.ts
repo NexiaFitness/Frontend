@@ -16,6 +16,8 @@ import type {
     SessionExercise,
     SessionExerciseCreate,
     SessionCoherence,
+    TrainingSessionReplicateRequest,
+    TrainingSessionReplicateResponse,
 } from '../types/trainingSessions';
 import type {
     SessionRecommendationsResponse,
@@ -241,9 +243,38 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * POST /training-sessions/{session_id}/replicate
+         * Replicar una sesion a otras semanas del mismo bloque
+         */
+        replicateTrainingSession: builder.mutation<
+            TrainingSessionReplicateResponse,
+            { sessionId: number; body: TrainingSessionReplicateRequest }
+        >({
+            query: ({ sessionId, body }) => ({
+                url: `/training-sessions/${sessionId}/replicate`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (result) => {
+                const tags: Array<{ type: 'TrainingSession' | 'PlanPeriodBlock' | 'WeeklyStructure'; id: string | number }> = [
+                    { type: 'TrainingSession', id: 'LIST' },
+                ];
+                if (result?.created_sessions) {
+                    result.created_sessions.forEach((s) => {
+                        tags.push({ type: 'TrainingSession', id: s.id });
+                        if (s.period_block_id) {
+                            tags.push({ type: 'PlanPeriodBlock', id: s.period_block_id });
+                        }
+                    });
+                }
+                return tags;
+            },
+        }),
+
+        /**
          * POST /training-sessions/{session_id}/exercises
          * Agregar ejercicio a una sesión de entrenamiento
-         * 
+         *
          * @author Frontend Team - NEXIA
          * @since v6.1.0
          */
@@ -282,6 +313,7 @@ export const {
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,
+    useReplicateTrainingSessionMutation,
     useCreateSessionExerciseMutation,
 } = trainingSessionsApi;
 
