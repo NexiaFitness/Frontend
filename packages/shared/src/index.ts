@@ -23,6 +23,7 @@ export {
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,
     useCreateSessionExerciseMutation,
+    useReplicateTrainingSessionMutation,
 } from "./api/trainingSessionsApi";
 export type { GetTrainingSessionsQueryArg } from "./api/trainingSessionsApi";
 export {
@@ -161,6 +162,10 @@ export type {
     TrainingSessionStatus,
     SessionExercise,
     SessionExerciseCreate,
+    TrainingSessionReplicateRequest,
+    TrainingSessionReplicateResponse,
+    ReplicatedSessionItem,
+    SkippedConflictItem,
 } from "./types/trainingSessions";
 export {
     SESSION_TYPE_LABELS,
