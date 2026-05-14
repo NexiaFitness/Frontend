@@ -15,7 +15,7 @@ export const CONSTRUCTOR_CARD_HEADER_CLASS =
 
 /** Grupo izquierdo de cabecera (bloque + tipo serie, sin wrap) */
 export const CONSTRUCTOR_CARD_HEADER_LEFT_CLASS =
-    "flex min-w-0 flex-1 items-center gap-2";
+    "flex items-center gap-2";
 
 /** Botón icono de acciones en cabecera */
 export const CONSTRUCTOR_HEADER_ICON_BTN_CLASS =
@@ -51,7 +51,7 @@ export const CONSTRUCTOR_BLOCK_DOT_CLASS =
 
 /** Combobox compacto en filas de ejercicio */
 export const CONSTRUCTOR_MINI_COMBO_CLASS =
-    "w-[52px] shrink-0 [&_button]:text-xs";
+    "w-[58px] shrink-0 [&_button]:text-xs [&_button]:px-1.5";
 
 /** Input numérico compacto en filas de ejercicio */
 export const CONSTRUCTOR_MINI_INPUT_CLASS =

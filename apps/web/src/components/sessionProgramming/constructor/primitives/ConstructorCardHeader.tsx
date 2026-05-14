@@ -54,7 +54,7 @@ export const ConstructorCardHeader: React.FC<ConstructorCardHeaderProps> = ({
         <div className={CONSTRUCTOR_CARD_HEADER_CLASS}>
             <div className={CONSTRUCTOR_CARD_HEADER_LEFT_CLASS}>
                 <span className={CONSTRUCTOR_BLOCK_DOT_CLASS} aria-hidden />
-                <span className="truncate text-sm font-semibold text-foreground">
+                <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-foreground">
                     {blockLabel}
                 </span>
                 <FormSelect

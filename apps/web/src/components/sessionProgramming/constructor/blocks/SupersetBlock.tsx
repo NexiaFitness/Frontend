@@ -27,10 +27,10 @@ import {
 const SLOT_LABELS = ["A1", "A2"] as const;
 
 const EXERCISE_GRID_CLASS =
-    "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_108px_108px_48px] gap-2 items-center";
+    "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_120px_120px] gap-2 items-center";
 
 const COLUMN_HEADER_GRID_CLASS =
-    "sm:grid-cols-[40px_minmax(0,1fr)_108px_108px_48px]";
+    "sm:grid-cols-[40px_minmax(0,1fr)_120px_120px]";
 
 export interface SupersetBlockProps {
     row: ConstructorRow;
@@ -118,7 +118,6 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                         <span>Ejercicio</span>
                         <span className="text-center">Reps / Tiempo</span>
                         <span className="text-center">Carácter</span>
-                        <span className="text-center">Descanso</span>
                     </div>
 
                     <div className="space-y-2 px-4 pb-3 pt-1">
@@ -156,9 +155,6 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                                             onUpdateExercise(normalized.id, ex.id, updates)
                                         }
                                     />
-                                    <span className="flex h-8 items-center justify-center text-[11px] text-muted-foreground/70">
-                                        —
-                                    </span>
                                 </div>
                             </GroupedExerciseRow>
                         ))}
