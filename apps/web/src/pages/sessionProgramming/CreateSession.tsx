@@ -53,6 +53,7 @@ import {
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import { buildExercisePayloadFromLine } from "./buildExercisePayload";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
+import { getRowVolumeSetsPerExercise } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
@@ -392,22 +393,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
                 const created = await createStandaloneSession(standaloneData).unwrap();
 
+                const flatExercises = constructorRows.flatMap((r) => {
+                    const planned_sets = getRowVolumeSetsPerExercise(r);
+                    return r.exercises
+                        .filter((ex) => ex.exerciseId > 0)
+                        .map((ex) => ({
+                            exercise_id: ex.exerciseId,
+                            planned_sets,
+                            planned_reps: convertPlannedReps(ex.plannedReps ?? ""),
+                            planned_weight: ex.plannedWeight,
+                            planned_rest: r.rest,
+                            notes: ex.notes,
+                        }));
+                });
                 let order = 0;
-                const flatExercises = constructorRows.flatMap((r) =>
-                    r.exercises.map((ex) => ({
-                        exercise_id: ex.exerciseId,
-                        order_in_session: ++order,
-                        planned_sets: r.sets ?? 3,
-                        planned_reps: convertPlannedReps(ex.plannedReps ?? ""),
-                        planned_weight: ex.plannedWeight,
-                        planned_rest: r.rest,
-                        notes: ex.notes,
-                    }))
-                );
+                const flatWithOrder = flatExercises.map((ex) => ({
+                    ...ex,
+                    order_in_session: ++order,
+                }));
 
-                if (flatExercises.length > 0) {
+                if (flatWithOrder.length > 0) {
                     let savedCount = 0;
-                    for (const ex of flatExercises) {
+                    for (const ex of flatWithOrder) {
                         try {
                             await createStandaloneExercise({
                                 sessionId: created.id,

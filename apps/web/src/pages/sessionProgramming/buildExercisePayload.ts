@@ -19,6 +19,7 @@ import type {
     ConstructorSetData,
 } from "@/components/sessionProgramming/constructorTypes";
 import type { PersistExerciseLine } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
+import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
@@ -125,7 +126,7 @@ export function buildExercisePayloadFromLine(
         exercise_id: line.exercise.exerciseId,
         order_in_block: line.orderInBlock,
         set_type: row.setType,
-        planned_sets: row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+        planned_sets: getPersistLinePlannedSets(row, line),
         planned_reps: mapped.planned_reps,
         planned_duration: mapped.planned_duration,
         planned_weight: fields.plannedWeight ?? null,
@@ -171,7 +172,7 @@ export function buildExerciseUpdatePayloadFromLine(
             : (line.setDataEntry?.rest ?? row.rest);
 
     return {
-        planned_sets: row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+        planned_sets: getPersistLinePlannedSets(row, line),
         planned_reps: mapped.planned_reps,
         planned_duration: mapped.planned_duration,
         planned_weight: fields.plannedWeight ?? null,

@@ -43,4 +43,8 @@ export {
     MAX_DROPS_AFTER_MAIN,
     DEFAULT_DROPSET_ROUNDS,
 } from "./utils/dropsetRow";
+export {
+    getRowVolumeSetsPerExercise,
+    getPersistLinePlannedSets,
+} from "./utils/volumeEquivalentSets";
 export { applyExercisePickerSelection } from "./utils/exercisePicker";

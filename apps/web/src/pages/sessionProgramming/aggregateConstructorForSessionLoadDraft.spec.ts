@@ -69,7 +69,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         expect(out).toEqual([{ exercise_id: 7, planned_sets: 5 }]);
     });
 
-    it("sets null en fila se trata como 0", () => {
+    it("sets null en fila no aporta volumen (se omite)", () => {
         const out = aggregateConstructorRowsForSessionLoadDraft([
             row({
                 id: "r1",
@@ -77,7 +77,7 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
                 exercises: [ex({ exerciseId: 5 })],
             }),
         ]);
-        expect(out).toEqual([{ exercise_id: 5, planned_sets: 0 }]);
+        expect(out).toEqual([]);
     });
 
     it("ignora exerciseId 0 o negativo", () => {
@@ -154,5 +154,57 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
             }),
         ]);
         expect(out).toEqual([{ exercise_id: 99, planned_sets: 3 }]);
+    });
+
+    it("dropset: volumen = rondas, no pasos × rondas", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.DROPSET,
+                sets: 3,
+                setData: [
+                    {
+                        id: "main",
+                        plannedReps: "8",
+                        plannedWeight: null,
+                        plannedDuration: null,
+                        effortCharacter: null,
+                        effortValue: null,
+                        rest: null,
+                        isManuallyEdited: false,
+                    },
+                    {
+                        id: "d1",
+                        plannedReps: "8",
+                        plannedWeight: null,
+                        plannedDuration: null,
+                        effortCharacter: null,
+                        effortValue: null,
+                        rest: null,
+                        isManuallyEdited: false,
+                    },
+                ],
+                exercises: [ex({ exerciseId: 42 })],
+            }),
+        ]);
+        expect(out).toEqual([{ exercise_id: 42, planned_sets: 3 }]);
+    });
+
+    it("amrap: volumen = rondas objetivo (row.rounds)", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.AMRAP,
+                sets: null,
+                rounds: 5,
+                exercises: [ex({ exerciseId: 1 }), ex({ exerciseId: 2 })],
+            }),
+        ]);
+        expect(out).toEqual(
+            expect.arrayContaining([
+                { exercise_id: 1, planned_sets: 5 },
+                { exercise_id: 2, planned_sets: 5 },
+            ])
+        );
     });
 });

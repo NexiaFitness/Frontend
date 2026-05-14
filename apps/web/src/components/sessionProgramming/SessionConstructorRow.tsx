@@ -436,6 +436,23 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             <span className="text-[10px] text-muted-foreground italic">
                                 Objetivo: máx. rondas
                             </span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] text-muted-foreground">
+                                    Rondas objetivo:
+                                </span>
+                                <InlineNumberInput
+                                    size="compact"
+                                    min={1}
+                                    value={row.rounds ?? ""}
+                                    onChange={(e) =>
+                                        onUpdate(row.id, {
+                                            rounds: e.target.value ? Number(e.target.value) : null,
+                                        })
+                                    }
+                                    placeholder="5"
+                                    className="w-14"
+                                />
+                            </div>
                         </>
                     )}
                     {row.setType === "for_time" && (
