@@ -1,24 +1,31 @@
 /**
  * buildExercisePayload.ts — Mapeo Constructor → API SessionBlockExercise
  *
- * Convierte el estado local del Constructor (ConstructorRow + ConstructorExercise)
- * al payload que espera el backend (SessionBlockExerciseCreate/Update).
- * Respeta repsTipo: reps → planned_reps, tiempo → planned_duration,
- * amrap → planned_reps="AMRAP". RPE va en columna Carácter.
+ * Convierte el estado local del Constructor al payload que espera el backend.
+ * single_set: N líneas con planned_sets: 1 y carga por setData[i].
  *
  * @spec IMPL_CREATE_EDIT_SESSION.md — Sección 10
- * @spec agent.md — Sin parches, alineado con backend
+ * @spec docs/tipo-serie/04_single-set-dropset-expansion-fase1.md
  */
 
 import type {
     SessionBlockExerciseCreate,
     SessionBlockExerciseUpdate,
 } from "@nexia/shared/types/sessionProgramming";
-import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
+import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import type {
+    ConstructorRow,
+    ConstructorExercise,
+    ConstructorSetData,
+} from "@/components/sessionProgramming/constructorTypes";
+import type { PersistExerciseLine } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
-    ex: ConstructorExercise
+    ex: Pick<
+        ConstructorExercise,
+        "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
+    >
 ): {
     planned_reps: string | null;
     planned_duration: number | null;
@@ -53,6 +60,31 @@ function mapRepsTipoToPayload(
     };
 }
 
+function lineToExerciseFields(
+    line: PersistExerciseLine
+): Pick<
+    ConstructorExercise,
+    | "plannedReps"
+    | "plannedWeight"
+    | "plannedDuration"
+    | "effortCharacter"
+    | "effortValue"
+    | "notes"
+> {
+    if (line.setDataEntry) {
+        const entry: ConstructorSetData = line.setDataEntry;
+        return {
+            plannedReps: entry.plannedReps,
+            plannedWeight: entry.plannedWeight,
+            plannedDuration: entry.plannedDuration,
+            effortCharacter: entry.effortCharacter,
+            effortValue: entry.effortValue,
+            notes: line.exercise.notes,
+        };
+    }
+    return line.exercise;
+}
+
 /** Payload para CreateSessionBlockExercise (create) */
 export function buildExercisePayload(
     row: ConstructorRow,
@@ -78,7 +110,32 @@ export function buildExercisePayload(
     };
 }
 
-/** Payload para UpdateSessionBlockExercise (update) — sin exercise_id, order_in_block, set_type */
+export function buildExercisePayloadFromLine(
+    row: ConstructorRow,
+    line: PersistExerciseLine
+): SessionBlockExerciseCreate {
+    const fields = lineToExerciseFields(line);
+    const mapped = mapRepsTipoToPayload(row, fields);
+    const plannedRest =
+        line.setDataEntry?.rest ?? row.rest;
+
+    return {
+        exercise_id: line.exercise.exerciseId,
+        order_in_block: line.orderInBlock,
+        set_type: row.setType,
+        planned_sets: row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+        planned_reps: mapped.planned_reps,
+        planned_duration: mapped.planned_duration,
+        planned_weight: fields.plannedWeight ?? null,
+        planned_rest: plannedRest,
+        effort_character: mapped.effort_character,
+        effort_value: mapped.effort_value,
+        notes: fields.notes ?? null,
+        ...(row.setType === SET_TYPE.SUPERSET ? { superset_group_id: 1 } : {}),
+    };
+}
+
+/** Payload para UpdateSessionBlockExercise (update) */
 export function buildExerciseUpdatePayload(
     row: ConstructorRow,
     ex: ConstructorExercise
@@ -94,5 +151,25 @@ export function buildExerciseUpdatePayload(
         effort_character: mapped.effort_character,
         effort_value: mapped.effort_value,
         notes: ex.notes,
+    };
+}
+
+export function buildExerciseUpdatePayloadFromLine(
+    row: ConstructorRow,
+    line: PersistExerciseLine
+): SessionBlockExerciseUpdate {
+    const fields = lineToExerciseFields(line);
+    const mapped = mapRepsTipoToPayload(row, fields);
+    const plannedRest = line.setDataEntry?.rest ?? row.rest;
+
+    return {
+        planned_sets: row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+        planned_reps: mapped.planned_reps,
+        planned_duration: mapped.planned_duration,
+        planned_weight: fields.plannedWeight ?? null,
+        planned_rest: plannedRest,
+        effort_character: mapped.effort_character,
+        effort_value: mapped.effort_value,
+        notes: fields.notes ?? null,
     };
 }

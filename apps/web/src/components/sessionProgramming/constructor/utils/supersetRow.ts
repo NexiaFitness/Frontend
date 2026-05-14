@@ -7,6 +7,7 @@
 
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
+import { normalizeSingleSetRow } from "./singleSetRow";
 
 export const SUPERSET_SLOT_COUNT = 2;
 
@@ -33,6 +34,10 @@ export function isFilledConstructorExercise(ex: ConstructorExercise): boolean {
 }
 
 export function getPersistableExercises(row: ConstructorRow): ConstructorExercise[] {
+    if (row.setType === SET_TYPE.SINGLE_SET) {
+        const normalized = normalizeSingleSetRow(row);
+        return normalized.exercises.filter(isFilledConstructorExercise);
+    }
     return row.exercises.filter(isFilledConstructorExercise);
 }
 
@@ -67,6 +72,9 @@ export function applyConstructorRowUpdate(
     const next = { ...row, ...updates };
     if (next.setType === SET_TYPE.SUPERSET) {
         return normalizeSupersetRow(next);
+    }
+    if (next.setType === SET_TYPE.SINGLE_SET) {
+        return normalizeSingleSetRow(next);
     }
     return next;
 }

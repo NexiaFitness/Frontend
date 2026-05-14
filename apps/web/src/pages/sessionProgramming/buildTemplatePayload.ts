@@ -1,8 +1,8 @@
 /**
  * buildTemplatePayload.ts — Mapeo Constructor → API SessionTemplateCreate
  *
- * Convierte constructorRows + formData al payload completo para crear plantilla
- * (bloques + ejercicios). Reutiliza la lógica de repsTipo de buildExercisePayload.
+ * Convierte constructorRows + formData al payload completo para crear plantilla.
+ * single_set: N líneas API con planned_sets: 1 por setData[i].
  *
  * @spec agent.md — Sin parches, alineado con backend
  */
@@ -12,11 +12,16 @@ import type {
     SessionTemplateBlockWithExercisesCreate,
     SessionTemplateExerciseCreate,
 } from "@nexia/shared/types/sessionProgramming";
+import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
+import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
-    ex: ConstructorExercise
+    ex: Pick<
+        ConstructorExercise,
+        "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
+    >
 ): {
     planned_reps: string | null;
     planned_duration: number | null;
@@ -54,18 +59,20 @@ function mapRepsTipoToPayload(
 function buildTemplateExercisePayload(
     row: ConstructorRow,
     ex: ConstructorExercise,
-    orderInBlock: number
+    orderInBlock: number,
+    plannedSets: number | null,
+    plannedRest: number | null
 ): SessionTemplateExerciseCreate {
     const mapped = mapRepsTipoToPayload(row, ex);
     return {
         exercise_id: ex.exerciseId,
         order_in_block: orderInBlock,
         set_type: row.setType,
-        planned_sets: row.sets,
+        planned_sets: plannedSets,
         planned_reps: mapped.planned_reps,
         planned_duration: mapped.planned_duration,
         planned_weight: ex.plannedWeight,
-        planned_rest: row.rest,
+        planned_rest: plannedRest,
         effort_character: mapped.effort_character,
         effort_value: mapped.effort_value,
         notes: ex.notes,
@@ -90,10 +97,26 @@ export function buildTemplatePayloadFromConstructorRows(
 
     const blocks: SessionTemplateBlockWithExercisesCreate[] = constructorRows.map(
         (row, rowIndex) => {
-            const exercises: SessionTemplateExerciseCreate[] = row.exercises.map(
-                (ex, exIndex) =>
-                    buildTemplateExercisePayload(row, ex, exIndex)
-            );
+            const lines = getConstructorPersistLines(row);
+            const exercises: SessionTemplateExerciseCreate[] = lines.map((line) => {
+                const fields = line.setDataEntry
+                    ? {
+                          plannedReps: line.setDataEntry.plannedReps,
+                          plannedWeight: line.setDataEntry.plannedWeight,
+                          plannedDuration: line.setDataEntry.plannedDuration,
+                          effortCharacter: line.setDataEntry.effortCharacter,
+                          effortValue: line.setDataEntry.effortValue,
+                          notes: line.exercise.notes,
+                      }
+                    : line.exercise;
+                return buildTemplateExercisePayload(
+                    row,
+                    { ...line.exercise, ...fields },
+                    line.orderInBlock,
+                    row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+                    line.setDataEntry?.rest ?? row.rest
+                );
+            });
             return {
                 block_type_id: row.blockTypeId,
                 order_in_template: rowIndex,

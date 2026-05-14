@@ -14,6 +14,7 @@ import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
     ConstructorBlockShell,
     SupersetBlock,
+    SingleSetBlock,
     resolveConstructorBlockComponent,
     supersetGroupLabels,
 } from "./constructor";
@@ -89,6 +90,19 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             groupLabel={
                                                 supersetLabels.get(row.id) ?? "SUPERSET A"
                                             }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.SINGLE_SET) {
+                                    return (
+                                        <SingleSetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}
                                             onUpdateExercise={handleUpdateExercise}

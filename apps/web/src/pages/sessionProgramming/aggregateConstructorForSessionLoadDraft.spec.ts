@@ -26,7 +26,7 @@ function row(partial: Partial<ConstructorRow> & Pick<ConstructorRow, "id">): Con
     return {
         id: partial.id,
         blockTypeId: partial.blockTypeId ?? 1,
-        setType: partial.setType ?? SET_TYPE.SINGLE_SET,
+        setType: partial.setType ?? SET_TYPE.GIANT_SET,
         sets: partial.sets ?? null,
         rounds: partial.rounds ?? null,
         timeCap: partial.timeCap ?? null,
@@ -49,10 +49,11 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         expect(out).toEqual([]);
     });
 
-    it("una fila, un ejercicio → planned_sets = sets de la fila", () => {
+    it("una fila single_set, un ejercicio → planned_sets = sets de la fila", () => {
         const out = aggregateConstructorRowsForSessionLoadDraft([
             row({
                 id: "r1",
+                setType: SET_TYPE.SINGLE_SET,
                 sets: 4,
                 exercises: [ex({ exerciseId: 10 })],
             }),
@@ -109,5 +110,49 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
             ])
         );
         expect(out).toHaveLength(2);
+    });
+
+    it("single_set con setData cuenta una serie por sub-fila", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.SINGLE_SET,
+                sets: 3,
+                setData: [
+                    {
+                        id: "s1",
+                        plannedReps: "10",
+                        plannedWeight: null,
+                        plannedDuration: null,
+                        effortCharacter: null,
+                        effortValue: null,
+                        rest: 60,
+                        isManuallyEdited: false,
+                    },
+                    {
+                        id: "s2",
+                        plannedReps: "10",
+                        plannedWeight: null,
+                        plannedDuration: null,
+                        effortCharacter: null,
+                        effortValue: null,
+                        rest: 60,
+                        isManuallyEdited: false,
+                    },
+                    {
+                        id: "s3",
+                        plannedReps: "10",
+                        plannedWeight: null,
+                        plannedDuration: null,
+                        effortCharacter: null,
+                        effortValue: null,
+                        rest: 60,
+                        isManuallyEdited: false,
+                    },
+                ],
+                exercises: [ex({ exerciseId: 99 })],
+            }),
+        ]);
+        expect(out).toEqual([{ exercise_id: 99, planned_sets: 3 }]);
     });
 });

@@ -10,6 +10,7 @@ import React from "react";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "../constructorTypes";
 import { applyConstructorRowUpdate } from "../constructor/utils/supersetRow";
+import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -63,7 +64,7 @@ export function useSessionConstructorActions(
 
     const handleAddRow = React.useCallback(
         (blockTypeId: number) => {
-            const newRow: ConstructorRow = {
+            const newRow = normalizeSingleSetRow({
                 id: generateId(),
                 blockTypeId,
                 setType: SET_TYPE.SINGLE_SET,
@@ -74,7 +75,7 @@ export function useSessionConstructorActions(
                 exercises: [],
                 rest: 60,
                 repsTipo: "reps",
-            };
+            });
             onRowsChange((prev) => [...prev, newRow]);
         },
         [onRowsChange]

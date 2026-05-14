@@ -1,16 +1,33 @@
 /**
  * Aplana el constructor a líneas { exercise_id, planned_sets } para POST validate-draft.
- * Misma regla que al persistir: cada ejercicio en un bloque recibe `row.sets` como planned_sets.
+ * single_set: N series de un movimiento (setData.length), no row.sets × ejercicios.
  */
 
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import type { SessionLoadDraftExerciseIn } from "@nexia/shared/types/sessionLoad";
+import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { normalizeSingleSetRow } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
+import { isFilledConstructorExercise } from "@/components/sessionProgramming/constructor/utils/supersetRow";
 
 export function aggregateConstructorRowsForSessionLoadDraft(
     rows: ConstructorRow[]
 ): SessionLoadDraftExerciseIn[] {
     const byExercise = new Map<number, number>();
     for (const row of rows) {
+        if (row.setType === SET_TYPE.SINGLE_SET) {
+            const normalized = normalizeSingleSetRow(row);
+            const exercise = normalized.exercises.find(isFilledConstructorExercise);
+            if (!exercise) continue;
+            const seriesCount = row.setData?.length
+                ? normalized.setData!.length
+                : (normalized.sets ?? 0);
+            byExercise.set(
+                exercise.exerciseId,
+                (byExercise.get(exercise.exerciseId) ?? 0) + seriesCount
+            );
+            continue;
+        }
+
         const sets = row.sets ?? 0;
         for (const ex of row.exercises) {
             const id = ex.exerciseId;

@@ -16,5 +16,19 @@ export { LegacyRowBlock } from "./blocks/LegacyRowBlock";
 export type { LegacyRowBlockProps } from "./blocks/LegacyRowBlock";
 export { SupersetBlock } from "./blocks/SupersetBlock";
 export type { SupersetBlockProps } from "./blocks/SupersetBlock";
-export { supersetGroupLabels, normalizeSupersetRow, getPersistableExercises } from "./utils/supersetRow";
+export { SingleSetBlock } from "./blocks/SingleSetBlock";
+export type { SingleSetBlockProps } from "./blocks/SingleSetBlock";
+export {
+    normalizeSingleSetRow,
+    updateSingleSetData,
+    getConstructorPersistLines,
+    hydrateSingleSetConstructorRow,
+    isCollapsedSingleSetApiLines,
+} from "./utils/singleSetRow";
+export type { PersistExerciseLine, ApiExerciseLine } from "./utils/singleSetRow";
+export {
+    supersetGroupLabels,
+    normalizeSupersetRow,
+    getPersistableExercises,
+} from "./utils/supersetRow";
 export { applyExercisePickerSelection } from "./utils/exercisePicker";

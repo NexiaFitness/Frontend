@@ -54,13 +54,16 @@ import type {
     RepsTipo,
 } from "@/components/sessionProgramming/constructorTypes";
 import {
-    buildExercisePayload,
-    buildExerciseUpdatePayload,
+    buildExercisePayloadFromLine,
+    buildExerciseUpdatePayloadFromLine,
 } from "./buildExercisePayload";
 import {
     applyExercisePickerSelection,
-    getPersistableExercises,
+    getConstructorPersistLines,
+    hydrateSingleSetConstructorRow,
+    isCollapsedSingleSetApiLines,
     normalizeSupersetRow,
+    normalizeSingleSetRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -250,17 +253,32 @@ export const EditSession: React.FC = () => {
             const rows: ConstructorRow[] = sortedBlocks.map((b, i) => {
                 const exs = exercisesByBlock[b.id] ?? [];
                 const firstEx = exs[0];
-                return {
+                const setType =
+                    (b.set_type as ConstructorRow["setType"]) ?? SET_TYPE.SINGLE_SET;
+
+                const base: ConstructorRow = {
                     id: `row-${b.id}-${i}`,
                     serverBlockId: b.id,
                     blockTypeId: b.block_type_id,
-                    setType: (b.set_type as ConstructorRow["setType"]) ?? SET_TYPE.SINGLE_SET,
+                    setType,
                     sets: exs[0]?.planned_sets ?? null,
                     rounds: b.rounds,
                     timeCap: b.time_cap,
                     intervalSeconds: b.interval_seconds,
                     rest: exs[0]?.planned_rest ?? 60,
                     repsTipo: firstEx ? inferRepsTipo(firstEx) : "reps",
+                    exercises: [],
+                };
+
+                if (
+                    setType === SET_TYPE.SINGLE_SET &&
+                    isCollapsedSingleSetApiLines(exs)
+                ) {
+                    return hydrateSingleSetConstructorRow(base, exs);
+                }
+
+                return {
+                    ...base,
                     exercises: exs.map((ex, j) => ({
                         id: `ex-${ex.id}-${j}`,
                         serverExerciseId: ex.id,
@@ -269,7 +287,8 @@ export const EditSession: React.FC = () => {
                         plannedReps: ex.planned_reps,
                         plannedWeight: ex.planned_weight,
                         plannedDuration: ex.planned_duration,
-                        effortCharacter: ex.effort_character as ConstructorExercise["effortCharacter"],
+                        effortCharacter:
+                            ex.effort_character as ConstructorExercise["effortCharacter"],
                         effortValue: ex.effort_value,
                         notes: ex.notes,
                     })),
@@ -292,11 +311,15 @@ export const EditSession: React.FC = () => {
                             exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
                         })),
                     }))
-                    .map((row) =>
-                        row.setType === SET_TYPE.SUPERSET
-                            ? normalizeSupersetRow(row)
-                            : row
-                    )
+                    .map((row) => {
+                        if (row.setType === SET_TYPE.SUPERSET) {
+                            return normalizeSupersetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.SINGLE_SET) {
+                            return normalizeSingleSetRow(row);
+                        }
+                        return row;
+                    })
             );
         };
 
@@ -436,25 +459,23 @@ export const EditSession: React.FC = () => {
                         currentExs.map((e: { id: number }) => e.id)
                     );
 
-                    const persistable = getPersistableExercises(row);
-                    for (let j = 0; j < persistable.length; j++) {
-                        const ex = persistable[j];
-                        if (ex.serverExerciseId) {
-                            const updatePayload = buildExerciseUpdatePayload(
+                    const persistLines = getConstructorPersistLines(row);
+                    for (let j = 0; j < persistLines.length; j++) {
+                        const line = persistLines[j];
+                        if (line.serverExerciseId) {
+                            const updatePayload = buildExerciseUpdatePayloadFromLine(
                                 row,
-                                ex
+                                line
                             );
                             await updateSessionBlockExercise({
-                                id: ex.serverExerciseId,
+                                id: line.serverExerciseId,
                                 data: updatePayload,
                             }).unwrap();
-                            serverExIds.delete(ex.serverExerciseId);
+                            serverExIds.delete(line.serverExerciseId);
                         } else {
-                            const createPayload = buildExercisePayload(
+                            const createPayload = buildExercisePayloadFromLine(
                                 row,
-                                ex,
-                                j + 1,
-                                row.setType
+                                line
                             );
                             await createSessionBlockExercise({
                                 blockId: row.serverBlockId,
@@ -470,15 +491,10 @@ export const EditSession: React.FC = () => {
                         sessionId,
                         data: blockPayload,
                     }).unwrap();
-                    const persistableNew = getPersistableExercises(row);
-                    for (let j = 0; j < persistableNew.length; j++) {
-                        const ex = persistableNew[j];
-                        const payload = buildExercisePayload(
-                            row,
-                            ex,
-                            j + 1,
-                            row.setType
-                        );
+                    const persistLinesNew = getConstructorPersistLines(row);
+                    for (let j = 0; j < persistLinesNew.length; j++) {
+                        const line = persistLinesNew[j];
+                        const payload = buildExercisePayloadFromLine(row, line);
                         await createSessionBlockExercise({
                             blockId: created.id,
                             data: payload,

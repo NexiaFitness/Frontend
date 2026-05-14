@@ -25,6 +25,20 @@ export interface ConstructorExercise {
 /** Modo de la columna Reps/Tiempo: Reps o Tiempo (AMRAP es tipo de serie, no modo reps) */
 export type RepsTipo = "reps" | "tiempo";
 
+/** Carga por sub-fila de serie (single_set / futuro dropset). */
+export interface ConstructorSetData {
+    id: string;
+    plannedReps: string | null;
+    plannedWeight: number | null;
+    plannedDuration: number | null;
+    effortCharacter: EffortCharacter | null;
+    effortValue: number | null;
+    rest: number | null;
+    isManuallyEdited: boolean;
+    /** ID en servidor de la línea API (EditSession diff) */
+    serverExerciseId?: number;
+}
+
 export interface ConstructorRow {
     id: string;
     blockTypeId: number;
@@ -37,6 +51,8 @@ export interface ConstructorRow {
     rest: number | null;
     /** Modo Reps/Tiempo: Reps, Tiempo, RPE, AMRAP — determina inputs de la columna */
     repsTipo?: RepsTipo;
+    /** Sub-filas de carga por serie (single_set: length === sets) */
+    setData?: ConstructorSetData[];
     /** ID en servidor (para EditSession diff) */
     serverBlockId?: number;
 }

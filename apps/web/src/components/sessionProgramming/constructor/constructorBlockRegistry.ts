@@ -14,10 +14,9 @@ export type ConstructorBlockComponentProps = LegacyRowBlockProps;
 const LEGACY: typeof LegacyRowBlock = LegacyRowBlock;
 
 export const CONSTRUCTOR_BLOCK_REGISTRY: Record<
-    Exclude<SetType, typeof SET_TYPE.SUPERSET>,
+    Exclude<SetType, typeof SET_TYPE.SUPERSET | typeof SET_TYPE.SINGLE_SET>,
     typeof LegacyRowBlock
 > = {
-    [SET_TYPE.SINGLE_SET]: LEGACY,
     [SET_TYPE.DROPSET]: LEGACY,
     [SET_TYPE.GIANT_SET]: LEGACY,
     [SET_TYPE.FOR_TIME]: LEGACY,
@@ -28,7 +27,7 @@ export const CONSTRUCTOR_BLOCK_REGISTRY: Record<
 export function resolveConstructorBlockComponent(
     setType: SetType
 ): typeof LegacyRowBlock | null {
-    if (setType === SET_TYPE.SUPERSET) {
+    if (setType === SET_TYPE.SUPERSET || setType === SET_TYPE.SINGLE_SET) {
         return null;
     }
     return CONSTRUCTOR_BLOCK_REGISTRY[setType] ?? LEGACY;

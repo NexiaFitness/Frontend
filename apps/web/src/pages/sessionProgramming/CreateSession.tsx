@@ -48,10 +48,10 @@ import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingB
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import {
     applyExercisePickerSelection,
-    getPersistableExercises,
+    getConstructorPersistLines,
 } from "@/components/sessionProgramming/constructor";
 import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
-import { buildExercisePayload } from "./buildExercisePayload";
+import { buildExercisePayloadFromLine } from "./buildExercisePayload";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
@@ -481,16 +481,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 data: blockPayload,
                             }).unwrap();
 
-                            const persistable = getPersistableExercises(row);
+                            const persistable = getConstructorPersistLines(row);
                             for (let j = 0; j < persistable.length; j++) {
-                                const ex = persistable[j];
+                                const line = persistable[j];
                                 try {
-                                    const payload = buildExercisePayload(
-                                        row,
-                                        ex,
-                                        j + 1,
-                                        row.setType
-                                    );
+                                    const payload = buildExercisePayloadFromLine(row, line);
                                     await createSessionBlockExercise({
                                         blockId: createdBlock.id,
                                         data: payload,
@@ -506,7 +501,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         }
                     }
                     const totalEx = constructorRows.reduce(
-                        (s, r) => s + getPersistableExercises(r).length,
+                        (s, r) => s + getConstructorPersistLines(r).length,
                         0
                     );
                     if (blocksSaved === constructorRows.length && exercisesSaved === totalEx) {
