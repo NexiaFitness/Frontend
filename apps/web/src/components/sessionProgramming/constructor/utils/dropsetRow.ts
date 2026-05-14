@@ -1,6 +1,7 @@
 /**
  * dropsetRow.ts — Estado, herencia y persistencia de filas dropset.
- * Contexto: MAIN + N drops; sets = N (drops tras MAIN); descanso tras secuencia en row.rest.
+ * Contexto: MAIN cuenta como paso 1; UI «Series» = total de pasos (MAIN + drops).
+ * setData.length === row.sets. Descanso tras secuencia en row.rest.
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
@@ -18,8 +19,11 @@ function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Número de drops tras MAIN (UI «Series»). setData.length = dropCount + 1 */
+/** Pasos totales por defecto: MAIN + DROP 1 + DROP 2 */
 export const DEFAULT_DROP_COUNT = 3;
+
+/** Mínimo MAIN + 1 drop */
+const MIN_DROPSET_STEPS = 2;
 
 const LOAD_FIELDS: (keyof ConstructorSetData)[] = [
     "plannedReps",
@@ -125,7 +129,7 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
 
     return {
         ...row,
-        sets: dropCount,
+        sets: stepCount,
         rest: restFallback,
         repsTipo: row.repsTipo ?? "reps",
         setData,
@@ -215,11 +219,11 @@ export function hydrateDropsetConstructorRow(
         serverExerciseId: ex.id,
     }));
 
-    const dropCount = Math.max(1, setData.length - 1);
+    const stepCount = Math.max(MIN_DROPSET_STEPS, setData.length);
 
     return normalizeDropsetRow({
         ...base,
-        sets: dropCount,
+        sets: stepCount,
         rest: first.planned_rest ?? base.rest ?? 120,
         exercises: [exercise],
         setData,

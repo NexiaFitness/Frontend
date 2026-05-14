@@ -109,7 +109,7 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                             <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
                             <InlineNumberInput
                                 size="xs"
-                                min={1}
+                                min={2}
                                 value={normalized.sets ?? ""}
                                 onChange={(e) =>
                                     onUpdate(normalized.id, {

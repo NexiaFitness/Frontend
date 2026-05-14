@@ -33,7 +33,7 @@ export function aggregateConstructorRowsForSessionLoadDraft(
             const normalized = normalizeDropsetRow(row);
             const exercise = normalized.exercises.find(isFilledConstructorExercise);
             if (!exercise) continue;
-            const seriesCount = normalized.setData?.length ?? (normalized.sets ?? 0) + 1;
+            const seriesCount = normalized.setData?.length ?? normalized.sets ?? 0;
             byExercise.set(
                 exercise.exerciseId,
                 (byExercise.get(exercise.exerciseId) ?? 0) + seriesCount
