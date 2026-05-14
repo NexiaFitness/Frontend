@@ -40,3 +40,33 @@ export interface ConstructorRow {
     /** ID en servidor (para EditSession diff) */
     serverBlockId?: number;
 }
+
+/** Metadatos de bloque a nivel card (evolución hacia estado discriminado por setType). */
+export interface ConstructorBlockBase {
+    id: string;
+    blockTypeId: number;
+    setType: SetType;
+    notes: string | null;
+    serverBlockId?: number;
+}
+
+/**
+ * Puente S-INF: cada fila legacy del constructor se expone como bloque-card
+ * hasta que cada setType tenga su propio constructor (SupersetBlock, …).
+ */
+export interface LegacyConstructorBlock extends ConstructorBlockBase {
+    row: ConstructorRow;
+}
+
+export type ConstructorBlock = LegacyConstructorBlock;
+
+export function legacyRowAsBlock(row: ConstructorRow): LegacyConstructorBlock {
+    return {
+        id: row.id,
+        blockTypeId: row.blockTypeId,
+        setType: row.setType,
+        notes: null,
+        serverBlockId: row.serverBlockId,
+        row,
+    };
+}
