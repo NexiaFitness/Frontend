@@ -15,8 +15,10 @@ import {
     ConstructorBlockShell,
     SupersetBlock,
     SingleSetBlock,
+    DropsetBlock,
     resolveConstructorBlockComponent,
     supersetGroupLabels,
+    dropsetGroupLabels,
 } from "./constructor";
 import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
 import type { ConstructorRow } from "./constructorTypes";
@@ -58,6 +60,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     }, [rows]);
 
     const supersetLabels = React.useMemo(() => supersetGroupLabels(rows), [rows]);
+    const dropsetLabels = React.useMemo(() => dropsetGroupLabels(rows), [rows]);
     const hasRows = rows.length > 0;
 
     return (
@@ -106,6 +109,24 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             key={row.id}
                                             row={row}
                                             blockTypes={blockTypes}
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.DROPSET) {
+                                    return (
+                                        <DropsetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                dropsetLabels.get(row.id) ?? "DROP SET A"
+                                            }
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}
                                             onUpdateExercise={handleUpdateExercise}

@@ -18,6 +18,8 @@ export { SupersetBlock } from "./blocks/SupersetBlock";
 export type { SupersetBlockProps } from "./blocks/SupersetBlock";
 export { SingleSetBlock } from "./blocks/SingleSetBlock";
 export type { SingleSetBlockProps } from "./blocks/SingleSetBlock";
+export { DropsetBlock } from "./blocks/DropsetBlock";
+export type { DropsetBlockProps } from "./blocks/DropsetBlock";
 export {
     normalizeSingleSetRow,
     updateSingleSetData,
@@ -31,4 +33,11 @@ export {
     normalizeSupersetRow,
     getPersistableExercises,
 } from "./utils/supersetRow";
+export {
+    normalizeDropsetRow,
+    updateDropsetData,
+    dropsetGroupLabels,
+    hydrateDropsetConstructorRow,
+    isCollapsedDropsetApiLines,
+} from "./utils/dropsetRow";
 export { applyExercisePickerSelection } from "./utils/exercisePicker";

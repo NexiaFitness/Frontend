@@ -61,9 +61,12 @@ import {
     applyExercisePickerSelection,
     getConstructorPersistLines,
     hydrateSingleSetConstructorRow,
+    hydrateDropsetConstructorRow,
     isCollapsedSingleSetApiLines,
+    isCollapsedDropsetApiLines,
     normalizeSupersetRow,
     normalizeSingleSetRow,
+    normalizeDropsetRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -277,6 +280,13 @@ export const EditSession: React.FC = () => {
                     return hydrateSingleSetConstructorRow(base, exs);
                 }
 
+                if (
+                    setType === SET_TYPE.DROPSET &&
+                    isCollapsedDropsetApiLines(exs)
+                ) {
+                    return hydrateDropsetConstructorRow(base, exs);
+                }
+
                 return {
                     ...base,
                     exercises: exs.map((ex, j) => ({
@@ -317,6 +327,9 @@ export const EditSession: React.FC = () => {
                         }
                         if (row.setType === SET_TYPE.SINGLE_SET) {
                             return normalizeSingleSetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.DROPSET) {
+                            return normalizeDropsetRow(row);
                         }
                         return row;
                     })

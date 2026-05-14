@@ -9,6 +9,7 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import { normalizeSingleSetRow } from "./singleSetRow";
 import { normalizeSupersetRow } from "./supersetRow";
+import { normalizeDropsetRow } from "./dropsetRow";
 
 function generateExerciseId(): string {
     return `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -64,6 +65,26 @@ export function applyExercisePickerSelection(
                         exerciseId: exercise.id,
                         exerciseName: exercise.name,
                         plannedReps: "10",
+                        plannedWeight: null,
+                        plannedDuration: null,
+                        effortCharacter: null,
+                        effortValue: null,
+                        notes: null,
+                    },
+                ],
+            });
+        }
+
+        if (row.setType === SET_TYPE.DROPSET) {
+            const slotId = exerciseSlotId ?? `ex-drop-${generateExerciseId()}`;
+            return normalizeDropsetRow({
+                ...row,
+                exercises: [
+                    {
+                        id: slotId,
+                        exerciseId: exercise.id,
+                        exerciseName: exercise.name,
+                        plannedReps: "8",
                         plannedWeight: null,
                         plannedDuration: null,
                         effortCharacter: null,

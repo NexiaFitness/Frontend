@@ -68,3 +68,31 @@ export const CONSTRUCTOR_SLOT_RING_CLASS =
 /** Línea conectora entre anillos */
 export const CONSTRUCTOR_SLOT_CONNECTOR_CLASS =
     "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-primary/25";
+
+/** Card dropset — acento naranja (borde izquierdo y sombra) */
+export const CONSTRUCTOR_DROPSET_CARD_CLASS =
+    "rounded-lg border border-orange-500/25 border-l-[3px] border-l-orange-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(24_95%_53%/0.08),inset_3px_0_12px_-8px_hsl(24_95%_53%/0.35)] overflow-hidden";
+
+/** Barra de grupo dropset */
+export const CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS =
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-orange-500/10 bg-orange-500/[0.06] px-4 py-2.5";
+
+/** Badge DROP SET A */
+export const CONSTRUCTOR_DROPSET_BADGE_CLASS =
+    "inline-flex shrink-0 items-center rounded-md border border-orange-500/35 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-orange-600 uppercase dark:text-orange-400";
+
+/** Anillo MAIN */
+export const CONSTRUCTOR_DROP_MAIN_RING_CLASS =
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-orange-500/50 bg-orange-500/[0.1] text-[9px] font-bold text-orange-600 dark:text-orange-400";
+
+/** Anillo DROP n */
+export const CONSTRUCTOR_DROP_STEP_RING_CLASS =
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-orange-500/35 bg-orange-500/[0.06] text-[9px] font-bold text-orange-600/90 dark:text-orange-400/90";
+
+/** Conector vertical entre drops */
+export const CONSTRUCTOR_DROP_CONNECTOR_CLASS =
+    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-orange-500/25";
+
+/** Etiqueta «SIGUIENTE DROP» en conector */
+export const CONSTRUCTOR_DROP_CONNECTOR_LABEL_CLASS =
+    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-card px-1 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-orange-600/80 dark:text-orange-400/80";

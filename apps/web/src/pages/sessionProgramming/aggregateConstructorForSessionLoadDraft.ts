@@ -7,6 +7,7 @@ import type { ConstructorRow } from "@/components/sessionProgramming/constructor
 import type { SessionLoadDraftExerciseIn } from "@nexia/shared/types/sessionLoad";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { normalizeSingleSetRow } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
+import { normalizeDropsetRow } from "@/components/sessionProgramming/constructor/utils/dropsetRow";
 import { isFilledConstructorExercise } from "@/components/sessionProgramming/constructor/utils/supersetRow";
 
 export function aggregateConstructorRowsForSessionLoadDraft(
@@ -21,6 +22,18 @@ export function aggregateConstructorRowsForSessionLoadDraft(
             const seriesCount = row.setData?.length
                 ? normalized.setData!.length
                 : (normalized.sets ?? 0);
+            byExercise.set(
+                exercise.exerciseId,
+                (byExercise.get(exercise.exerciseId) ?? 0) + seriesCount
+            );
+            continue;
+        }
+
+        if (row.setType === SET_TYPE.DROPSET) {
+            const normalized = normalizeDropsetRow(row);
+            const exercise = normalized.exercises.find(isFilledConstructorExercise);
+            if (!exercise) continue;
+            const seriesCount = normalized.setData?.length ?? (normalized.sets ?? 0) + 1;
             byExercise.set(
                 exercise.exerciseId,
                 (byExercise.get(exercise.exerciseId) ?? 0) + seriesCount

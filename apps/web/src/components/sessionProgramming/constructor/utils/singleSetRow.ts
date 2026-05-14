@@ -13,6 +13,7 @@ import type {
     ConstructorSetData,
 } from "../../constructorTypes";
 import { isFilledConstructorExercise } from "./supersetRow";
+import { normalizeDropsetRow } from "./dropsetRow";
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -175,6 +176,8 @@ export interface PersistExerciseLine {
     exercise: ConstructorExercise;
     setDataEntry?: ConstructorSetData;
     serverExerciseId?: number;
+    /** Índice dropset: 0 = MAIN, 1+ = DROP n */
+    dropsetSequence?: number;
 }
 
 export function getConstructorPersistLines(row: ConstructorRow): PersistExerciseLine[] {
@@ -189,6 +192,21 @@ export function getConstructorPersistLines(row: ConstructorRow): PersistExercise
             exercise,
             setDataEntry: entry,
             serverExerciseId: entry.serverExerciseId,
+        }));
+    }
+
+    if (row.setType === SET_TYPE.DROPSET) {
+        const normalized = normalizeDropsetRow(row);
+        const exercise = normalized.exercises.find(isFilledConstructorExercise);
+        if (!exercise || !normalized.setData?.length) {
+            return [];
+        }
+        return normalized.setData.map((entry, index) => ({
+            orderInBlock: index + 1,
+            exercise,
+            setDataEntry: entry,
+            serverExerciseId: entry.serverExerciseId,
+            dropsetSequence: index,
         }));
     }
 

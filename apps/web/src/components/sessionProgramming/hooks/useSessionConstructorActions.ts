@@ -11,6 +11,7 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "../constructorTypes";
 import { applyConstructorRowUpdate, normalizeSupersetRow } from "../constructor/utils/supersetRow";
 import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
+import { normalizeDropsetRow } from "../constructor/utils/dropsetRow";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -125,6 +126,8 @@ export function useSessionConstructorActions(
                     normalized = normalizeSupersetRow(clone);
                 } else if (clone.setType === SET_TYPE.SINGLE_SET) {
                     normalized = normalizeSingleSetRow(clone);
+                } else if (clone.setType === SET_TYPE.DROPSET) {
+                    normalized = normalizeDropsetRow(clone);
                 }
 
                 const next = [...prev];

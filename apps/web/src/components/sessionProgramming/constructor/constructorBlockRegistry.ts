@@ -27,7 +27,7 @@ export const CONSTRUCTOR_BLOCK_REGISTRY: Record<
 export function resolveConstructorBlockComponent(
     setType: SetType
 ): typeof LegacyRowBlock | null {
-    if (setType === SET_TYPE.SUPERSET || setType === SET_TYPE.SINGLE_SET) {
+    if (setType === SET_TYPE.SUPERSET || setType === SET_TYPE.SINGLE_SET || setType === SET_TYPE.DROPSET) {
         return null;
     }
     return CONSTRUCTOR_BLOCK_REGISTRY[setType] ?? LEGACY;

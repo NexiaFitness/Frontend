@@ -117,13 +117,15 @@ export function buildExercisePayloadFromLine(
     const fields = lineToExerciseFields(line);
     const mapped = mapRepsTipoToPayload(row, fields);
     const plannedRest =
-        line.setDataEntry?.rest ?? row.rest;
+        row.setType === SET_TYPE.DROPSET
+            ? row.rest
+            : (line.setDataEntry?.rest ?? row.rest);
 
     return {
         exercise_id: line.exercise.exerciseId,
         order_in_block: line.orderInBlock,
         set_type: row.setType,
-        planned_sets: row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+        planned_sets: row.setType === SET_TYPE.SINGLE_SET || row.setType === SET_TYPE.DROPSET ? 1 : row.sets,
         planned_reps: mapped.planned_reps,
         planned_duration: mapped.planned_duration,
         planned_weight: fields.plannedWeight ?? null,
@@ -132,6 +134,9 @@ export function buildExercisePayloadFromLine(
         effort_value: mapped.effort_value,
         notes: fields.notes ?? null,
         ...(row.setType === SET_TYPE.SUPERSET ? { superset_group_id: 1 } : {}),
+        ...(row.setType === SET_TYPE.DROPSET && line.dropsetSequence != null
+            ? { dropset_sequence: line.dropsetSequence }
+            : {}),
     };
 }
 
@@ -160,10 +165,13 @@ export function buildExerciseUpdatePayloadFromLine(
 ): SessionBlockExerciseUpdate {
     const fields = lineToExerciseFields(line);
     const mapped = mapRepsTipoToPayload(row, fields);
-    const plannedRest = line.setDataEntry?.rest ?? row.rest;
+    const plannedRest =
+        row.setType === SET_TYPE.DROPSET
+            ? row.rest
+            : (line.setDataEntry?.rest ?? row.rest);
 
     return {
-        planned_sets: row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
+        planned_sets: row.setType === SET_TYPE.SINGLE_SET || row.setType === SET_TYPE.DROPSET ? 1 : row.sets,
         planned_reps: mapped.planned_reps,
         planned_duration: mapped.planned_duration,
         planned_weight: fields.plannedWeight ?? null,
@@ -171,5 +179,8 @@ export function buildExerciseUpdatePayloadFromLine(
         effort_character: mapped.effort_character,
         effort_value: mapped.effort_value,
         notes: fields.notes ?? null,
+        ...(row.setType === SET_TYPE.DROPSET && line.dropsetSequence != null
+            ? { dropset_sequence: line.dropsetSequence }
+            : {}),
     };
 }
