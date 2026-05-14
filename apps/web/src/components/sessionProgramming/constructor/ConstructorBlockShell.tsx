@@ -17,6 +17,8 @@ export interface ConstructorBlockShellProps {
     onSetTypeChange: (setType: SetType) => void;
     children: React.ReactNode;
     className?: string;
+    onDuplicate?: () => void;
+    onRemove?: () => void;
 }
 
 export const ConstructorBlockShell: React.FC<ConstructorBlockShellProps> = ({
@@ -26,14 +28,24 @@ export const ConstructorBlockShell: React.FC<ConstructorBlockShellProps> = ({
     onSetTypeChange,
     children,
     className,
-}) => (
-    <div className={className ?? CONSTRUCTOR_CARD_CLASS}>
-        <ConstructorCardHeader
-            blockTypeId={blockTypeId}
-            blockTypes={blockTypes}
-            setType={setType}
-            onSetTypeChange={onSetTypeChange}
-        />
-        <div>{children}</div>
-    </div>
-);
+    onDuplicate,
+    onRemove,
+}) => {
+    const [collapsed, setCollapsed] = React.useState(false);
+
+    return (
+        <div className={className ?? CONSTRUCTOR_CARD_CLASS}>
+            <ConstructorCardHeader
+                blockTypeId={blockTypeId}
+                blockTypes={blockTypes}
+                setType={setType}
+                onSetTypeChange={onSetTypeChange}
+                collapsed={collapsed}
+                onToggleCollapse={() => setCollapsed((v) => !v)}
+                onDuplicate={onDuplicate}
+                onRemove={onRemove}
+            />
+            {!collapsed ? <div>{children}</div> : null}
+        </div>
+    );
+};

@@ -43,6 +43,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         handleUpdateExercise,
         handleAddRow,
         handleRemoveBlock,
+        handleDuplicateRow,
     } = useSessionConstructorActions(onRowsChange);
 
     const rowsByBlock = React.useMemo(() => {
@@ -93,6 +94,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}
                                             onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
                                         />
                                     );
                                 }
@@ -106,6 +109,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}
                                             onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
                                         />
                                     );
                                 }
@@ -124,6 +129,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                         onSetTypeChange={(setType) =>
                                             handleUpdateRow(row.id, { setType })
                                         }
+                                        onDuplicate={() => handleDuplicateRow(row.id)}
+                                        onRemove={() => handleRemoveRow(row.id)}
                                     >
                                         <BlockComponent
                                             row={row}

@@ -8,14 +8,15 @@
 import React from "react";
 import { FormCombobox } from "@/components/ui/forms";
 import type { ConstructorExercise, RepsTipo } from "../../constructorTypes";
+import {
+    CONSTRUCTOR_MINI_COMBO_CLASS,
+    CONSTRUCTOR_MINI_INPUT_CLASS,
+} from "./constructorCardStyles";
 
 const REPS_TIPO_OPTIONS: { value: RepsTipo; label: string }[] = [
     { value: "reps", label: "Reps" },
-    { value: "tiempo", label: "Tiempo" },
+    { value: "tiempo", label: "Seg" },
 ];
-
-const INPUT_CLS =
-    "flex h-8 w-[50px] shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]";
 
 export interface RepsTiempoFieldProps {
     repsTipo: RepsTipo;
@@ -32,22 +33,23 @@ export const RepsTiempoField: React.FC<RepsTiempoFieldProps> = ({
     onRepsTipoChange,
     onExerciseChange,
 }) => (
-    <div className="flex items-center gap-1 min-h-8">
+    <div className="flex h-8 items-center gap-1">
         {showModeSelector ? (
             <FormCombobox
-                size="sm"
+                size="xs"
                 value={repsTipo}
                 onChange={(v) => onRepsTipoChange(v as RepsTipo)}
                 options={REPS_TIPO_OPTIONS}
                 placeholder="Reps"
                 aria-label="Modo Reps/Tiempo"
+                className={CONSTRUCTOR_MINI_COMBO_CLASS}
             />
         ) : (
             <span
-                className="flex h-8 w-[58px] shrink-0 items-center justify-center rounded-md border border-border/60 bg-surface px-2 text-[10px] text-muted-foreground"
+                className={`${CONSTRUCTOR_MINI_INPUT_CLASS} flex items-center justify-center text-muted-foreground`}
                 aria-hidden
             >
-                {repsTipo === "tiempo" ? "Tiempo" : "Reps"}
+                {repsTipo === "tiempo" ? "Seg" : "Reps"}
             </span>
         )}
         {repsTipo === "reps" ? (
@@ -60,7 +62,8 @@ export const RepsTiempoField: React.FC<RepsTiempoFieldProps> = ({
                     })
                 }
                 placeholder="—"
-                className={INPUT_CLS}
+                className={CONSTRUCTOR_MINI_INPUT_CLASS}
+                aria-label="Repeticiones"
             />
         ) : (
             <input
@@ -90,7 +93,8 @@ export const RepsTiempoField: React.FC<RepsTiempoFieldProps> = ({
                     }
                 }}
                 placeholder="—"
-                className={INPUT_CLS}
+                className={CONSTRUCTOR_MINI_INPUT_CLASS}
+                aria-label="Duración"
             />
         )}
     </div>

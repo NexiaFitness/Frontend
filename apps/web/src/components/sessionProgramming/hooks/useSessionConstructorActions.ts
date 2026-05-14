@@ -9,7 +9,7 @@
 import React from "react";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "../constructorTypes";
-import { applyConstructorRowUpdate } from "../constructor/utils/supersetRow";
+import { applyConstructorRowUpdate, normalizeSupersetRow } from "../constructor/utils/supersetRow";
 import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
 
 function generateId(): string {
@@ -95,6 +95,42 @@ export function useSessionConstructorActions(
         [onRowsChange]
     );
 
+    const handleDuplicateRow = React.useCallback(
+        (rowId: string) => {
+            onRowsChange((prev) => {
+                const index = prev.findIndex((r) => r.id === rowId);
+                if (index === -1) return prev;
+
+                const source = prev[index];
+                const cloneId = generateId();
+                const clone: ConstructorRow = {
+                    ...source,
+                    id: cloneId,
+                    exercises: source.exercises.map((ex) => ({
+                        ...ex,
+                        id: `ex-${generateId()}`,
+                    })),
+                    setData: source.setData?.map((entry) => ({
+                        ...entry,
+                        id: `sd-${generateId()}`,
+                    })),
+                };
+
+                let normalized = clone;
+                if (clone.setType === SET_TYPE.SUPERSET) {
+                    normalized = normalizeSupersetRow(clone);
+                } else if (clone.setType === SET_TYPE.SINGLE_SET) {
+                    normalized = normalizeSingleSetRow(clone);
+                }
+
+                const next = [...prev];
+                next.splice(index + 1, 0, normalized);
+                return next;
+            });
+        },
+        [onRowsChange]
+    );
+
     return {
         handleUpdateRow,
         handleRemoveExercise,
@@ -102,5 +138,6 @@ export function useSessionConstructorActions(
         handleAddRow,
         handleRemoveRow,
         handleRemoveBlock,
+        handleDuplicateRow,
     };
 }

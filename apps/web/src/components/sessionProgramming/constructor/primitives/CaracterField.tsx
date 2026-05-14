@@ -7,7 +7,6 @@
 
 import React from "react";
 import { FormCombobox } from "@/components/ui/forms";
-import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import {
     getCaracterTipoFromEffortCharacter,
     getEffortCharacterForCaracterTipo,
@@ -15,6 +14,10 @@ import {
 } from "@nexia/shared/utils/sessionProgramming";
 import { EFFORT_CHARACTER } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorExercise } from "../../constructorTypes";
+import {
+    CONSTRUCTOR_MINI_COMBO_CLASS,
+    CONSTRUCTOR_MINI_INPUT_CLASS,
+} from "./constructorCardStyles";
 
 const CARACTER_TIPO_OPTIONS: { value: CaracterTipo; label: string }[] = [
     { value: "rpe", label: "RPE" },
@@ -33,10 +36,24 @@ export const CaracterField: React.FC<CaracterFieldProps> = ({
 }) => {
     const caracterTipo = getCaracterTipoFromEffortCharacter(exercise.effortCharacter);
 
+    const handleValueChange = (raw: string, tipo: CaracterTipo) => {
+        onExerciseChange({
+            effortCharacter:
+                exercise.effortCharacter ?? getEffortCharacterForCaracterTipo(tipo),
+            effortValue: raw ? Number(raw) : null,
+        });
+    };
+
+    const max =
+        caracterTipo === "rpe" ? 10 : caracterTipo === "rir" ? 5 : 100;
+    const min = caracterTipo === "rir" ? 0 : 1;
+    const placeholder =
+        caracterTipo === "rpe" ? "1-10" : caracterTipo === "rir" ? "0-5" : "0-100";
+
     return (
-        <div className="flex items-center gap-1 min-h-8">
+        <div className="flex h-8 items-center gap-1">
             <FormCombobox
-                size="sm"
+                size="xs"
                 value={caracterTipo}
                 onChange={(v) => {
                     const val = v as CaracterTipo;
@@ -63,62 +80,18 @@ export const CaracterField: React.FC<CaracterFieldProps> = ({
                 options={CARACTER_TIPO_OPTIONS}
                 placeholder="RPE"
                 aria-label="Carácter"
+                className={CONSTRUCTOR_MINI_COMBO_CLASS}
             />
-            {caracterTipo === "rpe" ? (
-                <InlineNumberInput
-                    size="xs"
-                    min={1}
-                    max={10}
-                    value={exercise.effortValue ?? ""}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        onExerciseChange({
-                            effortCharacter:
-                                exercise.effortCharacter ??
-                                getEffortCharacterForCaracterTipo("rpe"),
-                            effortValue: val ? Number(val) : null,
-                        });
-                    }}
-                    placeholder="1-10"
-                    className="w-[50px] shrink-0"
-                />
-            ) : caracterTipo === "rir" ? (
-                <InlineNumberInput
-                    size="xs"
-                    min={0}
-                    max={5}
-                    value={exercise.effortValue ?? ""}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        onExerciseChange({
-                            effortCharacter:
-                                exercise.effortCharacter ??
-                                getEffortCharacterForCaracterTipo("rir"),
-                            effortValue: val ? Number(val) : null,
-                        });
-                    }}
-                    placeholder="0-5"
-                    className="w-[50px] shrink-0"
-                />
-            ) : (
-                <InlineNumberInput
-                    size="xs"
-                    min={1}
-                    max={100}
-                    value={exercise.effortValue ?? ""}
-                    onChange={(e) => {
-                        const val = e.target.value;
-                        onExerciseChange({
-                            effortCharacter:
-                                exercise.effortCharacter ??
-                                getEffortCharacterForCaracterTipo("pct_rm"),
-                            effortValue: val ? Number(val) : null,
-                        });
-                    }}
-                    placeholder="0-100"
-                    className="w-[50px] shrink-0"
-                />
-            )}
+            <input
+                type="number"
+                min={min}
+                max={max}
+                value={exercise.effortValue ?? ""}
+                onChange={(e) => handleValueChange(e.target.value, caracterTipo)}
+                placeholder={placeholder}
+                className={CONSTRUCTOR_MINI_INPUT_CLASS}
+                aria-label="Valor de carácter"
+            />
         </div>
     );
 };

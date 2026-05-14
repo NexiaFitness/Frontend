@@ -26,10 +26,11 @@ export interface FormComboboxProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
-    size?: "sm" | "md" | "lg";
+    size?: "xs" | "sm" | "md" | "lg";
 }
 
 const sizeStyles = {
+    xs: "h-8 px-2 text-xs",
     sm: "h-9 px-3 text-sm",
     md: "h-9 px-4 text-sm",
     lg: "h-9 px-5 text-sm",
@@ -132,7 +133,12 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 )}
             >
                 <span className="truncate">{displayText}</span>
-                <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+                <ChevronDown
+                    className={cn(
+                        "opacity-50 shrink-0 ml-1",
+                        size === "xs" ? "h-3 w-3" : "h-4 w-4"
+                    )}
+                />
             </button>
 
             {open &&

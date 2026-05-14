@@ -28,9 +28,9 @@ import {
 } from "../primitives/constructorCardStyles";
 
 const SET_GRID_CLASS =
-    "grid grid-cols-1 sm:grid-cols-[132px_148px_64px] gap-2.5 items-center";
+    "grid grid-cols-1 sm:grid-cols-[108px_108px_72px] gap-2 items-center";
 
-const COLUMN_HEADER_GRID_CLASS = "sm:grid-cols-[40px_132px_148px_64px]";
+const COLUMN_HEADER_GRID_CLASS = "sm:grid-cols-[40px_108px_108px_72px]";
 
 export interface SingleSetBlockProps {
     row: ConstructorRow;
@@ -42,6 +42,8 @@ export interface SingleSetBlockProps {
         exerciseId: string,
         updates: Partial<ConstructorExercise>
     ) => void;
+    onDuplicate?: (rowId: string) => void;
+    onRemove?: (rowId: string) => void;
 }
 
 export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
@@ -50,7 +52,10 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
     onUpdate,
     onAddExercise,
     onUpdateExercise: _onUpdateExercise,
+    onDuplicate,
+    onRemove,
 }) => {
+    const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeSingleSetRow(row);
     const repsTipo = normalized.repsTipo ?? "reps";
     const exercise = normalized.exercises[0];
@@ -78,120 +83,136 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
                 blockTypes={blockTypes}
                 setType={normalized.setType}
                 onSetTypeChange={(setType) => onUpdate(normalized.id, { setType })}
+                collapsed={collapsed}
+                onToggleCollapse={() => setCollapsed((v) => !v)}
+                onDuplicate={onDuplicate ? () => onDuplicate(normalized.id) : undefined}
+                onRemove={onRemove ? () => onRemove(normalized.id) : undefined}
             />
 
-            <ConstructorGroupParamsBar badgeLabel="SINGLE SET">
-                <div className="flex items-center gap-2">
-                    <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
-                    <InlineNumberInput
-                        size="xs"
-                        min={1}
-                        value={normalized.sets ?? ""}
-                        onChange={(e) =>
-                            onUpdate(normalized.id, {
-                                sets: e.target.value ? Number(e.target.value) : null,
-                            })
-                        }
-                        className="w-12"
-                    />
-                </div>
-            </ConstructorGroupParamsBar>
-
-            <div className="border-b border-border/40 px-4 py-3 bg-surface/20">
-                {hasExercise ? (
-                    <ExercisePickerField
-                        exerciseName={exercise.exerciseName}
-                        onPick={() => onAddExercise(normalized.id, exercise.id)}
-                        onClear={() =>
-                            onUpdate(normalized.id, {
-                                exercises: [],
-                                setData: normalized.setData?.map((s) => ({
-                                    ...s,
-                                    isManuallyEdited: false,
-                                })),
-                            })
-                        }
-                    />
-                ) : (
-                    <ExercisePickerField
-                        exerciseName=""
-                        onPick={() => onAddExercise(normalized.id)}
-                    />
-                )}
-            </div>
-
-            {hasExercise && normalized.setData ? (
+            {!collapsed ? (
                 <>
-                    <div
-                        className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS}`}
-                    >
-                        <span />
-                        <span className="text-center">Reps / Tiempo</span>
-                        <span className="text-center">Carácter</span>
-                        <span className="text-center">Descanso</span>
+                    <ConstructorGroupParamsBar badgeLabel="SINGLE SET">
+                        <div className="flex items-center gap-2">
+                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
+                            <InlineNumberInput
+                                size="xs"
+                                min={1}
+                                value={normalized.sets ?? ""}
+                                onChange={(e) =>
+                                    onUpdate(normalized.id, {
+                                        sets: e.target.value ? Number(e.target.value) : null,
+                                    })
+                                }
+                                className="w-12"
+                            />
+                        </div>
+                    </ConstructorGroupParamsBar>
+
+                    <div className="border-b border-border/40 px-4 py-3 bg-surface/20">
+                        {hasExercise ? (
+                            <ExercisePickerField
+                                exerciseName={exercise.exerciseName}
+                                onPick={() => onAddExercise(normalized.id, exercise.id)}
+                                onClear={() =>
+                                    onUpdate(normalized.id, {
+                                        exercises: [],
+                                        setData: normalized.setData?.map((s) => ({
+                                            ...s,
+                                            isManuallyEdited: false,
+                                        })),
+                                    })
+                                }
+                            />
+                        ) : (
+                            <ExercisePickerField
+                                exerciseName=""
+                                onPick={() => onAddExercise(normalized.id)}
+                            />
+                        )}
                     </div>
-                    <div className="space-y-2 px-4 pb-3 pt-1">
-                        {normalized.setData.map((entry, index) => {
-                            const view = setDataToExerciseView(entry);
-                            const syntheticExercise: ConstructorExercise = {
-                                ...exercise,
-                                ...view,
-                            };
-                            return (
-                                <GroupedExerciseRow
-                                    key={entry.id}
-                                    slotLabel={`S${index + 1}`}
-                                    isLast={index === normalized.setData!.length - 1}
-                                >
-                                    <div className={SET_GRID_CLASS}>
-                                        <RepsTiempoField
-                                            repsTipo={repsTipo}
-                                            exercise={syntheticExercise}
-                                            showModeSelector={index === 0}
-                                            onRepsTipoChange={(mode) =>
-                                                onUpdate(normalized.id, { repsTipo: mode })
+
+                    {hasExercise && normalized.setData ? (
+                        <>
+                            <div
+                                className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS}`}
+                            >
+                                <span />
+                                <span className="text-center">Reps / Tiempo</span>
+                                <span className="text-center">Carácter</span>
+                                <span className="text-center">Descanso</span>
+                            </div>
+                            <div className="space-y-2 px-4 pb-3 pt-1">
+                                {normalized.setData.map((entry, index) => {
+                                    const view = setDataToExerciseView(entry);
+                                    const syntheticExercise: ConstructorExercise = {
+                                        ...exercise,
+                                        ...view,
+                                    };
+                                    return (
+                                        <GroupedExerciseRow
+                                            key={entry.id}
+                                            slotLabel={`S${index + 1}`}
+                                            isLast={
+                                                index === normalized.setData!.length - 1
                                             }
-                                            onExerciseChange={(updates) =>
-                                                handleSetDataFieldChange(
-                                                    entry.id,
-                                                    "reps",
-                                                    updates
-                                                )
-                                            }
-                                        />
-                                        <CaracterField
-                                            exercise={syntheticExercise}
-                                            onExerciseChange={(updates) =>
-                                                handleSetDataFieldChange(
-                                                    entry.id,
-                                                    "caracter",
-                                                    updates
-                                                )
-                                            }
-                                        />
-                                        <div className="flex items-center justify-center gap-1 min-h-8">
-                                            <InlineNumberInput
-                                                size="xs"
-                                                min={0}
-                                                value={entry.rest ?? ""}
-                                                onChange={(e) =>
-                                                    handleSetDataFieldChange(entry.id, "rest", {
-                                                        rest: e.target.value
-                                                            ? Number(e.target.value)
-                                                            : null,
-                                                    })
-                                                }
-                                                className="w-12"
-                                            />
-                                            <span className="text-[10px] text-muted-foreground">
-                                                seg
-                                            </span>
-                                        </div>
-                                    </div>
-                                </GroupedExerciseRow>
-                            );
-                        })}
-                    </div>
+                                        >
+                                            <div className={SET_GRID_CLASS}>
+                                                <RepsTiempoField
+                                                    repsTipo={repsTipo}
+                                                    exercise={syntheticExercise}
+                                                    showModeSelector={index === 0}
+                                                    onRepsTipoChange={(mode) =>
+                                                        onUpdate(normalized.id, {
+                                                            repsTipo: mode,
+                                                        })
+                                                    }
+                                                    onExerciseChange={(updates) =>
+                                                        handleSetDataFieldChange(
+                                                            entry.id,
+                                                            "reps",
+                                                            updates
+                                                        )
+                                                    }
+                                                />
+                                                <CaracterField
+                                                    exercise={syntheticExercise}
+                                                    onExerciseChange={(updates) =>
+                                                        handleSetDataFieldChange(
+                                                            entry.id,
+                                                            "caracter",
+                                                            updates
+                                                        )
+                                                    }
+                                                />
+                                                <div className="flex h-8 items-center justify-center gap-1">
+                                                    <InlineNumberInput
+                                                        size="xs"
+                                                        min={0}
+                                                        value={entry.rest ?? ""}
+                                                        onChange={(e) =>
+                                                            handleSetDataFieldChange(
+                                                                entry.id,
+                                                                "rest",
+                                                                {
+                                                                    rest: e.target.value
+                                                                        ? Number(e.target.value)
+                                                                        : null,
+                                                                }
+                                                            )
+                                                        }
+                                                        className="w-12"
+                                                    />
+                                                    <span className="text-[10px] text-muted-foreground">
+                                                        seg
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </GroupedExerciseRow>
+                                    );
+                                })}
+                            </div>
+                        </>
+                    ) : null}
                 </>
             ) : null}
         </div>

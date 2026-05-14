@@ -7,11 +7,19 @@
 
 /** Contenedor exterior de cada bloque-card del constructor */
 export const CONSTRUCTOR_CARD_CLASS =
-    "rounded-lg border border-primary/20 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.06)] overflow-hidden";
+    "rounded-lg border border-primary/25 border-l-[3px] border-l-primary bg-card text-card-foreground shadow-[0_0_0_1px_hsl(var(--primary)/0.08),inset_3px_0_12px_-8px_hsl(var(--primary)/0.35)] overflow-hidden";
 
 /** Cabecera: bloque + selector tipo serie en la misma línea */
 export const CONSTRUCTOR_CARD_HEADER_CLASS =
-    "flex flex-wrap items-center gap-2.5 border-b border-border/50 bg-surface/40 px-4 py-2.5";
+    "flex items-center justify-between gap-3 border-b border-border/50 bg-surface/40 px-4 py-2";
+
+/** Grupo izquierdo de cabecera (bloque + tipo serie, sin wrap) */
+export const CONSTRUCTOR_CARD_HEADER_LEFT_CLASS =
+    "flex min-w-0 flex-1 items-center gap-2";
+
+/** Botón icono de acciones en cabecera */
+export const CONSTRUCTOR_HEADER_ICON_BTN_CLASS =
+    "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-surface hover:text-foreground";
 
 /** Barra de parámetros de grupo (series, descanso…) */
 export const CONSTRUCTOR_GROUP_BAR_CLASS =
@@ -35,11 +43,19 @@ export const CONSTRUCTOR_FOOTER_HINT_CLASS =
 
 /** Select compacto tipo serie (cabecera) */
 export const CONSTRUCTOR_SET_TYPE_SELECT_CLASS =
-    "!h-8 !min-h-8 w-[128px] shrink-0 !bg-surface !border-border/70 !text-xs !shadow-none hover:!border-primary/40";
+    "!h-8 !min-h-8 w-[118px] shrink-0 !bg-surface !border-border/70 !text-[11px] !shadow-none hover:!border-primary/40";
 
 /** Punto de estado del bloque (cabecera Lovable) */
 export const CONSTRUCTOR_BLOCK_DOT_CLASS =
     "h-2 w-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.55)]";
+
+/** Combobox compacto en filas de ejercicio */
+export const CONSTRUCTOR_MINI_COMBO_CLASS =
+    "w-[52px] shrink-0 [&_button]:text-xs";
+
+/** Input numérico compacto en filas de ejercicio */
+export const CONSTRUCTOR_MINI_INPUT_CLASS =
+    "h-8 w-[44px] shrink-0 rounded-md border border-border/60 bg-surface px-1.5 py-0 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]";
 
 /** Anillo A1/A2 / S1… */
 export const CONSTRUCTOR_SLOT_RING_CLASS =
