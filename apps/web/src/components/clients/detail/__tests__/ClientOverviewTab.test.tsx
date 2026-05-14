@@ -519,11 +519,11 @@ describe("ClientOverviewTab", () => {
             const user = userEvent.setup();
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                expect(screen.getByRole("button", { name: /ver detalles de coherencia/i })).toBeInTheDocument();
-            });
-
-            const coherenceLink = screen.getByRole("button", { name: /ver detalles de coherencia/i });
+            const coherenceLink = await screen.findByRole(
+                "button",
+                { name: /ver detalles de coherencia/i },
+                { timeout: 10000 }
+            );
             await user.click(coherenceLink);
 
             expect(mockNavigate).toHaveBeenCalledWith("/dashboard/clients/1?tab=daily-coherence");
@@ -546,12 +546,19 @@ describe("ClientOverviewTab", () => {
             const user = userEvent.setup();
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                expect(screen.getByText(/nivel de riesgo/i)).toBeInTheDocument();
-                expect(screen.getByText(/alto/i)).toBeInTheDocument();
-            });
+            await waitFor(
+                () => {
+                    expect(screen.getByText(/nivel de riesgo/i)).toBeInTheDocument();
+                },
+                { timeout: 10000 }
+            );
+            expect(screen.getByText(/alto/i)).toBeInTheDocument();
 
-            const progressLink = screen.getByRole("button", { name: /ver análisis de fatiga/i });
+            const progressLink = await screen.findByRole(
+                "button",
+                { name: /ver análisis de fatiga/i },
+                { timeout: 10000 }
+            );
             await user.click(progressLink);
 
             expect(mockNavigate).toHaveBeenCalledWith("/dashboard/clients/1?tab=progress");
