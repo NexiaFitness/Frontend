@@ -51,6 +51,9 @@ export const CaracterField: React.FC<CaracterFieldProps> = ({
     const placeholder =
         caracterTipo === "rpe" ? "1-10" : caracterTipo === "rir" ? "0-5" : "0-100";
 
+    const inputWidthClass =
+        caracterTipo === "pct_rm" ? "w-16 shrink-0" : "w-[3.25rem] shrink-0";
+
     return (
         <div className={CONSTRUCTOR_FIELD_PAIR_CLASS}>
             <FormCombobox
@@ -90,7 +93,7 @@ export const CaracterField: React.FC<CaracterFieldProps> = ({
                 value={exercise.effortValue ?? ""}
                 onChange={(e) => handleValueChange(e.target.value, caracterTipo)}
                 placeholder={placeholder}
-                className="w-[44px] shrink-0"
+                className={inputWidthClass}
                 aria-label="Valor de carácter"
             />
         </div>

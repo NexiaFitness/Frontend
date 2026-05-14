@@ -6,7 +6,7 @@
  */
 
 import React from "react";
-import { Plus } from "lucide-react";
+import { Plus, Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
@@ -109,6 +109,10 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
                         metaLabel={`${windowCount} ventana${windowCount === 1 ? "" : "s"} · ${rounds} ronda${rounds === 1 ? "" : "s"}`}
                     >
                         <div className="flex items-center gap-2">
+                            <Timer
+                                className="h-3.5 w-3.5 text-purple-600/70 dark:text-purple-400/70 shrink-0"
+                                aria-hidden
+                            />
                             <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
                                 Duración ventana
                             </span>
