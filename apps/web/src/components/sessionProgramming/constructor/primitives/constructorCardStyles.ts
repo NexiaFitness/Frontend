@@ -83,16 +83,12 @@ export const CONSTRUCTOR_DROPSET_BADGE_CLASS =
 
 /** Anillo MAIN */
 export const CONSTRUCTOR_DROP_MAIN_RING_CLASS =
-    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-orange-500/50 bg-orange-500/[0.1] text-[9px] font-bold text-orange-600 dark:text-orange-400";
+    "z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-orange-500/50 bg-orange-500/[0.1] text-[8px] font-bold uppercase tracking-wide text-orange-600 dark:text-orange-400";
 
-/** Anillo DROP n */
+/** Anillo DROP n (DROP + número en dos líneas) */
 export const CONSTRUCTOR_DROP_STEP_RING_CLASS =
-    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-orange-500/35 bg-orange-500/[0.06] text-[9px] font-bold text-orange-600/90 dark:text-orange-400/90";
+    "z-10 flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-full border-2 border-orange-500/35 bg-orange-500/[0.06] text-orange-600 dark:text-orange-400";
 
 /** Conector vertical entre drops */
 export const CONSTRUCTOR_DROP_CONNECTOR_CLASS =
-    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-orange-500/25";
-
-/** Etiqueta «SIGUIENTE DROP» en conector */
-export const CONSTRUCTOR_DROP_CONNECTOR_LABEL_CLASS =
-    "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded bg-card px-1 py-0.5 text-[8px] font-semibold uppercase tracking-wider text-orange-600/80 dark:text-orange-400/80";
+    "pointer-events-none absolute left-1/2 top-10 bottom-0 w-px -translate-x-1/2 bg-orange-500/25";

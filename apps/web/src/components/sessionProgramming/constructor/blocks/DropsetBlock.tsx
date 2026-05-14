@@ -11,7 +11,6 @@ import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
-    dropStepLabel,
     normalizeDropsetRow,
     setDataToExerciseView,
     updateDropsetData,
@@ -34,7 +33,7 @@ const EXERCISE_GRID_CLASS =
     "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_102px_102px] gap-2 items-center sm:justify-items-stretch [&>*:nth-child(2)]:sm:justify-self-center [&>*:nth-child(3)]:sm:justify-self-center";
 
 const COLUMN_HEADER_GRID_CLASS =
-    "sm:grid-cols-[40px_minmax(0,1fr)_102px_102px] [&>span:nth-child(3)]:justify-self-center [&>span:nth-child(4)]:justify-self-center";
+    "sm:grid-cols-[44px_minmax(0,1fr)_102px_102px] [&>span:nth-child(3)]:justify-self-center [&>span:nth-child(4)]:justify-self-center";
 
 export interface DropsetBlockProps {
     row: ConstructorRow;
@@ -160,10 +159,8 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                             return (
                                 <DropStepRow
                                     key={entry.id}
-                                    stepLabel={dropStepLabel(index)}
-                                    isMain={isMain}
+                                    stepIndex={index}
                                     isLast={index === setData.length - 1}
-                                    showConnectorLabel={index < setData.length - 1}
                                 >
                                     <div className={EXERCISE_GRID_CLASS}>
                                         {isMain ? (
