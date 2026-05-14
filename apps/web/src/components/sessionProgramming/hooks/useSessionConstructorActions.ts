@@ -13,6 +13,7 @@ import { applyConstructorRowUpdate, normalizeSupersetRow } from "../constructor/
 import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
 import { normalizeDropsetRow } from "../constructor/utils/dropsetRow";
 import { normalizeGiantSetRow } from "../constructor/utils/giantSetRow";
+import { normalizeForTimeRow } from "../constructor/utils/forTimeRow";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -57,7 +58,11 @@ export function useSessionConstructorActions(
                     const base =
                         r.setType === SET_TYPE.SUPERSET
                             ? normalizeSupersetRow(r)
-                            : r;
+                            : r.setType === SET_TYPE.GIANT_SET
+                              ? normalizeGiantSetRow(r)
+                              : r.setType === SET_TYPE.FOR_TIME
+                                ? normalizeForTimeRow(r)
+                                : r;
                     const exercises = base.exercises.map((ex) =>
                         ex.id === exerciseId ? { ...ex, ...updates } : ex
                     );
@@ -131,6 +136,8 @@ export function useSessionConstructorActions(
                     normalized = normalizeDropsetRow(clone);
                 } else if (clone.setType === SET_TYPE.GIANT_SET) {
                     normalized = normalizeGiantSetRow(clone);
+                } else if (clone.setType === SET_TYPE.FOR_TIME) {
+                    normalized = normalizeForTimeRow(clone);
                 }
 
                 const next = [...prev];

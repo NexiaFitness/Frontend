@@ -190,6 +190,23 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         expect(out).toEqual([{ exercise_id: 42, planned_sets: 3 }]);
     });
 
+    it("for_time: volumen = rondas (row.rounds)", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.FOR_TIME,
+                rounds: 4,
+                exercises: [ex({ exerciseId: 10 }), ex({ exerciseId: 11 })],
+            }),
+        ]);
+        expect(out).toEqual(
+            expect.arrayContaining([
+                { exercise_id: 10, planned_sets: 4 },
+                { exercise_id: 11, planned_sets: 4 },
+            ])
+        );
+    });
+
     it("amrap: volumen = rondas objetivo (row.rounds)", () => {
         const out = aggregateConstructorRowsForSessionLoadDraft([
             row({

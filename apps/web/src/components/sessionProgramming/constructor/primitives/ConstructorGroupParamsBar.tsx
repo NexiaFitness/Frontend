@@ -13,25 +13,36 @@ import {
     CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS,
     CONSTRUCTOR_GIANT_SET_BADGE_CLASS,
     CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS,
+    CONSTRUCTOR_FOR_TIME_BADGE_CLASS,
+    CONSTRUCTOR_FOR_TIME_GROUP_BAR_CLASS,
 } from "./constructorCardStyles";
 
 export interface ConstructorGroupParamsBarProps {
     badgeLabel: string;
     children: React.ReactNode;
-    variant?: "primary" | "dropset" | "giant_set";
+    variant?: "primary" | "dropset" | "giant_set" | "for_time";
     metaLabel?: string;
 }
 
 function resolveBarClass(variant: ConstructorGroupParamsBarProps["variant"]): string {
     if (variant === "dropset") return CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS;
     if (variant === "giant_set") return CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS;
+    if (variant === "for_time") return CONSTRUCTOR_FOR_TIME_GROUP_BAR_CLASS;
     return CONSTRUCTOR_GROUP_BAR_CLASS;
 }
 
 function resolveBadgeClass(variant: ConstructorGroupParamsBarProps["variant"]): string {
     if (variant === "dropset") return CONSTRUCTOR_DROPSET_BADGE_CLASS;
     if (variant === "giant_set") return CONSTRUCTOR_GIANT_SET_BADGE_CLASS;
+    if (variant === "for_time") return CONSTRUCTOR_FOR_TIME_BADGE_CLASS;
     return CONSTRUCTOR_GROUP_BADGE_CLASS;
+}
+
+function resolveMetaClass(variant: ConstructorGroupParamsBarProps["variant"]): string {
+    if (variant === "for_time") {
+        return "text-[10px] italic text-muted-foreground";
+    }
+    return "text-[10px] font-semibold uppercase tracking-wider text-cyan-700/80 dark:text-cyan-400/80";
 }
 
 export const ConstructorGroupParamsBar: React.FC<ConstructorGroupParamsBarProps> = ({
@@ -43,9 +54,7 @@ export const ConstructorGroupParamsBar: React.FC<ConstructorGroupParamsBarProps>
     <div className={resolveBarClass(variant)}>
         <span className={resolveBadgeClass(variant)}>{badgeLabel}</span>
         {metaLabel ? (
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-700/80 dark:text-cyan-400/80">
-                {metaLabel}
-            </span>
+            <span className={resolveMetaClass(variant)}>{metaLabel}</span>
         ) : null}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">{children}</div>
     </div>

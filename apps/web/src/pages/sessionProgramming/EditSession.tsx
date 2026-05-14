@@ -68,6 +68,7 @@ import {
     normalizeSingleSetRow,
     normalizeDropsetRow,
     normalizeGiantSetRow,
+    normalizeForTimeRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -334,6 +335,9 @@ export const EditSession: React.FC = () => {
                         }
                         if (row.setType === SET_TYPE.GIANT_SET) {
                             return normalizeGiantSetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.FOR_TIME) {
+                            return normalizeForTimeRow(row);
                         }
                         return row;
                     })

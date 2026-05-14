@@ -11,6 +11,7 @@ import { normalizeSingleSetRow } from "./singleSetRow";
 import { normalizeSupersetRow } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { normalizeGiantSetRow } from "./giantSetRow";
+import { normalizeForTimeRow } from "./forTimeRow";
 
 function generateExerciseId(): string {
     return `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -43,7 +44,9 @@ export function applyExercisePickerSelection(
                     ? normalizeSupersetRow(row)
                     : row.setType === SET_TYPE.GIANT_SET
                       ? normalizeGiantSetRow(row)
-                      : row;
+                      : row.setType === SET_TYPE.FOR_TIME
+                        ? normalizeForTimeRow(row)
+                        : row;
             return {
                 ...base,
                 exercises: base.exercises.map((ex) =>

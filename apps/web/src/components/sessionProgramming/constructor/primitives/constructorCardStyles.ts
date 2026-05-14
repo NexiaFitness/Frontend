@@ -108,3 +108,16 @@ export const CONSTRUCTOR_GIANT_SET_BADGE_CLASS =
 /** Contenedor interior del grupo de ejercicios */
 export const CONSTRUCTOR_GIANT_SET_INNER_CLASS =
     "mx-4 mb-3 rounded-md border border-cyan-500/20 bg-cyan-500/[0.04] px-3 pb-3 pt-2";
+
+/** Card for_time — acento violeta */
+export const CONSTRUCTOR_FOR_TIME_CARD_CLASS =
+    "rounded-lg border border-violet-500/25 border-l-[3px] border-l-violet-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(263_70%_50%/0.08),inset_3px_0_12px_-8px_hsl(263_70%_50%/0.35)] overflow-hidden";
+
+export const CONSTRUCTOR_FOR_TIME_GROUP_BAR_CLASS =
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-violet-500/10 bg-violet-500/[0.06] px-4 py-2.5";
+
+export const CONSTRUCTOR_FOR_TIME_BADGE_CLASS =
+    "inline-flex shrink-0 items-center rounded-md border border-violet-500/35 bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-violet-700 uppercase dark:text-violet-400";
+
+export const CONSTRUCTOR_FOR_TIME_INNER_CLASS =
+    "mx-4 mb-3 rounded-md border border-violet-500/20 bg-violet-500/[0.04] px-3 pb-3 pt-2";

@@ -10,6 +10,7 @@ import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes
 import { normalizeSingleSetRow } from "./singleSetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { normalizeGiantSetRow } from "./giantSetRow";
+import { normalizeForTimeRow } from "./forTimeRow";
 
 export const SUPERSET_SLOT_COUNT = 2;
 
@@ -96,6 +97,9 @@ export function applyConstructorRowUpdate(
     }
     if (next.setType === SET_TYPE.GIANT_SET) {
         return normalizeGiantSetRow(next);
+    }
+    if (next.setType === SET_TYPE.FOR_TIME) {
+        return normalizeForTimeRow(next);
     }
     return next;
 }

@@ -17,10 +17,12 @@ import {
     SingleSetBlock,
     DropsetBlock,
     GiantSetBlock,
+    ForTimeBlock,
     resolveConstructorBlockComponent,
     supersetGroupLabels,
     dropsetGroupLabels,
     giantSetGroupLabels,
+    forTimeGroupLabels,
 } from "./constructor";
 import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
 import type { ConstructorRow } from "./constructorTypes";
@@ -64,6 +66,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     const supersetLabels = React.useMemo(() => supersetGroupLabels(rows), [rows]);
     const dropsetLabels = React.useMemo(() => dropsetGroupLabels(rows), [rows]);
     const giantSetLabels = React.useMemo(() => giantSetGroupLabels(rows), [rows]);
+    const forTimeLabels = React.useMemo(() => forTimeGroupLabels(rows), [rows]);
     const hasRows = rows.length > 0;
 
     return (
@@ -147,6 +150,24 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             blockTypes={blockTypes}
                                             groupLabel={
                                                 giantSetLabels.get(row.id) ?? "GIANT SET A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.FOR_TIME) {
+                                    return (
+                                        <ForTimeBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                forTimeLabels.get(row.id) ?? "FOR TIME A"
                                             }
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}

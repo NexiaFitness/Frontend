@@ -22,6 +22,8 @@ export { DropsetBlock } from "./blocks/DropsetBlock";
 export type { DropsetBlockProps } from "./blocks/DropsetBlock";
 export { GiantSetBlock } from "./blocks/GiantSetBlock";
 export type { GiantSetBlockProps } from "./blocks/GiantSetBlock";
+export { ForTimeBlock } from "./blocks/ForTimeBlock";
+export type { ForTimeBlockProps } from "./blocks/ForTimeBlock";
 export {
     normalizeSingleSetRow,
     updateSingleSetData,
@@ -52,6 +54,14 @@ export {
     MIN_GIANT_SET_SLOTS,
     DEFAULT_GIANT_SET_SLOTS,
 } from "./utils/giantSetRow";
+export {
+    normalizeForTimeRow,
+    addForTimeExerciseSlot,
+    forTimeGroupLabels,
+    MIN_FOR_TIME_SLOTS,
+    DEFAULT_FOR_TIME_SLOTS,
+    DEFAULT_FOR_TIME_ROUNDS,
+} from "./utils/forTimeRow";
 export {
     getRowVolumeSetsPerExercise,
     getPersistLinePlannedSets,
