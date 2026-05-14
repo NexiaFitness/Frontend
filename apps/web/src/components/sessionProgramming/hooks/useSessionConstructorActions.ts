@@ -52,10 +52,14 @@ export function useSessionConstructorActions(
             onRowsChange((prev) =>
                 prev.map((r) => {
                     if (r.id !== rowId) return r;
-                    const exercises = r.exercises.map((ex) =>
+                    const base =
+                        r.setType === SET_TYPE.SUPERSET
+                            ? normalizeSupersetRow(r)
+                            : r;
+                    const exercises = base.exercises.map((ex) =>
                         ex.id === exerciseId ? { ...ex, ...updates } : ex
                     );
-                    return { ...r, exercises };
+                    return { ...base, exercises };
                 })
             );
         },

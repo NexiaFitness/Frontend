@@ -8,6 +8,7 @@
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import { normalizeSingleSetRow } from "./singleSetRow";
+import { normalizeSupersetRow } from "./supersetRow";
 
 function generateExerciseId(): string {
     return `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -35,9 +36,13 @@ export function applyExercisePickerSelection(
         };
 
         if (exerciseSlotId) {
+            const base =
+                row.setType === SET_TYPE.SUPERSET
+                    ? normalizeSupersetRow(row)
+                    : row;
             return {
-                ...row,
-                exercises: row.exercises.map((ex) =>
+                ...base,
+                exercises: base.exercises.map((ex) =>
                     ex.id === exerciseSlotId
                         ? {
                               ...ex,

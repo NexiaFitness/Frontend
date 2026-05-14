@@ -27,10 +27,10 @@ import {
 const SLOT_LABELS = ["A1", "A2"] as const;
 
 const EXERCISE_GRID_CLASS =
-    "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_120px_120px] gap-2 items-center";
+    "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_102px_102px] gap-2 items-center sm:justify-items-stretch [&>*:nth-child(2)]:sm:justify-self-center [&>*:nth-child(3)]:sm:justify-self-center";
 
 const COLUMN_HEADER_GRID_CLASS =
-    "sm:grid-cols-[40px_minmax(0,1fr)_120px_120px]";
+    "sm:grid-cols-[40px_minmax(0,1fr)_102px_102px] [&>span:nth-child(3)]:justify-self-center [&>span:nth-child(4)]:justify-self-center";
 
 export interface SupersetBlockProps {
     row: ConstructorRow;
@@ -116,8 +116,8 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                     >
                         <span />
                         <span>Ejercicio</span>
-                        <span className="text-center">Reps / Tiempo</span>
-                        <span className="text-center">Carácter</span>
+                        <span className="text-center w-full">Reps / Tiempo</span>
+                        <span className="text-center w-full">Carácter</span>
                     </div>
 
                     <div className="space-y-2 px-4 pb-3 pt-1">

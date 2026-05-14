@@ -15,9 +15,15 @@ function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-export function createSupersetExerciseSlot(slot: "a1" | "a2"): ConstructorExercise {
+export function createSupersetExerciseSlot(
+    slot: "a1" | "a2",
+    rowId?: string
+): ConstructorExercise {
+    const id = rowId
+        ? `ex-superset-${slot}-${rowId}`
+        : `ex-superset-${slot}-${generateId()}`;
     return {
-        id: `ex-superset-${slot}-${generateId()}`,
+        id,
         exerciseId: 0,
         exerciseName: "",
         plannedReps: "10",
@@ -52,7 +58,9 @@ export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
         if (existing) {
             slots.push(existing);
         } else {
-            slots.push(createSupersetExerciseSlot(i === 0 ? "a1" : "a2"));
+            slots.push(
+                createSupersetExerciseSlot(i === 0 ? "a1" : "a2", row.id)
+            );
         }
     }
 

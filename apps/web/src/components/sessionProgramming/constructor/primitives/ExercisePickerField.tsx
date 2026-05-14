@@ -64,7 +64,11 @@ export const ExercisePickerField: React.FC<ExercisePickerFieldProps> = ({
                 >
                     Quitar
                 </span>
-            ) : null}
+            ) : (
+                <span className="invisible shrink-0 text-[10px]" aria-hidden>
+                    Quitar
+                </span>
+            )}
         </button>
     );
 };

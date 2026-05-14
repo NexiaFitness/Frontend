@@ -9,6 +9,7 @@ import React from "react";
 import { FormCombobox } from "@/components/ui/forms";
 import type { ConstructorExercise, RepsTipo } from "../../constructorTypes";
 import {
+    CONSTRUCTOR_FIELD_PAIR_CLASS,
     CONSTRUCTOR_MINI_COMBO_CLASS,
     CONSTRUCTOR_MINI_INPUT_CLASS,
 } from "./constructorCardStyles";
@@ -33,25 +34,17 @@ export const RepsTiempoField: React.FC<RepsTiempoFieldProps> = ({
     onRepsTipoChange,
     onExerciseChange,
 }) => (
-    <div className="flex h-8 items-center gap-1">
-        {showModeSelector ? (
-            <FormCombobox
-                size="xs"
-                value={repsTipo}
-                onChange={(v) => onRepsTipoChange(v as RepsTipo)}
-                options={REPS_TIPO_OPTIONS}
-                placeholder="Reps"
-                aria-label="Modo Reps/Tiempo"
-                className={CONSTRUCTOR_MINI_COMBO_CLASS}
-            />
-        ) : (
-            <span
-                className={`${CONSTRUCTOR_MINI_INPUT_CLASS} flex items-center justify-center text-muted-foreground`}
-                aria-hidden
-            >
-                {repsTipo === "tiempo" ? "Seg" : "Reps"}
-            </span>
-        )}
+    <div className={CONSTRUCTOR_FIELD_PAIR_CLASS}>
+        <FormCombobox
+            size="xs"
+            value={repsTipo}
+            onChange={(v) => onRepsTipoChange(v as RepsTipo)}
+            options={REPS_TIPO_OPTIONS}
+            placeholder="Reps"
+            aria-label="Modo Reps/Tiempo"
+            className={CONSTRUCTOR_MINI_COMBO_CLASS}
+            disabled={!showModeSelector}
+        />
         {repsTipo === "reps" ? (
             <input
                 type="text"

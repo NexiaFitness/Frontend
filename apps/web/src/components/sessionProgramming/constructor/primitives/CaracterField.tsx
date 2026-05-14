@@ -15,6 +15,7 @@ import {
 import { EFFORT_CHARACTER } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorExercise } from "../../constructorTypes";
 import {
+    CONSTRUCTOR_FIELD_PAIR_CLASS,
     CONSTRUCTOR_MINI_COMBO_CLASS,
     CONSTRUCTOR_MINI_INPUT_CLASS,
 } from "./constructorCardStyles";
@@ -51,7 +52,7 @@ export const CaracterField: React.FC<CaracterFieldProps> = ({
         caracterTipo === "rpe" ? "1-10" : caracterTipo === "rir" ? "0-5" : "0-100";
 
     return (
-        <div className="flex h-8 items-center gap-1">
+        <div className={CONSTRUCTOR_FIELD_PAIR_CLASS}>
             <FormCombobox
                 size="xs"
                 value={caracterTipo}
