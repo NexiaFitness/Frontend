@@ -1,7 +1,7 @@
 /**
  * dropsetRow.ts — Estado, herencia y persistencia de filas dropset.
- * Contexto: MAIN cuenta como paso 1; UI «Series» = total de pasos (MAIN + drops).
- * setData.length === row.sets. Descanso tras secuencia en row.rest.
+ * Contexto: row.sets = rondas (repetir secuencia); setData = MAIN + drops (botón añadir).
+ * Descanso tras secuencia en row.rest.
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
@@ -19,11 +19,14 @@ function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-/** Pasos totales por defecto: MAIN + DROP 1 + DROP 2 */
-export const DEFAULT_DROP_COUNT = 3;
+/** Rondas por defecto (repeticiones de la secuencia MAIN→drops) */
+export const DEFAULT_DROPSET_ROUNDS = 3;
 
-/** Mínimo MAIN + 1 drop */
-const MIN_DROPSET_STEPS = 2;
+/** Máximo de drops adicionales tras MAIN (MAIN + 3 drops) */
+export const MAX_DROPS_AFTER_MAIN = 3;
+
+/** Estado inicial: MAIN + 1 drop */
+const DEFAULT_INITIAL_STEPS = 2;
 
 const LOAD_FIELDS: (keyof ConstructorSetData)[] = [
     "plannedReps",
@@ -69,24 +72,8 @@ function propagateDropInheritance(setData: ConstructorSetData[]): ConstructorSet
     });
 }
 
-function resizeDropSteps(
-    setData: ConstructorSetData[],
-    targetLength: number
-): ConstructorSetData[] {
-    const next = [...setData];
-    while (next.length < targetLength) {
-        const master = next[0] ?? createDefaultDropStepData(true);
-        next.push({
-            ...createDefaultDropStepData(false),
-            ...copyLoadFields(master),
-            id: `drop-${generateId()}`,
-            isManuallyEdited: false,
-        });
-    }
-    if (next.length > targetLength) {
-        return next.slice(0, targetLength);
-    }
-    return next;
+function createInitialSetData(length: number): ConstructorSetData[] {
+    return Array.from({ length }, (_, i) => createDefaultDropStepData(i === 0));
 }
 
 export function dropStepLabel(index: number): string {
@@ -110,18 +97,18 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
         return row;
     }
 
-    const stepCount = Math.max(MIN_DROPSET_STEPS, row.sets ?? DEFAULT_DROP_COUNT);
-    const targetLength = stepCount;
+    const rounds = Math.max(1, row.sets ?? DEFAULT_DROPSET_ROUNDS);
+    const maxSteps = 1 + MAX_DROPS_AFTER_MAIN;
     const restFallback = row.rest ?? 120;
 
-    let setData = row.setData?.length
-        ? resizeDropSteps(row.setData, targetLength)
-        : resizeDropSteps(
-              Array.from({ length: targetLength }, (_, i) =>
-                  createDefaultDropStepData(i === 0)
-              ),
-              targetLength
-          );
+    let setData =
+        row.setData?.length && row.setData.length > 0
+            ? [...row.setData]
+            : createInitialSetData(DEFAULT_INITIAL_STEPS);
+
+    if (setData.length > maxSteps) {
+        setData = setData.slice(0, maxSteps);
+    }
 
     setData = propagateDropInheritance(setData);
 
@@ -129,12 +116,33 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
 
     return {
         ...row,
-        sets: stepCount,
+        sets: rounds,
         rest: restFallback,
         repsTipo: row.repsTipo ?? "reps",
         setData,
         exercises,
     };
+}
+
+export function addDropsetDrop(row: ConstructorRow): ConstructorRow {
+    const normalized = normalizeDropsetRow(row);
+    const additionalDrops = (normalized.setData?.length ?? 1) - 1;
+    if (additionalDrops >= MAX_DROPS_AFTER_MAIN) {
+        return normalized;
+    }
+
+    const master = normalized.setData![0];
+    const nextSetData = [
+        ...normalized.setData!,
+        {
+            ...createDefaultDropStepData(false),
+            ...copyLoadFields(master),
+            id: `drop-${generateId()}`,
+            isManuallyEdited: false,
+        },
+    ];
+
+    return normalizeDropsetRow({ ...normalized, setData: nextSetData });
 }
 
 export function updateDropsetData(
@@ -219,11 +227,9 @@ export function hydrateDropsetConstructorRow(
         serverExerciseId: ex.id,
     }));
 
-    const stepCount = Math.max(MIN_DROPSET_STEPS, setData.length);
-
     return normalizeDropsetRow({
         ...base,
-        sets: stepCount,
+        sets: first.planned_sets ?? base.sets ?? DEFAULT_DROPSET_ROUNDS,
         rest: first.planned_rest ?? base.rest ?? 120,
         exercises: [exercise],
         setData,
@@ -238,5 +244,5 @@ export function isCollapsedDropsetApiLines(exs: DropsetApiExerciseLine[]): boole
     if (exs.length < 2) return false;
     const firstId = exs[0].exercise_id;
     if (!exs.every((e) => e.exercise_id === firstId)) return false;
-    return exs.every((e) => (e.planned_sets ?? 1) === 1);
+    return exs.every((e) => (e.planned_sets ?? 1) >= 1);
 }

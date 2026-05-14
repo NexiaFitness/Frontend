@@ -113,9 +113,7 @@ export function buildTemplatePayloadFromConstructorRows(
                     row,
                     { ...line.exercise, ...fields },
                     line.orderInBlock,
-                    row.setType === SET_TYPE.SINGLE_SET || row.setType === SET_TYPE.DROPSET
-                        ? 1
-                        : row.sets,
+                    row.setType === SET_TYPE.SINGLE_SET ? 1 : row.sets,
                     row.setType === SET_TYPE.DROPSET
                         ? row.rest
                         : (line.setDataEntry?.rest ?? row.rest)

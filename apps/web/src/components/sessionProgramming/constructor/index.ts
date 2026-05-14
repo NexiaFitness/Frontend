@@ -36,8 +36,11 @@ export {
 export {
     normalizeDropsetRow,
     updateDropsetData,
+    addDropsetDrop,
     dropsetGroupLabels,
     hydrateDropsetConstructorRow,
     isCollapsedDropsetApiLines,
+    MAX_DROPS_AFTER_MAIN,
+    DEFAULT_DROPSET_ROUNDS,
 } from "./utils/dropsetRow";
 export { applyExercisePickerSelection } from "./utils/exercisePicker";

@@ -10,7 +10,10 @@ import { Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
+import { Plus } from "lucide-react";
 import {
+    addDropsetDrop,
+    MAX_DROPS_AFTER_MAIN,
     normalizeDropsetRow,
     setDataToExerciseView,
     updateDropsetData,
@@ -72,7 +75,15 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
         updates: Record<string, unknown>
     ) => {
         const nextRow = updateDropsetData(normalized, setDataId, updates);
-        onUpdate(normalized.id, { setData: nextRow.setData, sets: nextRow.sets });
+        onUpdate(normalized.id, { setData: nextRow.setData });
+    };
+
+    const additionalDrops = Math.max(0, setData.length - 1);
+    const canAddDrop = additionalDrops < MAX_DROPS_AFTER_MAIN;
+
+    const handleAddDrop = () => {
+        const nextRow = addDropsetDrop(normalized);
+        onUpdate(normalized.id, { setData: nextRow.setData });
     };
 
     const placeholderExercise: ConstructorExercise = {
@@ -106,10 +117,10 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                 <>
                     <ConstructorGroupParamsBar badgeLabel={groupLabel} variant="dropset">
                         <div className="flex items-center gap-2">
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
+                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
                             <InlineNumberInput
                                 size="xs"
-                                min={2}
+                                min={1}
                                 value={normalized.sets ?? ""}
                                 onChange={(e) =>
                                     onUpdate(normalized.id, {
@@ -214,11 +225,24 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                                 </DropStepRow>
                             );
                         })}
+
+                        <div className="grid grid-cols-[44px_1fr] gap-3 pt-1">
+                            <span />
+                            <button
+                                type="button"
+                                disabled={!canAddDrop}
+                                onClick={handleAddDrop}
+                                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-orange-500/40 px-3 text-[11px] font-medium text-orange-600 transition-colors hover:border-orange-500/60 hover:bg-orange-500/[0.06] disabled:cursor-not-allowed disabled:opacity-40 dark:text-orange-400"
+                            >
+                                <Plus className="h-3.5 w-3.5 shrink-0" />
+                                Añadir Drop ({additionalDrops}/{MAX_DROPS_AFTER_MAIN})
+                            </button>
+                        </div>
                     </div>
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
-                        Sin descanso entre drops · Mismo ejercicio con carga descendente en cada
-                        paso
+                        Sin descanso entre drops · Mismo ejercicio, reduciendo reps/esfuerzo en
+                        cada drop
                     </p>
                 </>
             ) : null}
