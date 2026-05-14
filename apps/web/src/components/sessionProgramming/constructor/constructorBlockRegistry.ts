@@ -6,17 +6,18 @@
  * @since v5.3.0
  */
 
-import type { ComponentType } from "react";
 import { SET_TYPE, type SetType } from "@nexia/shared/types/sessionProgramming";
 import { LegacyRowBlock, type LegacyRowBlockProps } from "./blocks/LegacyRowBlock";
 
 export type ConstructorBlockComponentProps = LegacyRowBlockProps;
 
-const LEGACY: ComponentType<LegacyRowBlockProps> = LegacyRowBlock;
+const LEGACY: typeof LegacyRowBlock = LegacyRowBlock;
 
-export const CONSTRUCTOR_BLOCK_REGISTRY: Record<SetType, ComponentType<LegacyRowBlockProps>> = {
+export const CONSTRUCTOR_BLOCK_REGISTRY: Record<
+    Exclude<SetType, typeof SET_TYPE.SUPERSET>,
+    typeof LegacyRowBlock
+> = {
     [SET_TYPE.SINGLE_SET]: LEGACY,
-    [SET_TYPE.SUPERSET]: LEGACY,
     [SET_TYPE.DROPSET]: LEGACY,
     [SET_TYPE.GIANT_SET]: LEGACY,
     [SET_TYPE.FOR_TIME]: LEGACY,
@@ -26,6 +27,9 @@ export const CONSTRUCTOR_BLOCK_REGISTRY: Record<SetType, ComponentType<LegacyRow
 
 export function resolveConstructorBlockComponent(
     setType: SetType
-): ComponentType<LegacyRowBlockProps> {
+): typeof LegacyRowBlock | null {
+    if (setType === SET_TYPE.SUPERSET) {
+        return null;
+    }
     return CONSTRUCTOR_BLOCK_REGISTRY[setType] ?? LEGACY;
 }

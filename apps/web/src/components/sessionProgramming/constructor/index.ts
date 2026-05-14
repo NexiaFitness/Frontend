@@ -14,3 +14,7 @@ export {
 export type { ConstructorBlockComponentProps } from "./constructorBlockRegistry";
 export { LegacyRowBlock } from "./blocks/LegacyRowBlock";
 export type { LegacyRowBlockProps } from "./blocks/LegacyRowBlock";
+export { SupersetBlock } from "./blocks/SupersetBlock";
+export type { SupersetBlockProps } from "./blocks/SupersetBlock";
+export { supersetGroupLabels, normalizeSupersetRow, getPersistableExercises } from "./utils/supersetRow";
+export { applyExercisePickerSelection } from "./utils/exercisePicker";

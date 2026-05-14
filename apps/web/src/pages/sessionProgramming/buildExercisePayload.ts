@@ -74,6 +74,7 @@ export function buildExercisePayload(
         effort_character: mapped.effort_character,
         effort_value: mapped.effort_value,
         notes: ex.notes,
+        ...(setType === "superset" ? { superset_group_id: 1 } : {}),
     };
 }
 

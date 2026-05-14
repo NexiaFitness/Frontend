@@ -57,6 +57,11 @@ import {
     buildExercisePayload,
     buildExerciseUpdatePayload,
 } from "./buildExercisePayload";
+import {
+    applyExercisePickerSelection,
+    getPersistableExercises,
+    normalizeSupersetRow,
+} from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
@@ -147,6 +152,7 @@ export const EditSession: React.FC = () => {
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
+    const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
     const draftExercisesForVolumePanel = useMemo(
@@ -278,13 +284,19 @@ export const EditSession: React.FC = () => {
             }
 
             setConstructorRows(
-                rows.map((row) => ({
-                    ...row,
-                    exercises: row.exercises.map((ex) => ({
-                        ...ex,
-                        exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
-                    })),
-                })),
+                rows
+                    .map((row) => ({
+                        ...row,
+                        exercises: row.exercises.map((ex) => ({
+                            ...ex,
+                            exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
+                        })),
+                    }))
+                    .map((row) =>
+                        row.setType === SET_TYPE.SUPERSET
+                            ? normalizeSupersetRow(row)
+                            : row
+                    )
             );
         };
 
@@ -297,28 +309,19 @@ export const EditSession: React.FC = () => {
     const handleSelectFromPicker = useCallback(
         (exercise: Exercise) => {
             if (!targetRowIdForPicker) return;
-            const newEx: ConstructorExercise = {
-                id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                exerciseId: exercise.id,
-                exerciseName: exerciseDisplayName(exercise),
-                plannedReps: "10",
-                plannedWeight: null,
-                plannedDuration: null,
-                effortCharacter: null,
-                effortValue: null,
-                notes: null,
-            };
             setConstructorRows((prev) =>
-                prev.map((r) =>
-                    r.id === targetRowIdForPicker
-                        ? { ...r, exercises: [...r.exercises, newEx] }
-                        : r
+                applyExercisePickerSelection(
+                    prev,
+                    targetRowIdForPicker,
+                    { id: exercise.id, name: exerciseDisplayName(exercise) },
+                    targetExerciseSlotId
                 )
             );
             setShowExercisePickerModal(false);
             setTargetRowIdForPicker(null);
+            setTargetExerciseSlotId(null);
         },
-        [targetRowIdForPicker]
+        [targetRowIdForPicker, targetExerciseSlotId]
     );
 
     // Prellenar formulario cuando se carga la sesión
@@ -433,8 +436,9 @@ export const EditSession: React.FC = () => {
                         currentExs.map((e: { id: number }) => e.id)
                     );
 
-                    for (let j = 0; j < row.exercises.length; j++) {
-                        const ex = row.exercises[j];
+                    const persistable = getPersistableExercises(row);
+                    for (let j = 0; j < persistable.length; j++) {
+                        const ex = persistable[j];
                         if (ex.serverExerciseId) {
                             const updatePayload = buildExerciseUpdatePayload(
                                 row,
@@ -466,8 +470,9 @@ export const EditSession: React.FC = () => {
                         sessionId,
                         data: blockPayload,
                     }).unwrap();
-                    for (let j = 0; j < row.exercises.length; j++) {
-                        const ex = row.exercises[j];
+                    const persistableNew = getPersistableExercises(row);
+                    for (let j = 0; j < persistableNew.length; j++) {
+                        const ex = persistableNew[j];
                         const payload = buildExercisePayload(
                             row,
                             ex,
@@ -756,8 +761,9 @@ export const EditSession: React.FC = () => {
                                         rows={constructorRows}
                                         blockTypes={blockTypes}
                                         onRowsChange={setConstructorRows}
-                                        onAddExerciseRequest={(rowId) => {
+                                        onAddExerciseRequest={(rowId, exerciseSlotId) => {
                                             setTargetRowIdForPicker(rowId);
+                                            setTargetExerciseSlotId(exerciseSlotId ?? null);
                                             setShowExercisePickerModal(true);
                                         }}
                                         titleAccessory={

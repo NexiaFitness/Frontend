@@ -9,6 +9,7 @@
 import React from "react";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "../constructorTypes";
+import { applyConstructorRowUpdate } from "../constructor/utils/supersetRow";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -20,7 +21,9 @@ export function useSessionConstructorActions(
     const handleUpdateRow = React.useCallback(
         (rowId: string, updates: Partial<ConstructorRow>) => {
             onRowsChange((prev) =>
-                prev.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
+                prev.map((r) =>
+                    r.id === rowId ? applyConstructorRowUpdate(r, updates) : r
+                )
             );
         },
         [onRowsChange]

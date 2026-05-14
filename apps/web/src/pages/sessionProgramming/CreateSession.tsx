@@ -46,7 +46,11 @@ import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel"
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
-import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
+import {
+    applyExercisePickerSelection,
+    getPersistableExercises,
+} from "@/components/sessionProgramming/constructor";
+import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
 import { buildExercisePayload } from "./buildExercisePayload";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
@@ -258,6 +262,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     /** Fase 4+7: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
+    const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
 
     const draftExercisesForVolumePanel = useMemo(
         () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
@@ -290,26 +295,17 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
         if (!targetRowIdForPicker) return;
-        const newEx: ConstructorExercise = {
-            id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-            exerciseId: exercise.id,
-            exerciseName: exerciseDisplayName(exercise),
-            plannedReps: "10",
-            plannedWeight: null,
-            plannedDuration: null,
-            effortCharacter: null,
-            effortValue: null,
-            notes: null,
-        };
         setConstructorRows((prev) =>
-            prev.map((r) =>
-                r.id === targetRowIdForPicker
-                    ? { ...r, exercises: [...r.exercises, newEx] }
-                    : r
+            applyExercisePickerSelection(
+                prev,
+                targetRowIdForPicker,
+                { id: exercise.id, name: exerciseDisplayName(exercise) },
+                targetExerciseSlotId
             )
         );
         setShowExercisePickerModal(false);
         setTargetRowIdForPicker(null);
+        setTargetExerciseSlotId(null);
     };
 
     /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */
@@ -485,8 +481,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 data: blockPayload,
                             }).unwrap();
 
-                            for (let j = 0; j < row.exercises.length; j++) {
-                                const ex = row.exercises[j];
+                            const persistable = getPersistableExercises(row);
+                            for (let j = 0; j < persistable.length; j++) {
+                                const ex = persistable[j];
                                 try {
                                     const payload = buildExercisePayload(
                                         row,
@@ -508,7 +505,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             // continuar
                         }
                     }
-                    const totalEx = constructorRows.reduce((s, r) => s + r.exercises.length, 0);
+                    const totalEx = constructorRows.reduce(
+                        (s, r) => s + getPersistableExercises(r).length,
+                        0
+                    );
                     if (blocksSaved === constructorRows.length && exercisesSaved === totalEx) {
                         showSuccess(`Sesión creada con ${blocksSaved} bloques y ${exercisesSaved} ejercicios.`, 2000);
                     } else if (blocksSaved > 0) {
@@ -884,8 +884,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             rows={constructorRows}
                                             blockTypes={blockTypes}
                                             onRowsChange={setConstructorRows}
-                                            onAddExerciseRequest={(rowId) => {
+                                            onAddExerciseRequest={(rowId, exerciseSlotId) => {
                                                 setTargetRowIdForPicker(rowId);
+                                                setTargetExerciseSlotId(exerciseSlotId ?? null);
                                                 setShowExercisePickerModal(true);
                                             }}
                                             titleAccessory={

@@ -1,0 +1,84 @@
+/**
+ * supersetRow.ts — Estado y normalización de filas superset (2 slots A1/A2).
+ * Contexto: CreateSession, EditSession y SupersetBlock comparten estas reglas.
+ * @author Frontend Team
+ * @since v5.3.0
+ */
+
+import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
+
+export const SUPERSET_SLOT_COUNT = 2;
+
+function generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+export function createSupersetExerciseSlot(slot: "a1" | "a2"): ConstructorExercise {
+    return {
+        id: `ex-superset-${slot}-${generateId()}`,
+        exerciseId: 0,
+        exerciseName: "",
+        plannedReps: "10",
+        plannedWeight: null,
+        plannedDuration: null,
+        effortCharacter: null,
+        effortValue: null,
+        notes: null,
+    };
+}
+
+export function isFilledConstructorExercise(ex: ConstructorExercise): boolean {
+    return ex.exerciseId > 0;
+}
+
+export function getPersistableExercises(row: ConstructorRow): ConstructorExercise[] {
+    return row.exercises.filter(isFilledConstructorExercise);
+}
+
+export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
+    if (row.setType !== SET_TYPE.SUPERSET) {
+        return row;
+    }
+
+    const slots: ConstructorExercise[] = [];
+    for (let i = 0; i < SUPERSET_SLOT_COUNT; i++) {
+        const existing = row.exercises[i];
+        if (existing) {
+            slots.push(existing);
+        } else {
+            slots.push(createSupersetExerciseSlot(i === 0 ? "a1" : "a2"));
+        }
+    }
+
+    return {
+        ...row,
+        exercises: slots,
+        sets: row.sets ?? 3,
+        rest: row.rest ?? 90,
+        repsTipo: row.repsTipo ?? "reps",
+    };
+}
+
+export function applyConstructorRowUpdate(
+    row: ConstructorRow,
+    updates: Partial<ConstructorRow>
+): ConstructorRow {
+    const next = { ...row, ...updates };
+    if (next.setType === SET_TYPE.SUPERSET) {
+        return normalizeSupersetRow(next);
+    }
+    return next;
+}
+
+export function supersetGroupLabels(rows: ConstructorRow[]): Map<string, string> {
+    const map = new Map<string, string>();
+    let index = 0;
+    for (const row of rows) {
+        if (row.setType !== SET_TYPE.SUPERSET) continue;
+        const letter = String.fromCharCode(65 + (index % 26));
+        map.set(row.id, `SUPERSET ${letter}`);
+        index += 1;
+    }
+    return map;
+}

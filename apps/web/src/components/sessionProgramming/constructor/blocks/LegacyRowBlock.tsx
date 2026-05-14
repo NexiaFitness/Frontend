@@ -16,7 +16,7 @@ export interface LegacyRowBlockProps {
     blockTypes: TrainingBlockType[];
     onUpdate: (rowId: string, updates: Partial<ConstructorRow>) => void;
     onRemove: (rowId: string) => void;
-    onAddExercise: (rowId: string) => void;
+    onAddExercise: (rowId: string, exerciseSlotId?: string) => void;
     onRemoveExercise: (rowId: string, exerciseId: string) => void;
     onUpdateExercise: (
         rowId: string,

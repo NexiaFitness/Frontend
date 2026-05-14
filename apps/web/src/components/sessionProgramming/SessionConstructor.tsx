@@ -1,30 +1,30 @@
 /**
  * SessionConstructor.tsx — Lista de bloques-card del Constructor de Sesión.
- * Contexto: orquesta ConstructorBlockShell + registro por setType; estado sigue en ConstructorRow[].
- * Notas de mantenimiento: LegacyRowBlock es puente S-INF hasta constructores dedicados por tipo.
- * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
- * @spec docs/tipo-serie/06_arquitectura-constructores-por-tipo.md — S-INF
+ * Contexto: orquesta constructores por setType; estado en ConstructorRow[].
+ * Notas de mantenimiento: superset usa SupersetBlock dedicado; resto LegacyRowBlock en shell.
+ * @spec docs/tipo-serie/06_arquitectura-constructores-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
  */
 
 import React from "react";
 import { Plus, Trash2 } from "lucide-react";
+import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
     ConstructorBlockShell,
+    SupersetBlock,
     resolveConstructorBlockComponent,
+    supersetGroupLabels,
 } from "./constructor";
 import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
 import type { ConstructorRow } from "./constructorTypes";
-import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 
 export interface SessionConstructorProps {
     rows: ConstructorRow[];
     blockTypes: TrainingBlockType[];
-    /** Típico: `setConstructorRows` de useState, admite array o updater funcional. */
     onRowsChange: (action: React.SetStateAction<ConstructorRow[]>) => void;
-    onAddExerciseRequest: (rowId: string) => void;
-    /** Misma línea que el título, alineado a la derecha (p. ej. carga axial). */
+    onAddExerciseRequest: (rowId: string, exerciseSlotId?: string) => void;
     titleAccessory?: React.ReactNode;
 }
 
@@ -44,7 +44,6 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         handleRemoveBlock,
     } = useSessionConstructorActions(onRowsChange);
 
-    /** Agrupar filas por blockTypeId para pie de bloque de entrenamiento */
     const rowsByBlock = React.useMemo(() => {
         const map = new Map<number, ConstructorRow[]>();
         for (const row of rows) {
@@ -56,6 +55,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         return map;
     }, [rows]);
 
+    const supersetLabels = React.useMemo(() => supersetGroupLabels(rows), [rows]);
     const hasRows = rows.length > 0;
 
     return (
@@ -80,7 +80,27 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                     {Array.from(rowsByBlock.entries()).map(([blockTypeId, blockRows]) => (
                         <div key={blockTypeId} className="space-y-3">
                             {blockRows.map((row, index) => {
-                                const BlockComponent = resolveConstructorBlockComponent(row.setType);
+                                if (row.setType === SET_TYPE.SUPERSET) {
+                                    return (
+                                        <SupersetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                supersetLabels.get(row.id) ?? "SUPERSET A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                        />
+                                    );
+                                }
+
+                                const BlockComponent = resolveConstructorBlockComponent(
+                                    row.setType
+                                );
+                                if (!BlockComponent) return null;
+
                                 return (
                                     <ConstructorBlockShell key={row.id} setType={row.setType}>
                                         <BlockComponent
