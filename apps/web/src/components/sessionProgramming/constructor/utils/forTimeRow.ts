@@ -56,6 +56,7 @@ export function normalizeForTimeRow(row: ConstructorRow): ConstructorRow {
         ...row,
         exercises,
         rounds: row.rounds ?? DEFAULT_FOR_TIME_ROUNDS,
+        timeCap: null,
         repsTipo: row.repsTipo ?? "reps",
     };
 }

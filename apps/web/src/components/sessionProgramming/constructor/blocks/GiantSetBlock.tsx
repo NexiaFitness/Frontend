@@ -26,7 +26,6 @@ import {
     CONSTRUCTOR_FIELD_LABEL_CLASS,
     CONSTRUCTOR_FOOTER_HINT_CLASS,
     CONSTRUCTOR_GIANT_SET_CARD_CLASS,
-    CONSTRUCTOR_GIANT_SET_INNER_CLASS,
 } from "../primitives/constructorCardStyles";
 
 const EXERCISE_GRID_CLASS =
@@ -138,21 +137,21 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                         </div>
                     </ConstructorGroupParamsBar>
 
-                    <div className={CONSTRUCTOR_GIANT_SET_INNER_CLASS}>
-                        <div
-                            className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS} !px-0`}
-                        >
-                            <span />
-                            <span>Ejercicio</span>
-                            <span className="text-center w-full">Reps / Tiempo</span>
-                            <span className="text-center w-full">Carácter</span>
-                        </div>
+                    <div
+                        className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS}`}
+                    >
+                        <span />
+                        <span>Ejercicio</span>
+                        <span className="text-center w-full">Reps / Tiempo</span>
+                        <span className="text-center w-full">Carácter</span>
+                    </div>
 
-                        <div className="space-y-2 pt-1">
+                    <div className="space-y-2 px-4 pb-3 pt-1">
                             {normalized.exercises.map((ex, index) => (
                                 <GroupedExerciseRow
                                     key={ex.id}
                                     slotLabel={slotLabel(index)}
+                                    variant="giant_set"
                                     isLast={index === normalized.exercises.length - 1}
                                 >
                                     <div className={EXERCISE_GRID_CLASS}>
@@ -207,7 +206,6 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                                     ) : null}
                                 </div>
                             </div>
-                        </div>
                     </div>
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>

@@ -14,6 +14,8 @@ import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
 import { normalizeDropsetRow } from "../constructor/utils/dropsetRow";
 import { normalizeGiantSetRow } from "../constructor/utils/giantSetRow";
 import { normalizeForTimeRow } from "../constructor/utils/forTimeRow";
+import { normalizeEmomRow } from "../constructor/utils/emomRow";
+import { normalizeAmrapRow } from "../constructor/utils/amrapRow";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -138,6 +140,20 @@ export function useSessionConstructorActions(
                     normalized = normalizeGiantSetRow(clone);
                 } else if (clone.setType === SET_TYPE.FOR_TIME) {
                     normalized = normalizeForTimeRow(clone);
+                } else if (clone.setType === SET_TYPE.EMOM) {
+                    normalized = normalizeEmomRow({
+                        ...clone,
+                        emomWindows: clone.emomWindows?.map((w) => ({
+                            ...w,
+                            id: `emom-win-${generateId()}`,
+                            exercises: w.exercises.map((ex) => ({
+                                ...ex,
+                                id: `ex-${generateId()}`,
+                            })),
+                        })),
+                    });
+                } else if (clone.setType === SET_TYPE.AMRAP) {
+                    normalized = normalizeAmrapRow(clone);
                 }
 
                 const next = [...prev];

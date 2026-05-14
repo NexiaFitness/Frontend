@@ -24,6 +24,10 @@ export { GiantSetBlock } from "./blocks/GiantSetBlock";
 export type { GiantSetBlockProps } from "./blocks/GiantSetBlock";
 export { ForTimeBlock } from "./blocks/ForTimeBlock";
 export type { ForTimeBlockProps } from "./blocks/ForTimeBlock";
+export { EmomBlock } from "./blocks/EmomBlock";
+export type { EmomBlockProps } from "./blocks/EmomBlock";
+export { AmrapBlock } from "./blocks/AmrapBlock";
+export type { AmrapBlockProps } from "./blocks/AmrapBlock";
 export {
     normalizeSingleSetRow,
     updateSingleSetData,
@@ -45,6 +49,8 @@ export {
     hydrateDropsetConstructorRow,
     isCollapsedDropsetApiLines,
     MAX_DROPS_AFTER_MAIN,
+    MIN_DROPSET_STEPS,
+    removeDropsetDrop,
     DEFAULT_DROPSET_ROUNDS,
 } from "./utils/dropsetRow";
 export {
@@ -62,6 +68,28 @@ export {
     DEFAULT_FOR_TIME_SLOTS,
     DEFAULT_FOR_TIME_ROUNDS,
 } from "./utils/forTimeRow";
+export {
+    normalizeEmomRow,
+    addEmomWindow,
+    removeEmomWindow,
+    addEmomWindowExercise,
+    removeEmomWindowLastExercise,
+    emomGroupLabels,
+    hydrateEmomConstructorRow,
+    computeEmomTotalMinutes,
+    MIN_EMOM_WINDOWS,
+    DEFAULT_EMOM_ROUNDS,
+    DEFAULT_EMOM_INTERVAL_SECONDS,
+} from "./utils/emomRow";
+export {
+    normalizeAmrapRow,
+    addAmrapExerciseSlot,
+    amrapGroupLabels,
+    MIN_AMRAP_SLOTS,
+    DEFAULT_AMRAP_SLOTS,
+    DEFAULT_AMRAP_DURATION_SECONDS,
+    DEFAULT_AMRAP_TARGET_ROUNDS,
+} from "./utils/amrapRow";
 export {
     getRowVolumeSetsPerExercise,
     getPersistLinePlannedSets,

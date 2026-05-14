@@ -26,7 +26,8 @@ export const DEFAULT_DROPSET_ROUNDS = 3;
 export const MAX_DROPS_AFTER_MAIN = 3;
 
 /** Estado inicial: MAIN + 1 drop */
-const DEFAULT_INITIAL_STEPS = 2;
+export const MIN_DROPSET_STEPS = 2;
+const DEFAULT_INITIAL_STEPS = MIN_DROPSET_STEPS;
 
 const LOAD_FIELDS: (keyof ConstructorSetData)[] = [
     "plannedReps",
@@ -142,6 +143,16 @@ export function addDropsetDrop(row: ConstructorRow): ConstructorRow {
         },
     ];
 
+    return normalizeDropsetRow({ ...normalized, setData: nextSetData });
+}
+
+export function removeDropsetDrop(row: ConstructorRow): ConstructorRow {
+    const normalized = normalizeDropsetRow(row);
+    const stepCount = normalized.setData?.length ?? MIN_DROPSET_STEPS;
+    if (stepCount <= MIN_DROPSET_STEPS) {
+        return normalized;
+    }
+    const nextSetData = normalized.setData!.slice(0, -1);
     return normalizeDropsetRow({ ...normalized, setData: nextSetData });
 }
 

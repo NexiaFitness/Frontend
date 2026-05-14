@@ -14,6 +14,7 @@ import type {
 } from "../../constructorTypes";
 import { isFilledConstructorExercise } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
+import { getEmomPersistLines } from "./emomRow";
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -178,6 +179,8 @@ export interface PersistExerciseLine {
     serverExerciseId?: number;
     /** Índice dropset: 0 = MAIN, 1+ = DROP n */
     dropsetSequence?: number;
+    /** Ventana EMOM (1-based → superset_group_id en API) */
+    emomWindowIndex?: number;
 }
 
 export function getConstructorPersistLines(row: ConstructorRow): PersistExerciseLine[] {
@@ -208,6 +211,10 @@ export function getConstructorPersistLines(row: ConstructorRow): PersistExercise
             serverExerciseId: entry.serverExerciseId,
             dropsetSequence: index,
         }));
+    }
+
+    if (row.setType === SET_TYPE.EMOM) {
+        return getEmomPersistLines(row);
     }
 
     return row.exercises

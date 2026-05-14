@@ -12,6 +12,8 @@ import { normalizeSupersetRow } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { normalizeGiantSetRow } from "./giantSetRow";
 import { normalizeForTimeRow } from "./forTimeRow";
+import { normalizeEmomRow } from "./emomRow";
+import { normalizeAmrapRow } from "./amrapRow";
 
 function generateExerciseId(): string {
     return `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -39,6 +41,23 @@ export function applyExercisePickerSelection(
         };
 
         if (exerciseSlotId) {
+            if (row.setType === SET_TYPE.EMOM) {
+                const base = normalizeEmomRow(row);
+                const windows = base.emomWindows!.map((window) => ({
+                    ...window,
+                    exercises: window.exercises.map((ex) =>
+                        ex.id === exerciseSlotId
+                            ? {
+                                  ...ex,
+                                  exerciseId: exercise.id,
+                                  exerciseName: exercise.name,
+                              }
+                            : ex
+                    ),
+                }));
+                return normalizeEmomRow({ ...base, emomWindows: windows });
+            }
+
             const base =
                 row.setType === SET_TYPE.SUPERSET
                     ? normalizeSupersetRow(row)
@@ -46,6 +65,8 @@ export function applyExercisePickerSelection(
                       ? normalizeGiantSetRow(row)
                       : row.setType === SET_TYPE.FOR_TIME
                         ? normalizeForTimeRow(row)
+                        : row.setType === SET_TYPE.AMRAP
+                          ? normalizeAmrapRow(row)
                         : row;
             return {
                 ...base,

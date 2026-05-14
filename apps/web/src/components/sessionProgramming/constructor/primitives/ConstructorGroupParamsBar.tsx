@@ -15,12 +15,16 @@ import {
     CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS,
     CONSTRUCTOR_FOR_TIME_BADGE_CLASS,
     CONSTRUCTOR_FOR_TIME_GROUP_BAR_CLASS,
+    CONSTRUCTOR_EMOM_BADGE_CLASS,
+    CONSTRUCTOR_EMOM_GROUP_BAR_CLASS,
+    CONSTRUCTOR_AMRAP_BADGE_CLASS,
+    CONSTRUCTOR_AMRAP_GROUP_BAR_CLASS,
 } from "./constructorCardStyles";
 
 export interface ConstructorGroupParamsBarProps {
     badgeLabel: string;
     children: React.ReactNode;
-    variant?: "primary" | "dropset" | "giant_set" | "for_time";
+    variant?: "primary" | "dropset" | "giant_set" | "for_time" | "emom" | "amrap";
     metaLabel?: string;
 }
 
@@ -28,6 +32,8 @@ function resolveBarClass(variant: ConstructorGroupParamsBarProps["variant"]): st
     if (variant === "dropset") return CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS;
     if (variant === "giant_set") return CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS;
     if (variant === "for_time") return CONSTRUCTOR_FOR_TIME_GROUP_BAR_CLASS;
+    if (variant === "emom") return CONSTRUCTOR_EMOM_GROUP_BAR_CLASS;
+    if (variant === "amrap") return CONSTRUCTOR_AMRAP_GROUP_BAR_CLASS;
     return CONSTRUCTOR_GROUP_BAR_CLASS;
 }
 
@@ -35,11 +41,13 @@ function resolveBadgeClass(variant: ConstructorGroupParamsBarProps["variant"]): 
     if (variant === "dropset") return CONSTRUCTOR_DROPSET_BADGE_CLASS;
     if (variant === "giant_set") return CONSTRUCTOR_GIANT_SET_BADGE_CLASS;
     if (variant === "for_time") return CONSTRUCTOR_FOR_TIME_BADGE_CLASS;
+    if (variant === "emom") return CONSTRUCTOR_EMOM_BADGE_CLASS;
+    if (variant === "amrap") return CONSTRUCTOR_AMRAP_BADGE_CLASS;
     return CONSTRUCTOR_GROUP_BADGE_CLASS;
 }
 
 function resolveMetaClass(variant: ConstructorGroupParamsBarProps["variant"]): string {
-    if (variant === "for_time") {
+    if (variant === "for_time" || variant === "emom") {
         return "text-[10px] italic text-muted-foreground";
     }
     return "text-[10px] font-semibold uppercase tracking-wider text-cyan-700/80 dark:text-cyan-400/80";

@@ -11,6 +11,8 @@ import { normalizeSingleSetRow } from "./singleSetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { normalizeGiantSetRow } from "./giantSetRow";
 import { normalizeForTimeRow } from "./forTimeRow";
+import { normalizeEmomRow } from "./emomRow";
+import { normalizeAmrapRow } from "./amrapRow";
 
 export const SUPERSET_SLOT_COUNT = 2;
 
@@ -100,6 +102,12 @@ export function applyConstructorRowUpdate(
     }
     if (next.setType === SET_TYPE.FOR_TIME) {
         return normalizeForTimeRow(next);
+    }
+    if (next.setType === SET_TYPE.EMOM) {
+        return normalizeEmomRow(next);
+    }
+    if (next.setType === SET_TYPE.AMRAP) {
+        return normalizeAmrapRow(next);
     }
     return next;
 }

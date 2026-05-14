@@ -14,7 +14,9 @@ import { Plus } from "lucide-react";
 import {
     addDropsetDrop,
     MAX_DROPS_AFTER_MAIN,
+    MIN_DROPSET_STEPS,
     normalizeDropsetRow,
+    removeDropsetDrop,
     setDataToExerciseView,
     updateDropsetData,
 } from "../utils/dropsetRow";
@@ -80,9 +82,16 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
 
     const additionalDrops = Math.max(0, setData.length - 1);
     const canAddDrop = additionalDrops < MAX_DROPS_AFTER_MAIN;
+    const canRemoveLast = setData.length > MIN_DROPSET_STEPS;
 
     const handleAddDrop = () => {
         const nextRow = addDropsetDrop(normalized);
+        onUpdate(normalized.id, { setData: nextRow.setData });
+    };
+
+    const handleRemoveLastDrop = () => {
+        if (!canRemoveLast) return;
+        const nextRow = removeDropsetDrop(normalized);
         onUpdate(normalized.id, { setData: nextRow.setData });
     };
 
@@ -228,15 +237,26 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
 
                         <div className="grid grid-cols-[44px_1fr] gap-3 pt-1">
                             <span />
-                            <button
-                                type="button"
-                                disabled={!canAddDrop}
-                                onClick={handleAddDrop}
-                                className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-orange-500/40 px-3 text-[11px] font-medium text-orange-600 transition-colors hover:border-orange-500/60 hover:bg-orange-500/[0.06] disabled:cursor-not-allowed disabled:opacity-40 dark:text-orange-400"
-                            >
-                                <Plus className="h-3.5 w-3.5 shrink-0" />
-                                Añadir Drop ({additionalDrops}/{MAX_DROPS_AFTER_MAIN})
-                            </button>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    disabled={!canAddDrop}
+                                    onClick={handleAddDrop}
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-orange-500/40 px-3 text-[11px] font-medium text-orange-600 transition-colors hover:border-orange-500/60 hover:bg-orange-500/[0.06] disabled:cursor-not-allowed disabled:opacity-40 dark:text-orange-400"
+                                >
+                                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                                    Añadir Drop ({additionalDrops}/{MAX_DROPS_AFTER_MAIN})
+                                </button>
+                                {canRemoveLast ? (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveLastDrop}
+                                        className="text-[11px] text-muted-foreground transition-colors hover:text-destructive"
+                                    >
+                                        Quitar último
+                                    </button>
+                                ) : null}
+                            </div>
                         </div>
                     </div>
 

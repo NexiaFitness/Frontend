@@ -18,15 +18,14 @@ type DedicatedSetType =
     | typeof SET_TYPE.SINGLE_SET
     | typeof SET_TYPE.DROPSET
     | typeof SET_TYPE.GIANT_SET
-    | typeof SET_TYPE.FOR_TIME;
+    | typeof SET_TYPE.FOR_TIME
+    | typeof SET_TYPE.EMOM
+    | typeof SET_TYPE.AMRAP;
 
-export const CONSTRUCTOR_BLOCK_REGISTRY: Record<
+export const CONSTRUCTOR_BLOCK_REGISTRY = {} as Record<
     Exclude<SetType, DedicatedSetType>,
     typeof LegacyRowBlock
-> = {
-    [SET_TYPE.EMOM]: LEGACY,
-    [SET_TYPE.AMRAP]: LEGACY,
-};
+>;
 
 export function resolveConstructorBlockComponent(
     setType: SetType
@@ -36,7 +35,9 @@ export function resolveConstructorBlockComponent(
         setType === SET_TYPE.SINGLE_SET ||
         setType === SET_TYPE.DROPSET ||
         setType === SET_TYPE.GIANT_SET ||
-        setType === SET_TYPE.FOR_TIME
+        setType === SET_TYPE.FOR_TIME ||
+        setType === SET_TYPE.EMOM ||
+        setType === SET_TYPE.AMRAP
     ) {
         return null;
     }

@@ -138,6 +138,9 @@ export function buildExercisePayloadFromLine(
         ...(row.setType === SET_TYPE.DROPSET && line.dropsetSequence != null
             ? { dropset_sequence: line.dropsetSequence }
             : {}),
+        ...(row.setType === SET_TYPE.EMOM && line.emomWindowIndex != null
+            ? { superset_group_id: line.emomWindowIndex }
+            : {}),
     };
 }
 

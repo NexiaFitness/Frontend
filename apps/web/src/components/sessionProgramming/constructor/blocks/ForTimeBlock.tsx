@@ -6,7 +6,7 @@
  */
 
 import React from "react";
-import { Plus, Timer } from "lucide-react";
+import { Plus } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
@@ -26,7 +26,6 @@ import {
     CONSTRUCTOR_FIELD_LABEL_CLASS,
     CONSTRUCTOR_FOOTER_HINT_CLASS,
     CONSTRUCTOR_FOR_TIME_CARD_CLASS,
-    CONSTRUCTOR_FOR_TIME_INNER_CLASS,
 } from "../primitives/constructorCardStyles";
 
 const EXERCISE_GRID_CLASS =
@@ -68,8 +67,6 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
     const normalized = normalizeForTimeRow(row);
     const exerciseCount = normalized.exercises.length;
     const canRemoveLast = exerciseCount > MIN_FOR_TIME_SLOTS;
-    const timeCapMinutes =
-        normalized.timeCap != null ? Math.floor(normalized.timeCap / 60) : "";
 
     const handleAddSlot = () => {
         const next = addForTimeExerciseSlot(normalized);
@@ -117,44 +114,23 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
                                 className="w-12"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Timer
-                                className="h-3.5 w-3.5 text-violet-600/70 dark:text-violet-400/70 shrink-0"
-                                aria-hidden
-                            />
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Time cap</span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={timeCapMinutes}
-                                onChange={(e) => {
-                                    const v = e.target.value;
-                                    onUpdate(normalized.id, {
-                                        timeCap: v ? Number(v) * 60 : null,
-                                    });
-                                }}
-                                placeholder="12"
-                                className="w-12"
-                            />
-                            <span className="text-[10px] text-muted-foreground">min</span>
-                        </div>
                     </ConstructorGroupParamsBar>
 
-                    <div className={CONSTRUCTOR_FOR_TIME_INNER_CLASS}>
-                        <div
-                            className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS} !px-0`}
-                        >
-                            <span />
-                            <span>Ejercicio</span>
-                            <span className="text-center w-full">Reps / Tiempo</span>
-                            <span className="text-center w-full">Carácter</span>
-                        </div>
+                    <div
+                        className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS}`}
+                    >
+                        <span />
+                        <span>Ejercicio</span>
+                        <span className="text-center w-full">Reps / Tiempo</span>
+                        <span className="text-center w-full">Carácter</span>
+                    </div>
 
-                        <div className="space-y-2 pt-1">
+                    <div className="space-y-2 px-4 pb-3 pt-1">
                             {normalized.exercises.map((ex, index) => (
                                 <GroupedExerciseRow
                                     key={ex.id}
                                     slotLabel={slotLabel(index)}
+                                    variant="for_time"
                                     isLast={index === normalized.exercises.length - 1}
                                 >
                                     <div className={EXERCISE_GRID_CLASS}>
@@ -209,7 +185,6 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
                                     ) : null}
                                 </div>
                             </div>
-                        </div>
                     </div>
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>

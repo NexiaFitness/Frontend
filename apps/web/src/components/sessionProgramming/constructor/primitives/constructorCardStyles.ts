@@ -69,6 +69,20 @@ export const CONSTRUCTOR_SLOT_RING_CLASS =
 export const CONSTRUCTOR_SLOT_CONNECTOR_CLASS =
     "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-primary/25";
 
+/** Anillo numerado for_time (violeta) */
+export const CONSTRUCTOR_FOR_TIME_SLOT_RING_CLASS =
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-500/45 bg-violet-500/[0.08] text-[10px] font-bold text-violet-700 dark:text-violet-400";
+
+export const CONSTRUCTOR_FOR_TIME_SLOT_CONNECTOR_CLASS =
+    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-violet-500/25";
+
+/** Anillo A1… giant_set (cyan) */
+export const CONSTRUCTOR_GIANT_SET_SLOT_RING_CLASS =
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-cyan-500/45 bg-cyan-500/[0.08] text-[10px] font-bold text-cyan-700 dark:text-cyan-400";
+
+export const CONSTRUCTOR_GIANT_SET_SLOT_CONNECTOR_CLASS =
+    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-cyan-500/25";
+
 /** Card dropset — acento naranja (borde izquierdo y sombra) */
 export const CONSTRUCTOR_DROPSET_CARD_CLASS =
     "rounded-lg border border-orange-500/25 border-l-[3px] border-l-orange-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(24_95%_53%/0.08),inset_3px_0_12px_-8px_hsl(24_95%_53%/0.35)] overflow-hidden";
@@ -121,3 +135,38 @@ export const CONSTRUCTOR_FOR_TIME_BADGE_CLASS =
 
 export const CONSTRUCTOR_FOR_TIME_INNER_CLASS =
     "mx-4 mb-3 rounded-md border border-violet-500/20 bg-violet-500/[0.04] px-3 pb-3 pt-2";
+
+/** Card emom — acento púrpura (distinto de for_time violeta) */
+export const CONSTRUCTOR_EMOM_CARD_CLASS =
+    "rounded-lg border border-purple-500/25 border-l-[3px] border-l-purple-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(280_70%_50%/0.08),inset_3px_0_12px_-8px_hsl(280_70%_50%/0.35)] overflow-hidden";
+
+export const CONSTRUCTOR_EMOM_GROUP_BAR_CLASS =
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-purple-500/10 bg-purple-500/[0.06] px-4 py-2.5";
+
+export const CONSTRUCTOR_EMOM_BADGE_CLASS =
+    "inline-flex shrink-0 items-center rounded-md border border-purple-500/35 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-purple-700 uppercase dark:text-purple-400";
+
+export const CONSTRUCTOR_EMOM_INNER_CLASS =
+    "mx-4 mb-3 pt-2";
+
+export const CONSTRUCTOR_EMOM_WINDOW_CLASS =
+    "rounded-md border border-purple-500/20 bg-purple-500/[0.04] px-3 pb-3 pt-1";
+
+export const CONSTRUCTOR_EMOM_WINDOW_LABEL_CLASS =
+    "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-purple-500/35 bg-purple-500/10 text-[10px] font-bold text-purple-700 dark:text-purple-400";
+
+/** Card amrap — acento rosa/rose */
+export const CONSTRUCTOR_AMRAP_CARD_CLASS =
+    "rounded-lg border border-rose-500/25 border-l-[3px] border-l-rose-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(350_70%_50%/0.08),inset_3px_0_12px_-8px_hsl(350_70%_50%/0.35)] overflow-hidden";
+
+export const CONSTRUCTOR_AMRAP_GROUP_BAR_CLASS =
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-rose-500/10 bg-rose-500/[0.06] px-4 py-2.5";
+
+export const CONSTRUCTOR_AMRAP_BADGE_CLASS =
+    "inline-flex shrink-0 items-center rounded-md border border-rose-500/35 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-rose-700 uppercase dark:text-rose-400";
+
+export const CONSTRUCTOR_AMRAP_SLOT_RING_CLASS =
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-rose-500/45 bg-rose-500/[0.08] text-[10px] font-bold text-rose-700 dark:text-rose-400";
+
+export const CONSTRUCTOR_AMRAP_SLOT_CONNECTOR_CLASS =
+    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-rose-500/25";

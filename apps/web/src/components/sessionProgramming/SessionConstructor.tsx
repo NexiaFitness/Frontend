@@ -18,11 +18,15 @@ import {
     DropsetBlock,
     GiantSetBlock,
     ForTimeBlock,
+    EmomBlock,
+    AmrapBlock,
     resolveConstructorBlockComponent,
     supersetGroupLabels,
     dropsetGroupLabels,
     giantSetGroupLabels,
     forTimeGroupLabels,
+    emomGroupLabels,
+    amrapGroupLabels,
 } from "./constructor";
 import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
 import type { ConstructorRow } from "./constructorTypes";
@@ -67,6 +71,8 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     const dropsetLabels = React.useMemo(() => dropsetGroupLabels(rows), [rows]);
     const giantSetLabels = React.useMemo(() => giantSetGroupLabels(rows), [rows]);
     const forTimeLabels = React.useMemo(() => forTimeGroupLabels(rows), [rows]);
+    const emomLabels = React.useMemo(() => emomGroupLabels(rows), [rows]);
+    const amrapLabels = React.useMemo(() => amrapGroupLabels(rows), [rows]);
     const hasRows = rows.length > 0;
 
     return (
@@ -169,6 +175,37 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             groupLabel={
                                                 forTimeLabels.get(row.id) ?? "FOR TIME A"
                                             }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.EMOM) {
+                                    return (
+                                        <EmomBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={emomLabels.get(row.id) ?? "EMOM A"}
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.AMRAP) {
+                                    return (
+                                        <AmrapBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={amrapLabels.get(row.id) ?? "AMRAP A"}
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}
                                             onUpdateExercise={handleUpdateExercise}

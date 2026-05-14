@@ -69,6 +69,9 @@ import {
     normalizeDropsetRow,
     normalizeGiantSetRow,
     normalizeForTimeRow,
+    normalizeEmomRow,
+    hydrateEmomConstructorRow,
+    normalizeAmrapRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -232,6 +235,7 @@ export const EditSession: React.FC = () => {
                     notes: string | null;
                     planned_duration: number | null;
                     order_in_block: number;
+                    superset_group_id: number | null;
                 }[]
             > = {};
 
@@ -289,6 +293,10 @@ export const EditSession: React.FC = () => {
                     return hydrateDropsetConstructorRow(base, exs);
                 }
 
+                if (setType === SET_TYPE.EMOM && exs.length > 0) {
+                    return hydrateEmomConstructorRow(base, exs);
+                }
+
                 return {
                     ...base,
                     exercises: exs.map((ex, j) => ({
@@ -338,6 +346,12 @@ export const EditSession: React.FC = () => {
                         }
                         if (row.setType === SET_TYPE.FOR_TIME) {
                             return normalizeForTimeRow(row);
+                        }
+                        if (row.setType === SET_TYPE.EMOM) {
+                            return normalizeEmomRow(row);
+                        }
+                        if (row.setType === SET_TYPE.AMRAP) {
+                            return normalizeAmrapRow(row);
                         }
                         return row;
                     })

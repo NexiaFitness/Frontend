@@ -41,6 +41,12 @@ export interface ConstructorSetData {
     serverExerciseId?: number;
 }
 
+/** Ventana EMOM (V1, V2…) — varios ejercicios en el mismo intervalo de tiempo. */
+export interface EmomWindow {
+    id: string;
+    exercises: ConstructorExercise[];
+}
+
 export interface ConstructorRow {
     id: string;
     blockTypeId: number;
@@ -55,6 +61,8 @@ export interface ConstructorRow {
     repsTipo?: RepsTipo;
     /** Sub-filas de carga por serie (single_set: length === sets) */
     setData?: ConstructorSetData[];
+    /** Ventanas EMOM (V1, V2…); cada una con 1+ ejercicios en el mismo intervalo */
+    emomWindows?: EmomWindow[];
     /** ID en servidor (para EditSession diff) */
     serverBlockId?: number;
 }
