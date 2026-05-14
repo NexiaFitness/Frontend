@@ -1,5 +1,5 @@
 /**
- * RepsTiempoField.tsx — Input Reps o Tiempo según modo de fila.
+ * RepsTiempoField.tsx — Input Reps o Tiempo por ejercicio.
  * Contexto: columnas de ejercicio en constructores card.
  * @author Frontend Team
  * @since v5.3.0
@@ -7,7 +7,12 @@
 
 import React from "react";
 import { FormCombobox } from "@/components/ui/forms";
+import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, RepsTipo } from "../../constructorTypes";
+import {
+    getExerciseRepsTipo,
+    repsTipoExercisePatch,
+} from "../utils/exerciseRepsMode";
 import {
     CONSTRUCTOR_FIELD_PAIR_CLASS,
     CONSTRUCTOR_MINI_COMBO_CLASS,
@@ -20,75 +25,72 @@ const REPS_TIPO_OPTIONS: { value: RepsTipo; label: string }[] = [
 ];
 
 export interface RepsTiempoFieldProps {
-    repsTipo: RepsTipo;
     exercise: ConstructorExercise;
-    showModeSelector: boolean;
-    onRepsTipoChange: (mode: RepsTipo) => void;
+    /** Fallback de modo (single_set a nivel fila) */
+    rowRepsTipo?: RepsTipo;
+    /** Si se define, el combo cambia el modo de toda la fila (single_set) */
+    onRowRepsTipoChange?: (mode: RepsTipo) => void;
     onExerciseChange: (updates: Partial<ConstructorExercise>) => void;
 }
 
 export const RepsTiempoField: React.FC<RepsTiempoFieldProps> = ({
-    repsTipo,
     exercise,
-    showModeSelector,
-    onRepsTipoChange,
+    rowRepsTipo = "reps",
+    onRowRepsTipoChange,
     onExerciseChange,
-}) => (
-    <div className={CONSTRUCTOR_FIELD_PAIR_CLASS}>
-        <FormCombobox
-            size="xs"
-            value={repsTipo}
-            onChange={(v) => onRepsTipoChange(v as RepsTipo)}
-            options={REPS_TIPO_OPTIONS}
-            placeholder="Reps"
-            aria-label="Modo Reps/Tiempo"
-            className={CONSTRUCTOR_MINI_COMBO_CLASS}
-            disabled={!showModeSelector}
-        />
-        {repsTipo === "reps" ? (
-            <input
-                type="text"
-                value={exercise.plannedReps ?? ""}
-                onChange={(e) =>
-                    onExerciseChange({
-                        plannedReps: e.target.value || null,
-                    })
-                }
-                placeholder="—"
-                className={CONSTRUCTOR_MINI_INPUT_CLASS}
-                aria-label="Repeticiones"
+}) => {
+    const repsTipo = onRowRepsTipoChange
+        ? rowRepsTipo
+        : getExerciseRepsTipo(exercise, rowRepsTipo);
+
+    const handleRepsTipoChange = (mode: RepsTipo) => {
+        if (onRowRepsTipoChange) {
+            onRowRepsTipoChange(mode);
+            return;
+        }
+        onExerciseChange(repsTipoExercisePatch(exercise, mode));
+    };
+
+    return (
+        <div className={CONSTRUCTOR_FIELD_PAIR_CLASS}>
+            <FormCombobox
+                size="xs"
+                value={repsTipo}
+                onChange={(v) => handleRepsTipoChange(v as RepsTipo)}
+                options={REPS_TIPO_OPTIONS}
+                placeholder="Reps"
+                aria-label="Modo Reps/Tiempo"
+                className={CONSTRUCTOR_MINI_COMBO_CLASS}
             />
-        ) : (
-            <input
-                type="text"
-                value={
-                    exercise.plannedDuration != null
-                        ? exercise.plannedDuration >= 60
-                            ? `${Math.floor(exercise.plannedDuration / 60)}:${(exercise.plannedDuration % 60).toString().padStart(2, "0")}`
-                            : String(exercise.plannedDuration)
-                        : ""
-                }
-                onChange={(e) => {
-                    const v = e.target.value.trim();
-                    if (!v) {
-                        onExerciseChange({ plannedDuration: null });
-                        return;
-                    }
-                    if (v.includes(":")) {
-                        const [m, s] = v.split(":").map(Number);
-                        const total = !Number.isNaN(m) && !Number.isNaN(s) ? m * 60 + s : null;
-                        onExerciseChange({ plannedDuration: total });
-                    } else {
-                        const parsed = parseInt(v, 10);
+            {repsTipo === "reps" ? (
+                <input
+                    type="text"
+                    value={exercise.plannedReps ?? ""}
+                    onChange={(e) =>
                         onExerciseChange({
-                            plannedDuration: Number.isNaN(parsed) ? null : parsed,
-                        });
+                            plannedReps: e.target.value || null,
+                        })
                     }
-                }}
-                placeholder="—"
-                className={CONSTRUCTOR_MINI_INPUT_CLASS}
-                aria-label="Duración"
-            />
-        )}
-    </div>
-);
+                    placeholder="—"
+                    className={CONSTRUCTOR_MINI_INPUT_CLASS}
+                    aria-label="Repeticiones"
+                />
+            ) : (
+                <InlineNumberInput
+                    size="xs"
+                    min={0}
+                    value={exercise.plannedDuration ?? ""}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        onExerciseChange({
+                            plannedDuration: val ? Number(val) : null,
+                        });
+                    }}
+                    placeholder="—"
+                    className="w-[44px] shrink-0"
+                    aria-label="Segundos"
+                />
+            )}
+        </div>
+    );
+};

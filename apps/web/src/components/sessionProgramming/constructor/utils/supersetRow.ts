@@ -32,6 +32,7 @@ export function createSupersetExerciseSlot(
         effortCharacter: null,
         effortValue: null,
         notes: null,
+        repsTipo: "reps",
     };
 }
 

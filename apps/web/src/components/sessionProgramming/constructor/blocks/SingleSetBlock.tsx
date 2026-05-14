@@ -158,10 +158,9 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
                                         >
                                             <div className={SET_GRID_CLASS}>
                                                 <RepsTiempoField
-                                                    repsTipo={repsTipo}
                                                     exercise={syntheticExercise}
-                                                    showModeSelector={index === 0}
-                                                    onRepsTipoChange={(mode) =>
+                                                    rowRepsTipo={repsTipo}
+                                                    onRowRepsTipoChange={(mode) =>
                                                         onUpdate(normalized.id, {
                                                             repsTipo: mode,
                                                         })

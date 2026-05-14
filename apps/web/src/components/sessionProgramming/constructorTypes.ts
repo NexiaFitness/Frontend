@@ -18,6 +18,8 @@ export interface ConstructorExercise {
     effortCharacter: EffortCharacter | null;
     effortValue: number | null;
     notes: string | null;
+    /** Modo Reps/Tiempo por ejercicio (superset: A1/A2 independientes) */
+    repsTipo?: RepsTipo;
     /** ID en servidor (para EditSession diff) */
     serverExerciseId?: number;
 }

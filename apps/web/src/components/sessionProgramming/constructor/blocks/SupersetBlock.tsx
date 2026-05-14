@@ -59,7 +59,6 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeSupersetRow(row);
-    const repsTipo = normalized.repsTipo ?? "reps";
 
     return (
         <div className={CONSTRUCTOR_CARD_CLASS}>
@@ -139,12 +138,8 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                                         }
                                     />
                                     <RepsTiempoField
-                                        repsTipo={repsTipo}
                                         exercise={ex}
-                                        showModeSelector={index === 0}
-                                        onRepsTipoChange={(mode) =>
-                                            onUpdate(normalized.id, { repsTipo: mode })
-                                        }
+                                        rowRepsTipo={normalized.repsTipo}
                                         onExerciseChange={(updates) =>
                                             onUpdateExercise(normalized.id, ex.id, updates)
                                         }

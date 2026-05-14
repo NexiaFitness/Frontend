@@ -7,6 +7,7 @@
 
 import React from "react";
 import { FormCombobox } from "@/components/ui/forms";
+import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import {
     getCaracterTipoFromEffortCharacter,
     getEffortCharacterForCaracterTipo,
@@ -17,7 +18,6 @@ import type { ConstructorExercise } from "../../constructorTypes";
 import {
     CONSTRUCTOR_FIELD_PAIR_CLASS,
     CONSTRUCTOR_MINI_COMBO_CLASS,
-    CONSTRUCTOR_MINI_INPUT_CLASS,
 } from "./constructorCardStyles";
 
 const CARACTER_TIPO_OPTIONS: { value: CaracterTipo; label: string }[] = [
@@ -83,14 +83,14 @@ export const CaracterField: React.FC<CaracterFieldProps> = ({
                 aria-label="Carácter"
                 className={CONSTRUCTOR_MINI_COMBO_CLASS}
             />
-            <input
-                type="number"
+            <InlineNumberInput
+                size="xs"
                 min={min}
                 max={max}
                 value={exercise.effortValue ?? ""}
                 onChange={(e) => handleValueChange(e.target.value, caracterTipo)}
                 placeholder={placeholder}
-                className={CONSTRUCTOR_MINI_INPUT_CLASS}
+                className="w-[44px] shrink-0"
                 aria-label="Valor de carácter"
             />
         </div>

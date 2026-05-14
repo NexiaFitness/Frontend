@@ -51,7 +51,7 @@ export const CONSTRUCTOR_BLOCK_DOT_CLASS =
 
 /** Combobox compacto en filas de ejercicio */
 export const CONSTRUCTOR_MINI_COMBO_CLASS =
-    "w-[58px] shrink-0 [&_button]:text-xs [&_button]:px-1.5 [&_button:disabled]:cursor-default [&_button:disabled]:opacity-100";
+    "w-[58px] shrink-0 [&_button]:text-xs [&_button]:px-1.5";
 
 /** Par combo + valor (ancho fijo para alinear filas) */
 export const CONSTRUCTOR_FIELD_PAIR_CLASS =
