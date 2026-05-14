@@ -55,9 +55,7 @@ const ClientDetail = lazy(() =>
 const ClientEdit = lazy(() =>
   import("./pages/clients/ClientEdit").then((m) => ({ default: m.ClientEdit }))
 );
-const ClientNewSessionPage = lazy(() =>
-  import("./pages/clients/ClientNewSessionPage").then((m) => ({ default: m.ClientNewSessionPage }))
-);
+
 const TrainingPlansPage = lazy(() =>
   import("./pages/trainingPlans/TrainingPlansPage").then((m) => ({ default: m.TrainingPlansPage }))
 );
@@ -76,6 +74,11 @@ const CreateTrainingPlanTemplate = lazy(() =>
 const TrainingPlanTemplateDetail = lazy(() =>
   import("./pages/trainingPlans/TrainingPlanTemplateDetail").then((m) => ({
     default: m.TrainingPlanTemplateDetail,
+  }))
+);
+const WeeklyStructurePage = lazy(() =>
+  import("./pages/trainingPlans/WeeklyStructurePage").then((m) => ({
+    default: m.WeeklyStructurePage,
   }))
 );
 const ExerciseList = lazy(() =>
@@ -253,6 +256,14 @@ function App() {
             }
           />
           <Route
+            path="training-plans/:planId/period-blocks/:blockId/weekly-structure"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <WeeklyStructurePage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
             path="training-plans"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
@@ -304,14 +315,7 @@ function App() {
               </RoleProtectedRoute>
             }
           />
-          <Route
-            path="clients/:id/sessions/new/*"
-            element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-                <ClientNewSessionPage />
-              </RoleProtectedRoute>
-            }
-          />
+
           <Route
             path="clients/:id"
             element={

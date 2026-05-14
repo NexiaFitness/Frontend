@@ -225,6 +225,9 @@ export interface TrainingSession {
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
+    // Period-based planning (optional — present when session belongs to a block)
+    training_plan_id?: number | null;
+    period_block_id?: number | null;
 }
 
 // ========================================

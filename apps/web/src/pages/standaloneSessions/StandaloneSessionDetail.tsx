@@ -11,7 +11,7 @@
  */
 
 import React, { useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar, ChevronRight, Clock, Timer } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -24,6 +24,9 @@ import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { cn } from "@/lib/utils";
+import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+
+const DEFAULT_STANDALONE_BACK = "/dashboard/sessions";
 
 const STATUS_LABELS: Record<string, string> = {
     planned: "Planificada",
@@ -77,6 +80,15 @@ function formatLongDate(dateStr: string | null | undefined): string {
 
 export const StandaloneSessionDetail: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
+    const backTarget = readSafeReturnTo(location.state) ?? null;
+    const goBack = () => {
+        if (backTarget) {
+            navigate(backTarget);
+        } else {
+            navigate(DEFAULT_STANDALONE_BACK);
+        }
+    };
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
 
@@ -144,8 +156,8 @@ export const StandaloneSessionDetail: React.FC = () => {
             <div className="p-6">
                 <Alert variant="error">{errorMessage}</Alert>
                 <div className="flex gap-3 mt-4">
-                    <Button variant="outline" onClick={() => navigate("/dashboard/clients")}>
-                        Volver a clientes
+                    <Button variant="outline" onClick={goBack}>
+                        {backTarget ? "Volver" : "Volver a clientes"}
                     </Button>
                 </div>
             </div>
@@ -165,9 +177,11 @@ export const StandaloneSessionDetail: React.FC = () => {
                 <button
                     type="button"
                     className="hover:text-foreground"
-                    onClick={() => navigate("/dashboard/sessions")}
+                    onClick={goBack}
                 >
-                    Sesiones
+                    {backTarget?.includes("/clients/") && !backTarget.includes("/sessions/new")
+                        ? "Cliente"
+                        : "Sesiones"}
                 </button>
                 <ChevronRight className="h-3.5 w-3.5" aria-hidden />
                 <span className="truncate font-medium text-foreground">{session.session_name}</span>
@@ -221,7 +235,7 @@ export const StandaloneSessionDetail: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                    <Button variant="outline" onClick={() => navigate("/dashboard/sessions")}>
+                    <Button variant="outline" onClick={goBack}>
                         <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
                     </Button>

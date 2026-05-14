@@ -195,14 +195,18 @@ export const trainingPlansApi = baseApi.injectEndpoints({
         /**
          * Eliminar training plan
          */
-        deleteTrainingPlan: builder.mutation<DeleteTrainingPlanResponse, number>({
-            query: (id) => ({
+        deleteTrainingPlan: builder.mutation<DeleteTrainingPlanResponse, { id: number; clientId?: number }>({
+            query: ({ id }) => ({
                 url: `/training-plans/${id}`,
                 method: "DELETE",
             }),
-            invalidatesTags: (result, error, id) => [
+            invalidatesTags: (result, error, { id, clientId }) => [
                 { type: "TrainingPlan", id },
                 { type: "TrainingPlan", id: "LIST" },
+                ...(clientId ? [
+                    { type: "Client" as const, id: `PLANS-${clientId}` },
+                    { type: "TrainingPlan" as const, id: `ACTIVE-${clientId}` },
+                ] : []),
             ],
         }),
 

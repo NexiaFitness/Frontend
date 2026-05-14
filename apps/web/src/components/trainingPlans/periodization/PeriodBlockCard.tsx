@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { Layers } from "lucide-react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
@@ -41,6 +43,7 @@ export const PeriodBlockCard: React.FC<Props> = ({
   volumeNominalPhase,
   volumeNominalLabel,
 }) => {
+  const navigate = useNavigate();
   const [showSessions, setShowSessions] = useState(false);
   const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
   const days = daysBetween(block.start_date, block.end_date);
@@ -143,17 +146,29 @@ export const PeriodBlockCard: React.FC<Props> = ({
             </span>
           </div>
         </div>
-        {onCreateSessionForBlock != null && (
+        <div className="flex flex-col gap-2 w-full shrink-0 sm:w-auto sm:flex-row">
           <Button
             type="button"
-            variant="outline"
+            variant="ghost"
             size="sm"
-            className="w-full shrink-0 sm:w-auto"
-            onClick={() => onCreateSessionForBlock(block)}
+            className="w-full sm:w-auto"
+            onClick={() => navigate(`/dashboard/training-plans/${block.training_plan_id}/period-blocks/${block.id}/weekly-structure`)}
           >
-            {sessions.length === 0 ? "Crear sesión" : "Añadir sesión"}
+            <Layers className="h-3.5 w-3.5 mr-1" />
+            Estructura
           </Button>
-        )}
+          {onCreateSessionForBlock != null && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => onCreateSessionForBlock(block)}
+            >
+              {sessions.length === 0 ? "Crear sesión" : "Añadir sesión"}
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Sessions summary */}

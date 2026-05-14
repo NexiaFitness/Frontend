@@ -132,7 +132,7 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
                 className={cn(
                     "inline-flex items-center gap-1.5",
                     "px-3 text-xs font-medium",
-                    isFormVariant ? "min-h-[44px]" : "h-9",
+                    "h-9",
                     "rounded-md",
                     "transition-all duration-200 ease-out",
                     "focus:outline-none focus:ring-0",

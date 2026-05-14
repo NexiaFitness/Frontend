@@ -14,8 +14,13 @@ export const getClientTrainingSessionsHandler = http.get("*/training-sessions/",
     await new Promise((res) => setTimeout(res, 100));
     
     const url = new URL(request.url);
-    const clientId = Number(url.searchParams.get("client_id"));
-    
+    const clientIdRaw = url.searchParams.get("client_id");
+
+    if (clientIdRaw == null || clientIdRaw === "") {
+        return HttpResponse.json([], { status: 200 });
+    }
+
+    const clientId = Number(clientIdRaw);
     if (!clientId || clientId <= 0) {
         return HttpResponse.json(
             { detail: "Invalid client ID" },

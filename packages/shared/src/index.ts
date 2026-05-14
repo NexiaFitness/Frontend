@@ -1,7 +1,11 @@
+// Analytics (lógica pura plan / bloques)
+export * from "./analytics/planBlockAnalytics";
+
 // API
 export * from "./api/authApi";
 export * from "./api/baseApi";
 export * from "./api/clientsApi";
+export * from "./api/sessionLoadApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
@@ -11,6 +15,7 @@ export {
 // Training Sessions API - exported separately to avoid conflicts
 export {
     useGetTrainingSessionsQuery,
+    useLazyGetTrainingSessionsQuery,
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
@@ -18,7 +23,9 @@ export {
     useUpdateTrainingSessionMutation,
     useDeleteTrainingSessionMutation,
     useCreateSessionExerciseMutation,
+    useReplicateTrainingSessionMutation,
 } from "./api/trainingSessionsApi";
+export type { GetTrainingSessionsQueryArg } from "./api/trainingSessionsApi";
 export {
     useGetDayExceptionsQuery,
     useCreateDayExceptionMutation,
@@ -135,6 +142,12 @@ export * from "./types/training";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
 export * from "./training/weeklyVolumeTarget";
+export * from "./training/weeklyVolumePanelModel";
+export {
+    mondayOfIsoWeekContaining,
+    formatWeekRangeLabelEs,
+    sundayOfWeekFromMondayYmd,
+} from "./utils/isoWeekRange";
 export * from "./types/trainingAnalytics";
 export * from "./types/trainingRecommendations";
 export * from "./types/sessionRecommendations";
@@ -149,13 +162,20 @@ export type {
     TrainingSessionStatus,
     SessionExercise,
     SessionExerciseCreate,
+    TrainingSessionReplicateRequest,
+    TrainingSessionReplicateResponse,
+    ReplicatedSessionItem,
+    SkippedConflictItem,
 } from "./types/trainingSessions";
 export {
     SESSION_TYPE_LABELS,
     INTENSITY_LABELS,
     TRAINING_SESSION_STATUS_LABELS,
+    isSessionDeletable,
 } from "./types/trainingSessions";
+export type { SessionDeletableInput } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
+export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
 export * from "./types/coherence";
@@ -323,6 +343,11 @@ export {
     type FatigueAlertContextualAction,
 } from "./utils/fatigueAlertActions";
 export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
+export * from "./utils/exerciseUiBucket";
+export {
+    generateSyntheticWeeks,
+    mergeWeeklyStructureWeeks,
+} from "./utils/weeklyStructure";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
 export {

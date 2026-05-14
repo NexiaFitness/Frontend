@@ -26,13 +26,14 @@ export interface FormComboboxProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
-    size?: "sm" | "md" | "lg";
+    size?: "xs" | "sm" | "md" | "lg";
 }
 
 const sizeStyles = {
-    sm: "h-9 px-3 text-xs",
-    md: "h-10 px-3 text-sm",
-    lg: "h-12 px-4 text-base",
+    xs: "h-8 px-2 text-xs",
+    sm: "h-9 px-3 text-sm",
+    md: "h-9 px-4 text-sm",
+    lg: "h-9 px-5 text-sm",
 };
 
 type PopoverCoords = { top: number; left: number; width: number; maxHeight: number };
@@ -44,7 +45,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     placeholder = "Seleccionar",
     disabled = false,
     className,
-    size = "md",
+    size = "sm",
 }) => {
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<PopoverCoords>({
@@ -125,14 +126,19 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 disabled={disabled}
                 className={cn(
                     "flex w-full items-center justify-between rounded-md border border-input bg-background py-2 ring-offset-background",
-                    "placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    "placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     !value && "text-muted-foreground",
                     sizeStyles[size]
                 )}
             >
                 <span className="truncate">{displayText}</span>
-                <ChevronDown className="h-4 w-4 opacity-50 shrink-0 ml-2" />
+                <ChevronDown
+                    className={cn(
+                        "opacity-50 shrink-0 ml-1",
+                        size === "xs" ? "h-3 w-3" : "h-4 w-4"
+                    )}
+                />
             </button>
 
             {open &&

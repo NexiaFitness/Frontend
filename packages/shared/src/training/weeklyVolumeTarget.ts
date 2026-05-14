@@ -11,6 +11,11 @@
  * @param maxSets Entero ≥ 1 (p. ej. `recommendations.volume.max_sets` con recomendaciones complete).
  * @param volumeLevel Entero en [1, 10] (p. ej. `PlanPeriodBlock.volume_level`).
  * @returns Entero mostrable, o `null` si alguna entrada no cumple precondiciones §6.1.
+ *
+ * Nota de arquitectura: en flujos donde el backend ya expone `weekly_target`
+ * (p. ej. `POST /session-load/validate-draft`), el frontend debe consumir ese
+ * valor directamente y NO recalcularlo con esta funcion. Esta funcion queda
+ * como fuente de verdad para contextos sin borrador (GET semanal, etc.).
  */
 export function computeTargetWeeklySets(maxSets: number, volumeLevel: number): number | null {
     if (!Number.isFinite(maxSets) || !Number.isFinite(volumeLevel)) {

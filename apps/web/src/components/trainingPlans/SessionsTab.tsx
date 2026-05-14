@@ -16,7 +16,7 @@
  */
 
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTrainingSessions } from '@nexia/shared/hooks/training/useTrainingSessions';
 import { SessionCard } from '@/components/trainingSessions';
 import { PeriodBlockEmptyCallout } from '@/components/trainingPlans/periodization/PeriodBlockEmptyCallout';
@@ -25,6 +25,10 @@ import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
 import { BaseModal } from '@/components/ui/modals/BaseModal';
 import { cn } from '@/lib/utils';
+import { returnToStateFromView } from '@/lib/sessionDetailNavigation';
+import { useReplicateSessionFlow } from '@/components/sessions/useReplicateSessionFlow';
+import { ReplicateSessionModal } from '@/components/sessions/ReplicateSessionModal';
+import { ReplicateSessionConflictModal } from '@/components/sessions/ReplicateSessionConflictModal';
 import type { PlanTrainingSession } from '@nexia/shared';
 
 function sessionFilterChipClass(active: boolean): string {
@@ -42,6 +46,7 @@ interface SessionsTabProps {
 
 export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const {
         sessions,
         upcomingSessions,
@@ -57,6 +62,19 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
     const [filter, setFilter] = useState<'all' | 'upcoming' | 'completed' | 'planned'>('all');
     const [sessionToDelete, setSessionToDelete] = useState<PlanTrainingSession | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [replicateSession, setReplicateSession] = useState<PlanTrainingSession | null>(null);
+
+    const replicateFlow = useReplicateSessionFlow(
+        replicateSession
+            ? {
+                  id: replicateSession.id,
+                  session_date: replicateSession.session_date,
+                  session_name: replicateSession.session_name,
+                  training_plan_id: replicateSession.training_plan_id ?? null,
+                  period_block_id: replicateSession.period_block_id ?? null,
+              }
+            : { id: 0, session_date: null, session_name: '', training_plan_id: null, period_block_id: null }
+    );
 
     // Handlers - Navegación a vistas completas (patrón del proyecto)
     const handleCreateSession = () => {
@@ -92,7 +110,16 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
     };
 
     const handleViewDetail = (session: PlanTrainingSession | { id: number }) => {
-        navigate(`/dashboard/session-programming/sessions/${session.id}`);
+        navigate(`/dashboard/session-programming/sessions/${session.id}`, {
+            state: returnToStateFromView(location),
+        });
+    };
+
+    const handleReplicate = (session: PlanTrainingSession | { id: number }) => {
+        if ('period_block_id' in session) {
+            setReplicateSession(session as PlanTrainingSession);
+            setTimeout(() => replicateFlow.openModal(), 0);
+        }
     };
 
     // Determinar qué sesiones mostrar según filtro
@@ -219,10 +246,32 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
                             onEdit={handleEditSession}
                             onDelete={handleDeleteClick}
                             onViewDetail={handleViewDetail}
+                            onReplicate={handleReplicate}
                         />
                     ))}
                 </div>
             )}
+
+            <ReplicateSessionModal
+                isOpen={replicateFlow.isOpen}
+                onClose={() => replicateFlow.setIsOpen(false)}
+                weeks={replicateFlow.weeks}
+                selectedWeeks={replicateFlow.selectedWeeks}
+                onToggleWeek={replicateFlow.toggleWeek}
+                onReplicate={replicateFlow.handleReplicate}
+                isLoading={replicateFlow.isReplicating}
+                sessionName={replicateSession?.session_name ?? ''}
+                hasBlock={replicateFlow.hasBlock}
+                isBlockLoading={replicateFlow.isBlockLoading}
+            />
+            <ReplicateSessionConflictModal
+                isOpen={replicateFlow.isConflictOpen}
+                onClose={replicateFlow.handleCancelConflict}
+                onConfirmReplace={replicateFlow.handleConfirmReplace}
+                conflicts={replicateFlow.pendingConflicts}
+                createdCount={replicateFlow.createdCount}
+                isLoading={replicateFlow.isReplicating}
+            />
 
             {/* Modal de confirmación de eliminación */}
             <BaseModal

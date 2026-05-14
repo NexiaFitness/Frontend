@@ -23,8 +23,8 @@ describe("Button", () => {
             expect(button).toBeInTheDocument()
             // Default variant=primary: gradient + text-primary-foreground
             expect(button).toHaveClass("text-primary-foreground", "bg-gradient-to-r")
-            // Default size=md: h-10 px-4 py-2
-            expect(button).toHaveClass("h-10", "px-4", "py-2")
+            // Default size=sm: h-9 px-3
+            expect(button).toHaveClass("h-9", "px-3")
         })
 
         it("renders children correctly", () => {
@@ -72,13 +72,13 @@ describe("Button", () => {
 
         it("renders medium size correctly", () => {
             render(<Button size="md">Medium</Button>)
-            expect(screen.getByRole("button")).toHaveClass("h-10", "px-4", "py-2")
+            expect(screen.getByRole("button")).toHaveClass("h-9", "px-4")
         })
 
         it("renders large size correctly", () => {
             render(<Button size="lg">Large</Button>)
-            // lg = h-11 px-8 (sizeStyles)
-            expect(screen.getByRole("button")).toHaveClass("h-11", "px-8")
+            // lg = h-9 px-8 (sizeStyles)
+            expect(screen.getByRole("button")).toHaveClass("h-9", "px-8")
         })
     })
 
@@ -181,7 +181,7 @@ describe("Button", () => {
             render(<Button variant="danger" size="lg">Large Danger</Button>)
             const button = screen.getByRole("button")
             expect(button).toHaveClass("bg-destructive")
-            expect(button).toHaveClass("h-11", "px-8")
+            expect(button).toHaveClass("h-9", "px-8")
         })
     })
 })

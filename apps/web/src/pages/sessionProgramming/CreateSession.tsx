@@ -4,7 +4,7 @@
  * Contexto:
  * - Vista protegida (solo trainers) para crear sesión manualmente
  * - Soporta: ?clientId=X (desde cliente) o ?planId=X (desde plan)
- * - Uso embebido: clientIdProp + returnToPath + backPath desde ClientNewSessionPage (ruta clients/:id/sessions/new)
+ * - Uso embebido: clientIdProp + returnToPath + backPath desde contexto cliente (navegación directa).
  * - Añadir ejercicio: botón abre ExercisePickerPanel (panel lateral, lista por letra)
  * - P2: Si no hay plan activo para la fecha seleccionada → StandaloneSession (sesión libre)
  *
@@ -46,15 +46,25 @@ import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel"
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
-import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
-import { buildExercisePayload } from "./buildExercisePayload";
+import {
+    applyExercisePickerSelection,
+    getConstructorPersistLines,
+} from "@/components/sessionProgramming/constructor";
+import type { ConstructorRow } from "@/components/sessionProgramming/constructorTypes";
+import { buildExercisePayloadFromLine } from "./buildExercisePayload";
+import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
+import { getRowVolumeSetsPerExercise } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
+import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
+import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
+import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
+import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -65,6 +75,7 @@ import type {
     SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
+import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import type { LocationStateReturnTo } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
 
@@ -220,6 +231,17 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         notes: "",
     });
 
+    const volumeRecComplete =
+        recommendationsData?.status === "complete"
+            ? (recommendationsData as TrainingPlanRecommendationsComplete)
+            : null;
+    const volumeMaxSets = volumeRecComplete?.recommendations.volume.max_sets;
+
+    const plannedVolumeInt = Math.min(
+        10,
+        Math.max(1, Math.round(Number(formData.plannedVolume) || 5))
+    );
+
     const [formErrors, setFormErrors] = useState<CreateSessionFormErrors>({});
 
     // P2: Plan activo para la fecha seleccionada (ventana start_date..end_date contiene sessionDate)
@@ -241,6 +263,22 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     /** Fase 4+7: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
+    const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
+
+    const draftExercisesForVolumePanel = useMemo(
+        () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
+        [constructorRows]
+    );
+
+    const weeklyVolumePanel = useWeeklyClientVolumePanel({
+        clientId: effectiveClientId,
+        sessionDateYmd: formData.sessionDate,
+        plannedVolume1to10: plannedVolumeInt,
+        recommendationsComplete: recommendationsData?.status === "complete",
+        volumeMaxSets,
+        includeStandalone: true,
+        draftExercises: draftExercisesForVolumePanel,
+    });
 
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
     const [createSessionBlock] = useCreateSessionBlockMutation();
@@ -252,30 +290,23 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         SessionCoherenceWarning[] | null
     >(null);
     const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
+    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
+    const [createdSessionId, setCreatedSessionId] = useState<number | null>(null);
 
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
         if (!targetRowIdForPicker) return;
-        const newEx: ConstructorExercise = {
-            id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-            exerciseId: exercise.id,
-            exerciseName: exerciseDisplayName(exercise),
-            plannedReps: "10",
-            plannedWeight: null,
-            plannedDuration: null,
-            effortCharacter: null,
-            effortValue: null,
-            notes: null,
-        };
         setConstructorRows((prev) =>
-            prev.map((r) =>
-                r.id === targetRowIdForPicker
-                    ? { ...r, exercises: [...r.exercises, newEx] }
-                    : r
+            applyExercisePickerSelection(
+                prev,
+                targetRowIdForPicker,
+                { id: exercise.id, name: exerciseDisplayName(exercise) },
+                targetExerciseSlotId
             )
         );
         setShowExercisePickerModal(false);
         setTargetRowIdForPicker(null);
+        setTargetExerciseSlotId(null);
     };
 
     /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */
@@ -362,22 +393,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
                 const created = await createStandaloneSession(standaloneData).unwrap();
 
+                const flatExercises = constructorRows.flatMap((r) => {
+                    const planned_sets = getRowVolumeSetsPerExercise(r);
+                    return r.exercises
+                        .filter((ex) => ex.exerciseId > 0)
+                        .map((ex) => ({
+                            exercise_id: ex.exerciseId,
+                            planned_sets,
+                            planned_reps: convertPlannedReps(ex.plannedReps ?? ""),
+                            planned_weight: ex.plannedWeight,
+                            planned_rest: r.rest,
+                            notes: ex.notes,
+                        }));
+                });
                 let order = 0;
-                const flatExercises = constructorRows.flatMap((r) =>
-                    r.exercises.map((ex) => ({
-                        exercise_id: ex.exerciseId,
-                        order_in_session: ++order,
-                        planned_sets: r.sets ?? 3,
-                        planned_reps: convertPlannedReps(ex.plannedReps ?? ""),
-                        planned_weight: ex.plannedWeight,
-                        planned_rest: r.rest,
-                        notes: ex.notes,
-                    }))
-                );
+                const flatWithOrder = flatExercises.map((ex) => ({
+                    ...ex,
+                    order_in_session: ++order,
+                }));
 
-                if (flatExercises.length > 0) {
+                if (flatWithOrder.length > 0) {
                     let savedCount = 0;
-                    for (const ex of flatExercises) {
+                    for (const ex of flatWithOrder) {
                         try {
                             await createStandaloneExercise({
                                 sessionId: created.id,
@@ -423,6 +460,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
 
                 const createdSession = await createTrainingSession(sessionData).unwrap();
+                setCreatedSessionId(createdSession.id);
 
                 if (constructorRows.length > 0) {
                     let blocksSaved = 0;
@@ -450,15 +488,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 data: blockPayload,
                             }).unwrap();
 
-                            for (let j = 0; j < row.exercises.length; j++) {
-                                const ex = row.exercises[j];
+                            const persistable = getConstructorPersistLines(row);
+                            for (let j = 0; j < persistable.length; j++) {
+                                const line = persistable[j];
                                 try {
-                                    const payload = buildExercisePayload(
-                                        row,
-                                        ex,
-                                        j + 1,
-                                        row.setType
-                                    );
+                                    const payload = buildExercisePayloadFromLine(row, line);
                                     await createSessionBlockExercise({
                                         blockId: createdBlock.id,
                                         data: payload,
@@ -473,7 +507,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             // continuar
                         }
                     }
-                    const totalEx = constructorRows.reduce((s, r) => s + r.exercises.length, 0);
+                    const totalEx = constructorRows.reduce(
+                        (s, r) => s + getConstructorPersistLines(r).length,
+                        0
+                    );
                     if (blocksSaved === constructorRows.length && exercisesSaved === totalEx) {
                         showSuccess(`Sesión creada con ${blocksSaved} bloques y ${exercisesSaved} ejercicios.`, 2000);
                     } else if (blocksSaved > 0) {
@@ -495,7 +532,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     setPostCreateCoherenceWarnings(warnings);
                     setPostCreateRedirectPath(redirectTo);
                 } else {
-                    setTimeout(() => navigate(redirectTo), 1500);
+                    setValidationPanelOpen(true);
                 }
             }
         } catch (err) {
@@ -534,8 +571,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         variant="primary"
                         onClick={() => {
                             setPostCreateCoherenceWarnings(null);
-                            setPostCreateRedirectPath(null);
-                            navigate(postCreateRedirectPath);
+                            setValidationPanelOpen(true);
                         }}
                     >
                         Entendido
@@ -804,7 +840,18 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
                             {/* Recomendaciones de plan (Lovable) — solo cuando hay cliente asignado */}
                             {effectiveClientId && (
-                                <RecommendationsCards clientId={effectiveClientId} />
+                                <>
+                                    <RecommendationsCards clientId={effectiveClientId} />
+                                    <WeeklyClientVolumePanel
+                                        weekLabel={weeklyVolumePanel.weekLabel}
+                                        rows={weeklyVolumePanel.rows}
+                                        isLoading={weeklyVolumePanel.isLoading}
+                                        isError={weeklyVolumePanel.isError}
+                                        hasClient={weeklyVolumePanel.hasClient}
+                                        usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
+                                        weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                    />
+                                </>
                             )}
 
                             {/* Bloques + Constructor + Panel lateral — flex cuando panel abierto */}
@@ -839,10 +886,16 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             rows={constructorRows}
                                             blockTypes={blockTypes}
                                             onRowsChange={setConstructorRows}
-                                            onAddExerciseRequest={(rowId) => {
+                                            onAddExerciseRequest={(rowId, exerciseSlotId) => {
                                                 setTargetRowIdForPicker(rowId);
+                                                setTargetExerciseSlotId(exerciseSlotId ?? null);
                                                 setShowExercisePickerModal(true);
                                             }}
+                                            titleAccessory={
+                                                constructorRows.length > 0 ? (
+                                                    <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                                ) : undefined
+                                            }
                                         />
                                     </div>
 
@@ -948,6 +1001,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     </div>
                 </div>
             </div>
+
+            <SessionValidationPanel
+                trainingSessionId={createdSessionId}
+                isOpen={validationPanelOpen}
+                onClose={() => {
+                    setValidationPanelOpen(false);
+                    const target = postCreateRedirectPath || backPath;
+                    if (target) {
+                        navigate(target);
+                    } else {
+                        const state = location.state as LocationStateReturnTo | null;
+                        if (state?.from) {
+                            navigate(state.from);
+                        } else {
+                            navigate(-1);
+                        }
+                    }
+                }}
+                onEdit={() => {
+                    setValidationPanelOpen(false);
+                }}
+            />
         </>
     );
 };

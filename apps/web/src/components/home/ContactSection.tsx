@@ -171,7 +171,7 @@ export const ContactSection: React.FC = () => {
                                     placeholder="Tu nombre"
                                     value={typedFormData.name}
                                     onChange={(e) => handleInputChange("name")(e)}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-2 placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
                                 />
                                 {errors.name && (
                                     <p className="mt-1 text-sm text-destructive">{errors.name}</p>
@@ -188,7 +188,7 @@ export const ContactSection: React.FC = () => {
                                     placeholder="tu@email.com"
                                     value={typedFormData.email}
                                     onChange={(e) => handleInputChange("email")(e)}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-2 placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
                                 />
                                 {errors.email && (
                                     <p className="mt-1 text-sm text-destructive">{errors.email}</p>
@@ -205,7 +205,7 @@ export const ContactSection: React.FC = () => {
                                     onChange={(e) => handleInputChange("message")(e)}
                                     placeholder="Cuéntanos qué necesitas..."
                                     rows={4}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary focus:ring-offset-2 placeholder:text-muted-foreground resize-none"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] placeholder:text-muted-foreground resize-none"
                                 />
                                 {errors.message && (
                                     <p className="mt-1 text-sm text-destructive">

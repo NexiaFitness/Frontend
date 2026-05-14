@@ -12,6 +12,8 @@ export { SearchBar } from "./SearchBar";
 export { FormSelect } from "./FormSelect";
 export { FormCombobox } from "./FormCombobox";
 export { DatePickerButton } from "./DatePickerButton";
+export { TimePickerButton } from "./TimePickerButton";
+export type { TimePickerButtonProps } from "./TimePickerButton";
 export { Textarea } from "./Textarea";
 export { InlineNumberInput } from "./InlineNumberInput";
 export type { InlineNumberSize } from "./InlineNumberInput";

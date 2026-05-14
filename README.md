@@ -799,7 +799,10 @@ El test falla de forma clara si la pantalla no existe, el endpoint cambió o el 
 - **Production**: Vercel with automatic deployments
 - **Environment**: Development, staging, production
 - **Monitoring**: Error tracking and performance
-- **CI/CD**: GitHub Actions for quality gates
+- **CI/CD**: GitHub Actions for quality gates (`.github/workflows/deploy.yml`)
+
+### Vercel CLI en GitHub Actions
+El job de deploy instala la CLI oficial con una versión **fijada** (`VERCEL_CLI_PIN` en el job `deploy`). No uses `latest` en CI: un cambio upstream puede romper el pipeline sin tocar el repo. Cuando Vercel exija una CLI más nueva (o quieras nuevas features), sube **a mano** ese valor y verifica el workflow (p. ej. `npm view vercel version`).
 
 ## Contributing
 1. Fork the repository

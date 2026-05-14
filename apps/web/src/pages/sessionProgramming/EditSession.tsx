@@ -11,7 +11,7 @@
  * @since v6.0.0
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
@@ -46,21 +47,43 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
+import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
 import type {
     ConstructorRow,
     ConstructorExercise,
     RepsTipo,
 } from "@/components/sessionProgramming/constructorTypes";
 import {
-    buildExercisePayload,
-    buildExerciseUpdatePayload,
+    buildExercisePayloadFromLine,
+    buildExerciseUpdatePayloadFromLine,
 } from "./buildExercisePayload";
+import {
+    applyExercisePickerSelection,
+    getConstructorPersistLines,
+    hydrateSingleSetConstructorRow,
+    hydrateDropsetConstructorRow,
+    isCollapsedSingleSetApiLines,
+    isCollapsedDropsetApiLines,
+    normalizeSupersetRow,
+    normalizeSingleSetRow,
+    normalizeDropsetRow,
+    normalizeGiantSetRow,
+    normalizeForTimeRow,
+    normalizeEmomRow,
+    hydrateEmomConstructorRow,
+    normalizeAmrapRow,
+} from "@/components/sessionProgramming/constructor";
+import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, Flame, Gauge } from "lucide-react";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
+import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
+import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
+import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import { SESSION_TYPES } from "./sessionFormConstants";
 
 /** Escala 1–10 del slider; el API a veces devuelve floats o valores fuera de rango. */
@@ -108,6 +131,11 @@ export const EditSession: React.FC = () => {
         includeHistory: false,
     });
 
+    const { data: editRecommendationsData } = useGetTrainingPlanRecommendationsQuery(
+        { clientId: session?.client_id ?? 0 },
+        { skip: !session?.client_id }
+    );
+
     // Hook de mutación para actualizar sesión
     const [updateTrainingSession, { isLoading: isUpdatingSession }] = useUpdateTrainingSessionMutation();
 
@@ -122,12 +150,37 @@ export const EditSession: React.FC = () => {
         notes: "",
     });
 
+    const editVolumeRecComplete =
+        editRecommendationsData?.status === "complete"
+            ? (editRecommendationsData as TrainingPlanRecommendationsComplete)
+            : null;
+    const editVolumeMaxSets = editVolumeRecComplete?.recommendations.volume.max_sets;
+    const editPlannedVolumeInt = sliderDisplay1to10(formData.plannedVolume, 5);
+
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
 
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
+    const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
+
+    const draftExercisesForVolumePanel = useMemo(
+        () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
+        [constructorRows]
+    );
+
+    const weeklyVolumePanel = useWeeklyClientVolumePanel({
+        clientId: session?.client_id,
+        sessionDateYmd: formData.sessionDate,
+        plannedVolume1to10: editPlannedVolumeInt,
+        recommendationsComplete: editRecommendationsData?.status === "complete",
+        volumeMaxSets: editVolumeMaxSets,
+        excludeTrainingSessionId: sessionId > 0 ? sessionId : undefined,
+        includeStandalone: true,
+        draftExercises: draftExercisesForVolumePanel,
+    });
 
     const dispatch = useDispatch<AppDispatch>();
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
@@ -182,6 +235,7 @@ export const EditSession: React.FC = () => {
                     notes: string | null;
                     planned_duration: number | null;
                     order_in_block: number;
+                    superset_group_id: number | null;
                 }[]
             > = {};
 
@@ -208,17 +262,43 @@ export const EditSession: React.FC = () => {
             const rows: ConstructorRow[] = sortedBlocks.map((b, i) => {
                 const exs = exercisesByBlock[b.id] ?? [];
                 const firstEx = exs[0];
-                return {
+                const setType =
+                    (b.set_type as ConstructorRow["setType"]) ?? SET_TYPE.SINGLE_SET;
+
+                const base: ConstructorRow = {
                     id: `row-${b.id}-${i}`,
                     serverBlockId: b.id,
                     blockTypeId: b.block_type_id,
-                    setType: (b.set_type as ConstructorRow["setType"]) ?? SET_TYPE.SINGLE_SET,
+                    setType,
                     sets: exs[0]?.planned_sets ?? null,
                     rounds: b.rounds,
                     timeCap: b.time_cap,
                     intervalSeconds: b.interval_seconds,
                     rest: exs[0]?.planned_rest ?? 60,
                     repsTipo: firstEx ? inferRepsTipo(firstEx) : "reps",
+                    exercises: [],
+                };
+
+                if (
+                    setType === SET_TYPE.SINGLE_SET &&
+                    isCollapsedSingleSetApiLines(exs)
+                ) {
+                    return hydrateSingleSetConstructorRow(base, exs);
+                }
+
+                if (
+                    setType === SET_TYPE.DROPSET &&
+                    isCollapsedDropsetApiLines(exs)
+                ) {
+                    return hydrateDropsetConstructorRow(base, exs);
+                }
+
+                if (setType === SET_TYPE.EMOM && exs.length > 0) {
+                    return hydrateEmomConstructorRow(base, exs);
+                }
+
+                return {
+                    ...base,
                     exercises: exs.map((ex, j) => ({
                         id: `ex-${ex.id}-${j}`,
                         serverExerciseId: ex.id,
@@ -227,7 +307,8 @@ export const EditSession: React.FC = () => {
                         plannedReps: ex.planned_reps,
                         plannedWeight: ex.planned_weight,
                         plannedDuration: ex.planned_duration,
-                        effortCharacter: ex.effort_character as ConstructorExercise["effortCharacter"],
+                        effortCharacter:
+                            ex.effort_character as ConstructorExercise["effortCharacter"],
                         effortValue: ex.effort_value,
                         notes: ex.notes,
                     })),
@@ -242,13 +323,38 @@ export const EditSession: React.FC = () => {
             }
 
             setConstructorRows(
-                rows.map((row) => ({
-                    ...row,
-                    exercises: row.exercises.map((ex) => ({
-                        ...ex,
-                        exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
-                    })),
-                })),
+                rows
+                    .map((row) => ({
+                        ...row,
+                        exercises: row.exercises.map((ex) => ({
+                            ...ex,
+                            exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
+                        })),
+                    }))
+                    .map((row) => {
+                        if (row.setType === SET_TYPE.SUPERSET) {
+                            return normalizeSupersetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.SINGLE_SET) {
+                            return normalizeSingleSetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.DROPSET) {
+                            return normalizeDropsetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.GIANT_SET) {
+                            return normalizeGiantSetRow(row);
+                        }
+                        if (row.setType === SET_TYPE.FOR_TIME) {
+                            return normalizeForTimeRow(row);
+                        }
+                        if (row.setType === SET_TYPE.EMOM) {
+                            return normalizeEmomRow(row);
+                        }
+                        if (row.setType === SET_TYPE.AMRAP) {
+                            return normalizeAmrapRow(row);
+                        }
+                        return row;
+                    })
             );
         };
 
@@ -261,28 +367,19 @@ export const EditSession: React.FC = () => {
     const handleSelectFromPicker = useCallback(
         (exercise: Exercise) => {
             if (!targetRowIdForPicker) return;
-            const newEx: ConstructorExercise = {
-                id: `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                exerciseId: exercise.id,
-                exerciseName: exerciseDisplayName(exercise),
-                plannedReps: "10",
-                plannedWeight: null,
-                plannedDuration: null,
-                effortCharacter: null,
-                effortValue: null,
-                notes: null,
-            };
             setConstructorRows((prev) =>
-                prev.map((r) =>
-                    r.id === targetRowIdForPicker
-                        ? { ...r, exercises: [...r.exercises, newEx] }
-                        : r
+                applyExercisePickerSelection(
+                    prev,
+                    targetRowIdForPicker,
+                    { id: exercise.id, name: exerciseDisplayName(exercise) },
+                    targetExerciseSlotId
                 )
             );
             setShowExercisePickerModal(false);
             setTargetRowIdForPicker(null);
+            setTargetExerciseSlotId(null);
         },
-        [targetRowIdForPicker]
+        [targetRowIdForPicker, targetExerciseSlotId]
     );
 
     // Prellenar formulario cuando se carga la sesión
@@ -397,24 +494,23 @@ export const EditSession: React.FC = () => {
                         currentExs.map((e: { id: number }) => e.id)
                     );
 
-                    for (let j = 0; j < row.exercises.length; j++) {
-                        const ex = row.exercises[j];
-                        if (ex.serverExerciseId) {
-                            const updatePayload = buildExerciseUpdatePayload(
+                    const persistLines = getConstructorPersistLines(row);
+                    for (let j = 0; j < persistLines.length; j++) {
+                        const line = persistLines[j];
+                        if (line.serverExerciseId) {
+                            const updatePayload = buildExerciseUpdatePayloadFromLine(
                                 row,
-                                ex
+                                line
                             );
                             await updateSessionBlockExercise({
-                                id: ex.serverExerciseId,
+                                id: line.serverExerciseId,
                                 data: updatePayload,
                             }).unwrap();
-                            serverExIds.delete(ex.serverExerciseId);
+                            serverExIds.delete(line.serverExerciseId);
                         } else {
-                            const createPayload = buildExercisePayload(
+                            const createPayload = buildExercisePayloadFromLine(
                                 row,
-                                ex,
-                                j + 1,
-                                row.setType
+                                line
                             );
                             await createSessionBlockExercise({
                                 blockId: row.serverBlockId,
@@ -430,14 +526,10 @@ export const EditSession: React.FC = () => {
                         sessionId,
                         data: blockPayload,
                     }).unwrap();
-                    for (let j = 0; j < row.exercises.length; j++) {
-                        const ex = row.exercises[j];
-                        const payload = buildExercisePayload(
-                            row,
-                            ex,
-                            j + 1,
-                            row.setType
-                        );
+                    const persistLinesNew = getConstructorPersistLines(row);
+                    for (let j = 0; j < persistLinesNew.length; j++) {
+                        const line = persistLinesNew[j];
+                        const payload = buildExercisePayloadFromLine(row, line);
                         await createSessionBlockExercise({
                             blockId: created.id,
                             data: payload,
@@ -452,13 +544,7 @@ export const EditSession: React.FC = () => {
 
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
-            setTimeout(() => {
-                if (session.training_plan_id) {
-                    navigate(`/dashboard/training-plans/${session.training_plan_id}?tab=sessions`);
-                } else {
-                    navigate("/dashboard");
-                }
-            }, 1500);
+            setValidationPanelOpen(true);
         } catch (err) {
             console.error("Error actualizando sesión:", err);
             const errorMessage =
@@ -678,7 +764,18 @@ export const EditSession: React.FC = () => {
                         ) : null}
 
                         {session.client_id ? (
-                            <RecommendationsCards clientId={session.client_id} />
+                            <>
+                                <RecommendationsCards clientId={session.client_id} />
+                                <WeeklyClientVolumePanel
+                                    weekLabel={weeklyVolumePanel.weekLabel}
+                                    rows={weeklyVolumePanel.rows}
+                                    isLoading={weeklyVolumePanel.isLoading}
+                                    isError={weeklyVolumePanel.isError}
+                                    hasClient={weeklyVolumePanel.hasClient}
+                                    usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
+                                    weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                />
+                            </>
                         ) : null}
 
                         <div className="flex gap-6">
@@ -715,10 +812,16 @@ export const EditSession: React.FC = () => {
                                         rows={constructorRows}
                                         blockTypes={blockTypes}
                                         onRowsChange={setConstructorRows}
-                                        onAddExerciseRequest={(rowId) => {
+                                        onAddExerciseRequest={(rowId, exerciseSlotId) => {
                                             setTargetRowIdForPicker(rowId);
+                                            setTargetExerciseSlotId(exerciseSlotId ?? null);
                                             setShowExercisePickerModal(true);
                                         }}
+                                        titleAccessory={
+                                            constructorRows.length > 0 ? (
+                                                <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                            ) : undefined
+                                        }
                                     />
                                 </div>
 
@@ -779,6 +882,21 @@ export const EditSession: React.FC = () => {
                     </Button>
                 </div>
             </div>
+
+            <SessionValidationPanel
+                trainingSessionId={sessionId}
+                isOpen={validationPanelOpen}
+                onClose={() => setValidationPanelOpen(false)}
+                onEdit={() => setValidationPanelOpen(false)}
+                onContinue={() => {
+                    setValidationPanelOpen(false);
+                    if (session?.training_plan_id) {
+                        navigate(`/dashboard/training-plans/${session.training_plan_id}?tab=sessions`);
+                    } else {
+                        navigate("/dashboard");
+                    }
+                }}
+            />
         </>
     );
 };

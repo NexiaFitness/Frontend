@@ -50,6 +50,18 @@
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 240 14% 20%;
     --sidebar-ring: 190 100% 50%;
+
+    /* ===== Bucket Colors — Movement Patterns (FEATURE_UX_MEJORA_ESTRUCTURA_SEMANAL §9) ===== */
+    --bucket-lower: 0 80% 65%;
+    --bucket-lower-foreground: 240 33% 4%;
+    --bucket-upper: 210 80% 60%;
+    --bucket-upper-foreground: 240 33% 4%;
+    --bucket-core: 160 80% 55%;
+    --bucket-core-foreground: 240 33% 4%;
+    --bucket-power: 35 100% 55%;
+    --bucket-power-foreground: 240 33% 4%;
+    --bucket-accessory: 260 40% 65%;
+    --bucket-accessory-foreground: 240 33% 4%;
   }
 
   * {

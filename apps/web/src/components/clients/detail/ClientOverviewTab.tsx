@@ -434,7 +434,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                     id="rating-select"
                                     value={ratingValue}
                                     onChange={(e) => setRatingValue(Number(e.target.value))}
-                                    className="block w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                    className="block w-full max-w-xs rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
                                     required
                                 >
                                     {[1, 2, 3, 4, 5].map((n) => (
@@ -453,7 +453,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                     value={ratingComment}
                                     onChange={(e) => setRatingComment(e.target.value)}
                                     rows={2}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:border-primary focus:ring-1 focus:ring-primary"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
                                 />
                             </div>
                             <div className="flex gap-2">

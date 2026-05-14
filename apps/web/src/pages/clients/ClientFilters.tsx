@@ -99,7 +99,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                             placeholder="Nombre, apellidos o mail..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="w-full px-4 py-2.5 pl-10 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary transition-colors bg-background text-foreground placeholder:text-muted-foreground"
+                            className="w-full px-4 py-2.5 pl-10 border border-input rounded-lg focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors bg-background text-foreground placeholder:text-muted-foreground"
                         />
                         <svg
                             className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground"
@@ -126,7 +126,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         id="objetivo_entrenamiento"
                         value={filters.objetivo_entrenamiento || ""}
                         onChange={handleObjetivoChange}
-                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary transition-colors bg-background text-foreground"
+                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors bg-background text-foreground"
                     >
                         <option value="">Todos</option>
                         <option value={TRAINING_GOAL_ENUM.HIPERTROFIA}>Hipertrofia muscular</option>
@@ -149,7 +149,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         id="experiencia"
                         value={filters.experiencia || ""}
                         onChange={handleExperienciaChange}
-                        className="w-full px-4 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors bg-white"
+                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors bg-background text-foreground"
                     >
                         <option value="">Todos</option>
                         <option value={EXPERIENCE_ENUM.BAJA}>Principiante (Baja)</option>
@@ -167,7 +167,7 @@ export const ClientFilters: React.FC<ClientFiltersProps> = ({ filters, onFilters
                         id="activo"
                         value={filters.activo === undefined ? "" : filters.activo.toString()}
                         onChange={handleActivoChange}
-                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:ring-2 focus:ring-ring focus:border-primary transition-colors bg-background text-foreground"
+                        className="w-full px-4 py-2.5 border border-input rounded-lg focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] transition-colors bg-background text-foreground"
                     >
                         <option value="">Todos</option>
                         <option value="true">Activos</option>

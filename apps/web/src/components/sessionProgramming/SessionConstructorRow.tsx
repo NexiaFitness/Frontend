@@ -12,6 +12,7 @@ import React from "react";
 import { Plus, X, Timer } from "lucide-react";
 import { FormSelect, FormCombobox } from "@/components/ui/forms";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
+import { cn } from "@/lib/utils";
 import type { ConstructorRow, ConstructorExercise, RepsTipo } from "./constructorTypes";
 import {
     getCaracterTipoFromEffortCharacter,
@@ -83,7 +84,6 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
         row.setType === "single_set" ||
         row.setType === "superset" ||
         row.setType === "giant_set";
-    const showRoundsInSeriesCol = row.setType === "circuit";
 
     const blockSelectOptions = blockTypes.map((bt) => ({
         value: String(bt.id),
@@ -109,7 +109,15 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                     options={blockSelectOptions}
                     placeholder="Seleccionar"
                     aria-label="Bloque de entrenamiento"
-                    className="!h-8 !min-h-8 shrink-0 w-full min-w-0"
+                    className={cn(
+                        "!h-8 !min-h-8 shrink-0 w-full min-w-0",
+                        "font-medium",
+                        "border border-primary/40 !bg-primary/10 !shadow-none",
+                        "focus:!border-primary/50 focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
+                        row.blockTypeId
+                            ? "!text-primary"
+                            : "!text-muted-foreground"
+                    )}
                 />
             </div>
 
@@ -133,18 +141,6 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                         onChange={(e) =>
                             onUpdate(row.id, {
                                 sets: e.target.value ? Number(e.target.value) : null,
-                            })
-                        }
-                        min={1}
-                        className="w-14"
-                    />
-                ) : showRoundsInSeriesCol ? (
-                    <InlineNumberInput
-                        size="xs"
-                        value={row.rounds ?? ""}
-                        onChange={(e) =>
-                            onUpdate(row.id, {
-                                rounds: e.target.value ? Number(e.target.value) : null,
                             })
                         }
                         min={1}
@@ -190,7 +186,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                 {row.exercises.map((ex, idx) => {
                     const repsTipo = row.repsTipo ?? "reps";
                     const showCombobox = idx === 0;
-                    const inputCls = `flex ${INPUT_H} w-[50px] shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-0`;
+                    const inputCls = `flex ${INPUT_H} w-[50px] shrink-0 rounded-md border border-border/60 bg-surface px-2 py-1.5 text-center text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]`;
                     return (
                         <div key={ex.id} className="flex items-center gap-1 min-h-8">
                             {showCombobox ? (
@@ -408,8 +404,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
             {/* Barra config — ancho completo, alineada a la izquierda (debajo de Bloque) */}
             {(row.setType === "amrap" ||
                 row.setType === "for_time" ||
-                row.setType === "emom" ||
-                row.setType === "circuit") && (
+                row.setType === "emom") && (
                 <div className="col-span-full flex flex-wrap items-center gap-3 py-2 bg-accent/30 border-t border-border/40 mt-2">
                     {row.setType === "amrap" && (
                         <>
@@ -441,6 +436,23 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                             <span className="text-[10px] text-muted-foreground italic">
                                 Objetivo: máx. rondas
                             </span>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[11px] text-muted-foreground">
+                                    Rondas objetivo:
+                                </span>
+                                <InlineNumberInput
+                                    size="compact"
+                                    min={1}
+                                    value={row.rounds ?? ""}
+                                    onChange={(e) =>
+                                        onUpdate(row.id, {
+                                            rounds: e.target.value ? Number(e.target.value) : null,
+                                        })
+                                    }
+                                    placeholder="5"
+                                    className="w-14"
+                                />
+                            </div>
                         </>
                     )}
                     {row.setType === "for_time" && (
@@ -555,28 +567,6 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     <span className="text-[10px] text-muted-foreground">min</span>
                                 </div>
                             )}
-                        </>
-                    )}
-                    {row.setType === "circuit" && (
-                        <>
-                            <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold border-primary/40 text-primary">
-                                Circuit
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                                <span className="text-[11px] text-muted-foreground">Rondas:</span>
-                                <InlineNumberInput
-                                    size="compact"
-                                    min={1}
-                                    value={row.rounds ?? ""}
-                                    onChange={(e) =>
-                                        onUpdate(row.id, {
-                                            rounds: e.target.value ? Number(e.target.value) : null,
-                                        })
-                                    }
-                                    placeholder="3"
-                                    className="w-14"
-                                />
-                            </div>
                         </>
                     )}
                 </div>

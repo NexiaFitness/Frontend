@@ -14,4 +14,5 @@ export { useTrainingPlanTemplates } from './useTrainingPlanTemplates';
 export { useTrainingSessions } from './useTrainingSessions';
 export { useTrainingPlanCoherence } from './useTrainingPlanCoherence';
 export { useTrainingPlanAlignment } from './useTrainingPlanAlignment';
+export { usePlanBlockAnalytics } from './usePlanBlockAnalytics';
 export { useClientActiveBlock } from './useClientActiveBlock';

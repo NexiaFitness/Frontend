@@ -20,14 +20,13 @@ import {
     useGetScheduledSessions,
     useUpcomingScheduledSession,
 } from "@nexia/shared";
-import { useGetSessionTemplatesQuery } from "@nexia/shared/api/sessionProgrammingApi";
+
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import {
     ScheduledSessionCalendar,
     UpcomingScheduledSessionCard,
-    SessionTemplatesList,
     TrainerAvailabilitySection,
 } from "@/components/scheduling";
 
@@ -74,16 +73,6 @@ export const SchedulingPage: React.FC = () => {
         trainer_id: trainerId,
     });
 
-    // Obtener templates
-    const {
-        data: templatesData,
-        isLoading: isLoadingTemplates,
-    } = useGetSessionTemplatesQuery({
-        skip: 0,
-        limit: 100,
-    });
-    const templates = templatesData?.items ?? [];
-
     const handleDateClick = (date: Date) => {
         const dateStr = date.toISOString().split("T")[0];
         navigate(`/dashboard/scheduling/new?date=${dateStr}`);
@@ -93,25 +82,17 @@ export const SchedulingPage: React.FC = () => {
         navigate(`/dashboard/scheduling/${session.id}/edit`);
     };
 
-    const handleUseTemplate = (templateId: number) => {
-        navigate(`/dashboard/scheduling/new?templateId=${templateId}`);
-    };
-
-    const handleCreateTemplate = () => {
-        navigate("/dashboard/session-programming/create-template");
-    };
-
     const handleMonthChange = (date: Date) => {
         setCurrentMonth(date);
     };
 
-    const isLoading = isLoadingSessions || isLoadingUpcoming || isLoadingTemplates;
+    const isLoading = isLoadingSessions || isLoadingUpcoming;
 
     return (
         <>
             <PageTitle
-                title="Programación de Sesiones"
-                subtitle="Gestiona tus citas agendadas con clientes"
+                title="Agenda"
+                subtitle="Gestiona tus citas y disponibilidad"
                 className="mb-6"
             />
 
@@ -154,12 +135,7 @@ export const SchedulingPage: React.FC = () => {
                                     onSessionClick={upcomingSession ? () => handleSessionClick(upcomingSession) : undefined}
                                 />
 
-                                {/* Templates */}
-                                <SessionTemplatesList
-                                    templates={templates}
-                                    onUseTemplate={handleUseTemplate}
-                                    onCreateTemplate={handleCreateTemplate}
-                                />
+
                             </div>
                         </div>
                     )}

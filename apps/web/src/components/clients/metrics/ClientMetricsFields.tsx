@@ -185,7 +185,7 @@ export const ClientMetricsFields: React.FC<ClientMetricsFieldsProps> = ({
                                 value={formData.notas ?? ""}
                                 onChange={(e) => updateField("notas", e.target.value || null)}
                                 rows={3}
-                                className="w-full border rounded-lg p-2 bg-white text-slate-800 resize-none"
+                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] resize-none"
                                 placeholder="Observaciones sobre este registro de progreso..."
                             />
                             {errors.notas && (

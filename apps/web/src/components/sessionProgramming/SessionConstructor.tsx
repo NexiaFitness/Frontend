@@ -1,29 +1,42 @@
 /**
- * SessionConstructor.tsx — Tabla principal del Constructor de Sesión
- *
- * Dos estados: placeholder (sin filas) vs tabla (con cabeceras, filas, pie por bloque).
- * Filas agrupadas por blockTypeId; cada grupo tiene su pie: + Añadir serie | Eliminar bloque.
- *
- * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
- * @spec Lovable — Bloques + Constructor dinámico
+ * SessionConstructor.tsx — Lista de bloques-card del Constructor de Sesión.
+ * Contexto: orquesta constructores por setType; estado en ConstructorRow[].
+ * Notas de mantenimiento: superset usa SupersetBlock dedicado; resto LegacyRowBlock en shell.
+ * @spec docs/tipo-serie/06_arquitectura-constructores-por-tipo.md
+ * @author Frontend Team
+ * @since v5.3.0
  */
 
 import React from "react";
-import { Plus, Trash2, Timer } from "lucide-react";
-import { SessionConstructorRow } from "./SessionConstructorRow";
-import type { ConstructorRow, ConstructorExercise } from "./constructorTypes";
-import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
+import { Plus, Trash2 } from "lucide-react";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
-
-function generateId(): string {
-    return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
+import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
+import {
+    ConstructorBlockShell,
+    SupersetBlock,
+    SingleSetBlock,
+    DropsetBlock,
+    GiantSetBlock,
+    ForTimeBlock,
+    EmomBlock,
+    AmrapBlock,
+    resolveConstructorBlockComponent,
+    supersetGroupLabels,
+    dropsetGroupLabels,
+    giantSetGroupLabels,
+    forTimeGroupLabels,
+    emomGroupLabels,
+    amrapGroupLabels,
+} from "./constructor";
+import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
+import type { ConstructorRow } from "./constructorTypes";
 
 export interface SessionConstructorProps {
     rows: ConstructorRow[];
     blockTypes: TrainingBlockType[];
-    onRowsChange: (rows: ConstructorRow[]) => void;
-    onAddExerciseRequest: (rowId: string) => void;
+    onRowsChange: (action: React.SetStateAction<ConstructorRow[]>) => void;
+    onAddExerciseRequest: (rowId: string, exerciseSlotId?: string) => void;
+    titleAccessory?: React.ReactNode;
 }
 
 export const SessionConstructor: React.FC<SessionConstructorProps> = ({
@@ -31,68 +44,18 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     blockTypes,
     onRowsChange,
     onAddExerciseRequest,
+    titleAccessory,
 }) => {
-    const handleUpdateRow = (rowId: string, updates: Partial<ConstructorRow>) => {
-        onRowsChange(
-            rows.map((r) => (r.id === rowId ? { ...r, ...updates } : r))
-        );
-    };
+    const {
+        handleUpdateRow,
+        handleRemoveRow,
+        handleRemoveExercise,
+        handleUpdateExercise,
+        handleAddRow,
+        handleRemoveBlock,
+        handleDuplicateRow,
+    } = useSessionConstructorActions(onRowsChange);
 
-    const handleAddExercise = (rowId: string) => {
-        onAddExerciseRequest(rowId);
-    };
-
-    const handleRemoveExercise = (rowId: string, exerciseId: string) => {
-        onRowsChange(
-            rows.map((r) => {
-                if (r.id !== rowId) return r;
-                const exercises = r.exercises.filter((ex) => ex.id !== exerciseId);
-                return { ...r, exercises };
-            })
-        );
-    };
-
-    const handleUpdateExercise = (
-        rowId: string,
-        exerciseId: string,
-        updates: Partial<ConstructorExercise>
-    ) => {
-        onRowsChange(
-            rows.map((r) => {
-                if (r.id !== rowId) return r;
-                const exercises = r.exercises.map((ex) =>
-                    ex.id === exerciseId ? { ...ex, ...updates } : ex
-                );
-                return { ...r, exercises };
-            })
-        );
-    };
-
-    const handleAddRow = (blockTypeId: number) => {
-        const newRow: ConstructorRow = {
-            id: generateId(),
-            blockTypeId,
-            setType: SET_TYPE.SINGLE_SET,
-            sets: 3,
-            rounds: null,
-            timeCap: null,
-            intervalSeconds: null,
-            exercises: [],
-            rest: 60,
-            repsTipo: "reps",
-        };
-        onRowsChange([...rows, newRow]);
-    };
-
-    const handleRemoveRow = (rowId: string) => {
-        onRowsChange(rows.filter((r) => r.id !== rowId));
-    };
-
-    const handleRemoveBlock = (blockTypeId: number) => {
-        onRowsChange(rows.filter((r) => r.blockTypeId !== blockTypeId));
-    };
-
-    /** Agrupar filas por blockTypeId para mostrar pie por bloque */
     const rowsByBlock = React.useMemo(() => {
         const map = new Map<number, ConstructorRow[]>();
         for (const row of rows) {
@@ -104,52 +67,185 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
         return map;
     }, [rows]);
 
-    const showTable = rows.length > 0;
+    const supersetLabels = React.useMemo(() => supersetGroupLabels(rows), [rows]);
+    const dropsetLabels = React.useMemo(() => dropsetGroupLabels(rows), [rows]);
+    const giantSetLabels = React.useMemo(() => giantSetGroupLabels(rows), [rows]);
+    const forTimeLabels = React.useMemo(() => forTimeGroupLabels(rows), [rows]);
+    const emomLabels = React.useMemo(() => emomGroupLabels(rows), [rows]);
+    const amrapLabels = React.useMemo(() => amrapGroupLabels(rows), [rows]);
+    const hasRows = rows.length > 0;
 
     return (
-        <div className="rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-border/70 bg-surface/20 text-card-foreground overflow-hidden">
             <div className="p-4 border-b border-border">
-                <h3 className="text-sm font-semibold text-foreground">
-                    Constructor de Sesión
-                </h3>
+                <div className="flex items-center justify-between gap-3 min-w-0">
+                    <h3 className="text-sm font-semibold text-foreground truncate">
+                        Constructor de Sesión
+                    </h3>
+                    {titleAccessory ? (
+                        <div className="shrink-0 flex items-center">{titleAccessory}</div>
+                    ) : null}
+                </div>
             </div>
 
-            {!showTable ? (
+            {!hasRows ? (
                 <div className="p-12 text-center text-sm text-muted-foreground">
                     Selecciona un bloque de entrenamiento para comenzar a construir tu sesión.
                 </div>
             ) : (
-                <div className="divide-y divide-border">
-                    {/* Cabeceras — grid: más espacio Reps/Tiempo, Carácter, Descanso; menos Ejercicios */}
-                    <div className="grid grid-cols-[170px_110px_70px_minmax(140px,1fr)_140px_160px_100px] gap-2 px-4 py-2.5 bg-surface/50 text-[11px] font-medium text-muted-foreground uppercase tracking-wider items-center">
-                        <span>Bloque</span>
-                        <span>Tipo Serie</span>
-                        <span>Series</span>
-                        <span>Ejercicios</span>
-                        <span className="flex items-center justify-center w-full text-center">Reps / Tiempo</span>
-                        <span className="flex items-center justify-center w-full text-center">Carácter</span>
-                        <span className="flex items-center justify-center gap-1 w-full text-center">
-                            <Timer className="h-3 w-3 shrink-0" aria-hidden />
-                            Descanso
-                        </span>
-                    </div>
-
-                    {/* Filas agrupadas por bloque — cada grupo tiene su pie con + Añadir serie | Eliminar bloque */}
+                <div className="p-4 space-y-6">
                     {Array.from(rowsByBlock.entries()).map(([blockTypeId, blockRows]) => (
-                        <React.Fragment key={blockTypeId}>
-                            {blockRows.map((row) => (
-                                <SessionConstructorRow
-                                    key={row.id}
-                                    row={row}
-                                    blockTypes={blockTypes}
-                                    onUpdate={handleUpdateRow}
-                                    onRemove={handleRemoveRow}
-                                    onAddExercise={handleAddExercise}
-                                    onRemoveExercise={handleRemoveExercise}
-                                    onUpdateExercise={handleUpdateExercise}
-                                />
-                            ))}
-                            <div className="flex items-center justify-between px-4 py-2 bg-surface/20 border-t border-border/40">
+                        <div key={blockTypeId} className="space-y-4">
+                            {blockRows.map((row, index) => {
+                                if (row.setType === SET_TYPE.SUPERSET) {
+                                    return (
+                                        <SupersetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                supersetLabels.get(row.id) ?? "SUPERSET A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.SINGLE_SET) {
+                                    return (
+                                        <SingleSetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.DROPSET) {
+                                    return (
+                                        <DropsetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                dropsetLabels.get(row.id) ?? "DROP SET A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.GIANT_SET) {
+                                    return (
+                                        <GiantSetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                giantSetLabels.get(row.id) ?? "GIANT SET A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.FOR_TIME) {
+                                    return (
+                                        <ForTimeBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                forTimeLabels.get(row.id) ?? "FOR TIME A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.EMOM) {
+                                    return (
+                                        <EmomBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={emomLabels.get(row.id) ?? "EMOM A"}
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.AMRAP) {
+                                    return (
+                                        <AmrapBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={amrapLabels.get(row.id) ?? "AMRAP A"}
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                const BlockComponent = resolveConstructorBlockComponent(
+                                    row.setType
+                                );
+                                if (!BlockComponent) return null;
+
+                                return (
+                                    <ConstructorBlockShell
+                                        key={row.id}
+                                        blockTypeId={row.blockTypeId}
+                                        blockTypes={blockTypes}
+                                        setType={row.setType}
+                                        onSetTypeChange={(setType) =>
+                                            handleUpdateRow(row.id, { setType })
+                                        }
+                                        onDuplicate={() => handleDuplicateRow(row.id)}
+                                        onRemove={() => handleRemoveRow(row.id)}
+                                    >
+                                        <BlockComponent
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            onUpdate={handleUpdateRow}
+                                            onRemove={handleRemoveRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onRemoveExercise={handleRemoveExercise}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            showColumnHeader={index === 0}
+                                        />
+                                    </ConstructorBlockShell>
+                                );
+                            })}
+                            <div className="flex items-center justify-between px-1 py-1">
                                 <button
                                     type="button"
                                     onClick={() => handleAddRow(blockTypeId)}
@@ -167,7 +263,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                     Eliminar bloque
                                 </button>
                             </div>
-                        </React.Fragment>
+                        </div>
                     ))}
                 </div>
             )}

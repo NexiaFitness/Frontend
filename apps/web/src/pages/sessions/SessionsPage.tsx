@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Plus, Search, Pencil } from "lucide-react";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetSessionsQuery } from "@nexia/shared/api/sessionsApi";
@@ -22,6 +22,7 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { PaginationBar } from "@/components/ui/pagination";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
 import { PageTitle } from "@/components/dashboard/shared";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -72,6 +73,7 @@ function getEditUrl(s: SessionOut): string {
 
 export const SessionsPage: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const user = useSelector((state: RootState) => state.auth.user);
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
@@ -320,11 +322,17 @@ export const SessionsPage: React.FC = () => {
                                         key={`${s.session_kind}-${s.id}`}
                                         role="button"
                                         tabIndex={0}
-                                        onClick={() => navigate(getDetailUrl(s))}
+                                        onClick={() =>
+                                            navigate(getDetailUrl(s), {
+                                                state: returnToStateFromView(location),
+                                            })
+                                        }
                                         onKeyDown={(e) => {
                                             if (e.key === "Enter" || e.key === " ") {
                                                 e.preventDefault();
-                                                navigate(getDetailUrl(s));
+                                                navigate(getDetailUrl(s), {
+                                                    state: returnToStateFromView(location),
+                                                });
                                             }
                                         }}
                                         className="flex w-full cursor-pointer items-center gap-4 rounded-lg bg-card p-4 text-left transition-colors hover:bg-surface-2"

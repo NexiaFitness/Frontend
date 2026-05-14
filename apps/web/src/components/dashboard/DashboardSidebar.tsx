@@ -183,13 +183,13 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
 
                 <div
                     className={cn(
-                        "shrink-0 border-t border-border min-h-[3.75rem]",
-                        isCollapsed ? "pl-[14px] pr-[14px] py-3" : "pl-[14px] pr-3 py-3"
+                        "shrink-0 border-t border-border py-4",
+                        isCollapsed ? "pl-[14px] pr-[14px]" : "pl-[14px] pr-3"
                     )}
                 >
-                    <div className="flex items-start gap-3">
+                    <div className="flex items-center gap-3 w-full">
                         <div
-                            className="h-8 w-8 shrink-0 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-medium"
+                            className="h-9 w-9 shrink-0 rounded-full bg-primary/20 text-primary flex items-center justify-center text-sm font-medium"
                             title={user ? `${user.nombre} ${user.apellidos}` : undefined}
                         >
                             {user?.nombre?.[0]?.toUpperCase() ?? "?"}
