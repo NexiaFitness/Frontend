@@ -1,5 +1,5 @@
 /**
- * ForTimeBlock.tsx — Constructor card for_time (diseño Lovable, acento violeta).
+ * ForTimeBlock.tsx — Constructor card for_time (diseño Lovable, acento verde).
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
@@ -169,7 +169,7 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
                                     <button
                                         type="button"
                                         onClick={handleAddSlot}
-                                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-violet-500/40 px-3 text-[11px] font-medium text-violet-700 transition-colors hover:border-violet-500/60 hover:bg-violet-500/[0.06] dark:text-violet-400"
+                                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-emerald-500/40 px-3 text-[11px] font-medium text-emerald-700 transition-colors hover:border-emerald-500/60 hover:bg-emerald-500/[0.06] dark:text-emerald-400"
                                     >
                                         <Plus className="h-3.5 w-3.5 shrink-0" />
                                         Añadir ejercicio ({exerciseCount})

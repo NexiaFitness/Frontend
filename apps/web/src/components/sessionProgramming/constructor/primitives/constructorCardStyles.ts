@@ -69,74 +69,66 @@ export const CONSTRUCTOR_SLOT_RING_CLASS =
 export const CONSTRUCTOR_SLOT_CONNECTOR_CLASS =
     "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-primary/25";
 
-/** Anillo numerado for_time (violeta) */
+/** Anillo numerado for_time (verde / emerald) */
 export const CONSTRUCTOR_FOR_TIME_SLOT_RING_CLASS =
-    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-violet-500/45 bg-violet-500/[0.08] text-[10px] font-bold text-violet-700 dark:text-violet-400";
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-emerald-500/45 bg-emerald-500/[0.08] text-[10px] font-bold text-emerald-700 dark:text-emerald-400";
 
 export const CONSTRUCTOR_FOR_TIME_SLOT_CONNECTOR_CLASS =
-    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-violet-500/25";
+    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-emerald-500/25";
 
-/** Anillo A1… giant_set (cyan) */
-export const CONSTRUCTOR_GIANT_SET_SLOT_RING_CLASS =
-    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-cyan-500/45 bg-cyan-500/[0.08] text-[10px] font-bold text-cyan-700 dark:text-cyan-400";
+/** Anillo A1… giant_set (azul primary, mismo acento que superset) */
+export const CONSTRUCTOR_GIANT_SET_SLOT_RING_CLASS = CONSTRUCTOR_SLOT_RING_CLASS;
 
-export const CONSTRUCTOR_GIANT_SET_SLOT_CONNECTOR_CLASS =
-    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-cyan-500/25";
+export const CONSTRUCTOR_GIANT_SET_SLOT_CONNECTOR_CLASS = CONSTRUCTOR_SLOT_CONNECTOR_CLASS;
 
-/** Card dropset — acento naranja (borde izquierdo y sombra) */
-export const CONSTRUCTOR_DROPSET_CARD_CLASS =
-    "rounded-lg border border-orange-500/25 border-l-[3px] border-l-orange-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(24_95%_53%/0.08),inset_3px_0_12px_-8px_hsl(24_95%_53%/0.35)] overflow-hidden";
+/** Card dropset — acento azul (primary) */
+export const CONSTRUCTOR_DROPSET_CARD_CLASS = CONSTRUCTOR_CARD_CLASS;
 
 /** Barra de grupo dropset */
-export const CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS =
-    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-orange-500/10 bg-orange-500/[0.06] px-4 py-2.5";
+export const CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS = CONSTRUCTOR_GROUP_BAR_CLASS;
 
 /** Badge DROP SET A */
-export const CONSTRUCTOR_DROPSET_BADGE_CLASS =
-    "inline-flex shrink-0 items-center rounded-md border border-orange-500/35 bg-orange-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-orange-600 uppercase dark:text-orange-400";
+export const CONSTRUCTOR_DROPSET_BADGE_CLASS = CONSTRUCTOR_GROUP_BADGE_CLASS;
 
 /** Anillo MAIN */
 export const CONSTRUCTOR_DROP_MAIN_RING_CLASS =
-    "z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-orange-500/50 bg-orange-500/[0.1] text-[8px] font-bold uppercase tracking-wide text-orange-600 dark:text-orange-400";
+    "z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border-2 border-primary/50 bg-primary/[0.1] text-[8px] font-bold uppercase tracking-wide text-primary";
 
 /** Anillo DROP n (DROP + número en dos líneas) */
 export const CONSTRUCTOR_DROP_STEP_RING_CLASS =
-    "z-10 flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-full border-2 border-orange-500/35 bg-orange-500/[0.06] text-orange-600 dark:text-orange-400";
+    "z-10 flex h-9 w-9 shrink-0 flex-col items-center justify-center rounded-full border-2 border-primary/35 bg-primary/[0.06] text-primary";
 
 /** Conector vertical entre drops */
 export const CONSTRUCTOR_DROP_CONNECTOR_CLASS =
-    "pointer-events-none absolute left-1/2 top-10 bottom-0 w-px -translate-x-1/2 bg-orange-500/25";
+    "pointer-events-none absolute left-1/2 top-10 bottom-0 w-px -translate-x-1/2 bg-primary/25";
 
-/** Card giant set — acento cyan/teal (borde izquierdo y sombra) */
-export const CONSTRUCTOR_GIANT_SET_CARD_CLASS =
-    "rounded-lg border border-cyan-500/25 border-l-[3px] border-l-cyan-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(189_94%_43%/0.08),inset_3px_0_12px_-8px_hsl(189_94%_43%/0.35)] overflow-hidden";
+/** Card giant set — acento azul (primary) */
+export const CONSTRUCTOR_GIANT_SET_CARD_CLASS = CONSTRUCTOR_CARD_CLASS;
 
 /** Barra de grupo giant set */
-export const CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS =
-    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-cyan-500/10 bg-cyan-500/[0.06] px-4 py-2.5";
+export const CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS = CONSTRUCTOR_GROUP_BAR_CLASS;
 
 /** Badge GIANT SET A */
-export const CONSTRUCTOR_GIANT_SET_BADGE_CLASS =
-    "inline-flex shrink-0 items-center rounded-md border border-cyan-500/35 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-cyan-700 uppercase dark:text-cyan-400";
+export const CONSTRUCTOR_GIANT_SET_BADGE_CLASS = CONSTRUCTOR_GROUP_BADGE_CLASS;
 
 /** Contenedor interior del grupo de ejercicios */
 export const CONSTRUCTOR_GIANT_SET_INNER_CLASS =
-    "mx-4 mb-3 rounded-md border border-cyan-500/20 bg-cyan-500/[0.04] px-3 pb-3 pt-2";
+    "mx-4 mb-3 rounded-md border border-primary/20 bg-primary/[0.04] px-3 pb-3 pt-2";
 
-/** Card for_time — acento violeta */
+/** Card for_time — acento verde (emerald) */
 export const CONSTRUCTOR_FOR_TIME_CARD_CLASS =
-    "rounded-lg border border-violet-500/25 border-l-[3px] border-l-violet-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(263_70%_50%/0.08),inset_3px_0_12px_-8px_hsl(263_70%_50%/0.35)] overflow-hidden";
+    "rounded-lg border border-emerald-500/25 border-l-[3px] border-l-emerald-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(160_84%_39%/0.08),inset_3px_0_12px_-8px_hsl(160_84%_39%/0.35)] overflow-hidden";
 
 export const CONSTRUCTOR_FOR_TIME_GROUP_BAR_CLASS =
-    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-violet-500/10 bg-violet-500/[0.06] px-4 py-2.5";
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-emerald-500/10 bg-emerald-500/[0.06] px-4 py-2.5";
 
 export const CONSTRUCTOR_FOR_TIME_BADGE_CLASS =
-    "inline-flex shrink-0 items-center rounded-md border border-violet-500/35 bg-violet-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-violet-700 uppercase dark:text-violet-400";
+    "inline-flex shrink-0 items-center rounded-md border border-emerald-500/35 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-emerald-700 uppercase dark:text-emerald-400";
 
 export const CONSTRUCTOR_FOR_TIME_INNER_CLASS =
-    "mx-4 mb-3 rounded-md border border-violet-500/20 bg-violet-500/[0.04] px-3 pb-3 pt-2";
+    "mx-4 mb-3 rounded-md border border-emerald-500/20 bg-emerald-500/[0.04] px-3 pb-3 pt-2";
 
-/** Card emom — acento púrpura (distinto de for_time violeta) */
+/** Card emom — acento púrpura */
 export const CONSTRUCTOR_EMOM_CARD_CLASS =
     "rounded-lg border border-purple-500/25 border-l-[3px] border-l-purple-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(280_70%_50%/0.08),inset_3px_0_12px_-8px_hsl(280_70%_50%/0.35)] overflow-hidden";
 
@@ -155,18 +147,18 @@ export const CONSTRUCTOR_EMOM_WINDOW_CLASS =
 export const CONSTRUCTOR_EMOM_WINDOW_LABEL_CLASS =
     "flex h-8 w-8 shrink-0 items-center justify-center rounded-md border border-purple-500/35 bg-purple-500/10 text-[10px] font-bold text-purple-700 dark:text-purple-400";
 
-/** Card amrap — acento rosa/rose */
+/** Card amrap — acento rojo */
 export const CONSTRUCTOR_AMRAP_CARD_CLASS =
-    "rounded-lg border border-rose-500/25 border-l-[3px] border-l-rose-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(350_70%_50%/0.08),inset_3px_0_12px_-8px_hsl(350_70%_50%/0.35)] overflow-hidden";
+    "rounded-lg border border-red-500/25 border-l-[3px] border-l-red-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(0_72%_51%/0.08),inset_3px_0_12px_-8px_hsl(0_72%_51%/0.35)] overflow-hidden";
 
 export const CONSTRUCTOR_AMRAP_GROUP_BAR_CLASS =
-    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-rose-500/10 bg-rose-500/[0.06] px-4 py-2.5";
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-red-500/10 bg-red-500/[0.06] px-4 py-2.5";
 
 export const CONSTRUCTOR_AMRAP_BADGE_CLASS =
-    "inline-flex shrink-0 items-center rounded-md border border-rose-500/35 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-rose-700 uppercase dark:text-rose-400";
+    "inline-flex shrink-0 items-center rounded-md border border-red-500/35 bg-red-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-red-700 uppercase dark:text-red-400";
 
 export const CONSTRUCTOR_AMRAP_SLOT_RING_CLASS =
-    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-rose-500/45 bg-rose-500/[0.08] text-[10px] font-bold text-rose-700 dark:text-rose-400";
+    "z-10 flex h-8 w-8 items-center justify-center rounded-full border-2 border-red-500/45 bg-red-500/[0.08] text-[10px] font-bold text-red-700 dark:text-red-400";
 
 export const CONSTRUCTOR_AMRAP_SLOT_CONNECTOR_CLASS =
-    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-rose-500/25";
+    "absolute left-1/2 top-9 bottom-0 w-px -translate-x-1/2 bg-red-500/25";

@@ -100,7 +100,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                     <ConstructorGroupParamsBar badgeLabel={groupLabel} variant="amrap">
                         <div className="flex items-center gap-2">
                             <Timer
-                                className="h-3.5 w-3.5 text-rose-600/70 dark:text-rose-400/70 shrink-0"
+                                className="h-3.5 w-3.5 text-red-600/70 dark:text-red-400/70 shrink-0"
                                 aria-hidden
                             />
                             <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
@@ -195,7 +195,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                 <button
                                     type="button"
                                     onClick={handleAddSlot}
-                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-rose-500/40 px-3 text-[11px] font-medium text-rose-700 transition-colors hover:border-rose-500/60 hover:bg-rose-500/[0.06] dark:text-rose-400"
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-red-500/40 px-3 text-[11px] font-medium text-red-700 transition-colors hover:border-red-500/60 hover:bg-red-500/[0.06] dark:text-red-400"
                                 >
                                     <Plus className="h-3.5 w-3.5 shrink-0" />
                                     Añadir ejercicio ({exerciseCount})

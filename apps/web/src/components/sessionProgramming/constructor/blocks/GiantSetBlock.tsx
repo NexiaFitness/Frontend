@@ -1,5 +1,5 @@
 /**
- * GiantSetBlock.tsx — Constructor card giant_set (diseño Lovable, acento cyan).
+ * GiantSetBlock.tsx — Constructor card giant_set (diseño Lovable, acento azul).
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
@@ -116,7 +116,7 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                         </div>
                         <div className="flex items-center gap-2">
                             <Timer
-                                className="h-3.5 w-3.5 text-cyan-600/70 dark:text-cyan-400/70 shrink-0"
+                                className="h-3.5 w-3.5 text-primary/70 shrink-0"
                                 aria-hidden
                             />
                             <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
@@ -151,7 +151,7 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                                 <GroupedExerciseRow
                                     key={ex.id}
                                     slotLabel={slotLabel(index)}
-                                    variant="giant_set"
+                                    variant="primary"
                                     isLast={index === normalized.exercises.length - 1}
                                 >
                                     <div className={EXERCISE_GRID_CLASS}>
@@ -190,7 +190,7 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                                     <button
                                         type="button"
                                         onClick={handleAddSlot}
-                                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-cyan-500/40 px-3 text-[11px] font-medium text-cyan-700 transition-colors hover:border-cyan-500/60 hover:bg-cyan-500/[0.06] dark:text-cyan-400"
+                                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-primary/40 px-3 text-[11px] font-medium text-primary transition-colors hover:border-primary/60 hover:bg-primary/[0.06]"
                                     >
                                         <Plus className="h-3.5 w-3.5 shrink-0" />
                                         Añadir ejercicio ({exerciseCount})

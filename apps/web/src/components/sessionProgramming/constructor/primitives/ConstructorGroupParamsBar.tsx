@@ -50,7 +50,7 @@ function resolveMetaClass(variant: ConstructorGroupParamsBarProps["variant"]): s
     if (variant === "for_time" || variant === "emom") {
         return "text-[10px] italic text-muted-foreground";
     }
-    return "text-[10px] font-semibold uppercase tracking-wider text-cyan-700/80 dark:text-cyan-400/80";
+    return "text-[10px] font-semibold uppercase tracking-wider text-primary/80";
 }
 
 export const ConstructorGroupParamsBar: React.FC<ConstructorGroupParamsBarProps> = ({

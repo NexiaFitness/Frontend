@@ -1,5 +1,5 @@
 /**
- * DropsetBlock.tsx — Constructor card dropset (diseño Lovable, acento naranja).
+ * DropsetBlock.tsx — Constructor card dropset (diseño Lovable, acento azul).
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
@@ -140,7 +140,7 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                             />
                         </div>
                         <div className="flex items-center gap-2">
-                            <Timer className="h-3.5 w-3.5 text-orange-600/70 dark:text-orange-400/70" />
+                            <Timer className="h-3.5 w-3.5 text-primary/70 shrink-0" aria-hidden />
                             <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
                                 Descanso tras secuencia
                             </span>
@@ -242,7 +242,7 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                                     type="button"
                                     disabled={!canAddDrop}
                                     onClick={handleAddDrop}
-                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-orange-500/40 px-3 text-[11px] font-medium text-orange-600 transition-colors hover:border-orange-500/60 hover:bg-orange-500/[0.06] disabled:cursor-not-allowed disabled:opacity-40 dark:text-orange-400"
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-primary/40 px-3 text-[11px] font-medium text-primary transition-colors hover:border-primary/60 hover:bg-primary/[0.06] disabled:cursor-not-allowed disabled:opacity-40"
                                 >
                                     <Plus className="h-3.5 w-3.5 shrink-0" />
                                     Añadir Drop ({additionalDrops}/{MAX_DROPS_AFTER_MAIN})
