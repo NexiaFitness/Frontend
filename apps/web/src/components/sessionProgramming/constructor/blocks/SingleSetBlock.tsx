@@ -1,34 +1,36 @@
 /**
- * SingleSetBlock.tsx — Constructor card para single_set (1 ejercicio, N sub-filas).
- * Contexto: herencia por sub-fila entera desde serie 1; persistencia N líneas API.
+ * SingleSetBlock.tsx — Constructor card single_set (diseño Lovable).
  * @spec docs/tipo-serie/08_single-set-card-borrador.md
  * @author Frontend Team
  * @since v5.3.0
  */
 
 import React from "react";
-import { FormSelect } from "@/components/ui/forms";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
-import { cn } from "@/lib/utils";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
-import type { SetType, TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
-import { SET_TYPE_LABELS } from "@nexia/shared/types/sessionProgramming";
-import { getTrainingBlockDisplayName } from "../utils/trainingBlockDisplay";
+import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
     normalizeSingleSetRow,
     setDataToExerciseView,
     updateSingleSetData,
 } from "../utils/singleSetRow";
+import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
+import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import { isFilledConstructorExercise } from "../utils/supersetRow";
+import {
+    CONSTRUCTOR_CARD_CLASS,
+    CONSTRUCTOR_COLUMN_HEADER_CLASS,
+    CONSTRUCTOR_FIELD_LABEL_CLASS,
+} from "../primitives/constructorCardStyles";
 
-const SET_TYPE_OPTIONS = Object.entries(SET_TYPE_LABELS).map(([value, label]) => ({
-    value,
-    label,
-}));
+const SET_GRID_CLASS =
+    "grid grid-cols-1 sm:grid-cols-[132px_148px_64px] gap-2.5 items-center";
+
+const COLUMN_HEADER_GRID_CLASS = "sm:grid-cols-[40px_132px_148px_64px]";
 
 export interface SingleSetBlockProps {
     row: ConstructorRow;
@@ -54,28 +56,13 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
     const exercise = normalized.exercises[0];
     const hasExercise = exercise && isFilledConstructorExercise(exercise);
 
-    const blockSelectOptions = blockTypes.map((bt) => ({
-        value: String(bt.id),
-        label: getTrainingBlockDisplayName(bt.name),
-    }));
-
-    const handleSetTypeChange = (setType: SetType) => {
-        onUpdate(normalized.id, { setType });
-    };
-
-    const handleSetsChange = (sets: number | null) => {
-        onUpdate(normalized.id, { sets });
-    };
-
     const handleSetDataFieldChange = (
         setDataId: string,
         field: "reps" | "caracter" | "rest",
         updates: Record<string, unknown>
     ) => {
         const patch: Parameters<typeof updateSingleSetData>[2] = {};
-        if (field === "reps") {
-            Object.assign(patch, updates);
-        } else if (field === "caracter") {
+        if (field === "reps" || field === "caracter") {
             Object.assign(patch, updates);
         } else if (field === "rest") {
             patch.rest = updates.rest as number | null;
@@ -85,49 +72,32 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
     };
 
     return (
-        <div className="rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
-            <div className="flex flex-wrap items-center gap-3 border-b border-border bg-surface/30 px-4 py-3">
-                <FormSelect
-                    size="xs"
-                    value={normalized.blockTypeId ? String(normalized.blockTypeId) : ""}
-                    onChange={(e) => {
-                        const v = e.target.value;
-                        onUpdate(normalized.id, {
-                            blockTypeId: v ? Number(v) : 0,
-                        });
-                    }}
-                    options={blockSelectOptions}
-                    placeholder="Bloque"
-                    aria-label="Bloque de entrenamiento"
-                    className={cn(
-                        "!h-8 !min-h-8 min-w-[160px] shrink-0 font-medium",
-                        "border border-primary/40 !bg-primary/10 !shadow-none",
-                        normalized.blockTypeId ? "!text-primary" : "!text-muted-foreground"
-                    )}
-                />
-                <FormSelect
-                    size="xs"
-                    value={normalized.setType}
-                    onChange={(e) => handleSetTypeChange(e.target.value as SetType)}
-                    options={SET_TYPE_OPTIONS}
-                    className="!h-8 !min-h-8 w-[130px] shrink-0"
-                    aria-label="Tipo de serie"
-                />
-                <div className="flex items-center gap-2 ml-auto">
-                    <span className="text-[11px] text-muted-foreground">Series</span>
+        <div className={CONSTRUCTOR_CARD_CLASS}>
+            <ConstructorCardHeader
+                blockTypeId={normalized.blockTypeId}
+                blockTypes={blockTypes}
+                setType={normalized.setType}
+                onSetTypeChange={(setType) => onUpdate(normalized.id, { setType })}
+            />
+
+            <ConstructorGroupParamsBar badgeLabel="SINGLE SET">
+                <div className="flex items-center gap-2">
+                    <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
                     <InlineNumberInput
                         size="xs"
                         min={1}
                         value={normalized.sets ?? ""}
                         onChange={(e) =>
-                            handleSetsChange(e.target.value ? Number(e.target.value) : null)
+                            onUpdate(normalized.id, {
+                                sets: e.target.value ? Number(e.target.value) : null,
+                            })
                         }
-                        className="w-14"
+                        className="w-12"
                     />
                 </div>
-            </div>
+            </ConstructorGroupParamsBar>
 
-            <div className="border-b border-border/60 px-4 py-3 bg-surface/10">
+            <div className="border-b border-border/40 px-4 py-3 bg-surface/20">
                 {hasExercise ? (
                     <ExercisePickerField
                         exerciseName={exercise.exerciseName}
@@ -151,64 +121,78 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
             </div>
 
             {hasExercise && normalized.setData ? (
-                <div className="px-4 py-3 space-y-3">
-                    <div className="hidden sm:grid sm:grid-cols-[140px_160px_72px] gap-3 px-[52px] text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+                <>
+                    <div
+                        className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS}`}
+                    >
+                        <span />
                         <span className="text-center">Reps / Tiempo</span>
                         <span className="text-center">Carácter</span>
                         <span className="text-center">Descanso</span>
                     </div>
-
-                    {normalized.setData.map((entry, index) => {
-                        const view = setDataToExerciseView(entry);
-                        const syntheticExercise: ConstructorExercise = {
-                            ...exercise,
-                            ...view,
-                        };
-                        return (
-                            <GroupedExerciseRow
-                                key={entry.id}
-                                slotLabel={`S${index + 1}`}
-                                isLast={index === normalized.setData!.length - 1}
-                            >
-                                <div className="grid grid-cols-1 sm:grid-cols-[140px_160px_72px] gap-3 items-center">
-                                    <RepsTiempoField
-                                        repsTipo={repsTipo}
-                                        exercise={syntheticExercise}
-                                        showModeSelector={index === 0}
-                                        onRepsTipoChange={(mode) =>
-                                            onUpdate(normalized.id, { repsTipo: mode })
-                                        }
-                                        onExerciseChange={(updates) =>
-                                            handleSetDataFieldChange(entry.id, "reps", updates)
-                                        }
-                                    />
-                                    <CaracterField
-                                        exercise={syntheticExercise}
-                                        onExerciseChange={(updates) =>
-                                            handleSetDataFieldChange(entry.id, "caracter", updates)
-                                        }
-                                    />
-                                    <div className="flex items-center justify-center gap-1 min-h-8">
-                                        <InlineNumberInput
-                                            size="xs"
-                                            min={0}
-                                            value={entry.rest ?? ""}
-                                            onChange={(e) =>
-                                                handleSetDataFieldChange(entry.id, "rest", {
-                                                    rest: e.target.value
-                                                        ? Number(e.target.value)
-                                                        : null,
-                                                })
+                    <div className="space-y-2 px-4 pb-3 pt-1">
+                        {normalized.setData.map((entry, index) => {
+                            const view = setDataToExerciseView(entry);
+                            const syntheticExercise: ConstructorExercise = {
+                                ...exercise,
+                                ...view,
+                            };
+                            return (
+                                <GroupedExerciseRow
+                                    key={entry.id}
+                                    slotLabel={`S${index + 1}`}
+                                    isLast={index === normalized.setData!.length - 1}
+                                >
+                                    <div className={SET_GRID_CLASS}>
+                                        <RepsTiempoField
+                                            repsTipo={repsTipo}
+                                            exercise={syntheticExercise}
+                                            showModeSelector={index === 0}
+                                            onRepsTipoChange={(mode) =>
+                                                onUpdate(normalized.id, { repsTipo: mode })
                                             }
-                                            className="w-14"
+                                            onExerciseChange={(updates) =>
+                                                handleSetDataFieldChange(
+                                                    entry.id,
+                                                    "reps",
+                                                    updates
+                                                )
+                                            }
                                         />
-                                        <span className="text-[10px] text-muted-foreground">seg</span>
+                                        <CaracterField
+                                            exercise={syntheticExercise}
+                                            onExerciseChange={(updates) =>
+                                                handleSetDataFieldChange(
+                                                    entry.id,
+                                                    "caracter",
+                                                    updates
+                                                )
+                                            }
+                                        />
+                                        <div className="flex items-center justify-center gap-1 min-h-8">
+                                            <InlineNumberInput
+                                                size="xs"
+                                                min={0}
+                                                value={entry.rest ?? ""}
+                                                onChange={(e) =>
+                                                    handleSetDataFieldChange(entry.id, "rest", {
+                                                        rest: e.target.value
+                                                            ? Number(e.target.value)
+                                                            : null,
+                                                    })
+                                                }
+                                                className="w-12"
+                                            />
+                                            <span className="text-[10px] text-muted-foreground">
+                                                seg
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            </GroupedExerciseRow>
-                        );
-                    })}
-                </div>
+                                </GroupedExerciseRow>
+                            );
+                        })}
+                    </div>
+                </>
             ) : null}
         </div>
     );

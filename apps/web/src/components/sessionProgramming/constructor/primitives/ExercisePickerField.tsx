@@ -1,6 +1,5 @@
 /**
- * ExercisePickerField.tsx — Campo de selección de ejercicio (abre picker externo).
- * Contexto: SupersetBlock y futuros constructores por tipo.
+ * ExercisePickerField.tsx — Campo de ejercicio con punto de estado (Lovable).
  * @author Frontend Team
  * @since v5.3.0
  */
@@ -29,13 +28,22 @@ export const ExercisePickerField: React.FC<ExercisePickerFieldProps> = ({
             type="button"
             onClick={onPick}
             className={cn(
-                "flex h-8 w-full min-w-0 items-center gap-2 rounded-md border border-border/60 bg-surface px-2.5 text-left text-xs transition-colors",
-                "hover:border-primary/40 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
-                filled ? "text-foreground" : "text-muted-foreground",
+                "flex h-8 w-full min-w-0 items-center gap-2 rounded-md border bg-surface px-2.5 text-left text-xs transition-colors",
+                filled
+                    ? "border-emerald-500/35 text-foreground"
+                    : "border-border/60 text-muted-foreground",
+                "hover:border-primary/40 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]",
                 className
             )}
         >
-            <Search className="h-3 w-3 shrink-0 opacity-70" aria-hidden />
+            {filled ? (
+                <span
+                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_4px_rgba(52,211,153,0.6)]"
+                    aria-hidden
+                />
+            ) : (
+                <Search className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
+            )}
             <span className="flex-1 truncate">{filled ? exerciseName : "Buscar ejercicio…"}</span>
             {filled && onClear ? (
                 <span

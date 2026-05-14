@@ -1,37 +1,39 @@
 /**
- * ConstructorBlockShell.tsx — Contenedor visual de un bloque-card en el constructor.
- * Contexto: envuelve el constructor específico por setType; cabecera con badge de tipo.
- * Notas de mantenimiento: sin acciones Lovable (duplicar/colapsar); notas de bloque en fases posteriores.
+ * ConstructorBlockShell.tsx — Shell legacy (tipos aún no migrados a card propia).
+ * Contexto: envuelve LegacyRowBlock; cabecera alineada con diseño Lovable.
  * @author Frontend Team
  * @since v5.3.0
  */
 
 import React from "react";
-import { SET_TYPE_LABELS, type SetType } from "@nexia/shared/types/sessionProgramming";
-import { cn } from "@/lib/utils";
+import type { SetType, TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
+import { ConstructorCardHeader } from "./primitives/ConstructorCardHeader";
+import { CONSTRUCTOR_CARD_CLASS } from "./primitives/constructorCardStyles";
 
 export interface ConstructorBlockShellProps {
+    blockTypeId: number;
+    blockTypes: TrainingBlockType[];
     setType: SetType;
+    onSetTypeChange: (setType: SetType) => void;
     children: React.ReactNode;
     className?: string;
 }
 
 export const ConstructorBlockShell: React.FC<ConstructorBlockShellProps> = ({
+    blockTypeId,
+    blockTypes,
     setType,
+    onSetTypeChange,
     children,
     className,
 }) => (
-    <div
-        className={cn(
-            "rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden",
-            className
-        )}
-    >
-        <div className="flex items-center px-4 py-2 border-b border-border bg-surface/30">
-            <span className="inline-flex items-center rounded-full border border-primary/40 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
-                {SET_TYPE_LABELS[setType]}
-            </span>
-        </div>
+    <div className={className ?? CONSTRUCTOR_CARD_CLASS}>
+        <ConstructorCardHeader
+            blockTypeId={blockTypeId}
+            blockTypes={blockTypes}
+            setType={setType}
+            onSetTypeChange={onSetTypeChange}
+        />
         <div>{children}</div>
     </div>
 );

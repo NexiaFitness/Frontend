@@ -1,32 +1,36 @@
 /**
- * SupersetBlock.tsx — Constructor card para tipo superset (2 ejercicios A1/A2).
- * Contexto: registro S1′; persistencia vía ConstructorRow con 2 slots fijos.
- * Notas de mantenimiento: sin invertir A1/A2; descanso intra-par mostrado como «—».
+ * SupersetBlock.tsx — Constructor card superset (diseño Lovable).
  * @spec docs/tipo-serie/07_superset-lovable-spec.md
  * @author Frontend Team
  * @since v5.3.0
  */
 
 import React from "react";
-import { FormSelect } from "@/components/ui/forms";
-import { cn } from "@/lib/utils";
+import { Timer } from "lucide-react";
+import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
-import type { SetType, TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
-import { SET_TYPE_LABELS } from "@nexia/shared/types/sessionProgramming";
-import { getTrainingBlockDisplayName } from "../utils/trainingBlockDisplay";
+import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import { normalizeSupersetRow } from "../utils/supersetRow";
-import { SupersetGroupHeader } from "../primitives/SupersetGroupHeader";
+import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
+import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
-
-const SET_TYPE_OPTIONS = Object.entries(SET_TYPE_LABELS).map(([value, label]) => ({
-    value,
-    label,
-}));
+import {
+    CONSTRUCTOR_CARD_CLASS,
+    CONSTRUCTOR_COLUMN_HEADER_CLASS,
+    CONSTRUCTOR_FIELD_LABEL_CLASS,
+    CONSTRUCTOR_FOOTER_HINT_CLASS,
+} from "../primitives/constructorCardStyles";
 
 const SLOT_LABELS = ["A1", "A2"] as const;
+
+const EXERCISE_GRID_CLASS =
+    "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_132px_148px_64px] gap-2.5 items-center";
+
+const COLUMN_HEADER_GRID_CLASS =
+    "sm:grid-cols-[40px_minmax(0,1fr)_132px_148px_64px]";
 
 export interface SupersetBlockProps {
     row: ConstructorRow;
@@ -52,69 +56,66 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
     const normalized = normalizeSupersetRow(row);
     const repsTipo = normalized.repsTipo ?? "reps";
 
-    const blockSelectOptions = blockTypes.map((bt) => ({
-        value: String(bt.id),
-        label: getTrainingBlockDisplayName(bt.name),
-    }));
-
-    const handleSetTypeChange = (setType: SetType) => {
-        onUpdate(normalized.id, { setType });
-    };
-
     return (
-        <div className="rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
-            <div className="flex flex-wrap items-center gap-3 border-b border-border bg-surface/30 px-4 py-3">
-                <FormSelect
-                    size="xs"
-                    value={normalized.blockTypeId ? String(normalized.blockTypeId) : ""}
-                    onChange={(e) => {
-                        const v = e.target.value;
-                        onUpdate(normalized.id, {
-                            blockTypeId: v ? Number(v) : 0,
-                        });
-                    }}
-                    options={blockSelectOptions}
-                    placeholder="Bloque"
-                    aria-label="Bloque de entrenamiento"
-                    className={cn(
-                        "!h-8 !min-h-8 min-w-[160px] shrink-0 font-medium",
-                        "border border-primary/40 !bg-primary/10 !shadow-none",
-                        normalized.blockTypeId ? "!text-primary" : "!text-muted-foreground"
-                    )}
-                />
-                <FormSelect
-                    size="xs"
-                    value={normalized.setType}
-                    onChange={(e) => handleSetTypeChange(e.target.value as SetType)}
-                    options={SET_TYPE_OPTIONS}
-                    className="!h-8 !min-h-8 w-[130px] shrink-0"
-                    aria-label="Tipo de serie"
-                />
-            </div>
-
-            <SupersetGroupHeader
-                groupLabel={groupLabel}
-                sets={normalized.sets}
-                restSeconds={normalized.rest}
-                onSetsChange={(sets) => onUpdate(normalized.id, { sets })}
-                onRestChange={(rest) => onUpdate(normalized.id, { rest })}
+        <div className={CONSTRUCTOR_CARD_CLASS}>
+            <ConstructorCardHeader
+                blockTypeId={normalized.blockTypeId}
+                blockTypes={blockTypes}
+                setType={normalized.setType}
+                onSetTypeChange={(setType) => onUpdate(normalized.id, { setType })}
             />
 
-            <div className="px-4 py-3 space-y-3">
-                <div className="hidden sm:grid sm:grid-cols-[minmax(0,1fr)_140px_160px_72px] gap-3 px-[52px] text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    <span>Ejercicio</span>
-                    <span className="text-center">Reps / Tiempo</span>
-                    <span className="text-center">Carácter</span>
-                    <span className="text-center">Descanso</span>
+            <ConstructorGroupParamsBar badgeLabel={groupLabel}>
+                <div className="flex items-center gap-2">
+                    <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
+                    <InlineNumberInput
+                        size="xs"
+                        min={1}
+                        value={normalized.sets ?? ""}
+                        onChange={(e) =>
+                            onUpdate(normalized.id, {
+                                sets: e.target.value ? Number(e.target.value) : null,
+                            })
+                        }
+                        className="w-12"
+                    />
                 </div>
+                <div className="flex items-center gap-2">
+                    <Timer className="h-3 w-3 text-primary/70 shrink-0" aria-hidden />
+                    <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Descanso por ronda</span>
+                    <InlineNumberInput
+                        size="xs"
+                        min={0}
+                        value={normalized.rest ?? ""}
+                        onChange={(e) =>
+                            onUpdate(normalized.id, {
+                                rest: e.target.value ? Number(e.target.value) : null,
+                            })
+                        }
+                        className="w-12"
+                    />
+                    <span className="text-[10px] text-muted-foreground">seg</span>
+                </div>
+            </ConstructorGroupParamsBar>
 
+            <div
+                className={`${CONSTRUCTOR_COLUMN_HEADER_CLASS} ${COLUMN_HEADER_GRID_CLASS}`}
+            >
+                <span />
+                <span>Ejercicio</span>
+                <span className="text-center">Reps / Tiempo</span>
+                <span className="text-center">Carácter</span>
+                <span className="text-center">Descanso</span>
+            </div>
+
+            <div className="space-y-2 px-4 pb-3 pt-1">
                 {normalized.exercises.map((ex, index) => (
                     <GroupedExerciseRow
                         key={ex.id}
                         slotLabel={SLOT_LABELS[index] ?? `A${index + 1}`}
                         isLast={index === normalized.exercises.length - 1}
                     >
-                        <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_140px_160px_72px] gap-3 items-center">
+                        <div className={EXERCISE_GRID_CLASS}>
                             <ExercisePickerField
                                 exerciseName={ex.exerciseName}
                                 onPick={() => onAddExercise(normalized.id, ex.id)}
@@ -142,13 +143,15 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                                     onUpdateExercise(normalized.id, ex.id, updates)
                                 }
                             />
-                            <span className="text-center text-[10px] text-muted-foreground">—</span>
+                            <span className="text-center text-[11px] text-muted-foreground/70">
+                                —
+                            </span>
                         </div>
                     </GroupedExerciseRow>
                 ))}
             </div>
 
-            <p className="border-t border-border/60 px-4 py-2.5 text-[10px] italic text-muted-foreground">
+            <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
                 El Superset siempre contiene 2 ejercicios. Para más, usa Giant Set.
             </p>
         </div>

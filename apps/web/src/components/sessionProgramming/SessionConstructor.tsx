@@ -60,7 +60,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
     const hasRows = rows.length > 0;
 
     return (
-        <div className="rounded-lg border border-border bg-card text-card-foreground shadow-sm overflow-hidden">
+        <div className="rounded-lg border border-border/70 bg-surface/20 text-card-foreground overflow-hidden">
             <div className="p-4 border-b border-border">
                 <div className="flex items-center justify-between gap-3 min-w-0">
                     <h3 className="text-sm font-semibold text-foreground truncate">
@@ -79,7 +79,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
             ) : (
                 <div className="p-4 space-y-6">
                     {Array.from(rowsByBlock.entries()).map(([blockTypeId, blockRows]) => (
-                        <div key={blockTypeId} className="space-y-3">
+                        <div key={blockTypeId} className="space-y-4">
                             {blockRows.map((row, index) => {
                                 if (row.setType === SET_TYPE.SUPERSET) {
                                     return (
@@ -116,7 +116,15 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                 if (!BlockComponent) return null;
 
                                 return (
-                                    <ConstructorBlockShell key={row.id} setType={row.setType}>
+                                    <ConstructorBlockShell
+                                        key={row.id}
+                                        blockTypeId={row.blockTypeId}
+                                        blockTypes={blockTypes}
+                                        setType={row.setType}
+                                        onSetTypeChange={(setType) =>
+                                            handleUpdateRow(row.id, { setType })
+                                        }
+                                    >
                                         <BlockComponent
                                             row={row}
                                             blockTypes={blockTypes}
