@@ -6,41 +6,47 @@
  */
 
 import React from "react";
-import { cn } from "@/lib/utils";
 import {
     CONSTRUCTOR_GROUP_BADGE_CLASS,
     CONSTRUCTOR_GROUP_BAR_CLASS,
     CONSTRUCTOR_DROPSET_BADGE_CLASS,
     CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS,
+    CONSTRUCTOR_GIANT_SET_BADGE_CLASS,
+    CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS,
 } from "./constructorCardStyles";
 
 export interface ConstructorGroupParamsBarProps {
     badgeLabel: string;
     children: React.ReactNode;
-    variant?: "primary" | "dropset";
+    variant?: "primary" | "dropset" | "giant_set";
+    metaLabel?: string;
+}
+
+function resolveBarClass(variant: ConstructorGroupParamsBarProps["variant"]): string {
+    if (variant === "dropset") return CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS;
+    if (variant === "giant_set") return CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS;
+    return CONSTRUCTOR_GROUP_BAR_CLASS;
+}
+
+function resolveBadgeClass(variant: ConstructorGroupParamsBarProps["variant"]): string {
+    if (variant === "dropset") return CONSTRUCTOR_DROPSET_BADGE_CLASS;
+    if (variant === "giant_set") return CONSTRUCTOR_GIANT_SET_BADGE_CLASS;
+    return CONSTRUCTOR_GROUP_BADGE_CLASS;
 }
 
 export const ConstructorGroupParamsBar: React.FC<ConstructorGroupParamsBarProps> = ({
     badgeLabel,
     children,
     variant = "primary",
+    metaLabel,
 }) => (
-    <div
-        className={cn(
-            variant === "dropset"
-                ? CONSTRUCTOR_DROPSET_GROUP_BAR_CLASS
-                : CONSTRUCTOR_GROUP_BAR_CLASS
-        )}
-    >
-        <span
-            className={
-                variant === "dropset"
-                    ? CONSTRUCTOR_DROPSET_BADGE_CLASS
-                    : CONSTRUCTOR_GROUP_BADGE_CLASS
-            }
-        >
-            {badgeLabel}
-        </span>
+    <div className={resolveBarClass(variant)}>
+        <span className={resolveBadgeClass(variant)}>{badgeLabel}</span>
+        {metaLabel ? (
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-cyan-700/80 dark:text-cyan-400/80">
+                {metaLabel}
+            </span>
+        ) : null}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2">{children}</div>
     </div>
 );

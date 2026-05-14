@@ -16,9 +16,11 @@ import {
     SupersetBlock,
     SingleSetBlock,
     DropsetBlock,
+    GiantSetBlock,
     resolveConstructorBlockComponent,
     supersetGroupLabels,
     dropsetGroupLabels,
+    giantSetGroupLabels,
 } from "./constructor";
 import { useSessionConstructorActions } from "./hooks/useSessionConstructorActions";
 import type { ConstructorRow } from "./constructorTypes";
@@ -61,6 +63,7 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
 
     const supersetLabels = React.useMemo(() => supersetGroupLabels(rows), [rows]);
     const dropsetLabels = React.useMemo(() => dropsetGroupLabels(rows), [rows]);
+    const giantSetLabels = React.useMemo(() => giantSetGroupLabels(rows), [rows]);
     const hasRows = rows.length > 0;
 
     return (
@@ -126,6 +129,24 @@ export const SessionConstructor: React.FC<SessionConstructorProps> = ({
                                             blockTypes={blockTypes}
                                             groupLabel={
                                                 dropsetLabels.get(row.id) ?? "DROP SET A"
+                                            }
+                                            onUpdate={handleUpdateRow}
+                                            onAddExercise={onAddExerciseRequest}
+                                            onUpdateExercise={handleUpdateExercise}
+                                            onDuplicate={handleDuplicateRow}
+                                            onRemove={handleRemoveRow}
+                                        />
+                                    );
+                                }
+
+                                if (row.setType === SET_TYPE.GIANT_SET) {
+                                    return (
+                                        <GiantSetBlock
+                                            key={row.id}
+                                            row={row}
+                                            blockTypes={blockTypes}
+                                            groupLabel={
+                                                giantSetLabels.get(row.id) ?? "GIANT SET A"
                                             }
                                             onUpdate={handleUpdateRow}
                                             onAddExercise={onAddExerciseRequest}

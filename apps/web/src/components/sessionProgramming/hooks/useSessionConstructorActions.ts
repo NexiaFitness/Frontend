@@ -12,6 +12,7 @@ import type { ConstructorRow, ConstructorExercise } from "../constructorTypes";
 import { applyConstructorRowUpdate, normalizeSupersetRow } from "../constructor/utils/supersetRow";
 import { normalizeSingleSetRow } from "../constructor/utils/singleSetRow";
 import { normalizeDropsetRow } from "../constructor/utils/dropsetRow";
+import { normalizeGiantSetRow } from "../constructor/utils/giantSetRow";
 
 function generateId(): string {
     return `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -128,6 +129,8 @@ export function useSessionConstructorActions(
                     normalized = normalizeSingleSetRow(clone);
                 } else if (clone.setType === SET_TYPE.DROPSET) {
                     normalized = normalizeDropsetRow(clone);
+                } else if (clone.setType === SET_TYPE.GIANT_SET) {
+                    normalized = normalizeGiantSetRow(clone);
                 }
 
                 const next = [...prev];

@@ -92,3 +92,19 @@ export const CONSTRUCTOR_DROP_STEP_RING_CLASS =
 /** Conector vertical entre drops */
 export const CONSTRUCTOR_DROP_CONNECTOR_CLASS =
     "pointer-events-none absolute left-1/2 top-10 bottom-0 w-px -translate-x-1/2 bg-orange-500/25";
+
+/** Card giant set — acento cyan/teal (borde izquierdo y sombra) */
+export const CONSTRUCTOR_GIANT_SET_CARD_CLASS =
+    "rounded-lg border border-cyan-500/25 border-l-[3px] border-l-cyan-500 bg-card text-card-foreground shadow-[0_0_0_1px_hsl(189_94%_43%/0.08),inset_3px_0_12px_-8px_hsl(189_94%_43%/0.35)] overflow-hidden";
+
+/** Barra de grupo giant set */
+export const CONSTRUCTOR_GIANT_SET_GROUP_BAR_CLASS =
+    "flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-cyan-500/10 bg-cyan-500/[0.06] px-4 py-2.5";
+
+/** Badge GIANT SET A */
+export const CONSTRUCTOR_GIANT_SET_BADGE_CLASS =
+    "inline-flex shrink-0 items-center rounded-md border border-cyan-500/35 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold tracking-wider text-cyan-700 uppercase dark:text-cyan-400";
+
+/** Contenedor interior del grupo de ejercicios */
+export const CONSTRUCTOR_GIANT_SET_INNER_CLASS =
+    "mx-4 mb-3 rounded-md border border-cyan-500/20 bg-cyan-500/[0.04] px-3 pb-3 pt-2";

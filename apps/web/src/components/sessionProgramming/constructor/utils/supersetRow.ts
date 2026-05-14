@@ -9,6 +9,7 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import { normalizeSingleSetRow } from "./singleSetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
+import { normalizeGiantSetRow } from "./giantSetRow";
 
 export const SUPERSET_SLOT_COUNT = 2;
 
@@ -92,6 +93,9 @@ export function applyConstructorRowUpdate(
     }
     if (next.setType === SET_TYPE.DROPSET) {
         return normalizeDropsetRow(next);
+    }
+    if (next.setType === SET_TYPE.GIANT_SET) {
+        return normalizeGiantSetRow(next);
     }
     return next;
 }

@@ -20,6 +20,8 @@ export { SingleSetBlock } from "./blocks/SingleSetBlock";
 export type { SingleSetBlockProps } from "./blocks/SingleSetBlock";
 export { DropsetBlock } from "./blocks/DropsetBlock";
 export type { DropsetBlockProps } from "./blocks/DropsetBlock";
+export { GiantSetBlock } from "./blocks/GiantSetBlock";
+export type { GiantSetBlockProps } from "./blocks/GiantSetBlock";
 export {
     normalizeSingleSetRow,
     updateSingleSetData,
@@ -43,6 +45,13 @@ export {
     MAX_DROPS_AFTER_MAIN,
     DEFAULT_DROPSET_ROUNDS,
 } from "./utils/dropsetRow";
+export {
+    normalizeGiantSetRow,
+    addGiantSetExerciseSlot,
+    giantSetGroupLabels,
+    MIN_GIANT_SET_SLOTS,
+    DEFAULT_GIANT_SET_SLOTS,
+} from "./utils/giantSetRow";
 export {
     getRowVolumeSetsPerExercise,
     getPersistLinePlannedSets,

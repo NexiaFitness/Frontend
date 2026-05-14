@@ -10,6 +10,7 @@ import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes
 import { normalizeSingleSetRow } from "./singleSetRow";
 import { normalizeSupersetRow } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
+import { normalizeGiantSetRow } from "./giantSetRow";
 
 function generateExerciseId(): string {
     return `ex-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -40,7 +41,9 @@ export function applyExercisePickerSelection(
             const base =
                 row.setType === SET_TYPE.SUPERSET
                     ? normalizeSupersetRow(row)
-                    : row;
+                    : row.setType === SET_TYPE.GIANT_SET
+                      ? normalizeGiantSetRow(row)
+                      : row;
             return {
                 ...base,
                 exercises: base.exercises.map((ex) =>

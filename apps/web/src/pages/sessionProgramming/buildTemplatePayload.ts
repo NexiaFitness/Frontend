@@ -15,6 +15,7 @@ import type {
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
+import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
