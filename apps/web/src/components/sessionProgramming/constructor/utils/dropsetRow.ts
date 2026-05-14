@@ -110,8 +110,8 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
         return row;
     }
 
-    const dropCount = Math.max(1, row.sets ?? DEFAULT_DROP_COUNT);
-    const targetLength = dropCount + 1;
+    const stepCount = Math.max(MIN_DROPSET_STEPS, row.sets ?? DEFAULT_DROP_COUNT);
+    const targetLength = stepCount;
     const restFallback = row.rest ?? 120;
 
     let setData = row.setData?.length
