@@ -388,40 +388,41 @@ function getAlternativesEmptyCopy(reason: AlternativesEmptyReason): {
         case "injury_filter":
             return {
                 title:
-                    "No hay alternativas seguras: las lesiones activas del cliente bloquean los ejercicios que comparten músculos principales.",
+                    "Con la lesión activa de este cliente, no hay otro ejercicio seguro que trabaje los mismos músculos de forma compatible.",
                 subtitle:
-                    "Revisa las lesiones activas o registra sustituciones manuales en el backend.",
+                    "Revisa su perfil de lesiones o elige otro ejercicio para esta serie.",
             };
         case "score_threshold":
             return {
                 title:
-                    "No hay alternativas con puntuación suficiente entre ejercicios con los mismos músculos principales.",
+                    "No encontramos sustitutos automáticos con buen encaje para este ejercicio.",
                 subtitle:
-                    "Amplía el catálogo, ajusta el ejercicio original o registra alternativas manuales.",
+                    "Prueba otro ejercicio del mismo grupo muscular o el que sueles usar como alternativa.",
             };
         case "no_pool":
             return {
                 title:
-                    "No hay ejercicios en catálogo con los mismos músculos principales (prime mover).",
+                    "En la biblioteca no hay otro ejercicio con los mismos músculos principales.",
                 subtitle:
-                    "Completa las etiquetas musculares del ejercicio o registra alternativas manuales.",
+                    "Elige otro ejercicio para la sesión o avisa si falta alguno en la biblioteca.",
             };
         case "joint_catalog":
             return {
                 title:
-                    "Hay candidatos por músculo, pero faltan datos de articulación/movimiento en catálogo para compararlos con el ejercicio original.",
+                    "No podemos proponer sustitutos automáticos porque faltan datos técnicos del movimiento en la biblioteca.",
                 subtitle:
-                    "Completa joint actions en el catálogo o registra alternativas manuales.",
+                    "Elige otro ejercicio manualmente o contacta con soporte si crees que debería haber alternativas.",
             };
         case "manual_empty":
             return {
                 title:
-                    "Las alternativas manuales registradas no son seguras para este cliente con sus lesiones activas.",
-                subtitle: "Actualiza las sustituciones manuales en el backend.",
+                    "Las alternativas que tenías guardadas para este ejercicio no son compatibles con la lesión actual del cliente.",
+                subtitle: "Elige otro ejercicio o actualiza sus alternativas habituales.",
             };
         default:
             return {
                 title: "No hay alternativas seguras sugeridas para este ejercicio.",
+                subtitle: "Prueba otro ejercicio o revisa el perfil del cliente.",
             };
     }
 }

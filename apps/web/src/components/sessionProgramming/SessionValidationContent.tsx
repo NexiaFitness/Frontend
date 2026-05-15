@@ -68,6 +68,10 @@ const STATUS_CONFIG: Record<ValidationStatus | "partially_aligned" | "null", {
     },
 };
 
+function getValidationStatusLabel(status: ValidationStatus | "partially_aligned" | null): string {
+    return STATUS_CONFIG[status ?? "null"].label;
+}
+
 export function StatusBadge({ status }: { status: ValidationStatus | "partially_aligned" | null }) {
     const config = STATUS_CONFIG[status ?? "null"];
     return (
@@ -146,9 +150,7 @@ const PatternsSection: React.FC<{ data: SessionValidationOut["patterns"] }> = ({
                     </div>
                 </div>
             )}
-            {data.coverage_note && (
-                <p className="text-xs text-muted-foreground italic">{data.coverage_note}</p>
-            )}
+            {/* coverage_note eliminado — contiene texto técnico de infraestructura (Excel, BD, post-import) */}
         </div>
     );
 };
@@ -300,29 +302,19 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
 
             {data && (
                 <>
-                    {data.disclaimers.length > 0 && (
-                        <CollapsibleFormGroup title="Información técnica de validación" defaultOpen={false}>
-                            <div className="rounded-md bg-primary/5 border border-primary/20 p-3 space-y-1">
-                                {data.disclaimers.map((d, i) => (
-                                    <p key={i} className="text-xs text-primary">{d}</p>
-                                ))}
-                            </div>
-                        </CollapsibleFormGroup>
-                    )}
-
-                    <CollapsibleFormGroup title="Patrones de movimiento" badge={data.patterns?.status ?? "N/A"} defaultOpen>
+                    <CollapsibleFormGroup title="Patrones de movimiento" badge={getValidationStatusLabel(data.patterns?.status ?? null)} defaultOpen>
                         <PatternsSection data={data.patterns} />
                     </CollapsibleFormGroup>
 
-                    <CollapsibleFormGroup title="Volumen" badge={data.volume?.status ?? "N/A"} defaultOpen>
+                    <CollapsibleFormGroup title="Volumen" badge={getValidationStatusLabel(data.volume?.status ?? null)} defaultOpen>
                         <VolumeSection data={data.volume} />
                     </CollapsibleFormGroup>
 
-                    <CollapsibleFormGroup title="Carga axial" badge={data.axial_score ? (data.axial_score.exceeds_threshold ? "alerta" : "ok") : "N/A"}>
+                    <CollapsibleFormGroup title="Carga axial" badge={data.axial_score ? (data.axial_score.exceeds_threshold ? "Excede umbral" : "Dentro del umbral") : "No disponible"}>
                         <AxialLoadSection data={data.axial_score} />
                     </CollapsibleFormGroup>
 
-                    <CollapsibleFormGroup title="Seguridad" badge={data.safety_summary ? `${data.safety_summary.blocking_count} bloqueos` : "N/A"}>
+                    <CollapsibleFormGroup title="Seguridad" badge={data.safety_summary ? `${data.safety_summary.blocking_count} bloqueos` : "No disponible"}>
                         <SafetySummarySection data={data.safety_summary} />
                     </CollapsibleFormGroup>
                 </>
