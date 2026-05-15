@@ -441,32 +441,6 @@ const LegacyExercisesTable: React.FC<{
                     />
                 ))}
             </div>
-
-            {/* Modales de replicación */}
-            {session && (
-                <>
-                    <ReplicateSessionModal
-                        isOpen={replicateFlow.isOpen}
-                        onClose={() => replicateFlow.setIsOpen(false)}
-                        weeks={replicateFlow.weeks}
-                        selectedWeeks={replicateFlow.selectedWeeks}
-                        onToggleWeek={replicateFlow.toggleWeek}
-                        onReplicate={replicateFlow.handleReplicate}
-                        isLoading={replicateFlow.isReplicating}
-                        sessionName={session.session_name}
-                        hasBlock={replicateFlow.hasBlock}
-                        isBlockLoading={replicateFlow.isBlockLoading}
-                    />
-                    <ReplicateSessionConflictModal
-                        isOpen={replicateFlow.isConflictOpen}
-                        onClose={replicateFlow.handleCancelConflict}
-                        onConfirmReplace={replicateFlow.handleConfirmReplace}
-                        conflicts={replicateFlow.pendingConflicts}
-                        createdCount={replicateFlow.createdCount}
-                        isLoading={replicateFlow.isReplicating}
-                    />
-                </>
-            )}
         </div>
     );
 };
@@ -707,6 +681,28 @@ export const SessionReviewPage: React.FC = () => {
                     />
                 </div>
             </div>
+
+            {/* Modales de replicación */}
+            <ReplicateSessionModal
+                isOpen={replicateFlow.isOpen}
+                onClose={() => replicateFlow.setIsOpen(false)}
+                weeks={replicateFlow.weeks}
+                selectedWeeks={replicateFlow.selectedWeeks}
+                onToggleWeek={replicateFlow.toggleWeek}
+                onReplicate={replicateFlow.handleReplicate}
+                isLoading={replicateFlow.isReplicating}
+                sessionName={session.session_name}
+                hasBlock={replicateFlow.hasBlock}
+                isBlockLoading={replicateFlow.isBlockLoading}
+            />
+            <ReplicateSessionConflictModal
+                isOpen={replicateFlow.isConflictOpen}
+                onClose={replicateFlow.handleCancelConflict}
+                onConfirmReplace={replicateFlow.handleConfirmReplace}
+                conflicts={replicateFlow.pendingConflicts}
+                createdCount={replicateFlow.createdCount}
+                isLoading={replicateFlow.isReplicating}
+            />
         </div>
     );
 };
