@@ -90,4 +90,6 @@ export interface SafeAlternativesResponse {
     alternatives: Exercise[];
     safety_results: ExerciseSafetyResponse[];
     match_scores: Record<number, number>;
+    /** True when the API found no safe alternative (threshold, injury filter, or empty catalog). */
+    no_alternatives_found: boolean;
 }

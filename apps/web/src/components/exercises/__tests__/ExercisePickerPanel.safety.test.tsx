@@ -102,6 +102,7 @@ describe("ExercisePickerPanel — safety batch y alternativas", () => {
                         alternatives: [EX_ALT],
                         safety_results: [],
                         match_scores: {},
+                        no_alternatives_found: false,
                     },
                     isLoading: false,
                     isError: false,
