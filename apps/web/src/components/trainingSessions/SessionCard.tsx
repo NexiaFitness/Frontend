@@ -27,7 +27,16 @@ interface SessionCardProps {
     onReplicate?: (session: SessionCardSession) => void;
 }
 
-const COHERENCE_PREFIX = "[Coherence Warnings:";
+const COHERENCE_NOTE_PREFIXES = ["[Avisos de coherencia:", "[Coherence Warnings:"] as const;
+
+function findCoherenceNotesPrefix(notes: string): (typeof COHERENCE_NOTE_PREFIXES)[number] | null {
+    for (const prefix of COHERENCE_NOTE_PREFIXES) {
+        if (notes.startsWith(prefix)) {
+            return prefix;
+        }
+    }
+    return null;
+}
 
 /** Separa aviso embebido en `notes` (legacy/API) del texto libre del entrenador. */
 function parseSessionNotes(notes: string | null | undefined): {
@@ -38,17 +47,18 @@ function parseSessionNotes(notes: string | null | undefined): {
         return { coherenceBody: null, trainerNotes: null };
     }
     const t = notes.trim();
-    if (!t.startsWith(COHERENCE_PREFIX)) {
+    const prefix = findCoherenceNotesPrefix(t);
+    if (!prefix) {
         return { coherenceBody: null, trainerNotes: t };
     }
-    const closeIdx = t.indexOf("]", COHERENCE_PREFIX.length);
+    const closeIdx = t.indexOf("]", prefix.length);
     if (closeIdx === -1) {
         return {
-            coherenceBody: t.slice(COHERENCE_PREFIX.length).trim() || null,
+            coherenceBody: t.slice(prefix.length).trim() || null,
             trainerNotes: null,
         };
     }
-    const coherenceBody = t.slice(COHERENCE_PREFIX.length, closeIdx).trim() || null;
+    const coherenceBody = t.slice(prefix.length, closeIdx).trim() || null;
     const after = t.slice(closeIdx + 1).trim();
     return { coherenceBody, trainerNotes: after || null };
 }
