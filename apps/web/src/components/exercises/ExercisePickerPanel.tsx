@@ -23,7 +23,11 @@ import {
     useGetSafeAlternativesQuery,
 } from "@nexia/shared/hooks/exercises";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import type { ExerciseSafetyResponse, ExerciseSafetyBatchResponse } from "@nexia/shared/types/engineSafety";
+import type {
+    AlternativesEmptyReason,
+    ExerciseSafetyResponse,
+    ExerciseSafetyBatchResponse,
+} from "@nexia/shared/types/engineSafety";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -376,6 +380,52 @@ const ListView: React.FC<ListViewProps> = ({
 // Sub-component: Alternatives view
 // ---------------------------------------------------------------------------
 
+function getAlternativesEmptyCopy(reason: AlternativesEmptyReason): {
+    title: string;
+    subtitle?: string;
+} {
+    switch (reason) {
+        case "injury_filter":
+            return {
+                title:
+                    "No hay alternativas seguras: las lesiones activas del cliente bloquean los ejercicios que comparten músculos principales.",
+                subtitle:
+                    "Revisa las lesiones activas o registra sustituciones manuales en el backend.",
+            };
+        case "score_threshold":
+            return {
+                title:
+                    "No hay alternativas con puntuación suficiente entre ejercicios con los mismos músculos principales.",
+                subtitle:
+                    "Amplía el catálogo, ajusta el ejercicio original o registra alternativas manuales.",
+            };
+        case "no_pool":
+            return {
+                title:
+                    "No hay ejercicios en catálogo con los mismos músculos principales (prime mover).",
+                subtitle:
+                    "Completa las etiquetas musculares del ejercicio o registra alternativas manuales.",
+            };
+        case "joint_catalog":
+            return {
+                title:
+                    "Hay candidatos por músculo, pero faltan datos de articulación/movimiento en catálogo para compararlos con el ejercicio original.",
+                subtitle:
+                    "Completa joint actions en el catálogo o registra alternativas manuales.",
+            };
+        case "manual_empty":
+            return {
+                title:
+                    "Las alternativas manuales registradas no son seguras para este cliente con sus lesiones activas.",
+                subtitle: "Actualiza las sustituciones manuales en el backend.",
+            };
+        default:
+            return {
+                title: "No hay alternativas seguras sugeridas para este ejercicio.",
+            };
+    }
+}
+
 interface AlternativesViewProps {
     exerciseId: number | null;
     clientId?: number | null;
@@ -450,17 +500,20 @@ const AlternativesView: React.FC<AlternativesViewProps> = ({
             {/* Alternatives list */}
             {data.alternatives.length === 0 ? (
                 <div className="rounded-md border border-border bg-card p-4 text-center space-y-1">
-                    <p className="text-sm text-muted-foreground">
-                        {data.no_alternatives_found
-                            ? "No hay alternativas seguras que trabajen los mismos músculos principales con puntuación suficiente."
-                            : "No hay alternativas seguras sugeridas para este ejercicio con las lesiones activas."}
-                    </p>
-                    {data.no_alternatives_found ? (
-                        <p className="text-xs text-muted-foreground">
-                            Revisa lesiones activas, el catálogo del ejercicio o registra sustituciones
-                            manuales en el backend.
-                        </p>
-                    ) : null}
+                    {(() => {
+                        const copy = getAlternativesEmptyCopy(
+                            data.empty_reason ??
+                                (data.no_alternatives_found ? "score_threshold" : "none")
+                        );
+                        return (
+                            <>
+                                <p className="text-sm text-muted-foreground">{copy.title}</p>
+                                {copy.subtitle ? (
+                                    <p className="text-xs text-muted-foreground">{copy.subtitle}</p>
+                                ) : null}
+                            </>
+                        );
+                    })()}
                 </div>
             ) : (
                 <div className="space-y-2">

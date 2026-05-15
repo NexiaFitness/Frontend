@@ -301,11 +301,13 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
             {data && (
                 <>
                     {data.disclaimers.length > 0 && (
-                        <div className="rounded-md bg-primary/5 border border-primary/20 p-3 space-y-1">
-                            {data.disclaimers.map((d, i) => (
-                                <p key={i} className="text-xs text-primary">{d}</p>
-                            ))}
-                        </div>
+                        <CollapsibleFormGroup title="Información técnica de validación" defaultOpen={false}>
+                            <div className="rounded-md bg-primary/5 border border-primary/20 p-3 space-y-1">
+                                {data.disclaimers.map((d, i) => (
+                                    <p key={i} className="text-xs text-primary">{d}</p>
+                                ))}
+                            </div>
+                        </CollapsibleFormGroup>
                     )}
 
                     <CollapsibleFormGroup title="Patrones de movimiento" badge={data.patterns?.status ?? "N/A"} defaultOpen>

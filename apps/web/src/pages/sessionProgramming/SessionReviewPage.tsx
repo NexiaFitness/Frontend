@@ -115,6 +115,34 @@ function getNextWeekDate(sessionDate: string | null): string {
     return d.toISOString().split("T")[0];
 }
 
+const COHERENCE_NOTE_PREFIXES = ["[Avisos de coherencia:", "[Coherence Warnings:"] as const;
+
+/** Separa aviso embebido en `notes` (legacy/API) del texto libre del entrenador. */
+function parseSessionNotes(notes: string | null | undefined): {
+    coherenceBody: string | null;
+    trainerNotes: string | null;
+} {
+    if (!notes?.trim()) {
+        return { coherenceBody: null, trainerNotes: null };
+    }
+    const t = notes.trim();
+    for (const prefix of COHERENCE_NOTE_PREFIXES) {
+        if (t.startsWith(prefix)) {
+            const closeIdx = t.indexOf("]", prefix.length);
+            if (closeIdx === -1) {
+                return {
+                    coherenceBody: t.slice(prefix.length).trim() || null,
+                    trainerNotes: null,
+                };
+            }
+            const body = t.slice(prefix.length, closeIdx).trim() || null;
+            const rest = t.slice(closeIdx + 1).trim();
+            return { coherenceBody: body, trainerNotes: rest || null };
+        }
+    }
+    return { coherenceBody: null, trainerNotes: t };
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -293,12 +321,16 @@ const SessionSummaryCard: React.FC<{
                 />
             </div>
 
-            {session.notes && (
-                <div className="rounded-md bg-surface p-3 space-y-1">
-                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Notas</p>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">{session.notes}</p>
-                </div>
-            )}
+            {(() => {
+                const { trainerNotes } = parseSessionNotes(session.notes);
+                if (!trainerNotes) return null;
+                return (
+                    <div className="rounded-md bg-surface p-3 space-y-1">
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">Notas</p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">{trainerNotes}</p>
+                    </div>
+                );
+            })()}
         </div>
     );
 };
