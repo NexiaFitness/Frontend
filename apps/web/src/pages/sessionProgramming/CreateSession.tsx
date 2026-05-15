@@ -61,7 +61,6 @@ import { EmptyStateCard } from "@/components/ui/cards";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
-import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
@@ -72,7 +71,6 @@ import type {
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     TrainingSessionCreate,
-    SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
@@ -285,14 +283,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
     const [createSessionTemplate, { isLoading: isSavingTemplate }] = useCreateSessionTemplateMutation();
 
-    /** Fase 3: avisos de coherencia tras crear sesión; al confirmar "Entendido" se redirige. */
-    const [postCreateCoherenceWarnings, setPostCreateCoherenceWarnings] = useState<
-        SessionCoherenceWarning[] | null
-    >(null);
-    const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
-    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
-    const [createdSessionId, setCreatedSessionId] = useState<number | null>(null);
-
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
         if (!targetRowIdForPicker) return;
@@ -460,7 +450,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
 
                 const createdSession = await createTrainingSession(sessionData).unwrap();
-                setCreatedSessionId(createdSession.id);
 
                 if (constructorRows.length > 0) {
                     let blocksSaved = 0;
@@ -522,18 +511,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     showSuccess("Sesión creada exitosamente.", 2000);
                 }
 
-                const coherence = createdSession.coherence;
-                const warnings =
-                    coherence?.coherence_warnings && coherence.coherence_warnings.length > 0
-                        ? coherence.coherence_warnings
-                        : null;
-
-                if (warnings && warnings.length > 0) {
-                    setPostCreateCoherenceWarnings(warnings);
-                    setPostCreateRedirectPath(redirectTo);
-                } else {
-                    setValidationPanelOpen(true);
-                }
+                navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`);
             }
         } catch (err) {
             console.error("Error creando sesión:", err);
@@ -550,33 +528,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner size="lg" />
-            </div>
-        );
-    }
-
-    if (postCreateCoherenceWarnings != null && postCreateCoherenceWarnings.length > 0 && postCreateRedirectPath) {
-        return (
-            <div className="mb-6 lg:mb-8">
-                <div className="rounded-xl border border-warning/30 bg-warning/10 p-6 space-y-4">
-                    <h2 className="text-xl font-semibold text-foreground">Sesión creada con avisos de coherencia</h2>
-                    <p className="text-sm text-muted-foreground">
-                        La sesión se ha guardado correctamente. Revisa los siguientes avisos respecto al plan del día:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
-                        {postCreateCoherenceWarnings.map((w, i) => (
-                            <li key={i}>{w.message}</li>
-                        ))}
-                    </ul>
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            setPostCreateCoherenceWarnings(null);
-                            setValidationPanelOpen(true);
-                        }}
-                    >
-                        Entendido
-                    </Button>
-                </div>
             </div>
         );
     }
@@ -1002,27 +953,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 </div>
             </div>
 
-            <SessionValidationPanel
-                trainingSessionId={createdSessionId}
-                isOpen={validationPanelOpen}
-                onClose={() => {
-                    setValidationPanelOpen(false);
-                    const target = postCreateRedirectPath || backPath;
-                    if (target) {
-                        navigate(target);
-                    } else {
-                        const state = location.state as LocationStateReturnTo | null;
-                        if (state?.from) {
-                            navigate(state.from);
-                        } else {
-                            navigate(-1);
-                        }
-                    }
-                }}
-                onEdit={() => {
-                    setValidationPanelOpen(false);
-                }}
-            />
         </>
     );
 };

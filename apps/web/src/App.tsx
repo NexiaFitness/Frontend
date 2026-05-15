@@ -117,6 +117,9 @@ const CreateTemplate = lazy(() =>
 const SessionDetail = lazy(() =>
   import("./pages/sessionProgramming/SessionDetail").then((m) => ({ default: m.SessionDetail }))
 );
+const SessionReviewPage = lazy(() =>
+  import("./pages/sessionProgramming/SessionReviewPage").then((m) => ({ default: m.SessionReviewPage }))
+);
 const StandaloneSessionDetail = lazy(() =>
   import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
 );
@@ -425,6 +428,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
                 <SessionDetail />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="session-programming/sessions/:id/review"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <SessionReviewPage />
               </RoleProtectedRoute>
             }
           />

@@ -10,5 +10,6 @@ export * from "./CreateSession";
 export * from "./EditSession";
 export * from "./CreateTemplate";
 export * from "./SessionDetail";
+export * from "./SessionReviewPage";
 
 
