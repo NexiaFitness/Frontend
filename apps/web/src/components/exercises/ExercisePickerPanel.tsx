@@ -452,7 +452,7 @@ const AlternativesView: React.FC<AlternativesViewProps> = ({
                 <div className="rounded-md border border-border bg-card p-4 text-center space-y-1">
                     <p className="text-sm text-muted-foreground">
                         {data.no_alternatives_found
-                            ? "No hay alternativas seguras que cumplan el criterio de sustitución (mismo patrón y músculos principales, puntuación mínima 0,6)."
+                            ? "No hay alternativas seguras que trabajen los mismos músculos principales con puntuación suficiente."
                             : "No hay alternativas seguras sugeridas para este ejercicio con las lesiones activas."}
                     </p>
                     {data.no_alternatives_found ? (

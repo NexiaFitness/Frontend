@@ -511,7 +511,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     showSuccess("Sesión creada exitosamente.", 2000);
                 }
 
-                navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`);
+                navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`, {
+                    state: { returnTo: "/dashboard/session-programming", clientId: effectiveClientId },
+                });
             }
         } catch (err) {
             console.error("Error creando sesión:", err);

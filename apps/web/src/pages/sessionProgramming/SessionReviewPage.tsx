@@ -15,19 +15,19 @@
  * @updated v6.6.0 — Fase B enriched UX
  */
 
-import React, { useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import React, { useMemo, useCallback } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
     ChevronRight,
     ArrowLeft,
     Pencil,
     CalendarPlus,
-    Clock,
     Gauge,
     Dumbbell,
     FileText,
     AlertTriangle,
     CheckCircle2,
+    Copy,
 } from "lucide-react";
 
 import { useGetTrainingSessionQuery, useGetSessionCoherenceQuery } from "@nexia/shared/api/trainingSessionsApi";
@@ -39,21 +39,23 @@ import {
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName } from "@nexia/shared";
+// import { exerciseDisplayName } from "@nexia/shared";
 import {
     SESSION_TYPE_LABELS,
     TRAINING_SESSION_STATUS_LABELS,
 } from "@nexia/shared/types/trainingSessions";
 import type { TrainingSessionStatus } from "@nexia/shared/types/trainingSessions";
-import type { SessionBlock, SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
+import type { SessionBlock } from "@nexia/shared/types/sessionProgramming";
 import type { SessionExercise } from "@nexia/shared/types/trainingSessions";
-import type { Client } from "@nexia/shared/types/client";
 
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { SessionValidationContent } from "@/components/sessionProgramming/SessionValidationContent";
 import { ClientAvatar } from "@/components/ui/avatar";
+import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
+import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
+import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import { cn } from "@/lib/utils";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -106,6 +108,13 @@ function buildExercisesMap(exercises: Array<{ id: number; nombre: string }> | un
     return map;
 }
 
+function getNextWeekDate(sessionDate: string | null): string {
+    if (!sessionDate) return new Date().toISOString().split("T")[0];
+    const d = new Date(sessionDate);
+    d.setDate(d.getDate() + 7);
+    return d.toISOString().split("T")[0];
+}
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -135,7 +144,9 @@ const SessionReviewHeader: React.FC<{
     onBack: () => void;
     onEdit: () => void;
     onSchedule: () => void;
-}> = ({ session, onBack, onEdit, onSchedule }) => {
+    onReplicate?: () => void;
+    canReplicate: boolean;
+}> = ({ session, onBack, onEdit, onSchedule, onReplicate, canReplicate }) => {
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(session.client_id, {
         skip: !session.client_id,
     });
@@ -199,7 +210,7 @@ const SessionReviewHeader: React.FC<{
                     )}
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button variant="outline" size="sm" onClick={onBack}>
                         <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                         Volver
@@ -208,12 +219,19 @@ const SessionReviewHeader: React.FC<{
                         <Pencil className="mr-1 h-4 w-4" aria-hidden />
                         Editar
                     </Button>
+                    {canReplicate && onReplicate && (
+                        <Button variant="secondary" size="sm" onClick={onReplicate}>
+                            <Copy className="mr-1 h-4 w-4" aria-hidden />
+                            Replicar
+                        </Button>
+                    )}
                     <Button variant="primary" size="sm" onClick={onSchedule}>
                         <CalendarPlus className="mr-1 h-4 w-4" aria-hidden />
                         Programar siguiente
                     </Button>
                 </div>
             </div>
+
         </div>
     );
 };
@@ -423,6 +441,32 @@ const LegacyExercisesTable: React.FC<{
                     />
                 ))}
             </div>
+
+            {/* Modales de replicación */}
+            {session && (
+                <>
+                    <ReplicateSessionModal
+                        isOpen={replicateFlow.isOpen}
+                        onClose={() => replicateFlow.setIsOpen(false)}
+                        weeks={replicateFlow.weeks}
+                        selectedWeeks={replicateFlow.selectedWeeks}
+                        onToggleWeek={replicateFlow.toggleWeek}
+                        onReplicate={replicateFlow.handleReplicate}
+                        isLoading={replicateFlow.isReplicating}
+                        sessionName={session.session_name}
+                        hasBlock={replicateFlow.hasBlock}
+                        isBlockLoading={replicateFlow.isBlockLoading}
+                    />
+                    <ReplicateSessionConflictModal
+                        isOpen={replicateFlow.isConflictOpen}
+                        onClose={replicateFlow.handleCancelConflict}
+                        onConfirmReplace={replicateFlow.handleConfirmReplace}
+                        conflicts={replicateFlow.pendingConflicts}
+                        createdCount={replicateFlow.createdCount}
+                        isLoading={replicateFlow.isReplicating}
+                    />
+                </>
+            )}
         </div>
     );
 };
@@ -491,7 +535,10 @@ const ValidationSection: React.FC<{
 export const SessionReviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const sessionId = id ? Number(id) : 0;
+
+    const returnTo = (location.state as { returnTo?: string } | null)?.returnTo;
 
     const {
         data: session,
@@ -532,6 +579,38 @@ export const SessionReviewPage: React.FC = () => {
         [exercisesCatalog]
     );
 
+    const handleBack = useCallback(() => {
+        if (returnTo) {
+            navigate(returnTo);
+        } else {
+            navigate(-1);
+        }
+    }, [returnTo, navigate]);
+
+    const handleSchedule = useCallback(() => {
+        const nextDate = getNextWeekDate(session?.session_date ?? null);
+        const params = new URLSearchParams();
+        if (session?.client_id) {
+            params.set("clientId", String(session.client_id));
+        }
+        params.set("date", nextDate);
+        navigate(`/dashboard/scheduling/new?${params.toString()}`);
+    }, [session, navigate]);
+
+    const replicateFlow = useReplicateSessionFlow(
+        session
+            ? {
+                  id: session.id,
+                  session_name: session.session_name,
+                  session_date: session.session_date,
+                  training_plan_id: session.training_plan_id ?? null,
+                  period_block_id: session.period_block_id ?? null,
+              }
+            : { id: 0, session_name: "", session_date: null, training_plan_id: null, period_block_id: null }
+    );
+
+    const canReplicate = !!session?.period_block_id && !!session?.session_date;
+
     if (!sessionId || isNaN(sessionId)) {
         return (
             <div className="px-4 lg:px-8 py-8">
@@ -564,9 +643,11 @@ export const SessionReviewPage: React.FC = () => {
         <div className="space-y-8 pb-8 px-4 lg:px-8">
             <SessionReviewHeader
                 session={session}
-                onBack={() => navigate("/dashboard/sessions")}
+                onBack={handleBack}
                 onEdit={() => navigate(`/dashboard/session-programming/edit-session/${sessionId}`)}
-                onSchedule={() => navigate("/dashboard/scheduling/new")}
+                onSchedule={handleSchedule}
+                onReplicate={replicateFlow.openModal}
+                canReplicate={canReplicate}
             />
 
             <div className="flex flex-col gap-6 lg:flex-row">

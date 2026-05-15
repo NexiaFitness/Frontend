@@ -544,7 +544,9 @@ export const EditSession: React.FC = () => {
 
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
-            navigate(`/dashboard/session-programming/sessions/${sessionId}/review`);
+            navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
+                state: { returnTo: "/dashboard/session-programming", clientId: session?.client_id },
+            });
         } catch (err) {
             console.error("Error actualizando sesión:", err);
             const errorMessage =

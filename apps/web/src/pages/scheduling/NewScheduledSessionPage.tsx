@@ -38,6 +38,7 @@ export const NewScheduledSessionPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const dateParam = searchParams.get("date");
+    const clientIdParam = searchParams.get("clientId");
 
 
     const { user } = useSelector((state: RootState) => state.auth);
@@ -104,6 +105,16 @@ export const NewScheduledSessionPage: React.FC = () => {
             setFormData((prev) => ({ ...prev, scheduledDate: dateParam }));
         }
     }, [dateParam]);
+
+    useEffect(() => {
+        if (clientIdParam && clientsData?.items) {
+            const clientId = Number(clientIdParam);
+            const exists = clientsData.items.some((c) => c.id === clientId);
+            if (exists) {
+                setFormData((prev) => ({ ...prev, clientId }));
+            }
+        }
+    }, [clientIdParam, clientsData]);
 
     const fetchAvailableSlots = useCallback(async () => {
         if (!trainerId || !formData.scheduledDate) {
