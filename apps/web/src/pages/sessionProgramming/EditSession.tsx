@@ -43,6 +43,7 @@ import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjurie
 import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
+import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
@@ -776,6 +777,11 @@ export const EditSession: React.FC = () => {
                                     hasClient={weeklyVolumePanel.hasClient}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                />
+                                <SessionMovementPatternsCard
+                                    clientId={session.client_id}
+                                    sessionDate={formData.sessionDate}
+                                    trainerId={trainerIdForDayPlan}
                                 />
                             </>
                         ) : null}

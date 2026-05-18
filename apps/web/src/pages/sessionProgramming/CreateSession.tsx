@@ -44,6 +44,7 @@ import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
+import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import {
@@ -803,6 +804,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         hasClient={weeklyVolumePanel.hasClient}
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                         weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                    />
+                                    <SessionMovementPatternsCard
+                                        clientId={effectiveClientId}
+                                        sessionDate={formData.sessionDate}
+                                        trainerId={trainerId}
                                     />
                                 </>
                             )}
