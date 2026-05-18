@@ -9,6 +9,14 @@
  * @since Fase 3 - Alineación documento canónico
  */
 
+/** Patrón de movimiento esperado para el día */
+export interface SessionDayMovementPattern {
+    id: number;
+    name_es: string;
+    ui_bucket: string;
+    sub_pattern: string | null;
+}
+
 /** Detalle de recomendaciones para el día */
 export interface SessionDayRecommendations {
     physical_quality: string;
@@ -27,6 +35,8 @@ export interface SessionDayRecommendations {
     month_intensity: number | null;
     week_volume: number | null;
     week_intensity: number | null;
+    /** Patrones de movimiento planificados para esta fecha (Fase A — movement_patterns) */
+    movement_patterns?: SessionDayMovementPattern[] | null;
 }
 
 /** Respuesta sin plan activo */
