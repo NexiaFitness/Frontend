@@ -279,10 +279,14 @@ export const PeriodizationWeeklyStructureModal: React.FC<
             isOpen={isOpen}
             onClose={onClose}
             title="Estructura semanal"
-            description={formatRangeShort(startDate, endDate)}
             maxWidth="3xl"
         >
             <div className="space-y-4">
+                {/* Rango del bloque en azul primary, alineado bajo el titulo del modal. */}
+                <p className="-mt-3 text-center text-sm font-semibold text-primary">
+                    {formatRangeShort(startDate, endDate)}
+                </p>
+
                 {/* Context header */}
                 <div className="flex items-center justify-between text-xs text-muted-foreground border-b border-border pb-3">
                     <span>
