@@ -8,7 +8,8 @@
  * - Se usa en CreateSession y EditSession, debajo de WeeklyClientVolumePanel
  *
  * Diseño: Card Standard (bg-card border border-border rounded-lg p-5)
- * Chips neutros (bg-surface-2) alineados con la imagen de referencia.
+ * Layout horizontal: titulo izquierda + divisor vertical + chips derecha.
+ * Chips coloreados por ui_bucket via PatternBadge active.
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -18,6 +19,7 @@ import React from "react";
 import { Zap } from "lucide-react";
 import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
+import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 
 interface SessionMovementPatternsCardProps {
     clientId: number | null;
@@ -54,36 +56,54 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
 
     return (
         <div className="rounded-lg border border-border bg-card p-5">
-            <div className="flex items-center gap-3">
-                <Zap className="size-5 text-primary" aria-hidden="true" />
-                <div>
-                    <h3 className="text-sm font-semibold text-foreground">
-                        Patrones de movimiento del dia
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                        Que se entrena hoy segun la planificacion
-                    </p>
+            <div className="flex items-center gap-4">
+                {/* Columna izquierda: icono + titulo + subtitulo */}
+                <div className="flex items-center gap-3">
+                    <Zap className="size-5 text-primary" aria-hidden="true" />
+                    <div className="flex flex-col gap-0.5">
+                        <h3 className="text-sm font-semibold text-foreground">
+                            Patrones de movimiento del dia
+                        </h3>
+                        <p className="text-xs text-muted-foreground">
+                            Que se entrena hoy segun la planificacion
+                        </p>
+                    </div>
+                </div>
+
+                {/* Divisor vertical */}
+                <div
+                    className="shrink-0"
+                    style={{
+                        width: "1px",
+                        height: "32px",
+                        backgroundColor: "var(--color-border-tertiary, hsl(var(--border) / 0.6))",
+                    }}
+                />
+
+                {/* Columna derecha: chips */}
+                <div className="flex flex-1 flex-wrap items-center gap-1.5">
+                    {isLoading ? (
+                        <div className="h-4 w-32 animate-pulse rounded bg-surface-2" />
+                    ) : patterns.length === 0 ? (
+                        <span className="text-xs text-muted-foreground">
+                            Sin patrones asignados
+                        </span>
+                    ) : (
+                        patterns.map((p) => (
+                            <PatternBadge
+                                key={p.id}
+                                name={
+                                    p.sub_pattern
+                                        ? `${p.name_es} — ${p.sub_pattern}`
+                                        : p.name_es
+                                }
+                                uiBucket={p.ui_bucket}
+                                active
+                            />
+                        ))
+                    )}
                 </div>
             </div>
-
-            {isLoading ? (
-                <div className="mt-3 h-4 w-32 animate-pulse rounded bg-surface-2" />
-            ) : patterns.length === 0 ? (
-                <p className="mt-3 text-xs text-muted-foreground">
-                    Sin patrones asignados para este dia.
-                </p>
-            ) : (
-                <div className="mt-3 flex flex-wrap gap-2">
-                    {patterns.map((p) => (
-                        <span
-                            key={p.id}
-                            className="inline-flex items-center rounded-md bg-surface-2 px-2.5 py-1 text-xs font-medium text-foreground"
-                        >
-                            {p.sub_pattern ? `${p.name_es} — ${p.sub_pattern}` : p.name_es}
-                        </span>
-                    ))}
-                </div>
-            )}
         </div>
     );
 };
