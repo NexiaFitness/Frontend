@@ -29,11 +29,11 @@ const bucketActiveClasses: Record<string, string> = {
 };
 
 const bucketInactiveClasses: Record<string, string> = {
-    LOWER: "bg-bucket-lower/15 text-bucket-lower hover:bg-bucket-lower/25",
-    UPPER: "bg-bucket-upper/15 text-bucket-upper hover:bg-bucket-upper/25",
-    CORE: "bg-bucket-core/15 text-bucket-core hover:bg-bucket-core/25",
-    POWER_LOCOMOTION: "bg-bucket-power/15 text-bucket-power hover:bg-bucket-power/25",
-    ACCESSORY: "bg-bucket-accessory/15 text-bucket-accessory hover:bg-bucket-accessory/25",
+    LOWER: "bg-bucket-lower/15 text-bucket-lower ring-1 ring-bucket-lower hover:bg-bucket-lower/25",
+    UPPER: "bg-bucket-upper/15 text-bucket-upper ring-1 ring-bucket-upper hover:bg-bucket-upper/25",
+    CORE: "bg-bucket-core/15 text-bucket-core ring-1 ring-bucket-core hover:bg-bucket-core/25",
+    POWER_LOCOMOTION: "bg-bucket-power/15 text-bucket-power ring-1 ring-bucket-power hover:bg-bucket-power/25",
+    ACCESSORY: "bg-bucket-accessory/15 text-bucket-accessory ring-1 ring-bucket-accessory hover:bg-bucket-accessory/25",
 };
 
 function getBucketKey(raw: string | null | undefined): string {

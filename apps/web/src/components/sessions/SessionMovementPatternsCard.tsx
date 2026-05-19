@@ -9,7 +9,7 @@
  *
  * Diseño: Card Standard (bg-card border border-border rounded-lg p-5)
  * Layout horizontal: titulo izquierda + divisor vertical + chips derecha.
- * Chips transparentes con ring (bg-bucket-{key}/15 + text-bucket-* + ring-1).
+ * Chips coloreados por ui_bucket via PatternBadge (inactivo con ring).
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -19,23 +19,8 @@ import React from "react";
 import { Zap } from "lucide-react";
 import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
+import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 
-
-function getBucketKey(raw: string | null | undefined): string {
-    if (!raw) return "ACCESSORY";
-    const key = String(raw).trim().toUpperCase().replace(/\s+/g, "_");
-    const valid = ["LOWER", "UPPER", "CORE", "POWER_LOCOMOTION", "ACCESSORY"];
-    if (valid.includes(key)) return key;
-    const map: Record<string, string> = {
-        POWER: "POWER_LOCOMOTION",
-        LOC: "POWER_LOCOMOTION",
-        LOCOMOTION: "POWER_LOCOMOTION",
-        ACC: "ACCESSORY",
-        LEGS: "LOWER",
-        ARMS: "UPPER",
-    };
-    return map[key] || "ACCESSORY";
-}
 
 interface SessionMovementPatternsCardProps {
     clientId: number | null;
@@ -96,7 +81,7 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
                     }}
                 />
 
-                {/* Columna derecha: chips transparentes con ring */}
+                {/* Columna derecha: chips */}
                 <div className="flex flex-1 flex-wrap items-center gap-1.5">
                     {isLoading ? (
                         <div className="h-4 w-32 animate-pulse rounded bg-surface-2" />
@@ -105,20 +90,17 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
                             Sin patrones asignados
                         </span>
                     ) : (
-                        patterns.map((p) => {
-                            const bucketKey = getBucketKey(p.ui_bucket);
-                            return (
-                                <span
-                                    key={p.id}
-                                    className={`inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors cursor-default bg-bucket-${bucketKey}/15 text-bucket-${bucketKey} ring-1 ring-bucket-${bucketKey} hover:bg-bucket-${bucketKey}/25`}
-                                    title={p.sub_pattern ? `${p.name_es} — ${p.sub_pattern}` : p.name_es}
-                                >
-                                    {p.sub_pattern
+                        patterns.map((p) => (
+                            <PatternBadge
+                                key={p.id}
+                                name={
+                                    p.sub_pattern
                                         ? `${p.name_es} — ${p.sub_pattern}`
-                                        : p.name_es}
-                                </span>
-                            );
-                        })
+                                        : p.name_es
+                                }
+                                uiBucket={p.ui_bucket}
+                            />
+                        ))
                     )}
                 </div>
             </div>
