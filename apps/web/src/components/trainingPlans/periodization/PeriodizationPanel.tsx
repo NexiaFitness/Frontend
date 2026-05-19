@@ -1,14 +1,16 @@
-import React from "react";
+import React, { useMemo, useState } from "react";
 
 import type { PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
+import { getTrainingDatesInRange } from "@nexia/shared";
 
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
-import { PeriodizationWeeklyStructureDraft } from "./PeriodizationWeeklyStructureDraft";
+import { PeriodizationWeeklyStructureModal } from "./PeriodizationWeeklyStructureModal";
+import { WeeklyStructureSummaryCard } from "./WeeklyStructureSummaryCard";
 
 
 
@@ -96,6 +98,19 @@ export const PeriodizationPanel: React.FC<Props> = ({
   const assignedIds = formState.qualities.map((q) => q.physical_quality_id);
 
   const available = catalog.filter((c) => !assignedIds.includes(c.id));
+
+  const [isWeeklyModalOpen, setIsWeeklyModalOpen] = useState(false);
+
+  const weeklyMetrics = useMemo(() => {
+    const totalTrainable = formState.startDate && formState.endDate
+      ? getTrainingDatesInRange(formState.startDate, formState.endDate, trainingDays).length
+      : 0;
+    const withPatterns = formState.weeklyStructure.reduce(
+      (acc, w) => acc + w.days.filter((d) => d.patterns.length > 0).length,
+      0,
+    );
+    return { totalTrainable, withPatterns };
+  }, [formState.startDate, formState.endDate, formState.weeklyStructure, trainingDays]);
 
   const sumColor =
 
@@ -367,25 +382,16 @@ export const PeriodizationPanel: React.FC<Props> = ({
 
       {/* Weekly structure */}
       {formState.phase === "rangeComplete" && formState.startDate && formState.endDate && (
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Estructura semanal
-            </p>
-            {(() => {
-              const totalTrainable = trainingDays?.length ?? 0;
-              const withPatterns = formState.weeklyStructure.reduce(
-                (acc, w) => acc + w.days.filter((d) => d.patterns.length > 0).length,
-                0
-              );
-              return (
-                <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
-                  {withPatterns}/{totalTrainable} días
-                </span>
-              );
-            })()}
-          </div>
-          <PeriodizationWeeklyStructureDraft
+        <>
+          <WeeklyStructureSummaryCard
+            totalTrainable={weeklyMetrics.totalTrainable}
+            withPatterns={weeklyMetrics.withPatterns}
+            hasTrainingDays={Boolean(trainingDays?.length)}
+            onOpen={() => setIsWeeklyModalOpen(true)}
+          />
+          <PeriodizationWeeklyStructureModal
+            isOpen={isWeeklyModalOpen}
+            onClose={() => setIsWeeklyModalOpen(false)}
             startDate={formState.startDate}
             endDate={formState.endDate}
             trainingDays={trainingDays}
@@ -395,7 +401,7 @@ export const PeriodizationPanel: React.FC<Props> = ({
             value={formState.weeklyStructure}
             onChange={onWeeklyStructureChange ?? (() => {})}
           />
-        </div>
+        </>
       )}
 
       {/* Volume */}
