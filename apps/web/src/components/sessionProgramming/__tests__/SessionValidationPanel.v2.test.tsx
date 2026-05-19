@@ -88,10 +88,13 @@ describe("SessionValidationPanel — axial y seguridad", () => {
         );
 
         await screen.findByText("Validación de sesión");
-        const axialToggle = screen.getByRole("button", { name: "Carga axialok" });
+        const axialToggle = screen.getByRole("button", { name: "Carga axialDentro del umbral" });
         await user.click(axialToggle);
 
-        expect(await screen.findByText("Dentro del umbral")).toBeInTheDocument();
+        // "Dentro del umbral" aparece dos veces tras expandir: en el badge del
+        // header (siempre visible) y en AxialLoadSection (contenido expandido).
+        const dentroUmbral = await screen.findAllByText("Dentro del umbral");
+        expect(dentroUmbral.length).toBeGreaterThanOrEqual(2);
         expect(screen.getByText("40 / 100")).toBeInTheDocument();
         expect(screen.getByText("Press banca")).toBeInTheDocument();
     });

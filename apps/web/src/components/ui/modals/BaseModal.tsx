@@ -25,11 +25,13 @@ const maxWidthStyles: Record<ModalMaxWidth, string> = {
     lg: "sm:max-w-lg",
     xl: "sm:max-w-xl",
     "2xl": "sm:max-w-2xl",
+    "3xl": "sm:max-w-3xl",
+    "4xl": "sm:max-w-4xl",
 };
 
 export type ModalIconType = "warning" | "danger" | "info" | "success";
 
-export type ModalMaxWidth = "sm" | "md" | "lg" | "xl" | "2xl";
+export type ModalMaxWidth = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 
 interface BaseModalProps {
     isOpen: boolean;
