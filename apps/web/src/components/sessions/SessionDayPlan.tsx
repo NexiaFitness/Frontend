@@ -17,6 +17,7 @@ import React from "react";
 import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import { cn } from "@/lib/utils";
 
 /** Alineado con EmptyStateCard: borde, barra primary, sombra, ocupa altura de la columna. */
@@ -156,6 +157,46 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
                         </p>
                     </div>
                 </div>
+                {rec.movement_patterns !== undefined && rec.movement_patterns !== null && (
+                    <div className="mt-4 flex items-center gap-4">
+                        <div className="flex shrink-0 flex-col gap-0.5">
+                            <span className="text-xs font-semibold text-foreground">
+                                Patrones de movimiento del día
+                            </span>
+                            <span className="text-[11px] text-muted-foreground">
+                                Qué se entrena hoy según la planificación
+                            </span>
+                        </div>
+                        <div
+                            className="shrink-0"
+                            style={{
+                                width: "1px",
+                                height: "32px",
+                                backgroundColor: "var(--color-border-tertiary, hsl(var(--border) / 0.6))",
+                            }}
+                        />
+                        <div className="flex flex-wrap gap-1.5">
+                            {rec.movement_patterns.length === 0 ? (
+                                <span className="text-xs text-muted-foreground">
+                                    Sin patrones asignados
+                                </span>
+                            ) : (
+                                rec.movement_patterns.map((p) => (
+                                    <PatternBadge
+                                        key={p.id}
+                                        name={
+                                            p.sub_pattern
+                                                ? `${p.name_es} — ${p.sub_pattern}`
+                                                : p.name_es
+                                        }
+                                        uiBucket={p.ui_bucket}
+                                        active
+                                    />
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
                 {rec.day_inherited && (
                     <p className="mt-auto pt-4 text-xs text-muted-foreground">
                         Valores heredados del plan semanal/mensual.
