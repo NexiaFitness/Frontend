@@ -2,20 +2,27 @@
  * PeriodizationWeeklyStructureModal.tsx — Modal de edición de la estructura semanal
  * dentro del flujo de creación/edición de bloques de periodización.
  *
- * Sustituye el render inline largo del draft por:
- * - Matriz semana × día en viewports `lg+`.
- * - Lista vertical (fallback) en viewports `< lg`, idéntica al draft inline.
+ * Render unificado: acordeon vertical de semanas (una expandida a la vez).
+ * - Cabecera de cada semana: chevron + chip ordinal + "Semana N" + rango
+ *   lun-dom + contador `n/m dias`. Sin acciones extra.
+ * - Cuerpo expandido: una fila por dia entrenable con su nombre, fecha,
+ *   patrones asignados (o "Sin patrones asignados") y boton "+".
+ * - Footer: leyenda de buckets (Tren inferior / Tren superior / Core / ...)
+ *   + contador global + boton "Listo".
  *
  * El componente NO mantiene estado del draft: lee `value` y emite `onChange`.
- * Cerrar el modal (ESC, backdrop o botón "Listo") **no** resetea nada.
+ * Cerrar el modal (ESC, backdrop o boton "Listo") **no** resetea nada.
  *
  * Spec: docs/specs/estructura-semanal/02_SPEC_TECNICO_MODAL.md
  */
 
 import React, { useCallback, useMemo, useState } from "react";
+import { ChevronDown } from "lucide-react";
 
 import {
     getTrainingDatesInRange,
+    UI_BUCKET_LABELS,
+    UI_BUCKET_ORDER,
     type TrainingDateInfo,
 } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
@@ -26,17 +33,16 @@ import type {
 
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
 
 import { DayCell } from "./DayCell";
 
-const ISO_DAY_NAMES_SHORT: Record<number, string> = {
-    1: "Lun",
-    2: "Mar",
-    3: "Mié",
-    4: "Jue",
-    5: "Vie",
-    6: "Sáb",
-    7: "Dom",
+const BUCKET_DOT_CLASS: Record<string, string> = {
+    LOWER: "bg-bucket-lower",
+    UPPER: "bg-bucket-upper",
+    CORE: "bg-bucket-core",
+    POWER_LOCOMOTION: "bg-bucket-power",
+    ACCESSORY: "bg-bucket-accessory",
 };
 
 function formatRangeShort(startDate: string, endDate: string): string {
@@ -48,6 +54,36 @@ function formatRangeShort(startDate: string, endDate: string): string {
         });
     };
     return `${fmt(startDate)} – ${fmt(endDate)}`;
+}
+
+/**
+ * Devuelve el rango "dd mmm – dd mmm" de la semana N del bloque, contando
+ * desde `blockStartISO` (semana 1 = startDate .. startDate+6, etc).
+ *
+ * Importante: NO se usa la semana ISO calendárica (lun-dom), porque cuando
+ * el bloque empieza a media semana los dias entrenables del bloque caen en
+ * semanas ISO distintas pero pertenecen a la misma "semana 1" del bloque.
+ */
+function formatBlockWeekRange(
+    blockStartISO: string,
+    weekOrdinal: number,
+    blockEndISO?: string,
+): string {
+    const [y, m, d] = blockStartISO.split("-").map(Number);
+    const start = new Date(y, m - 1, d);
+    start.setDate(start.getDate() + (weekOrdinal - 1) * 7);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+    if (blockEndISO) {
+        const [ey, em, ed] = blockEndISO.split("-").map(Number);
+        const blockEnd = new Date(ey, em - 1, ed);
+        if (end.getTime() > blockEnd.getTime()) {
+            end.setTime(blockEnd.getTime());
+        }
+    }
+    const fmt = (dt: Date) =>
+        dt.toLocaleDateString("es-ES", { day: "numeric", month: "short" });
+    return `${fmt(start)} – ${fmt(end)}`;
 }
 
 export interface PeriodizationWeeklyStructureModalProps {
@@ -104,12 +140,24 @@ export const PeriodizationWeeklyStructureModal: React.FC<
         return ordered;
     }, [trainingDates]);
 
-    // Columnas activas de la matriz: subconjunto ISO 1..7 que aparece en algún día del rango.
-    const activeDaysOfWeek = useMemo(() => {
-        const set = new Set<number>();
-        for (const d of trainingDates) set.add(d.dayOfWeek);
-        return Array.from(set).sort((a, b) => a - b);
-    }, [trainingDates]);
+    // Acordeon exclusivo: solo una semana abierta a la vez.
+    // Por defecto la primera semana del rango (si existe).
+    const [expandedWeek, setExpandedWeek] = useState<number | null>(() =>
+        groupedByWeek.length > 0 ? groupedByWeek[0].weekOrdinal : null,
+    );
+    // Si el rango cambia y la semana abierta deja de existir, recolocamos.
+    React.useEffect(() => {
+        if (groupedByWeek.length === 0) {
+            if (expandedWeek !== null) setExpandedWeek(null);
+            return;
+        }
+        const stillExists = groupedByWeek.some(
+            (w) => w.weekOrdinal === expandedWeek,
+        );
+        if (!stillExists) {
+            setExpandedWeek(groupedByWeek[0].weekOrdinal);
+        }
+    }, [groupedByWeek, expandedWeek]);
 
     const getDayPatterns = useCallback(
         (weekOrdinal: number, dayOfWeek: number): WeeklyStructureDayPatternInput[] => {
@@ -173,7 +221,34 @@ export const PeriodizationWeeklyStructureModal: React.FC<
         );
     }, [value]);
 
-    // Empty states
+    // Recuento por semana (configurados / entrenables).
+    const weekStats = useCallback(
+        (weekOrdinal: number, weekDays: TrainingDateInfo[]) => {
+            const total = weekDays.length;
+            const week = value.find((w) => w.week_ordinal === weekOrdinal);
+            const configured = week
+                ? week.days.filter((d) => d.patterns.length > 0).length
+                : 0;
+            return { configured, total };
+        },
+        [value],
+    );
+
+    const presentBuckets = useMemo(() => {
+        const set = new Set<string>();
+        for (const p of patternsCatalog) {
+            const key = (p.ui_bucket || "ACCESSORY").toString().toUpperCase();
+            set.add(key);
+        }
+        const ordered: { key: string; label: string }[] = [];
+        for (const key of UI_BUCKET_ORDER) {
+            if (set.has(key)) {
+                ordered.push({ key, label: UI_BUCKET_LABELS[key] });
+            }
+        }
+        return ordered;
+    }, [patternsCatalog]);
+
     const emptyContent = (() => {
         if (!trainingDays?.length) {
             return (
@@ -205,7 +280,7 @@ export const PeriodizationWeeklyStructureModal: React.FC<
             onClose={onClose}
             title="Estructura semanal"
             description={formatRangeShort(startDate, endDate)}
-            maxWidth="4xl"
+            maxWidth="3xl"
         >
             <div className="space-y-4">
                 {/* Context header */}
@@ -223,64 +298,72 @@ export const PeriodizationWeeklyStructureModal: React.FC<
                 {emptyContent}
 
                 {!emptyContent && (
-                    <>
-                        {/* Matrix view (lg+) */}
-                        <div className="hidden lg:block">
-                            <div className="max-h-[60vh] overflow-y-auto rounded-md border border-border">
+                    <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                        {groupedByWeek.map((weekGroup) => {
+                            const isExpanded =
+                                expandedWeek === weekGroup.weekOrdinal;
+                            const { configured, total } = weekStats(
+                                weekGroup.weekOrdinal,
+                                weekGroup.days,
+                            );
+                            const weekRange = formatBlockWeekRange(
+                                startDate,
+                                weekGroup.weekOrdinal,
+                                endDate,
+                            );
+                            return (
                                 <div
-                                    className="grid sticky top-0 z-10 bg-card border-b border-border"
-                                    style={{
-                                        gridTemplateColumns: `80px repeat(${activeDaysOfWeek.length}, minmax(160px, 1fr))`,
-                                    }}
+                                    key={weekGroup.weekOrdinal}
+                                    className="rounded-lg border border-border bg-surface-2/30 overflow-hidden"
                                 >
-                                    <div className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">
-                                        Semana
-                                    </div>
-                                    {activeDaysOfWeek.map((dow) => (
-                                        <div
-                                            key={dow}
-                                            className="px-2 py-2 text-[10px] font-semibold text-muted-foreground uppercase tracking-wider text-center"
-                                        >
-                                            {ISO_DAY_NAMES_SHORT[dow]}
-                                        </div>
-                                    ))}
-                                </div>
-
-                                {groupedByWeek.map((weekGroup) => (
-                                    <div
-                                        key={weekGroup.weekOrdinal}
-                                        className="grid border-b border-border/60 last:border-b-0"
-                                        style={{
-                                            gridTemplateColumns: `80px repeat(${activeDaysOfWeek.length}, minmax(160px, 1fr))`,
-                                        }}
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            setExpandedWeek(
+                                                isExpanded
+                                                    ? null
+                                                    : weekGroup.weekOrdinal,
+                                            )
+                                        }
+                                        className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-2/60 transition-colors text-left"
+                                        aria-expanded={isExpanded}
                                     >
-                                        <div className="px-2 py-3 text-xs font-semibold text-foreground tabular-nums">
-                                            Sem {weekGroup.weekOrdinal}
+                                        <ChevronDown
+                                            className={cn(
+                                                "h-4 w-4 text-muted-foreground shrink-0 transition-transform",
+                                                isExpanded ? "" : "-rotate-90",
+                                            )}
+                                            aria-hidden
+                                        />
+                                        <span className="inline-flex h-7 w-7 items-center justify-center rounded-md bg-primary/15 text-primary text-xs font-semibold shrink-0">
+                                            S{weekGroup.weekOrdinal}
+                                        </span>
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-semibold text-foreground">
+                                                Semana {weekGroup.weekOrdinal}
+                                            </p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {weekRange}
+                                                {" · "}
+                                                <span className="tabular-nums">
+                                                    {configured}/{total} días
+                                                </span>
+                                            </p>
                                         </div>
-                                        {activeDaysOfWeek.map((dow) => {
-                                            const dayInfo = weekGroup.days.find(
-                                                (d) => d.dayOfWeek === dow,
-                                            );
-                                            if (!dayInfo) {
+                                    </button>
+                                    {isExpanded && (
+                                        <div className="border-t border-border/60 px-2 py-2 space-y-1">
+                                            {weekGroup.days.map((dayInfo) => {
+                                                const popoverKey = `${weekGroup.weekOrdinal}-${dayInfo.dayOfWeek}`;
+                                                const isPopoverOpen =
+                                                    openPopoverKey === popoverKey;
                                                 return (
-                                                    <div
-                                                        key={`${weekGroup.weekOrdinal}-${dow}`}
-                                                        className="px-1 py-2 opacity-30"
-                                                        aria-hidden
-                                                    >
-                                                        <div className="rounded-md border border-dashed border-border h-full min-h-[88px]" />
-                                                    </div>
-                                                );
-                                            }
-                                            const popoverKey = `${weekGroup.weekOrdinal}-${dow}`;
-                                            const isOpen = openPopoverKey === popoverKey;
-                                            return (
-                                                <div
-                                                    key={popoverKey}
-                                                    className="px-1 py-2"
-                                                >
                                                     <DayCell
-                                                        weekOrdinal={weekGroup.weekOrdinal}
+                                                        key={popoverKey}
+                                                        layout="row"
+                                                        weekOrdinal={
+                                                            weekGroup.weekOrdinal
+                                                        }
                                                         dayOfWeek={dayInfo.dayOfWeek}
                                                         dateISO={dayInfo.dateISO}
                                                         dayName={dayInfo.dayName}
@@ -291,7 +374,7 @@ export const PeriodizationWeeklyStructureModal: React.FC<
                                                         catalog={patternsCatalog}
                                                         catalogLoading={patternsLoading}
                                                         catalogError={patternsError}
-                                                        isPopoverOpen={isOpen}
+                                                        isPopoverOpen={isPopoverOpen}
                                                         onOpenPopover={() =>
                                                             setOpenPopoverKey(popoverKey)
                                                         }
@@ -305,73 +388,47 @@ export const PeriodizationWeeklyStructureModal: React.FC<
                                                                 patternId,
                                                             )
                                                         }
-                                                        className="rounded-md border border-border/60 bg-surface-2/40 p-2 space-y-2 h-full min-h-[88px]"
                                                     />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* List fallback (< lg) */}
-                        <div className="block lg:hidden space-y-3 max-h-[60vh] overflow-y-auto">
-                            {groupedByWeek.map((weekGroup) => (
-                                <div key={weekGroup.weekOrdinal} className="space-y-2">
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                                        Semana {weekGroup.weekOrdinal}
-                                    </p>
-                                    <div className="space-y-2">
-                                        {weekGroup.days.map((dayInfo) => {
-                                            const popoverKey = `${weekGroup.weekOrdinal}-${dayInfo.dayOfWeek}-mb`;
-                                            const isOpen = openPopoverKey === popoverKey;
-                                            return (
-                                                <DayCell
-                                                    key={popoverKey}
-                                                    weekOrdinal={weekGroup.weekOrdinal}
-                                                    dayOfWeek={dayInfo.dayOfWeek}
-                                                    dateISO={dayInfo.dateISO}
-                                                    dayName={dayInfo.dayName}
-                                                    assignedPatterns={getDayPatterns(
-                                                        weekGroup.weekOrdinal,
-                                                        dayInfo.dayOfWeek,
-                                                    )}
-                                                    catalog={patternsCatalog}
-                                                    catalogLoading={patternsLoading}
-                                                    catalogError={patternsError}
-                                                    isPopoverOpen={isOpen}
-                                                    onOpenPopover={() =>
-                                                        setOpenPopoverKey(popoverKey)
-                                                    }
-                                                    onClosePopover={() =>
-                                                        setOpenPopoverKey(null)
-                                                    }
-                                                    onToggle={(patternId) =>
-                                                        togglePattern(
-                                                            weekGroup.weekOrdinal,
-                                                            dayInfo.dayOfWeek,
-                                                            patternId,
-                                                        )
-                                                    }
-                                                />
-                                            );
-                                        })}
-                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
-                            ))}
-                        </div>
-                    </>
+                            );
+                        })}
+                    </div>
                 )}
 
                 {/* Footer */}
-                <div className="flex items-center justify-between border-t border-border pt-4">
-                    <span className="text-xs text-muted-foreground tabular-nums">
-                        {withPatterns} / {totalTrainable} días configurados
-                    </span>
-                    <Button variant="primary" size="sm" onClick={onClose}>
-                        Listo
-                    </Button>
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                    {presentBuckets.length > 0 && (
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                            {presentBuckets.map((b) => (
+                                <span
+                                    key={b.key}
+                                    className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
+                                >
+                                    <span
+                                        className={cn(
+                                            "h-2 w-2 rounded-full",
+                                            BUCKET_DOT_CLASS[b.key]
+                                                ?? "bg-muted-foreground",
+                                        )}
+                                        aria-hidden
+                                    />
+                                    {b.label}
+                                </span>
+                            ))}
+                        </div>
+                    )}
+                    <div className="flex items-center gap-3 ml-auto">
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                            {withPatterns} / {totalTrainable} días configurados
+                        </span>
+                        <Button variant="primary" size="sm" onClick={onClose}>
+                            Listo
+                        </Button>
+                    </div>
                 </div>
             </div>
         </BaseModal>

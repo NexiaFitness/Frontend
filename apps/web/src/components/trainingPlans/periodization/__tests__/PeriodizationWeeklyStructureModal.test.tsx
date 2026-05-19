@@ -106,19 +106,17 @@ describe("PeriodizationWeeklyStructureModal", () => {
             />,
         );
 
-        // Hay dos celdas Lunes potencialmente renderizadas: la del grid (lg+) y la del
-        // fallback de lista (< lg). En jsdom ambas estan en el DOM (no hay media query
-        // real); cualquiera de las dos sirve para validar el cableado.
-        const addButtons = screen.getAllByRole("button", {
+        // El modal es un acordeon exclusivo: solo la primera semana esta
+        // expandida por defecto, asi que solo hay un boton "Añadir patrones a
+        // Lunes" visible (el de la semana 1, que es la unica del rango aqui).
+        const addButton = screen.getByRole("button", {
             name: /añadir patrones a lunes/i,
         });
-        expect(addButtons.length).toBeGreaterThanOrEqual(1);
-        await user.click(addButtons[0]);
+        await user.click(addButton);
 
         // El popover renderiza el catalogo entero como botones PatternBadge.
-        // Hay un boton "Empuje" por cada popover abierto (solo uno deberia abrirse).
-        const empujeButtons = await screen.findAllByRole("button", { name: /empuje/i });
-        await user.click(empujeButtons[0]);
+        const empujeButton = await screen.findByRole("button", { name: /empuje/i });
+        await user.click(empujeButton);
 
         expect(onChange).toHaveBeenCalledTimes(1);
         expect(onChange).toHaveBeenCalledWith([

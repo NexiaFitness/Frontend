@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -165,8 +166,17 @@ export const BaseModal: React.FC<BaseModalProps> = ({
 
     const icon = iconType ? iconConfig[iconType] : null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    // Portal: el modal se monta directamente en <body> para escapar de
+    // ancestros con `transform`, `filter`, `perspective` o `position: sticky`
+    // que romperian el position:fixed (anclandolo al contenedor en vez del
+    // viewport) y dejando ver el contenido detras del modal. Tambien evita que
+    // elementos hermanos con z-index local lo tapen.
+    const portalTarget =
+        typeof document !== "undefined" ? document.body : null;
+    if (!portalTarget) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
                 onClick={handleBackdropClick}
@@ -226,6 +236,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget,
     );
 };
