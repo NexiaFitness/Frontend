@@ -10,6 +10,10 @@
  */
 
 import type { WeeklyStructureWeek, WeeklyStructureDay } from "../types/weeklyStructure";
+import {
+    isoLocalDateToTrainingDayValue,
+    parseHabitualTrainingDaySet,
+} from "./clientTrainingDays";
 
 /**
  * Genera semanas sintéticas vacías a partir del rango de fechas de un bloque.
@@ -75,4 +79,83 @@ export function mergeWeeklyStructureWeeks(
     const missing = syntheticWeeks.filter((w) => !realOrdinals.has(w.week_ordinal));
 
     return [...realWeeks, ...missing].sort((a, b) => a.week_ordinal - b.week_ordinal);
+}
+
+/**
+ * Información de un día entrenable resuelto dentro del rango de un bloque.
+ *
+ * - `weekOrdinal` es 1-indexado y relativo al inicio del bloque (week_ordinal del
+ *   modelo `WeeklyStructureWeek`).
+ * - `dayOfWeek` sigue ISO 1..7 (1=Lunes, 7=Domingo).
+ * - `dateISO` se devuelve en hora local (`YYYY-MM-DD`), alineado con `toLocalISO`.
+ */
+export interface TrainingDateInfo {
+    weekOrdinal: number;
+    dayOfWeek: number;
+    dateISO: string;
+    dayName: string;
+}
+
+const DAY_NAMES_ES: Record<number, string> = {
+    1: "Lunes",
+    2: "Martes",
+    3: "Miércoles",
+    4: "Jueves",
+    5: "Viernes",
+    6: "Sábado",
+    7: "Domingo",
+};
+
+/**
+ * Devuelve los días entrenables del cliente que caen dentro del rango del bloque,
+ * agrupándolos en semanas ordinales relativas a `startDate`.
+ *
+ * - Lee `trainingDays` (lista de días habituales del cliente) y filtra el rango.
+ * - Calcula `weekOrdinal` como `floor(diffDaysDesdeInicio / 7) + 1`.
+ * - El nombre del día se devuelve en español.
+ */
+export function getTrainingDatesInRange(
+    startDate: string,
+    endDate: string,
+    trainingDays: readonly string[] | null | undefined,
+): TrainingDateInfo[] {
+    const daySet = parseHabitualTrainingDaySet(trainingDays);
+    if (!daySet.size) return [];
+
+    const [sy, sm, sd] = startDate.split("-").map(Number);
+    const [ey, em, ed] = endDate.split("-").map(Number);
+    if ([sy, sm, sd, ey, em, ed].some((n) => Number.isNaN(n))) return [];
+
+    const start = new Date(sy, sm - 1, sd);
+    const end = new Date(ey, em - 1, ed);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return [];
+
+    const out: TrainingDateInfo[] = [];
+    const cursor = new Date(start);
+
+    while (cursor.getTime() <= end.getTime()) {
+        const y = cursor.getFullYear();
+        const m = String(cursor.getMonth() + 1).padStart(2, "0");
+        const d = String(cursor.getDate()).padStart(2, "0");
+        const dateISO = `${y}-${m}-${d}`;
+
+        const dayValue = isoLocalDateToTrainingDayValue(dateISO);
+        if (dayValue && daySet.has(dayValue)) {
+            const jsDay = cursor.getDay();
+            const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+            const diffMs = cursor.getTime() - start.getTime();
+            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const weekOrdinal = Math.floor(diffDays / 7) + 1;
+            out.push({
+                weekOrdinal,
+                dayOfWeek,
+                dateISO,
+                dayName: DAY_NAMES_ES[dayOfWeek] ?? "",
+            });
+        }
+
+        cursor.setDate(cursor.getDate() + 1);
+    }
+
+    return out;
 }

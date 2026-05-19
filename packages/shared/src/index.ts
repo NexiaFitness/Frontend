@@ -347,6 +347,8 @@ export * from "./utils/exerciseUiBucket";
 export {
     generateSyntheticWeeks,
     mergeWeeklyStructureWeeks,
+    getTrainingDatesInRange,
+    type TrainingDateInfo,
 } from "./utils/weeklyStructure";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
