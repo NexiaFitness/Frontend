@@ -22,6 +22,13 @@ export default defineConfig({
         globals: true,
         setupFiles: ['./src/test-utils/setup.ts'],
 
+        // Default 5000ms timeout was triggering flaky failures on the full suite
+        // (jsdom + RTK Query + 400+ tests saturate the runner under Windows I/O).
+        // Individual tests pass when isolated; this gives breathing room without
+        // masking real bugs.
+        testTimeout: 20000,
+        hookTimeout: 20000,
+
         // Coverage configuration
         coverage: {
             provider: 'v8',
