@@ -24,6 +24,7 @@ import { getMutationErrorMessage } from "@nexia/shared";
 
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
+import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -117,11 +118,9 @@ const PatternsSection: React.FC<{ data: SessionValidationOut["patterns"] }> = ({
             {data.missing.length > 0 && (
                 <div>
                     <p className="text-xs font-medium text-muted-foreground mb-1">Patrones faltantes</p>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                         {data.missing.map((p) => (
-                            <span key={p} className="rounded-md bg-destructive/10 text-destructive px-2 py-0.5 text-xs">
-                                {p}
-                            </span>
+                            <PatternBadge key={p} as="span" name={p} />
                         ))}
                     </div>
                 </div>
@@ -129,11 +128,9 @@ const PatternsSection: React.FC<{ data: SessionValidationOut["patterns"] }> = ({
             {data.extra.length > 0 && (
                 <div>
                     <p className="text-xs font-medium text-muted-foreground mb-1">Patrones extra</p>
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                         {data.extra.map((p) => (
-                            <span key={p} className="rounded-md bg-primary/10 text-primary px-2 py-0.5 text-xs">
-                                {p}
-                            </span>
+                            <PatternBadge key={p} as="span" name={p} />
                         ))}
                     </div>
                 </div>
