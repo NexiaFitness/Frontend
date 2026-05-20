@@ -82,7 +82,7 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
                 />
 
                 {/* Columna derecha: chips */}
-                <div className="flex flex-1 flex-wrap items-center gap-1.5">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
                     {isLoading ? (
                         <div className="h-4 w-32 animate-pulse rounded bg-surface-2" />
                     ) : patterns.length === 0 ? (
@@ -93,6 +93,7 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
                         patterns.map((p) => (
                             <PatternBadge
                                 key={p.id}
+                                as="span"
                                 name={
                                     p.sub_pattern
                                         ? `${p.name_es} — ${p.sub_pattern}`

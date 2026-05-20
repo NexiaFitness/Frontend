@@ -7,8 +7,7 @@
  *   lun-dom + contador `n/m dias`. Sin acciones extra.
  * - Cuerpo expandido: una fila por dia entrenable con su nombre, fecha,
  *   patrones asignados (o "Sin patrones asignados") y boton "+".
- * - Footer: leyenda de buckets (Tren inferior / Tren superior / Core / ...)
- *   + contador global + boton "Listo".
+ * - Footer: contador global + boton "Listo".
  *
  * El componente NO mantiene estado del draft: lee `value` y emite `onChange`.
  * Cerrar el modal (ESC, backdrop o boton "Listo") **no** resetea nada.
@@ -21,8 +20,6 @@ import { ChevronDown } from "lucide-react";
 
 import {
     getTrainingDatesInRange,
-    UI_BUCKET_LABELS,
-    UI_BUCKET_ORDER,
     type TrainingDateInfo,
 } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
@@ -36,14 +33,6 @@ import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 
 import { DayCell } from "./DayCell";
-
-const BUCKET_DOT_CLASS: Record<string, string> = {
-    LOWER: "bg-bucket-lower",
-    UPPER: "bg-bucket-upper",
-    CORE: "bg-bucket-core",
-    POWER_LOCOMOTION: "bg-bucket-power",
-    ACCESSORY: "bg-bucket-accessory",
-};
 
 function formatRangeShort(startDate: string, endDate: string): string {
     const fmt = (iso: string) => {
@@ -234,21 +223,6 @@ export const PeriodizationWeeklyStructureModal: React.FC<
         [value],
     );
 
-    const presentBuckets = useMemo(() => {
-        const set = new Set<string>();
-        for (const p of patternsCatalog) {
-            const key = (p.ui_bucket || "ACCESSORY").toString().toUpperCase();
-            set.add(key);
-        }
-        const ordered: { key: string; label: string }[] = [];
-        for (const key of UI_BUCKET_ORDER) {
-            if (set.has(key)) {
-                ordered.push({ key, label: UI_BUCKET_LABELS[key] });
-            }
-        }
-        return ordered;
-    }, [patternsCatalog]);
-
     const emptyContent = (() => {
         if (!trainingDays?.length) {
             return (
@@ -302,7 +276,11 @@ export const PeriodizationWeeklyStructureModal: React.FC<
                 {emptyContent}
 
                 {!emptyContent && (
-                    <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+                    // Sin overflow propio: el popover de patrones es position:absolute
+                    // dentro de la celda y un contenedor con overflow-y-auto en este
+                    // wrapper lo clipa al abrirse. El scroll lo gestiona el BaseModal
+                    // (max-h-[90vh] overflow-y-auto en el outer).
+                    <div className="space-y-2">
                         {groupedByWeek.map((weekGroup) => {
                             const isExpanded =
                                 expandedWeek === weekGroup.weekOrdinal;
@@ -404,35 +382,13 @@ export const PeriodizationWeeklyStructureModal: React.FC<
                 )}
 
                 {/* Footer */}
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-                    {presentBuckets.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                            {presentBuckets.map((b) => (
-                                <span
-                                    key={b.key}
-                                    className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground"
-                                >
-                                    <span
-                                        className={cn(
-                                            "h-2 w-2 rounded-full",
-                                            BUCKET_DOT_CLASS[b.key]
-                                                ?? "bg-muted-foreground",
-                                        )}
-                                        aria-hidden
-                                    />
-                                    {b.label}
-                                </span>
-                            ))}
-                        </div>
-                    )}
-                    <div className="flex items-center gap-3 ml-auto">
-                        <span className="text-xs text-muted-foreground tabular-nums">
-                            {withPatterns} / {totalTrainable} días configurados
-                        </span>
-                        <Button variant="primary" size="sm" onClick={onClose}>
-                            Listo
-                        </Button>
-                    </div>
+                <div className="flex items-center justify-end gap-3 border-t border-border pt-4">
+                    <span className="text-xs text-muted-foreground tabular-nums">
+                        {withPatterns} / {totalTrainable} días configurados
+                    </span>
+                    <Button variant="primary" size="sm" onClick={onClose}>
+                        Listo
+                    </Button>
                 </div>
             </div>
         </BaseModal>

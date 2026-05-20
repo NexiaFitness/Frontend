@@ -84,10 +84,10 @@ export const PatternSelectorPopover: React.FC<PatternSelectorPopoverProps> = ({
     // El theme usa el mismo HSL para --card, --surface y --popover, asi que
     // un popover plano dentro de un BaseModal (bg-card) se confundiria con el
     // fondo. Usamos bg-surface-2 (240 14% 16%, ligeramente mas claro) +
-    // shadow-2xl para que el popover quede claramente "elevado" sobre el
-    // modal sin tocar los tokens globales del theme.
+    // backdrop-blur-sm + shadow-2xl para que el popover quede claramente
+    // "elevado" sobre el modal sin tocar los tokens globales del theme.
     const wrapperClass = className
-        ?? "absolute right-0 top-full mt-1 z-40 w-64 rounded-lg border border-border bg-surface-2 shadow-2xl p-2 space-y-2 max-h-64 overflow-y-auto scrollbar-primary";
+        ?? "absolute right-0 top-full mt-1 z-40 w-64 rounded-lg border border-border bg-surface-2/95 backdrop-blur-sm shadow-2xl p-2 space-y-2 max-h-64 overflow-y-auto scrollbar-primary";
 
     return (
         <div ref={popoverRef} className={wrapperClass} role="dialog">

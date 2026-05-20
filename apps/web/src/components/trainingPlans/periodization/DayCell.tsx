@@ -12,7 +12,7 @@
  *   + `onClose`) para coordinarse con otras celdas (solo un popover a la vez).
  */
 
-import React from "react";
+import React, { useRef } from "react";
 import { Plus, X } from "lucide-react";
 
 import type { MovementPattern } from "@nexia/shared/types/exercise";
@@ -54,8 +54,6 @@ export interface DayCellProps {
     layout?: DayCellLayout;
     /** Layout del wrapper externo (lista vertical, celda de matriz, …). */
     className?: string;
-    /** Layout opcional del popover (posicionamiento). */
-    popoverClassName?: string;
 }
 
 export const DayCell: React.FC<DayCellProps> = ({
@@ -72,12 +70,14 @@ export const DayCell: React.FC<DayCellProps> = ({
     onToggle,
     layout = "cell",
     className,
-    popoverClassName,
 }) => {
+    const triggerRef = useRef<HTMLButtonElement | null>(null);
+
     const popover = (
         <PatternSelectorPopover
             isOpen={isPopoverOpen}
             onClose={onClosePopover}
+            anchorRef={triggerRef}
             catalog={catalog}
             catalogLoading={catalogLoading}
             catalogError={catalogError}
@@ -85,7 +85,6 @@ export const DayCell: React.FC<DayCellProps> = ({
                 (p) => p.movement_pattern_id,
             )}
             onToggle={onToggle}
-            className={popoverClassName}
         />
     );
 
@@ -140,8 +139,9 @@ export const DayCell: React.FC<DayCellProps> = ({
                         </div>
                     )}
                 </div>
-                <div className="relative shrink-0">
+                <div className="shrink-0">
                     <button
+                        ref={triggerRef}
                         type="button"
                         onClick={() =>
                             isPopoverOpen ? onClosePopover() : onOpenPopover()
@@ -170,8 +170,9 @@ export const DayCell: React.FC<DayCellProps> = ({
                         {formatDateShort(dateISO)}
                     </p>
                 </div>
-                <div className="relative">
+                <div>
                     <button
+                        ref={triggerRef}
                         type="button"
                         onClick={() => (isPopoverOpen ? onClosePopover() : onOpenPopover())}
                         className="inline-flex items-center gap-1 rounded-md border border-dashed border-primary/40 px-2 py-1 text-[11px] text-primary hover:bg-primary/10 transition-colors"
