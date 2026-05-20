@@ -56,7 +56,7 @@ export const SessionMovementPatternsCard: React.FC<SessionMovementPatternsCardPr
     }
 
     return (
-        <div className="rounded-lg border border-border bg-card p-5">
+        <div className="rounded-lg border border-border border-l-2 border-l-primary bg-card p-5">
             <div className="flex items-center gap-4">
                 {/* Columna izquierda: icono + titulo + subtitulo */}
                 <div className="flex items-center gap-3">
