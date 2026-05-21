@@ -12,13 +12,16 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { PageTitle } from "@/components/dashboard/shared";
 import { LoadingSpinner, useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import { useCreateTestResult } from "@nexia/shared";
 import { useGetClientQuery, useGetPhysicalTestsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 
 export const CreateTestResult: React.FC = () => {
     const navigate = useNavigate();
@@ -44,6 +47,8 @@ export const CreateTestResult: React.FC = () => {
         { isStandard: true },
         { skip: !clientId }
     );
+
+    useScrollDashboardWhenReady(!isLoadingClient && !isLoadingTests && !!clientId);
 
     const [formData, setFormData] = useState({
         test_id: "",
@@ -149,17 +154,14 @@ export const CreateTestResult: React.FC = () => {
 
     return (
         <>
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+                <div className="mb-6 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                                Nuevo Test Físico
-                            </h2>
-                            <p className="text-muted-foreground text-sm md:text-base">
-                                Registrar un nuevo resultado de test físico
-                            </p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => goBack()}>
+                        <PageTitle
+                            title="Nuevo Test Físico"
+                            subtitle="Registrar un nuevo resultado de test físico"
+                        />
+                        <Button variant="outline" size="sm" onClick={() => goBack()} className="shrink-0">
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver
                         </Button>
                     </div>

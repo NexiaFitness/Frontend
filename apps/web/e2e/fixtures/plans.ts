@@ -1,8 +1,7 @@
 /**
  * E2E helpers para flujos de planes
  *
- * - ensureOnPlanDetail: estar en lista de planes → terminar en detalle de un plan
- *   (usa "Ver detalles" del primero si hay planes; si no, crea uno y va al detalle).
+ * - ensureOnPlanDetail: lista de planes → detalle (redirect a ficha cliente si el plan tiene cliente)
  * Sin skip: el test siempre se ejecuta.
  */
 
@@ -12,11 +11,8 @@ import { createMinimalPlanData } from "./test-data";
 const LIST_READY_TIMEOUT = 12_000;
 
 /**
- * Asegura estar en la página de detalle de un plan.
- * Debe llamarse después de login y navigateToPlans(page).
- * - Si hay al menos un plan: hace click en el primer "Ver detalles" y espera la URL de detalle.
- * - Si la lista está vacía: crea un plan (formulario mínimo) y espera la URL de detalle.
- * No usa test.skip(); el test siempre continúa.
+ * Asegura estar en planificación del cliente para un plan con asignación.
+ * Tras consolidación UX, /training-plans/:id redirige a /clients/:id?tab=planning&plan=:id.
  */
 export async function ensureOnPlanDetail(page: Page): Promise<void> {
   const verDetalles = page
@@ -33,9 +29,11 @@ export async function ensureOnPlanDetail(page: Page): Promise<void> {
 
   if (hasExistingPlan) {
     await verDetalles.click();
-    await page.waitForURL(/\/dashboard\/training-plans\/\d+/, {
-      timeout: 10_000,
-    });
+    await page.waitForURL(
+      /\/dashboard\/(training-plans\/\d+|clients\/\d+\?.*tab=planning)/,
+      { timeout: 15_000 },
+    );
+    await page.waitForURL(/\/dashboard\/clients\/\d+/, { timeout: 15_000 }).catch(() => {});
     return;
   }
 
@@ -61,7 +59,9 @@ export async function ensureOnPlanDetail(page: Page): Promise<void> {
     .fill(end.toISOString().slice(0, 10));
   await page.getByRole("button", { name: /siguiente/i }).click();
 
-  await page.waitForURL(/\/dashboard\/training-plans\/\d+/, {
-    timeout: 15_000,
-  });
+  await page.waitForURL(
+    /\/dashboard\/(training-plans\/\d+|clients\/\d+)/,
+    { timeout: 15_000 },
+  );
+  await page.waitForURL(/\/dashboard\/clients\/\d+/, { timeout: 15_000 }).catch(() => {});
 }

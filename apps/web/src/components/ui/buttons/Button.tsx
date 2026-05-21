@@ -26,6 +26,7 @@ export type ButtonVariant =
     | "destructive"
     | "danger"
     | "outline"
+    | "outline-primary"
     | "outline-destructive"
     | "secondary"
     | "ghost"
@@ -52,6 +53,8 @@ const variantStyles: Record<string, string> = {
         "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
     outline:
         "border border-primary text-primary bg-transparent hover:bg-primary/10",
+    "outline-primary":
+        "rounded-lg border border-primary/30 bg-primary/20 text-primary hover:bg-primary/30 hover:border-primary/50",
     "outline-destructive":
         "rounded-lg border border-destructive/30 bg-destructive/20 text-destructive hover:bg-destructive/30 hover:border-destructive/50",
     secondary:

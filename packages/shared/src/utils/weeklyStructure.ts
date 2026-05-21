@@ -3,13 +3,18 @@
  *
  * Contexto:
  * - Generación de semanas sintéticas para bloques sin filas en weekly_structure_weeks.
- * - Compartido entre WeeklyStructureEditor (web) y PeriodizationWeeklyStructureDraft (web).
+ * - Compartido entre WeeklyStructureEditor (web) y constructor de periodización (web).
+ * - week_ordinal = semana calendario (lun–dom) anclada al lunes de la semana de start_date.
  *
  * @author Frontend Team
  * @since v6.3.1 — SPEC_FIX_ESTRUCTURA_SEMANAL_BLOQUES_ANTIGUOS.md Fase 4
  */
 
 import type { WeeklyStructureWeek, WeeklyStructureDay } from "../types/weeklyStructure";
+import {
+    getBlockCalendarWeekCount,
+    getBlockCalendarWeekOrdinal,
+} from "./calendarWeekForBlock";
 import {
     isoLocalDateToTrainingDayValue,
     parseHabitualTrainingDaySet,
@@ -19,8 +24,7 @@ import {
  * Genera semanas sintéticas vacías a partir del rango de fechas de un bloque.
  *
  * Reglas:
- * - total_days  = (end_date - start_date).days + 1
- * - num_weeks   = ceil(total_days / 7)
+ * - num_weeks = semanas calendario (lun–dom) entre start_date y end_date del bloque.
  * - Cada semana tiene 7 días vacíos (day_of_week 1..7, patterns=[]).
  * - id es undefined (no persistido).
  *
@@ -32,14 +36,7 @@ export function generateSyntheticWeeks(
     startDate: string,
     endDate: string
 ): WeeklyStructureWeek[] {
-    const [sy, sm, sd] = startDate.split("-").map(Number);
-    const [ey, em, ed] = endDate.split("-").map(Number);
-
-    const start = new Date(sy, sm - 1, sd);
-    const end = new Date(ey, em - 1, ed);
-
-    const totalDays = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-    const numWeeks = Math.ceil(totalDays / 7);
+    const numWeeks = getBlockCalendarWeekCount(startDate, endDate);
 
     if (numWeeks <= 0) return [];
 
@@ -84,8 +81,7 @@ export function mergeWeeklyStructureWeeks(
 /**
  * Información de un día entrenable resuelto dentro del rango de un bloque.
  *
- * - `weekOrdinal` es 1-indexado y relativo al inicio del bloque (week_ordinal del
- *   modelo `WeeklyStructureWeek`).
+ * - `weekOrdinal` es 1-indexado: semana calendario (lun–dom) anclada al bloque.
  * - `dayOfWeek` sigue ISO 1..7 (1=Lunes, 7=Domingo).
  * - `dateISO` se devuelve en hora local (`YYYY-MM-DD`), alineado con `toLocalISO`.
  */
@@ -108,10 +104,10 @@ const DAY_NAMES_ES: Record<number, string> = {
 
 /**
  * Devuelve los días entrenables del cliente que caen dentro del rango del bloque,
- * agrupándolos en semanas ordinales relativas a `startDate`.
+ * agrupándolos en semanas calendario (lun–dom) relativas al bloque.
  *
  * - Lee `trainingDays` (lista de días habituales del cliente) y filtra el rango.
- * - Calcula `weekOrdinal` como `floor(diffDaysDesdeInicio / 7) + 1`.
+ * - Calcula `weekOrdinal` con getBlockCalendarWeekOrdinal.
  * - El nombre del día se devuelve en español.
  */
 export function getTrainingDatesInRange(
@@ -143,9 +139,7 @@ export function getTrainingDatesInRange(
         if (dayValue && daySet.has(dayValue)) {
             const jsDay = cursor.getDay();
             const dayOfWeek = jsDay === 0 ? 7 : jsDay;
-            const diffMs = cursor.getTime() - start.getTime();
-            const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            const weekOrdinal = Math.floor(diffDays / 7) + 1;
+            const weekOrdinal = getBlockCalendarWeekOrdinal(dateISO, startDate);
             out.push({
                 weekOrdinal,
                 dayOfWeek,

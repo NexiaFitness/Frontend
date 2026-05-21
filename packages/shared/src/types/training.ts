@@ -71,6 +71,11 @@ export interface TrainingPlan {
     /** Contadores de sesiones del plan (listados por trainer/client desde backend). */
     sessions_completed: number;
     sessions_total: number;
+    /**
+     * Estado derivado (GET /training-plans/?client_id=): operational | future | past | completed | paused | cancelled.
+     * Usar para badges; status del documento puede quedar desalineado en datos legacy hasta sync.
+     */
+    lifecycle_status?: string | null;
 }
 
 /**

@@ -23,6 +23,7 @@ import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { usePagination } from "@nexia/shared/hooks/common";
 import type { RootState } from "@nexia/shared/store";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import {
     TRAINING_PLAN_GOAL,
     TEMPLATE_LEVEL,
@@ -267,7 +268,7 @@ export const TrainingPlansPage: React.FC = () => {
 
     const handleAssignedPlansPageChange = (page: number): void => {
         setActivePlansPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     };
 
     const resetPlanningPage = useCallback(() => {
@@ -288,7 +289,7 @@ export const TrainingPlansPage: React.FC = () => {
 
     const handleTemplatesPageChange = (page: number): void => {
         setTemplatesPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     };
 
     const resetTemplatesPage = useCallback(() => {

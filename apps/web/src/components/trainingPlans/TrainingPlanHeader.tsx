@@ -160,7 +160,7 @@ export const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
                                     size="sm"
                                     onClick={() =>
                                         navigate(
-                                            `/dashboard/clients/${volverAlClienteClientId}?tab=planificacion`
+                                            `/dashboard/clients/${volverAlClienteClientId}?tab=planning`
                                         )
                                     }
                                     aria-label="Volver al cliente"

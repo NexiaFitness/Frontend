@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
@@ -157,6 +158,10 @@ export const CreateTrainingPlan: React.FC = () => {
     );
 
     const [createPlan, { isLoading: isCreating }] = useCreateTrainingPlanMutation();
+
+    const isPageReady =
+        !isLoadingTrainer && (!clientId || (!isLoadingClient && !!client));
+    useScrollDashboardWhenReady(isPageReady);
 
     // ============================================================================
     // FORM STATE
@@ -478,12 +483,12 @@ export const CreateTrainingPlan: React.FC = () => {
                                 Nombre <span className="text-destructive">*</span>
                             </Label>
                             <Input
+                                size="sm"
                                 value={formData.name}
                                 onChange={(e) =>
                                     setFormData({ ...formData, name: e.target.value })
                                 }
                                 placeholder="Ej: Hipertrofia Avanzada Q1"
-                                className="h-10"
                             />
                             {formErrors.name && (
                                 <p className="text-destructive text-xs">{formErrors.name}</p>
@@ -532,6 +537,7 @@ export const CreateTrainingPlan: React.FC = () => {
                                 Objetivo <span className="text-destructive">*</span>
                             </Label>
                             <FormCombobox
+                                size="sm"
                                 value={formData.goal}
                                 onChange={(value) => setFormData({ ...formData, goal: value as TrainingPlanGoal })}
                                 options={GOAL_OPTIONS}

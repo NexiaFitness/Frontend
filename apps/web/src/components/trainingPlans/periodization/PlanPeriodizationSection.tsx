@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarDays, Target } from "lucide-react";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
@@ -33,6 +33,7 @@ import { GOAL_LABEL_ES, toneFromGoal } from "@/components/trainingPlans/goalLabe
 import { Button } from "@/components/ui/buttons";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodizationPanel } from "./PeriodizationPanel";
+import { PeriodBlockConstructorSummaryStrip } from "./PeriodBlockConstructorSummaryStrip";
 import { PeriodBlockCard } from "./PeriodBlockCard";
 import { PeriodizationCharts } from "./PeriodizationCharts";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
@@ -190,6 +191,10 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
   const [hasLoadedWeeklyStructure, setHasLoadedWeeklyStructure] = useState(false);
+  const calendarColumnRef = useRef<HTMLDivElement>(null);
+  const [calendarColumnHeight, setCalendarColumnHeight] = useState<number | null>(
+    null,
+  );
 
   const {
     data: patternsCatalog,
@@ -213,11 +218,22 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     setWeeklyStructure,
     loadBlock,
     reset,
+    advanceConstructorStep,
     qualitiesSum,
     overlapDetected,
     outsidePlanBounds,
     canSubmit,
   } = usePeriodBlockForm(blocks, editingBlockId, planStartDate, planEndDate);
+
+  useLayoutEffect(() => {
+    const el = calendarColumnRef.current;
+    if (!el) return;
+    const sync = () => setCalendarColumnHeight(el.offsetHeight);
+    sync();
+    const ro = new ResizeObserver(sync);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [calMonth, form.phase, form.constructorStep, blocks.length]);
 
   const [createWeek] = useCreateWeeklyStructureWeekMutation();
   const [deleteWeek] = useDeleteWeeklyStructureWeekMutation();
@@ -432,40 +448,36 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   return (
     <section className="space-y-6">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <PageTitle titleAs="h3" title="Editor de periodización del plan" />
-        <button
-          type="button"
-          onClick={() => navigate(`/dashboard/training-plans/${planId}`)}
-          className="inline-flex items-center gap-1.5 rounded-md border border-primary/30 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5 transition-colors"
-        >
-          Ver plan completo
-          <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 6H5.25A2.25 2.25 0 003 8.25v10.5A2.25 2.25 0 005.25 21h10.5A2.25 2.25 0 0018 18.75V10.5m-10.5 6L21 3m0 0h-5.25M21 3v5.25" />
-          </svg>
-        </button>
-      </div>
+      <PageTitle titleAs="h3" title="Editor de periodización del plan" />
 
-      {/* Calendar + Panel grid */}
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="lg:w-[60%]">
-          <PeriodizationCalendar
-            currentMonth={calMonth}
-            onMonthChange={setCalMonth}
-            blocks={blocks}
-            planStartDate={planStartDate}
-            planEndDate={planEndDate}
-            sessionDates={sessionDates}
-            exceptionDates={exceptionDates}
-            formState={form}
-            onDayClick={guardedDayClick}
-            onDayRightClick={handleDayContextMenu}
-            habitualTrainingDays={clientProfile?.training_days ?? null}
-          />
-        </div>
-        <div className="lg:w-[40%] space-y-4">
+      {/* Calendario + constructor (misma altura); resumen a ancho completo debajo */}
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+          <div ref={calendarColumnRef} className="w-full lg:w-[60%] min-w-0 shrink-0">
+            <PeriodizationCalendar
+              currentMonth={calMonth}
+              onMonthChange={setCalMonth}
+              blocks={blocks}
+              planStartDate={planStartDate}
+              planEndDate={planEndDate}
+              sessionDates={sessionDates}
+              exceptionDates={exceptionDates}
+              formState={form}
+              onDayClick={guardedDayClick}
+              onDayRightClick={handleDayContextMenu}
+              habitualTrainingDays={clientProfile?.training_days ?? null}
+            />
+          </div>
+          <div
+            className="w-full lg:w-[40%] min-w-0 flex flex-col gap-4 overflow-hidden"
+            style={
+              calendarColumnHeight != null
+                ? { height: calendarColumnHeight }
+                : undefined
+            }
+          >
           {activePlan && (
-            <div className="rounded-lg border border-border bg-surface p-5 space-y-2">
+            <div className="shrink-0 rounded-lg border border-border bg-surface p-5 space-y-2">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -504,6 +516,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
               </div>
             </div>
           )}
+          <div className="flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden">
           <PeriodizationPanel
             formState={form}
             catalog={catalog}
@@ -520,6 +533,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             isSubmitting={isCreating || isUpdating}
             onSubmit={handleSubmitBlock}
             onReset={handleCancelEdit}
+            onAdvanceStep={advanceConstructorStep}
             volumeNominalPhase={volumeNominal.phase}
             volumeNominalLabel={volumeNominal.labelForVolumeLevel(form.volumeLevel)}
             volumeNominalHint={volumeNominal.auxiliaryHint}
@@ -528,8 +542,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             patternsLoading={isLoadingPatterns}
             patternsError={isErrorPatterns}
             onWeeklyStructureChange={setWeeklyStructure}
+            fillHeight
           />
+          </div>
+          </div>
         </div>
+        <PeriodBlockConstructorSummaryStrip
+          formState={form}
+          catalog={catalog}
+          trainingDays={clientProfile?.training_days ?? null}
+        />
       </div>
 
       {/* Configured blocks */}

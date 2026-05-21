@@ -186,7 +186,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             <div
                 ref={modalRef}
                 className={cn(
-                    "relative rounded-lg border border-border bg-card text-card-foreground shadow-lg w-full max-w-[calc(100vw-2rem)] transform transition-all animate-in zoom-in-95 duration-200 focus:outline-none max-h-[90vh] overflow-y-auto",
+                    "relative rounded-lg border border-border bg-card text-card-foreground shadow-lg w-full max-w-[calc(100vw-2rem)] transform transition-all animate-in zoom-in-95 duration-200 focus:outline-none max-h-[90vh] overflow-y-auto scrollbar-primary",
                     maxWidthStyles[maxWidth],
                 )}
                 role="dialog"

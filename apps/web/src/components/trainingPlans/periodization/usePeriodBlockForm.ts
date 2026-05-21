@@ -2,6 +2,8 @@ import { useState, useCallback, useMemo } from "react";
 import type { PlanPeriodBlock, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 import { hasOverlap, isWithinPlanBounds } from "@nexia/shared/utils/periodBlockOverlap";
+import type { PeriodBlockConstructorStep } from "./periodBlockConstructor";
+import { nextConstructorStep } from "./periodBlockConstructor";
 
 type SelectionPhase = "idle" | "rangeStart" | "rangeComplete";
 
@@ -13,6 +15,10 @@ export interface PeriodBlockFormState {
   volumeLevel: number;
   intensityLevel: number;
   weeklyStructure: WeeklyStructureWeekCreate[];
+  /** Paso activo del constructor (columna derecha). */
+  constructorStep: PeriodBlockConstructorStep;
+  /** Pasos ya confirmados con «Continuar» (alimentan la card bajo el calendario). */
+  completedSteps: PeriodBlockConstructorStep[];
 }
 
 /** Estado inicial exportable (p. ej. calendario de periodización en solo lectura / selector de fecha). */
@@ -24,6 +30,8 @@ export const IDLE_PERIOD_BLOCK_FORM_STATE: PeriodBlockFormState = {
   volumeLevel: 5,
   intensityLevel: 5,
   weeklyStructure: [],
+  constructorStep: "range",
+  completedSteps: [],
 };
 
 const INITIAL_STATE = IDLE_PERIOD_BLOCK_FORM_STATE;
@@ -39,15 +47,26 @@ export function usePeriodBlockForm(
   const handleDayClick = useCallback((dateStr: string) => {
     setForm((prev) => {
       if (prev.phase === "idle" || prev.phase === "rangeComplete") {
-        return { ...IDLE_PERIOD_BLOCK_FORM_STATE, phase: "rangeStart", startDate: dateStr };
+        return {
+          ...IDLE_PERIOD_BLOCK_FORM_STATE,
+          phase: "rangeStart",
+          startDate: dateStr,
+          constructorStep: "range",
+        };
       }
       if (prev.phase === "rangeStart" && prev.startDate) {
         const s = new Date(prev.startDate).getTime();
         const e = new Date(dateStr).getTime();
         if (e < s) {
-          return { ...prev, phase: "rangeStart", startDate: dateStr };
+          return { ...prev, phase: "rangeStart", startDate: dateStr, constructorStep: "range" };
         }
-        return { ...prev, phase: "rangeComplete", endDate: dateStr };
+        return {
+          ...prev,
+          phase: "rangeComplete",
+          endDate: dateStr,
+          constructorStep: "qualities",
+          completedSteps: ["range"],
+        };
       }
       return prev;
     });
@@ -111,7 +130,24 @@ export function usePeriodBlockForm(
       volumeLevel: block.volume_level,
       intensityLevel: block.intensity_level,
       weeklyStructure: [],
+      constructorStep: "qualities",
+      completedSteps: ["range"],
     });
+  }, []);
+
+  const advanceConstructorStep = useCallback(() => {
+    setForm((prev) => {
+      const next = nextConstructorStep(prev.constructorStep);
+      if (!next) return prev;
+      const completed = prev.completedSteps.includes(prev.constructorStep)
+        ? prev.completedSteps
+        : [...prev.completedSteps, prev.constructorStep];
+      return { ...prev, constructorStep: next, completedSteps: completed };
+    });
+  }, []);
+
+  const setConstructorStep = useCallback((step: PeriodBlockConstructorStep) => {
+    setForm((prev) => ({ ...prev, constructorStep: step }));
   }, []);
 
   const setWeeklyStructure = useCallback((draft: WeeklyStructureWeekCreate[]) => {
@@ -146,6 +182,9 @@ export function usePeriodBlockForm(
     !overlapDetected &&
     !outsidePlanBounds;
 
+  const qualitiesComplete =
+    form.qualities.length > 0 && qualitiesSum === 100;
+
   return {
     form,
     handleDayClick,
@@ -157,9 +196,12 @@ export function usePeriodBlockForm(
     setWeeklyStructure,
     loadBlock,
     reset,
+    advanceConstructorStep,
+    setConstructorStep,
     qualitiesSum,
     overlapDetected,
     outsidePlanBounds,
     canSubmit,
+    qualitiesComplete,
   };
 }

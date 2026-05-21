@@ -14,6 +14,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
+import { PageTitle } from "@/components/dashboard/shared";
 import { useToast } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import {
@@ -206,14 +207,11 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
     return (
         <>
-                {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        Crear Template de Plan de Entrenamiento
-                    </h2>
-                    <p className="text-white/80 text-sm md:text-base">
-                        Crea un template reutilizable que podrás asignar a múltiples clientes
-                    </p>
+                <div className="mb-6 px-4 lg:px-8">
+                    <PageTitle
+                        title="Crear Template de Plan de Entrenamiento"
+                        subtitle="Crea un template reutilizable que podrás asignar a múltiples clientes"
+                    />
                 </div>
 
                 {/* Contenido principal con ancho completo */}

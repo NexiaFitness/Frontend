@@ -10,6 +10,7 @@
  */
 
 import React, { useMemo } from "react";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Briefcase, MapPin, Phone } from "lucide-react";
@@ -132,7 +133,7 @@ export const CompleteProfileForm: React.FC = () => {
         if (result.success) {
             navigate("/dashboard", { replace: true });
         } else {
-            window.scrollTo({ top: 0, behavior: "smooth" });
+            scrollDashboardMainToTop("smooth");
         }
     };
 

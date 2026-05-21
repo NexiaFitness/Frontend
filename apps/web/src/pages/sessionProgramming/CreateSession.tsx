@@ -20,6 +20,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -129,6 +130,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const { data: trainerClientsData } = useGetTrainerClientsQuery(
         { trainerId, page: 1, per_page: 50 },
         { skip: !trainerId }
+    );
+
+    useScrollDashboardWhenReady(
+        !isLoadingClient && !isLoadingPlan && !isLoadingPlans,
     );
 
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
@@ -353,9 +358,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
         const redirectTo =
             returnToPath ??
-            (selectedPlanId
-                ? `/dashboard/training-plans/${selectedPlanId}?tab=sessions`
-                : `/dashboard/clients/${effectiveClientId}?tab=sessions`);
+            `/dashboard/clients/${effectiveClientId}?tab=sessions`;
 
         const convertPlannedReps = (repsStr: string): number | null => {
             if (!repsStr?.trim()) return null;
@@ -513,7 +516,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 }
 
                 navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`, {
-                    state: { returnTo: "/dashboard/session-programming", clientId: effectiveClientId },
+                    state: { returnTo: "/dashboard/sessions", clientId: effectiveClientId },
                 });
             }
         } catch (err) {

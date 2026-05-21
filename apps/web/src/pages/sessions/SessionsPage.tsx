@@ -23,6 +23,7 @@ import { PaginationBar } from "@/components/ui/pagination";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
 import { PageTitle } from "@/components/dashboard/shared";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 20;
@@ -116,12 +117,12 @@ export const SessionsPage: React.FC = () => {
 
     const handlePageChange = useCallback((newPage: number) => {
         setPage(newPage);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     }, []);
 
     const handleTemplatesPageChange = useCallback((newPage: number) => {
         setTemplatesPage(newPage);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     }, []);
 
     const skip = (page - 1) * PAGE_SIZE;
@@ -211,6 +212,7 @@ export const SessionsPage: React.FC = () => {
                 onChange={(id) => {
                     if (id === "sessions" || id === "templates") {
                         setActiveTab(id);
+                        scrollDashboardMainToTop();
                     }
                 }}
                 items={[

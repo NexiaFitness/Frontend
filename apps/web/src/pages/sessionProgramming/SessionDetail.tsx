@@ -6,7 +6,7 @@
  * @since v6.3.0
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
     ArrowLeft,
@@ -16,23 +16,31 @@ import {
     Clock,
     Copy,
     Dumbbell,
-    Flame,
-    Gauge,
     Pencil,
-    Target,
     Timer,
+    Trash2,
 } from "lucide-react";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Badge } from "@/components/ui/Badge";
-import { useGetTrainingSessionQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { Badge, type BadgeVariant } from "@/components/ui/Badge";
+import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
+import {
+    useGetTrainingSessionQuery,
+    useDeleteTrainingSessionMutation,
+} from "@nexia/shared/api/trainingSessionsApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import { useSessionExercisesDisplay } from "@nexia/shared/hooks/sessionProgramming";
+import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import { cn } from "@/lib/utils";
-import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
+import {
+    SessionBlockDetail,
+    SessionContextStrip,
+    SessionAlertsRow,
+} from "@/components/sessionProgramming/detail";
 import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
@@ -46,13 +54,13 @@ const STATUS_LABELS: Record<string, string> = {
     in_progress: "Planificada",
 };
 
-const STATUS_STYLES: Record<string, string> = {
-    planned: "bg-primary/15 text-primary",
-    completed: "bg-[hsl(var(--success))]/15 text-[hsl(var(--success))]",
-    cancelled: "bg-destructive/15 text-destructive",
-    skipped: "bg-destructive/15 text-destructive",
-    modified: "bg-primary/15 text-primary",
-    in_progress: "bg-primary/15 text-primary",
+const STATUS_BADGE_VARIANT: Record<string, BadgeVariant> = {
+    planned: "subtle",
+    completed: "subtle-success",
+    cancelled: "subtle-destructive",
+    skipped: "subtle-destructive",
+    modified: "subtle",
+    in_progress: "subtle",
 };
 
 const TYPE_LABELS: Record<string, string> = {
@@ -62,21 +70,12 @@ const TYPE_LABELS: Record<string, string> = {
     assessment: "Evaluación",
 };
 
-const TYPE_STYLES: Record<string, string> = {
-    strength: "bg-primary/20 text-primary",
-    cardio: "bg-warning/20 text-warning",
-    technique: "bg-info/20 text-info",
-    assessment: "bg-[hsl(270,60%,60%)]/20 text-[hsl(270,60%,60%)]",
+const TYPE_BADGE_VARIANT: Record<string, BadgeVariant> = {
+    strength: "subtle",
+    cardio: "subtle-warning",
+    technique: "subtle",
+    assessment: "subtle-secondary",
 };
-
-type DayPlanSource = "daily_override" | "weekly_override" | "monthly_baseline";
-
-interface DerivedDayPlan {
-    source: DayPlanSource;
-    qualities: Array<{ name: string; pct: number }>;
-    volume: number;
-    intensity: number;
-}
 
 function getInitials(fullName: string): string {
     const parts = fullName.trim().split(/\s+/).filter(Boolean);
@@ -110,6 +109,7 @@ const DEFAULT_BACK_TO_SESSIONS = "/dashboard/sessions";
 export const SessionDetail: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { showSuccess, showError } = useToast();
     const backTarget = readSafeReturnTo(location.state) ?? null;
     const goBack = () => {
         if (backTarget) {
@@ -122,15 +122,18 @@ export const SessionDetail: React.FC = () => {
     const sessionId = id ? Number(id) : 0;
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
 
+    const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [deleteSession, { isLoading: isDeleting }] = useDeleteTrainingSessionMutation();
+
     const { data: session, isLoading, isError, error } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId || Number.isNaN(sessionId) || !isAuthenticated,
     });
 
     const {
-        exercises,
+        view: sessionStructure,
         isLoading: isLoadingExercises,
         isError: isErrorExercises,
-    } = useSessionExercisesDisplay(
+    } = useSessionStructureView(
         sessionId && !Number.isNaN(sessionId) && isAuthenticated ? sessionId : null
     );
 
@@ -153,6 +156,26 @@ export const SessionDetail: React.FC = () => {
               }
             : { id: 0, session_date: null, session_name: "", training_plan_id: null, period_block_id: null }
     );
+
+    const handleConfirmDelete = async () => {
+        if (!session) return;
+        try {
+            await deleteSession({
+                id: session.id,
+                trainingPlanId: session.training_plan_id ?? null,
+            }).unwrap();
+            setShowDeleteModal(false);
+            showSuccess("Sesión eliminada correctamente.");
+            goBack();
+        } catch (err) {
+            console.error("Error eliminando sesión:", err);
+            const errorMessage =
+                err && typeof err === "object" && "data" in err
+                    ? String((err as { data?: { detail?: string } }).data?.detail || "No se pudo eliminar la sesión.")
+                    : "No se pudo eliminar la sesión.";
+            showError(errorMessage);
+        }
+    };
 
     if (!sessionId || Number.isNaN(sessionId)) {
         return (
@@ -195,38 +218,17 @@ export const SessionDetail: React.FC = () => {
     }
 
     const statusLabel = STATUS_LABELS[session.status] || "Planificada";
-    const statusStyle = STATUS_STYLES[session.status] || "bg-primary/15 text-primary";
+    const statusVariant: BadgeVariant = STATUS_BADGE_VARIANT[session.status] ?? "subtle";
     const sessionTypeKey = String(session.session_type || "").toLowerCase();
     const typeLabel = TYPE_LABELS[sessionTypeKey] || session.session_type || "—";
-    const typeStyle = TYPE_STYLES[sessionTypeKey] || "bg-primary/20 text-primary";
+    const typeVariant: BadgeVariant = TYPE_BADGE_VARIANT[sessionTypeKey] ?? "subtle-secondary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
-    const injuryWarning = client?.lesiones_relevantes?.trim() || null;
 
-    const dayPlan: DerivedDayPlan | null = (() => {
-        if (!session.training_plan_id) return null;
-        if (session.planned_intensity == null && session.planned_volume == null) return null;
-        const volume = Math.max(0, Math.min(10, Number(session.planned_volume ?? 0)));
-        const intensity = Math.max(0, Math.min(10, Number(session.planned_intensity ?? 0)));
-        const qualities = [
-            { name: "Volumen", pct: Math.round((volume / 10) * 100) },
-            { name: "Intensidad", pct: Math.round((intensity / 10) * 100) },
-        ];
-        return {
-            source: "monthly_baseline",
-            qualities,
-            volume,
-            intensity,
-        };
-    })();
-
-    const dayPlanSourceLabel = {
-        daily_override: "Override diario",
-        weekly_override: "Override semanal",
-        monthly_baseline: "Baseline mensual",
-    }[dayPlan?.source ?? "monthly_baseline"];
+    const embeddedCoherence = session.coherence ?? null;
+    const legacyInjuryNote = client?.lesiones_relevantes?.trim() || null;
 
     return (
-        <div className="space-y-6">
+        <div className={cn("space-y-6", DASHBOARD_FIXED_FOOTER_PADDING_CLASS)}>
             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                 <button
                     type="button"
@@ -242,21 +244,17 @@ export const SessionDetail: React.FC = () => {
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 min-w-0 flex-1">
                     <span className="relative flex h-14 w-14 shrink-0 overflow-hidden rounded-full">
                         <span className="flex h-full w-full items-center justify-center rounded-full bg-success/20 text-lg font-bold text-success">
                             {getInitials(clientName)}
                         </span>
                     </span>
-                    <div>
+                    <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-xl font-bold">{session.session_name}</h1>
-                            <Badge className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0", statusStyle)}>
-                                {statusLabel}
-                            </Badge>
-                            <Badge className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border-0", typeStyle)}>
-                                {typeLabel}
-                            </Badge>
+                            <Badge variant={statusVariant}>{statusLabel}</Badge>
+                            <Badge variant={typeVariant}>{typeLabel}</Badge>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">{clientName}</p>
                         {session.training_plan_id && plan?.name ? (
@@ -280,101 +278,28 @@ export const SessionDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <div className="flex shrink-0 items-center gap-2">
-                    <Button
-                        variant="outline"
-                        onClick={goBack}
-                    >
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                        Volver
-                    </Button>
-                    {session.period_block_id ? (
-                        <Button
-                            variant="secondary"
-                            onClick={replicateFlow.openModal}
-                        >
-                            <Copy className="mr-1 h-4 w-4" aria-hidden />
-                            Replicar
-                        </Button>
-                    ) : null}
-                    <Button
-                        variant="primary"
-                        onClick={() => navigate(`/dashboard/session-programming/edit-session/${session.id}`)}
-                    >
-                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
-                        Editar sesión
-                    </Button>
-                </div>
+                <Button variant="outline" size="sm" onClick={goBack} className="shrink-0">
+                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    Volver
+                </Button>
             </div>
 
-            {dayPlan && (
-                <div className="grid grid-cols-1 gap-3 lg:grid-cols-4">
-                    <div className="rounded-lg bg-surface p-4 col-span-2 lg:col-span-2 border-l-2 border-l-primary overflow-hidden">
-                        <div className="flex items-center gap-2 mb-3">
-                            <div className="rounded-lg bg-surface-2 p-2 text-primary">
-                                <Target className="h-4 w-4" aria-hidden />
-                            </div>
-                            <div>
-                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">Plan del día</p>
-                                <p className="text-xs text-muted-foreground">{dayPlanSourceLabel}</p>
-                            </div>
-                        </div>
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                            {dayPlan.qualities.map((q) => (
-                                <span key={q.name} className="rounded-full bg-surface-2 border border-border/30 px-3 py-1 text-[11px] font-semibold">
-                                    {q.name} <span className="text-primary ml-0.5">{q.pct}%</span>
-                                </span>
-                            ))}
-                        </div>
-                    </div>
+            <SessionContextStrip
+                sessionId={session.id}
+                clientId={session.client_id}
+                trainerId={session.trainer_id}
+                trainingPlanId={session.training_plan_id ?? null}
+                periodBlockId={session.period_block_id ?? null}
+                sessionDate={session.session_date ?? null}
+                embeddedCoherence={embeddedCoherence}
+            />
 
-                    <div className="rounded-lg bg-surface p-4 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs text-muted-foreground">Volumen</p>
-                                <p className="mt-1 text-3xl font-bold text-foreground">
-                                    {dayPlan.volume}
-                                    <span className="text-base font-normal text-muted-foreground">/10</span>
-                                </p>
-                            </div>
-                            <div className="rounded-lg bg-surface-2 p-2.5 text-primary">
-                                <Gauge className="h-5 w-5" aria-hidden />
-                            </div>
-                        </div>
-                        <div className="mt-3 h-1.5 w-full rounded-full bg-surface-2">
-                            <div
-                                className="h-full rounded-full bg-primary transition-all"
-                                style={{ width: `${dayPlan.volume * 10}%` }}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="rounded-lg bg-surface p-4 transition-all duration-150 ease-out hover:-translate-y-0.5 hover:shadow-[0_0_20px_hsl(var(--warning)/0.2)]">
-                        <div className="flex items-start justify-between">
-                            <div>
-                                <p className="text-xs text-muted-foreground">Intensidad</p>
-                                <p className="mt-1 text-3xl font-bold text-foreground">
-                                    {dayPlan.intensity}
-                                    <span className="text-base font-normal text-muted-foreground">/10</span>
-                                </p>
-                            </div>
-                            <div className="rounded-lg bg-surface-2 p-2.5 text-[hsl(var(--warning))]">
-                                <Flame className="h-5 w-5" aria-hidden />
-                            </div>
-                        </div>
-                        <div className="mt-3 h-1.5 w-full rounded-full bg-surface-2">
-                            <div
-                                className="h-full rounded-full bg-[hsl(var(--warning))] transition-all"
-                                style={{ width: `${dayPlan.intensity * 10}%` }}
-                            />
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {injuryWarning && (
-                <Alert variant="warning">{injuryWarning}</Alert>
-            )}
+            <SessionAlertsRow
+                sessionId={session.id}
+                clientId={session.client_id}
+                embeddedCoherence={embeddedCoherence}
+                legacyInjuryNote={legacyInjuryNote}
+            />
 
             <div>
                 <div className="flex items-center gap-2 mb-4">
@@ -383,8 +308,13 @@ export const SessionDetail: React.FC = () => {
                     </div>
                     <h2 className="text-lg font-semibold">Ejercicios</h2>
                     <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                        {exercises.length}
+                        {sessionStructure.totalExercises}
                     </span>
+                    {sessionStructure.totalSets > 0 && (
+                        <span className="rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+                            {sessionStructure.totalSets} series
+                        </span>
+                    )}
                 </div>
                 {isLoadingExercises ? (
                     <div className="flex items-center justify-center py-8">
@@ -392,10 +322,14 @@ export const SessionDetail: React.FC = () => {
                     </div>
                 ) : isErrorExercises ? (
                     <Alert variant="error">No se pudieron cargar los ejercicios</Alert>
+                ) : sessionStructure.blocks.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border/60 bg-surface/40 px-4 py-10 text-center text-sm text-muted-foreground">
+                        Esta sesión todavía no tiene ejercicios asignados.
+                    </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {exercises.map((exercise) => (
-                            <SessionDetailExerciseCard key={exercise.id} exercise={exercise} />
+                    <div className="space-y-4">
+                        {sessionStructure.blocks.map((block) => (
+                            <SessionBlockDetail key={block.blockId} block={block} />
                         ))}
                     </div>
                 )}
@@ -443,6 +377,64 @@ export const SessionDetail: React.FC = () => {
                     </div>
                 </div>
             )}
+
+            <DashboardFixedFooter>
+                <div className="flex flex-wrap items-center justify-end gap-2">
+                    <Button
+                        variant="outline-destructive"
+                        onClick={() => setShowDeleteModal(true)}
+                    >
+                        <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                        Eliminar
+                    </Button>
+                    {session.period_block_id ? (
+                        <Button
+                            variant="outline-primary"
+                            onClick={replicateFlow.openModal}
+                        >
+                            <Copy className="mr-1 h-4 w-4" aria-hidden />
+                            Replicar
+                        </Button>
+                    ) : null}
+                    <Button
+                        variant="primary"
+                        onClick={() => navigate(`/dashboard/session-programming/edit-session/${session.id}`)}
+                    >
+                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                        Editar sesión
+                    </Button>
+                </div>
+            </DashboardFixedFooter>
+
+            <BaseModal
+                isOpen={showDeleteModal}
+                onClose={() => {
+                    if (!isDeleting) setShowDeleteModal(false);
+                }}
+                title="Eliminar sesión"
+                description={`¿Seguro que quieres eliminar la sesión "${session.session_name}"? Esta acción no se puede deshacer.`}
+                iconType="danger"
+                closeOnBackdrop={!isDeleting}
+                closeOnEsc={!isDeleting}
+                isLoading={isDeleting}
+            >
+                <div className="mt-4 flex justify-end gap-3">
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowDeleteModal(false)}
+                        disabled={isDeleting}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        variant="danger"
+                        onClick={handleConfirmDelete}
+                        disabled={isDeleting}
+                    >
+                        {isDeleting ? "Eliminando..." : "Eliminar"}
+                    </Button>
+                </div>
+            </BaseModal>
         </div>
     );
 };

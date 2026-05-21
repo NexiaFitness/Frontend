@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
@@ -118,6 +119,8 @@ export const EditSession: React.FC = () => {
     } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId || isNaN(sessionId),
     });
+
+    useScrollDashboardWhenReady(!isLoadingSession && !!session);
 
     // Cargar plan y cliente
     const { data: plan } = useGetTrainingPlanQuery(
@@ -546,7 +549,7 @@ export const EditSession: React.FC = () => {
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
             navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
-                state: { returnTo: "/dashboard/session-programming", clientId: session?.client_id },
+                state: { returnTo: "/dashboard/sessions", clientId: session?.client_id },
             });
         } catch (err) {
             console.error("Error actualizando sesión:", err);

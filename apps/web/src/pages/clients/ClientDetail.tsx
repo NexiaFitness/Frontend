@@ -9,7 +9,8 @@
  * Navegación de planes:
  * - "Ver plan" desde cualquier tab navega a ?tab=planning&plan=:id (detalle inline).
  * - "Crear plan" navega a /training-plans/create?clientId=:id; al crear vuelve aquí.
- * - El detalle de plan (sesiones, planificación, hitos, gráficos) vive en ClientPlanningTab.
+ * - El detalle operativo del plan (periodización, ejecución, hitos) vive en ClientPlanningTab.
+ * - /dashboard/training-plans/:id redirige aquí (ver CONSOLIDACION_VISTA_PLAN_EN_CLIENTE.md).
  *
  * @author Frontend Team
  * @since v3.1.0
@@ -70,6 +71,17 @@ export const ClientDetail: React.FC = () => {
     const { activeTab, setActiveTab } = useTabNavigation<TabId>({
         validTabs: TABS.map((t) => t.id),
         defaultTab: "overview",
+        tabAliases: {
+            planificacion: "planning",
+            sesiones: "sessions",
+            resumen: "overview",
+            progreso: "progress",
+            lesiones: "injuries",
+            charts: "planning",
+            analytics: "planning",
+            milestones: "planning",
+            hitos: "planning",
+        },
     });
 
     // S03: si la URL trae tab legacy, abrir "sessions" (enlaces antiguos)

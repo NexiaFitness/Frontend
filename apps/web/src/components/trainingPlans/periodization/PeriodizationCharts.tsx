@@ -198,7 +198,7 @@ export const PeriodizationCharts: React.FC<Props> = ({ blocks, catalog }) => {
   return (
     <div className="rounded-lg bg-surface p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">Progresión del plan</h3>
+        <h3 className="text-sm font-semibold">Progresión planificada</h3>
         <div className="flex items-center gap-2">
           <select
             value={aggregation}

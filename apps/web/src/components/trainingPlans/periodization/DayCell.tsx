@@ -18,8 +18,13 @@ import { Plus, X } from "lucide-react";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureDayPatternInput } from "@nexia/shared/types/weeklyStructure";
 
+import { cn } from "@/lib/utils";
+
 import { PatternBadge } from "./PatternBadge";
-import { PatternSelectorPopover } from "./PatternSelectorPopover";
+import {
+    PatternSelectorPopover,
+    type PatternSelectorPlacement,
+} from "./PatternSelectorPopover";
 
 function formatDateShort(dateISO: string): string {
     const [y, m, d] = dateISO.split("-").map(Number);
@@ -44,6 +49,8 @@ export interface DayCellProps {
     onOpenPopover: () => void;
     onClosePopover: () => void;
     onToggle: (patternId: number) => void;
+    /** portal = flotante (modal); inline = debajo del día (constructor). */
+    pickerPlacement?: PatternSelectorPlacement;
     /**
      * "cell": layout vertical (titulo arriba, chips abajo) usado en la matriz
      * semana x dia o como tarjeta apilada.
@@ -68,31 +75,32 @@ export const DayCell: React.FC<DayCellProps> = ({
     onOpenPopover,
     onClosePopover,
     onToggle,
+    pickerPlacement = "portal",
     layout = "cell",
     className,
 }) => {
     const triggerRef = useRef<HTMLButtonElement | null>(null);
+    const rowRef = useRef<HTMLDivElement | null>(null);
 
-    const popover = (
-        <PatternSelectorPopover
-            isOpen={isPopoverOpen}
-            onClose={onClosePopover}
-            anchorRef={triggerRef}
-            catalog={catalog}
-            catalogLoading={catalogLoading}
-            catalogError={catalogError}
-            selectedPatternIds={assignedPatterns.map(
-                (p) => p.movement_pattern_id,
-            )}
-            onToggle={onToggle}
-        />
-    );
+    const popoverProps = {
+        isOpen: isPopoverOpen,
+        onClose: onClosePopover,
+        catalog,
+        catalogLoading,
+        catalogError,
+        selectedPatternIds: assignedPatterns.map((p) => p.movement_pattern_id),
+        onToggle,
+        anchorRef: triggerRef,
+        alignRef: rowRef,
+        placement: pickerPlacement,
+        onDone: onClosePopover,
+    };
 
     if (layout === "row") {
-        const wrapperClass = className
-            ?? "flex items-center gap-3 rounded-md px-3 py-2.5 hover:bg-surface-2/40 transition-colors";
-        return (
-            <div className={wrapperClass} data-day-of-week={dayOfWeek}>
+        const isInlineOpen = pickerPlacement === "inline" && isPopoverOpen;
+
+        const rowBar = (
+            <>
                 <div className="w-20 shrink-0">
                     <p className="text-sm font-semibold text-foreground capitalize">
                         {dayName.toLowerCase()}
@@ -139,7 +147,7 @@ export const DayCell: React.FC<DayCellProps> = ({
                         </div>
                     )}
                 </div>
-                <div className="shrink-0">
+                <div className="relative shrink-0">
                     <button
                         ref={triggerRef}
                         type="button"
@@ -152,17 +160,58 @@ export const DayCell: React.FC<DayCellProps> = ({
                     >
                         <Plus className="h-4 w-4" />
                     </button>
-                    {popover}
+                    {pickerPlacement === "portal" && (
+                        <PatternSelectorPopover {...popoverProps} />
+                    )}
                 </div>
+            </>
+        );
+
+        if (isInlineOpen) {
+            return (
+                <div
+                    ref={rowRef}
+                    className={cn(
+                        "flex flex-col min-w-0 rounded-md hover:bg-surface-2/40 transition-colors",
+                        className,
+                    )}
+                    data-day-of-week={dayOfWeek}
+                >
+                    <div className="flex w-full items-center gap-3 min-w-0 px-3 py-2.5">
+                        {rowBar}
+                    </div>
+                    <div className="px-3 pb-2.5">
+                        <PatternSelectorPopover {...popoverProps} />
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+            <div
+                ref={rowRef}
+                className={cn(
+                    "flex w-full items-center gap-3 min-w-0 rounded-md px-3 py-2.5 hover:bg-surface-2/40 transition-colors",
+                    className,
+                )}
+                data-day-of-week={dayOfWeek}
+            >
+                {rowBar}
             </div>
         );
     }
 
-    const wrapperClass = className
-        ?? "rounded-md border border-border/60 bg-surface-2/40 p-2.5 space-y-2";
+    const wrapperClass = cn(
+        "rounded-md border border-border/60 bg-surface-2/40 p-2.5 space-y-2",
+        className,
+    );
 
     return (
-        <div className={wrapperClass} data-day-of-week={dayOfWeek}>
+        <div
+            ref={rowRef}
+            className={wrapperClass}
+            data-day-of-week={dayOfWeek}
+        >
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-xs font-medium text-foreground">{dayName}</p>
@@ -170,7 +219,7 @@ export const DayCell: React.FC<DayCellProps> = ({
                         {formatDateShort(dateISO)}
                     </p>
                 </div>
-                <div>
+                <div className="relative">
                     <button
                         ref={triggerRef}
                         type="button"
@@ -182,7 +231,7 @@ export const DayCell: React.FC<DayCellProps> = ({
                         <Plus className="h-3 w-3" />
                         Añadir patrón
                     </button>
-                    {popover}
+                    <PatternSelectorPopover {...popoverProps} />
                 </div>
             </div>
             {assignedPatterns.length > 0 && (

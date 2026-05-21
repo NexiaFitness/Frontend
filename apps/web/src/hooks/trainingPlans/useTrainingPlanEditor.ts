@@ -172,10 +172,10 @@ export function useTrainingPlanEditor(
                 setTimeout(() => {
                     if (cid) {
                         navigate(
-                            `/dashboard/training-plans/${result.id}?returnToClient=${cid}&tab=planning`
+                            `/dashboard/clients/${cid}?tab=planning&plan=${result.id}`,
                         );
                     } else {
-                        navigate(`/dashboard/training-plans/${result.id}?tab=planning`);
+                        navigate(`/dashboard/training-plans/${result.id}`);
                     }
                 }, 800);
             } catch (err) {

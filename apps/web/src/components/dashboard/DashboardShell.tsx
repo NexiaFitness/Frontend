@@ -17,6 +17,8 @@
 
 import React, { useCallback, useState } from "react";
 import { Outlet } from "react-router-dom";
+import { useDashboardScrollOnNavigation } from "@/hooks/useDashboardScrollOnNavigation";
+import { DASHBOARD_MAIN_SCROLL_ID } from "@/lib/dashboardScroll";
 import { useSelector } from "react-redux";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { AppNavbar } from "@/components/ui/layout/navbar/AppNavbar";
@@ -25,6 +27,8 @@ import { cn } from "@/lib/utils";
 import type { RootState } from "@nexia/shared/store";
 
 export const DashboardShell: React.FC = () => {
+    useDashboardScrollOnNavigation();
+
     const { user, isLoading, error } = useSelector((state: RootState) => state.auth);
     const nav = getNavigationForRole(user?.role);
     const menuItems = nav.menuItems.map(({ label, path }) => ({ label, path }));
@@ -77,9 +81,9 @@ export const DashboardShell: React.FC = () => {
             />
 
             <main
-                id="dashboard-main-scroll"
+                id={DASHBOARD_MAIN_SCROLL_ID}
                 className={cn(
-                    "min-h-screen min-w-0 overflow-y-auto px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
+                    "min-h-screen min-w-0 overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
                     sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded"
                 )}
             >

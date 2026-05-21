@@ -77,7 +77,7 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
         },
         {
             label: "Planificación",
-            path: `/dashboard/clients/${clientId}?tab=planificacion`,
+            path: `/dashboard/clients/${clientId}?tab=planning`,
         },
         ...(plan ? [{ label: plan.name, active: true } as BreadcrumbItem] : []),
     ];

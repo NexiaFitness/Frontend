@@ -125,7 +125,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 onClick={() => setOpen(!open)}
                 disabled={disabled}
                 className={cn(
-                    "flex w-full items-center justify-between rounded-md border border-input bg-background py-2 ring-offset-background",
+                    "flex w-full items-center justify-between rounded-md border border-border bg-surface-2 ring-offset-background",
                     "placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     !value && "text-muted-foreground",

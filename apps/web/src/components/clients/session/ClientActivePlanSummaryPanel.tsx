@@ -128,12 +128,10 @@ export const ClientActivePlanSummaryPanel: React.FC<
 }) => {
   const todayISO = useMemo(() => toLocalISO(new Date()), []);
 
-  const fullPlanLink = useMemo(() => {
-    const params = new URLSearchParams();
-    params.set("returnToClient", String(clientId));
-    params.set("tab", "planning");
-    return `/dashboard/training-plans/${activePlan.id}?${params.toString()}`;
-  }, [activePlan.id, clientId]);
+  const planningTabLink = useMemo(
+    () => `/dashboard/clients/${clientId}?tab=planning&plan=${activePlan.id}`,
+    [activePlan.id, clientId],
+  );
 
   const activeBlock = useMemo(
     () =>
@@ -405,13 +403,12 @@ export const ClientActivePlanSummaryPanel: React.FC<
         )}
       </div>
 
-      {/* ---- CTA ---- */}
       <div className="pt-1">
         <Link
-          to={fullPlanLink}
+          to={planningTabLink}
           className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 hover:underline transition-colors"
         >
-          Ver plan completo
+          Abrir planificación
           <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       </div>

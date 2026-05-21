@@ -12,7 +12,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { PageTitle } from "@/components/dashboard/shared";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import {
@@ -188,21 +190,26 @@ export const ExerciseForm: React.FC = () => {
 
     return (
         <>
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate("/dashboard/exercises")}
-                        className="mb-4"
-                    >
-                        ← Volver a Ejercicios
-                    </Button>
-                    <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                        {isEdit ? "Editar Ejercicio" : "Crear Ejercicio"}
-                    </h2>
-                    <p className="text-muted-foreground text-sm">
-                        {isEdit ? "Modifica los datos del ejercicio." : "Añade un nuevo ejercicio a la base de datos."}
-                    </p>
+                <div className="mb-6 px-4 lg:px-8">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <PageTitle
+                            title={isEdit ? "Editar Ejercicio" : "Crear Ejercicio"}
+                            subtitle={
+                                isEdit
+                                    ? "Modifica los datos del ejercicio."
+                                    : "Añade un nuevo ejercicio a la base de datos."
+                            }
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate("/dashboard/exercises")}
+                            className="shrink-0"
+                        >
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                            Volver a Ejercicios
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">

@@ -4,6 +4,7 @@
 
 import React, { useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -151,7 +152,8 @@ export const ExerciseDetail: React.FC = () => {
         <>
             <div className="mb-6 lg:mb-8 px-4 lg:px-8">
                 <Button variant="outline" size="sm" onClick={handleBack} className="mb-4">
-                    ← Volver a Ejercicios
+                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    Volver a Ejercicios
                 </Button>
                 {isLocalRoute && (
                     <Alert variant="warning" className="mb-4">

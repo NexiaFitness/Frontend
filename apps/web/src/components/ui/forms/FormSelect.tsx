@@ -14,6 +14,7 @@
  */
 
 import React, { forwardRef, useId } from "react";
+import { ChevronDown } from "lucide-react";
 import clsx from "clsx";
 
 export type SelectSize = "xs" | "sm" | "md" | "lg";
@@ -38,12 +39,19 @@ interface FormSelectProps
 const baseStyles =
     "block w-full rounded-md border bg-surface-2 text-foreground transition-colors placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed caret-primary";
 
-// xs = compact (Constructor, chips); sm/md/lg = todos h-9 (slim unificado)
+// xs = compact (Constructor, chips); sm/md/lg = h-9 fijo sin py vertical (el nativo ignora h si hay py)
 const sizeStyles: Record<SelectSize, string> = {
-    xs: "h-8 px-2.5 py-1.5 text-[11px] rounded-md border border-border/60 bg-surface",
-    sm: "h-9 px-3 py-1.5 text-sm",
-    md: "h-9 px-4 py-1.5 text-sm",
-    lg: "h-9 px-5 py-1.5 text-sm",
+    xs: "h-8 px-2.5 py-0 text-[11px] rounded-md border border-border/60 bg-surface",
+    sm: "h-9 px-3 py-0 text-sm leading-none",
+    md: "h-9 px-4 py-0 text-sm leading-none",
+    lg: "h-9 px-5 py-0 text-sm leading-none",
+};
+
+const chevronPadStyles: Record<SelectSize, string> = {
+    xs: "pr-8",
+    sm: "pr-9",
+    md: "pr-10",
+    lg: "pr-11",
 };
 
 const stateStyles = {
@@ -92,43 +100,54 @@ export const FormSelect = forwardRef<HTMLSelectElement, FormSelectProps>(
                     </label>
                 )}
 
-                <select
-                    ref={ref}
-                    id={selectId}
-                    value={value}
-                    className={clsx(
-                        baseStyles,
-                        sizeStyles[size],
-                        hasError
-                            ? stateStyles.error
-                            : size === "xs"
-                            ? stateStyles.defaultXs
-                            : stateStyles.default,
-                        textColorClass,
-                        className
-                    )}
-                    {...props}
-                >
-                    {placeholder && (
-                        <option
-                            value=""
-                            disabled
-                            className="bg-surface-2 text-muted-foreground"
-                        >
-                            {placeholder}
-                        </option>
-                    )}
-                    {options.map((option) => (
-                        <option
-                            key={option.value}
-                            value={option.value}
-                            disabled={option.disabled}
-                            className="text-foreground bg-surface-2"
-                        >
-                            {option.label}
-                        </option>
-                    ))}
-                </select>
+                <div className="relative">
+                    <select
+                        ref={ref}
+                        id={selectId}
+                        value={value}
+                        className={clsx(
+                            baseStyles,
+                            sizeStyles[size],
+                            chevronPadStyles[size],
+                            "appearance-none",
+                            hasError
+                                ? stateStyles.error
+                                : size === "xs"
+                                  ? stateStyles.defaultXs
+                                  : stateStyles.default,
+                            textColorClass,
+                            className
+                        )}
+                        {...props}
+                    >
+                        {placeholder && (
+                            <option
+                                value=""
+                                disabled
+                                className="bg-surface-2 text-muted-foreground"
+                            >
+                                {placeholder}
+                            </option>
+                        )}
+                        {options.map((option) => (
+                            <option
+                                key={option.value}
+                                value={option.value}
+                                disabled={option.disabled}
+                                className="text-foreground bg-surface-2"
+                            >
+                                {option.label}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown
+                        className={clsx(
+                            "pointer-events-none absolute top-1/2 -translate-y-1/2 opacity-50",
+                            size === "xs" ? "right-2 h-3 w-3" : "right-3 h-4 w-4"
+                        )}
+                        aria-hidden
+                    />
+                </div>
 
                 {error && <p className={errorStyles}>{error}</p>}
                 {!error && helperText && <p className={helperStyles}>{helperText}</p>}

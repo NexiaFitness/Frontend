@@ -235,19 +235,21 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                         importantes.
                     </p>
                 </div>
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={formOpen ? closeForm : openForm}
-                    className="shrink-0"
-                >
-                    {formOpen ? (
-                        <X className="size-4" />
-                    ) : (
-                        <Plus className="size-4" />
-                    )}
-                    {formOpen ? "Cancelar" : "Nuevo hito"}
-                </Button>
+                {sorted.length > 0 && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={formOpen ? closeForm : openForm}
+                        className="shrink-0"
+                    >
+                        {formOpen ? (
+                            <X className="size-4" />
+                        ) : (
+                            <Plus className="size-4" />
+                        )}
+                        {formOpen ? "Cancelar" : "Nuevo hito"}
+                    </Button>
+                )}
             </div>
 
             {/* Create form */}

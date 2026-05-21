@@ -31,6 +31,7 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
 import { PaginationBar } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 
 const PAGE_SIZE = 9;
 
@@ -196,7 +197,7 @@ export const ClientList: React.FC = () => {
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     }, []);
 
     const handleClientClick = useCallback(

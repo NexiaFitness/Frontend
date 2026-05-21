@@ -38,7 +38,7 @@ interface Props {
   sessionPickerDate?: string | null;
   /**
    * Días de la semana habituales de entreno del cliente (`Client.training_days`, inglés).
-   * Si hay valores válidos, las celdas en bloque con ese weekday muestran icono y la leyenda incluye “Día de entreno”.
+   * Si hay valores válidos, las celdas en vigencia del plan con ese weekday muestran icono y la leyenda incluye “Día de entreno”.
    */
   habitualTrainingDays?: readonly string[] | null;
 }
@@ -141,7 +141,8 @@ export const PeriodizationCalendar: React.FC<Props> = ({
       const weekday = isoLocalDateToTrainingDayValue(dateISO);
       const isHabitualTrainingWeekday =
         weekday !== null && habitualDaySet.has(weekday);
-      const showHabitualInBlockIcon = inBlock && !isException && isHabitualTrainingWeekday;
+      const showHabitualInBlockIcon =
+        inPlanVigencia && !isException && isHabitualTrainingWeekday;
       const sessionPickHighlight =
         Boolean(sessionPickerDate) &&
         sessionPickerDate === dateISO &&

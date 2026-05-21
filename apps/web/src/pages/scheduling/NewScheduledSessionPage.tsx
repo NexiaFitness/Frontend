@@ -12,6 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
@@ -220,6 +221,7 @@ export const NewScheduledSessionPage: React.FC = () => {
                             subtitle="Programa una cita con tu cliente"
                         />
                         <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/scheduling")}>
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al calendario
                         </Button>
                     </div>

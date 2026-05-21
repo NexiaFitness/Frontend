@@ -141,6 +141,7 @@ export * from "./types/progress";
 export * from "./types/training";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
+export * from "./training/trainingPlanLifecycle";
 export * from "./training/weeklyVolumeTarget";
 export * from "./training/weeklyVolumePanelModel";
 export {
@@ -350,6 +351,12 @@ export {
     getTrainingDatesInRange,
     type TrainingDateInfo,
 } from "./utils/weeklyStructure";
+export {
+    getMondayOfWeekLocal,
+    getBlockCalendarWeekOrdinal,
+    getBlockCalendarWeekCount,
+    formatCalendarWeekRange,
+} from "./utils/calendarWeekForBlock";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
 export {
@@ -371,6 +378,10 @@ export * from "./hooks/scheduling";
 
 // Hooks - Session Programming
 export * from "./hooks/sessionProgramming";
+
+// Session Programming - Vista agrupada de bloques (lógica pura)
+export * from "./sessionProgramming/sessionBlockView";
+export * from "./sessionProgramming/sessionBriefMath";
 
 // Hooks - Injuries
 export * from "./hooks/injuries";

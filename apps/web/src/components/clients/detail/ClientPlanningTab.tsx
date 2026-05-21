@@ -1,38 +1,47 @@
 /**
- * ClientPlanningTab.tsx — Planificación desde perfil de cliente
+ * ClientPlanningTab.tsx — Planificación desde perfil de cliente (vista única del plan)
  *
- * Por defecto: plan activo vía GET active-by-client/{client_id}.
- * Si la URL trae `?plan=:id` (focusPlanId): muestra ese plan si pertenece al cliente
- * (alineado con handleViewPlan en ClientDetail); si coincide con el activo, no duplica fetch.
+ * Contenido por plan (activo o ?plan=):
+ * - Periodización (PlanPeriodizationSection)
+ * - Progresión planificada (PeriodizationCharts, dentro de la sección anterior)
+ * - Ejecución del plan (colapsable): ChartsTab si hay sesiones; EmptyState si no
+ * - Hitos (MilestonesTab, sección colapsable)
+ * - Acciones en barra fija inferior (DashboardFixedFooter): Editar plan, Eliminar plan
  *
- * Sin plan activo y sin plan enfocado válido: estado vacío + CTA "Crear plan".
- *
- * @author Frontend Team
- * @since Fase 1 U3
- * @updated v9.0.0 — Eliminado PlanningTab legacy; solo PlanPeriodizationSection
- * @updated 2026-04 — Soporte ?plan= para ver periodización de un plan concreto
+ * @see docs/specs/CONSOLIDACION_VISTA_PLAN_EN_CLIENTE.md
  */
 
-import React, { useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import React, { useMemo, useCallback, Suspense, lazy, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { BarChart3, Plus } from "lucide-react";
 import type { ActivePlanByClientOut, TrainingPlan } from "@nexia/shared/types/training";
 import { getMutationErrorMessage } from "@nexia/shared";
+import { usePlanBlockAnalytics } from "@nexia/shared/hooks/training/usePlanBlockAnalytics";
 import {
     useGetActivePlanByClientQuery,
     useGetTrainingPlanQuery,
+    useDeleteTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert, EmptyState, useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
+import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { PlanPeriodizationSection } from "@/components/trainingPlans/periodization";
+import { MilestonesTab } from "@/components/trainingPlans";
+import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
+import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { TYPOGRAPHY } from "@/utils/typography";
+
+const ChartsTab = lazy(() =>
+    import("@/components/trainingPlans").then((module) => ({
+        default: module.ChartsTab,
+    })),
+);
 
 interface ClientPlanningTabProps {
     clientId: number;
     trainingPlans?: TrainingPlan[];
     isLoadingPlans?: boolean;
-    /**
-     * ID de plan desde `?plan=` (ClientDetail). null = solo plan activo.
-     */
     focusPlanId?: number | null;
     onOpenCreatePlan?: () => void;
     onOpenUseTemplate?: () => void;
@@ -53,7 +62,11 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     focusPlanId = null,
     onOpenCreatePlan,
 }) => {
+    const navigate = useNavigate();
     const [, setSearchParams] = useSearchParams();
+    const { showError } = useToast();
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deletePlan, { isLoading: isDeletingPlan }] = useDeleteTrainingPlanMutation();
 
     const clearPlanQuery = useCallback(() => {
         setSearchParams(
@@ -99,21 +112,22 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                     const isNotFound =
                         focusedError &&
                         typeof focusedError === "object" &&
-                        (("status" in focusedError && (focusedError.status === 404 || focusedError.status === "PARSING_ERROR")) ||
+                        (("status" in focusedError &&
+                            (focusedError.status === 404 || focusedError.status === "PARSING_ERROR")) ||
                             getMutationErrorMessage(focusedError).toLowerCase().includes("not found"));
                     return {
                         kind: "error" as const,
                         message: isNotFound
                             ? "El plan de entrenamiento no existe o ha sido eliminado."
-                            : (focusedError && typeof focusedError === "object" && "data" in focusedError
-                                ? getMutationErrorMessage(focusedError)
-                                : "No se pudo cargar el plan."),
+                            : focusedError &&
+                                typeof focusedError === "object" &&
+                                "data" in focusedError
+                              ? getMutationErrorMessage(focusedError)
+                              : "No se pudo cargar el plan.",
                     };
                 }
                 if (focusedPlan.client_id !== clientId) {
-                    return {
-                        kind: "wrong_client" as const,
-                    };
+                    return { kind: "wrong_client" as const };
                 }
                 return {
                     kind: "ok" as const,
@@ -137,10 +151,28 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         focusedError,
     ]);
 
+    const planIdForAnalytics =
+        resolved.kind === "ok" ? resolved.plan.id : null;
+
+    const { sessions, isLoading: executionDataLoading } =
+        usePlanBlockAnalytics(planIdForAnalytics);
+
     const isLoading =
         isLoadingPlans ||
         isLoadingActive ||
         resolved.kind === "loading";
+
+    const handleDeleteConfirm = useCallback(async () => {
+        if (resolved.kind !== "ok") return;
+        const plan = resolved.plan;
+        try {
+            await deletePlan({ id: plan.id, clientId }).unwrap();
+            setDeleteModalOpen(false);
+            navigate(buildClientTabPath(clientId, { tab: "sessions" }));
+        } catch (err: unknown) {
+            showError(getMutationErrorMessage(err));
+        }
+    }, [resolved, deletePlan, clientId, navigate, showError]);
 
     if (isLoading) {
         return (
@@ -201,21 +233,25 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const showNonActiveBanner =
         source === "focused" && (activePlan == null || activePlan.id !== plan.id);
 
+    const hasExecutionData =
+        (plan.sessions_total ?? 0) > 0 || sessions.length > 0;
+
     return (
-        <div className="space-y-4">
+        <div className="space-y-8 pb-24" data-testid="client-planning-tab">
             {showNonActiveBanner && (
                 <Alert variant="warning" className="text-sm">
                     Estás viendo la periodización de un plan concreto (enlace o pestaña).{" "}
                     {activePlan ? "Puede no ser el plan activo del cliente." : "No hay plan activo asignado."}{" "}
                     <button
                         type="button"
-                        className="underline font-medium text-foreground hover:no-underline"
+                        className="font-medium text-foreground underline hover:no-underline"
                         onClick={clearPlanQuery}
                     >
                         Volver al plan activo
                     </button>
                 </Alert>
             )}
+
             <PlanPeriodizationSection
                 planId={plan.id}
                 clientId={clientId}
@@ -223,6 +259,104 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 planEndDate={plan.end_date}
                 activePlan={source === "active" ? plan : undefined}
                 planGoalForRecommendations={plan.goal}
+            />
+
+            <CollapsibleFormGroup title="Ejecución del plan" defaultOpen={false}>
+                <div className="space-y-4" data-testid="plan-execution-section">
+                    <p className="text-sm text-muted-foreground">
+                        Cumplimiento de la carga planificada: coherencia por bloques, desviación y plan vs real.
+                    </p>
+                    {executionDataLoading ? (
+                        <div className="flex items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/10 py-16">
+                            <LoadingSpinner size="lg" />
+                        </div>
+                    ) : hasExecutionData ? (
+                        <Suspense fallback={<LoadingSpinner size="lg" />}>
+                            <ChartsTab
+                                planId={plan.id}
+                                planStartDate={plan.start_date}
+                                planEndDate={plan.end_date}
+                            />
+                        </Suspense>
+                    ) : (
+                        <div
+                            className="rounded-lg border border-dashed border-border/50 bg-muted/10"
+                            data-testid="plan-execution-empty"
+                        >
+                            <EmptyState
+                                icon={<BarChart3 />}
+                                title="Sin datos de ejecución"
+                                description="Programa y completa sesiones en los bloques del plan para ver coherencia, desviación y plan vs real."
+                                action={
+                                    <div className="flex flex-wrap items-center justify-center gap-2">
+                                        <Button
+                                            variant="primary"
+                                            size="sm"
+                                            onClick={() =>
+                                                navigate(
+                                                    buildClientTabPath(clientId, {
+                                                        tab: "sessions",
+                                                    }),
+                                                )
+                                            }
+                                        >
+                                            Ir a sesiones
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                const qs = new URLSearchParams({
+                                                    clientId: String(clientId),
+                                                    planId: String(plan.id),
+                                                });
+                                                navigate(
+                                                    `/dashboard/session-programming/create-session?${qs.toString()}`,
+                                                );
+                                            }}
+                                        >
+                                            <Plus className="size-4" aria-hidden />
+                                            Crear sesión
+                                        </Button>
+                                    </div>
+                                }
+                            />
+                        </div>
+                    )}
+                </div>
+            </CollapsibleFormGroup>
+
+            <CollapsibleFormGroup title="Hitos del plan" defaultOpen={false}>
+                <MilestonesTab planId={plan.id} />
+            </CollapsibleFormGroup>
+
+            <DashboardFixedFooter>
+                <div className="flex flex-wrap items-center justify-end gap-3">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/dashboard/training-plans/${plan.id}/edit`)}
+                    >
+                        Editar plan
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="outline-destructive"
+                        size="sm"
+                        onClick={() => setDeleteModalOpen(true)}
+                    >
+                        Eliminar plan
+                    </Button>
+                </div>
+            </DashboardFixedFooter>
+
+            <DeleteTrainingPlanModal
+                isOpen={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                onConfirm={handleDeleteConfirm}
+                plan={plan}
+                isLoading={isDeletingPlan}
             />
         </div>
     );

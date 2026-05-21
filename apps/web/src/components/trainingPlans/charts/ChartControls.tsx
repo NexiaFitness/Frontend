@@ -24,14 +24,16 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useGetTrainingPlanQuery } from '@nexia/shared/api/trainingPlansApi';
 import type { ChartView, ChartMetrics } from '@nexia/shared/types/charts';
+import { buildClientTabPath } from '@/lib/trainingPlanNavigation';
 
 interface ChartControlsProps {
     view: ChartView;
     onViewChange: (view: ChartView) => void;
     metrics: ChartMetrics;
     onMetricsChange: (metrics: ChartMetrics) => void;
-    planId?: number; // Para navegación "Back"
+    planId?: number;
 }
 
 export const ChartControls: React.FC<ChartControlsProps> = ({
@@ -42,6 +44,7 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
     planId,
 }) => {
     const navigate = useNavigate();
+    const { data: plan } = useGetTrainingPlanQuery(planId!, { skip: !planId });
 
     const views: { id: ChartView; label: string }[] = [
         { id: 'weekly', label: 'Weekly' },
@@ -58,7 +61,9 @@ export const ChartControls: React.FC<ChartControlsProps> = ({
     };
 
     const handleBack = () => {
-        if (planId) {
+        if (plan?.client_id) {
+            navigate(buildClientTabPath(plan.client_id, { tab: 'planning', planId }));
+        } else if (planId) {
             navigate(`/dashboard/training-plans/${planId}`);
         } else {
             navigate('/dashboard/training-plans');

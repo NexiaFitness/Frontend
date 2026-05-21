@@ -2,7 +2,7 @@
  * TrainingPlanEditorForm.tsx — Formulario presentacional unificado (crear / editar plan).
  *
  * Contexto: sin mutaciones ni RTK; el contenedor pasa estado y errores.
- * Estilo alineado con la vista compacta de creación (`CreateTrainingPlan`).
+ * Estilo alineado con DESIGN.md §5.18 (campos h-9, PageTitle, sin títulos duplicados).
  *
  * @author Frontend Team
  * @since v1.0.0
@@ -10,9 +10,10 @@
 
 import React, { useMemo } from "react";
 import { ArrowLeft, ExternalLink } from "lucide-react";
-import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
+import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import { Button } from "@/components/ui/buttons";
-import { Input, Textarea, DatePickerButton, Label, FormCombobox, FormSelect } from "@/components/ui/forms";
+import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { chipFromGoal } from "@/components/trainingPlans/goalLabels";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
@@ -47,8 +48,10 @@ function formatDateShort(dateString: string | null | undefined): string {
 export interface TrainingPlanEditorFormProps {
     formId: string;
     mode: "create" | "edit";
-    pageTitle: string;
-    cardTitle: string;
+    /** Título de página (único; no duplicar con subtítulo de sección). */
+    title: string;
+    /** Subtítulo opcional (p. ej. nombre del cliente). */
+    subtitle?: string;
     client: { id: number; nombre: string; apellidos: string } | null;
     showClientBlock: boolean;
     draft: TrainingPlanEditorDraft;
@@ -69,8 +72,8 @@ export interface TrainingPlanEditorFormProps {
 export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
     formId,
     mode,
-    pageTitle,
-    cardTitle,
+    title,
+    subtitle,
     client,
     showClientBlock,
     draft,
@@ -193,20 +196,22 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
     };
 
     return (
-        <div className="space-y-6 pb-24">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <h1 className="text-2xl font-bold text-foreground">{pageTitle}</h1>
-                <Button type="button" variant="outline" size="sm" onClick={onCancel}>
+        <div className={`space-y-6 ${DASHBOARD_FIXED_FOOTER_PADDING_CLASS}`}>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <PageTitle title={title} subtitle={subtitle} className="min-w-0 flex-1" />
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0 self-start"
+                    onClick={onCancel}
+                >
                     <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                     Volver
                 </Button>
             </div>
 
-            <div className="space-y-5 rounded-lg border border-border bg-surface p-6">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">{cardTitle}</h2>
-                </div>
-
+            <div className="space-y-5 rounded-lg border border-border bg-surface p-6 lg:p-8">
                 {showClientBlock && client && (
                     <div className="flex items-center gap-3 rounded-lg bg-surface-2 px-4 py-2.5">
                         <div className="relative flex h-7 w-7 shrink-0 overflow-hidden rounded-full">
@@ -253,16 +258,16 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                 <form id={formId} onSubmit={onSubmit} className="space-y-5">
                     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                         <div className="space-y-1.5">
-                            <Label className="text-sm font-medium">
-                                Nombre <span className="text-destructive">*</span>
+                            <Label className="text-foreground">
+                                Nombre <span className="text-destructive ml-0.5">*</span>
                             </Label>
                             <Input
+                                size="sm"
                                 value={draft.name}
                                 onChange={(e) =>
                                     onDraftChange({ ...draft, name: e.target.value })
                                 }
                                 placeholder="Ej: Hipertrofia Avanzada Q1"
-                                className="h-10"
                             />
                             {errors.name && (
                                 <p className="text-xs text-destructive">{errors.name}</p>
@@ -270,8 +275,8 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-sm font-medium">
-                                Fecha inicio <span className="text-destructive">*</span>
+                            <Label className="text-foreground">
+                                Fecha inicio <span className="text-destructive ml-0.5">*</span>
                             </Label>
                             <DatePickerButton
                                 label="Seleccionar"
@@ -285,8 +290,8 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-sm font-medium">
-                                Fecha fin <span className="text-destructive">*</span>
+                            <Label className="text-foreground">
+                                Fecha fin <span className="text-destructive ml-0.5">*</span>
                             </Label>
                             <DatePickerButton
                                 label="Seleccionar"
@@ -300,10 +305,11 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                         </div>
 
                         <div className="space-y-1.5">
-                            <Label className="text-sm font-medium">
-                                Objetivo <span className="text-destructive">*</span>
+                            <Label className="text-foreground">
+                                Objetivo <span className="text-destructive ml-0.5">*</span>
                             </Label>
                             <FormCombobox
+                                size="sm"
                                 value={draft.goal}
                                 onChange={(value) =>
                                     onDraftChange({
@@ -323,36 +329,38 @@ export const TrainingPlanEditorForm: React.FC<TrainingPlanEditorFormProps> = ({
                     {mode === "edit" && (
                         <div className="grid gap-4 sm:grid-cols-2">
                             <div className="space-y-1.5">
-                                <Label className="text-sm font-medium">Estado</Label>
-                                <FormSelect
-                                    options={PLAN_STATUS_OPTIONS}
+                                <Label className="text-foreground">Estado</Label>
+                                <FormCombobox
+                                    size="sm"
                                     value={draft.status || "active"}
-                                    onChange={(e) =>
-                                        onDraftChange({ ...draft, status: e.target.value })
+                                    onChange={(value) =>
+                                        onDraftChange({ ...draft, status: value })
                                     }
+                                    options={PLAN_STATUS_OPTIONS}
+                                    placeholder="Seleccionar"
                                 />
                             </div>
                             <div className="space-y-1.5">
-                                <Label className="text-sm font-medium">
+                                <Label className="text-foreground">
                                     Etiquetas{" "}
-                                    <span className="text-xs text-muted-foreground">
+                                    <span className="text-xs font-normal text-muted-foreground">
                                         (separadas por coma)
                                     </span>
                                 </Label>
                                 <Input
+                                    size="sm"
                                     value={draft.tagsInput}
                                     onChange={(e) =>
                                         onDraftChange({ ...draft, tagsInput: e.target.value })
                                     }
                                     placeholder="fuerza, pretemporada…"
-                                    className="h-10"
                                 />
                             </div>
                         </div>
                     )}
 
                     <div className="space-y-1.5">
-                        <Label className="text-sm font-medium">
+                        <Label className="text-foreground">
                             {mode === "create" ? (
                                 <>
                                     Notas{" "}
