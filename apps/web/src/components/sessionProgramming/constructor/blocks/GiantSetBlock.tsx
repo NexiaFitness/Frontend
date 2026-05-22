@@ -22,6 +22,10 @@ import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
+import {
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
     CONSTRUCTOR_FIELD_LABEL_CLASS,
     CONSTRUCTOR_FOOTER_HINT_CLASS,
@@ -67,6 +71,22 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
     const normalized = normalizeGiantSetRow(row);
     const exerciseCount = normalized.exercises.length;
     const canRemoveLast = exerciseCount > MIN_GIANT_SET_SLOTS;
+
+    const handleExerciseChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                normalized.exercises,
+                index,
+                updates
+            );
+            onUpdate(normalized.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(normalized.id, normalized.exercises[index].id, updates);
+        }
+    };
 
     const handleAddSlot = () => {
         const next = addGiantSetExerciseSlot(normalized);
@@ -171,13 +191,13 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                                             exercise={ex}
                                             rowRepsTipo={normalized.repsTipo}
                                             onExerciseChange={(updates) =>
-                                                onUpdateExercise(normalized.id, ex.id, updates)
+                                                handleExerciseChange(index, updates)
                                             }
                                         />
                                         <CaracterField
                                             exercise={ex}
                                             onExerciseChange={(updates) =>
-                                                onUpdateExercise(normalized.id, ex.id, updates)
+                                                handleExerciseChange(index, updates)
                                             }
                                         />
                                     </div>

@@ -17,13 +17,12 @@ import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useWeeklyMetricsV2, useMetricsAlertsV2, useMonthlyMetricsV2 } from "@nexia/shared/hooks/metrics";
-import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
-import { Alert } from "@/components/ui/feedback/Alert";
+import { LoadingSpinner, Alert, EmptyState } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
-import { Button } from "@/components/ui/buttons";
+import { Button, SegmentButton } from "@/components/ui/buttons";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
-import { Pencil, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { ClipboardList, Pencil, Plus, X } from "lucide-react";
 import {
     LineChart,
     ComposedChart,
@@ -61,6 +60,36 @@ const CHART_TOOLTIP_STYLE: React.CSSProperties = {
 
 type ProgressSubTab = "overview" | "load" | "history";
 type MetricsPeriod = "weekly" | "monthly" | "annual";
+
+const METRICS_PERIOD_OPTIONS: { id: MetricsPeriod; label: string }[] = [
+    { id: "weekly", label: "Semanal" },
+    { id: "monthly", label: "Mensual" },
+    { id: "annual", label: "Anual" },
+];
+
+function MetricsPeriodSelector({
+    value,
+    onChange,
+}: {
+    value: MetricsPeriod;
+    onChange: (period: MetricsPeriod) => void;
+}) {
+    return (
+        <div className="flex items-center gap-1.5" role="group" aria-label="Periodo métricas">
+            {METRICS_PERIOD_OPTIONS.map((p) => (
+                <SegmentButton
+                    key={p.id}
+                    size="sm"
+                    selected={value === p.id}
+                    onClick={() => onChange(p.id)}
+                    className="w-[5.25rem]"
+                >
+                    {p.label}
+                </SegmentButton>
+            ))}
+        </div>
+    );
+}
 type MetricCardColor = "blue" | "green" | "orange" | "red";
 
 interface NormalizedWorkloadDataPoint {
@@ -812,28 +841,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             {/* ═══════════ LOAD TAB ═══════════ */}
             {activeTab === "load" && (
                 <div className="space-y-6">
-                    {/* Period chips */}
-                    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Periodo métricas">
-                        {([
-                            { id: "weekly" as MetricsPeriod, label: "Semanal" },
-                            { id: "monthly" as MetricsPeriod, label: "Mensual" },
-                            { id: "annual" as MetricsPeriod, label: "Anual" },
-                        ] as const).map((p) => (
-                            <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => setMetricsPeriod(p.id)}
-                                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-                                    metricsPeriod === p.id
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                                }`}
-                                aria-pressed={metricsPeriod === p.id}
-                            >
-                                {p.label}
-                            </button>
-                        ))}
-                    </div>
+                    {!cidChartConfig && (
+                        <div className="flex justify-end">
+                            <MetricsPeriodSelector
+                                value={metricsPeriod}
+                                onChange={setMetricsPeriod}
+                            />
+                        </div>
+                    )}
 
                     {/* No data */}
                     {!isLoading && hasNoLoadData && (
@@ -853,7 +868,13 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                     {/* CID chart */}
                     {cidChartConfig && (
                         <div className="rounded-lg bg-surface p-5">
-                            <h3 className="mb-4 text-sm font-semibold">{cidChartConfig.title}</h3>
+                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                <h3 className="text-sm font-semibold">{cidChartConfig.title}</h3>
+                                <MetricsPeriodSelector
+                                    value={metricsPeriod}
+                                    onChange={setMetricsPeriod}
+                                />
+                            </div>
                             <div className="w-full min-w-0">
                                 <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
                                     <LineChart data={cidChartConfig.data} margin={CHART_MARGIN}>
@@ -972,9 +993,39 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             )}
 
             {/* ═══════════ HISTORY TAB ═══════════ */}
-            {activeTab === "history" && (
-                <>
-                    {!isNotFoundError && progressHistory && progressHistory.length > 0 ? (
+            {activeTab === "history" && !isNotFoundError && (
+                <div className="space-y-5">
+                    {progressHistory && progressHistory.length > 0 && (
+                        <div className="flex justify-end">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowProgressForm((v) => !v)}
+                                className="shrink-0"
+                            >
+                                {showProgressForm ? (
+                                    <X className="size-4" aria-hidden />
+                                ) : (
+                                    <Plus className="size-4" aria-hidden />
+                                )}
+                                {showProgressForm ? "Cancelar" : "Nuevo registro"}
+                            </Button>
+                        </div>
+                    )}
+
+                    {showProgressForm && (
+                        <div
+                            ref={formRef}
+                            className="rounded-lg border border-border bg-card p-5"
+                        >
+                            <p className="mb-4 text-sm font-semibold text-foreground">
+                                Nuevo registro de progreso
+                            </p>
+                            <ProgressForm clientId={clientId} />
+                        </div>
+                    )}
+
+                    {progressHistory && progressHistory.length > 0 ? (
                         <div className="space-y-2">
                             {progressHistory.map((record: ClientProgress) => (
                                 <div
@@ -1021,43 +1072,31 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             ))}
                         </div>
                     ) : (
-                        !isNotFoundError && (
-                            <div
-                                className="flex w-full items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 text-center text-sm text-muted-foreground"
-                                style={{ minHeight: 200 }}
-                            >
-                                No hay registros de progreso aún.
-                            </div>
-                        )
+                        <div
+                            className="rounded-lg border border-dashed border-border/50 bg-muted/10"
+                            data-testid="progress-history-empty"
+                        >
+                            <EmptyState
+                                icon={<ClipboardList />}
+                                title="Sin registros de progreso"
+                                description="Registra peso, IMC y notas para seguir la evolución corporal del cliente."
+                                action={
+                                    !showProgressForm ? (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setShowProgressForm(true)}
+                                        >
+                                            <Plus className="size-4" aria-hidden />
+                                            Añadir primer registro
+                                        </Button>
+                                    ) : undefined
+                                }
+                            />
+                        </div>
                     )}
-                </>
+                </div>
             )}
-
-            {/* ═══════════ ADD PROGRESS FORM ═══════════ */}
-            <div ref={formRef}>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowProgressForm((v) => !v)}
-                    className="w-full justify-between"
-                >
-                    <span className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" aria-hidden />
-                        Añadir nuevo registro de progreso
-                    </span>
-                    {showProgressForm ? (
-                        <ChevronUp className="h-4 w-4" aria-hidden />
-                    ) : (
-                        <ChevronDown className="h-4 w-4" aria-hidden />
-                    )}
-                </Button>
-                {showProgressForm && (
-                    <div className="mt-4">
-                        <ProgressForm clientId={clientId} />
-                    </div>
-                )}
-            </div>
 
             {/* Edit modal */}
             {selectedRecord && (

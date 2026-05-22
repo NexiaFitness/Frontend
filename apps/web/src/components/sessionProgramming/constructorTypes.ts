@@ -20,6 +20,8 @@ export interface ConstructorExercise {
     notes: string | null;
     /** Modo Reps/Tiempo por ejercicio (superset: A1/A2 independientes) */
     repsTipo?: RepsTipo;
+    /** Indica si el carácter de este ejercicio fue editado manualmente (bloques sin setData) */
+    isManuallyEdited?: boolean;
     /** ID en servidor (para EditSession diff) */
     serverExerciseId?: number;
 }

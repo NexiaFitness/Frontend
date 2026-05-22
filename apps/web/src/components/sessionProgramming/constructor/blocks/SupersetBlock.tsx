@@ -18,6 +18,10 @@ import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
+import {
     CONSTRUCTOR_CARD_CLASS,
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
     CONSTRUCTOR_FIELD_LABEL_CLASS,
@@ -59,6 +63,22 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeSupersetRow(row);
+
+    const handleExerciseChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                normalized.exercises,
+                index,
+                updates
+            );
+            onUpdate(normalized.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(normalized.id, normalized.exercises[index].id, updates);
+        }
+    };
 
     return (
         <div className={CONSTRUCTOR_CARD_CLASS}>
@@ -141,13 +161,13 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                                         exercise={ex}
                                         rowRepsTipo={normalized.repsTipo}
                                         onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
+                                            handleExerciseChange(index, updates)
                                         }
                                     />
                                     <CaracterField
                                         exercise={ex}
                                         onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
+                                            handleExerciseChange(index, updates)
                                         }
                                     />
                                 </div>

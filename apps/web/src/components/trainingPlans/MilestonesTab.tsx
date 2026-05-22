@@ -224,18 +224,9 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                 </Alert>
             )}
 
-            {/* Header */}
-            <div className="flex items-start justify-between gap-4">
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">
-                        Hitos del plan
-                    </h2>
-                    <p className="mt-0.5 text-sm text-muted-foreground">
-                        Registra eventos clave: competiciones, pruebas y fechas
-                        importantes.
-                    </p>
-                </div>
-                {sorted.length > 0 && (
+            {/* Add button */}
+            {sorted.length > 0 && (
+                <div className="flex justify-end">
                     <Button
                         variant="outline"
                         size="sm"
@@ -249,8 +240,8 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                         )}
                         {formOpen ? "Cancelar" : "Nuevo hito"}
                     </Button>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Create form */}
             {formOpen && (

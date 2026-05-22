@@ -26,6 +26,10 @@ import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
+    applyEmomWindowCaracterInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
+import {
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
     CONSTRUCTOR_EMOM_CARD_CLASS,
     CONSTRUCTOR_EMOM_WINDOW_LABEL_CLASS,
@@ -75,17 +79,27 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
         exerciseId: string,
         updates: Partial<ConstructorExercise>
     ) => {
-        const nextWindows = windows.map((window) =>
-            window.id !== windowId
-                ? window
-                : {
-                      ...window,
-                      exercises: window.exercises.map((ex) =>
-                          ex.id === exerciseId ? { ...ex, ...updates } : ex
-                      ),
-                  }
-        );
-        onUpdate(normalized.id, { emomWindows: nextWindows });
+        if (hasCaracterChange(updates)) {
+            const nextWindows = applyEmomWindowCaracterInheritance(
+                windows,
+                windowId,
+                exerciseId,
+                updates
+            );
+            onUpdate(normalized.id, { emomWindows: nextWindows });
+        } else {
+            const nextWindows = windows.map((window) =>
+                window.id !== windowId
+                    ? window
+                    : {
+                          ...window,
+                          exercises: window.exercises.map((ex) =>
+                              ex.id === exerciseId ? { ...ex, ...updates } : ex
+                          ),
+                      }
+            );
+            onUpdate(normalized.id, { emomWindows: nextWindows });
+        }
     };
 
     return (

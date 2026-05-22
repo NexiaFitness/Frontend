@@ -22,6 +22,10 @@ import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
+import {
     CONSTRUCTOR_AMRAP_CARD_CLASS,
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
     CONSTRUCTOR_FIELD_LABEL_CLASS,
@@ -67,6 +71,23 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
     const normalized = normalizeAmrapRow(row);
     const exerciseCount = normalized.exercises.length;
     const canRemoveLast = exerciseCount > MIN_AMRAP_SLOTS;
+
+    const handleExerciseChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                normalized.exercises,
+                index,
+                updates
+            );
+            onUpdate(normalized.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(normalized.id, normalized.exercises[index].id, updates);
+        }
+    };
+
     const durationMinutes =
         normalized.timeCap != null ? Math.floor(normalized.timeCap / 60) : "";
 
@@ -176,13 +197,13 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                         exercise={ex}
                                         rowRepsTipo={normalized.repsTipo}
                                         onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
+                                            handleExerciseChange(index, updates)
                                         }
                                     />
                                     <CaracterField
                                         exercise={ex}
                                         onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
+                                            handleExerciseChange(index, updates)
                                         }
                                     />
                                 </div>

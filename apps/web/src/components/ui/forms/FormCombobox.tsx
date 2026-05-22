@@ -26,7 +26,9 @@ export interface FormComboboxProps {
     placeholder?: string;
     disabled?: boolean;
     className?: string;
+    buttonClassName?: string;
     size?: "xs" | "sm" | "md" | "lg";
+    ariaLabel?: string;
 }
 
 const sizeStyles = {
@@ -45,7 +47,9 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     placeholder = "Seleccionar",
     disabled = false,
     className,
+    buttonClassName,
     size = "sm",
+    ariaLabel,
 }) => {
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<PopoverCoords>({
@@ -124,12 +128,14 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                 type="button"
                 onClick={() => setOpen(!open)}
                 disabled={disabled}
+                aria-label={ariaLabel}
                 className={cn(
                     "flex w-full items-center justify-between rounded-md border border-border bg-surface-2 ring-offset-background",
                     "placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     !value && "text-muted-foreground",
-                    sizeStyles[size]
+                    sizeStyles[size],
+                    buttonClassName
                 )}
             >
                 <span className="truncate">{displayText}</span>
