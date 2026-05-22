@@ -240,6 +240,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             ? (recommendationsData as TrainingPlanRecommendationsComplete)
             : null;
     const volumeMaxSets = volumeRecComplete?.recommendations.volume.max_sets;
+    const sliderValueNote =
+        effectiveClientId && recommendationsData?.status === "complete"
+            ? "Recomendado"
+            : undefined;
 
     const plannedVolumeInt = Math.min(
         10,
@@ -722,6 +726,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         min={1}
                                         max={10}
                                         color="primary"
+                                        valueNote={sliderValueNote}
                                         onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
                                     />
                                 </div>
@@ -733,6 +738,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         min={1}
                                         max={10}
                                         color="warning"
+                                        valueNote={sliderValueNote}
                                         onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
                                     />
                                 </div>
@@ -790,7 +796,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             {effectiveClientId && hasActiveInjuries && displayClient && (
                                 <Alert variant="warning">
                                     Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
-                                    {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
+                                    {clientActiveInjuries.map((i) => i.joint_name_es || i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
                                     ). Los ejercicios contraindicados están marcados en la lista.
                                 </Alert>
                             )}
@@ -816,77 +822,72 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </>
                             )}
 
-                            {/* Bloques + Constructor + Panel lateral — flex cuando panel abierto */}
-                            <div className="flex gap-6">
-                                <div
-                                    className={cn(
-                                        "flex-1 space-y-5 min-w-0",
-                                        showExercisePickerModal && "lg:max-w-[calc(100%-324px)]"
-                                    )}
-                                >
-                                    <div className="space-y-5">
-                                        <TrainingBlockSelector
-                                            selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
-                                            onSelect={(blockTypeId) => {
-                                                if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
-                                                const newRow: ConstructorRow = {
-                                                    id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                                                    blockTypeId: blockTypeId,
-                                                    setType: SET_TYPE.SINGLE_SET,
-                                                    sets: 3,
-                                                    rounds: null,
-                                                    timeCap: null,
-                                                    intervalSeconds: null,
-                                                    exercises: [],
-                                                    rest: 60,
-                                                    repsTipo: "reps",
-                                                };
-                                                setConstructorRows((prev) => [...prev, newRow]);
-                                            }}
-                                        />
-                                        <SessionConstructor
-                                            rows={constructorRows}
-                                            blockTypes={blockTypes}
-                                            onRowsChange={setConstructorRows}
-                                            onAddExerciseRequest={(rowId, exerciseSlotId) => {
-                                                setTargetRowIdForPicker(rowId);
-                                                setTargetExerciseSlotId(exerciseSlotId ?? null);
-                                                setShowExercisePickerModal(true);
-                                            }}
-                                            titleAccessory={
-                                                constructorRows.length > 0 ? (
-                                                    <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
-                                                ) : undefined
-                                            }
-                                        />
-                                    </div>
+                            <div className="space-y-5">
+                                <TrainingBlockSelector
+                                    selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
+                                    onSelect={(blockTypeId) => {
+                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
+                                        const newRow: ConstructorRow = {
+                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockTypeId: blockTypeId,
+                                            setType: SET_TYPE.SINGLE_SET,
+                                            sets: 3,
+                                            rounds: null,
+                                            timeCap: null,
+                                            intervalSeconds: null,
+                                            exercises: [],
+                                            rest: 60,
+                                            repsTipo: "reps",
+                                        };
+                                        setConstructorRows((prev) => [...prev, newRow]);
+                                    }}
+                                />
+                                <SessionConstructor
+                                    rows={constructorRows}
+                                    blockTypes={blockTypes}
+                                    onRowsChange={setConstructorRows}
+                                    onAddExerciseRequest={(rowId, exerciseSlotId) => {
+                                        setTargetRowIdForPicker(rowId);
+                                        setTargetExerciseSlotId(exerciseSlotId ?? null);
+                                        setTimeout(() => {
+                                            setShowExercisePickerModal(true);
+                                        }, 0);
+                                    }}
+                                    titleAccessory={
+                                        constructorRows.length > 0 ? (
+                                            <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                        ) : undefined
+                                    }
+                                    activePickerRowId={targetRowIdForPicker}
+                                    exercisePickerPanel={
+                                        showExercisePickerModal ? (
+                                            <ExercisePickerPanel
+                                                mode="inline"
+                                                isOpen={true}
+                                                onClose={() => {
+                                                    setShowExercisePickerModal(false);
+                                                    setTargetRowIdForPicker(null);
+                                                }}
+                                                onSelect={handleSelectFromPicker}
+                                                clientId={effectiveClientId ?? undefined}
+                                                activeInjuries={clientActiveInjuries}
+                                            />
+                                        ) : null
+                                    }
+                                />
+                            </div>
 
-                                    {/* Notas — al final del formulario */}
-                                    <div className="pt-6 border-t border-border">
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                            Notas de la Sesión
-                                        </label>
-                                        <Textarea
-                                            value={formData.notes}
-                                            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                                            rows={3}
-                                            placeholder="Instrucciones generales para la sesión..."
-                                        />
-                                    </div>
-                                </div>
-
-                                {showExercisePickerModal && (
-                                    <ExercisePickerPanel
-                                        isOpen={true}
-                                        onClose={() => {
-                                            setShowExercisePickerModal(false);
-                                            setTargetRowIdForPicker(null);
-                                        }}
-                                        onSelect={handleSelectFromPicker}
-                                        clientId={effectiveClientId ?? undefined}
-                                        activeInjuries={clientActiveInjuries}
-                                    />
-                                )}
+                            {/* Notas — al final del formulario */}
+                            <div className="pt-6 border-t border-border">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                    Notas de la Sesión
+                                </label>
+                                <Textarea
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                                    rows={3}
+                                    placeholder="Instrucciones generales para la sesión..."
+                                />
                             </div>
                 </div>
                 </form>

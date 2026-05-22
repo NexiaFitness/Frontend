@@ -31,6 +31,14 @@ export interface SessionDayRecommendations {
     recommended_daily_volume_scale: number;
     recommended_daily_intensity_scale: number;
     day_inherited: boolean;
+    /** Origen de volumen/intensidad: block | week | month */
+    source?: string | null;
+    period_block_id?: number | null;
+    period_block_name?: string | null;
+    period_block_start_date?: string | null;
+    period_block_end_date?: string | null;
+    block_week_ordinal?: number | null;
+    block_week_count?: number | null;
     month_volume: number | null;
     month_intensity: number | null;
     week_volume: number | null;

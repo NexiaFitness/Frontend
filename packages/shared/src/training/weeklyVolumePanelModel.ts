@@ -5,6 +5,127 @@
 
 export type WeeklyVolumeRowStatus = "deficit" | "on_target" | "excess" | "no_target";
 
+/** Banda ±10 % sobre el objetivo diario (constructor y validación de sesión). */
+export const DAILY_VOLUME_TARGET_BAND = 0.1;
+
+export type VolumeRatioHoyStyle = "constructor" | "session_review";
+
+export function resolveDailyVolumeBand(targetToday: number): {
+    rangeMin: number;
+    rangeMax: number;
+} {
+    const rangeMin = Math.max(1, Math.floor(targetToday * (1 - DAILY_VOLUME_TARGET_BAND)));
+    const rangeMax = Math.max(rangeMin, Math.ceil(targetToday * (1 + DAILY_VOLUME_TARGET_BAND)));
+    return { rangeMin, rangeMax };
+}
+
+export function resolveDailyVolumeStatus(
+    actualSets: number,
+    targetToday: number | null
+): WeeklyVolumeRowStatus {
+    if (targetToday == null || targetToday <= 0) return "no_target";
+    const { rangeMin, rangeMax } = resolveDailyVolumeBand(targetToday);
+    if (actualSets < rangeMin) return "deficit";
+    if (actualSets > rangeMax) return "excess";
+    return "on_target";
+}
+
+export function volumeStatusLabel(status: WeeklyVolumeRowStatus): string {
+    switch (status) {
+        case "deficit":
+            return "Déficit";
+        case "on_target":
+            return "En rango";
+        case "excess":
+            return "Exceso";
+        default:
+            return "Sin objetivo";
+    }
+}
+
+export function volumeStatusDotClass(status: WeeklyVolumeRowStatus): string {
+    switch (status) {
+        case "deficit":
+            return "text-amber-500";
+        case "on_target":
+            return "text-emerald-500";
+        case "excess":
+            return "text-rose-500";
+        default:
+            return "text-muted-foreground";
+    }
+}
+
+export function volumeStatusBarColorClass(status: WeeklyVolumeRowStatus): string {
+    switch (status) {
+        case "deficit":
+            return "bg-amber-500/90";
+        case "on_target":
+            return "bg-emerald-500/90";
+        case "excess":
+            return "bg-rose-500/90";
+        default:
+            return "bg-muted-foreground/40";
+    }
+}
+
+export function volumeBarWidthPct(row: WeeklyVolumePanelRowModel): number {
+    if (row.status === "no_target") {
+        const cap = Math.max(row.draftSets, 10);
+        return Math.min(100, (row.draftSets / cap) * 100);
+    }
+    if (row.targetToday != null && row.targetToday > 0) {
+        return Math.min(100, (row.draftSets / row.targetToday) * 100);
+    }
+    if (row.rangeMax != null && row.rangeMax > 0) {
+        return Math.min(100, (row.accumulated / row.rangeMax) * 100);
+    }
+    return 0;
+}
+
+export function formatVolumeRatioHoy(
+    row: Pick<WeeklyVolumePanelRowModel, "draftSets" | "targetToday" | "accumulated" | "rangeMax" | "targetCenter">,
+    style: VolumeRatioHoyStyle = "constructor"
+): string {
+    if (row.targetToday != null && row.targetToday > 0) {
+        const base = `${row.draftSets} / ${row.targetToday}`;
+        return style === "session_review" ? `${base} series hoy` : `${base} hoy`;
+    }
+    if (row.rangeMax != null && row.rangeMax > 0 && row.targetCenter != null) {
+        return `${row.accumulated} / ${row.targetCenter} hoy`;
+    }
+    return `${row.accumulated} series`;
+}
+
+/** Mapea fila de validación de sesión (V1) al modelo del panel de volumen. */
+export function volumeMuscleValidationToPanelRow(mg: {
+    muscle_group_id: number;
+    name_es: string;
+    weekly_target: number;
+    daily_expected: number;
+    actual_sets: number;
+}): WeeklyVolumePanelRowModel {
+    const targetToday = mg.daily_expected > 0 ? mg.daily_expected : null;
+    const draftSets = mg.actual_sets;
+    const status = resolveDailyVolumeStatus(draftSets, targetToday);
+    const band =
+        targetToday != null && targetToday > 0 ? resolveDailyVolumeBand(targetToday) : null;
+
+    return {
+        muscleGroupId: mg.muscle_group_id,
+        nameEs: mg.name_es?.trim() || "",
+        accumulated: draftSets,
+        savedWeekWithoutSession: null,
+        draftSets,
+        targetToday,
+        rangeMin: band?.rangeMin ?? null,
+        rangeMax: band?.rangeMax ?? null,
+        targetCenter: mg.weekly_target > 0 ? mg.weekly_target : null,
+        status,
+        patternSessionDays: null,
+    };
+}
+
 export interface WeeklyVolumePanelRowModel {
     muscleGroupId: number;
     nameEs: string;
@@ -59,12 +180,8 @@ export function buildWeeklyVolumePanelRows(
 
         // MODO DIARIO: si tenemos targetToday valido
         if (targetToday != null && targetToday > 0) {
-            const rangeMin = Math.max(1, Math.floor(targetToday * 0.9));
-            const rangeMax = Math.max(rangeMin, Math.ceil(targetToday * 1.1));
-            let status: WeeklyVolumeRowStatus;
-            if (draftSets < rangeMin) status = "deficit";
-            else if (draftSets > rangeMax) status = "excess";
-            else status = "on_target";
+            const { rangeMin, rangeMax } = resolveDailyVolumeBand(targetToday);
+            const status = resolveDailyVolumeStatus(draftSets, targetToday);
 
             return {
                 muscleGroupId: r.muscle_group_id,

@@ -15,8 +15,7 @@ import React from "react";
 import { Archive, ClipboardList, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { SearchBar } from "@/components/ui/forms";
-import { LoadingSpinner } from "@/components/ui/feedback";
-import { EmptyStateCard } from "@/components/ui/cards";
+import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
 import { TrainingPlanCard } from "./TrainingPlanCard";
 import { TrainingPlanTemplateCard } from "./TrainingPlanTemplateCard";
 import type { TrainingPlan, TrainingPlanTemplate } from "@nexia/shared/types/training";
@@ -38,6 +37,10 @@ interface TrainingPlansSectionProps {
     clientsMap?: Record<number, Client[]>;
     onCreate?: () => void;
     isLoading?: boolean;
+    /** Vacío contextual (mismo patrón que Sesiones / EmptyState). */
+    emptyTitle?: string;
+    emptyDescription?: string;
+    emptyShowCreateAction?: boolean;
 }
 
 export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
@@ -55,6 +58,9 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
     clientsMap = {},
     onCreate,
     isLoading = false,
+    emptyTitle,
+    emptyDescription,
+    emptyShowCreateAction = false,
 }) => {
     const isTemplate = items.length > 0 && "usage_count" in items[0];
     const EmptyIcon = isTemplate ? FileStack : ClipboardList;
@@ -111,30 +117,25 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
                     <LoadingSpinner size="lg" />
                 </div>
             ) : items.length === 0 ? (
-                <EmptyStateCard
-                    icon={<EmptyIcon aria-hidden />}
-                    title={`No hay ${isTemplate ? "plantillas" : "planes"} aún`}
-                    description={
-                        isTemplate
-                            ? "No hay plantillas que coincidan con los filtros o aún no has creado ninguna."
-                            : type === "active"
-                              ? "No hay planes que coincidan con los filtros o aún no tienes planificaciones asignadas."
-                              : "No hay planes archivados."
-                    }
-                    action={
-                        onCreate && (
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="w-full border-primary/30 bg-transparent text-primary hover:border-primary/50 hover:bg-primary/10"
-                                onClick={onCreate}
-                            >
-                                <EmptyIcon className="mr-2 h-3.5 w-3.5" aria-hidden />
-                                Crear {isTemplate ? "primera plantilla" : "primer plan"}
-                            </Button>
-                        )
-                    }
-                />
+                <div className="rounded-lg border border-dashed border-border/50 bg-muted/10">
+                    <EmptyState
+                        icon={<EmptyIcon aria-hidden />}
+                        title={
+                            emptyTitle ??
+                            `No hay ${isTemplate ? "plantillas" : "planes"} aún`
+                        }
+                        description={emptyDescription}
+                        className="py-16"
+                        action={
+                            emptyShowCreateAction && onCreate ? (
+                                <Button variant="outline" size="sm" onClick={onCreate}>
+                                    <EmptyIcon className="size-4" aria-hidden />
+                                    {isTemplate ? "Crear primera plantilla" : "Crear primera planificación"}
+                                </Button>
+                            ) : undefined
+                        }
+                    />
+                </div>
             ) : (
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {type === "template"

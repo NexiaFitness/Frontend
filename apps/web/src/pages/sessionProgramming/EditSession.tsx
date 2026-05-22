@@ -12,7 +12,7 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
@@ -79,7 +79,8 @@ import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstruc
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
-import { ArrowLeft, Flame, Gauge } from "lucide-react";
+import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
@@ -103,6 +104,7 @@ function sliderDisplay1to10(raw: string, fallback: number): number {
 
 export const EditSession: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
     const { showSuccess, showError } = useToast();
@@ -564,6 +566,14 @@ export const EditSession: React.FC = () => {
     };
 
     const trainerIdForDayPlan = trainerProfile?.id ?? session?.trainer_id ?? 0;
+    const canReviewAlignment = !!session?.period_block_id;
+
+    const handleReviewAlignment = useCallback(() => {
+        if (!sessionId || !canReviewAlignment) return;
+        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
+            state: returnToStateFromView(location),
+        });
+    }, [navigate, sessionId, canReviewAlignment, location]);
 
     if (isLoadingSession) {
         return (
@@ -763,7 +773,7 @@ export const EditSession: React.FC = () => {
                         {session.client_id && hasActiveInjuries && client ? (
                             <Alert variant="warning">
                                 Atención: {client.nombre} {client.apellidos} tiene lesiones activas (
-                                {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") ||
+                                {clientActiveInjuries.map((i) => i.joint_name_es || i.joint_name).filter(Boolean).join(", ") ||
                                     "ver ficha del cliente"}
                                 ). Los ejercicios contraindicados están marcados en la lista.
                             </Alert>
@@ -789,81 +799,77 @@ export const EditSession: React.FC = () => {
                             </>
                         ) : null}
 
-                        <div className="flex gap-6">
-                            <div
-                                className={cn(
-                                    "min-w-0 flex-1 space-y-5",
-                                    showExercisePickerModal && "lg:max-w-[calc(100%-324px)]",
-                                )}
-                            >
-                                <div className="space-y-5">
-                                    <TrainingBlockSelector
-                                        selectedBlockTypeIds={[
-                                            ...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean)),
-                                        ]}
-                                        onSelect={(blockTypeId) => {
-                                            if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId))
-                                                return;
-                                            const newRow: ConstructorRow = {
-                                                id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                                                blockTypeId: blockTypeId,
-                                                setType: SET_TYPE.SINGLE_SET,
-                                                sets: 3,
-                                                rounds: null,
-                                                timeCap: null,
-                                                intervalSeconds: null,
-                                                exercises: [],
-                                                rest: 60,
-                                                repsTipo: "reps",
-                                            };
-                                            setConstructorRows((prev) => [...prev, newRow]);
-                                        }}
-                                    />
-                                    <SessionConstructor
-                                        rows={constructorRows}
-                                        blockTypes={blockTypes}
-                                        onRowsChange={setConstructorRows}
-                                        onAddExerciseRequest={(rowId, exerciseSlotId) => {
-                                            setTargetRowIdForPicker(rowId);
-                                            setTargetExerciseSlotId(exerciseSlotId ?? null);
+                            <div className="space-y-5">
+                                <TrainingBlockSelector
+                                    selectedBlockTypeIds={[
+                                        ...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean)),
+                                    ]}
+                                    onSelect={(blockTypeId) => {
+                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId))
+                                            return;
+                                        const newRow: ConstructorRow = {
+                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockTypeId: blockTypeId,
+                                            setType: SET_TYPE.SINGLE_SET,
+                                            sets: 3,
+                                            rounds: null,
+                                            timeCap: null,
+                                            intervalSeconds: null,
+                                            exercises: [],
+                                            rest: 60,
+                                            repsTipo: "reps",
+                                        };
+                                        setConstructorRows((prev) => [...prev, newRow]);
+                                    }}
+                                />
+                                <SessionConstructor
+                                    rows={constructorRows}
+                                    blockTypes={blockTypes}
+                                    onRowsChange={setConstructorRows}
+                                    onAddExerciseRequest={(rowId, exerciseSlotId) => {
+                                        setTargetRowIdForPicker(rowId);
+                                        setTargetExerciseSlotId(exerciseSlotId ?? null);
+                                        setTimeout(() => {
                                             setShowExercisePickerModal(true);
-                                        }}
-                                        titleAccessory={
-                                            constructorRows.length > 0 ? (
-                                                <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
-                                            ) : undefined
-                                        }
-                                    />
-                                </div>
-
-                                <div className="border-t border-border pt-6">
-                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Notas de la Sesión
-                                    </label>
-                                    <Textarea
-                                        value={formData.notes}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, notes: e.target.value })
-                                        }
-                                        rows={3}
-                                        placeholder="Instrucciones generales para la sesión..."
-                                    />
-                                </div>
+                                        }, 0);
+                                    }}
+                                    titleAccessory={
+                                        constructorRows.length > 0 ? (
+                                            <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                        ) : undefined
+                                    }
+                                    activePickerRowId={targetRowIdForPicker}
+                                    exercisePickerPanel={
+                                        showExercisePickerModal ? (
+                                            <ExercisePickerPanel
+                                                mode="inline"
+                                                isOpen={true}
+                                                onClose={() => {
+                                                    setShowExercisePickerModal(false);
+                                                    setTargetRowIdForPicker(null);
+                                                }}
+                                                onSelect={handleSelectFromPicker}
+                                                clientId={session.client_id ?? undefined}
+                                                activeInjuries={clientActiveInjuries}
+                                            />
+                                        ) : null
+                                    }
+                                />
                             </div>
 
-                            {showExercisePickerModal ? (
-                                <ExercisePickerPanel
-                                    isOpen={true}
-                                    onClose={() => {
-                                        setShowExercisePickerModal(false);
-                                        setTargetRowIdForPicker(null);
-                                    }}
-                                    onSelect={handleSelectFromPicker}
-                                    clientId={session.client_id ?? undefined}
-                                    activeInjuries={clientActiveInjuries}
+                            <div className="border-t border-border pt-6">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                    Notas de la Sesión
+                                </label>
+                                <Textarea
+                                    value={formData.notes}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, notes: e.target.value })
+                                    }
+                                    rows={3}
+                                    placeholder="Instrucciones generales para la sesión..."
                                 />
-                            ) : null}
-                        </div>
+                            </div>
                     </div>
                 </form>
             </div>
@@ -872,25 +878,41 @@ export const EditSession: React.FC = () => {
                 className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
-                <div className="flex items-center justify-end gap-3">
-                    <Button
-                        type="button"
-                        variant="outline-destructive"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        form="edit-session-form"
-                        variant="primary"
-                        size="sm"
-                        disabled={isUpdatingSession}
-                        isLoading={isUpdatingSession}
-                    >
-                        Actualizar Sesión
-                    </Button>
+                <div className="flex items-center justify-between gap-3">
+                    {canReviewAlignment ? (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleReviewAlignment}
+                            className="shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                            Revisar alineación
+                            <ChevronRight className="ml-0.5 h-4 w-4" aria-hidden />
+                        </Button>
+                    ) : (
+                        <span className="shrink-0" aria-hidden />
+                    )}
+                    <div className="flex items-center justify-end gap-3">
+                        <Button
+                            type="button"
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={() => navigate(-1)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="edit-session-form"
+                            variant="primary"
+                            size="sm"
+                            disabled={isUpdatingSession}
+                            isLoading={isUpdatingSession}
+                        >
+                            Actualizar Sesión
+                        </Button>
+                    </div>
                 </div>
             </div>
 

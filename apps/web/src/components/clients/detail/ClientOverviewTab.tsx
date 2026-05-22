@@ -513,10 +513,10 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                         <div>
                                             <p className="text-sm text-muted-foreground">Articulación</p>
                                             <p className="text-base font-semibold text-foreground">
-                                                {injury.joint_name || `Joint #${injury.joint_id}`}
+                                                {injury.joint_name_es || injury.joint_name || `Articulación #${injury.joint_id}`}
                                             </p>
-                                            {injury.movement_name && (
-                                                <p className="mt-1 text-sm text-muted-foreground">{injury.movement_name}</p>
+                                            {(injury.movement_name_es || injury.movement_name) && (
+                                                <p className="mt-1 text-sm text-muted-foreground">{injury.movement_name_es || injury.movement_name}</p>
                                             )}
                                         </div>
                                         <span className="rounded-full px-2.5 py-1 text-xs font-semibold bg-destructive/20 text-destructive">

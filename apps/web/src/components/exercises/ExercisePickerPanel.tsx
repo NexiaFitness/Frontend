@@ -59,6 +59,7 @@ export interface ExercisePickerPanelProps {
     onSelect: (exercise: Exercise) => void;
     clientId?: number | null;
     activeInjuries?: InjuryWithDetails[];
+    mode?: 'sidebar' | 'inline';
 }
 
 export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
@@ -67,6 +68,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     onSelect,
     clientId,
     activeInjuries = [],
+    mode = 'sidebar',
 }) => {
     const [search, setSearch] = useState("");
     const [view, setView] = useState<"list" | "alternatives">("list");
@@ -144,8 +146,10 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                 "rounded-lg border border-border border-l-2 border-l-primary bg-card text-card-foreground shadow-sm overflow-hidden",
                 "flex w-[300px] shrink-0 flex-col self-start",
                 "max-h-[600px] lg:max-h-[600px]",
-                "fixed right-0 top-0 bottom-0 z-50 shadow-xl",
-                "lg:relative lg:right-auto lg:top-auto lg:bottom-auto lg:z-auto lg:shadow-sm"
+                mode === 'sidebar' && [
+                    "fixed right-0 top-0 bottom-0 z-50 shadow-xl",
+                    "lg:relative lg:right-auto lg:top-auto lg:bottom-auto lg:z-auto lg:shadow-sm",
+                ]
             )}
         >
             {/* Cabecera */}

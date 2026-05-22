@@ -101,13 +101,6 @@ export function useSessionConstructorActions(
         [onRowsChange]
     );
 
-    const handleRemoveBlock = React.useCallback(
-        (blockTypeId: number) => {
-            onRowsChange((prev) => prev.filter((r) => r.blockTypeId !== blockTypeId));
-        },
-        [onRowsChange]
-    );
-
     const handleDuplicateRow = React.useCallback(
         (rowId: string) => {
             onRowsChange((prev) => {
@@ -170,7 +163,6 @@ export function useSessionConstructorActions(
         handleUpdateExercise,
         handleAddRow,
         handleRemoveRow,
-        handleRemoveBlock,
         handleDuplicateRow,
     };
 }

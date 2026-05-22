@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import {
     SessionBlockDetail,
     SessionContextStrip,
-    SessionAlertsRow,
+    SessionAlertsPanel,
 } from "@/components/sessionProgramming/detail";
 import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
@@ -294,9 +294,10 @@ export const SessionDetail: React.FC = () => {
                 embeddedCoherence={embeddedCoherence}
             />
 
-            <SessionAlertsRow
+            <SessionAlertsPanel
                 sessionId={session.id}
                 clientId={session.client_id}
+                periodBlockId={session.period_block_id ?? null}
                 embeddedCoherence={embeddedCoherence}
                 legacyInjuryNote={legacyInjuryNote}
             />

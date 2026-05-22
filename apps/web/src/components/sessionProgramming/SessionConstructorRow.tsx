@@ -3,7 +3,7 @@
  *
  * Grid: 170px 110px 70px 1fr 140px 160px 100px (sin papelera por fila).
  * Bloque: chip con nombre + X visible en group-hover. Click abre selector.
- * Eliminar bloque: solo en pie (Eliminar bloque).
+ * Eliminar serie: solo en pie del grupo (última card del bloque de entrenamiento).
  *
  * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
  */
