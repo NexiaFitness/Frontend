@@ -42,6 +42,9 @@ export interface DetailKindStyle {
     accentTextClass: string;
 }
 
+/** Badge de tipo de serie en cabecera read-only (más legible que el constructor). */
+export const DETAIL_HEADER_BADGE_SIZE_CLASS = "px-2.5 py-1 text-xs";
+
 const PRIMARY_STYLE: DetailKindStyle = {
     cardClass: CONSTRUCTOR_CARD_CLASS,
     groupBarClass: CONSTRUCTOR_GROUP_BAR_CLASS,

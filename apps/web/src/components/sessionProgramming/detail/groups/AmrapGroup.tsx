@@ -24,8 +24,6 @@ export interface AmrapGroupProps {
 
 export const AmrapGroup: React.FC<AmrapGroupProps> = ({ blockTitle, group }) => {
     const style = detailStyleForKind(group.kind);
-    const headerBadge = <span className={style.badgeClass}>{group.badgeLabel}</span>;
-
     const paramsBar = (
         <>
             {group.timeCapMinutes != null && (
@@ -51,7 +49,7 @@ export const AmrapGroup: React.FC<AmrapGroupProps> = ({ blockTitle, group }) => 
         <DetailCardShell
             kind={group.kind}
             blockTitle={blockTitle}
-            headerTrailing={headerBadge}
+            seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >

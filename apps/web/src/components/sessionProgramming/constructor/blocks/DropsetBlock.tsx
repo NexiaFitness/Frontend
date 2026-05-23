@@ -211,6 +211,12 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                                                     }
                                                 />
                                             )
+                                        ) : hasExercise ? (
+                                            <ExercisePickerField
+                                                exerciseName={exercise.exerciseName}
+                                                onPick={() => {}}
+                                                readOnly
+                                            />
                                         ) : (
                                             <span className="block h-8" aria-hidden />
                                         )}

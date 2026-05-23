@@ -6,6 +6,7 @@
  * @since v5.3.0
  */
 
+import { markDistinctStepsFromMaster } from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
@@ -101,8 +102,6 @@ export function normalizeSingleSetRow(row: ConstructorRow): ConstructorRow {
               sets,
               restFallback
           );
-
-    setData = propagateSetDataInheritance(setData);
 
     const exercises =
         row.exercises.length > 0
@@ -308,9 +307,11 @@ export function hydrateSingleSetConstructorRow(
         });
     }
 
-    const setData = exs
-        .sort((a, b) => a.order_in_block - b.order_in_block)
-        .map((ex) => setDataFromApiLine(ex, false));
+    const setData = markDistinctStepsFromMaster(
+        exs
+            .sort((a, b) => a.order_in_block - b.order_in_block)
+            .map((ex) => setDataFromApiLine(ex, false))
+    );
 
     return normalizeSingleSetRow({
         ...base,

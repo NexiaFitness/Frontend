@@ -32,12 +32,24 @@ export const DetailSlotRing: React.FC<DetailSlotRingProps> = ({
 }) => {
     const { ringClass, connectorClass } = slotTokens(variant);
 
+    const ringContent =
+        variant === "dropset_step" ? (
+            <>
+                <span className="text-[7px] font-semibold uppercase leading-none tracking-wide">
+                    Drop
+                </span>
+                <span className="text-[11px] font-bold leading-none">{subLabel}</span>
+            </>
+        ) : (
+            <>
+                <span className="leading-none">{label}</span>
+                {subLabel ? <span className="text-[9px] leading-none">{subLabel}</span> : null}
+            </>
+        );
+
     return (
         <div className="relative flex flex-col items-center">
-            <div className={cn(ringClass, className)}>
-                <span className="leading-none">{label}</span>
-                {subLabel && <span className="text-[9px] leading-none">{subLabel}</span>}
-            </div>
+            <div className={cn(ringClass, className)}>{ringContent}</div>
             {withConnector && connectorClass && (
                 <span className={connectorClass} aria-hidden />
             )}

@@ -50,6 +50,7 @@ export {
     updateDropsetData,
     addDropsetDrop,
     dropsetGroupLabels,
+    canHydrateDropsetApiLines,
     hydrateDropsetConstructorRow,
     isCollapsedDropsetApiLines,
     MAX_DROPS_AFTER_MAIN,

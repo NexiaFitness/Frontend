@@ -56,9 +56,9 @@ import {
     applyExercisePickerSelection,
     getConstructorPersistLines,
     hydrateSingleSetConstructorRow,
+    canHydrateDropsetApiLines,
     hydrateDropsetConstructorRow,
     isCollapsedSingleSetApiLines,
-    isCollapsedDropsetApiLines,
     normalizeSupersetRow,
     normalizeSingleSetRow,
     normalizeDropsetRow,
@@ -285,10 +285,7 @@ export const EditSession: React.FC = () => {
                     return hydrateSingleSetConstructorRow(base, exs);
                 }
 
-                if (
-                    setType === SET_TYPE.DROPSET &&
-                    isCollapsedDropsetApiLines(exs)
-                ) {
+                if (setType === SET_TYPE.DROPSET && canHydrateDropsetApiLines(exs)) {
                     return hydrateDropsetConstructorRow(base, exs);
                 }
 

@@ -24,6 +24,7 @@ import {
     type SetType,
     type TrainingBlockType,
 } from "../types/sessionProgramming";
+import { collapseDropsetBlockLines, inferDropsetRounds } from "./dropsetCollapse";
 
 // ============================================================================
 // TIPOS DE VISTA
@@ -293,19 +294,15 @@ function buildDropsetGroups(
 ): SessionExerciseGroupView[] {
     if (lines.length === 0) return [];
 
-    const sorted = [...lines].sort((a, b) => {
-        const seqA = a.dropset_sequence ?? a.order_in_block;
-        const seqB = b.dropset_sequence ?? b.order_in_block;
-        return seqA - seqB;
-    });
-
-    const mainLine = sorted.find((l) => (l.dropset_sequence ?? 0) === 0) ?? sorted[0];
-    const rounds = mainLine.planned_sets ?? block.rounds ?? 1;
+    const steps = collapseDropsetBlockLines(lines);
+    const mainLine = steps.find((l) => (l.dropset_sequence ?? 0) === 0) ?? steps[0];
+    const rounds = inferDropsetRounds(lines, block.rounds);
     const restBetween = mainLine.planned_rest ?? null;
 
-    const stepSets: SessionExerciseSetView[] = sorted.map((line, i) => {
-        const isMain = (line.dropset_sequence ?? 0) === 0;
-        const label = isMain ? "MAIN" : `DROP ${line.dropset_sequence ?? i}`;
+    const stepSets: SessionExerciseSetView[] = steps.map((line, i) => {
+        const seq = line.dropset_sequence ?? i;
+        const isMain = seq === 0;
+        const label = isMain ? "MAIN" : `DROP ${seq}`;
         return {
             ...setView(line, label, i + 1),
             label,

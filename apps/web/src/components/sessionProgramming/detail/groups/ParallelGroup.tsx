@@ -33,8 +33,6 @@ export const ParallelGroup: React.FC<ParallelGroupProps> = ({ blockTitle, group 
     const style = detailStyleForKind(group.kind);
     const rest = restLabel(group);
 
-    const headerBadge = <span className={style.badgeClass}>{group.badgeLabel}</span>;
-
     const paramsBar = (
         <>
             <DetailParamItem
@@ -58,7 +56,7 @@ export const ParallelGroup: React.FC<ParallelGroupProps> = ({ blockTitle, group 
         <DetailCardShell
             kind={group.kind}
             blockTitle={blockTitle}
-            headerTrailing={headerBadge}
+            seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >

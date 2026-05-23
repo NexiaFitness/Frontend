@@ -292,10 +292,15 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 body,
             }),
             invalidatesTags: (result, _error, { id }) => {
-                const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'SessionBlock' | 'SessionBlockExercise'; id: string | number }> = [
+                const tags: Array<
+                    | { type: 'TrainingSession' | 'TrainingPlan' | 'SessionBlock'; id: string | number }
+                    | { type: 'SessionBlockExercise' }
+                > = [
                     { type: 'TrainingSession', id },
-                    { type: 'SessionBlock', id: `SESSION_${id}` },
-                    { type: 'SessionBlockExercise', id: `SESSION_${id}` },
+                    // Debe coincidir con getSessionBlocks providesTags (`SESSION-${sessionId}`).
+                    { type: 'SessionBlock', id: `SESSION-${id}` },
+                    // Invalida todas las queries getSessionBlockExercises (tag `BLOCK-${blockId}`).
+                    { type: 'SessionBlockExercise' },
                 ];
                 if (result?.training_plan_id) {
                     tags.push(

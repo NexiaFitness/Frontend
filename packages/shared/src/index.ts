@@ -381,6 +381,8 @@ export * from "./hooks/sessionProgramming";
 
 // Session Programming - Vista agrupada de bloques (lógica pura)
 export * from "./sessionProgramming/sessionBlockView";
+export * from "./sessionProgramming/dropsetCollapse";
+export * from "./sessionProgramming/loadInheritance";
 export * from "./sessionProgramming/sessionBriefMath";
 
 // Hooks - Injuries

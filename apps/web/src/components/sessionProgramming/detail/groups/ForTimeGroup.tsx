@@ -24,8 +24,6 @@ export interface ForTimeGroupProps {
 
 export const ForTimeGroup: React.FC<ForTimeGroupProps> = ({ blockTitle, group }) => {
     const style = detailStyleForKind(group.kind);
-    const headerBadge = <span className={style.badgeClass}>{group.badgeLabel}</span>;
-
     const paramsBar = (
         <DetailParamItem
             icon={<Repeat className="h-3.5 w-3.5" />}
@@ -39,7 +37,7 @@ export const ForTimeGroup: React.FC<ForTimeGroupProps> = ({ blockTitle, group })
         <DetailCardShell
             kind={group.kind}
             blockTitle={blockTitle}
-            headerTrailing={headerBadge}
+            seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >

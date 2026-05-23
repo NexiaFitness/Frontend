@@ -32,7 +32,6 @@ export const DropsetGroup: React.FC<DropsetGroupProps> = ({ blockTitle, group })
     const slot = group.slots[0];
     const style = detailStyleForKind(group.kind);
 
-    const headerBadge = <span className={style.badgeClass}>{group.badgeLabel}</span>;
     const rest = restLabel(group.restBetweenSeconds);
 
     const paramsBar = (
@@ -59,7 +58,7 @@ export const DropsetGroup: React.FC<DropsetGroupProps> = ({ blockTitle, group })
             <DetailCardShell
                 kind={group.kind}
                 blockTitle={blockTitle}
-                headerTrailing={headerBadge}
+                seriesBadgeLabel={group.badgeLabel}
                 paramsBar={paramsBar}
                 hint={hintForKind(group.kind, group.rounds)}
             >
@@ -77,22 +76,26 @@ export const DropsetGroup: React.FC<DropsetGroupProps> = ({ blockTitle, group })
         <DetailCardShell
             kind={group.kind}
             blockTitle={blockTitle}
-            headerTrailing={headerBadge}
+            seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >
             <div className="flex items-start gap-3">
                 <div className="flex flex-col items-center gap-2">
                     <DetailSlotRing variant="dropset_main" label="MAIN" withConnector />
-                    {slot.sets.slice(1).map((set, i, arr) => (
-                        <DetailSlotRing
-                            key={set.label + i}
-                            variant="dropset_step"
-                            label="DROP"
-                            subLabel={String(i + 1)}
-                            withConnector={i < arr.length - 1}
-                        />
-                    ))}
+                    {slot.sets.slice(1).map((set, i, arr) => {
+                        const dropNum =
+                            set.label.replace(/^DROP\s*/i, "").trim() || String(i + 1);
+                        return (
+                            <DetailSlotRing
+                                key={`${set.label}-${i}`}
+                                variant="dropset_step"
+                                label="DROP"
+                                subLabel={dropNum}
+                                withConnector={i < arr.length - 1}
+                            />
+                        );
+                    })}
                 </div>
                 <div className="min-w-0 flex-1">
                     <div className="mb-2 text-sm font-semibold text-foreground">

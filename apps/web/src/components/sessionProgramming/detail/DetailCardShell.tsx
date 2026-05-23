@@ -13,17 +13,16 @@ import type { SessionGroupKind } from "@nexia/shared";
 import { cn } from "@/lib/utils";
 import {
     CONSTRUCTOR_BLOCK_DOT_CLASS,
-    CONSTRUCTOR_CARD_HEADER_CLASS,
     CONSTRUCTOR_FOOTER_HINT_CLASS,
 } from "../constructor/primitives/constructorCardStyles";
-import { detailStyleForKind } from "./detailStyles";
+import { DETAIL_HEADER_BADGE_SIZE_CLASS, detailStyleForKind } from "./detailStyles";
 
 export interface DetailCardShellProps {
     kind: SessionGroupKind;
     /** Nombre del bloque (Hipertrofia, Acondicionamiento…). */
     blockTitle: string;
-    /** Slot a la derecha del título (badge de tipo serie). */
-    headerTrailing?: React.ReactNode;
+    /** Etiqueta de tipo de serie (DROP SET A, SUPERSET A…), antes del nombre de bloque. */
+    seriesBadgeLabel?: string;
     /** Barra de parámetros (rondas, time cap, descanso…). */
     paramsBar?: React.ReactNode;
     /** Cuerpo de la card. */
@@ -36,7 +35,7 @@ export interface DetailCardShellProps {
 export const DetailCardShell: React.FC<DetailCardShellProps> = ({
     kind,
     blockTitle,
-    headerTrailing,
+    seriesBadgeLabel,
     paramsBar,
     children,
     hint,
@@ -46,14 +45,24 @@ export const DetailCardShell: React.FC<DetailCardShellProps> = ({
 
     return (
         <article className={cn(style.cardClass, className)}>
-            <header className={CONSTRUCTOR_CARD_HEADER_CLASS}>
-                <div className="flex items-center gap-2">
+            <header className="flex items-center gap-3 border-b border-border/50 bg-surface/40 px-4 py-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2.5">
+                    {seriesBadgeLabel && (
+                        <span
+                            className={cn(
+                                style.badgeClass,
+                                DETAIL_HEADER_BADGE_SIZE_CLASS,
+                                "shrink-0"
+                            )}
+                        >
+                            {seriesBadgeLabel}
+                        </span>
+                    )}
                     <span className={CONSTRUCTOR_BLOCK_DOT_CLASS} aria-hidden />
-                    <span className="text-sm font-semibold text-foreground">{blockTitle}</span>
+                    <span className="truncate text-sm font-semibold text-foreground">
+                        {blockTitle}
+                    </span>
                 </div>
-                {headerTrailing && (
-                    <div className="flex items-center gap-2">{headerTrailing}</div>
-                )}
             </header>
 
             {paramsBar && <div className={style.groupBarClass}>{paramsBar}</div>}

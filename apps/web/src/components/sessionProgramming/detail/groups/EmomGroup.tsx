@@ -50,8 +50,6 @@ export const EmomGroup: React.FC<EmomGroupProps> = ({ blockTitle, group }) => {
     const windows = useMemo(() => groupByWindow(group), [group]);
     const interval = formatIntervalSeconds(group.intervalSeconds);
 
-    const headerBadge = <span className={style.badgeClass}>{group.badgeLabel}</span>;
-
     const paramsBar = (
         <>
             {group.timeCapMinutes != null && (
@@ -83,7 +81,7 @@ export const EmomGroup: React.FC<EmomGroupProps> = ({ blockTitle, group }) => {
         <DetailCardShell
             kind={group.kind}
             blockTitle={blockTitle}
-            headerTrailing={headerBadge}
+            seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >

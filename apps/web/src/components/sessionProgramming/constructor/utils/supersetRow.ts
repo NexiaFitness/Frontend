@@ -6,6 +6,7 @@
  * @updated v6.1.0 — setData por ejercicio para series independientes A1/A2
  */
 
+import { markDistinctStepsFromMaster } from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
@@ -190,7 +191,6 @@ export function normalizeSupersetRow(row: ConstructorRow): ConstructorRow {
                 const master = exerciseLoadToSetData(existing);
                 setData = resizeExerciseSetData(undefined, sets, master);
             }
-            setData = propagateExerciseSetDataInheritance(setData);
             slots.push({ ...existing, setData });
         } else {
             slots.push(createSupersetExerciseSlot(i === 0 ? "a1" : "a2", row.id));
@@ -346,9 +346,11 @@ export function hydrateSupersetConstructorRow(
             slots.push({ ...exercise, setData });
         } else {
             // Expanded: N lines with planned_sets === 1
-            const setData = slotExs
-                .sort((a, b) => a.order_in_block - b.order_in_block)
-                .map((ex) => setDataFromApiLine(ex, false));
+            const setData = markDistinctStepsFromMaster(
+                slotExs
+                    .sort((a, b) => a.order_in_block - b.order_in_block)
+                    .map((ex) => setDataFromApiLine(ex, false))
+            );
             slots.push({ ...exercise, setData });
         }
     }

@@ -41,10 +41,6 @@ export const SingleSetGroup: React.FC<SingleSetGroupProps> = ({ blockTitle, grou
     const restLabel = commonRest(group);
     const seriesCount = slot?.sets.length ?? 0;
 
-    const headerBadge = (
-        <span className={style.badgeClass}>{group.badgeLabel}</span>
-    );
-
     const paramsBar = (
         <>
             <DetailParamItem
@@ -69,7 +65,7 @@ export const SingleSetGroup: React.FC<SingleSetGroupProps> = ({ blockTitle, grou
             <DetailCardShell
                 kind={group.kind}
                 blockTitle={blockTitle}
-                headerTrailing={headerBadge}
+                seriesBadgeLabel={group.badgeLabel}
                 paramsBar={paramsBar}
                 hint={hintForKind(group.kind, group.rounds)}
             >
@@ -82,7 +78,7 @@ export const SingleSetGroup: React.FC<SingleSetGroupProps> = ({ blockTitle, grou
         <DetailCardShell
             kind={group.kind}
             blockTitle={blockTitle}
-            headerTrailing={headerBadge}
+            seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >
