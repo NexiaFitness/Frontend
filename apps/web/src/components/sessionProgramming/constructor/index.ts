@@ -52,7 +52,6 @@ export {
     dropsetGroupLabels,
     canHydrateDropsetApiLines,
     hydrateDropsetConstructorRow,
-    isCollapsedDropsetApiLines,
     MAX_DROPS_AFTER_MAIN,
     MIN_DROPSET_STEPS,
     removeDropsetDrop,

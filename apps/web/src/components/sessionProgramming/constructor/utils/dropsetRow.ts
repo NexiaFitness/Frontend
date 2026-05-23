@@ -59,21 +59,6 @@ function copyLoadFields(source: ConstructorSetData): Partial<ConstructorSetData>
     return patch;
 }
 
-function propagateDropInheritance(setData: ConstructorSetData[]): ConstructorSetData[] {
-    if (setData.length === 0) return setData;
-    const master = setData[0];
-    return setData.map((entry, index) => {
-        if (index === 0 || entry.isManuallyEdited) {
-            return entry;
-        }
-        return {
-            ...entry,
-            ...copyLoadFields(master),
-            isManuallyEdited: false,
-        };
-    });
-}
-
 function createInitialSetData(length: number): ConstructorSetData[] {
     return Array.from({ length }, (_, i) => createDefaultDropStepData(i === 0));
 }
@@ -253,14 +238,6 @@ export function hydrateDropsetConstructorRow(
 
 export interface DropsetApiExerciseLine extends ApiExerciseLine {
     dropset_sequence?: number | null;
-}
-
-export function isCollapsedDropsetApiLines(exs: DropsetApiExerciseLine[]): boolean {
-    if (exs.length < 2) return false;
-    const firstId = exs[0].exercise_id;
-    if (!exs.every((e) => e.exercise_id === firstId)) return false;
-    const keys = exs.map((e, i) => e.dropset_sequence ?? Math.max(0, e.order_in_block - 1));
-    return new Set(keys).size === exs.length;
 }
 
 /** Hidrata dropset si hay al menos una línea del mismo ejercicio (colapsada o expandida). */

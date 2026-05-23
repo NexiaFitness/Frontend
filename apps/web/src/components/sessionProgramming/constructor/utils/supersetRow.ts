@@ -119,23 +119,6 @@ function resizeExerciseSetData(
     return next;
 }
 
-function propagateExerciseSetDataInheritance(
-    setData: ConstructorSetData[]
-): ConstructorSetData[] {
-    if (setData.length === 0) return setData;
-    const master = setData[0];
-    return setData.map((entry, index) => {
-        if (index === 0 || entry.isManuallyEdited) {
-            return entry;
-        }
-        return {
-            ...entry,
-            ...copyLoadFields(master),
-            isManuallyEdited: false,
-        };
-    });
-}
-
 export function updateSupersetExerciseSetData(
     exercise: ConstructorExercise,
     setDataId: string,

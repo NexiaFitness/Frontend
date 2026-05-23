@@ -95,7 +95,7 @@ export function normalizeSingleSetRow(row: ConstructorRow): ConstructorRow {
 
     const sets = Math.max(1, row.sets ?? 3);
     const restFallback = row.rest ?? 60;
-    let setData = row.setData?.length
+    const setData = row.setData?.length
         ? resizeSetData(row.setData, sets, restFallback)
         : resizeSetData(
               Array.from({ length: sets }, () => createDefaultSetData(restFallback)),
