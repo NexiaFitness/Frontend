@@ -24,6 +24,8 @@ export interface ConstructorExercise {
     isManuallyEdited?: boolean;
     /** ID en servidor (para EditSession diff) */
     serverExerciseId?: number;
+    /** Sub-filas de carga por serie a nivel de ejercicio (superset: cada ejercicio tiene N series) */
+    setData?: ConstructorSetData[];
 }
 
 /** Modo de la columna Reps/Tiempo: Reps o Tiempo (AMRAP es tipo de serie, no modo reps) */

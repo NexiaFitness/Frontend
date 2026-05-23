@@ -40,6 +40,10 @@ export {
     supersetGroupLabels,
     normalizeSupersetRow,
     getPersistableExercises,
+    getSupersetPersistLines,
+    isExpandedSupersetApiLines,
+    hydrateSupersetConstructorRow,
+    updateSupersetExerciseSetData,
 } from "./utils/supersetRow";
 export {
     normalizeDropsetRow,

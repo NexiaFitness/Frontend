@@ -15,6 +15,7 @@ import type {
 import { isFilledConstructorExercise } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { getEmomPersistLines } from "./emomRow";
+import { getSupersetPersistLines } from "./supersetRow";
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -211,6 +212,10 @@ export function getConstructorPersistLines(row: ConstructorRow): PersistExercise
             serverExerciseId: entry.serverExerciseId,
             dropsetSequence: index,
         }));
+    }
+
+    if (row.setType === SET_TYPE.SUPERSET) {
+        return getSupersetPersistLines(row);
     }
 
     if (row.setType === SET_TYPE.EMOM) {

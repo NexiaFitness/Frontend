@@ -20,6 +20,9 @@ import type {
     TrainingSessionReplicateResponse,
 } from '../types/trainingSessions';
 import type {
+    TrainingSessionFullUpdate,
+} from '../types/sessionProgramming';
+import type {
     SessionRecommendationsResponse,
     SessionRecommendationsParams,
 } from '../types/sessionRecommendations';
@@ -272,6 +275,39 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * PUT /training-sessions/{id}/full
+         * Atomic full update: session header + blocks + exercises in one call.
+         * Replaces the N-request loop (update session + update/create/delete blocks
+         * and exercises) with a single transactional call.
+         *
+         * @since v6.2.0
+         */
+        updateTrainingSessionFull: builder.mutation<
+            TrainingSession,
+            { id: number; body: TrainingSessionFullUpdate }
+        >({
+            query: ({ id, body }) => ({
+                url: `/training-sessions/${id}/full`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: (result, _error, { id }) => {
+                const tags: Array<{ type: 'TrainingSession' | 'TrainingPlan' | 'SessionBlock' | 'SessionBlockExercise'; id: string | number }> = [
+                    { type: 'TrainingSession', id },
+                    { type: 'SessionBlock', id: `SESSION_${id}` },
+                    { type: 'SessionBlockExercise', id: `SESSION_${id}` },
+                ];
+                if (result?.training_plan_id) {
+                    tags.push(
+                        { type: 'TrainingSession', id: `PLAN_${result.training_plan_id}` },
+                        { type: 'TrainingPlan', id: result.training_plan_id }
+                    );
+                }
+                return tags;
+            },
+        }),
+
+        /**
          * POST /training-sessions/{session_id}/exercises
          * Agregar ejercicio a una sesión de entrenamiento
          *
@@ -312,6 +348,7 @@ export const {
     useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
+    useUpdateTrainingSessionFullMutation,
     useDeleteTrainingSessionMutation,
     useReplicateTrainingSessionMutation,
     useCreateSessionExerciseMutation,

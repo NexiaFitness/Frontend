@@ -25,17 +25,11 @@ import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
     useGetTrainingSessionQuery,
-    useUpdateTrainingSessionMutation,
+    useUpdateTrainingSessionFullMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
 import {
     useGetSessionBlocksQuery,
     useGetTrainingBlockTypesQuery,
-    useCreateSessionBlockMutation,
-    useUpdateSessionBlockMutation,
-    useDeleteSessionBlockMutation,
-    useCreateSessionBlockExerciseMutation,
-    useUpdateSessionBlockExerciseMutation,
-    useDeleteSessionBlockExerciseMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
@@ -57,7 +51,6 @@ import type {
 } from "@/components/sessionProgramming/constructorTypes";
 import {
     buildExercisePayloadFromLine,
-    buildExerciseUpdatePayloadFromLine,
 } from "./buildExercisePayload";
 import {
     applyExercisePickerSelection,
@@ -74,10 +67,11 @@ import {
     normalizeEmomRow,
     hydrateEmomConstructorRow,
     normalizeAmrapRow,
+    isExpandedSupersetApiLines,
+    hydrateSupersetConstructorRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
@@ -142,8 +136,12 @@ export const EditSession: React.FC = () => {
         { skip: !session?.client_id }
     );
 
-    // Hook de mutación para actualizar sesión
-    const [updateTrainingSession, { isLoading: isUpdatingSession }] = useUpdateTrainingSessionMutation();
+    // Hook de mutación atómica para actualizar sesión completa
+    const [updateTrainingSessionFull, { isLoading: isUpdatingSessionFull }] =
+        useUpdateTrainingSessionFullMutation();
+
+    // Estado de guardado local (cubre todo el proceso, no solo la mutación)
+    const [isSaving, setIsSaving] = useState(false);
 
     // Estado del formulario
     const [formData, setFormData] = useState({
@@ -197,12 +195,7 @@ export const EditSession: React.FC = () => {
             skip: !sessionId || isNaN(sessionId),
         },
     );
-    const [createSessionBlock] = useCreateSessionBlockMutation();
-    const [updateSessionBlock] = useUpdateSessionBlockMutation();
-    const [deleteSessionBlock] = useDeleteSessionBlockMutation();
-    const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
-    const [updateSessionBlockExercise] = useUpdateSessionBlockExerciseMutation();
-    const [deleteSessionBlockExercise] = useDeleteSessionBlockExerciseMutation();
+
 
     /** Al cambiar de sesión, vaciar constructor hasta que lleguen los bloques (evita mezclar sesiones). */
     useEffect(() => {
@@ -297,6 +290,13 @@ export const EditSession: React.FC = () => {
                     isCollapsedDropsetApiLines(exs)
                 ) {
                     return hydrateDropsetConstructorRow(base, exs);
+                }
+
+                if (
+                    setType === SET_TYPE.SUPERSET &&
+                    isExpandedSupersetApiLines(exs)
+                ) {
+                    return hydrateSupersetConstructorRow(base, exs);
                 }
 
                 if (setType === SET_TYPE.EMOM && exs.length > 0) {
@@ -444,6 +444,7 @@ export const EditSession: React.FC = () => {
             return;
         }
 
+        setIsSaving(true);
         try {
             const sessionData: TrainingSessionUpdate = {
                 session_name: formData.sessionName.trim(),
@@ -459,16 +460,18 @@ export const EditSession: React.FC = () => {
                 notes: formData.notes.trim() || null,
             };
 
-            await updateTrainingSession({
-                id: sessionId,
-                body: sessionData,
-            }).unwrap();
+            const blocksPayload = constructorRows.map((row, i) => {
+                const persistLines = getConstructorPersistLines(row);
+                const exercises = persistLines.map((line) => {
+                    const base = buildExercisePayloadFromLine(row, line);
+                    return {
+                        ...(line.serverExerciseId ? { id: line.serverExerciseId } : {}),
+                        ...base,
+                    };
+                });
 
-            const serverBlockIds = new Set(blocks.map((b) => b.id));
-
-            for (let i = 0; i < constructorRows.length; i++) {
-                const row = constructorRows[i];
-                const blockPayload = {
+                return {
+                    ...(row.serverBlockId ? { id: row.serverBlockId } : {}),
                     block_type_id: row.blockTypeId,
                     order_in_session: i + 1,
                     set_type: row.setType,
@@ -481,72 +484,17 @@ export const EditSession: React.FC = () => {
                             : row.setType === "amrap"
                             ? "Objetivo: máximo rendimiento"
                             : null,
+                    exercises,
                 };
+            });
 
-                if (row.serverBlockId) {
-                    await updateSessionBlock({
-                        id: row.serverBlockId,
-                        data: blockPayload,
-                    }).unwrap();
-                    serverBlockIds.delete(row.serverBlockId);
-
-                    const exResult = (await (dispatch as AppDispatch)(
-                        sessionProgrammingApi.endpoints.getSessionBlockExercises.initiate(
-                            row.serverBlockId!
-                        )
-                    )) as { data?: SessionBlockExercise[] };
-                    const currentExs = exResult?.data ?? [];
-                    const serverExIds = new Set<number>(
-                        currentExs.map((e: { id: number }) => e.id)
-                    );
-
-                    const persistLines = getConstructorPersistLines(row);
-                    for (let j = 0; j < persistLines.length; j++) {
-                        const line = persistLines[j];
-                        if (line.serverExerciseId) {
-                            const updatePayload = buildExerciseUpdatePayloadFromLine(
-                                row,
-                                line
-                            );
-                            await updateSessionBlockExercise({
-                                id: line.serverExerciseId,
-                                data: updatePayload,
-                            }).unwrap();
-                            serverExIds.delete(line.serverExerciseId);
-                        } else {
-                            const createPayload = buildExercisePayloadFromLine(
-                                row,
-                                line
-                            );
-                            await createSessionBlockExercise({
-                                blockId: row.serverBlockId,
-                                data: createPayload,
-                            }).unwrap();
-                        }
-                    }
-                    for (const exId of serverExIds) {
-                        await deleteSessionBlockExercise(exId);
-                    }
-                } else {
-                    const created = await createSessionBlock({
-                        sessionId,
-                        data: blockPayload,
-                    }).unwrap();
-                    const persistLinesNew = getConstructorPersistLines(row);
-                    for (let j = 0; j < persistLinesNew.length; j++) {
-                        const line = persistLinesNew[j];
-                        const payload = buildExercisePayloadFromLine(row, line);
-                        await createSessionBlockExercise({
-                            blockId: created.id,
-                            data: payload,
-                        }).unwrap();
-                    }
-                }
-            }
-
-            for (const blockId of serverBlockIds) {
-                await deleteSessionBlock(blockId);
-            }
+            await updateTrainingSessionFull({
+                id: sessionId,
+                body: {
+                    session: sessionData,
+                    blocks: blocksPayload,
+                },
+            }).unwrap();
 
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
@@ -562,6 +510,8 @@ export const EditSession: React.FC = () => {
                       )
                     : "Error al actualizar la sesión";
             showError(errorMessage);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -907,8 +857,8 @@ export const EditSession: React.FC = () => {
                             form="edit-session-form"
                             variant="primary"
                             size="sm"
-                            disabled={isUpdatingSession}
-                            isLoading={isUpdatingSession}
+                            disabled={isSaving || isUpdatingSessionFull}
+                            isLoading={isSaving || isUpdatingSessionFull}
                         >
                             Actualizar Sesión
                         </Button>

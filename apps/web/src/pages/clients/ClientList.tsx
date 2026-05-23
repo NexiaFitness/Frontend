@@ -235,65 +235,70 @@ export const ClientList: React.FC = () => {
                     </Button>
                 </div>
 
-                {/* Controles §5 — full width search on mobile; pills + toggle wrap */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-muted-foreground" aria-hidden />
+                {/* Controles §5 — nuevo patrón de filtros */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
+                        {(["all", "active", "paused"] as const).map((key) => (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => setStatusFilter(key)}
+                                aria-pressed={statusFilter === key}
+                                className={cn(
+                                    "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
+                                    statusFilter === key
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
+                                )}
+                            >
+                                <span>{key === "all" ? "Todos" : key === "active" ? "Activos" : "Pausados"}</span>
+                                {key === "all" && total != null && (
+                                    <span className="tabular-nums font-normal text-primary/60">{total}</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex shrink-0 rounded-md border border-border">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("grid")}
+                            className={cn(
+                                "inline-flex h-9 w-9 items-center justify-center transition-colors",
+                                viewMode === "grid"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                            )}
+                            aria-label="Vista grid"
+                            aria-pressed={viewMode === "grid"}
+                        >
+                            <LayoutGrid className="h-4 w-4" aria-hidden />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("list")}
+                            className={cn(
+                                "inline-flex h-9 w-9 items-center justify-center transition-colors",
+                                viewMode === "list"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                            )}
+                            aria-label="Vista lista"
+                            aria-pressed={viewMode === "list"}
+                        >
+                            <List className="h-4 w-4" aria-hidden />
+                        </button>
+                    </div>
+                    <div className="relative ml-auto h-9 w-full sm:w-56">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
                         <input
-                            type="search"
+                            id="client-search"
+                            type="text"
                             placeholder="Buscar por nombre o email..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="min-h-touch w-full rounded-md border border-border bg-surface py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] sm:min-h-0 sm:py-2"
+                            className="block h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
                             aria-label="Buscar cliente"
                         />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex flex-wrap gap-1.5">
-                            {(["all", "active", "paused"] as const).map((key) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    onClick={() => setStatusFilter(key)}
-                                    className={cn(
-                                        "min-h-[40px] rounded-full px-3 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-1.5",
-                                        statusFilter === key
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    {key === "all" ? "Todos" : key === "active" ? "Activo" : "Pausado"}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex shrink-0 rounded-md border border-border">
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("grid")}
-                                className={cn(
-                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
-                                    viewMode === "grid"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                                )}
-                                aria-label="Vista grid"
-                            >
-                                <LayoutGrid className="h-4 w-4" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("list")}
-                                className={cn(
-                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
-                                    viewMode === "list"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                                )}
-                                aria-label="Vista lista"
-                            >
-                                <List className="h-4 w-4" />
-                            </button>
-                        </div>
                     </div>
                 </div>
 
