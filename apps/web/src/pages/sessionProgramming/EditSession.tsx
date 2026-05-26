@@ -69,6 +69,10 @@ import {
     normalizeAmrapRow,
     isExpandedSupersetApiLines,
     hydrateSupersetConstructorRow,
+    isExpandedGiantSetApiLines,
+    hydrateGiantSetConstructorRow,
+    isExpandedForTimeApiLines,
+    hydrateForTimeConstructorRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -79,6 +83,8 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
+import { getVolumeIntensityPrefillSourceLabel } from "@nexia/shared/training/sessionVolumeIntensityPrefill";
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import { SESSION_TYPES } from "./sessionFormConstants";
@@ -106,6 +112,8 @@ export const EditSession: React.FC = () => {
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
     });
+
+    const trainerId = trainerProfile?.id ?? 0;
 
     // Cargar sesión
     const { 
@@ -153,6 +161,40 @@ export const EditSession: React.FC = () => {
         plannedVolume: "",
         notes: "",
     });
+
+    const [originalSessionDate, setOriginalSessionDate] = useState<string | null>(null);
+    const [volumeIntensityTouched, setVolumeIntensityTouched] = useState(false);
+
+    const volumeIntensityPrefill = useSessionVolumeIntensityPrefill({
+        clientId: session?.client_id,
+        sessionDate: formData.sessionDate,
+        trainerId,
+        enabled: !!session?.client_id && trainerId > 0,
+    });
+
+    const shouldApplyVolumeIntensityPrefill =
+        !volumeIntensityTouched &&
+        originalSessionDate != null &&
+        formData.sessionDate !== originalSessionDate;
+
+    useEffect(() => {
+        if (!shouldApplyVolumeIntensityPrefill || volumeIntensityPrefill.isLoading) return;
+        setFormData((prev) => ({
+            ...prev,
+            plannedVolume: String(volumeIntensityPrefill.volume),
+            plannedIntensity: String(volumeIntensityPrefill.intensity),
+        }));
+    }, [
+        shouldApplyVolumeIntensityPrefill,
+        volumeIntensityPrefill.isLoading,
+        volumeIntensityPrefill.volume,
+        volumeIntensityPrefill.intensity,
+    ]);
+
+    const editSliderValueNote =
+        !volumeIntensityTouched && shouldApplyVolumeIntensityPrefill
+            ? getVolumeIntensityPrefillSourceLabel(volumeIntensityPrefill.source)
+            : undefined;
 
     const editVolumeRecComplete =
         editRecommendationsData?.status === "complete"
@@ -296,6 +338,20 @@ export const EditSession: React.FC = () => {
                     return hydrateSupersetConstructorRow(base, exs);
                 }
 
+                if (
+                    setType === SET_TYPE.GIANT_SET &&
+                    isExpandedGiantSetApiLines(exs)
+                ) {
+                    return hydrateGiantSetConstructorRow(base, exs);
+                }
+
+                if (
+                    setType === SET_TYPE.FOR_TIME &&
+                    isExpandedForTimeApiLines(exs)
+                ) {
+                    return hydrateForTimeConstructorRow(base, exs);
+                }
+
                 if (setType === SET_TYPE.EMOM && exs.length > 0) {
                     return hydrateEmomConstructorRow(base, exs);
                 }
@@ -388,9 +444,14 @@ export const EditSession: React.FC = () => {
     // Prellenar formulario cuando se carga la sesión
     useEffect(() => {
         if (session) {
+            const sessionDateYmd = session.session_date
+                ? session.session_date.split("T")[0]
+                : new Date().toISOString().split("T")[0];
+            setOriginalSessionDate(sessionDateYmd);
+            setVolumeIntensityTouched(false);
             setFormData({
                 sessionName: session.session_name || "",
-                sessionDate: session.session_date ? session.session_date.split("T")[0] : new Date().toISOString().split("T")[0],
+                sessionDate: sessionDateYmd,
                 sessionType: session.session_type || "training",
                 plannedDuration: session.planned_duration?.toString() || "",
                 plannedIntensity: clampIntSlider1to10(session.planned_intensity, 5),
@@ -686,7 +747,11 @@ export const EditSession: React.FC = () => {
                                         min={1}
                                         max={10}
                                         color="primary"
-                                        onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
+                                        valueNote={editSliderValueNote}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData({ ...formData, plannedVolume: String(v) });
+                                        }}
                                     />
                                 </div>
                                 <div className="mt-3 md:mt-0">
@@ -697,9 +762,11 @@ export const EditSession: React.FC = () => {
                                         min={1}
                                         max={10}
                                         color="warning"
-                                        onChange={(v) =>
-                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))
-                                        }
+                                        valueNote={editSliderValueNote}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
+                                        }}
                                     />
                                 </div>
                             </div>

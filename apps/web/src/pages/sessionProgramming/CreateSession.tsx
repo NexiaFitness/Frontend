@@ -66,6 +66,8 @@ import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyC
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
+import { getVolumeIntensityPrefillSourceLabel } from "@nexia/shared/training/sessionVolumeIntensityPrefill";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -165,7 +167,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         includeHistory: false,
     });
 
-    // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
+    // Recomendaciones de plan (tarjetas Lovable + panel volumen semanal)
     const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(
         { clientId: effectiveClientId ?? 0 },
         { skip: !effectiveClientId || effectiveClientId <= 0 }
@@ -174,7 +176,23 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
 
-    const prefillApplied = useRef<{ clientId: number; duration: boolean; rec: boolean } | null>(null);
+    const [formData, setFormData] = useState({
+        sessionName: "",
+        sessionDate: dateFromQuery || new Date().toISOString().split("T")[0],
+        sessionType: "strength",
+        plannedDuration: "60",
+        plannedIntensity: "5",
+        plannedVolume: "5",
+        notes: "",
+    });
+
+    const [volumeIntensityTouched, setVolumeIntensityTouched] = useState(false);
+
+    const prefillApplied = useRef<{ clientId: number; duration: boolean } | null>(null);
+
+    useEffect(() => {
+        setVolumeIntensityTouched(false);
+    }, [effectiveClientId]);
 
     useEffect(() => {
         if (!effectiveClientId || effectiveClientId <= 0) {
@@ -182,7 +200,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             return;
         }
         if (prefillApplied.current?.clientId !== effectiveClientId) {
-            prefillApplied.current = { clientId: effectiveClientId, duration: false, rec: false };
+            prefillApplied.current = { clientId: effectiveClientId, duration: false };
         }
         const state = prefillApplied.current;
         const updates: Partial<typeof formData> = {};
@@ -198,52 +216,47 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             state.duration = true;
         }
 
-        const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
-        if (!state.rec && rec?.status === "complete" && rec.recommendations) {
-            const levelToSlider: Record<string, string> = {
-                low: "3",
-                Low: "3",
-                medium: "6",
-                Medium: "6",
-                high: "8",
-                High: "8",
-            };
-            const volLevel = rec.recommendations.volume?.level;
-            const intLevel = rec.recommendations.intensity?.level;
-            if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
-            if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
-            state.rec = true;
-        }
-
         if (Object.keys(updates).length > 0) {
             setFormData((prev) => ({ ...prev, ...updates }));
         }
-    }, [effectiveClientId, displayClient, recommendationsData]);
+    }, [effectiveClientId, displayClient]);
+
+    const volumeIntensityPrefill = useSessionVolumeIntensityPrefill({
+        clientId: effectiveClientId,
+        sessionDate: formData.sessionDate,
+        trainerId,
+        enabled: !!effectiveClientId && effectiveClientId > 0,
+    });
+
+    useEffect(() => {
+        if (volumeIntensityTouched || volumeIntensityPrefill.isLoading) return;
+        setFormData((prev) => ({
+            ...prev,
+            plannedVolume: String(volumeIntensityPrefill.volume),
+            plannedIntensity: String(volumeIntensityPrefill.intensity),
+        }));
+    }, [
+        volumeIntensityTouched,
+        volumeIntensityPrefill.isLoading,
+        volumeIntensityPrefill.volume,
+        volumeIntensityPrefill.intensity,
+        formData.sessionDate,
+        effectiveClientId,
+    ]);
 
     // Hook de mutación para crear sesión
     const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
     const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
     const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
 
-    const [formData, setFormData] = useState({
-        sessionName: "",
-        sessionDate: dateFromQuery || new Date().toISOString().split("T")[0],
-        sessionType: "strength",
-        plannedDuration: "60",
-        plannedIntensity: "5",
-        plannedVolume: "5",
-        notes: "",
-    });
-
     const volumeRecComplete =
         recommendationsData?.status === "complete"
             ? (recommendationsData as TrainingPlanRecommendationsComplete)
             : null;
     const volumeMaxSets = volumeRecComplete?.recommendations.volume.max_sets;
-    const sliderValueNote =
-        effectiveClientId && recommendationsData?.status === "complete"
-            ? "Recomendado"
-            : undefined;
+    const sliderValueNote = !volumeIntensityTouched
+        ? getVolumeIntensityPrefillSourceLabel(volumeIntensityPrefill.source)
+        : undefined;
 
     const plannedVolumeInt = Math.min(
         10,
@@ -727,7 +740,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         max={10}
                                         color="primary"
                                         valueNote={sliderValueNote}
-                                        onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData({ ...formData, plannedVolume: String(v) });
+                                        }}
                                     />
                                 </div>
                                 <div className="mt-3 md:mt-0">
@@ -739,7 +755,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         max={10}
                                         color="warning"
                                         valueNote={sliderValueNote}
-                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
+                                        }}
                                     />
                                 </div>
                             </div>

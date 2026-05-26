@@ -19,7 +19,10 @@ import { ConstructorStepHeader } from "./ConstructorStepHeader";
 import { PeriodBlockQualitiesStep } from "./PeriodBlockQualitiesStep";
 import { qualitiesSumBadgeClass } from "./periodBlockQualitiesValidation";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
+import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
+import { VolumeIntensityExplainer } from "./VolumeIntensityExplainer";
+import { SliderLevelBadge } from "./SliderLevelBadge";
 import {
     PeriodizationWeeklyStructureEditor,
     formatRangeShort,
@@ -42,9 +45,9 @@ interface Props {
     onSubmit: () => void;
     onReset: () => void;
     onAdvanceStep: () => void;
-    volumeNominalPhase?: PeriodizationVolumeNominalPhase;
-    volumeNominalLabel?: string | null;
-    volumeNominalHint?: string | null;
+    volumeIntensityContext?: VolumeIntensityContext | null;
+    volumeIntensityPhase?: PeriodizationVolumeNominalPhase;
+    volumeIntensityHint?: string | null;
     trainingDays?: readonly string[] | null;
     patternsCatalog?: MovementPattern[];
     patternsLoading?: boolean;
@@ -80,9 +83,9 @@ export const PeriodizationPanel: React.FC<Props> = ({
     onSubmit,
     onReset,
     onAdvanceStep,
-    volumeNominalPhase,
-    volumeNominalLabel,
-    volumeNominalHint,
+    volumeIntensityContext,
+    volumeIntensityPhase,
+    volumeIntensityHint,
     trainingDays,
     patternsCatalog,
     patternsLoading,
@@ -238,13 +241,19 @@ export const PeriodizationPanel: React.FC<Props> = ({
             {step === "volumeIntensity" && (
                 <div className="space-y-5">
                     <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-2 gap-2">
                             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 Volumen
                             </p>
-                            <span className="text-sm font-bold text-primary tabular-nums">
-                                {formState.volumeLevel}/10
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <SliderLevelBadge
+                                    level={formState.volumeLevel}
+                                    tone="volume"
+                                />
+                                <span className="text-sm font-bold text-primary tabular-nums">
+                                    {formState.volumeLevel}/10
+                                </span>
+                            </div>
                         </div>
                         <input
                             type="range"
@@ -257,40 +266,22 @@ export const PeriodizationPanel: React.FC<Props> = ({
                             className="w-full h-1.5 rounded-full appearance-none bg-surface-2 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer"
                             aria-label="Volumen"
                         />
-                        {volumeNominalPhase != null && (
-                            <div className="mt-2 space-y-1">
-                                {volumeNominalPhase === "loading" && (
-                                    <p className="text-[10px] text-muted-foreground">
-                                        Cargando referencia de volumen…
-                                    </p>
-                                )}
-                                {volumeNominalPhase === "complete" &&
-                                    volumeNominalLabel != null &&
-                                    volumeNominalLabel !== "" && (
-                                        <p className="text-[10px] text-foreground/90 leading-snug">
-                                            {volumeNominalLabel}
-                                        </p>
-                                    )}
-                                {(volumeNominalPhase === "incomplete" ||
-                                    volumeNominalPhase === "error") &&
-                                    volumeNominalHint != null &&
-                                    volumeNominalHint !== "" && (
-                                        <p className="text-[10px] text-muted-foreground leading-snug">
-                                            {volumeNominalHint}
-                                        </p>
-                                    )}
-                            </div>
-                        )}
                     </div>
 
                     <div>
-                        <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center justify-between mb-2 gap-2">
                             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                                 Intensidad
                             </p>
-                            <span className="text-sm font-bold text-warning tabular-nums">
-                                {formState.intensityLevel}/10
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <SliderLevelBadge
+                                    level={formState.intensityLevel}
+                                    tone="intensity"
+                                />
+                                <span className="text-sm font-bold text-warning tabular-nums">
+                                    {formState.intensityLevel}/10
+                                </span>
+                            </div>
                         </div>
                         <input
                             type="range"
@@ -304,6 +295,14 @@ export const PeriodizationPanel: React.FC<Props> = ({
                             aria-label="Intensidad"
                         />
                     </div>
+
+                    {volumeIntensityPhase != null && (
+                        <VolumeIntensityExplainer
+                            context={volumeIntensityContext ?? null}
+                            phase={volumeIntensityPhase}
+                            hint={volumeIntensityHint}
+                        />
+                    )}
 
                     <div className="flex gap-2 pt-1">
                         <button

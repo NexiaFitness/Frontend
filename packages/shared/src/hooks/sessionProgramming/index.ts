@@ -11,5 +11,6 @@ export * from "./useCreateTemplate";
 export * from "./useSessionExercisesDisplay";
 export * from "./useSessionStructureView";
 export * from "./useWeeklyClientVolumePanel";
+export * from "./useSessionVolumeIntensityPrefill";
 
 

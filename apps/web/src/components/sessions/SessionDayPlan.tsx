@@ -19,8 +19,11 @@ import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import type {
     SessionDayRecommendations,
     SessionRecommendationsResponse,
+    VolumeIntensityContextDto,
 } from "@nexia/shared/types/sessionRecommendations";
+import type { VolumeIntensityContext } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { VolumeIntensityExplainer } from "@/components/trainingPlans/periodization/VolumeIntensityExplainer";
 import { cn } from "@/lib/utils";
 
 /** Alineado con EmptyStateCard: borde, barra primary, sombra, ocupa altura de la columna. */
@@ -62,34 +65,8 @@ function resolveQualityLabel(
     return slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-function resolveSourceFootnote(rec: SessionDayRecommendations): string | null {
-    if (rec.source === "block") {
-        return "Según bloque de periodización activo.";
-    }
-    if (rec.day_inherited && rec.source === "week") {
-        return "Volumen e intensidad heredados de la planificación semanal.";
-    }
-    if (rec.day_inherited && rec.source === "month") {
-        return "Volumen e intensidad heredados de la planificación mensual.";
-    }
-    if (rec.day_inherited) {
-        return "Valores heredados de la planificación del plan.";
-    }
-    return null;
-}
-
-function formatDailyVolume(rec: SessionDayRecommendations): string {
-    const raw = rec.recommended_daily_volume_units;
-    if (rec.weekly_volume_unit_type === "series") {
-        const low = Math.floor(raw);
-        const high = Math.ceil(raw);
-        if (low === high) {
-            return `${low} series por grupo muscular`;
-        }
-        return `entre ${low} y ${high} series por grupo muscular`;
-    }
-    const rounded = Math.round(raw);
-    return `${rounded} ${rec.weekly_volume_unit_type}`;
+function toVolumeContext(dto: VolumeIntensityContextDto): VolumeIntensityContext {
+    return dto as unknown as VolumeIntensityContext;
 }
 
 function CoherenceWarnings({ warnings }: { warnings: string[] }) {
@@ -106,26 +83,13 @@ function CoherenceWarnings({ warnings }: { warnings: string[] }) {
     );
 }
 
-function DayPlanMetric({
-    label,
-    value,
-    accentClass,
+function DayPlanBody({
+    rec,
+    volumeContext,
 }: {
-    label: string;
-    value: string;
-    accentClass?: string;
+    rec: SessionDayRecommendations;
+    volumeContext?: VolumeIntensityContextDto | null;
 }) {
-    return (
-        <div className="min-w-0">
-            <span className={METRIC_LABEL_CLASS}>{label}</span>
-            <p className={cn("mt-0.5 text-sm font-medium tabular-nums", accentClass)}>
-                {value}
-            </p>
-        </div>
-    );
-}
-
-function DayPlanBody({ rec }: { rec: SessionDayRecommendations }) {
     const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
     const qualityLabel = resolveQualityLabel(rec.physical_quality, catalog);
     const dateRange = formatBlockDateRange(
@@ -158,39 +122,12 @@ function DayPlanBody({ rec }: { rec: SessionDayRecommendations }) {
                 </p>
             </div>
 
-            <div className="inline-flex flex-wrap items-end gap-x-3 gap-y-1 rounded-md border border-border/40 bg-surface/25 px-2.5 py-2">
-                <DayPlanMetric
-                    label="Volumen"
-                    value={`${rec.planned_volume_scale.toFixed(1)}/10`}
-                    accentClass="text-primary"
+            {volumeContext?.client_capacity ? (
+                <VolumeIntensityExplainer
+                    context={toVolumeContext(volumeContext)}
+                    phase="complete"
+                    compact
                 />
-                <span
-                    className="pb-0.5 text-sm leading-none text-muted-foreground/35 select-none"
-                    aria-hidden
-                >
-                    ·
-                </span>
-                <DayPlanMetric
-                    label="Intensidad"
-                    value={`${rec.planned_intensity_scale.toFixed(1)}/10`}
-                    accentClass="text-warning"
-                />
-            </div>
-        </div>
-    );
-}
-
-function DayPlanFooter({ rec }: { rec: SessionDayRecommendations }) {
-    const footnote = resolveSourceFootnote(rec);
-
-    return (
-        <div className="mt-auto w-full space-y-1.5 pt-3 text-right">
-            <p className="text-[10px] leading-snug text-muted-foreground">
-                <span className="font-medium text-muted-foreground/85">Volumen diario · </span>
-                {formatDailyVolume(rec)}
-            </p>
-            {footnote ? (
-                <p className="text-[10px] leading-snug text-muted-foreground/60">{footnote}</p>
             ) : null}
         </div>
     );
@@ -273,8 +210,10 @@ export const SessionDayPlan: React.FC<SessionDayPlanProps> = ({
     return (
         <div className={dayPlanRoot}>
             <div className={dayPlanCardShell}>
-                <DayPlanBody rec={response.recommendations} />
-                <DayPlanFooter rec={response.recommendations} />
+                <DayPlanBody
+                    rec={response.recommendations}
+                    volumeContext={response.volume_intensity_context}
+                />
             </div>
             <CoherenceWarnings warnings={warnings} />
         </div>

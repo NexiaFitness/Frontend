@@ -6,7 +6,9 @@ import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
+import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
+import { SliderLevelBadge } from "./SliderLevelBadge";
 
 const blockIconBtn =
     "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors";
@@ -19,8 +21,8 @@ interface Props {
   onDelete: (id: number, label: string) => void;
   /** Alta de sesión enlazada al plan/bloque (navegación la define el contenedor). */
   onCreateSessionForBlock?: (block: PlanPeriodBlock) => void;
-  volumeNominalPhase?: PeriodizationVolumeNominalPhase;
-  volumeNominalLabel?: string | null;
+  volumeIntensityContext?: VolumeIntensityContext | null;
+  volumeIntensityPhase?: PeriodizationVolumeNominalPhase;
 }
 
 function parseLocal(s: string): Date {
@@ -44,8 +46,8 @@ export const PeriodBlockCard: React.FC<Props> = ({
   onEdit,
   onDelete,
   onCreateSessionForBlock,
-  volumeNominalPhase,
-  volumeNominalLabel,
+  volumeIntensityContext,
+  volumeIntensityPhase,
 }) => {
   const navigate = useNavigate();
   const [showSessions, setShowSessions] = useState(false);
@@ -133,30 +135,22 @@ export const PeriodBlockCard: React.FC<Props> = ({
       {/* Volume / Intensity + sesión (misma fila: métricas a la izquierda, CTA a la derecha) */}
       <div className="flex flex-col gap-3 rounded-lg border border-primary/25 bg-primary/[0.06] px-4 py-3.5 sm:flex-row sm:flex-nowrap sm:items-center sm:justify-between sm:gap-4">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 min-w-0">
-          <div className="flex flex-col items-start gap-0.5 min-w-0 rounded-md border border-primary/45 bg-primary/10 px-2.5 py-1.5">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Volumen
-              </span>
+          <div className="flex flex-col items-start gap-0.5 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <SliderLevelBadge level={block.volume_level} tone="volume" prefix="Volumen" />
               <span className="text-sm font-bold text-primary tabular-nums">
                 {block.volume_level}/10
               </span>
             </div>
-            {volumeNominalPhase === "complete" &&
-              volumeNominalLabel != null &&
-              volumeNominalLabel !== "" && (
-                <p className="text-[10px] text-muted-foreground leading-tight max-w-[14rem]">
-                  {volumeNominalLabel}
+            {volumeIntensityPhase === "complete" &&
+              volumeIntensityContext?.result.weekly_target_sets != null && (
+                <p className="text-[10px] text-muted-foreground leading-tight">
+                  Objetivo: {volumeIntensityContext.result.weekly_target_sets} series / semana
                 </p>
               )}
-            {volumeNominalPhase === "loading" && (
-              <p className="text-[10px] text-muted-foreground/80">Referencia…</p>
-            )}
           </div>
-          <div className="flex items-center gap-2 rounded-md border border-border/60 bg-surface/80 px-2.5 py-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Intensidad
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <SliderLevelBadge level={block.intensity_level} tone="intensity" prefix="Intensidad" />
             <span className="text-sm font-bold text-warning tabular-nums">
               {block.intensity_level}/10
             </span>

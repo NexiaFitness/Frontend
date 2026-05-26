@@ -17,6 +17,8 @@ import { isFilledConstructorExercise } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { getEmomPersistLines } from "./emomRow";
 import { getSupersetPersistLines } from "./supersetRow";
+import { getGiantSetPersistLines } from "./giantSetRow";
+import { getForTimePersistLines } from "./forTimeRow";
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -215,6 +217,14 @@ export function getConstructorPersistLines(row: ConstructorRow): PersistExercise
 
     if (row.setType === SET_TYPE.SUPERSET) {
         return getSupersetPersistLines(row);
+    }
+
+    if (row.setType === SET_TYPE.GIANT_SET) {
+        return getGiantSetPersistLines(row);
+    }
+
+    if (row.setType === SET_TYPE.FOR_TIME) {
+        return getForTimePersistLines(row);
     }
 
     if (row.setType === SET_TYPE.EMOM) {

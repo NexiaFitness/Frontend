@@ -9,6 +9,28 @@
  * @since Fase 3 - Alineación documento canónico
  */
 
+/** Contexto capacidad → bloque → objetivo (GET /training-sessions/recommendations) */
+export interface VolumeIntensityContextDto {
+    client_capacity: {
+        volume_level_es: string;
+        max_sets: number;
+        min_sets: number | null;
+        based_on: Record<string, unknown>;
+    } | null;
+    block_modulation: {
+        volume_level: number;
+        volume_level_es: string;
+        intensity_level: number;
+        intensity_level_es: string;
+    };
+    result: {
+        weekly_target_sets: number | null;
+        daily_target_sets: number | null;
+        weekly_target_label: string | null;
+        daily_target_label: string | null;
+    };
+}
+
 /** Patrón de movimiento esperado para el día */
 export interface SessionDayMovementPattern {
     id: number;
@@ -80,6 +102,7 @@ export interface SessionRecommendationsWithValues {
     axial_threshold?: number;
     client_has_injuries?: boolean;
     injury_regions?: string[];
+    volume_intensity_context?: VolumeIntensityContextDto;
 }
 
 export type SessionRecommendationsResponse =

@@ -143,6 +143,8 @@ export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
 export * from "./training/trainingPlanLifecycle";
 export * from "./training/weeklyVolumeTarget";
+export * from "./training/volumeIntensityContext";
+export * from "./training/sessionVolumeIntensityPrefill";
 export * from "./training/weeklyVolumePanelModel";
 export {
     mondayOfIsoWeekContaining,

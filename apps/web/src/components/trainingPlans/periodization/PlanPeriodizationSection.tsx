@@ -259,7 +259,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const planGoalResolved =
     activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
 
-  const volumeNominal = usePeriodizationVolumeRecommendations(clientId, planGoalResolved);
+  const trainingFrequency = clientProfile?.exact_training_frequency ?? 3;
+  const volumeNominal = usePeriodizationVolumeRecommendations(
+    clientId,
+    planGoalResolved,
+    trainingFrequency
+  );
+  const formVolumeContext = volumeNominal.buildContext(
+    form.volumeLevel,
+    form.intensityLevel
+  );
 
   const handleCreateSessionForBlock = useCallback(
     (block: PlanPeriodBlock) => {
@@ -534,9 +543,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             onSubmit={handleSubmitBlock}
             onReset={handleCancelEdit}
             onAdvanceStep={advanceConstructorStep}
-            volumeNominalPhase={volumeNominal.phase}
-            volumeNominalLabel={volumeNominal.labelForVolumeLevel(form.volumeLevel)}
-            volumeNominalHint={volumeNominal.auxiliaryHint}
+            volumeIntensityContext={formVolumeContext}
+            volumeIntensityPhase={volumeNominal.phase}
+            volumeIntensityHint={volumeNominal.auxiliaryHint}
             trainingDays={clientProfile?.training_days ?? null}
             patternsCatalog={patternsCatalog ?? []}
             patternsLoading={isLoadingPatterns}
@@ -570,8 +579,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                 onEdit={handleEditBlock}
                 onDelete={(id, label) => setDeleteTarget({ id, label })}
                 onCreateSessionForBlock={handleCreateSessionForBlock}
-                volumeNominalPhase={volumeNominal.phase}
-                volumeNominalLabel={volumeNominal.labelForVolumeLevel(block.volume_level)}
+                volumeIntensityContext={volumeNominal.buildContext(
+                  block.volume_level,
+                  block.intensity_level
+                )}
+                volumeIntensityPhase={volumeNominal.phase}
               />
             ))}
           </div>
