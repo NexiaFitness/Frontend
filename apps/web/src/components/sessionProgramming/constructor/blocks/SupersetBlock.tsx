@@ -7,8 +7,9 @@
  */
 
 import React from "react";
-import { ChevronLeft, ChevronRight, Timer } from "lucide-react";
+import { Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
+import { ConstructorRoundNavigator } from "../primitives/ConstructorRoundNavigator";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
@@ -230,34 +231,16 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                         })}
                     </div>
 
-                    {/* Navegación de rondas compartida */}
-                    <div className="flex items-center justify-center gap-1.5 pb-2 pt-3">
-                        <button
-                            type="button"
-                            onClick={() => setActiveSetIndex((i) => Math.max(0, i - 1))}
-                            disabled={!canGoBack}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                            aria-label="Ronda anterior"
-                        >
-                            <ChevronLeft className="h-3.5 w-3.5" aria-hidden />
-                        </button>
-                        <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
-                            Ronda {activeSetIndex + 1} de {totalSets}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={() =>
-                                setActiveSetIndex((i) =>
-                                    Math.min(totalSets - 1, i + 1)
-                                )
-                            }
-                            disabled={!canGoForward}
-                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground disabled:opacity-40 disabled:cursor-not-allowed"
-                            aria-label="Ronda siguiente"
-                        >
-                            <ChevronRight className="h-3.5 w-3.5" aria-hidden />
-                        </button>
-                    </div>
+                    <ConstructorRoundNavigator
+                        activeIndex={activeSetIndex}
+                        total={totalSets}
+                        canGoBack={canGoBack}
+                        canGoForward={canGoForward}
+                        onPrevious={() => setActiveSetIndex((i) => Math.max(0, i - 1))}
+                        onNext={() =>
+                            setActiveSetIndex((i) => Math.min(totalSets - 1, i + 1))
+                        }
+                    />
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
                         El Superset siempre contiene 2 ejercicios. Para más, usa Giant Set.
