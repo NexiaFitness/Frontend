@@ -32,6 +32,7 @@ import {
     CONSTRUCTOR_SLOT_CONNECTOR_CLASS,
     CONSTRUCTOR_SLOT_RING_CLASS,
 } from "../constructor/primitives/constructorCardStyles";
+import { amrapFooterHint } from "@nexia/shared";
 import type { SessionGroupKind } from "@nexia/shared";
 
 export interface DetailKindStyle {
@@ -139,20 +140,27 @@ export function slotTokens(variant: DetailSlotVariant): SlotRingTokens {
 // Hints inferiores (texto reutilizado del constructor)
 // ============================================================================
 
-const HINT_BY_KIND: Record<SessionGroupKind, (rounds: number | null) => string | null> = {
+const HINT_BY_KIND: Record<
+    SessionGroupKind,
+    (rounds: number | null, timeCapMinutes?: number | null) => string | null
+> = {
     single_set: () => "Series del mismo ejercicio con descanso entre series.",
     superset: () => "El Superset siempre contiene 2 ejercicios.",
     giant_set: () => "Descanso solo al final de cada ronda.",
     dropset: () =>
         "Sin descanso entre drops · Mismo ejercicio, reduciendo reps/esfuerzo en cada drop.",
-    amrap: () => "Completa los ejercicios en orden = 1 ronda. Máximo de rondas posibles.",
+    amrap: (_rounds, timeCapMinutes) => amrapFooterHint(timeCapMinutes),
     emom: () =>
         "Completa los ejercicios de cada ventana dentro del tiempo establecido y descansa el tiempo restante.",
     for_time: (rounds) =>
         `Completa los ejercicios en orden, ${rounds ?? 1} ronda(s) — el objetivo es el menor tiempo posible.`,
 };
 
-export function hintForKind(kind: SessionGroupKind, rounds: number | null): string | null {
+export function hintForKind(
+    kind: SessionGroupKind,
+    rounds: number | null,
+    timeCapMinutes?: number | null
+): string | null {
     const fn = HINT_BY_KIND[kind];
-    return fn ? fn(rounds) : null;
+    return fn ? fn(rounds, timeCapMinutes) : null;
 }

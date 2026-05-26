@@ -20,6 +20,8 @@ export interface DetailSlotRingProps {
     subLabel?: string;
     /** Si true, dibuja conector vertical inferior. */
     withConnector?: boolean;
+    /** Alineación horizontal del anillo dentro de la celda (tablas: start). */
+    align?: "center" | "start";
     className?: string;
 }
 
@@ -28,6 +30,7 @@ export const DetailSlotRing: React.FC<DetailSlotRingProps> = ({
     label,
     subLabel,
     withConnector = false,
+    align = "center",
     className,
 }) => {
     const { ringClass, connectorClass } = slotTokens(variant);
@@ -48,7 +51,12 @@ export const DetailSlotRing: React.FC<DetailSlotRingProps> = ({
         );
 
     return (
-        <div className="relative flex flex-col items-center">
+        <div
+            className={cn(
+                "relative flex flex-col",
+                align === "start" ? "items-start" : "items-center"
+            )}
+        >
             <div className={cn(ringClass, className)}>{ringContent}</div>
             {withConnector && connectorClass && (
                 <span className={connectorClass} aria-hidden />

@@ -16,7 +16,7 @@ import { isFilledConstructorExercise } from "./supersetRow";
 /** Rondas / series equivalentes de UNA línea persistida dentro de una fila constructor. */
 export function getPersistLinePlannedSets(
     row: ConstructorRow,
-    line: { dropsetSequence?: number }
+    line: { dropsetSequence?: number; setDataEntry?: unknown }
 ): number {
     if (row.setType === SET_TYPE.SINGLE_SET) {
         return 1;
@@ -25,6 +25,11 @@ export function getPersistLinePlannedSets(
         // Solo MAIN aporta volumen; drops son pasos intra-secuencia.
         return line.dropsetSequence === 0 ? Math.max(1, row.sets ?? 1) : 0;
     }
+    // superset / giant_set / for_time expandidos: 1 fila = 1 ronda (block.rounds = total).
+    if (line.setDataEntry) {
+        return 1;
+    }
+    // Colapsado legacy: 1 fila por slot, planned_sets = rondas del bloque.
     return Math.max(0, getRowVolumeSetsPerExercise(row));
 }
 

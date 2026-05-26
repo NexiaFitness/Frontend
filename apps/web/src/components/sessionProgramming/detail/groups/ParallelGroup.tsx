@@ -1,21 +1,40 @@
 /**
  * ParallelGroup.tsx — Superset / Giant Set (read-only).
  *
- * Estructura compartida: rondas × N ejercicios. Cada ejercicio se renderiza con
- * su slot ring (A1, A2…) y una tabla con una fila por ronda.
+ * Renderiza los ejercicios agrupados por ronda (Round-centric).
+ * Cada ronda (R1, R2...) muestra todos los ejercicios del grupo en esa ronda,
+ * permitiendo al atleta seguir el flujo de entrenamiento de forma natural.
  *
  * @author Frontend Team
- * @since v6.5.0
+ * @since v6.6.0
  */
 
 import React from "react";
 import { Repeat, Timer } from "lucide-react";
-import type { SessionExerciseGroupView } from "@nexia/shared";
+import type { SessionExerciseGroupView, SessionExerciseSetView } from "@nexia/shared";
 import { DetailCardShell } from "../DetailCardShell";
 import { DetailSlotRing } from "../DetailSlotRing";
-import { DetailSeriesTable } from "../DetailSeriesTable";
 import { DetailParamItem } from "./DetailParamItem";
 import { detailStyleForKind, hintForKind } from "../detailStyles";
+import { formatReps, formatEffort } from "../detailFormatters";
+import {
+    DETAIL_TABLE_BODY_CLASS,
+    DETAIL_TABLE_CLASS,
+    DETAIL_TABLE_HEAD_CLASS,
+    detailTableColSpan,
+} from "../detailTableLayout";
+import {
+    DetailEffortCell,
+    DetailEffortHeaderCell,
+    DetailLeadHeaderCell,
+    DetailRepsCell,
+    DetailRepsHeaderCell,
+    DetailRestEmptyCell,
+    DetailRestHeaderCell,
+    DetailRoundHeaderCell,
+    DetailRoundLabelCell,
+    DetailTableColGroup,
+} from "../detailTableCells";
 
 export interface ParallelGroupProps {
     blockTitle: string;
@@ -29,9 +48,46 @@ function restLabel(group: SessionExerciseGroupView): string | null {
     return `${seconds}s`;
 }
 
+function RoundRow({
+    roundIndex,
+    slotCount,
+    slotLabel,
+    exerciseName,
+    set,
+    variant,
+}: {
+    roundIndex: number;
+    slotCount: number;
+    slotLabel: string;
+    exerciseName: string;
+    set: SessionExerciseSetView;
+    variant: "primary" | "for_time";
+}) {
+    const repsText = formatReps(set) ?? "—";
+    const effortText = formatEffort(set.effortCharacter, set.effortValue) ?? "—";
+
+    return (
+        <tr className="bg-card">
+            {slotCount > 0 && (
+                <DetailRoundLabelCell label={`R${roundIndex + 1}`} rowSpan={slotCount} />
+            )}
+            <td className="px-3 py-2">
+                <div className="flex items-center gap-2.5">
+                    <DetailSlotRing variant={variant} label={slotLabel} />
+                    <span className="text-sm font-medium text-foreground">{exerciseName}</span>
+                </div>
+            </td>
+            <DetailRepsCell>{repsText}</DetailRepsCell>
+            <DetailEffortCell>{effortText}</DetailEffortCell>
+            <DetailRestEmptyCell />
+        </tr>
+    );
+}
+
 export const ParallelGroup: React.FC<ParallelGroupProps> = ({ blockTitle, group }) => {
     const style = detailStyleForKind(group.kind);
     const rest = restLabel(group);
+    const roundCount = group.slots[0]?.sets.length ?? 0;
 
     const paramsBar = (
         <>
@@ -60,35 +116,68 @@ export const ParallelGroup: React.FC<ParallelGroupProps> = ({ blockTitle, group 
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >
-            <div className="space-y-4">
-                {group.slots.map((slot, idx) => {
-                    const isLast = idx === group.slots.length - 1;
-                    return (
-                        <div key={slot.slotLabel + idx} className="flex items-start gap-3">
-                            <DetailSlotRing
-                                variant="primary"
-                                label={slot.slotLabel}
-                                withConnector={!isLast}
-                            />
-                            <div className="min-w-0 flex-1">
-                                <div className="mb-2 text-sm font-semibold text-foreground">
-                                    {slot.exerciseName}
-                                </div>
-                                <DetailSeriesTable
-                                    rows={slot.sets}
-                                    firstColumnLabel="Ronda"
-                                    hideRestColumn
-                                />
-                                {slot.notes && (
-                                    <p className="mt-2 text-[11px] italic text-muted-foreground">
-                                        {slot.notes}
-                                    </p>
+            <div className="overflow-hidden rounded-md border border-border/50">
+                <table className={DETAIL_TABLE_CLASS}>
+                    <DetailTableColGroup />
+                    <thead className={DETAIL_TABLE_HEAD_CLASS}>
+                        <tr>
+                            <DetailRoundHeaderCell showLabel />
+                            <DetailLeadHeaderCell label="Ejercicio" />
+                            <DetailRepsHeaderCell />
+                            <DetailEffortHeaderCell />
+                            <DetailRestHeaderCell showLabel={false} />
+                        </tr>
+                    </thead>
+                    {Array.from({ length: roundCount }).map((_, roundIdx) => {
+                        const visibleSlots = group.slots.filter((slot) => slot.sets[roundIdx]);
+
+                        return (
+                            <React.Fragment key={roundIdx}>
+                                <tbody className={DETAIL_TABLE_BODY_CLASS}>
+                                    {visibleSlots.map((slot, slotIdx) => (
+                                        <RoundRow
+                                            key={`${roundIdx}-${slotIdx}`}
+                                            roundIndex={roundIdx}
+                                            slotCount={slotIdx === 0 ? visibleSlots.length : 0}
+                                            slotLabel={slot.slotLabel}
+                                            exerciseName={slot.exerciseName}
+                                            set={slot.sets[roundIdx]}
+                                            variant="primary"
+                                        />
+                                    ))}
+                                </tbody>
+                                {roundIdx < roundCount - 1 && (
+                                    <tbody aria-hidden="true">
+                                        <tr>
+                                            <td
+                                                colSpan={detailTableColSpan({})}
+                                                className="bg-card px-2 py-1.5"
+                                            >
+                                                <div className="border-t-2 border-border/70" />
+                                            </td>
+                                        </tr>
+                                    </tbody>
                                 )}
-                            </div>
-                        </div>
-                    );
-                })}
+                            </React.Fragment>
+                        );
+                    })}
+                </table>
             </div>
+
+            {group.slots.some((s) => s.notes) && (
+                <div className="mt-3 space-y-1">
+                    {group.slots
+                        .filter((s) => s.notes)
+                        .map((slot) => (
+                            <p
+                                key={slot.slotLabel}
+                                className="text-[11px] italic text-muted-foreground"
+                            >
+                                {slot.slotLabel}: {slot.notes}
+                            </p>
+                        ))}
+                </div>
+            )}
         </DetailCardShell>
     );
 };

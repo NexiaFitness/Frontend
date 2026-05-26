@@ -20,6 +20,7 @@
 import React, { useMemo } from "react";
 import type { SessionExerciseSetView } from "@nexia/shared";
 import { cn } from "@/lib/utils";
+import { formatReps, formatEffort, formatRest } from "./detailFormatters";
 
 export interface DetailSeriesRow extends SessionExerciseSetView {
     /** Override opcional de la etiqueta (por ej. en EMOM mostramos V1). */
@@ -33,39 +34,6 @@ export interface DetailSeriesTableProps {
     /** Si true, oculta la columna de descanso (útil en grupos sin descanso entre series). */
     hideRestColumn?: boolean;
     className?: string;
-}
-
-function formatReps(setRow: SessionExerciseSetView): string | null {
-    if (setRow.plannedReps) return setRow.plannedReps;
-    if (setRow.plannedDuration != null) return `${setRow.plannedDuration}s`;
-    return null;
-}
-
-function formatRest(seconds: number | null): string | null {
-    if (seconds == null) return null;
-    if (seconds <= 0) return "0s";
-    if (seconds >= 60 && seconds % 60 === 0) return `${seconds / 60}'`;
-    return `${seconds}s`;
-}
-
-function formatEffort(
-    character: SessionExerciseSetView["effortCharacter"],
-    value: number | null
-): string | null {
-    if (value == null) return character ? character.toUpperCase() : null;
-    if (!character) return String(value);
-    switch (character) {
-        case "rpe":
-            return `RPE ${value}`;
-        case "rir":
-            return `RIR ${value}`;
-        case "velocity_loss":
-            return `VL ${value}%`;
-        case "pct_rm":
-            return `${value}% 1RM`;
-        default:
-            return `${value}`;
-    }
 }
 
 export const DetailSeriesTable: React.FC<DetailSeriesTableProps> = ({

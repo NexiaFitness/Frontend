@@ -41,6 +41,7 @@ import {
     useCreateSessionBlockExerciseMutation,
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
+import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
@@ -483,7 +484,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 block_type_id: row.blockTypeId,
                                 order_in_session: i + 1,
                                 set_type: row.setType,
-                                rounds: row.rounds,
+                                rounds: getBlockRoundsFromConstructorRow(row),
                                 time_cap: row.timeCap,
                                 interval_seconds: row.intervalSeconds,
                                 objective_text:

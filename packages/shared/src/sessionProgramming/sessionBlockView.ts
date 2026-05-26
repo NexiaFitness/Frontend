@@ -14,6 +14,7 @@
  *
  * @author Frontend Team
  * @since v6.5.0
+ * @updated v6.6.1 — colapso round-centric superset/giant/for_time (parallelRoundCollapse)
  */
 
 import {
@@ -25,6 +26,9 @@ import {
     type TrainingBlockType,
 } from "../types/sessionProgramming";
 import { collapseDropsetBlockLines, inferDropsetRounds } from "./dropsetCollapse";
+import { getEffectiveBlockRounds, timeCapSecondsToMinutes } from "./blockRounds";
+import { inferRoundSlotLayout } from "./parallelRoundCollapse";
+import { displayAmrapPlannedReps } from "./amrapPlannedReps";
 
 // ============================================================================
 // TIPOS DE VISTA
@@ -236,12 +240,40 @@ interface ParallelGroupOptions {
     badgePrefix: "SUPERSET" | "GIANT SET";
 }
 
+const SUPERSET_MIN_SLOTS = 2;
+const GIANT_SET_MIN_SLOTS = 2;
+
+function buildParallelSlotView(
+    slotLines: SessionBlockExercise[],
+    slotIdx: number,
+    rounds: number,
+    nameMap: Map<number, string>
+): SessionExerciseSlotView {
+    const first = slotLines[0];
+    const sets: SessionExerciseSetView[] =
+        slotLines.length === 1
+            ? Array.from({ length: rounds }, (_, roundIdx) =>
+                  setView(first, `R${roundIdx + 1}`, roundIdx + 1)
+              )
+            : slotLines.map((line, roundIdx) => setView(line, `R${roundIdx + 1}`, roundIdx + 1));
+
+    return {
+        slotLabel: `A${slotIdx + 1}`,
+        exerciseId: first.exercise_id,
+        exerciseName: exerciseNameOf(nameMap, first.exercise_id),
+        notes: first.notes ?? null,
+        sets,
+    };
+}
+
 function buildParallelGroups(
     options: ParallelGroupOptions,
     lines: SessionBlockExercise[],
     nameMap: Map<number, string>
 ): SessionExerciseGroupView[] {
     const sorted = [...lines].sort(sortByOrderInBlock);
+    const minSlots =
+        options.kind === "superset" ? SUPERSET_MIN_SLOTS : GIANT_SET_MIN_SLOTS;
 
     const byGroupId = new Map<number, SessionBlockExercise[]>();
     for (const line of sorted) {
@@ -254,30 +286,21 @@ function buildParallelGroups(
 
     return sortedKeys.map((groupKey, idx) => {
         const groupLines = byGroupId.get(groupKey)!;
-        const rounds = groupLines[0]?.planned_sets ?? options.block.rounds ?? null;
-        const totalRounds = Math.max(1, rounds ?? 1);
-
-        const slots: SessionExerciseSlotView[] = groupLines.map((line, slotIdx) => {
-            const slotLabel = `A${slotIdx + 1}`;
-            const sets: SessionExerciseSetView[] = Array.from({ length: totalRounds }, (_, r) =>
-                setView(line, `R${r + 1}`, r + 1)
-            );
-            return {
-                slotLabel,
-                exerciseId: line.exercise_id,
-                exerciseName: exerciseNameOf(nameMap, line.exercise_id),
-                notes: line.notes ?? null,
-                sets,
-            };
-        });
-
+        const layout = inferRoundSlotLayout(
+            groupLines,
+            getEffectiveBlockRounds(options.block.rounds, groupLines),
+            minSlots
+        );
+        const slots = layout.slotLines.map((slotLines, slotIdx) =>
+            buildParallelSlotView(slotLines, slotIdx, layout.rounds, nameMap)
+        );
         const restBetweenSeconds = groupLines[0]?.planned_rest ?? null;
 
         return {
             groupId: `block-${options.blockId}-${options.kind}-${groupKey}`,
             kind: options.kind,
             badgeLabel: `${options.badgePrefix} ${asLetter(idx)}`,
-            rounds: totalRounds,
+            rounds: layout.rounds,
             timeCapMinutes: null,
             intervalSeconds: null,
             restBetweenSeconds,
@@ -338,6 +361,30 @@ interface SequentialGroupOptions {
     badgePrefix: "AMRAP" | "FOR TIME";
 }
 
+function buildSequentialSlotView(
+    slotLines: SessionBlockExercise[],
+    slotIdx: number,
+    rounds: number,
+    nameMap: Map<number, string>
+): SessionExerciseSlotView {
+    const first = slotLines[0];
+    const slotLabel = `${slotIdx + 1}`;
+    const sets: SessionExerciseSetView[] =
+        slotLines.length === 1
+            ? Array.from({ length: rounds }, (_, roundIdx) =>
+                  setView(first, slotLabel, roundIdx + 1)
+              )
+            : slotLines.map((line, roundIdx) => setView(line, slotLabel, roundIdx + 1));
+
+    return {
+        slotLabel,
+        exerciseId: first.exercise_id,
+        exerciseName: exerciseNameOf(nameMap, first.exercise_id),
+        notes: first.notes ?? null,
+        sets,
+    };
+}
+
 function buildSequentialGroups(
     options: SequentialGroupOptions,
     lines: SessionBlockExercise[],
@@ -346,24 +393,49 @@ function buildSequentialGroups(
     if (lines.length === 0) return [];
     const sorted = [...lines].sort(sortByOrderInBlock);
 
-    const slots: SessionExerciseSlotView[] = sorted.map((line, idx) => {
-        const slotLabel = `${idx + 1}`;
-        return {
-            slotLabel,
+    let slots: SessionExerciseSlotView[];
+    let rounds: number | null;
+
+    if (options.kind === "for_time") {
+        const layout = inferRoundSlotLayout(
+            sorted,
+            getEffectiveBlockRounds(options.block.rounds, sorted),
+            GIANT_SET_MIN_SLOTS
+        );
+        rounds = layout.rounds;
+        slots = layout.slotLines.map((slotLines, slotIdx) =>
+            buildSequentialSlotView(slotLines, slotIdx, layout.rounds, nameMap)
+        );
+    } else {
+        rounds = options.block.rounds ?? null;
+        slots = sorted.map((line, idx) => ({
+            slotLabel: `${idx + 1}`,
             exerciseId: line.exercise_id,
             exerciseName: exerciseNameOf(nameMap, line.exercise_id),
             notes: line.notes ?? null,
-            sets: [setView(line, slotLabel, 1)],
-        };
-    });
+            sets: [
+                setView(
+                    {
+                        ...line,
+                        planned_reps: displayAmrapPlannedReps(line.planned_reps),
+                    },
+                    `${idx + 1}`,
+                    1
+                ),
+            ],
+        }));
+    }
 
     return [
         {
             groupId: `block-${options.blockId}-${options.kind}`,
             kind: options.kind,
             badgeLabel: `${options.badgePrefix} A`,
-            rounds: options.block.rounds ?? null,
-            timeCapMinutes: options.kind === "amrap" ? options.block.time_cap ?? null : null,
+            rounds,
+            timeCapMinutes:
+                options.kind === "amrap"
+                    ? timeCapSecondsToMinutes(options.block.time_cap)
+                    : null,
             intervalSeconds: null,
             restBetweenSeconds: null,
             slots,

@@ -6,6 +6,7 @@
  */
 
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import { hydrateAmrapPlannedReps } from "@nexia/shared";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 
 export const MIN_AMRAP_SLOTS = 2;
@@ -48,9 +49,14 @@ export function normalizeAmrapRow(row: ConstructorRow): ConstructorRow {
         exercises.push(createAmrapExerciseSlot(exercises.length, row.id));
     }
 
+    const normalizedExercises = exercises.map((ex) => ({
+        ...ex,
+        plannedReps: hydrateAmrapPlannedReps(ex.plannedReps),
+    }));
+
     return {
         ...row,
-        exercises,
+        exercises: normalizedExercises,
         timeCap: row.timeCap ?? DEFAULT_AMRAP_DURATION_SECONDS,
         rounds: row.rounds ?? DEFAULT_AMRAP_TARGET_ROUNDS,
         repsTipo: row.repsTipo ?? "reps",

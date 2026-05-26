@@ -1,8 +1,8 @@
 /**
  * AmrapGroup.tsx — AMRAP en modo lectura.
  *
- * Estructura: lista numerada (slot rings rojos) con cada ejercicio + reps/tiempo.
- * Barra: Time Cap · Rondas objetivo (opcional).
+ * Lista numerada: ejercicio + reps/tiempo + esfuerzo por movimiento de la ronda.
+ * Barra: Time cap · Rondas objetivo (opcional).
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -11,11 +11,29 @@
 import React from "react";
 import { Hourglass, Repeat } from "lucide-react";
 import type { SessionExerciseGroupView } from "@nexia/shared";
+import { amrapFooterHint } from "@nexia/shared";
 import { DetailCardShell } from "../DetailCardShell";
 import { DetailSlotRing } from "../DetailSlotRing";
-import { DetailSeriesTable } from "../DetailSeriesTable";
 import { DetailParamItem } from "./DetailParamItem";
-import { detailStyleForKind, hintForKind } from "../detailStyles";
+import { detailStyleForKind } from "../detailStyles";
+import { formatReps, formatEffort } from "../detailFormatters";
+import {
+    DETAIL_TABLE_BODY_CLASS,
+    DETAIL_TABLE_CLASS,
+    DETAIL_TABLE_HEAD_CLASS,
+} from "../detailTableLayout";
+import {
+    DetailEffortCell,
+    DetailEffortHeaderCell,
+    DetailLeadHeaderCell,
+    DetailRepsCell,
+    DetailRepsHeaderCell,
+    DetailRestEmptyCell,
+    DetailRestHeaderCell,
+    DetailRoundBodyCell,
+    DetailRoundHeaderCell,
+    DetailTableColGroup,
+} from "../detailTableCells";
 
 export interface AmrapGroupProps {
     blockTitle: string;
@@ -51,36 +69,57 @@ export const AmrapGroup: React.FC<AmrapGroupProps> = ({ blockTitle, group }) => 
             blockTitle={blockTitle}
             seriesBadgeLabel={group.badgeLabel}
             paramsBar={paramsBar}
-            hint={hintForKind(group.kind, group.rounds)}
+            hint={amrapFooterHint(group.timeCapMinutes)}
         >
-            <div className="space-y-4">
-                {group.slots.map((slot, idx) => {
-                    const isLast = idx === group.slots.length - 1;
-                    return (
-                        <div key={slot.slotLabel + idx} className="flex items-start gap-3">
-                            <DetailSlotRing
-                                variant="amrap"
-                                label={slot.slotLabel}
-                                withConnector={!isLast}
-                            />
-                            <div className="min-w-0 flex-1">
-                                <div className="mb-2 text-sm font-semibold text-foreground">
-                                    {slot.exerciseName}
-                                </div>
-                                <DetailSeriesTable
-                                    rows={slot.sets}
-                                    firstColumnLabel="Bloque"
-                                    hideRestColumn
-                                />
-                                {slot.notes && (
-                                    <p className="mt-2 text-[11px] italic text-muted-foreground">
-                                        {slot.notes}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    );
-                })}
+            <div className="overflow-hidden rounded-md border border-border/50">
+                <table className={DETAIL_TABLE_CLASS}>
+                    <DetailTableColGroup />
+                    <thead className={DETAIL_TABLE_HEAD_CLASS}>
+                        <tr>
+                            <DetailRoundHeaderCell />
+                            <DetailLeadHeaderCell label="Ejercicio" />
+                            <DetailRepsHeaderCell />
+                            <DetailEffortHeaderCell />
+                            <DetailRestHeaderCell showLabel={false} />
+                        </tr>
+                    </thead>
+                    <tbody className={DETAIL_TABLE_BODY_CLASS}>
+                        {group.slots.map((slot, idx) => {
+                            const set = slot.sets[0];
+                            const repsText = set ? formatReps(set) ?? "—" : "—";
+                            const effortText = set
+                                ? formatEffort(set.effortCharacter, set.effortValue) ?? "—"
+                                : "—";
+                            const isLast = idx === group.slots.length - 1;
+
+                            return (
+                                <tr key={slot.slotLabel + idx} className="bg-card">
+                                    <DetailRoundBodyCell />
+                                    <td className="px-3 py-2">
+                                        <div className="flex items-center gap-2.5">
+                                            <DetailSlotRing
+                                                variant="amrap"
+                                                label={slot.slotLabel}
+                                                withConnector={!isLast}
+                                            />
+                                            <span className="text-sm font-medium text-foreground">
+                                                {slot.exerciseName}
+                                            </span>
+                                        </div>
+                                        {slot.notes && (
+                                            <p className="mt-1 pl-[46px] text-[11px] italic text-muted-foreground">
+                                                {slot.notes}
+                                            </p>
+                                        )}
+                                    </td>
+                                    <DetailRepsCell>{repsText}</DetailRepsCell>
+                                    <DetailEffortCell>{effortText}</DetailEffortCell>
+                                    <DetailRestEmptyCell />
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
             </div>
         </DetailCardShell>
     );

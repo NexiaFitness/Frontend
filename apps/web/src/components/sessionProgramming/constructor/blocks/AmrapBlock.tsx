@@ -15,6 +15,7 @@ import {
     MIN_AMRAP_SLOTS,
     normalizeAmrapRow,
 } from "../utils/amrapRow";
+import { amrapFooterHint } from "@nexia/shared";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
@@ -235,8 +236,9 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                     </div>
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
-                        Completa los {exerciseCount} ejercicios en orden = 1 ronda. Máximo de
-                        rondas posibles.
+                        {amrapFooterHint(
+                            durationMinutes === "" ? null : Number(durationMinutes)
+                        )}
                     </p>
                 </>
             ) : null}

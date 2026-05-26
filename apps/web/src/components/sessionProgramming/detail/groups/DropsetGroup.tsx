@@ -1,21 +1,39 @@
 /**
  * DropsetGroup.tsx — Renderiza el grupo dropset en modo lectura.
  *
- * Estructura: 1 ejercicio MAIN + N pasos DROP.
- * Header de tabla "Paso" (MAIN, DROP 1…) sin columna de descanso.
+ * Tabla alineada con superset/for time: anillo MAIN/DROP por fila,
+ * reps y esfuerzo a la derecha (sin columna Paso).
  *
  * @author Frontend Team
  * @since v6.5.0
+ * @updated v6.6.1 — layout tabular round-aligned
  */
 
 import React from "react";
 import { Repeat, Timer } from "lucide-react";
-import type { SessionExerciseGroupView } from "@nexia/shared";
+import type { SessionExerciseGroupView, SessionExerciseSetView } from "@nexia/shared";
 import { DetailCardShell } from "../DetailCardShell";
 import { DetailSlotRing } from "../DetailSlotRing";
-import { DetailSeriesTable, type DetailSeriesRow } from "../DetailSeriesTable";
 import { DetailParamItem } from "./DetailParamItem";
 import { detailStyleForKind, hintForKind } from "../detailStyles";
+import { formatReps, formatEffort } from "../detailFormatters";
+import {
+    DETAIL_TABLE_BODY_CLASS,
+    DETAIL_TABLE_CLASS,
+    DETAIL_TABLE_HEAD_CLASS,
+} from "../detailTableLayout";
+import {
+    DetailEffortCell,
+    DetailEffortHeaderCell,
+    DetailLeadHeaderCell,
+    DetailRepsCell,
+    DetailRepsHeaderCell,
+    DetailRestEmptyCell,
+    DetailRestHeaderCell,
+    DetailRoundBodyCell,
+    DetailRoundHeaderCell,
+    DetailTableColGroup,
+} from "../detailTableCells";
 
 export interface DropsetGroupProps {
     blockTitle: string;
@@ -28,10 +46,49 @@ function restLabel(seconds: number | null): string | null {
     return `${seconds}s`;
 }
 
+function dropSubLabel(set: SessionExerciseSetView, stepIndex: number): string {
+    const fromLabel = set.label.replace(/^DROP\s*/i, "").trim();
+    return fromLabel || String(stepIndex);
+}
+
+function DropStepRow({
+    set,
+    stepIndex,
+}: {
+    set: SessionExerciseSetView;
+    stepIndex: number;
+}) {
+    const isMain = stepIndex === 0;
+    const repsText = formatReps(set) ?? "—";
+    const effortText = formatEffort(set.effortCharacter, set.effortValue) ?? "—";
+
+    return (
+        <tr className="bg-card">
+            <DetailRoundBodyCell />
+            <td className="px-3 py-2">
+                <div className="flex items-center gap-2.5">
+                    {isMain ? (
+                        <DetailSlotRing variant="dropset_main" label="MAIN" align="start" />
+                    ) : (
+                        <DetailSlotRing
+                            variant="dropset_step"
+                            label="DROP"
+                            subLabel={dropSubLabel(set, stepIndex)}
+                            align="start"
+                        />
+                    )}
+                </div>
+            </td>
+            <DetailRepsCell>{repsText}</DetailRepsCell>
+            <DetailEffortCell>{effortText}</DetailEffortCell>
+            <DetailRestEmptyCell />
+        </tr>
+    );
+}
+
 export const DropsetGroup: React.FC<DropsetGroupProps> = ({ blockTitle, group }) => {
     const slot = group.slots[0];
     const style = detailStyleForKind(group.kind);
-
     const rest = restLabel(group.restBetweenSeconds);
 
     const paramsBar = (
@@ -67,11 +124,6 @@ export const DropsetGroup: React.FC<DropsetGroupProps> = ({ blockTitle, group })
         );
     }
 
-    const rows: DetailSeriesRow[] = slot.sets.map((set) => ({
-        ...set,
-        overrideLabel: set.label,
-    }));
-
     return (
         <DetailCardShell
             kind={group.kind}
@@ -80,33 +132,34 @@ export const DropsetGroup: React.FC<DropsetGroupProps> = ({ blockTitle, group })
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >
-            <div className="flex items-start gap-3">
-                <div className="flex flex-col items-center gap-2">
-                    <DetailSlotRing variant="dropset_main" label="MAIN" withConnector />
-                    {slot.sets.slice(1).map((set, i, arr) => {
-                        const dropNum =
-                            set.label.replace(/^DROP\s*/i, "").trim() || String(i + 1);
-                        return (
-                            <DetailSlotRing
-                                key={`${set.label}-${i}`}
-                                variant="dropset_step"
-                                label="DROP"
-                                subLabel={dropNum}
-                                withConnector={i < arr.length - 1}
+            <p className="mb-2 text-sm font-semibold text-foreground">{slot.exerciseName}</p>
+            <div className="overflow-hidden rounded-md border border-border/50">
+                <table className={DETAIL_TABLE_CLASS}>
+                    <DetailTableColGroup />
+                    <thead className={DETAIL_TABLE_HEAD_CLASS}>
+                        <tr>
+                            <DetailRoundHeaderCell />
+                            <DetailLeadHeaderCell label="Drop" />
+                            <DetailRepsHeaderCell />
+                            <DetailEffortHeaderCell />
+                            <DetailRestHeaderCell showLabel={false} />
+                        </tr>
+                    </thead>
+                    <tbody className={DETAIL_TABLE_BODY_CLASS}>
+                        {slot.sets.map((set, stepIndex) => (
+                            <DropStepRow
+                                key={`${set.label}-${set.sourceLineId}-${stepIndex}`}
+                                set={set}
+                                stepIndex={stepIndex}
                             />
-                        );
-                    })}
-                </div>
-                <div className="min-w-0 flex-1">
-                    <div className="mb-2 text-sm font-semibold text-foreground">
-                        {slot.exerciseName}
-                    </div>
-                    <DetailSeriesTable rows={rows} firstColumnLabel="Paso" hideRestColumn />
-                    {slot.notes && (
-                        <p className="mt-2 text-[11px] italic text-muted-foreground">{slot.notes}</p>
-                    )}
-                </div>
+                        ))}
+                    </tbody>
+                </table>
             </div>
+
+            {slot.notes && (
+                <p className="mt-2 text-[11px] italic text-muted-foreground">{slot.notes}</p>
+            )}
         </DetailCardShell>
     );
 };

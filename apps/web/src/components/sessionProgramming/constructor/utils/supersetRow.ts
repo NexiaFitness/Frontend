@@ -6,7 +6,11 @@
  * @updated v6.1.0 — setData por ejercicio para series independientes A1/A2
  */
 
-import { markDistinctStepsFromMaster } from "@nexia/shared";
+import {
+    markDistinctStepsFromMaster,
+    groupParallelConstructorApiLines,
+    isParallelConstructorExpandedLines,
+} from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
@@ -243,24 +247,7 @@ interface ApiExerciseLine {
 }
 
 export function isExpandedSupersetApiLines(exs: ApiExerciseLine[]): boolean {
-    if (exs.length < 2) return false;
-    const byExercise = groupByExerciseId(exs);
-    // Expanded if at least one exercise has multiple lines with planned_sets === 1
-    for (const group of Object.values(byExercise)) {
-        if (group.length >= 2 && group.every((e) => (e.planned_sets ?? 1) === 1)) {
-            return true;
-        }
-    }
-    return false;
-}
-
-function groupByExerciseId(exs: ApiExerciseLine[]): Record<number, ApiExerciseLine[]> {
-    const map: Record<number, ApiExerciseLine[]> = {};
-    for (const ex of exs) {
-        if (!map[ex.exercise_id]) map[ex.exercise_id] = [];
-        map[ex.exercise_id].push(ex);
-    }
-    return map;
+    return isParallelConstructorExpandedLines(exs, SUPERSET_SLOT_COUNT);
 }
 
 function setDataFromApiLine(
@@ -280,68 +267,79 @@ function setDataFromApiLine(
     };
 }
 
+function buildSupersetSlotFromApiLines(
+    slotLines: ApiExerciseLine[],
+    slotIndex: number,
+    baseId: string,
+    slotKey: "a1" | "a2"
+): ConstructorExercise {
+    if (slotLines.length === 0) {
+        return createSupersetExerciseSlot(slotKey, baseId);
+    }
+
+    const first = slotLines[0];
+    const exercise: ConstructorExercise = {
+        id: `ex-${first.id}-${slotIndex}`,
+        serverExerciseId: slotLines.length === 1 ? first.id : undefined,
+        exerciseId: first.exercise_id,
+        exerciseName: `Ejercicio #${first.exercise_id}`,
+        plannedReps: first.planned_reps,
+        plannedWeight: first.planned_weight,
+        plannedDuration: first.planned_duration,
+        effortCharacter: first.effort_character as ConstructorExercise["effortCharacter"],
+        effortValue: first.effort_value,
+        notes: first.notes,
+        repsTipo:
+            first.planned_duration != null && !first.planned_reps?.trim() ? "tiempo" : "reps",
+    };
+
+    let setData: ConstructorSetData[];
+    if (slotLines.length === 1 && (first.planned_sets ?? 1) > 1) {
+        const count = first.planned_sets ?? 3;
+        const template = setDataFromApiLine(first, false);
+        setData = Array.from({ length: count }, (_, idx) => ({
+            ...template,
+            id: `set-legacy-${idx}-${generateId()}`,
+            isManuallyEdited: false,
+            serverExerciseId: idx === 0 ? first.id : undefined,
+        }));
+    } else {
+        setData = markDistinctStepsFromMaster(
+            slotLines
+                .sort((a, b) => a.order_in_block - b.order_in_block)
+                .map((ex) => setDataFromApiLine(ex, false))
+        );
+    }
+
+    return { ...exercise, setData };
+}
+
 export function hydrateSupersetConstructorRow(
     base: ConstructorRow,
     exs: ApiExerciseLine[]
 ): ConstructorRow {
-    const byExercise = groupByExerciseId(exs);
-    const slots: ConstructorExercise[] = [];
-
-    // Ordenar grupos por order_in_block del primer ejercicio de cada grupo
-    const sortedGroups = Object.values(byExercise).sort(
-        (a, b) => (a[0]?.order_in_block ?? 0) - (b[0]?.order_in_block ?? 0)
+    const { rounds, slotLines } = groupParallelConstructorApiLines(
+        exs,
+        base.rounds,
+        SUPERSET_SLOT_COUNT
     );
 
+    const slots: ConstructorExercise[] = [];
     for (let i = 0; i < SUPERSET_SLOT_COUNT; i++) {
-        const slotExs = sortedGroups[i];
-        if (!slotExs || slotExs.length === 0) {
-            slots.push(createSupersetExerciseSlot(i === 0 ? "a1" : "a2", base.id));
-            continue;
-        }
-
-        const first = slotExs[0];
-        const exercise: ConstructorExercise = {
-            id: `ex-${first.id}-${i}`,
-            serverExerciseId: slotExs.length === 1 ? first.id : undefined,
-            exerciseId: first.exercise_id,
-            exerciseName: `Ejercicio #${first.exercise_id}`,
-            plannedReps: first.planned_reps,
-            plannedWeight: first.planned_weight,
-            plannedDuration: first.planned_duration,
-            effortCharacter: first.effort_character as ConstructorExercise["effortCharacter"],
-            effortValue: first.effort_value,
-            notes: first.notes,
-            repsTipo: first.planned_duration != null && !first.planned_reps?.trim()
-                ? "tiempo"
-                : "reps",
-        };
-
-        if (slotExs.length === 1 && (first.planned_sets ?? 1) > 1) {
-            // Collapsed legacy: 1 line with planned_sets > 1
-            const count = first.planned_sets ?? 3;
-            const template = setDataFromApiLine(first, false);
-            const setData = Array.from({ length: count }, (_, idx) => ({
-                ...template,
-                id: `set-legacy-${idx}-${generateId()}`,
-                isManuallyEdited: false,
-                serverExerciseId: idx === 0 ? first.id : undefined,
-            }));
-            slots.push({ ...exercise, setData });
-        } else {
-            // Expanded: N lines with planned_sets === 1
-            const setData = markDistinctStepsFromMaster(
-                slotExs
-                    .sort((a, b) => a.order_in_block - b.order_in_block)
-                    .map((ex) => setDataFromApiLine(ex, false))
-            );
-            slots.push({ ...exercise, setData });
-        }
+        slots.push(
+            buildSupersetSlotFromApiLines(
+                slotLines[i] ?? [],
+                i,
+                base.id,
+                i === 0 ? "a1" : "a2"
+            )
+        );
     }
 
     return normalizeSupersetRow({
         ...base,
         exercises: slots,
-        sets: slots[0]?.setData?.length ?? base.sets ?? 3,
+        sets: rounds,
     });
 }
 

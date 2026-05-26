@@ -27,6 +27,7 @@ import {
     useGetTrainingSessionQuery,
     useUpdateTrainingSessionFullMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
+import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
 import {
     useGetSessionBlocksQuery,
     useGetTrainingBlockTypesQuery,
@@ -35,7 +36,7 @@ import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
+import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
@@ -67,11 +68,8 @@ import {
     normalizeEmomRow,
     hydrateEmomConstructorRow,
     normalizeAmrapRow,
-    isExpandedSupersetApiLines,
     hydrateSupersetConstructorRow,
-    isExpandedGiantSetApiLines,
     hydrateGiantSetConstructorRow,
-    isExpandedForTimeApiLines,
     hydrateForTimeConstructorRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
@@ -331,24 +329,15 @@ export const EditSession: React.FC = () => {
                     return hydrateDropsetConstructorRow(base, exs);
                 }
 
-                if (
-                    setType === SET_TYPE.SUPERSET &&
-                    isExpandedSupersetApiLines(exs)
-                ) {
+                if (setType === SET_TYPE.SUPERSET && exs.length > 0) {
                     return hydrateSupersetConstructorRow(base, exs);
                 }
 
-                if (
-                    setType === SET_TYPE.GIANT_SET &&
-                    isExpandedGiantSetApiLines(exs)
-                ) {
+                if (setType === SET_TYPE.GIANT_SET && exs.length > 0) {
                     return hydrateGiantSetConstructorRow(base, exs);
                 }
 
-                if (
-                    setType === SET_TYPE.FOR_TIME &&
-                    isExpandedForTimeApiLines(exs)
-                ) {
+                if (setType === SET_TYPE.FOR_TIME && exs.length > 0) {
                     return hydrateForTimeConstructorRow(base, exs);
                 }
 
@@ -533,7 +522,7 @@ export const EditSession: React.FC = () => {
                     block_type_id: row.blockTypeId,
                     order_in_session: i + 1,
                     set_type: row.setType,
-                    rounds: row.rounds,
+                    rounds: getBlockRoundsFromConstructorRow(row),
                     time_cap: row.timeCap,
                     interval_seconds: row.intervalSeconds,
                     objective_text:

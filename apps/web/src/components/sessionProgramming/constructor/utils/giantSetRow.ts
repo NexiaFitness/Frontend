@@ -6,7 +6,7 @@
  * @updated v6.2.0 — setData por ejercicio para series independientes por slot
  */
 
-import { markDistinctStepsFromMaster } from "@nexia/shared";
+import { markDistinctStepsFromMaster, groupParallelConstructorApiLines, isParallelConstructorExpandedLines } from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
@@ -233,15 +233,6 @@ export function getGiantSetPersistLines(row: ConstructorRow): PersistExerciseLin
 /*  Hidratación desde API                                             */
 /* ------------------------------------------------------------------ */
 
-function groupByExerciseId(exs: ApiExerciseLine[]): Record<number, ApiExerciseLine[]> {
-    const map: Record<number, ApiExerciseLine[]> = {};
-    for (const ex of exs) {
-        if (!map[ex.exercise_id]) map[ex.exercise_id] = [];
-        map[ex.exercise_id].push(ex);
-    }
-    return map;
-}
-
 function setDataFromApiLine(
     ex: ApiExerciseLine,
     isManuallyEdited: boolean
@@ -259,77 +250,75 @@ function setDataFromApiLine(
     };
 }
 
-export function isExpandedGiantSetApiLines(exs: ApiExerciseLine[]): boolean {
-    if (exs.length < 2) return false;
-    const byExercise = groupByExerciseId(exs);
-    // Expanded if at least one exercise has multiple lines with planned_sets === 1
-    for (const group of Object.values(byExercise)) {
-        if (group.length >= 2 && group.every((e) => (e.planned_sets ?? 1) === 1)) {
-            return true;
-        }
+function buildParallelSlotFromApiLines(
+    slotLines: ApiExerciseLine[],
+    slotIndex: number,
+    rowId: string,
+    createEmptySlot: (index: number, rowId: string) => ConstructorExercise
+): ConstructorExercise {
+    if (slotLines.length === 0) {
+        return createEmptySlot(slotIndex, rowId);
     }
-    return false;
+
+    const first = slotLines[0];
+    const exercise: ConstructorExercise = {
+        id: `ex-${first.id}-${slotIndex}`,
+        serverExerciseId: slotLines.length === 1 ? first.id : undefined,
+        exerciseId: first.exercise_id,
+        exerciseName: `Ejercicio #${first.exercise_id}`,
+        plannedReps: first.planned_reps,
+        plannedWeight: first.planned_weight,
+        plannedDuration: first.planned_duration,
+        effortCharacter: first.effort_character as ConstructorExercise["effortCharacter"],
+        effortValue: first.effort_value,
+        notes: first.notes,
+        repsTipo:
+            first.planned_duration != null && !first.planned_reps?.trim() ? "tiempo" : "reps",
+    };
+
+    let setData: ConstructorSetData[];
+    if (slotLines.length === 1 && (first.planned_sets ?? 1) > 1) {
+        const count = first.planned_sets ?? 3;
+        const template = setDataFromApiLine(first, false);
+        setData = Array.from({ length: count }, (_, idx) => ({
+            ...template,
+            id: `set-legacy-${idx}-${generateId()}`,
+            isManuallyEdited: false,
+            serverExerciseId: idx === 0 ? first.id : undefined,
+        }));
+    } else {
+        setData = markDistinctStepsFromMaster(
+            slotLines
+                .sort((a, b) => a.order_in_block - b.order_in_block)
+                .map((ex) => setDataFromApiLine(ex, false))
+        );
+    }
+
+    return { ...exercise, setData };
+}
+
+export function isExpandedGiantSetApiLines(exs: ApiExerciseLine[]): boolean {
+    return isParallelConstructorExpandedLines(exs, MIN_GIANT_SET_SLOTS);
 }
 
 export function hydrateGiantSetConstructorRow(
     base: ConstructorRow,
     exs: ApiExerciseLine[]
 ): ConstructorRow {
-    const byExercise = groupByExerciseId(exs);
-    const slots: ConstructorExercise[] = [];
-
-    // Ordenar grupos por order_in_block del primer ejercicio de cada grupo
-    const sortedGroups = Object.values(byExercise).sort(
-        (a, b) => (a[0]?.order_in_block ?? 0) - (b[0]?.order_in_block ?? 0)
+    const { rounds, slotLines } = groupParallelConstructorApiLines(
+        exs,
+        base.rounds,
+        MIN_GIANT_SET_SLOTS
     );
 
-    for (const group of sortedGroups) {
-        if (!group || group.length === 0) continue;
-
-        const first = group[0];
-        const exercise: ConstructorExercise = {
-            id: `ex-${first.id}-${slots.length}`,
-            serverExerciseId: group.length === 1 ? first.id : undefined,
-            exerciseId: first.exercise_id,
-            exerciseName: `Ejercicio #${first.exercise_id}`,
-            plannedReps: first.planned_reps,
-            plannedWeight: first.planned_weight,
-            plannedDuration: first.planned_duration,
-            effortCharacter: first.effort_character as ConstructorExercise["effortCharacter"],
-            effortValue: first.effort_value,
-            notes: first.notes,
-            repsTipo:
-                first.planned_duration != null && !first.planned_reps?.trim()
-                    ? "tiempo"
-                    : "reps",
-        };
-
-        if (group.length === 1 && (first.planned_sets ?? 1) > 1) {
-            // Collapsed legacy: 1 line with planned_sets > 1
-            const count = first.planned_sets ?? 3;
-            const template = setDataFromApiLine(first, false);
-            const setData = Array.from({ length: count }, (_, idx) => ({
-                ...template,
-                id: `set-legacy-${idx}-${generateId()}`,
-                isManuallyEdited: false,
-                serverExerciseId: idx === 0 ? first.id : undefined,
-            }));
-            slots.push({ ...exercise, setData });
-        } else {
-            // Expanded: N lines with planned_sets === 1
-            const setData = markDistinctStepsFromMaster(
-                group
-                    .sort((a, b) => a.order_in_block - b.order_in_block)
-                    .map((ex) => setDataFromApiLine(ex, false))
-            );
-            slots.push({ ...exercise, setData });
-        }
-    }
+    const slots = slotLines.map((lines, index) =>
+        buildParallelSlotFromApiLines(lines, index, base.id, createGiantSetExerciseSlot)
+    );
 
     return normalizeGiantSetRow({
         ...base,
         exercises: slots,
-        sets: slots[0]?.setData?.length ?? base.sets ?? 3,
+        sets: rounds,
     });
 }
 

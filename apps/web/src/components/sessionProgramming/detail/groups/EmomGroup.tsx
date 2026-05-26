@@ -1,11 +1,8 @@
 /**
  * EmomGroup.tsx — EMOM en modo lectura.
  *
- * Estructura: ventanas (V1, V2…) cada una con sus ejercicios. Cada ventana se
- * agrupa visualmente con el cuadrado púrpura a la izquierda y la lista de
- * ejercicios a la derecha.
- *
- * Barra: Tiempo total · Intervalo · Ventanas.
+ * Una tabla única (V1, V2…) con reps/esfuerzo alineados a la derecha,
+ * misma cuadrícula que AMRAP / Giant Set.
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -13,30 +10,33 @@
 
 import React, { useMemo } from "react";
 import { Clock, Hourglass, Repeat } from "lucide-react";
-import type { SessionExerciseGroupView, SessionExerciseSlotView } from "@nexia/shared";
+import type { SessionExerciseGroupView } from "@nexia/shared";
 import { DetailCardShell } from "../DetailCardShell";
 import { DetailSlotRing } from "../DetailSlotRing";
-import { DetailSeriesTable } from "../DetailSeriesTable";
 import { DetailParamItem } from "./DetailParamItem";
 import { detailStyleForKind, hintForKind } from "../detailStyles";
+import { formatReps, formatEffort } from "../detailFormatters";
+import {
+    DETAIL_TABLE_BODY_CLASS,
+    DETAIL_TABLE_CLASS,
+    DETAIL_TABLE_HEAD_CLASS,
+} from "../detailTableLayout";
+import {
+    DetailEffortCell,
+    DetailEffortHeaderCell,
+    DetailLeadHeaderCell,
+    DetailRepsCell,
+    DetailRepsHeaderCell,
+    DetailRestEmptyCell,
+    DetailRestHeaderCell,
+    DetailRoundBodyCell,
+    DetailRoundHeaderCell,
+    DetailTableColGroup,
+} from "../detailTableCells";
 
 export interface EmomGroupProps {
     blockTitle: string;
     group: SessionExerciseGroupView;
-}
-
-interface WindowGroup {
-    label: string;
-    slots: SessionExerciseSlotView[];
-}
-
-function groupByWindow(group: SessionExerciseGroupView): WindowGroup[] {
-    const map = new Map<string, SessionExerciseSlotView[]>();
-    for (const slot of group.slots) {
-        if (!map.has(slot.slotLabel)) map.set(slot.slotLabel, []);
-        map.get(slot.slotLabel)!.push(slot);
-    }
-    return Array.from(map.entries()).map(([label, slots]) => ({ label, slots }));
 }
 
 function formatIntervalSeconds(seconds: number | null): string | null {
@@ -45,9 +45,13 @@ function formatIntervalSeconds(seconds: number | null): string | null {
     return `${seconds}s`;
 }
 
+function countWindows(slots: SessionExerciseGroupView["slots"]): number {
+    return new Set(slots.map((slot) => slot.slotLabel)).size;
+}
+
 export const EmomGroup: React.FC<EmomGroupProps> = ({ blockTitle, group }) => {
     const style = detailStyleForKind(group.kind);
-    const windows = useMemo(() => groupByWindow(group), [group]);
+    const windowCount = useMemo(() => countWindows(group.slots), [group.slots]);
     const interval = formatIntervalSeconds(group.intervalSeconds);
 
     const paramsBar = (
@@ -71,7 +75,7 @@ export const EmomGroup: React.FC<EmomGroupProps> = ({ blockTitle, group }) => {
             <DetailParamItem
                 icon={<Repeat className="h-3.5 w-3.5" />}
                 label="Ventanas"
-                value={windows.length}
+                value={windowCount}
                 accentTextClass={style.accentTextClass}
             />
         </>
@@ -85,36 +89,55 @@ export const EmomGroup: React.FC<EmomGroupProps> = ({ blockTitle, group }) => {
             paramsBar={paramsBar}
             hint={hintForKind(group.kind, group.rounds)}
         >
-            <div className="space-y-3">
-                {windows.map((win) => (
-                    <div
-                        key={win.label}
-                        className="rounded-md border border-purple-500/20 bg-purple-500/[0.04] px-3 pb-3 pt-2"
-                    >
-                        <div className="flex items-start gap-3">
-                            <DetailSlotRing variant="emom_window" label={win.label} />
-                            <div className="min-w-0 flex-1 space-y-3">
-                                {win.slots.map((slot, idx) => (
-                                    <div key={slot.exerciseId + "-" + idx} className="min-w-0">
-                                        <div className="mb-1 text-sm font-semibold text-foreground">
-                                            {slot.exerciseName}
+            <div className="overflow-hidden rounded-md border border-border/50">
+                <table className={DETAIL_TABLE_CLASS}>
+                    <DetailTableColGroup />
+                    <thead className={DETAIL_TABLE_HEAD_CLASS}>
+                        <tr>
+                            <DetailRoundHeaderCell />
+                            <DetailLeadHeaderCell label="Ejercicio" />
+                            <DetailRepsHeaderCell />
+                            <DetailEffortHeaderCell />
+                            <DetailRestHeaderCell showLabel={false} />
+                        </tr>
+                    </thead>
+                    <tbody className={DETAIL_TABLE_BODY_CLASS}>
+                        {group.slots.map((slot, idx) => {
+                            const set = slot.sets[0];
+                            const repsText = set ? formatReps(set) ?? "—" : "—";
+                            const effortText = set
+                                ? formatEffort(set.effortCharacter, set.effortValue) ?? "—"
+                                : "—";
+                            const isLast = idx === group.slots.length - 1;
+
+                            return (
+                                <tr key={`${slot.slotLabel}-${slot.exerciseId}-${idx}`} className="bg-card">
+                                    <DetailRoundBodyCell />
+                                    <td className="px-3 py-2">
+                                        <div className="flex items-center gap-2.5 min-w-0">
+                                            <DetailSlotRing
+                                                variant="emom_window"
+                                                label={slot.slotLabel}
+                                                withConnector={!isLast}
+                                            />
+                                            <span className="truncate text-sm font-medium text-foreground">
+                                                {slot.exerciseName}
+                                            </span>
                                         </div>
-                                        <DetailSeriesTable
-                                            rows={slot.sets}
-                                            firstColumnLabel="Ventana"
-                                            hideRestColumn
-                                        />
                                         {slot.notes && (
-                                            <p className="mt-1 text-[11px] italic text-muted-foreground">
+                                            <p className="mt-1 pl-[46px] text-[11px] italic text-muted-foreground">
                                                 {slot.notes}
                                             </p>
                                         )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                ))}
+                                    </td>
+                                    <DetailRepsCell>{repsText}</DetailRepsCell>
+                                    <DetailEffortCell>{effortText}</DetailEffortCell>
+                                    <DetailRestEmptyCell />
+                                </tr>
+                            );
+                        })}
+                    </tbody>
+                </table>
             </div>
         </DetailCardShell>
     );

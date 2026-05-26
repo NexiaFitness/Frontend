@@ -16,6 +16,7 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
+import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
@@ -30,15 +31,6 @@ function mapRepsTipoToPayload(
     effort_value: number | null;
 } {
     const repsTipo = row.repsTipo ?? "reps";
-
-    if (row.setType === "amrap") {
-        return {
-            planned_reps: "AMRAP",
-            planned_duration: null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
 
     if (repsTipo === "tiempo") {
         return {
@@ -124,7 +116,7 @@ export function buildTemplatePayloadFromConstructorRows(
                 block_type_id: row.blockTypeId,
                 order_in_template: rowIndex,
                 set_type: row.setType,
-                rounds: row.rounds,
+                rounds: getBlockRoundsFromConstructorRow(row),
                 time_cap: row.timeCap,
                 interval_seconds: row.intervalSeconds,
                 exercises,

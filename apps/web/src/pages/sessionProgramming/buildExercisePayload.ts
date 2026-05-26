@@ -35,15 +35,6 @@ function mapRepsTipoToPayload(
 } {
     const repsTipo = row.repsTipo ?? "reps";
 
-    if (row.setType === "amrap") {
-        return {
-            planned_reps: "AMRAP",
-            planned_duration: null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
-
     if (repsTipo === "tiempo") {
         return {
             planned_reps: null,
