@@ -21,7 +21,7 @@ import { ContextStripShell, type ContextStripZone } from "@/components/ui/Contex
 
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 import type { PeriodBlockConstructorStep } from "./periodBlockConstructor";
-import { computeWeeklyStructureMetrics } from "./PeriodizationWeeklyStructureEditor";
+import { computeWeeklyStructureMetrics } from "./periodizationWeeklyStructureUtils";
 
 function formatDateShort(dateStr: string): string {
     const [y, m, d] = dateStr.split("-").map(Number);

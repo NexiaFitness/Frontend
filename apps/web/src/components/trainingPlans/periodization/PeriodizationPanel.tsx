@@ -23,10 +23,8 @@ import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 import { VolumeIntensityExplainer } from "./VolumeIntensityExplainer";
 import { SliderLevelBadge } from "./SliderLevelBadge";
-import {
-    PeriodizationWeeklyStructureEditor,
-    formatRangeShort,
-} from "./PeriodizationWeeklyStructureEditor";
+import { PeriodizationWeeklyStructureEditor } from "./PeriodizationWeeklyStructureEditor";
+import { formatRangeShort } from "./periodizationWeeklyStructureUtils";
 
 interface Props {
     formState: PeriodBlockFormState;

@@ -10,11 +10,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-import {
-    formatCalendarWeekRange,
-    getTrainingDatesInRange,
-    type TrainingDateInfo,
-} from "@nexia/shared";
+import { getTrainingDatesInRange, type TrainingDateInfo } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type {
     WeeklyStructureDayPatternInput,
@@ -24,44 +20,12 @@ import type {
 import { cn } from "@/lib/utils";
 
 import { DayCell } from "./DayCell";
-
-/** Identificador único del día en el picker: `{weekOrdinal}-{dayOfWeek}`. */
-export function toPickerDayId(weekOrdinal: number, dayOfWeek: number): string {
-    return `${weekOrdinal}-${dayOfWeek}`;
-}
-
-export function parsePickerDayId(
-    id: string,
-): { weekOrdinal: number; dayOfWeek: number } | null {
-    const parts = id.split("-");
-    if (parts.length !== 2) return null;
-    const weekOrdinal = Number(parts[0]);
-    const dayOfWeek = Number(parts[1]);
-    if (!Number.isFinite(weekOrdinal) || !Number.isFinite(dayOfWeek)) {
-        return null;
-    }
-    return { weekOrdinal, dayOfWeek };
-}
-
-export function formatRangeShort(startDate: string, endDate: string): string {
-    const fmt = (iso: string) => {
-        const [y, m, d] = iso.split("-").map(Number);
-        return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "short",
-        });
-    };
-    return `${fmt(startDate)} – ${fmt(endDate)}`;
-}
-
-/** Etiqueta lun–dom de la semana calendario N del bloque. */
-export function formatBlockWeekRange(
-    blockStartISO: string,
-    weekOrdinal: number,
-    _blockEndISO?: string,
-): string {
-    return formatCalendarWeekRange(weekOrdinal, blockStartISO);
-}
+import {
+    formatBlockWeekRange,
+    formatRangeShort,
+    parsePickerDayId,
+    toPickerDayId,
+} from "./periodizationWeeklyStructureUtils";
 
 export interface PeriodizationWeeklyStructureEditorProps {
     startDate: string;
@@ -79,12 +43,6 @@ export interface PeriodizationWeeklyStructureEditorProps {
     /** Ocupa el alto disponible del panel (scroll interno). */
     fillContainer?: boolean;
     className?: string;
-}
-
-export interface WeeklyStructureMetrics {
-    totalTrainable: number;
-    withPatterns: number;
-    weekCount: number;
 }
 
 export const PeriodizationWeeklyStructureEditor: React.FC<
@@ -433,26 +391,3 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
         </div>
     );
 };
-
-export function computeWeeklyStructureMetrics(
-    startDate: string,
-    endDate: string,
-    trainingDays: readonly string[] | null | undefined,
-    value: WeeklyStructureWeekCreate[],
-): WeeklyStructureMetrics {
-    const trainingDates = getTrainingDatesInRange(
-        startDate,
-        endDate,
-        trainingDays,
-    );
-    const weekOrdinals = new Set(trainingDates.map((d) => d.weekOrdinal));
-    const withPatterns = value.reduce(
-        (acc, w) => acc + w.days.filter((d) => d.patterns.length > 0).length,
-        0,
-    );
-    return {
-        totalTrainable: trainingDates.length,
-        withPatterns,
-        weekCount: weekOrdinals.size,
-    };
-}

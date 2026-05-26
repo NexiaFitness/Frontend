@@ -13,10 +13,8 @@ import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStruct
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { Button } from "@/components/ui/buttons";
 
-import {
-    PeriodizationWeeklyStructureEditor,
-    computeWeeklyStructureMetrics,
-} from "./PeriodizationWeeklyStructureEditor";
+import { PeriodizationWeeklyStructureEditor } from "./PeriodizationWeeklyStructureEditor";
+import { computeWeeklyStructureMetrics } from "./periodizationWeeklyStructureUtils";
 
 export interface PeriodizationWeeklyStructureModalProps {
     isOpen: boolean;
