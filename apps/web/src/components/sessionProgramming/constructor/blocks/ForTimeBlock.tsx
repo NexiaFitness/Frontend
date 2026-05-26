@@ -153,7 +153,7 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
     const canGoForward = activeSetIndex < totalRounds - 1;
 
     return (
-        <div className={CONSTRUCTOR_FOR_TIME_CARD_CLASS}>
+        <div className={CONSTRUCTOR_FOR_TIME_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}

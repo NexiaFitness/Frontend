@@ -105,7 +105,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
     };
 
     return (
-        <div className={CONSTRUCTOR_AMRAP_CARD_CLASS}>
+        <div className={CONSTRUCTOR_AMRAP_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}

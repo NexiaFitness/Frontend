@@ -9,7 +9,8 @@
  * - onToggleClick para toggle en tablet/touch (Fase 3).
  *
  * Notas de mantenimiento:
- * - Main: lg:ml-sidebar-collapsed | lg:ml-sidebar-expanded (tokens), transition-all duration-300, min-w-0.
+ * - Main: scroll contenido en #dashboard-main-scroll (altura = viewport − navbar), no en window.
+ * - lg:ml-sidebar-collapsed | lg:ml-sidebar-expanded (tokens), transition-all duration-300, min-w-0.
  *
  * @author Frontend Team
  * @since v5.0.0 - Nexia Sparkle Flow (Sidebar colapsable Fase 4)
@@ -83,7 +84,8 @@ export const DashboardShell: React.FC = () => {
             <main
                 id={DASHBOARD_MAIN_SCROLL_ID}
                 className={cn(
-                    "min-h-screen min-w-0 overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
+                    "min-h-0 min-w-0 overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
+                    "h-[calc(100vh-theme(space.navbar-dashboard-mobile))] lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]",
                     sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded"
                 )}
             >

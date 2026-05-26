@@ -110,7 +110,7 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
     const baseExercise = exercise ?? placeholderExercise;
 
     return (
-        <div className={CONSTRUCTOR_DROPSET_CARD_CLASS}>
+        <div className={CONSTRUCTOR_DROPSET_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}

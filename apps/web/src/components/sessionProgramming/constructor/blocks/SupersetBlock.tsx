@@ -133,7 +133,7 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
     const canGoForward = activeSetIndex < totalSets - 1;
 
     return (
-        <div className={CONSTRUCTOR_CARD_CLASS}>
+        <div className={CONSTRUCTOR_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}

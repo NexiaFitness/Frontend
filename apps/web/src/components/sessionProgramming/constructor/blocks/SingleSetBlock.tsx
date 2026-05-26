@@ -93,7 +93,7 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
     const baseExercise = exercise ?? placeholderExercise;
 
     return (
-        <div className={CONSTRUCTOR_CARD_CLASS}>
+        <div className={CONSTRUCTOR_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}

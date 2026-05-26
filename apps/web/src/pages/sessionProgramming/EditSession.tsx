@@ -14,6 +14,7 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
+import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
 import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
@@ -210,6 +211,21 @@ export const EditSession: React.FC = () => {
     const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
+    const { captureBeforePickerChange } = usePreserveDashboardScrollOnConstructorPicker(
+        showExercisePickerModal,
+        targetRowIdForPicker
+    );
+
+    const handleAddExerciseRequest = useCallback(
+        (rowId: string, exerciseSlotId?: string) => {
+            captureBeforePickerChange(rowId);
+            setTargetRowIdForPicker(rowId);
+            setTargetExerciseSlotId(exerciseSlotId ?? null);
+            setShowExercisePickerModal(true);
+        },
+        [captureBeforePickerChange]
+    );
+
     const draftExercisesForVolumePanel = useMemo(
         () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
         [constructorRows]
@@ -363,46 +379,31 @@ export const EditSession: React.FC = () => {
                 };
             });
 
-            const nameMap: Record<number, string> = {};
-            if (exercisesData?.exercises) {
-                for (const ex of exercisesData.exercises) {
-                    nameMap[ex.id] = ex.nombre;
-                }
-            }
-
             setConstructorRows(
-                rows
-                    .map((row) => ({
-                        ...row,
-                        exercises: row.exercises.map((ex) => ({
-                            ...ex,
-                            exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
-                        })),
-                    }))
-                    .map((row) => {
-                        if (row.setType === SET_TYPE.SUPERSET) {
-                            return normalizeSupersetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.SINGLE_SET) {
-                            return normalizeSingleSetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.DROPSET) {
-                            return normalizeDropsetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.GIANT_SET) {
-                            return normalizeGiantSetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.FOR_TIME) {
-                            return normalizeForTimeRow(row);
-                        }
-                        if (row.setType === SET_TYPE.EMOM) {
-                            return normalizeEmomRow(row);
-                        }
-                        if (row.setType === SET_TYPE.AMRAP) {
-                            return normalizeAmrapRow(row);
-                        }
-                        return row;
-                    })
+                rows.map((row) => {
+                    if (row.setType === SET_TYPE.SUPERSET) {
+                        return normalizeSupersetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.SINGLE_SET) {
+                        return normalizeSingleSetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.DROPSET) {
+                        return normalizeDropsetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.GIANT_SET) {
+                        return normalizeGiantSetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.FOR_TIME) {
+                        return normalizeForTimeRow(row);
+                    }
+                    if (row.setType === SET_TYPE.EMOM) {
+                        return normalizeEmomRow(row);
+                    }
+                    if (row.setType === SET_TYPE.AMRAP) {
+                        return normalizeAmrapRow(row);
+                    }
+                    return row;
+                })
             );
         };
 
@@ -410,7 +411,36 @@ export const EditSession: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [sessionId, blocks, isLoadingSessionBlocks, dispatch, exercisesData]);
+    }, [sessionId, blocks, isLoadingSessionBlocks, dispatch]);
+
+    /** Nombres del catálogo sin re-hidratar el constructor (evita perder edición y scroll). */
+    useEffect(() => {
+        if (!exercisesData?.exercises?.length) return;
+
+        const nameMap: Record<number, string> = {};
+        for (const ex of exercisesData.exercises) {
+            nameMap[ex.id] = ex.nombre;
+        }
+
+        setConstructorRows((prev) => {
+            if (prev.length === 0) return prev;
+
+            let changed = false;
+            const next = prev.map((row) => ({
+                ...row,
+                exercises: row.exercises.map((exercise) => {
+                    const resolved = nameMap[exercise.exerciseId];
+                    if (!resolved || exercise.exerciseName === resolved) {
+                        return exercise;
+                    }
+                    changed = true;
+                    return { ...exercise, exerciseName: resolved };
+                }),
+            }));
+
+            return changed ? next : prev;
+        });
+    }, [exercisesData]);
 
     const handleSelectFromPicker = useCallback(
         (exercise: Exercise) => {
@@ -829,13 +859,7 @@ export const EditSession: React.FC = () => {
                                     rows={constructorRows}
                                     blockTypes={blockTypes}
                                     onRowsChange={setConstructorRows}
-                                    onAddExerciseRequest={(rowId, exerciseSlotId) => {
-                                        setTargetRowIdForPicker(rowId);
-                                        setTargetExerciseSlotId(exerciseSlotId ?? null);
-                                        setTimeout(() => {
-                                            setShowExercisePickerModal(true);
-                                        }, 0);
-                                    }}
+                                    onAddExerciseRequest={handleAddExerciseRequest}
                                     titleAccessory={
                                         constructorRows.length > 0 ? (
                                             <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />

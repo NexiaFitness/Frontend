@@ -21,6 +21,7 @@
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
+import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
@@ -286,6 +287,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
     const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
+
+    const { captureBeforePickerChange } = usePreserveDashboardScrollOnConstructorPicker(
+        showExercisePickerModal,
+        targetRowIdForPicker
+    );
+
+    const handleAddExerciseRequest = useCallback(
+        (rowId: string, exerciseSlotId?: string) => {
+            captureBeforePickerChange(rowId);
+            setTargetRowIdForPicker(rowId);
+            setTargetExerciseSlotId(exerciseSlotId ?? null);
+            setShowExercisePickerModal(true);
+        },
+        [captureBeforePickerChange]
+    );
 
     const draftExercisesForVolumePanel = useMemo(
         () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
@@ -866,13 +882,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                     rows={constructorRows}
                                     blockTypes={blockTypes}
                                     onRowsChange={setConstructorRows}
-                                    onAddExerciseRequest={(rowId, exerciseSlotId) => {
-                                        setTargetRowIdForPicker(rowId);
-                                        setTargetExerciseSlotId(exerciseSlotId ?? null);
-                                        setTimeout(() => {
-                                            setShowExercisePickerModal(true);
-                                        }, 0);
-                                    }}
+                                    onAddExerciseRequest={handleAddExerciseRequest}
                                     titleAccessory={
                                         constructorRows.length > 0 ? (
                                             <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />

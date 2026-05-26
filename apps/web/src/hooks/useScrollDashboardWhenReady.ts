@@ -1,19 +1,19 @@
 /**
- * Scroll al inicio cuando el contenido de la vista termina de cargar (datos lazy, RTK, etc.).
+ * Scroll al inicio cuando la vista termina de cargar (datos lazy, RTK, etc.).
+ *
+ * Una sola vez por montaje: los reintentos de scrollDashboardMainToTopAfterPaint
+ * no deben ejecutarse tras interacción del usuario (p. ej. scroll al constructor).
  */
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { scrollDashboardMainToTopAfterPaint } from "@/lib/dashboardScroll";
 
 export function useScrollDashboardWhenReady(isReady: boolean): void {
-    useLayoutEffect(() => {
-        if (isReady) {
-            scrollDashboardMainToTopAfterPaint();
-        }
-    }, [isReady]);
+    const hasScrolledRef = useRef(false);
 
-    useEffect(() => {
-        if (!isReady) return;
+    useLayoutEffect(() => {
+        if (!isReady || hasScrolledRef.current) return;
+        hasScrolledRef.current = true;
         scrollDashboardMainToTopAfterPaint();
     }, [isReady]);
 }

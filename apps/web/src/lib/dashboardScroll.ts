@@ -22,8 +22,7 @@ export function scrollDashboardMainToTop(
             el.scrollLeft = 0;
             el.scrollTo({ top: 0, left: 0, behavior });
         }
-        // Como #dashboard-main-scroll usa min-h-screen (no h-screen), el scroll
-        // real puede recaer en window. Reseteamos ambos para cubrir cada layout.
+        // Fallback por si alguna vista aún desborda el viewport en window.
         window.scrollTo({ top: 0, left: 0, behavior });
         if (typeof document !== "undefined") {
             if (document.documentElement) {
@@ -51,4 +50,30 @@ export function scrollDashboardMainToTopAfterPaint(
     window.setTimeout(() => scrollDashboardMainToTop(behavior), 50);
     window.setTimeout(() => scrollDashboardMainToTop(behavior), 150);
     window.setTimeout(() => scrollDashboardMainToTop(behavior), 300);
+}
+
+/** Selector estable para anclar scroll al abrir/cerrar el picker inline del constructor. */
+export function getConstructorRowAnchorSelector(rowId: string): string {
+    return `[data-constructor-row-id="${CSS.escape(rowId)}"]`;
+}
+
+export function captureConstructorRowViewportTop(rowId: string): number | null {
+    const el = document.querySelector(getConstructorRowAnchorSelector(rowId));
+    return el ? el.getBoundingClientRect().top : null;
+}
+
+/** Compensa el scroll del main cuando un reflow mueve la card del constructor en viewport. */
+export function compensateDashboardScrollForRowViewportShift(
+    rowId: string,
+    viewportTopBefore: number,
+): boolean {
+    const main = getDashboardMainScrollElement();
+    const el = document.querySelector(getConstructorRowAnchorSelector(rowId));
+    if (!main || !el) return false;
+
+    const delta = el.getBoundingClientRect().top - viewportTopBefore;
+    if (Math.abs(delta) < 1) return false;
+
+    main.scrollTop += delta;
+    return true;
 }

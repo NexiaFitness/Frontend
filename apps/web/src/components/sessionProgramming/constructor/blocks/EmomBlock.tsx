@@ -103,7 +103,7 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
     };
 
     return (
-        <div className={CONSTRUCTOR_EMOM_CARD_CLASS}>
+        <div className={CONSTRUCTOR_EMOM_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}
