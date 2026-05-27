@@ -14,13 +14,21 @@ import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Briefcase, MapPin, Phone } from "lucide-react";
-import { FormSelect } from "@/components/ui/forms/FormSelect";
+import { FormCombobox } from "@/components/ui/forms/FormCombobox";
+import { Label } from "@/components/ui/forms/Label";
 import { Input } from "@/components/ui/forms/Input";
 import { FormSection } from "@/components/ui/forms/FormSection";
 import { Button } from "@/components/ui/buttons/Button";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
-import { useTrainerProfile, useGetCurrentTrainerProfileQuery } from "@nexia/shared";
+import {
+    useTrainerProfile,
+    useGetCurrentTrainerProfileQuery,
+    getTrainerOccupationLabel,
+    getTrainerModalityLabel,
+    getTrainerSpecialtyLabel,
+    toTrainerCatalogOptions,
+} from "@nexia/shared";
 import {
     useGetCountriesQuery,
     useGetCitiesQuery,
@@ -28,14 +36,55 @@ import {
     useGetTrainingModalitiesQuery,
     useGetTrainerSpecialtiesQuery,
 } from "@nexia/shared/api/catalogsApi";
+import type { ComboboxOption } from "@/components/ui/forms/FormCombobox";
 import type { RootState } from "@nexia/shared/store";
 
-function humanizeCatalogValue(str: string): string {
-    return str
-        .split("_")
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1).toLowerCase())
-        .join(" ");
+interface ProfileComboboxFieldProps {
+    id: string;
+    label: string;
+    value: string;
+    onChange: (value: string) => void;
+    options: ComboboxOption[];
+    error?: string;
+    helperText?: string;
+    required?: boolean;
+    disabled?: boolean;
+    placeholder?: string;
 }
+
+const ProfileComboboxField: React.FC<ProfileComboboxFieldProps> = ({
+    id,
+    label,
+    value,
+    onChange,
+    options,
+    error,
+    helperText,
+    required = false,
+    disabled = false,
+    placeholder = "Seleccionar",
+}) => (
+    <div className="space-y-1.5">
+        <Label htmlFor={id} className="text-foreground">
+            {label}
+            {required && <span className="text-destructive ml-0.5">*</span>}
+        </Label>
+        <FormCombobox
+            size="sm"
+            value={value}
+            onChange={onChange}
+            options={options}
+            placeholder={placeholder}
+            disabled={disabled}
+            ariaLabel={label}
+            buttonClassName={error ? "border-destructive" : undefined}
+        />
+        {error && <p className="text-sm text-destructive">{error}</p>}
+        {!error && helperText && (
+            <p className="text-sm text-muted-foreground">{helperText}</p>
+        )}
+    </div>
+);
 
 export const CompleteProfileForm: React.FC = () => {
     const navigate = useNavigate();
@@ -56,7 +105,6 @@ export const CompleteProfileForm: React.FC = () => {
         isLoading: isLoadingTrainer,
     });
 
-    // --- Catalogs ---
     const { data: countries = [] } = useGetCountriesQuery(undefined, { skip: !user });
 
     const countryCode = useMemo(() => {
@@ -73,7 +121,6 @@ export const CompleteProfileForm: React.FC = () => {
     const { data: modalities = [] } = useGetTrainingModalitiesQuery(undefined, { skip: !user });
     const { data: specialties = [] } = useGetTrainerSpecialtiesQuery(undefined, { skip: !user });
 
-    // --- Derived options ---
     const countrySelectValue = useMemo(() => {
         const v = formData.location_country ?? "";
         const c = countries.find((x) => x.code === v || x.name === v);
@@ -81,31 +128,37 @@ export const CompleteProfileForm: React.FC = () => {
     }, [formData.location_country, countries]);
 
     const occupationOptions = useMemo(
-        () => [
-            { value: "", label: "Selecciona tu ocupación" },
-            ...occupations.map((val) => ({ value: val, label: humanizeCatalogValue(val) })),
-        ],
+        () =>
+            toTrainerCatalogOptions(
+                occupations,
+                getTrainerOccupationLabel,
+                "Selecciona tu ocupación",
+            ),
         [occupations],
     );
 
     const modalityOptions = useMemo(
-        () => [
-            { value: "", label: "Selecciona modalidad" },
-            ...modalities.map((val) => ({ value: val, label: humanizeCatalogValue(val) })),
-        ],
+        () =>
+            toTrainerCatalogOptions(
+                modalities,
+                getTrainerModalityLabel,
+                "Selecciona modalidad",
+            ),
         [modalities],
     );
 
     const specialtyOptions = useMemo(
-        () => [
-            { value: "", label: "Sin especialidad específica" },
-            ...specialties.map((val) => ({ value: val, label: humanizeCatalogValue(val) })),
-        ],
+        () =>
+            toTrainerCatalogOptions(
+                specialties,
+                getTrainerSpecialtyLabel,
+                "Sin especialidad específica",
+            ),
         [specialties],
     );
 
     const countryOptions = useMemo(() => {
-        const opts = [
+        const opts: ComboboxOption[] = [
             { value: "", label: "Selecciona país" },
             ...countries.map((c) => ({ value: c.code, label: c.name })),
         ];
@@ -126,7 +179,6 @@ export const CompleteProfileForm: React.FC = () => {
         ];
     }, [citiesData, formData.location_city]);
 
-    // --- Handlers ---
     const onSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         const result = await handleSubmit();
@@ -149,87 +201,83 @@ export const CompleteProfileForm: React.FC = () => {
         <form onSubmit={onSubmit} className="space-y-6">
             {serverError && <ServerErrorBanner error={serverError} />}
 
-            {/* Section 1: Información Profesional */}
             <FormSection icon={<Briefcase className="h-4 w-4" />} title="Información profesional">
                 <p className="mb-5 -mt-2 text-sm text-muted-foreground">
                     Cuéntanos sobre tu experiencia y modalidad de trabajo
                 </p>
                 <div className="space-y-4">
-                    <FormSelect
+                    <ProfileComboboxField
                         id="occupation"
                         label="Ocupación"
                         value={formData.occupation}
-                        onChange={handleInputChange("occupation")}
+                        onChange={(value) => handleInputChange("occupation")(value)}
                         options={occupationOptions}
                         error={errors.occupation}
                         required
                         disabled={isSubmitting}
-                        size="sm"
+                        placeholder="Selecciona tu ocupación"
                     />
-                    <FormSelect
+                    <ProfileComboboxField
                         id="training_modality"
                         label="Modalidad de entrenamiento"
                         value={formData.training_modality}
-                        onChange={handleInputChange("training_modality")}
+                        onChange={(value) => handleInputChange("training_modality")(value)}
                         options={modalityOptions}
                         error={errors.training_modality}
                         required
                         disabled={isSubmitting}
+                        placeholder="Selecciona modalidad"
                         helperText="¿Trabajas presencial, online o ambas?"
-                        size="sm"
                     />
-                    <FormSelect
+                    <ProfileComboboxField
                         id="specialty"
                         label="Especialidad"
                         value={formData.specialty || ""}
-                        onChange={handleInputChange("specialty")}
+                        onChange={(value) => handleInputChange("specialty")(value)}
                         options={specialtyOptions}
                         error={errors.specialty}
                         disabled={isSubmitting}
+                        placeholder="Sin especialidad específica"
                         helperText="Opcional — Ayuda a tus clientes a encontrarte"
-                        size="sm"
                     />
                 </div>
             </FormSection>
 
-            {/* Section 2: Ubicación */}
             <FormSection icon={<MapPin className="h-4 w-4" />} title="Ubicación">
                 <p className="mb-5 -mt-2 text-sm text-muted-foreground">
                     ¿Dónde ofreces tus servicios?
                 </p>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <FormSelect
+                    <ProfileComboboxField
                         id="location_country"
                         label="País"
                         value={countrySelectValue}
-                        onChange={(e) => {
-                            const code = e.target.value;
-                            handleInputChange("location_country")(e);
+                        onChange={(code) => {
+                            handleInputChange("location_country")(code);
                             if (code !== countrySelectValue) {
-                                handleInputChange("location_city")({ target: { value: "" } });
+                                handleInputChange("location_city")("");
                             }
                         }}
                         options={countryOptions}
                         error={errors.location_country}
                         required
                         disabled={isSubmitting}
-                        size="sm"
+                        placeholder="Selecciona país"
                     />
-                    <FormSelect
+                    <ProfileComboboxField
                         id="location_city"
                         label="Ciudad"
                         value={formData.location_city || ""}
-                        onChange={handleInputChange("location_city")}
+                        onChange={(value) => handleInputChange("location_city")(value)}
                         options={cityOptions}
                         error={errors.location_city}
                         required
                         disabled={isSubmitting || !countryCode}
-                        size="sm"
+                        placeholder="Selecciona ciudad"
                     />
                 </div>
             </FormSection>
 
-            {/* Section 3: Contacto */}
             <FormSection icon={<Phone className="h-4 w-4" />} title="Contacto">
                 <p className="mb-5 -mt-2 text-sm text-muted-foreground">
                     Para que tus clientes puedan comunicarse contigo
@@ -249,7 +297,6 @@ export const CompleteProfileForm: React.FC = () => {
                 />
             </FormSection>
 
-            {/* Submit */}
             <div className="flex flex-col items-center gap-3 pt-2">
                 <Button
                     type="submit"

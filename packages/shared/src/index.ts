@@ -135,6 +135,14 @@ export * from "./types/client";
 export * from "./types/clientOnboarding";
 export * from "./types/clientStats";
 export * from "./types/trainer";
+export {
+    TRAINER_OCCUPATION_CATALOG_LABELS,
+    TRAINER_SPECIALTY_CATALOG_LABELS,
+    getTrainerOccupationLabel,
+    getTrainerModalityLabel,
+    getTrainerSpecialtyLabel,
+    toTrainerCatalogOptions,
+} from "./utils/trainerCatalogLabels";
 export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
