@@ -371,7 +371,8 @@ export function applyConstructorRowUpdate(
         return normalizeEmomRow(next);
     }
     if (next.setType === SET_TYPE.AMRAP) {
-        return normalizeAmrapRow(next);
+        const isTypeChange = row.setType !== SET_TYPE.AMRAP;
+        return normalizeAmrapRow(next, { applyDefaults: isTypeChange });
     }
     return next;
 }

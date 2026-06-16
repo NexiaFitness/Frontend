@@ -12,8 +12,8 @@ import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
     addAmrapExerciseSlot,
+    ensureAmrapStructure,
     MIN_AMRAP_SLOTS,
-    normalizeAmrapRow,
 } from "../utils/amrapRow";
 import { amrapFooterHint } from "@nexia/shared";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
@@ -69,7 +69,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
     onRemove,
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
-    const normalized = normalizeAmrapRow(row);
+    const normalized = ensureAmrapStructure(row);
     const exerciseCount = normalized.exercises.length;
     const canRemoveLast = exerciseCount > MIN_AMRAP_SLOTS;
 
@@ -139,7 +139,8 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                             : null,
                                     })
                                 }
-                                className="w-12"
+                                className="w-14"
+                                aria-label="Duración total"
                             />
                             <span className="text-[10px] text-muted-foreground">min</span>
                         </div>
@@ -159,6 +160,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                     })
                                 }
                                 className="w-12"
+                                aria-label="Rondas objetivo"
                             />
                             <span className="text-[10px] italic text-muted-foreground">
                                 opcional

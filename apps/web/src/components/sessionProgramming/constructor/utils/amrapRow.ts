@@ -34,10 +34,20 @@ export function createAmrapExerciseSlot(index: number, rowId?: string): Construc
     };
 }
 
-export function normalizeAmrapRow(row: ConstructorRow): ConstructorRow {
+export interface NormalizeAmrapRowOptions {
+    /** Si es true (default), rellena timeCap/rounds con valores por defecto cuando faltan. */
+    applyDefaults?: boolean;
+}
+
+export function normalizeAmrapRow(
+    row: ConstructorRow,
+    options: NormalizeAmrapRowOptions = {}
+): ConstructorRow {
     if (row.setType !== SET_TYPE.AMRAP) {
         return row;
     }
+
+    const { applyDefaults = true } = options;
 
     const exercises = [...row.exercises];
     const targetLength =
@@ -57,10 +67,19 @@ export function normalizeAmrapRow(row: ConstructorRow): ConstructorRow {
     return {
         ...row,
         exercises: normalizedExercises,
-        timeCap: row.timeCap ?? DEFAULT_AMRAP_DURATION_SECONDS,
-        rounds: row.rounds ?? DEFAULT_AMRAP_TARGET_ROUNDS,
+        timeCap: applyDefaults ? row.timeCap ?? DEFAULT_AMRAP_DURATION_SECONDS : row.timeCap,
+        rounds: applyDefaults ? row.rounds ?? DEFAULT_AMRAP_TARGET_ROUNDS : row.rounds,
         repsTipo: row.repsTipo ?? "reps",
     };
+}
+
+/**
+ * Garantiza la estructura mínima de un AMRAP (slots y repsTipo) sin imponer
+ * valores por defecto de timeCap/rounds. Util en renders controlados donde el
+ * padre ya gestiona esos valores.
+ */
+export function ensureAmrapStructure(row: ConstructorRow): ConstructorRow {
+    return normalizeAmrapRow(row, { applyDefaults: false });
 }
 
 export function addAmrapExerciseSlot(row: ConstructorRow): ConstructorRow {
