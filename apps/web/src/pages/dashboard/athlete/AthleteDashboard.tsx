@@ -16,6 +16,7 @@ import { EmptyState } from "@/components/ui/feedback/EmptyState";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
 import { useAthleteDashboard } from "@/hooks/athlete/useAthleteDashboard";
+import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import { CalendarDays } from "lucide-react";
 
 export const AthleteDashboard: React.FC = () => {
@@ -60,7 +61,9 @@ export const AthleteDashboard: React.FC = () => {
 
     return (
         <>
-            <div className="space-y-6 px-4 pb-24 pt-4 lg:px-8 lg:pb-8">
+            <div
+                className={`space-y-6 px-4 pt-4 lg:px-8 lg:pb-8 ${showStickyCta ? "" : "pb-24"}`}
+            >
                 <header className="space-y-1">
                     <h1 className="text-xl font-bold text-foreground">Hola, {userName}</h1>
                     <p className="text-sm text-muted-foreground">
@@ -124,14 +127,16 @@ export const AthleteDashboard: React.FC = () => {
             </div>
 
             {showStickyCta && todaySession && (
-                <div className="fixed inset-x-0 bottom-16 z-30 border-t border-border bg-background/95 p-4 backdrop-blur lg:hidden">
-                    <Button
-                        variant="primary"
-                        className="min-h-touch-athlete w-full"
-                        onClick={() => handleStart(todaySession.id)}
-                    >
-                        Empezar sesión
-                    </Button>
+                <div className="lg:hidden">
+                    <AthleteFixedFooter size="single">
+                        <Button
+                            variant="primary"
+                            className="min-h-touch-athlete w-full"
+                            onClick={() => handleStart(todaySession.id)}
+                        >
+                            Empezar sesión
+                        </Button>
+                    </AthleteFixedFooter>
                 </div>
             )}
         </>

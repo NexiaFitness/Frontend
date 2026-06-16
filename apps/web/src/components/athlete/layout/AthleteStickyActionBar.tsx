@@ -4,6 +4,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
+import { AthleteFixedFooter } from "./AthleteFixedFooter";
+import type { AthleteStickyFooterSize } from "./athleteLayoutClasses";
 
 export interface AthleteStickyActionBarProps {
     primaryLabel: string;
@@ -26,8 +28,11 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
     secondaryLoading,
     onSecondary,
 }) => {
+    const size: AthleteStickyFooterSize =
+        secondaryLabel && onSecondary ? "double" : "single";
+
     return (
-        <div className="fixed inset-x-0 bottom-16 z-30 space-y-2 border-t border-border bg-background/95 p-4">
+        <AthleteFixedFooter size={size}>
             <Button
                 variant="primary"
                 className="min-h-touch-athlete w-full active:scale-[0.98]"
@@ -46,6 +51,6 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
                     {secondaryLoading ? "Finalizando…" : secondaryLabel}
                 </Button>
             )}
-        </div>
+        </AthleteFixedFooter>
     );
 };

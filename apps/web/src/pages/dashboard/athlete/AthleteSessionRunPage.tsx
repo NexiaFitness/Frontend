@@ -11,6 +11,7 @@ import { AthleteStickyActionBar } from "@/components/athlete/layout/AthleteStick
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, useToast } from "@/components/ui/feedback";
 import { useAthleteSessionRun } from "@/hooks/athlete/useAthleteSessionRun";
+import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthleteSessionRunPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -90,7 +91,7 @@ export const AthleteSessionRunPage: React.FC = () => {
     }
 
     return (
-        <div className="flex min-h-full flex-col px-4 pb-32 pt-4">
+        <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
             <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
 
             <ExerciseStepView

@@ -16,6 +16,8 @@ import {
     useCreateSessionFeedbackMutation,
     useGetTrainingSessionQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
+import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
+import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthleteSessionFeedbackPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -68,7 +70,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     }
 
     return (
-        <div className="flex min-h-full flex-col px-4 pb-24 pt-4 lg:px-8">
+        <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
             <header className="mb-6 space-y-1">
                 <h1 className="text-xl font-bold text-foreground">¿Cómo fue la sesión?</h1>
                 <p className="text-sm text-muted-foreground">
@@ -141,7 +143,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                 )}
             </div>
 
-            <div className="fixed inset-x-0 bottom-16 z-30 space-y-2 border-t border-border bg-background/95 p-4 lg:static lg:mt-8 lg:border-0 lg:bg-transparent lg:p-0">
+            <AthleteFixedFooter size="withSecondaryLink">
                 <Button
                     variant="primary"
                     className="min-h-touch-athlete w-full"
@@ -157,7 +159,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                 >
                     Omitir por ahora
                 </button>
-            </div>
+            </AthleteFixedFooter>
         </div>
     );
 };

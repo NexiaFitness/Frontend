@@ -17,6 +17,8 @@ import {
     formatAthleteDateLong,
     getSessionStatusLabel,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
+import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -54,7 +56,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     }
 
     return (
-        <div className="flex min-h-full flex-col px-4 pb-24 pt-4 lg:px-8">
+        <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
             <button
                 type="button"
                 onClick={() => navigate(-1)}
@@ -136,7 +138,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 )}
             </div>
 
-            <div className="fixed inset-x-0 bottom-16 z-30 space-y-2 border-t border-border bg-background/95 p-4 lg:static lg:mt-8 lg:border-0 lg:bg-transparent lg:p-0">
+            <AthleteFixedFooter size="single">
                 {session.status === "completed" ? (
                     <Button
                         variant="primary"
@@ -155,7 +157,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         Empezar entrenamiento
                     </Button>
                 )}
-            </div>
+            </AthleteFixedFooter>
         </div>
     );
 };
