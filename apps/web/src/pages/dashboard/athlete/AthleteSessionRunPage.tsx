@@ -40,6 +40,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         handleFinish,
         isLoading,
         isLastStep,
+        showSaveSetButton,
     } = useAthleteSessionRun({
         sessionId,
         onSetSaved: (result) => {
@@ -107,10 +108,10 @@ export const AthleteSessionRunPage: React.FC = () => {
             />
 
             <AthleteStickyActionBar
-                primaryLabel="Serie completada"
+                primaryLabel={showSaveSetButton ? "Serie completada" : undefined}
                 primaryDisabled={saving}
                 primaryLoading={saving}
-                onPrimary={handleSaveSet}
+                onPrimary={showSaveSetButton ? handleSaveSet : undefined}
                 secondaryLabel={isLastStep ? "Finalizar sesión" : undefined}
                 secondaryDisabled={completing}
                 secondaryLoading={completing}

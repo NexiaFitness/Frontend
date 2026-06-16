@@ -8,10 +8,10 @@ import { AthleteFixedFooter } from "./AthleteFixedFooter";
 import type { AthleteStickyFooterSize } from "./athleteLayoutClasses";
 
 export interface AthleteStickyActionBarProps {
-    primaryLabel: string;
+    primaryLabel?: string;
     primaryDisabled?: boolean;
     primaryLoading?: boolean;
-    onPrimary: () => void;
+    onPrimary?: () => void;
     secondaryLabel?: string;
     secondaryDisabled?: boolean;
     secondaryLoading?: boolean;
@@ -28,23 +28,27 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
     secondaryLoading,
     onSecondary,
 }) => {
+    const hasPrimary = Boolean(primaryLabel && onPrimary);
+    const hasSecondary = Boolean(secondaryLabel && onSecondary);
     const size: AthleteStickyFooterSize =
-        secondaryLabel && onSecondary ? "double" : "single";
+        hasPrimary && hasSecondary ? "double" : "single";
 
     return (
         <AthleteFixedFooter size={size}>
-            <Button
-                variant="primary"
-                className="min-h-touch-athlete w-full active:scale-[0.98]"
-                disabled={primaryDisabled || primaryLoading}
-                onClick={onPrimary}
-            >
-                {primaryLoading ? "Guardando…" : primaryLabel}
-            </Button>
-            {secondaryLabel && onSecondary && (
+            {hasPrimary && (
                 <Button
-                    variant="secondary"
-                    className="min-h-touch-athlete w-full"
+                    variant="primary"
+                    className="min-h-touch-athlete w-full active:scale-[0.98]"
+                    disabled={primaryDisabled || primaryLoading}
+                    onClick={onPrimary}
+                >
+                    {primaryLoading ? "Guardando…" : primaryLabel}
+                </Button>
+            )}
+            {hasSecondary && (
+                <Button
+                    variant={hasPrimary ? "secondary" : "primary"}
+                    className="min-h-touch-athlete w-full active:scale-[0.98]"
                     disabled={secondaryDisabled || secondaryLoading}
                     onClick={onSecondary}
                 >

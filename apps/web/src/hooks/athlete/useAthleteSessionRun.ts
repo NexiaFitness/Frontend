@@ -93,20 +93,25 @@ export function useAthleteSessionRun({
     const [restSeconds, setRestSeconds] = useState<number | null>(null);
 
     const loggedSetsRef = useRef<Map<number, number>>(new Map());
+    const completedStepKeysRef = useRef<Set<string>>(new Set());
+    const [savedStepKeys, setSavedStepKeys] = useState<ReadonlySet<string>>(() => new Set());
 
     useEffect(() => {
         setStep(0);
         loggedSetsRef.current = new Map();
+        completedStepKeysRef.current = new Set();
+        setSavedStepKeys(new Set());
     }, [sessionId]);
 
     const current = flatExercises[step];
 
+    // Solo al cambiar de paso (stepKey), no cuando flatExercises se recalcula por refetch RTK.
     useEffect(() => {
         if (!current) return;
         setWeight(current.defaultWeight);
         setReps(current.defaultReps);
         setRpe(current.defaultRpe);
-    }, [current]);
+    }, [current?.stepKey]);
 
     const getNextActualSets = useCallback(
         (exercise: AthleteFlatExercise) => {
@@ -119,6 +124,8 @@ export function useAthleteSessionRun({
 
     const handleSaveSet = useCallback(async () => {
         if (!current) return;
+        if (completedStepKeysRef.current.has(current.stepKey)) return;
+
         setSaving(true);
         try {
             const nextSets = getNextActualSets(current);
@@ -130,6 +137,9 @@ export function useAthleteSessionRun({
                 actual_sets: nextSets,
                 actual_effort_value: rpe ?? undefined,
             });
+
+            completedStepKeysRef.current.add(current.stepKey);
+            setSavedStepKeys(new Set(completedStepKeysRef.current));
 
             onSetSaved?.(result);
 
@@ -184,6 +194,8 @@ export function useAthleteSessionRun({
     const waitingForCache = !isOnline && loadingFromNetwork && !cachedSnapshot;
     const isLoading = (loadingFromNetwork && !isUsingCache && isOnline) || waitingForCache;
     const isLastStep = step === flatExercises.length - 1;
+    const isCurrentStepSaved = current ? savedStepKeys.has(current.stepKey) : false;
+    const showSaveSetButton = Boolean(current) && !isCurrentStepSaved;
 
     return {
         session,
@@ -207,5 +219,6 @@ export function useAthleteSessionRun({
         handleFinish,
         isLoading,
         isLastStep,
+        showSaveSetButton,
     };
 }
