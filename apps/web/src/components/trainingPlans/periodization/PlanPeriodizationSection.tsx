@@ -26,7 +26,10 @@ import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
-import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
+import {
+  isDateInRange,
+  getBlockOverlapHint,
+} from "@nexia/shared/utils/periodBlockOverlap";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
 import { GOAL_LABEL_ES, toneFromGoal } from "@/components/trainingPlans/goalLabels";
@@ -64,6 +67,14 @@ function formatDateShort(dateStr: string): string {
     day: "numeric",
     month: "short",
     year: "numeric",
+  });
+}
+
+function formatDateFriendly(dateStr: string): string {
+  const [y, m, d] = dateStr.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
+    day: "numeric",
+    month: "short",
   });
 }
 
@@ -219,6 +230,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     loadBlock,
     reset,
     advanceConstructorStep,
+    setConstructorStep,
     qualitiesSum,
     overlapDetected,
     outsidePlanBounds,
@@ -273,7 +285,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const handleCreateSessionForBlock = useCallback(
     (block: PlanPeriodBlock) => {
       if (clientId != null && clientId > 0) {
-        navigate(`/dashboard/clients/${clientId}?tab=sessions`);
+        const params = new URLSearchParams({
+          tab: "sessions",
+          month: block.start_date,
+        });
+        navigate(`/dashboard/clients/${clientId}?${params.toString()}`);
         return;
       }
       const blockSessions = sessionsByBlock.get(block.id) ?? [];
@@ -297,9 +313,22 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         showWarning("Solo puedes definir bloques dentro de la vigencia del plan.");
         return;
       }
+
+      // Aviso anticipado si el inicio de un nuevo rango cae dentro de un bloque existente.
+      const isStartingNewRange = form.phase === "idle" || form.phase === "rangeComplete";
+      if (isStartingNewRange) {
+        const hint = getBlockOverlapHint(dateStr, blocks, editingBlockId ?? undefined);
+        if (hint) {
+          const blockName = hint.block.name?.trim() || "Otro bloque";
+          showWarning(
+            `El ${formatDateFriendly(dateStr)} está dentro del bloque '${blockName}'. El siguiente día libre es el ${formatDateFriendly(hint.nextFreeDate)}.`
+          );
+        }
+      }
+
       handleDayClick(dateStr);
     },
-    [planStartDate, planEndDate, handleDayClick, showWarning],
+    [planStartDate, planEndDate, handleDayClick, showWarning, form.phase, blocks, editingBlockId],
   );
 
   const handleSubmitBlock = useCallback(async () => {
@@ -543,6 +572,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             onSubmit={handleSubmitBlock}
             onReset={handleCancelEdit}
             onAdvanceStep={advanceConstructorStep}
+            onSetConstructorStep={setConstructorStep}
             volumeIntensityContext={formVolumeContext}
             volumeIntensityPhase={volumeNominal.phase}
             volumeIntensityHint={volumeNominal.auxiliaryHint}

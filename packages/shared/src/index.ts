@@ -313,6 +313,7 @@ export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
 export * from "./hooks/clients/useCoherence";
+export * from "./hooks/athlete/useAthleteContext";
 export * from "./hooks/clients/useClientTests";
 export * from "./hooks/clients/useCreateTestResult";
 
@@ -368,7 +369,17 @@ export {
     formatCalendarWeekRange,
 } from "./utils/calendarWeekForBlock";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
-export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
+export {
+  hasOverlap,
+  isDateInRange,
+  countPlannedDays,
+  toLocalISO,
+  parseISODateLocal,
+  findBlockContainingDate,
+  findNextFreeDate,
+  getBlockOverlapHint,
+  type DateRange,
+} from "./utils/periodBlockOverlap";
 export {
     isoLocalDateToTrainingDayValue,
     parseHabitualTrainingDaySet,
@@ -404,5 +415,8 @@ export * from "./hooks/injuries";
 
 // Hooks - Metrics
 export * from "./hooks/metrics";
+
+// Offline — cola ejecución atleta (F1)
+export * from "./offline";
 
 // Mocks (temporal - mientras backend implementa endpoints)

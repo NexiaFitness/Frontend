@@ -3,17 +3,12 @@
  *
  * Contexto:
  * - Chrome centralizado: sidebar (desktop) + navbar (móvil) + Outlet.
+ * - Atleta en móvil (< lg): AthleteMobileShell con bottom nav (portal atleta F0).
  * - Lee user.role del store; obtiene menuItems y metadatos desde getNavigationForRole.
- * - Incluye overlays de loading y error de auth (reubicados desde DashboardLayout).
- * - Estado sidebarCollapsed controla ancho del sidebar y margen del main (Fase 1).
- * - onToggleClick para toggle en tablet/touch (Fase 3).
- *
- * Notas de mantenimiento:
- * - Main: scroll contenido en #dashboard-main-scroll (altura = viewport − navbar), no en window.
- * - lg:ml-sidebar-collapsed | lg:ml-sidebar-expanded (tokens), transition-all duration-300, min-w-0.
  *
  * @author Frontend Team
  * @since v5.0.0 - Nexia Sparkle Flow (Sidebar colapsable Fase 4)
+ * @updated v6.1.0 - AthleteMobileShell en móvil
  */
 
 import React, { useCallback, useState } from "react";
@@ -23,14 +18,20 @@ import { DASHBOARD_MAIN_SCROLL_ID } from "@/lib/dashboardScroll";
 import { useSelector } from "react-redux";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { AppNavbar } from "@/components/ui/layout/navbar/AppNavbar";
+import { AthleteMobileShell } from "@/components/athlete/AthleteMobileShell";
 import { getNavigationForRole } from "@/config/navigationByRole";
+import { useIsLgViewport } from "@/hooks/athlete/useIsLgViewport";
 import { cn } from "@/lib/utils";
 import type { RootState } from "@nexia/shared/store";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
 
 export const DashboardShell: React.FC = () => {
     useDashboardScrollOnNavigation();
 
     const { user, isLoading, error } = useSelector((state: RootState) => state.auth);
+    const isLg = useIsLgViewport();
+    const isAthleteMobile = user?.role === USER_ROLES.ATHLETE && !isLg;
+
     const nav = getNavigationForRole(user?.role);
     const menuItems = nav.menuItems.map(({ label, path }) => ({ label, path }));
     const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
@@ -39,13 +40,8 @@ export const DashboardShell: React.FC = () => {
     const onHoverCollapse = useCallback(() => setSidebarCollapsed(true), []);
     const onToggleClick = useCallback(() => setSidebarCollapsed((prev) => !prev), []);
 
-    return (
-        <div
-            className={cn(
-                "min-h-screen w-full bg-background [--sidebar-width:0]",
-                sidebarCollapsed ? "lg:[--sidebar-width:4rem]" : "lg:[--sidebar-width:13.75rem]"
-            )}
-        >
+    const authOverlay = (
+        <>
             {isLoading && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
                     <div className="rounded-2xl border border-border bg-card p-8 text-center shadow-2xl">
@@ -64,6 +60,26 @@ export const DashboardShell: React.FC = () => {
                     <p className="mt-1 text-xs text-destructive/90">{error}</p>
                 </div>
             )}
+        </>
+    );
+
+    if (isAthleteMobile) {
+        return (
+            <>
+                {authOverlay}
+                <AthleteMobileShell />
+            </>
+        );
+    }
+
+    return (
+        <div
+            className={cn(
+                "min-h-screen w-full bg-background [--sidebar-width:0]",
+                sidebarCollapsed ? "lg:[--sidebar-width:4rem]" : "lg:[--sidebar-width:13.75rem]"
+            )}
+        >
+            {authOverlay}
 
             <AppNavbar
                 variant="dashboard"
@@ -86,7 +102,8 @@ export const DashboardShell: React.FC = () => {
                 className={cn(
                     "min-h-0 min-w-0 overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
                     "h-[calc(100vh-theme(space.navbar-dashboard-mobile))] lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]",
-                    sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded"
+                    sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded",
+                    user?.role === USER_ROLES.ATHLETE && "lg:px-8"
                 )}
             >
                 <Outlet />

@@ -36,4 +36,4 @@ export * from "./sessionProgramming";
 export * from "./injuries";
 export * from "./metrics";
 export * from "./common";
-
+export * from "./offline";

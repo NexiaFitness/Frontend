@@ -6,15 +6,17 @@
  * (PeriodBlockConstructorSummaryStrip).
  */
 
-import React from "react";
+import React, { useMemo, useState } from "react";
 
 import type { PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
 import { Button } from "@/components/ui/buttons";
+import { Alert } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
-import { CONSTRUCTOR_STEP_LABELS } from "./periodBlockConstructor";
+import { CONSTRUCTOR_STEP_LABELS, CONSTRUCTOR_STEP_ORDER } from "./periodBlockConstructor";
+import type { PeriodBlockConstructorStep } from "./periodBlockConstructor";
 import { ConstructorStepHeader } from "./ConstructorStepHeader";
 import { PeriodBlockQualitiesStep } from "./PeriodBlockQualitiesStep";
 import { qualitiesSumBadgeClass } from "./periodBlockQualitiesValidation";
@@ -24,7 +26,7 @@ import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/useP
 import { VolumeIntensityExplainer } from "./VolumeIntensityExplainer";
 import { SliderLevelBadge } from "./SliderLevelBadge";
 import { PeriodizationWeeklyStructureEditor } from "./PeriodizationWeeklyStructureEditor";
-import { formatRangeShort } from "./periodizationWeeklyStructureUtils";
+import { formatRangeShort, computeWeeklyStructureMetrics } from "./periodizationWeeklyStructureUtils";
 
 interface Props {
     formState: PeriodBlockFormState;
@@ -43,6 +45,7 @@ interface Props {
     onSubmit: () => void;
     onReset: () => void;
     onAdvanceStep: () => void;
+    onSetConstructorStep?: (step: PeriodBlockConstructorStep) => void;
     volumeIntensityContext?: VolumeIntensityContext | null;
     volumeIntensityPhase?: PeriodizationVolumeNominalPhase;
     volumeIntensityHint?: string | null;
@@ -81,6 +84,7 @@ export const PeriodizationPanel: React.FC<Props> = ({
     onSubmit,
     onReset,
     onAdvanceStep,
+    onSetConstructorStep,
     volumeIntensityContext,
     volumeIntensityPhase,
     volumeIntensityHint,
@@ -93,6 +97,39 @@ export const PeriodizationPanel: React.FC<Props> = ({
 }) => {
     const step = formState.constructorStep;
     const stepTitle = CONSTRUCTOR_STEP_LABELS[step];
+
+    const previousStep = useMemo<PeriodBlockConstructorStep | null>(() => {
+        const idx = CONSTRUCTOR_STEP_ORDER.indexOf(step);
+        return idx > 0 ? CONSTRUCTOR_STEP_ORDER[idx - 1] : null;
+    }, [step]);
+
+    const handleBack = React.useCallback(() => {
+        if (previousStep && onSetConstructorStep) {
+            onSetConstructorStep(previousStep);
+        }
+    }, [previousStep, onSetConstructorStep]);
+
+    const weeklyStructureMetrics = useMemo(() => {
+        if (
+            step !== "weeklyStructure" ||
+            !formState.startDate ||
+            !formState.endDate
+        ) {
+            return null;
+        }
+        return computeWeeklyStructureMetrics(
+            formState.startDate,
+            formState.endDate,
+            trainingDays,
+            formState.weeklyStructure,
+        );
+    }, [step, formState.startDate, formState.endDate, trainingDays, formState.weeklyStructure]);
+
+    const missingPatternDays = weeklyStructureMetrics
+        ? weeklyStructureMetrics.totalTrainable - weeklyStructureMetrics.withPatterns
+        : 0;
+
+    const [isMissingDaysBannerDismissed, setIsMissingDaysBannerDismissed] = useState(false);
     const shellClass = cn(
         "rounded-lg bg-surface p-5 min-w-0",
         fillHeight
@@ -212,6 +249,15 @@ export const PeriodizationPanel: React.FC<Props> = ({
                 formState.startDate &&
                 formState.endDate && (
                     <div className="flex flex-col gap-4 min-h-0 min-w-0 flex-1 overflow-hidden">
+                        {missingPatternDays > 0 && !isMissingDaysBannerDismissed && (
+                            <Alert
+                                variant="warning"
+                                onDismiss={() => setIsMissingDaysBannerDismissed(true)}
+                                className="text-xs"
+                            >
+                                Tienes {missingPatternDays} {missingPatternDays === 1 ? "día" : "días"} sin patrones asignados.
+                            </Alert>
+                        )}
                         <PeriodizationWeeklyStructureEditor
                             startDate={formState.startDate}
                             endDate={formState.endDate}
@@ -341,16 +387,42 @@ export const PeriodizationPanel: React.FC<Props> = ({
                 </div>
             )}
 
-            {step !== "volumeIntensity" && (
-                <button
-                    type="button"
-                    onClick={onReset}
-                    className="text-xs text-muted-foreground hover:text-destructive transition-colors w-full text-center shrink-0"
-                >
-                    Cancelar bloque
-                </button>
-            )}
             </div>
+
+            {step !== "range" && (
+                <div className="flex items-center justify-between shrink-0">
+                    <button
+                        type="button"
+                        onClick={handleBack}
+                        className="inline-flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                    >
+                        <svg
+                            className="h-3.5 w-3.5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            strokeWidth={2}
+                            aria-hidden
+                        >
+                            <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15 19l-7-7 7-7"
+                            />
+                        </svg>
+                        Volver
+                    </button>
+                    {step !== "volumeIntensity" && (
+                        <button
+                            type="button"
+                            onClick={onReset}
+                            className="text-xs text-destructive/70 hover:text-destructive transition-colors"
+                        >
+                            Cancelar bloque
+                        </button>
+                    )}
+                </div>
+            )}
         </div>
     );
 };

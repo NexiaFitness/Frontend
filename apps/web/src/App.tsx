@@ -38,6 +38,29 @@ const AdminDashboard = lazy(() =>
 const AthleteDashboard = lazy(() =>
   import("./pages/dashboard/athlete/AthleteDashboard").then((m) => ({ default: m.AthleteDashboard }))
 );
+const AthletePlanPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthletePlanPage").then((m) => ({ default: m.AthletePlanPage }))
+);
+const SessionsRouteSwitcher = lazy(() =>
+  import("./pages/dashboard/athlete/SessionsRouteSwitcher").then((m) => ({
+    default: m.SessionsRouteSwitcher,
+  }))
+);
+const AthleteSessionPreviewPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionPreviewPage").then((m) => ({
+    default: m.AthleteSessionPreviewPage,
+  }))
+);
+const AthleteSessionRunPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionRunPage").then((m) => ({
+    default: m.AthleteSessionRunPage,
+  }))
+);
+const AthleteSessionFeedbackPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionFeedbackPage").then((m) => ({
+    default: m.AthleteSessionFeedbackPage,
+  }))
+);
 
 // Bloque 3: Módulos trainer (lazy)
 const CompleteProfile = lazy(() =>
@@ -122,9 +145,6 @@ const SessionReviewPage = lazy(() =>
 );
 const StandaloneSessionDetail = lazy(() =>
   import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
-);
-const SessionsPage = lazy(() =>
-  import("./pages/sessions/SessionsPage").then((m) => ({ default: m.SessionsPage }))
 );
 const CreateTestResult = lazy(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
@@ -388,15 +408,42 @@ function App() {
             }
           />
 
-          {/* Sessions list (unified training + standalone) */}
+          {/* Athlete portal */}
           <Route
-            path="sessions"
+            path="my-plan"
             element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <SessionsPage />
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthletePlanPage />
               </RoleProtectedRoute>
             }
           />
+          <Route
+            path="sessions/:id/feedback"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionFeedbackPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id/run"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionRunPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionPreviewPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route path="sessions" element={<SessionsRouteSwitcher />} />
+
+          {/* Sessions list (trainer/admin via switcher; athlete uses AthleteSessionsPage) */}
 
           {/* Session Programming */}
           <Route

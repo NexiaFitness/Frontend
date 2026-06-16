@@ -69,7 +69,9 @@ const ATHLETE_NAV: RoleNavigation = {
     headerTitle: "Mi Entrenamiento",
     footerSubtitle: "Athlete",
     menuItems: [
-        { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Inicio", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Mis sesiones", path: "/dashboard/sessions", icon: Calendar },
+        { label: "Mi plan", path: "/dashboard/my-plan", icon: ClipboardList },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };

@@ -41,6 +41,7 @@ import type { ClientRatingOut, ClientRatingCreate } from "@nexia/shared/types/cl
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { Button } from "@/components/ui/buttons";
 import { ClientAlertsSection } from "./ClientAlertsSection";
+import { ClientAthleteFeedbackCard } from "./ClientAthleteFeedbackCard";
 import { ClientStatusSection } from "./ClientStatusSection";
 import { ClientPlansSection } from "./ClientPlansSection";
 import { RecommendationsCards } from "./RecommendationsCards";
@@ -577,6 +578,9 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                     </div>
                 </div>
             )}
+
+            {/* Feedback post-sesión del atleta (portal atleta F1) */}
+            {isValidClientId && <ClientAthleteFeedbackCard clientId={clientId} />}
 
             {/* INFORMACIÓN PERSONAL - Solo campos no visibles en header */}
             <div className="bg-card border border-border rounded-lg shadow p-6">

@@ -169,6 +169,18 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * Perfil del cliente autenticado (solo rol athlete).
+         * Endpoint: GET /api/v1/clients/profile
+         */
+        getCurrentClientProfile: builder.query<Client, void>({
+            query: () => ({
+                url: "/clients/profile",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "CURRENT_ATHLETE" }],
+        }),
+
+        /**
          * Obtener cliente específico por ID
          */
         getClient: builder.query<Client, number>({
@@ -996,6 +1008,7 @@ export const clientsApi = baseApi.injectEndpoints({
 export const {
     useGetTrainerClientsQuery,
     useGetClientsQuery,
+    useGetCurrentClientProfileQuery,
     useGetClientQuery,
     useCreateClientMutation,
     usePreviewClientCalculationsMutation,

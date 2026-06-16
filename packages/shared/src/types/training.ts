@@ -258,6 +258,21 @@ export interface ClientFeedback {
     is_active: boolean;
 }
 
+/** POST /training-sessions/{id}/feedback */
+export interface ClientFeedbackCreate {
+    client_id: number;
+    perceived_effort?: number | null;
+    fatigue_level?: number | null;
+    sleep_quality?: number | null;
+    stress_level?: number | null;
+    motivation_level?: number | null;
+    energy_level?: number | null;
+    muscle_soreness?: string | null;
+    pain_or_discomfort?: string | null;
+    notes?: string | null;
+    feedback_date?: string | null;
+}
+
 // ========================================
 // FATIGUE ANALYSIS
 // ========================================

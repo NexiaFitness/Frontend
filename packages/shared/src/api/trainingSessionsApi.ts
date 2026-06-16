@@ -19,6 +19,7 @@ import type {
     TrainingSessionReplicateRequest,
     TrainingSessionReplicateResponse,
 } from '../types/trainingSessions';
+import type { ClientFeedback, ClientFeedbackCreate } from '../types/training';
 import type {
     TrainingSessionFullUpdate,
 } from '../types/sessionProgramming';
@@ -245,6 +246,22 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             },
         }),
 
+        createSessionFeedback: builder.mutation<
+            ClientFeedback,
+            { sessionId: number; body: ClientFeedbackCreate }
+        >({
+            query: ({ sessionId, body }) => ({
+                url: `/training-sessions/${sessionId}/feedback`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (_result, _error, { sessionId, body }) => [
+                { type: 'TrainingSession', id: sessionId },
+                { type: 'Client', id: body.client_id },
+                { type: 'Client', id: 'FEEDBACK' },
+            ],
+        }),
+
         /**
          * POST /training-sessions/{session_id}/replicate
          * Replicar una sesion a otras semanas del mismo bloque
@@ -353,6 +370,7 @@ export const {
     useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
+    useCreateSessionFeedbackMutation,
     useUpdateTrainingSessionFullMutation,
     useDeleteTrainingSessionMutation,
     useReplicateTrainingSessionMutation,

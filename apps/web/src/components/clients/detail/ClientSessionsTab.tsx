@@ -20,12 +20,12 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ChevronDown, Calendar } from "lucide-react";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
-import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
+import { isDateInRange, parseISODateLocal } from "@nexia/shared/utils/periodBlockOverlap";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
@@ -90,9 +90,18 @@ function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
 export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { showWarning } = useToast();
-    const [currentMonth, setCurrentMonth] = useState(() => new Date());
-    const [periodCalMonth, setPeriodCalMonth] = useState(() => new Date());
+    const initialMonth = useMemo(() => {
+        const monthParam = searchParams.get("month");
+        if (monthParam) {
+            const parsed = parseISODateLocal(monthParam);
+            if (parsed) return parsed;
+        }
+        return new Date();
+    }, [searchParams]);
+    const [currentMonth, setCurrentMonth] = useState(() => initialMonth);
+    const [periodCalMonth, setPeriodCalMonth] = useState(() => initialMonth);
 
     const {
         activePlanForClient,
