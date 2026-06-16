@@ -4,13 +4,25 @@
 
 import type { SessionBlockExerciseUpdate } from "../types/sessionProgramming";
 
-/** Ejercicio aplanado para logger MVP atleta. */
 export interface AthleteFlatExercise {
+    /** ID estable para UI (puede repetir blockExerciseId en multi-serie legacy). */
+    stepKey: string;
     blockExerciseId: number;
     name: string;
+    blockName: string | null;
+    groupKind: string | null;
+    setLabel: string;
+    setIndex: number;
+    totalSetsInSlot: number;
     plannedLabel: string;
     defaultWeight: number;
     defaultReps: number;
+    restSeconds: number | null;
+    defaultRpe: number | null;
+    /** URL de vídeo demostrativo (null si no disponible). */
+    videoUrl: string | null;
+    /** Series ya registradas en backend para esta fila. */
+    loggedSets: number;
 }
 
 /** Snapshot de sesión persistido al abrir (lectura offline). */

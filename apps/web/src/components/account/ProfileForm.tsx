@@ -21,7 +21,7 @@ import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { useUpdateAccountMutation, selectUser, setCurrentUser, logout } from "@nexia/shared";
+import { useUpdateAccountMutation, selectUser, setCurrentUser, logout, useLogout } from "@nexia/shared";
 import type { AppDispatch } from "@nexia/shared/store";
 import type { UpdateAccountPayload } from "@nexia/shared/types/account";
 import { ChangePasswordForm } from "./ChangePasswordForm";
@@ -38,6 +38,9 @@ const getServerErrorMessage = (err: unknown): string => {
 export const ProfileForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
+    const { logout: handleLogout, isLoading: isLoggingOut } = useLogout({
+        onNavigate: (path) => navigate(path, { replace: true }),
+    });
     const user = useSelector(selectUser);
 
     const [updateAccount, { isLoading }] = useUpdateAccountMutation();
@@ -174,6 +177,28 @@ export const ProfileForm: React.FC = () => {
             {/* Seguridad */}
             <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-8">
                 <ChangePasswordForm />
+            </div>
+
+            <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                <h3 className="text-lg font-semibold text-foreground mb-2 text-center lg:text-left">
+                    Sesión
+                </h3>
+                <p className="text-sm text-muted-foreground mb-4 text-center lg:text-left">
+                    Cierra sesión en este dispositivo.
+                </p>
+                <div className="flex justify-center lg:justify-end">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        size="md"
+                        className="min-h-touch-athlete w-full md:w-auto md:min-w-[180px]"
+                        isLoading={isLoggingOut}
+                        disabled={isLoggingOut}
+                        onClick={() => void handleLogout()}
+                    >
+                        Cerrar sesión
+                    </Button>
+                </div>
             </div>
 
             {user?.role !== "admin" && (

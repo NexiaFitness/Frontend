@@ -61,6 +61,11 @@ const AthleteSessionFeedbackPage = lazy(() =>
     default: m.AthleteSessionFeedbackPage,
   }))
 );
+const AthleteFeedbackHistoryPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteFeedbackHistoryPage").then((m) => ({
+    default: m.AthleteFeedbackHistoryPage,
+  }))
+);
 
 // Bloque 3: Módulos trainer (lazy)
 const CompleteProfile = lazy(() =>
@@ -414,6 +419,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
                 <AthletePlanPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="feedback"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteFeedbackHistoryPage />
               </RoleProtectedRoute>
             }
           />

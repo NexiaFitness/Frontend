@@ -7,6 +7,8 @@
  */
 
 import type { TrainingSession } from "../../types/trainingSessions";
+import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
+import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
 
 const DAY_LABELS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 
@@ -166,6 +168,12 @@ export function getSessionStatusLabel(session: TrainingSession, today = new Date
     if (isSessionToday(session, today)) return "Hoy";
     if (session.status === "completed") return "Completada";
     if (session.status === "skipped") return "Omitida";
+    if (session.session_date && session.status === "planned") {
+        const sessionDay = parseSessionDateLocal(session.session_date);
+        const todayStart = new Date(today);
+        todayStart.setHours(0, 0, 0, 0);
+        if (sessionDay < todayStart) return "No realizada";
+    }
     return "Programada";
 }
 
@@ -182,4 +190,52 @@ export function getTrainingGoalLabel(goal: string | null | undefined): string {
         sport_performance: "Rendimiento deportivo",
     };
     return labels[goal] ?? goal;
+}
+
+/** Parsea reps planificadas ("8", "8-10") a entero para steppers. */
+export function parseAthleteReps(value: string | number | null | undefined): number {
+    if (value == null) return 8;
+    const raw = String(value).trim();
+    const match = raw.match(/\d+/);
+    const n = match ? Number.parseInt(match[0], 10) : 8;
+    return Number.isFinite(n) && n > 0 ? n : 8;
+}
+
+/** Aplana la estructura de sesión en pasos de logger (1 paso = 1 serie). */
+export function flattenAthleteExercises(view: SessionStructureView): AthleteFlatExercise[] {
+    const items: AthleteFlatExercise[] = [];
+
+    for (const block of view.blocks) {
+        for (const group of block.groups) {
+            for (const slot of group.slots) {
+                for (const set of slot.sets) {
+                    const parts: string[] = [];
+                    if (set.label) parts.push(set.label);
+                    if (set.plannedReps) parts.push(`${set.plannedReps} reps`);
+                    if (set.plannedWeight != null) parts.push(`@ ${set.plannedWeight} kg`);
+                    if (set.plannedDuration != null) parts.push(`${set.plannedDuration}s`);
+
+                    items.push({
+                        stepKey: `${set.sourceLineId}-${set.index}`,
+                        blockExerciseId: set.sourceLineId,
+                        name: slot.exerciseName,
+                        blockName: block.blockTypeName,
+                        groupKind: group.kind,
+                        setLabel: set.label,
+                        setIndex: set.index,
+                        totalSetsInSlot: slot.sets.length,
+                        plannedLabel: parts.join(" · ") || "Según prescripción",
+                        defaultWeight: set.plannedWeight ?? set.actualWeight ?? 0,
+                        defaultReps: parseAthleteReps(set.plannedReps ?? set.actualReps),
+                        restSeconds: set.plannedRest ?? group.restBetweenSeconds ?? null,
+                        defaultRpe: set.actualEffortValue ?? set.effortValue ?? null,
+                        videoUrl: null,
+                        loggedSets: 0,
+                    });
+                }
+            }
+        }
+    }
+
+    return items;
 }

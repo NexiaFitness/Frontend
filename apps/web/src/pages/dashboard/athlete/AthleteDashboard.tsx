@@ -64,7 +64,7 @@ export const AthleteDashboard: React.FC = () => {
                 <header className="space-y-1">
                     <h1 className="text-xl font-bold text-foreground">Hola, {userName}</h1>
                     <p className="text-sm text-muted-foreground">
-                        {todaySession ? "Sesión de hoy" : isRestDay ? "Día de descanso" : "Tu entrenamiento"}
+                        {todaySession ? "Sesión de hoy" : "Tu entrenamiento"}
                     </p>
                 </header>
 

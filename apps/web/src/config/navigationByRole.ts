@@ -26,6 +26,7 @@ import {
     BarChart3,
     Bell,
     Play,
+    MessageSquare,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -71,6 +72,7 @@ const ATHLETE_NAV: RoleNavigation = {
     menuItems: [
         { label: "Inicio", path: "/dashboard", icon: LayoutDashboard },
         { label: "Mis sesiones", path: "/dashboard/sessions", icon: Calendar },
+        { label: "Feedback", path: "/dashboard/feedback", icon: MessageSquare },
         { label: "Mi plan", path: "/dashboard/my-plan", icon: ClipboardList },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
