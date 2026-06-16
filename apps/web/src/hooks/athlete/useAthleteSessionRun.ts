@@ -169,7 +169,7 @@ export function useAthleteSessionRun({
             const result = await finishSession();
             onSessionFinished?.(result);
             if (result === "synced") {
-                navigate(`/dashboard/sessions/${sessionId}/feedback`);
+                navigate(`/dashboard/sessions/${sessionId}/summary`);
             } else {
                 navigate("/dashboard/sessions");
             }

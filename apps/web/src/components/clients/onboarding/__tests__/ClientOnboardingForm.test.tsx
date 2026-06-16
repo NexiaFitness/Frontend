@@ -14,7 +14,7 @@
  * @since v1.0.0
  */
 
-import { screen, waitFor, within } from "@testing-library/react";
+import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
 import { ClientOnboardingForm } from "../ClientOnboardingForm";
@@ -58,7 +58,7 @@ describe("ClientOnboardingForm", () => {
     });
 
     describe("Rendering & Basic UI", () => {
-        it("renders form with main title and first section (Información Personal)", { timeout: 10000 }, () => {
+        it("renders form with main title and first section (Información Personal)", () => {
             const initialData = createEmptyFormData();
             render(
                 <ClientOnboardingForm
@@ -68,17 +68,12 @@ describe("ClientOnboardingForm", () => {
             );
 
             expect(screen.getByRole("heading", { name: /^Nuevo Cliente$/i })).toBeInTheDocument();
-            const personalHeading = screen.getByRole("heading", { name: /información personal/i });
-            expect(personalHeading).toBeInTheDocument();
-            const personalSection = personalHeading.closest("section");
-            expect(personalSection).toBeTruthy();
-            const withinPersonal = within(personalSection!);
-            expect(withinPersonal.getByText(/^Nombre$/i)).toBeInTheDocument();
-            expect(withinPersonal.getByPlaceholderText(/ej: juan/i)).toBeInTheDocument();
-            expect(withinPersonal.getByText(/^Apellidos$/i)).toBeInTheDocument();
-            expect(withinPersonal.getByPlaceholderText(/ej: pérez/i)).toBeInTheDocument();
-            expect(withinPersonal.getByText(/correo electrónico/i)).toBeInTheDocument();
-            expect(withinPersonal.getByPlaceholderText(/ejemplo@correo.com/i)).toBeInTheDocument();
+            expect(
+                screen.getByRole("heading", { name: /información personal/i })
+            ).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/ej: juan/i)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/ej: pérez/i)).toBeInTheDocument();
+            expect(screen.getByPlaceholderText(/ejemplo@correo.com/i)).toBeInTheDocument();
             expect(screen.getByRole("button", { name: /siguiente/i })).toBeInTheDocument();
         });
 

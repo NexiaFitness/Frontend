@@ -244,8 +244,7 @@ describe("ClientOverviewTab", () => {
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
             await waitFor(() => {
-                expect(screen.getByText(/pre: 3/i)).toBeInTheDocument();
-                expect(screen.getByText(/post: 6/i)).toBeInTheDocument();
+                expect(screen.getByText(/Pre: 3\.0.*Post: 6\.0/i)).toBeInTheDocument();
             });
         });
 
@@ -632,7 +631,15 @@ describe("ClientOverviewTab", () => {
     });
 
     describe("Empty States", () => {
-        it("displays N/A for weight when no progress data", async () => {
+        it("displays fallback weight when no progress data and client has no peso", async () => {
+            const clientSinPeso = createMockClient({
+                id: 1,
+                nombre: "Juan",
+                apellidos: "Pérez",
+                peso: null,
+                imc: null,
+            });
+
             server.use(
                 http.get("*/progress/", async () => {
                     return HttpResponse.json([], { status: 200 });
@@ -648,7 +655,7 @@ describe("ClientOverviewTab", () => {
                 })
             );
 
-            render(<ClientOverviewTab client={mockClient} clientId={1} />);
+            render(<ClientOverviewTab client={clientSinPeso} clientId={1} />);
 
             await waitFor(() => {
                 expect(screen.getByText(/n\/a/i)).toBeInTheDocument();

@@ -27,6 +27,12 @@ describe("amrapPlannedReps", () => {
         expect(hydrateAmrapPlannedReps("15")).toBe("15");
     });
 
+    it("preserves null and undefined so the user can clear the field", () => {
+        expect(hydrateAmrapPlannedReps(null)).toBeNull();
+        expect(hydrateAmrapPlannedReps(undefined)).toBeNull();
+        expect(hydrateAmrapPlannedReps("")).toBe("");
+    });
+
     it("genera pie con minutos del time cap", () => {
         expect(amrapFooterHint(10)).toBe(
             "Completa el máximo de rondas posibles en 10 minutos."

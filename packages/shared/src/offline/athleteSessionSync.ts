@@ -173,6 +173,33 @@ export async function flushPendingSessionSync(
     return { syncedLogs, syncedCompletes, conflict: false };
 }
 
+export interface FinishOnlineSessionResult {
+    alreadyCompleted: boolean;
+}
+
+/**
+ * Online session finish: flush pending exercise logs (and queued completes) before
+ * marking complete, so post-session report reflects all logged sets.
+ */
+export async function finishOnlineSession(
+    sessionId: number,
+    adapter: AthleteSessionSyncAdapter
+): Promise<FinishOnlineSessionResult> {
+    await pruneSupersededLogs(sessionId);
+    const flushResult = await flushPendingSessionSync(sessionId, adapter);
+
+    if (flushResult.conflict) {
+        throw new AthleteSyncConflictError();
+    }
+
+    if (flushResult.syncedCompletes > 0) {
+        return { alreadyCompleted: true };
+    }
+
+    await adapter.completeSession(sessionId);
+    return { alreadyCompleted: false };
+}
+
 /** Elimina logs duplicados obsoletos tras dedupe (mantiene solo el ganador por ejercicio). */
 export async function pruneSupersededLogs(sessionId: number): Promise<void> {
     if (!isIndexedDbAvailable()) return;

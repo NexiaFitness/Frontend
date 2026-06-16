@@ -1,9 +1,13 @@
 /**
- * athleteSessionSync.spec.ts — Tests dedupe cola offline atleta.
+ * athleteSessionSync.spec.ts — Tests cola offline atleta.
  */
 
-import { describe, expect, it } from "vitest";
-import { dedupePendingLogs } from "./athleteSessionSync";
+import { describe, expect, it, vi } from "vitest";
+import {
+    dedupePendingLogs,
+    finishOnlineSession,
+    flushPendingSessionSync,
+} from "./athleteSessionSync";
 import type { PendingExerciseLog } from "./athleteSessionTypes";
 
 function log(id: string, blockExerciseId: number, ts: number): PendingExerciseLog {
@@ -31,5 +35,35 @@ describe("dedupePendingLogs", () => {
 
     it("returns empty for empty input", () => {
         expect(dedupePendingLogs([])).toEqual([]);
+    });
+});
+
+describe("finishOnlineSession", () => {
+    it("calls completeSession when there is no queued complete (test env: no IDB)", async () => {
+        const completeSession = vi.fn().mockResolvedValue(undefined);
+        const updateExercise = vi.fn();
+
+        const result = await finishOnlineSession(42, { updateExercise, completeSession });
+
+        expect(completeSession).toHaveBeenCalledWith(42);
+        expect(result.alreadyCompleted).toBe(false);
+    });
+
+    it("propagates errors from completeSession", async () => {
+        const completeSession = vi.fn().mockRejectedValue(new Error("network"));
+
+        await expect(
+            finishOnlineSession(42, { updateExercise: vi.fn(), completeSession })
+        ).rejects.toThrow("network");
+    });
+});
+
+describe("flushPendingSessionSync", () => {
+    it("is a no-op when IndexedDB is unavailable (test env)", async () => {
+        const result = await flushPendingSessionSync(1, {
+            updateExercise: vi.fn(),
+            completeSession: vi.fn(),
+        });
+        expect(result).toEqual({ syncedLogs: 0, syncedCompletes: 0, conflict: false });
     });
 });

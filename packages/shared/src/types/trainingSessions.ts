@@ -340,3 +340,49 @@ export interface SessionExerciseCreate {
     notes?: string | null;
 }
 
+/** F2: pre-session wellbeing check-in (1=Bajo, 2=Normal, 3=Alto) */
+export interface WellbeingCheckInCreate {
+    pre_fatigue_level: 1 | 2 | 3;
+}
+
+export interface WellbeingCheckIn {
+    id: number;
+    client_id: number;
+    session_id: number;
+    pre_fatigue_level: number;
+    risk_level: string | null;
+    recommendations: string | null;
+    analysis_date: string;
+    created_at: string;
+    updated_at: string;
+}
+
+/** F2: post-completion summary for athlete celebration screen */
+export interface PostSessionExerciseReport {
+    block_exercise_id: number;
+    exercise_id: number;
+    exercise_name: string;
+    planned_sets: number;
+    actual_sets: number;
+    completion_pct: number;
+}
+
+export interface PostSessionReport {
+    session_id: number;
+    session_name: string;
+    status: string;
+    session_date: string | null;
+    planned_duration: number | null;
+    actual_duration: number | null;
+    total_planned_sets: number;
+    total_actual_sets: number;
+    completion_percentage: number;
+    planned_volume: number | null;
+    actual_volume: number | null;
+    planned_intensity: number | null;
+    actual_intensity: number | null;
+    exercises: PostSessionExerciseReport[];
+    has_feedback: boolean;
+    highlights: string[];
+}
+

@@ -4,12 +4,12 @@
  * @since v6.1.0
  */
 
-import React from "react";
+import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Clock, Dumbbell } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
-import { Alert, LoadingSpinner } from "@/components/ui/feedback";
+import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
 import { useGetTrainingSessionQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import { getBlockDisplayName } from "@nexia/shared/sessionProgramming/sessionBlockView";
@@ -19,11 +19,16 @@ import {
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
+import { WellbeingCheckInModal } from "@/components/athlete/WellbeingCheckInModal";
+import { useWellbeingCheckIn } from "@/hooks/athlete/useWellbeingCheckIn";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const sessionId = Number(id);
     const navigate = useNavigate();
+    const { showToast } = useToast();
+    const [wellbeingOpen, setWellbeingOpen] = useState(false);
+    const { submit, isLoading: submittingWellbeing } = useWellbeingCheckIn(sessionId);
 
     const { data: session, isLoading: loadingSession } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId,
@@ -32,6 +37,20 @@ export const AthleteSessionPreviewPage: React.FC = () => {
 
     const isLoading = loadingSession || loadingStructure;
     const canStart = session?.status !== "completed" && view.totalExercises > 0;
+
+    const handleStartClick = () => {
+        setWellbeingOpen(true);
+    };
+
+    const handleWellbeingSubmit = async (level: 1 | 2 | 3) => {
+        try {
+            await submit(level);
+            setWellbeingOpen(false);
+            navigate(`/dashboard/sessions/${sessionId}/run`);
+        } catch {
+            showToast("error", "No se pudo guardar el check-in");
+        }
+    };
 
     if (isLoading) {
         return (
@@ -152,12 +171,19 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         variant="primary"
                         className="min-h-touch-athlete w-full"
                         disabled={!canStart}
-                        onClick={() => navigate(`/dashboard/sessions/${sessionId}/run`)}
+                        onClick={handleStartClick}
                     >
                         Empezar entrenamiento
                     </Button>
                 )}
             </AthleteFixedFooter>
+
+            <WellbeingCheckInModal
+                isOpen={wellbeingOpen}
+                onClose={() => setWellbeingOpen(false)}
+                onSubmit={handleWellbeingSubmit}
+                isSubmitting={submittingWellbeing}
+            />
         </div>
     );
 };

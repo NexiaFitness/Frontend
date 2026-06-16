@@ -23,15 +23,19 @@ export function displayAmrapPlannedReps(
     return plannedReps;
 }
 
-/** Constructor: sustituir marcador legacy por reps editables. */
+/**
+ * Constructor: sustituir marcador legacy por reps editables.
+ * Mantiene null/undefined tal cual para permitir borrar el campo libremente;
+ * el fallback solo aplica al marcador legacy "AMRAP".
+ */
 export function hydrateAmrapPlannedReps(
     plannedReps: string | null | undefined,
     fallback = "8"
-): string {
-    if (!plannedReps || isAmrapLegacyPlannedRepsSentinel(plannedReps)) {
+): string | null {
+    if (isAmrapLegacyPlannedRepsSentinel(plannedReps)) {
         return fallback;
     }
-    return plannedReps;
+    return plannedReps ?? null;
 }
 
 /** Pie de card AMRAP (constructor y vista detalle). */

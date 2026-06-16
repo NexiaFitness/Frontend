@@ -60,6 +60,38 @@ export const loginHandler = http.post("*/auth/login", async ({ request }) => {
     return HttpResponse.json(errorResponses.invalidLogin, { status: 401 })
 })
 
+/** Login con delay largo para tests de loading (evita race con MSW ~300ms). */
+export const loginSlowHandler = http.post("*/auth/login", async ({ request }) => {
+    await new Promise((res) => setTimeout(res, 800))
+
+    let body: { username?: string; password?: string } = {}
+    const contentType = request.headers.get("Content-Type")
+
+    try {
+        if (contentType?.includes("application/json")) {
+            body = (await request.json()) as { username?: string; password?: string }
+        } else if (contentType?.includes("application/x-www-form-urlencoded")) {
+            const text = await request.text()
+            const params = new URLSearchParams(text)
+            body = {
+                username: params.get("username") || undefined,
+                password: params.get("password") || undefined,
+            }
+        }
+    } catch {
+        return HttpResponse.json(errorResponses.invalidLogin, { status: 400 })
+    }
+
+    if (body.username === "test@example.com" && body.password === "testpass123") {
+        return HttpResponse.json(loginSuccessResponse, {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+        })
+    }
+
+    return HttpResponse.json(errorResponses.invalidLogin, { status: 401 })
+})
+
 // ===== HANDLERS ESPECÍFICOS PARA TESTING AVANZADO =====
 
 export const loginRetryHandler = (() => {

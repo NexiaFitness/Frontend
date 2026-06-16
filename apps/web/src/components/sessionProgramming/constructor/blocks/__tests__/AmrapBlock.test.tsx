@@ -35,10 +35,16 @@ function createAmrapRow(overrides: Partial<ConstructorRow> = {}): ConstructorRow
 function ControlledAmrapBlock({
     initialRow = createAmrapRow(),
     onUpdateSpy,
+    onUpdateExerciseSpy,
     ...rest
 }: Omit<React.ComponentProps<typeof AmrapBlock>, "row" | "onUpdate" | "onUpdateExercise"> & {
     initialRow?: ConstructorRow;
     onUpdateSpy?: (rowId: string, updates: Partial<ConstructorRow>) => void;
+    onUpdateExerciseSpy?: (
+        rowId: string,
+        exerciseId: string,
+        updates: Partial<ConstructorExercise>
+    ) => void;
 }) {
     const [row, setRow] = useState(initialRow);
 
@@ -48,7 +54,7 @@ function ControlledAmrapBlock({
     };
 
     const handleUpdateExercise = (
-        _rowId: string,
+        rowId: string,
         exerciseId: string,
         updates: Partial<ConstructorExercise>
     ) => {
@@ -58,6 +64,7 @@ function ControlledAmrapBlock({
                 ex.id === exerciseId ? { ...ex, ...updates } : ex
             ),
         }));
+        onUpdateExerciseSpy?.(rowId, exerciseId, updates);
     };
 
     return (
@@ -143,6 +150,64 @@ describe("AmrapBlock", () => {
         expect(onUpdateSpy).toHaveBeenLastCalledWith(
             "row-amrap-1",
             expect.objectContaining({ timeCap: null })
+        );
+    });
+
+    it("renders default reps of 8 for AMRAP exercises", () => {
+        render(
+            <ControlledAmrapBlock
+                blockTypes={[]}
+                groupLabel="AMRAP A"
+                onAddExercise={() => {}}
+            />
+        );
+
+        const repsInputs = screen.getAllByLabelText("Repeticiones");
+        expect(repsInputs[0]).toHaveValue("8");
+    });
+
+    it("allows changing reps freely", () => {
+        const onUpdateExerciseSpy = vi.fn();
+        render(
+            <ControlledAmrapBlock
+                blockTypes={[]}
+                groupLabel="AMRAP A"
+                onAddExercise={() => {}}
+                onUpdateExerciseSpy={onUpdateExerciseSpy}
+            />
+        );
+
+        const repsInput = screen.getAllByLabelText("Repeticiones")[0];
+        fireEvent.change(repsInput, { target: { value: "12" } });
+
+        expect(repsInput).toHaveValue("12");
+        expect(onUpdateExerciseSpy).toHaveBeenLastCalledWith(
+            "row-amrap-1",
+            expect.any(String),
+            expect.objectContaining({ plannedReps: "12" })
+        );
+    });
+
+    it("allows clearing reps to null", async () => {
+        const user = userEvent.setup();
+        const onUpdateExerciseSpy = vi.fn();
+        render(
+            <ControlledAmrapBlock
+                blockTypes={[]}
+                groupLabel="AMRAP A"
+                onAddExercise={() => {}}
+                onUpdateExerciseSpy={onUpdateExerciseSpy}
+            />
+        );
+
+        const repsInput = screen.getAllByLabelText("Repeticiones")[0];
+        await user.clear(repsInput);
+
+        expect(repsInput).toHaveValue("");
+        expect(onUpdateExerciseSpy).toHaveBeenLastCalledWith(
+            "row-amrap-1",
+            expect.any(String),
+            expect.objectContaining({ plannedReps: null })
         );
     });
 });

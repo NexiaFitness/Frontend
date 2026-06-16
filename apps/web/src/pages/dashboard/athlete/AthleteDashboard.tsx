@@ -85,16 +85,22 @@ export const AthleteDashboard: React.FC = () => {
                 <section aria-label="Tu entrenamiento">
                     <h2 className="mb-3 text-sm font-semibold text-foreground">Tu entrenamiento</h2>
                     <div className="grid grid-cols-2 gap-3">
-                        <MetricCard
-                            title="Adherencia"
-                            value={
-                                adherencePercent != null
-                                    ? `${Math.round(adherencePercent)}%`
-                                    : "—"
-                            }
-                            subtitle="Esta semana"
-                            color="green"
-                        />
+                        <button
+                            type="button"
+                            className="text-left"
+                            onClick={() => navigate("/dashboard/progress")}
+                        >
+                            <MetricCard
+                                title="Adherencia"
+                                value={
+                                    adherencePercent != null
+                                        ? `${Math.round(adherencePercent)}%`
+                                        : "—"
+                                }
+                                subtitle="Esta semana · Ver progreso"
+                                color="green"
+                            />
+                        </button>
                         <MetricCard
                             title="Plan"
                             value={

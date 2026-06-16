@@ -13,6 +13,7 @@ import { createClientHandler } from "./create"
 import { deleteClientHandler } from "./delete"
 import { createClientPreviewHandler } from "./preview"
 import { getClientTrainingSessionsHandler, getSessionCoherenceHandler } from "./sessions"
+import { getClientFeedbackHandler } from "./feedback"
 
 // ===== EXPORTAR HANDLERS INDIVIDUALES =====
 
@@ -25,6 +26,7 @@ export * from "./progress"
 export * from "./fatigue"
 export * from "./sessions"
 export * from "./tests"
+export * from "./feedback"
 
 // ===== ARRAY DE HANDLERS BÁSICOS (COMPATIBILIDAD) =====
 
@@ -36,5 +38,6 @@ export const clientsHandlers = [
     createClientPreviewHandler,
     getClientTrainingSessionsHandler,
     getSessionCoherenceHandler,
+    getClientFeedbackHandler,
 ]
 

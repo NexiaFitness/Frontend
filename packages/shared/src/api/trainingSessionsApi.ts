@@ -18,6 +18,9 @@ import type {
     SessionCoherence,
     TrainingSessionReplicateRequest,
     TrainingSessionReplicateResponse,
+    WellbeingCheckIn,
+    WellbeingCheckInCreate,
+    PostSessionReport,
 } from '../types/trainingSessions';
 import type { ClientFeedback, ClientFeedbackCreate } from '../types/training';
 import type {
@@ -262,6 +265,34 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        submitWellbeingCheckIn: builder.mutation<
+            WellbeingCheckIn,
+            { sessionId: number; body: WellbeingCheckInCreate }
+        >({
+            query: ({ sessionId, body }) => ({
+                url: `/training-sessions/${sessionId}/wellbeing-check-in`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (_result, _error, { sessionId }) => [
+                { type: 'TrainingSession', id: sessionId },
+            ],
+        }),
+
+        getWellbeingCheckIn: builder.query<WellbeingCheckIn, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/wellbeing-check-in`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: `WELLBEING_${sessionId}` },
+            ],
+        }),
+
+        getPostSessionReport: builder.query<PostSessionReport, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/post-session-report`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: `REPORT_${sessionId}` },
+            ],
+        }),
+
         /**
          * POST /training-sessions/{session_id}/replicate
          * Replicar una sesion a otras semanas del mismo bloque
@@ -371,6 +402,10 @@ export const {
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useCreateSessionFeedbackMutation,
+    useSubmitWellbeingCheckInMutation,
+    useGetWellbeingCheckInQuery,
+    useLazyGetWellbeingCheckInQuery,
+    useGetPostSessionReportQuery,
     useUpdateTrainingSessionFullMutation,
     useDeleteTrainingSessionMutation,
     useReplicateTrainingSessionMutation,

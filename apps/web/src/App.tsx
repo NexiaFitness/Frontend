@@ -66,6 +66,16 @@ const AthleteFeedbackHistoryPage = lazy(() =>
     default: m.AthleteFeedbackHistoryPage,
   }))
 );
+const AthleteSessionSummaryPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionSummaryPage").then((m) => ({
+    default: m.AthleteSessionSummaryPage,
+  }))
+);
+const AthleteProgressPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteProgressPage").then((m) => ({
+    default: m.AthleteProgressPage,
+  }))
+);
 
 // Bloque 3: Módulos trainer (lazy)
 const CompleteProfile = lazy(() =>
@@ -427,6 +437,22 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
                 <AthleteFeedbackHistoryPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="progress"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteProgressPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id/summary"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionSummaryPage />
               </RoleProtectedRoute>
             }
           />

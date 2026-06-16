@@ -6,6 +6,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { SessionBlockExerciseUpdate } from "../../types/sessionProgramming";
 import { countPendingForSession } from "../../offline/athleteSessionDb";
 import {
+    finishOnlineSession,
     flushPendingSessionSync,
     loadSessionSnapshot,
     persistSessionSnapshot,
@@ -161,13 +162,26 @@ export function useOfflineSessionLog(
     );
 
     const finishSession = useCallback(async () => {
-        return trySyncOrQueue(
-            () => adapter.completeSession(sessionId),
-            async () => {
-                await queueSessionComplete(sessionId);
+        if (!isOnline) {
+            await queueSessionComplete(sessionId);
+            await refreshPendingCount();
+            return "offline";
+        }
+
+        try {
+            await finishOnlineSession(sessionId, adapter);
+            await refreshPendingCount();
+            return "synced";
+        } catch (error) {
+            if (error instanceof AthleteSyncConflictError) {
+                onConflict?.();
+                throw error;
             }
-        );
-    }, [adapter, sessionId, trySyncOrQueue]);
+            await queueSessionComplete(sessionId);
+            await refreshPendingCount();
+            return "queued";
+        }
+    }, [adapter, isOnline, onConflict, refreshPendingCount, sessionId]);
 
     const isUsingCache =
         !isOnline && flatExercises.length === 0 && cachedSnapshot != null;
