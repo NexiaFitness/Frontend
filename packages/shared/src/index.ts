@@ -41,6 +41,8 @@ export {
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
+export * from "./api/notificationsApi";
+export * from "./api/athleteApi";
 export * from "./api";
 
 // Store
@@ -190,6 +192,7 @@ export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
 export * from "./types/coherence";
+export * from "./types/athleteWeeklySummary";
 export * from "./types/dashboard";
 export * from "./types/testing";
 export * from "./types/reports";

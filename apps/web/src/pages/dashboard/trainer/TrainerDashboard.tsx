@@ -20,6 +20,7 @@ import {
     TodaySessionsWidget,
     ClientListWidget,
     BillingWidget,
+    RecentActivityWidget,
 } from "@/components/dashboard/trainer/widgets";
 import {
     useClientStats,
@@ -119,6 +120,7 @@ export const TrainerDashboard: React.FC = () => {
                 </div>
 
                 <aside className="space-y-8 lg:w-[30%]">
+                    <RecentActivityWidget />
                     <ClientListWidget />
                     <BillingWidget />
                 </aside>

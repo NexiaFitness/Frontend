@@ -9,10 +9,13 @@
  * @since v5.x - DASHBOARD_LAYOUT_SPEC
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import { useGetClientsWithMetricsQuery } from "@nexia/shared/api/clientsApi";
+import {
+    useGetClientsWithMetricsQuery,
+    useGetRecentActivityQuery,
+} from "@nexia/shared/api/clientsApi";
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { ClientListItem } from "@nexia/shared/types/client";
@@ -33,6 +36,22 @@ export const ClientListWidget: React.FC = () => {
         },
         { skip: !trainerProfile?.id }
     );
+
+    const { data: activityData } = useGetRecentActivityQuery(
+        { limit: 30, trainer_id: trainerProfile?.id },
+        { skip: !trainerProfile?.id, pollingInterval: 60_000 }
+    );
+
+    const activeClientIds = useMemo(() => {
+        const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+        const ids = new Set<number>();
+        for (const item of activityData?.items ?? []) {
+            if (item.client_id && new Date(item.timestamp).getTime() >= cutoff) {
+                ids.add(item.client_id);
+            }
+        }
+        return ids;
+    }, [activityData?.items]);
 
     const items: ClientListItem[] = data?.items ?? [];
 
@@ -65,6 +84,7 @@ export const ClientListWidget: React.FC = () => {
                         <ClientListCard
                             key={client.id}
                             client={client}
+                            hasRecentActivity={activeClientIds.has(client.id)}
                             onClick={() => navigate(`/dashboard/clients/${client.id}`)}
                         />
                     ))

@@ -252,6 +252,8 @@ export interface ClientFeedback {
     muscle_soreness: string | null;
     pain_or_discomfort: string | null;
     notes: string | null;
+    trainer_response: string | null;
+    trainer_response_at: string | null; // ISO datetime
     feedback_date: string; // ISO datetime
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
@@ -271,6 +273,11 @@ export interface ClientFeedbackCreate {
     pain_or_discomfort?: string | null;
     notes?: string | null;
     feedback_date?: string | null;
+}
+
+/** PATCH /training-sessions/feedback/{id}/trainer-response (F3a) */
+export interface ClientFeedbackTrainerResponseUpdate {
+    trainer_response: string;
 }
 
 // ========================================

@@ -17,6 +17,7 @@ import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indic
 export interface ClientListCardProps {
     client: ClientListItem;
     onClick: () => void;
+    hasRecentActivity?: boolean;
 }
 
 /** Satisfacción 1–10: fatigue 1 (perfecto) → 10, fatigue 10 (exhausted) → 1. */
@@ -25,7 +26,11 @@ function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
     return Math.max(1, Math.min(10, raw));
 }
 
-export const ClientListCard: React.FC<ClientListCardProps> = ({ client, onClick }) => {
+export const ClientListCard: React.FC<ClientListCardProps> = ({
+    client,
+    onClick,
+    hasRecentActivity = false,
+}) => {
     const adherence = Math.min(100, Math.max(0, client.adherence_percentage ?? 0));
     const trend: ClientProgressTrend =
         client.satisfaction_trend ??
@@ -48,13 +53,21 @@ export const ClientListCard: React.FC<ClientListCardProps> = ({ client, onClick 
             aria-label={`Ir al detalle de ${fullName}`}
         >
             {/* 1. Avatar */}
-            <ClientAvatar
-                clientId={client.id}
-                nombre={client.nombre}
-                apellidos={client.apellidos}
-                size="sm"
-                className="h-8 w-8 shrink-0 text-label font-semibold"
-            />
+            <div className="relative shrink-0">
+                <ClientAvatar
+                    clientId={client.id}
+                    nombre={client.nombre}
+                    apellidos={client.apellidos}
+                    size="sm"
+                    className="h-8 w-8 text-label font-semibold"
+                />
+                {hasRecentActivity && (
+                    <span
+                        className="absolute -right-0.5 -top-0.5 size-2.5 rounded-full bg-primary ring-2 ring-card"
+                        aria-label="Actividad reciente"
+                    />
+                )}
+            </div>
 
             {/* 2. Nombre + adherencia (barra + %) */}
             <div className="min-w-0 flex-1">

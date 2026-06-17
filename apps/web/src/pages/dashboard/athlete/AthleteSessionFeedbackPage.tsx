@@ -10,7 +10,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import { Slider } from "@/components/ui/forms/Slider";
 import { Button } from "@/components/ui/buttons";
-import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
+import { Alert, useToast } from "@/components/ui/feedback";
+import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import {
     useCreateSessionFeedbackMutation,
@@ -62,11 +63,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return (
-            <div className="flex min-h-[50vh] items-center justify-center px-4 pb-24">
-                <LoadingSpinner size="lg" />
-            </div>
-        );
+        return <AthletePageLoading variant="session-feedback" />;
     }
 
     return (

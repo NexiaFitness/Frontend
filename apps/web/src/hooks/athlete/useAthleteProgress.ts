@@ -1,15 +1,35 @@
 /**
- * useAthleteProgress.ts — Datos de progreso para portal atleta (F2).
+ * useAthleteProgress.ts — Datos completos V10 progreso atleta (F2).
  */
 
 import { useMemo } from "react";
+import {
+    useGetClientProgressTrackingQuery,
+    useGetClientCoherenceQuery,
+} from "@nexia/shared/api/clientsApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises/useExercises";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
-import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import {
+    buildRecentRecords,
+    buildTopExercises,
+    buildWeeklyActivityBars,
+    computeAdherence30d,
+} from "@nexia/shared/utils/athlete/athleteProgressUtils";
+
+function monthPeriodBounds(): { periodStart: string; periodEnd: string } {
+    const end = new Date();
+    const start = new Date();
+    start.setDate(start.getDate() - 30);
+    const fmt = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    return { periodStart: fmt(start), periodEnd: fmt(end) };
+}
 
 export function useAthleteProgress() {
     const { clientId, isLoading: profileLoading } = useAthleteContext();
+    const period = useMemo(() => monthPeriodBounds(), []);
 
     const {
         weightChartData,
@@ -28,15 +48,63 @@ export function useAthleteProgress() {
         skip: !clientId,
     });
 
+    const {
+        data: tracking = [],
+        isLoading: trackingLoading,
+        isError: trackingError,
+    } = useGetClientProgressTrackingQuery(
+        { clientId: clientId ?? 0, limit: 200 },
+        { skip: !clientId }
+    );
+
+    const { data: coherence, isLoading: coherenceLoading } = useGetClientCoherenceQuery(
+        {
+            clientId: clientId ?? 0,
+            periodType: "month",
+            periodStart: period.periodStart,
+            periodEnd: period.periodEnd,
+        },
+        { skip: !clientId }
+    );
+
+    const { data: exerciseList, isLoading: exercisesLoading } = useGetExercisesQuery(
+        { skip: 0, limit: 500 },
+        { skip: !clientId }
+    );
+
+    const exerciseNames = useMemo(() => {
+        const map = new Map<number, string>();
+        for (const ex of exerciseList?.exercises ?? []) {
+            map.set(ex.id, ex.nombre);
+        }
+        return map;
+    }, [exerciseList?.exercises]);
+
+    const adherence30d = useMemo(() => computeAdherence30d(sessions), [sessions]);
+
+    const adherencePercent30d =
+        coherence?.kpis?.adherence_percentage ?? adherence30d.percent;
+
+    const weeklyActivity = useMemo(
+        () => buildWeeklyActivityBars(sessions),
+        [sessions]
+    );
+
+    const topExercises = useMemo(
+        () => buildTopExercises(tracking, exerciseNames),
+        [tracking, exerciseNames]
+    );
+
+    const recentRecords = useMemo(
+        () => buildRecentRecords(tracking, exerciseNames),
+        [tracking, exerciseNames]
+    );
+
     const completedSessions = useMemo(
         () =>
             [...sessions]
-                .filter((s: TrainingSession) => s.status === "completed")
-                .sort((a, b) => {
-                    const da = a.session_date ?? "";
-                    const db = b.session_date ?? "";
-                    return db.localeCompare(da);
-                })
+                .filter((s) => s.status === "completed")
+                .sort((a, b) => (b.session_date ?? "").localeCompare(a.session_date ?? ""))
                 .slice(0, 8),
         [sessions]
     );
@@ -52,10 +120,21 @@ export function useAthleteProgress() {
         latestWeight,
         weightChange,
         trend,
+        adherencePercent30d,
+        adherence30d,
+        weeklyActivity,
+        topExercises,
+        recentRecords,
         completedSessions,
         completedCount,
         totalSessions: sessions.length,
-        isLoading: profileLoading || progressLoading || sessionsLoading,
-        isError: Boolean(progressError) || sessionsError,
+        isLoading:
+            profileLoading ||
+            progressLoading ||
+            sessionsLoading ||
+            trackingLoading ||
+            coherenceLoading ||
+            exercisesLoading,
+        isError: Boolean(progressError) || sessionsError || trackingError,
     };
 }

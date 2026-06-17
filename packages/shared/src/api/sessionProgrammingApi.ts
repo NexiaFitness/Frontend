@@ -435,6 +435,9 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
                 ...(result?.session_block_id
                     ? [{ type: "SessionBlockExercise" as const, id: `BLOCK-${result.session_block_id}` }]
                     : []),
+                ...(result?.exercise_id
+                    ? [{ type: "AthleteLastPerformance" as const, id: result.exercise_id }]
+                    : []),
             ],
         }),
 

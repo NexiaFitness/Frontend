@@ -58,6 +58,8 @@ export interface SessionExerciseSetView {
     actualReps: string | null;
     actualWeight: number | null;
     actualEffortValue: number | null;
+    /** Series ya registradas en backend para la fila origen. */
+    rowLoggedSets: number;
     /** ID de la fila origen `session_block_exercises`. */
     sourceLineId: number;
 }
@@ -160,6 +162,7 @@ function setView(
         actualReps: line.actual_reps ?? null,
         actualWeight: line.actual_weight ?? null,
         actualEffortValue: line.actual_effort_value ?? null,
+        rowLoggedSets: line.actual_sets ?? 0,
         sourceLineId: line.id,
     };
 }

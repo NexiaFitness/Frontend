@@ -15,6 +15,7 @@ import type {
     TrainingSessionUpdate,
     SessionExercise,
     SessionExerciseCreate,
+    SessionExerciseUpdate,
     SessionCoherence,
     TrainingSessionReplicateRequest,
     TrainingSessionReplicateResponse,
@@ -265,6 +266,22 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        updateFeedbackTrainerResponse: builder.mutation<
+            ClientFeedback,
+            { feedbackId: number; clientId: number; trainer_response: string }
+        >({
+            query: ({ feedbackId, trainer_response }) => ({
+                url: `/training-sessions/feedback/${feedbackId}/trainer-response`,
+                method: 'PATCH',
+                body: { trainer_response },
+            }),
+            invalidatesTags: (_result, _error, { clientId }) => [
+                { type: 'Client', id: clientId },
+                { type: 'Client', id: 'FEEDBACK' },
+                { type: 'Client', id: 'RECENT_ACTIVITY' },
+            ],
+        }),
+
         submitWellbeingCheckIn: builder.mutation<
             WellbeingCheckIn,
             { sessionId: number; body: WellbeingCheckInCreate }
@@ -387,6 +404,43 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 return tags;
             },
         }),
+
+        /**
+         * PUT /training-sessions/exercises/{id}
+         * Actualizar ejercicio legacy (session_exercises) — F3c legacy run adapter
+         */
+        updateSessionExercise: builder.mutation<
+            SessionExercise,
+            { id: number; data: SessionExerciseUpdate; clientId?: number }
+        >({
+            query: ({ id, data }) => ({
+                url: `/training-sessions/exercises/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, _error, { id, clientId }) => {
+                const tags: Array<{
+                    type: 'TrainingSession' | 'SessionExercise' | 'Client' | 'AthleteLastPerformance';
+                    id: string | number;
+                }> = [{ type: 'SessionExercise', id }];
+                if (result?.training_session_id) {
+                    tags.push({ type: 'TrainingSession', id: result.training_session_id });
+                }
+                if (clientId != null) {
+                    tags.push({ type: 'Client', id: `TRACKING-${clientId}` });
+                    if (result?.exercise_id) {
+                        tags.push({
+                            type: 'Client',
+                            id: `TRACKING-${clientId}-${result.exercise_id}`,
+                        });
+                    }
+                }
+                if (result?.exercise_id) {
+                    tags.push({ type: 'AthleteLastPerformance', id: result.exercise_id });
+                }
+                return tags;
+            },
+        }),
     }),
     overrideExisting: false,
 });
@@ -402,6 +456,7 @@ export const {
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
     useCreateSessionFeedbackMutation,
+    useUpdateFeedbackTrainerResponseMutation,
     useSubmitWellbeingCheckInMutation,
     useGetWellbeingCheckInQuery,
     useLazyGetWellbeingCheckInQuery,
@@ -410,5 +465,6 @@ export const {
     useDeleteTrainingSessionMutation,
     useReplicateTrainingSessionMutation,
     useCreateSessionExerciseMutation,
+    useUpdateSessionExerciseMutation,
 } = trainingSessionsApi;
 

@@ -8,6 +8,8 @@ export interface AthleteFlatExercise {
     /** ID estable para UI (puede repetir blockExerciseId en multi-serie legacy). */
     stepKey: string;
     blockExerciseId: number;
+    /** ID catálogo ejercicio (progress tracking / PR). */
+    exerciseId: number;
     name: string;
     blockName: string | null;
     groupKind: string | null;
@@ -15,6 +17,8 @@ export interface AthleteFlatExercise {
     setIndex: number;
     totalSetsInSlot: number;
     plannedLabel: string;
+    /** Peso planificado de esta serie (kg), null si no prescrito. */
+    plannedWeight: number | null;
     defaultWeight: number;
     defaultReps: number;
     restSeconds: number | null;

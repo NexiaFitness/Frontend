@@ -59,6 +59,7 @@ export * from "./habits";
 
 // Injuries types
 export * from "./injuries";
+export * from "./injuryAlert";
 
 // Metrics types
 export * from "./metrics";

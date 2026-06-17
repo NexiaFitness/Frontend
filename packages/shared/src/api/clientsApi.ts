@@ -473,6 +473,23 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * Tracking de un ejercicio concreto (portal atleta V11).
+         * GET /training-sessions/progress/client/{client_id}/exercise/{exercise_id}
+         */
+        getClientExerciseProgressTracking: builder.query<
+            ProgressTracking[],
+            { clientId: number; exerciseId: number; skip?: number; limit?: number }
+        >({
+            query: ({ clientId, exerciseId, skip = 0, limit = 100 }) => ({
+                url: `/training-sessions/progress/client/${clientId}/exercise/${exerciseId}?skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId, exerciseId }) => [
+                { type: "Client", id: `TRACKING-${clientId}-${exerciseId}` },
+            ],
+        }),
+
+        /**
          * Crear registro de progreso del cliente
          */
         createProgressRecord: builder.mutation<ClientProgress, CreateClientProgressData>({
@@ -1028,6 +1045,7 @@ export const {
     useGetClientProgressHistoryQuery,
     useGetProgressAnalyticsQuery,
     useGetClientProgressTrackingQuery,
+    useGetClientExerciseProgressTrackingQuery,
     useCreateProgressRecordMutation,
     useUpdateProgressRecordMutation,
     // Training hooks

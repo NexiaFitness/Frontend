@@ -6,7 +6,8 @@
 
 import React from "react";
 import { AthletePlanOverview } from "@/components/athlete/AthletePlanOverview";
-import { Alert, EmptyState, LoadingSpinner } from "@/components/ui/feedback";
+import { Alert, EmptyState } from "@/components/ui/feedback";
+import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { Button } from "@/components/ui/buttons";
 import { useAthletePlan } from "@/hooks/athlete/useAthletePlan";
 import { useNavigate } from "react-router-dom";
@@ -17,11 +18,7 @@ export const AthletePlanPage: React.FC = () => {
     const { summary, planGoalLabel, isLoading, isError } = useAthletePlan();
 
     if (isLoading) {
-        return (
-            <div className="flex min-h-[50vh] items-center justify-center px-4 pb-24">
-                <LoadingSpinner size="lg" />
-            </div>
-        );
+        return <AthletePageLoading variant="plan" />;
     }
 
     if (isError) {

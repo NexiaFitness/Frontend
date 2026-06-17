@@ -346,5 +346,7 @@ export const baseApi = createApi({
         "WeeklyStructure",
         "DayException",
         "ExerciseSafety",
+        "AthleteWeeklySummary",
+        "AthleteLastPerformance",
     ],
 });

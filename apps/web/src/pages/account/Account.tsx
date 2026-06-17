@@ -15,10 +15,17 @@
  */
 
 import React from "react";
+import { useSelector } from "react-redux";
 import { PageTitle } from "@/components/dashboard/shared";
 import { ProfileForm } from "@/components/account/ProfileForm";
+import { AthleteNotificationPrefsCard } from "@/components/athlete/AthleteNotificationPrefsCard";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
+import { selectUser } from "@nexia/shared";
 
 export const Account: React.FC = () => {
+    const user = useSelector(selectUser);
+    const isAthlete = user?.role === USER_ROLES.ATHLETE;
+
     return (
         <>
             <PageTitle
@@ -27,10 +34,10 @@ export const Account: React.FC = () => {
                 className="mb-6"
             />
 
-                {/* Contenido principal con ancho completo */}
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <ProfileForm />
-                </div>
+            <div className="space-y-6 px-4 lg:px-8 pb-12 lg:pb-20">
+                {isAthlete && <AthleteNotificationPrefsCard />}
+                <ProfileForm />
+            </div>
         </>
     );
 };

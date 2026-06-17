@@ -96,6 +96,8 @@ export interface TrainingSession {
     is_active: boolean;
     /** Incluido en POST/PUT por backend (Fase 3); evita GET adicional. */
     coherence?: SessionCoherence | null;
+    /** % cumplimiento (series reales vs planificadas) cuando status=completed. F2-BE-05 */
+    completion_percentage?: number | null;
 }
 
 /**
@@ -337,6 +339,24 @@ export interface SessionExerciseCreate {
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
+    notes?: string | null;
+}
+
+/** PUT /training-sessions/exercises/{id} — atleta actual_* o trainer prescripción */
+export interface SessionExerciseUpdate {
+    order_in_session?: number | null;
+    planned_sets?: number | null;
+    planned_reps?: number | null;
+    planned_weight?: number | null;
+    planned_duration?: number | null;
+    planned_distance?: number | null;
+    planned_rest?: number | null;
+    actual_sets?: number | null;
+    actual_reps?: string | null;
+    actual_weight?: number | null;
+    actual_duration?: number | null;
+    actual_distance?: number | null;
+    actual_rest?: number | null;
     notes?: string | null;
 }
 

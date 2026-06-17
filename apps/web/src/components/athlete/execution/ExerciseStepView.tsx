@@ -5,8 +5,13 @@
 import React from "react";
 import { Play } from "lucide-react";
 import type { AthleteFlatExercise } from "@nexia/shared/offline";
+import type { InjuryAlert } from "@nexia/shared/types/injuryAlert";
 import { Badge } from "@/components/ui/Badge";
+import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteSetLogger } from "./AthleteSetLogger";
+import { AthleteLastPerformanceHint } from "./AthleteLastPerformanceHint";
+import type { AthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
+import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
 
 export interface ExerciseStepViewProps {
     exercise: AthleteFlatExercise;
@@ -18,6 +23,13 @@ export interface ExerciseStepViewProps {
     onWeightChange: (value: number) => void;
     onRepsChange: (value: number) => void;
     onRpeChange: (value: number | null) => void;
+    injuryConflict?: {
+        alert: InjuryAlert;
+        onConsultTrainer: () => void;
+    };
+    lastPerformance?: AthleteLastPerformance;
+    lastPerformanceDateLabel?: string | null;
+    onApplyLastPerformance?: () => void;
 }
 
 export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
@@ -30,6 +42,10 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     onWeightChange,
     onRepsChange,
     onRpeChange,
+    injuryConflict,
+    lastPerformance,
+    lastPerformanceDateLabel,
+    onApplyLastPerformance,
 }) => {
     return (
         <div className="space-y-4">
@@ -44,6 +60,25 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
 
             <h1 className="text-2xl font-bold text-foreground">{exercise.name}</h1>
             <p className="text-lg text-muted-foreground">{exercise.plannedLabel}</p>
+
+            {injuryConflict && (
+                <AthleteExerciseInjuryAlert
+                    exerciseName={exercise.name}
+                    alert={injuryConflict.alert}
+                    onConsultTrainer={injuryConflict.onConsultTrainer}
+                    compact
+                />
+            )}
+
+            {hasAthleteLastPerformance(lastPerformance) && onApplyLastPerformance && (
+                <AthleteLastPerformanceHint
+                    weightKg={lastPerformance.weight_kg}
+                    reps={lastPerformance.reps}
+                    rpe={lastPerformance.rpe}
+                    performedAtLabel={lastPerformanceDateLabel ?? ""}
+                    onApply={onApplyLastPerformance}
+                />
+            )}
 
             {exercise.videoUrl ? (
                 <div className="aspect-video overflow-hidden rounded-lg border border-border bg-muted">

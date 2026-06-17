@@ -1,40 +1,54 @@
 /**
- * useAthleteFeedbackHistory.ts — Historial feedback atleta (F1-FE-02).
+ * useAthleteFeedbackHistory.ts — Feedback atleta + nombres sesión (V12 / peek sheet).
+ * Contexto: portal atleta F3a/F3b, lógica compartida página + sheet.
+ * Contratos: agent.md §5
+ * @author Frontend Team
+ * @since v6.2.0
  */
 
 import { useMemo } from "react";
 import { useGetClientFeedbackQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
+import type { ClientFeedback } from "@nexia/shared/types/training";
+import { sortFeedbackNewestFirst } from "@nexia/shared/utils/athlete/athleteFeedbackUtils";
 
-export function useAthleteFeedbackHistory() {
-    const { clientId } = useAthleteContext();
+export interface AthleteFeedbackHistoryData {
+    clientId: number | undefined;
+    sorted: ClientFeedback[];
+    sessionNames: Map<number, string>;
+    isLoading: boolean;
+    getSessionName: (sessionId: number) => string;
+}
 
-    const { data, isLoading, isError, refetch } = useGetClientFeedbackQuery(
-        { clientId: clientId ?? 0, limit: 50 },
-        { skip: !clientId }
-    );
+export function useAthleteFeedbackHistory(limit = 50): AthleteFeedbackHistoryData {
+    const { clientId, isLoading: profileLoading } = useAthleteContext();
+
+    const { data: feedbackList = [], isLoading: feedbackLoading } =
+        useGetClientFeedbackQuery({ clientId: clientId ?? 0, limit }, { skip: !clientId });
 
     const { data: sessions = [] } = useGetTrainingSessionsByClientQuery(clientId ?? 0, {
         skip: !clientId,
     });
 
-    const sessionNameById = useMemo(() => {
+    const sessionNames = useMemo(() => {
         const map = new Map<number, string>();
-        for (const session of sessions) {
-            if (session.session_name) {
-                map.set(session.id, session.session_name);
-            }
+        for (const s of sessions) {
+            map.set(s.id, s.session_name);
         }
         return map;
     }, [sessions]);
 
+    const sorted = useMemo(() => sortFeedbackNewestFirst(feedbackList), [feedbackList]);
+
+    const getSessionName = (sessionId: number) =>
+        sessionNames.get(sessionId) ?? `Sesión #${sessionId}`;
+
     return {
-        clientId,
-        feedbackItems: data ?? [],
-        sessionNameById,
-        isLoading,
-        isError,
-        refetch,
+        clientId: clientId ?? undefined,
+        sorted,
+        sessionNames,
+        isLoading: profileLoading || feedbackLoading,
+        getSessionName,
     };
 }

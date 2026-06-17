@@ -25,6 +25,7 @@ import type {
     CreateInjuryRequest,
     UpdateInjuryRequest,
 } from "../types/injuries";
+import type { InjuryAlert, InjuryAlertCheck } from "../types/injuryAlert";
 
 export const injuriesApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -117,6 +118,14 @@ export const injuriesApi = baseApi.injectEndpoints({
                 "Injuries",
             ],
         }),
+
+        checkInjuryAlert: builder.mutation<InjuryAlert, InjuryAlertCheck>({
+            query: (body) => ({
+                url: "/injuries/check-alert",
+                method: "POST",
+                body,
+            }),
+        }),
     }),
 });
 
@@ -128,5 +137,6 @@ export const {
     useGetClientInjuriesQuery,
     useUpdateInjuryMutation,
     useDeleteInjuryMutation,
+    useCheckInjuryAlertMutation,
 } = injuriesApi;
 

@@ -76,6 +76,11 @@ const AthleteProgressPage = lazy(() =>
     default: m.AthleteProgressPage,
   }))
 );
+const AthleteExerciseProgressPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteExerciseProgressPage").then((m) => ({
+    default: m.AthleteExerciseProgressPage,
+  }))
+);
 
 // Bloque 3: Módulos trainer (lazy)
 const CompleteProfile = lazy(() =>
@@ -176,7 +181,8 @@ import { PublicLayout } from "./components/ui/layout/PublicLayout";
 import { DashboardShell } from "./components/dashboard/DashboardShell";
 
 // UI Components
-import { ToastProvider, LoadingSpinner } from "./components/ui/feedback";
+import { ToastProvider } from "./components/ui/feedback";
+import { AthleteMobileSuspenseFallback } from "./components/athlete/AthleteMobileSuspenseFallback";
 import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 
 // Protección de rutas
@@ -230,7 +236,7 @@ function App() {
   return (
     <ToastProvider>
       <ErrorBoundary>
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
+        <Suspense fallback={<AthleteMobileSuspenseFallback />}>
           <Routes>
             <Route element={<PublicLayout />}>
           <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
@@ -437,6 +443,14 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
                 <AthleteFeedbackHistoryPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="progress/exercise/:exerciseId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteExerciseProgressPage />
               </RoleProtectedRoute>
             }
           />

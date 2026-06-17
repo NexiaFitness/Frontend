@@ -2,15 +2,25 @@
  * AthleteSessionRunPage.tsx — Ejecución sesión atleta (F1 100%, DESIGN §7.4).
  */
 
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { AthleteContextStrip } from "@/components/athlete/AthleteContextStrip";
+import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
+import { AthletePrBanner } from "@/components/athlete/AthletePrBanner";
 import { OfflineSessionBadge } from "@/components/athlete/OfflineSessionBadge";
 import { ExerciseStepView } from "@/components/athlete/execution/ExerciseStepView";
 import { RestTimerOverlay } from "@/components/athlete/execution/RestTimerOverlay";
 import { AthleteStickyActionBar } from "@/components/athlete/layout/AthleteStickyActionBar";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, useToast } from "@/components/ui/feedback";
+import { useToast } from "@/components/ui/feedback";
+import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
+import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
+import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
 import { useAthleteSessionRun } from "@/hooks/athlete/useAthleteSessionRun";
+import { formatAthleteLastPerformanceDate } from "@/utils/athlete/formatAthleteLastPerformanceDate";
+import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
+import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
+import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthleteSessionRunPage: React.FC = () => {
@@ -18,6 +28,9 @@ export const AthleteSessionRunPage: React.FC = () => {
     const sessionId = Number(id);
     const navigate = useNavigate();
     const { showToast } = useToast();
+    const isDesktop = useIsAthleteDesktopLayout();
+    const { clientId } = useAthleteContext();
+    const { activeInjuries, hasActiveInjuries } = useAthleteInjuries();
 
     const {
         isOnline,
@@ -41,6 +54,9 @@ export const AthleteSessionRunPage: React.FC = () => {
         isLoading,
         isLastStep,
         showSaveSetButton,
+        prCelebration,
+        lastPerformance,
+        applyLastPerformance,
     } = useAthleteSessionRun({
         sessionId,
         onSetSaved: (result) => {
@@ -63,18 +79,62 @@ export const AthleteSessionRunPage: React.FC = () => {
         onError: (message) => showToast("error", message),
     });
 
-    if (isLoading) {
-        return (
-            <div className="flex min-h-[50vh] items-center justify-center px-4 pb-24">
-                <LoadingSpinner size="lg" />
-            </div>
+    useEffect(() => {
+        if (!prCelebration || isDesktop) return;
+        const prev =
+            prCelebration.previousMaxWeight != null
+                ? ` (antes ${prCelebration.previousMaxWeight} kg)`
+                : "";
+        showToast(
+            "success",
+            `¡Nuevo récord! ${prCelebration.exerciseName}: ${prCelebration.weight} kg${prev}`
         );
+        navigator.vibrate?.(50);
+    }, [prCelebration, isDesktop, showToast]);
+
+    const currentExerciseRef = useMemo(
+        () =>
+            current
+                ? [{ exerciseId: current.exerciseId, exerciseName: current.name }]
+                : [],
+        [current]
+    );
+
+    const { conflictByExerciseId } = useAthleteSessionInjuryAlerts(
+        clientId,
+        currentExerciseRef,
+        hasActiveInjuries && current != null
+    );
+
+    const currentConflict = current
+        ? conflictByExerciseId.get(current.exerciseId)
+        : undefined;
+
+    const handleConsultTrainer = () => {
+        navigate("/dashboard/feedback");
+    };
+
+    const lastPerformanceDateLabel =
+        hasAthleteLastPerformance(lastPerformance) && lastPerformance.performed_at
+            ? formatAthleteLastPerformanceDate(lastPerformance.performed_at)
+            : null;
+
+    if (isLoading) {
+        return <AthletePageLoading variant="session-run" />;
     }
 
     if (flatExercises.length === 0) {
         return (
             <div className="space-y-4 px-4 pb-24 pt-4">
-                <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
+                {isDesktop ? (
+                    <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
+                ) : (
+                    <AthleteContextStrip
+                        isOnline={isOnline}
+                        pendingCount={pendingCount}
+                        injuries={activeInjuries}
+                    />
+                )}
                 <p className="text-sm text-muted-foreground">
                     {isOnline
                         ? "Esta sesión no tiene ejercicios configurados todavía."
@@ -91,9 +151,36 @@ export const AthleteSessionRunPage: React.FC = () => {
         return null;
     }
 
+    // V05: strip móvil solo offline/sync — lesión ya informada en preview; conflicto → callout bajo título
+    const contextStripInjuries: typeof activeInjuries = [];
+
     return (
         <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
-            <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
+            {isDesktop ? (
+                <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
+            ) : (
+                <AthleteContextStrip
+                    isOnline={isOnline}
+                    pendingCount={pendingCount}
+                    injuries={contextStripInjuries}
+                />
+            )}
+
+            {isDesktop && prCelebration && (
+                <AthletePrBanner
+                    exerciseName={prCelebration.exerciseName}
+                    weight={prCelebration.weight}
+                    previousMaxWeight={prCelebration.previousMaxWeight}
+                />
+            )}
+
+            {isDesktop && hasActiveInjuries && currentConflict && (
+                <AthleteExerciseInjuryAlert
+                    exerciseName={current.name}
+                    alert={currentConflict.alert}
+                    onConsultTrainer={handleConsultTrainer}
+                />
+            )}
 
             <ExerciseStepView
                 exercise={current}
@@ -105,6 +192,17 @@ export const AthleteSessionRunPage: React.FC = () => {
                 onWeightChange={setWeight}
                 onRepsChange={setReps}
                 onRpeChange={setRpe}
+                injuryConflict={
+                    !isDesktop && currentConflict
+                        ? {
+                              alert: currentConflict.alert,
+                              onConsultTrainer: handleConsultTrainer,
+                          }
+                        : undefined
+                }
+                lastPerformance={lastPerformance}
+                lastPerformanceDateLabel={lastPerformanceDateLabel}
+                onApplyLastPerformance={applyLastPerformance}
             />
 
             <AthleteStickyActionBar

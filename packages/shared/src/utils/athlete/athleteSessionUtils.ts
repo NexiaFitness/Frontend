@@ -7,8 +7,13 @@
  */
 
 import type { TrainingSession } from "../../types/trainingSessions";
+import type { ClientFeedback } from "../../types/training";
 import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
+import {
+    formatTrainerNoteForAthlete,
+    hasHumanTrainerNote,
+} from "./athleteSessionNotesUtils";
 
 const DAY_LABELS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 
@@ -32,6 +37,28 @@ export function isSameLocalDay(a: Date, b: Date): boolean {
 export function isSessionToday(session: TrainingSession, today = new Date()): boolean {
     if (!session.session_date) return false;
     return isSameLocalDay(parseSessionDateLocal(session.session_date), today);
+}
+
+/** Días calendario desde hoy hasta la fecha de sesión (0 = hoy, 1 = mañana). */
+export function computeDaysUntilSession(
+    sessionDate: string,
+    today = new Date()
+): number {
+    const sessionDay = parseSessionDateLocal(sessionDate);
+    const todayStart = new Date(today);
+    todayStart.setHours(0, 0, 0, 0);
+    sessionDay.setHours(0, 0, 0, 0);
+    const diffMs = sessionDay.getTime() - todayStart.getTime();
+    return Math.round(diffMs / (24 * 60 * 60 * 1000));
+}
+
+export function formatWeekdayLong(date: Date): string {
+    const label = date.toLocaleDateString("es-ES", { weekday: "long" });
+    return label.charAt(0).toUpperCase() + label.slice(1);
+}
+
+export function formatWeekdayForSession(sessionDate: string): string {
+    return formatWeekdayLong(parseSessionDateLocal(sessionDate));
 }
 
 export function formatAthleteDate(isoDate: string): string {
@@ -192,6 +219,72 @@ export function getTrainingGoalLabel(goal: string | null | undefined): string {
     return labels[goal] ?? goal;
 }
 
+/** Días consecutivos con al menos una sesión completada (racha activa). */
+export function computeTrainingStreak(
+    sessions: TrainingSession[],
+    today = new Date()
+): number {
+    const completedDates = new Set<string>();
+    for (const session of sessions) {
+        if (session.status === "completed" && session.session_date) {
+            completedDates.add(session.session_date);
+        }
+    }
+    if (completedDates.size === 0) return 0;
+
+    const todayKey = toLocalDateKey(today);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayKey = toLocalDateKey(yesterday);
+
+    let cursorKey: string | null = null;
+    if (completedDates.has(todayKey)) {
+        cursorKey = todayKey;
+    } else if (completedDates.has(yesterdayKey)) {
+        cursorKey = yesterdayKey;
+    } else {
+        return 0;
+    }
+
+    let streak = 0;
+    const cursor = parseSessionDateLocal(cursorKey);
+    while (completedDates.has(toLocalDateKey(cursor))) {
+        streak += 1;
+        cursor.setDate(cursor.getDate() - 1);
+    }
+    return streak;
+}
+
+/** Sesión más reciente con notas humanas del entrenador (excluye avisos coherencia). */
+export function findLatestTrainerSessionNote(
+    sessions: TrainingSession[]
+): { session: TrainingSession; note: string } | null {
+    const withNotes = sessions
+        .map((s) => {
+            const raw = s.notes?.trim();
+            if (!raw || !hasHumanTrainerNote(raw)) return null;
+            return { session: s, note: formatTrainerNoteForAthlete(raw) };
+        })
+        .filter((x): x is { session: TrainingSession; note: string } => x != null)
+        .sort((a, b) =>
+            (b.session.session_date ?? "").localeCompare(a.session.session_date ?? "")
+        );
+    return withNotes[0] ?? null;
+}
+
+const MS_7_DAYS = 7 * 24 * 60 * 60 * 1000;
+
+/** @deprecated F3a — use hasUnreadTrainerResponse from athleteFeedbackUtils */
+export function hasRecentFeedbackAwaitingResponse(
+    feedbackItems: ClientFeedback[],
+    now = Date.now()
+): boolean {
+    return feedbackItems.some((item) => {
+        const t = new Date(item.feedback_date).getTime();
+        return Number.isFinite(t) && now - t <= MS_7_DAYS;
+    });
+}
+
 /** Parsea reps planificadas ("8", "8-10") a entero para steppers. */
 export function parseAthleteReps(value: string | number | null | undefined): number {
     if (value == null) return 8;
@@ -199,6 +292,30 @@ export function parseAthleteReps(value: string | number | null | undefined): num
     const match = raw.match(/\d+/);
     const n = match ? Number.parseInt(match[0], 10) : 8;
     return Number.isFinite(n) && n > 0 ? n : 8;
+}
+
+/** Etiqueta de prescripción para run atleta (sin kg planificado residual — F3c-FE-03). */
+function buildAthletePlannedLabel(set: {
+    label: string;
+    plannedReps: string | null;
+    plannedDuration: number | null;
+    effortCharacter: string | null;
+    effortValue: number | null;
+}): string {
+    const parts: string[] = [];
+    if (set.label) parts.push(set.label);
+    if (set.plannedReps) parts.push(`${set.plannedReps} reps`);
+    if (set.effortValue != null) {
+        if (set.effortCharacter === "rpe") {
+            parts.push(`RPE ${set.effortValue}`);
+        } else if (set.effortCharacter === "rir") {
+            parts.push(`RIR ${set.effortValue}`);
+        } else if (set.effortCharacter === "pct_rm") {
+            parts.push(`${set.effortValue}% RM`);
+        }
+    }
+    if (set.plannedDuration != null) parts.push(`${set.plannedDuration}s`);
+    return parts.join(" · ") || "Según prescripción";
 }
 
 /** Aplana la estructura de sesión en pasos de logger (1 paso = 1 serie). */
@@ -209,28 +326,24 @@ export function flattenAthleteExercises(view: SessionStructureView): AthleteFlat
         for (const group of block.groups) {
             for (const slot of group.slots) {
                 for (const set of slot.sets) {
-                    const parts: string[] = [];
-                    if (set.label) parts.push(set.label);
-                    if (set.plannedReps) parts.push(`${set.plannedReps} reps`);
-                    if (set.plannedWeight != null) parts.push(`@ ${set.plannedWeight} kg`);
-                    if (set.plannedDuration != null) parts.push(`${set.plannedDuration}s`);
-
                     items.push({
                         stepKey: `${set.sourceLineId}-${set.index}`,
                         blockExerciseId: set.sourceLineId,
+                        exerciseId: slot.exerciseId,
                         name: slot.exerciseName,
                         blockName: block.blockTypeName,
                         groupKind: group.kind,
                         setLabel: set.label,
                         setIndex: set.index,
                         totalSetsInSlot: slot.sets.length,
-                        plannedLabel: parts.join(" · ") || "Según prescripción",
-                        defaultWeight: set.plannedWeight ?? set.actualWeight ?? 0,
+                        plannedLabel: buildAthletePlannedLabel(set),
+                        plannedWeight: set.plannedWeight ?? null,
+                        defaultWeight: set.actualWeight ?? 0,
                         defaultReps: parseAthleteReps(set.plannedReps ?? set.actualReps),
                         restSeconds: set.plannedRest ?? group.restBetweenSeconds ?? null,
                         defaultRpe: set.actualEffortValue ?? set.effortValue ?? null,
                         videoUrl: null,
-                        loggedSets: 0,
+                        loggedSets: set.rowLoggedSets ?? 0,
                     });
                 }
             }

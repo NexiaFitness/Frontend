@@ -1,19 +1,18 @@
 /**
- * AthleteBottomNav.tsx — Navegación inferior móvil portal atleta.
- * Contexto: portal atleta F0, DESIGN_MOBILE §3.3
+ * AthleteBottomNav.tsx — Navegación inferior móvil portal atleta (4 tabs).
+ * Contexto: portal atleta F0, DESIGN_MOBILE §3.3 — Notas vía campana/sheet, no tab duplicado.
  * @author Frontend Team
  * @since v6.1.0
  */
 
 import React from "react";
 import { NavLink } from "react-router-dom";
-import { Calendar, ClipboardList, LayoutDashboard, MessageSquare, User } from "lucide-react";
+import { Calendar, ClipboardList, LayoutDashboard, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
     { to: "/dashboard", label: "Inicio", icon: LayoutDashboard, end: true },
     { to: "/dashboard/sessions", label: "Sesiones", icon: Calendar, end: false },
-    { to: "/dashboard/feedback", label: "Notas", icon: MessageSquare, end: false },
     { to: "/dashboard/my-plan", label: "Plan", icon: ClipboardList, end: false },
     { to: "/dashboard/account", label: "Cuenta", icon: User, end: false },
 ] as const;
@@ -32,7 +31,7 @@ export const AthleteBottomNav: React.FC = () => {
                             end={end}
                             className={({ isActive }) =>
                                 cn(
-                                    "flex min-h-touch-athlete flex-1 flex-col items-center justify-center gap-0.5 px-0.5 text-[10px] font-medium leading-tight transition-colors sm:text-caption sm:px-1",
+                                    "flex min-h-touch-athlete flex-1 flex-col items-center justify-center gap-0.5 px-1 text-[10px] font-medium leading-tight transition-colors sm:text-caption",
                                     isActive
                                         ? "text-primary"
                                         : "text-muted-foreground hover:text-foreground"

@@ -5,7 +5,7 @@
  * @since v6.1.0
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -20,6 +20,7 @@ export interface UseAthleteSessionsListResult {
     setFilter: (filter: AthleteSessionFilter) => void;
     isLoading: boolean;
     isError: boolean;
+    refreshSessions: () => Promise<void>;
 }
 
 export function useAthleteSessionsList(): UseAthleteSessionsListResult {
@@ -30,9 +31,14 @@ export function useAthleteSessionsList(): UseAthleteSessionsListResult {
         data: allSessions = [],
         isLoading,
         isError,
+        refetch,
     } = useGetTrainingSessionsByClientQuery(clientId ?? 0, {
         skip: !clientId,
     });
+
+    const refreshSessions = useCallback(async () => {
+        await refetch();
+    }, [refetch]);
 
     const sessions = useMemo(
         () => filterAthleteSessions(allSessions, filter),
@@ -45,5 +51,6 @@ export function useAthleteSessionsList(): UseAthleteSessionsListResult {
         setFilter,
         isLoading,
         isError,
+        refreshSessions,
     };
 }

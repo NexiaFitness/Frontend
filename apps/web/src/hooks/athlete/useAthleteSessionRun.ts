@@ -7,13 +7,23 @@ import { useNavigate } from "react-router-dom";
 import {
     useGetTrainingSessionQuery,
     useUpdateTrainingSessionMutation,
+    useUpdateSessionExerciseMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
 import { useUpdateSessionBlockExerciseMutation } from "@nexia/shared/api/sessionProgrammingApi";
+import { useGetAthleteLastPerformanceQuery } from "@nexia/shared/api/athleteApi";
+import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import type { AthleteFlatExercise } from "@nexia/shared/offline";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
+
+export interface AthletePrCelebration {
+    exerciseName: string;
+    weight: number;
+    previousMaxWeight: number | null;
+}
 
 export interface UseAthleteSessionRunOptions {
     sessionId: number;
@@ -38,9 +48,10 @@ export function useAthleteSessionRun({
     const { data: session, isLoading: loadingSession } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId,
     });
-    const { view, isLoading: loadingStructure } = useSessionStructureView(sessionId);
+    const { view, source: structureSource, isLoading: loadingStructure } = useSessionStructureView(sessionId);
 
-    const [updateExercise] = useUpdateSessionBlockExerciseMutation();
+    const [updateBlockExercise] = useUpdateSessionBlockExerciseMutation();
+    const [updateSessionExercise] = useUpdateSessionExerciseMutation();
     const [updateSession] = useUpdateTrainingSessionMutation();
 
     const flatExercisesFromApi = useMemo(() => flattenAthleteExercises(view), [view]);
@@ -49,15 +60,28 @@ export function useAthleteSessionRun({
         () => ({
             updateExercise: async (
                 blockExerciseId: number,
-                data: Parameters<typeof updateExercise>[0]["data"]
+                data: Parameters<typeof updateBlockExercise>[0]["data"]
             ) => {
-                await updateExercise({ id: blockExerciseId, data }).unwrap();
+                if (structureSource === "legacy") {
+                    await updateSessionExercise({
+                        id: blockExerciseId,
+                        clientId: clientId ?? undefined,
+                        data: {
+                            actual_weight: data.actual_weight,
+                            actual_reps: data.actual_reps,
+                            actual_sets: data.actual_sets,
+                            notes: data.notes,
+                        },
+                    }).unwrap();
+                    return;
+                }
+                await updateBlockExercise({ id: blockExerciseId, data }).unwrap();
             },
             completeSession: async (sid: number) => {
                 await updateSession({ id: sid, body: { status: "completed" } }).unwrap();
             },
         }),
-        [updateExercise, updateSession]
+        [structureSource, updateBlockExercise, updateSessionExercise, updateSession, clientId]
     );
 
     const {
@@ -84,6 +108,9 @@ export function useAthleteSessionRun({
               ? (cachedSnapshot?.flatExercises ?? [])
               : [];
 
+    const flatExercisesRef = useRef(flatExercises);
+    flatExercisesRef.current = flatExercises;
+
     const [step, setStep] = useState(0);
     const [weight, setWeight] = useState(0);
     const [reps, setReps] = useState(8);
@@ -91,6 +118,7 @@ export function useAthleteSessionRun({
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [restSeconds, setRestSeconds] = useState<number | null>(null);
+    const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
 
     const loggedSetsRef = useRef<Map<number, number>>(new Map());
     const completedStepKeysRef = useRef<Set<string>>(new Set());
@@ -104,14 +132,45 @@ export function useAthleteSessionRun({
     }, [sessionId]);
 
     const current = flatExercises[step];
+    const currentStepKey = current?.stepKey ?? null;
 
-    // Solo al cambiar de paso (stepKey), no cuando flatExercises se recalcula por refetch RTK.
+    const { evaluatePr } = useAthleteExercisePr(
+        clientId,
+        current?.exerciseId ?? null
+    );
+
+    const { data: lastPerformance } = useGetAthleteLastPerformanceQuery(
+        current?.exerciseId ?? 0,
+        { skip: !current?.exerciseId }
+    );
+
+    const applyLastPerformance = useCallback(() => {
+        if (!hasAthleteLastPerformance(lastPerformance)) return;
+        setWeight(lastPerformance.weight_kg);
+        if (lastPerformance.reps != null) {
+            setReps(lastPerformance.reps);
+        }
+        if (lastPerformance.rpe != null) {
+            setRpe(lastPerformance.rpe);
+        }
+    }, [lastPerformance]);
+
     useEffect(() => {
-        if (!current) return;
-        setWeight(current.defaultWeight);
-        setReps(current.defaultReps);
-        setRpe(current.defaultRpe);
-    }, [current?.stepKey]);
+        setPrCelebration(null);
+    }, [currentStepKey]);
+
+    // Sincronizar steppers solo al cambiar de paso (stepKey), no en refetch RTK del mismo paso.
+    // flatExercisesRef evita listar flatExercises en deps (HF-01).
+    useEffect(() => {
+        if (!currentStepKey) return;
+        const exercise = flatExercisesRef.current.find(
+            (item) => item.stepKey === currentStepKey
+        );
+        if (!exercise) return;
+        setWeight(exercise.defaultWeight);
+        setReps(exercise.defaultReps);
+        setRpe(exercise.defaultRpe);
+    }, [currentStepKey]);
 
     const getNextActualSets = useCallback(
         (exercise: AthleteFlatExercise) => {
@@ -141,6 +200,15 @@ export function useAthleteSessionRun({
             completedStepKeysRef.current.add(current.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
 
+            const prResult = evaluatePr(weight);
+            if (prResult.isPr) {
+                setPrCelebration({
+                    exerciseName: current.name,
+                    weight,
+                    previousMaxWeight: prResult.previousMaxWeight,
+                });
+            }
+
             onSetSaved?.(result);
 
             if (current.restSeconds && current.restSeconds > 0 && step < flatExercises.length - 1) {
@@ -160,6 +228,7 @@ export function useAthleteSessionRun({
         logSet,
         onError,
         onSetSaved,
+        evaluatePr,
         reps,
         rpe,
         step,
@@ -220,5 +289,8 @@ export function useAthleteSessionRun({
         isLoading,
         isLastStep,
         showSaveSetButton,
+        prCelebration,
+        lastPerformance,
+        applyLastPerformance,
     };
 }

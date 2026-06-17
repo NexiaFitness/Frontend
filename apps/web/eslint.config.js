@@ -14,6 +14,7 @@ export default tseslint.config(
       'build/**/*',
       'coverage/**/*',
       'e2e/**/*',
+      'public/push-handler.js',
       '*.config.js',
       '*.config.ts',
       'node_modules/**/*',

@@ -5,12 +5,14 @@
 
 import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { CheckCircle2, Trophy } from "lucide-react";
+import { CheckCircle2, Share2, Trophy } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { Alert, LoadingSpinner } from "@/components/ui/feedback";
+import { Alert } from "@/components/ui/feedback";
+import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { useGetPostSessionReportQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
+import { useAthleteSessionShare } from "@/hooks/athlete/useAthleteSessionShare";
 
 export const AthleteSessionSummaryPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -20,13 +22,10 @@ export const AthleteSessionSummaryPage: React.FC = () => {
     const { data: report, isLoading, isError } = useGetPostSessionReportQuery(sessionId, {
         skip: !sessionId,
     });
+    const { canShare, isSharing, share } = useAthleteSessionShare(report);
 
     if (isLoading) {
-        return (
-            <div className="flex min-h-[50vh] items-center justify-center px-4 pb-24">
-                <LoadingSpinner size="lg" />
-            </div>
-        );
+        return <AthletePageLoading variant="session-summary" />;
     }
 
     if (isError || !report) {
@@ -47,13 +46,28 @@ export const AthleteSessionSummaryPage: React.FC = () => {
     return (
         <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
             <div className="flex-1 space-y-6">
-                <header className="space-y-3 text-center">
-                    <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-success/15 text-success">
-                        <Trophy className="size-8" aria-hidden />
-                    </div>
-                    <h1 className="text-2xl font-bold text-foreground">¡Sesión completada!</h1>
-                    <p className="text-sm text-muted-foreground">{report.session_name}</p>
-                </header>
+                <div className="relative">
+                    {canShare && (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="absolute right-0 top-0 min-h-touch-athlete min-w-touch-athlete"
+                            onClick={() => void share()}
+                            disabled={isSharing}
+                            aria-label="Compartir resumen de sesión"
+                        >
+                            <Share2 className="size-5" aria-hidden />
+                        </Button>
+                    )}
+                    <header className="space-y-3 px-10 text-center">
+                        <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-success/15 text-success">
+                            <Trophy className="size-8" aria-hidden />
+                        </div>
+                        <h1 className="text-2xl font-bold text-foreground">¡Sesión completada!</h1>
+                        <p className="text-sm text-muted-foreground">{report.session_name}</p>
+                    </header>
+                </div>
 
                 <div className="rounded-xl border border-border bg-card p-6 text-center">
                     <p className="text-caption font-medium uppercase tracking-wide text-muted-foreground">

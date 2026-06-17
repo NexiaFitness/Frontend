@@ -16,6 +16,7 @@ import {
     useGetClientTrainingSessionsQuery,
 } from "@nexia/shared/api/clientsApi";
 import type { ClientFeedback } from "@nexia/shared/types/training";
+import { TrainerFeedbackResponseForm } from "./TrainerFeedbackResponseForm";
 
 export interface ClientAthleteFeedbackCardProps {
     clientId: number;
@@ -32,10 +33,12 @@ function formatFeedbackDate(iso: string): string {
 function FeedbackRow({
     item,
     sessionName,
+    clientId,
     onViewSession,
 }: {
     item: ClientFeedback;
     sessionName: string;
+    clientId: number;
     onViewSession: (sessionId: number) => void;
 }) {
     const highFatigue = (item.fatigue_level ?? 0) >= 8;
@@ -70,6 +73,19 @@ function FeedbackRow({
                     {item.pain_or_discomfort || item.notes}
                 </p>
             )}
+            {item.trainer_response?.trim() && (
+                <div className="rounded-md border border-primary/20 bg-primary/5 p-3">
+                    <p className="text-xs font-medium text-primary">Tu respuesta</p>
+                    <p className="mt-1 text-sm text-foreground line-clamp-3">
+                        {item.trainer_response}
+                    </p>
+                </div>
+            )}
+            <TrainerFeedbackResponseForm
+                feedbackId={item.id}
+                clientId={clientId}
+                existingResponse={item.trainer_response}
+            />
             <Button
                 variant="secondary"
                 size="sm"
@@ -157,6 +173,7 @@ export const ClientAthleteFeedbackCard: React.FC<ClientAthleteFeedbackCardProps>
             {latest && (
                 <FeedbackRow
                     item={latest}
+                    clientId={clientId}
                     sessionName={
                         sessionNames.get(latest.training_session_id) ?? `Sesión #${latest.training_session_id}`
                     }
@@ -191,6 +208,7 @@ export const ClientAthleteFeedbackCard: React.FC<ClientAthleteFeedbackCardProps>
                                 <FeedbackRow
                                     key={item.id}
                                     item={item}
+                                    clientId={clientId}
                                     sessionName={
                                         sessionNames.get(item.training_session_id) ??
                                         `Sesión #${item.training_session_id}`

@@ -1,117 +1,145 @@
 /**
- * SessionTodayCard.tsx — Hero sesión de hoy / descanso.
- * Contexto: portal atleta F0, V01 UX.
- * @author Frontend Team
- * @since v6.1.0
+ * SessionTodayCard.tsx — Hero sesión / preparación / celebración (F3b-FE-04).
+ * Presentacional: tono y CTA vienen del modelo shared.
  */
 
 import React from "react";
-import { Clock, Dumbbell } from "lucide-react";
+import {
+    ArrowRight,
+    Clock,
+    Dumbbell,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
-import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import type {
+    SessionHeroCopy,
+    SessionHeroCtaAction,
+} from "@nexia/shared/utils/athlete/athleteDashboardHeroCopy";
+import { SESSION_HERO_TONE_STYLES } from "@/components/athlete/sessionHeroPresentation";
 
 export interface SessionTodayCardProps {
     session: TrainingSession | undefined;
-    nextSession: TrainingSession | undefined;
+    hero: SessionHeroCopy;
     planProgressPercent: number | null;
-    isRestDay: boolean;
-    hasActivePlan: boolean;
-    onStart: (sessionId: number) => void;
+    onCta: (action: SessionHeroCtaAction, sessionId: number | null) => void;
 }
 
 export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
     session,
-    nextSession,
+    hero,
     planProgressPercent,
-    isRestDay,
-    hasActivePlan,
-    onStart,
+    onCta,
 }) => {
-    if (!hasActivePlan) {
-        return (
-            <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-sm text-muted-foreground">
-                    Tu entrenador te asignará un plan pronto. Mientras tanto, revisa tu cuenta o
-                    contacta con tu entrenador.
-                </p>
-            </div>
-        );
-    }
-
-    if (isRestDay || !session) {
-        return (
-            <div className="rounded-lg border border-border bg-card p-4 space-y-3">
-                <Badge variant="secondary">Día de descanso</Badge>
-                <h2 className="text-lg font-bold text-foreground">Recupera bien hoy</h2>
-                {nextSession?.session_date ? (
-                    <p className="text-sm text-muted-foreground">
-                        Próxima sesión:{" "}
-                        <span className="font-medium text-foreground">
-                            {nextSession.session_name} · {formatAthleteDateLong(nextSession.session_date)}
-                        </span>
-                    </p>
-                ) : (
-                    <p className="text-sm text-muted-foreground">No hay sesiones programadas.</p>
-                )}
-            </div>
-        );
-    }
-
+    const style = SESSION_HERO_TONE_STYLES[hero.tone];
     const progressLabel =
         planProgressPercent != null ? `${Math.round(planProgressPercent)}% del plan` : null;
+
+    const handleCta = () => {
+        if (!hero.cta) return;
+        onCta(hero.cta.action, hero.targetSessionId);
+    };
+
+    const showSessionMeta =
+        style.showMetaRow &&
+        session &&
+        (session.planned_duration != null || session.session_type);
 
     return (
         <div
             className={cn(
-                "rounded-lg border bg-card p-4 space-y-4",
-                "border-primary/30"
+                "relative overflow-hidden rounded-xl border p-4",
+                style.container,
+                hero.cta ? "space-y-4" : "space-y-2"
             )}
         >
-            <div className="flex items-start justify-between gap-2">
-                <div className="space-y-1">
-                    <Badge variant="default">Hoy</Badge>
-                    <h2 className="text-xl font-bold text-foreground">{session.session_name}</h2>
-                </div>
-            </div>
-
-            <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                {session.planned_duration != null && (
-                    <span className="inline-flex items-center gap-1">
-                        <Clock className="size-4" aria-hidden />
-                        {session.planned_duration} min
-                    </span>
+            <div
+                className={cn(
+                    "pointer-events-none absolute -right-6 -top-6 size-28 rounded-full blur-2xl",
+                    style.glow,
+                    hero.tone === "active" && "motion-safe:animate-pulse motion-reduce:animate-none"
                 )}
-                <span className="inline-flex items-center gap-1">
-                    <Dumbbell className="size-4" aria-hidden />
-                    {session.session_type}
-                </span>
+                aria-hidden
+            />
+
+            <div className="relative space-y-2">
+                {hero.badge && (
+                    <Badge
+                        variant={style.badgeVariant}
+                        className={style.badgeClass}
+                    >
+                        {hero.badge}
+                    </Badge>
+                )}
+                <h2
+                    className={cn(
+                        "font-bold leading-snug text-foreground",
+                        style.headlineClass
+                    )}
+                >
+                    {hero.headline}
+                </h2>
+                {hero.subline && (
+                    <p
+                        className={cn(
+                            "text-sm leading-relaxed",
+                            style.sublineClass
+                        )}
+                    >
+                        {hero.subline}
+                    </p>
+                )}
             </div>
 
-            {progressLabel && (
-                <div className="space-y-1">
+            {showSessionMeta && (
+                <div className="relative flex flex-wrap gap-3 text-sm text-muted-foreground">
+                    {session.planned_duration != null && (
+                        <span className="inline-flex items-center gap-1">
+                            <Clock className="size-4 text-primary" aria-hidden />
+                            {session.planned_duration} min
+                        </span>
+                    )}
+                    <span className="inline-flex items-center gap-1">
+                        <Dumbbell className="size-4 text-primary" aria-hidden />
+                        {session.session_type}
+                    </span>
+                </div>
+            )}
+
+            {style.showProgressBar && progressLabel && (
+                <div className="relative space-y-1">
                     <div className="flex justify-between text-caption text-muted-foreground">
                         <span>Progreso del plan</span>
                         <span>{progressLabel}</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-muted">
                         <div
-                            className="h-full rounded-full bg-primary transition-all"
-                            style={{ width: `${Math.min(100, planProgressPercent ?? 0)}%` }}
+                            className="h-full rounded-full bg-primary transition-all duration-500"
+                            style={{
+                                width: `${Math.min(100, planProgressPercent ?? 0)}%`,
+                            }}
                         />
                     </div>
                 </div>
             )}
 
-            <Button
-                variant="primary"
-                className="min-h-touch-athlete w-full"
-                onClick={() => onStart(session.id)}
-            >
-                Empezar sesión
-            </Button>
+            {hero.cta && (
+                <Button
+                    variant={style.ctaVariant}
+                    className={cn(
+                        "relative min-h-touch-athlete w-full gap-2 font-semibold",
+                        style.ctaVariant === "primary" && "text-base",
+                        style.ctaClass
+                    )}
+                    onClick={handleCta}
+                >
+                    {hero.cta.label}
+                    {hero.cta.action === "start" && (
+                        <ArrowRight className="size-4 shrink-0" aria-hidden />
+                    )}
+                </Button>
+            )}
         </div>
     );
 };

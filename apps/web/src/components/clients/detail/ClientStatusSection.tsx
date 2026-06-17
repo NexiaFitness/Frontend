@@ -22,10 +22,22 @@ import React, { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Client } from "@nexia/shared/types/client";
 import type { MetricCardColor } from "@nexia/shared/types/coherence";
+import { Badge } from "@/components/ui/Badge";
 import { MetricCard } from "@/components/ui/cards";
 import { useCoherence } from "@nexia/shared/hooks/clients/useCoherence";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
+
+const WELLBEING_LABELS: Record<number, string> = {
+    1: "Bajo",
+    2: "Normal",
+    3: "Alto",
+};
+
+function isRecentCheckIn(isoDate: string): boolean {
+    const ms = Date.now() - new Date(isoDate).getTime();
+    return ms >= 0 && ms <= 48 * 60 * 60 * 1000;
+}
 
 interface ClientStatusSectionProps {
     client: Client;
@@ -56,6 +68,7 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
     // Obtener datos de fatiga
     const {
         currentRiskLevel,
+        latestAnalysis,
         isLoading: isLoadingFatigue,
     } = useClientFatigue(isValidClientId ? clientId : 0);
 
@@ -90,6 +103,19 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
         if (currentRiskLevel === "medium") return "orange";
         return "green";
     }, [currentRiskLevel]);
+
+    const recentWellbeing = useMemo(() => {
+        if (!latestAnalysis?.pre_fatigue_level || !latestAnalysis.analysis_date) {
+            return null;
+        }
+        const dateKey = latestAnalysis.analysis_date;
+        if (!isRecentCheckIn(dateKey)) return null;
+        return {
+            level: latestAnalysis.pre_fatigue_level,
+            label: WELLBEING_LABELS[latestAnalysis.pre_fatigue_level] ?? "—",
+            risk: latestAnalysis.risk_level,
+        };
+    }, [latestAnalysis]);
 
     // Loading state
     const isLoading = isLoadingCoherence || isLoadingFatigue || isLoadingProgress;
@@ -153,6 +179,36 @@ export const ClientStatusSection: React.FC<ClientStatusSectionProps> = ({ client
                     />
                 )}
             </div>
+
+            {recentWellbeing && (
+                <div
+                    className="mb-6 rounded-lg border border-border bg-muted/30 p-4"
+                    data-testid="client-wellbeing-checkin"
+                >
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">
+                            Check-in pre-sesión (48h)
+                        </p>
+                        <Badge
+                            variant={
+                                recentWellbeing.level <= 1
+                                    ? "subtle-warning"
+                                    : recentWellbeing.level >= 3
+                                      ? "subtle-success"
+                                      : "subtle"
+                            }
+                        >
+                            Energía {recentWellbeing.label}
+                        </Badge>
+                    </div>
+                    {recentWellbeing.risk && recentWellbeing.risk !== "low" && (
+                        <p className="mt-2 text-sm text-muted-foreground">
+                            Riesgo {recentWellbeing.risk === "high" ? "alto" : "medio"} — revisar
+                            intensidad planificada.
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Indicadores de Tendencias */}
             {trend && (

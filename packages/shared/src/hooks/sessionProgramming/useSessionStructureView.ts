@@ -103,7 +103,7 @@ function legacyExercisesToBlock(exercises: SessionExercise[]): {
         effort_value: null,
         actual_sets: ex.actual_sets ?? null,
         actual_reps: ex.actual_reps != null ? String(ex.actual_reps) : null,
-        actual_weight: null,
+        actual_weight: ex.actual_weight ?? null,
         actual_duration: null,
         actual_distance: null,
         actual_rest: null,

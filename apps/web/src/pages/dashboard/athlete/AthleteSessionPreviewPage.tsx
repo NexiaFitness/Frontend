@@ -1,26 +1,44 @@
 /**
- * AthleteSessionPreviewPage.tsx — Vista previa sesión atleta (F1).
- * @author Frontend Team
- * @since v6.1.0
+ * AthleteSessionPreviewPage.tsx — Vista previa sesión atleta (F1 / F3b-FE-01).
  */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Clock, Dumbbell } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Clock, Dumbbell } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
-import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
+import { Alert, useToast } from "@/components/ui/feedback";
+import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { useGetTrainingSessionQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
+import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { getBlockDisplayName } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import {
     formatAthleteDateLong,
     getSessionStatusLabel,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import {
+    formatTrainerNoteForAthlete,
+    hasHumanTrainerNote,
+} from "@nexia/shared/utils/athlete/athleteSessionNotesUtils";
+import {
+    buildPreviewConflictSummary,
+    collectSessionExerciseRefs,
+    formatInjuryPrecautionCount,
+    injuryAlertIsDanger,
+} from "@nexia/shared/utils/athlete/athleteInjuryAlertUtils";
+import { AthleteContextStrip } from "@/components/athlete/AthleteContextStrip";
+import { AthleteInjuriesBanner } from "@/components/athlete/AthleteInjuriesBanner";
+import { AthleteInjuryCallout } from "@/components/athlete/AthleteInjuryCallout";
+import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryConsultSheet";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
+import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import { WellbeingCheckInModal } from "@/components/athlete/WellbeingCheckInModal";
 import { useWellbeingCheckIn } from "@/hooks/athlete/useWellbeingCheckIn";
+import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
+import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
+import { cn } from "@/lib/utils";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -28,15 +46,49 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const navigate = useNavigate();
     const { showToast } = useToast();
     const [wellbeingOpen, setWellbeingOpen] = useState(false);
+    const [injurySheetOpen, setInjurySheetOpen] = useState(false);
     const { submit, isLoading: submittingWellbeing } = useWellbeingCheckIn(sessionId);
+    const { clientId } = useAthleteContext();
+    const { activeInjuries, isLoading: loadingInjuries } = useAthleteInjuries();
+    const isDesktop = useIsAthleteDesktopLayout();
 
     const { data: session, isLoading: loadingSession } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId,
     });
     const { view, isLoading: loadingStructure } = useSessionStructureView(sessionId);
 
-    const isLoading = loadingSession || loadingStructure;
+    const sessionExercises = useMemo(() => collectSessionExerciseRefs(view), [view]);
+    const hasActiveInjuries = activeInjuries.length > 0;
+
+    const { conflicts, conflictByExerciseId, isChecking } = useAthleteSessionInjuryAlerts(
+        clientId,
+        sessionExercises,
+        hasActiveInjuries && sessionExercises.length > 0
+    );
+
+    const conflictCount = conflicts.length;
+    const hasDangerConflict = conflicts.some((c) => injuryAlertIsDanger(c.alert));
+
+    const showMobileSoftStrip =
+        !isDesktop && hasActiveInjuries && !isChecking && conflictCount === 0;
+    const showMobileConflictSummary =
+        !isDesktop && hasActiveInjuries && !isChecking && conflictCount > 0;
+
+    const mobileConflictSummary = showMobileConflictSummary
+        ? buildPreviewConflictSummary(conflictCount, activeInjuries)
+        : null;
+
+    const trainerNote =
+        session?.notes && hasHumanTrainerNote(session.notes)
+            ? formatTrainerNoteForAthlete(session.notes)
+            : null;
+
+    const isLoading = loadingSession || loadingStructure || loadingInjuries;
     const canStart = session?.status !== "completed" && view.totalExercises > 0;
+
+    const handleOpenInjurySheet = () => {
+        setInjurySheetOpen(true);
+    };
 
     const handleStartClick = () => {
         setWellbeingOpen(true);
@@ -53,11 +105,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     };
 
     if (isLoading) {
-        return (
-            <div className="flex min-h-[50vh] items-center justify-center px-4 pb-24">
-                <LoadingSpinner size="lg" />
-            </div>
-        );
+        return <AthletePageLoading variant="session-preview" />;
     }
 
     if (!session) {
@@ -109,39 +157,98 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                     </span>
                 </div>
 
-                {session.notes && (
+                {!loadingInjuries &&
+                    (isDesktop ? (
+                        hasActiveInjuries && (
+                            <AthleteInjuriesBanner
+                                injuries={activeInjuries}
+                                conflicts={conflicts}
+                                isCheckingConflicts={isChecking}
+                                onConsultTrainer={handleOpenInjurySheet}
+                            />
+                        )
+                    ) : (
+                        showMobileSoftStrip && (
+                            <AthleteContextStrip
+                                isOnline
+                                pendingCount={0}
+                                injuries={activeInjuries}
+                            />
+                        )
+                    ))}
+
+                {trainerNote && (
                     <div className="rounded-lg border border-border bg-card p-4">
-                        <p className="text-caption font-medium text-muted-foreground">Notas del entrenador</p>
-                        <p className="mt-1 text-sm text-foreground">{session.notes}</p>
+                        <p className="text-caption font-medium text-muted-foreground">
+                            Notas del entrenador
+                        </p>
+                        <p className="mt-1 text-sm text-foreground">{trainerNote}</p>
                     </div>
                 )}
 
                 {view.blocks.length > 0 ? (
                     <div className="space-y-3">
-                        {view.blocks.map((block) => (
+                        {view.blocks.map((block, blockIndex) => (
                             <div
                                 key={block.blockId}
                                 className="rounded-lg border border-border bg-card p-4"
                             >
-                                <p className="text-sm font-semibold text-foreground">
-                                    {getBlockDisplayName(block.blockTypeName)}
-                                </p>
+                                <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm font-semibold text-foreground">
+                                        {getBlockDisplayName(block.blockTypeName)}
+                                    </p>
+                                    {blockIndex === 0 &&
+                                        showMobileConflictSummary &&
+                                        conflictCount > 0 && (
+                                            <span className="text-caption font-medium text-warning">
+                                                {formatInjuryPrecautionCount(conflictCount)}
+                                            </span>
+                                        )}
+                                </div>
+
+                                {blockIndex === 0 && showMobileConflictSummary && mobileConflictSummary && (
+                                    <AthleteInjuryCallout
+                                        className="mt-3"
+                                        message={mobileConflictSummary}
+                                        isDanger={hasDangerConflict}
+                                        onConsult={handleOpenInjurySheet}
+                                    />
+                                )}
+
                                 <ul className="mt-2 space-y-1">
                                     {block.groups.flatMap((group) =>
-                                        group.slots.map((slot) => (
-                                            <li
-                                                key={`${group.groupId}-${slot.slotLabel}`}
-                                                className="text-sm text-muted-foreground"
-                                            >
-                                                {slot.exerciseName}
-                                                {slot.sets.length > 1 && (
-                                                    <span className="text-caption">
-                                                        {" "}
-                                                        · {slot.sets.length} series
+                                        group.slots.map((slot) => {
+                                            const conflict = conflictByExerciseId.get(
+                                                slot.exerciseId
+                                            );
+                                            return (
+                                                <li
+                                                    key={`${group.groupId}-${slot.slotLabel}`}
+                                                    className={cn(
+                                                        "flex items-start gap-2 rounded-md py-1 text-sm",
+                                                        conflict
+                                                            ? "border-l-2 border-warning/60 pl-2 text-warning"
+                                                            : "text-muted-foreground"
+                                                    )}
+                                                >
+                                                    {conflict && (
+                                                        <AlertTriangle
+                                                            className="mt-0.5 size-4 shrink-0"
+                                                            aria-label="Posible conflicto con lesión"
+                                                        />
+                                                    )}
+                                                    <span>
+                                                        {slot.exerciseName}
+                                                        {slot.sets.length > 1 && (
+                                                            <span className="text-caption">
+                                                                {" "}
+                                                                · {slot.sets.length} series
+                                                            </span>
+                                                        )}
                                                     </span>
-                                                )}
-                                            </li>
-                                        ))
+                                                </li>
+                                            );
+                                        })
                                     )}
                                 </ul>
                             </div>
@@ -184,6 +291,14 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 onSubmit={handleWellbeingSubmit}
                 isSubmitting={submittingWellbeing}
             />
+
+            {hasActiveInjuries && (
+                <AthleteInjuryConsultSheet
+                    isOpen={injurySheetOpen}
+                    onClose={() => setInjurySheetOpen(false)}
+                    injuries={activeInjuries}
+                />
+            )}
         </div>
     );
 };
