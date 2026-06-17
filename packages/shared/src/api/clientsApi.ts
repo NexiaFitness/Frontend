@@ -62,6 +62,7 @@ import type {
     GetWeeklySessionLoadByMuscleArg,
     WeeklyMusclePlannedLoadOut,
 } from "../types/sessionLoad";
+import type { ClientLoadInsights } from "../types/clientLoadInsights";
 import {
     buildCoherenceDevMockResponse,
     shouldServeCoherenceDevMock,
@@ -1015,6 +1016,13 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        getClientLoadInsights: builder.query<ClientLoadInsights, number>({
+            query: (clientId) => `/clients/${clientId}/load-insights`,
+            providesTags: (_result, _error, clientId) => [
+                { type: "Client" as const, id: clientId },
+            ],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -1076,4 +1084,5 @@ export const {
     useGetClientsWithMetricsQuery,
     useGetRecentActivityQuery,
     useGetWeeklySessionLoadByMuscleQuery,
+    useGetClientLoadInsightsQuery,
 } = clientsApi;

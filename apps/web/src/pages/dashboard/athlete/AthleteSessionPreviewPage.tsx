@@ -16,6 +16,7 @@ import { getBlockDisplayName } from "@nexia/shared/sessionProgramming/sessionBlo
 import {
     formatAthleteDateLong,
     getSessionStatusLabel,
+    isPartiallyClosedSession,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import {
     formatTrainerNoteForAthlete,
@@ -135,7 +136,13 @@ export const AthleteSessionPreviewPage: React.FC = () => {
 
             <div className="flex-1 space-y-4">
                 <div className="space-y-2">
-                    <Badge variant="outline">{getSessionStatusLabel(session)}</Badge>
+                    <Badge
+                        variant={
+                            isPartiallyClosedSession(session) ? "subtle-warning" : "outline"
+                        }
+                    >
+                        {getSessionStatusLabel(session)}
+                    </Badge>
                     <h1 className="text-2xl font-bold text-foreground">{session.session_name}</h1>
                     {session.session_date && (
                         <p className="text-sm text-muted-foreground">

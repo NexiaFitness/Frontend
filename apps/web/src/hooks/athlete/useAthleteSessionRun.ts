@@ -10,8 +10,9 @@ import {
     useUpdateSessionExerciseMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
 import { useUpdateSessionBlockExerciseMutation } from "@nexia/shared/api/sessionProgrammingApi";
-import { useGetAthleteLastPerformanceQuery } from "@nexia/shared/api/athleteApi";
+import { useGetAthleteLastPerformanceQuery, useGetAthleteSuggestedLoadQuery } from "@nexia/shared/api/athleteApi";
 import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
+import { shouldShowSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoad";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
@@ -144,6 +145,11 @@ export function useAthleteSessionRun({
         { skip: !current?.exerciseId }
     );
 
+    const { data: suggestedLoad } = useGetAthleteSuggestedLoadQuery(
+        current?.exerciseId ?? 0,
+        { skip: !current?.exerciseId }
+    );
+
     const applyLastPerformance = useCallback(() => {
         if (!hasAthleteLastPerformance(lastPerformance)) return;
         setWeight(lastPerformance.weight_kg);
@@ -154,6 +160,17 @@ export function useAthleteSessionRun({
             setRpe(lastPerformance.rpe);
         }
     }, [lastPerformance]);
+
+    const applySuggestedLoad = useCallback(() => {
+        if (!shouldShowSuggestedLoad(suggestedLoad)) return;
+        setWeight(suggestedLoad.suggested_weight_kg);
+        if (suggestedLoad.basis?.reps != null) {
+            setReps(suggestedLoad.basis.reps);
+        }
+        if (suggestedLoad.basis?.rpe != null) {
+            setRpe(suggestedLoad.basis.rpe);
+        }
+    }, [suggestedLoad]);
 
     useEffect(() => {
         setPrCelebration(null);
@@ -292,5 +309,7 @@ export function useAthleteSessionRun({
         prCelebration,
         lastPerformance,
         applyLastPerformance,
+        suggestedLoad,
+        applySuggestedLoad,
     };
 }

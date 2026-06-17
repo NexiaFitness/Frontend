@@ -10,8 +10,11 @@ import { Badge } from "@/components/ui/Badge";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteSetLogger } from "./AthleteSetLogger";
 import { AthleteLastPerformanceHint } from "./AthleteLastPerformanceHint";
+import { AthleteSuggestedLoadHint } from "./AthleteSuggestedLoadHint";
 import type { AthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
+import type { AthleteSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoad";
 import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
+import { shouldShowSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoad";
 
 export interface ExerciseStepViewProps {
     exercise: AthleteFlatExercise;
@@ -30,6 +33,8 @@ export interface ExerciseStepViewProps {
     lastPerformance?: AthleteLastPerformance;
     lastPerformanceDateLabel?: string | null;
     onApplyLastPerformance?: () => void;
+    suggestedLoad?: AthleteSuggestedLoad;
+    onApplySuggestedLoad?: () => void;
 }
 
 export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
@@ -46,6 +51,8 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     lastPerformance,
     lastPerformanceDateLabel,
     onApplyLastPerformance,
+    suggestedLoad,
+    onApplySuggestedLoad,
 }) => {
     return (
         <div className="space-y-4">
@@ -77,6 +84,14 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
                     rpe={lastPerformance.rpe}
                     performedAtLabel={lastPerformanceDateLabel ?? ""}
                     onApply={onApplyLastPerformance}
+                />
+            )}
+
+            {shouldShowSuggestedLoad(suggestedLoad) && onApplySuggestedLoad && (
+                <AthleteSuggestedLoadHint
+                    suggestedWeightKg={suggestedLoad.suggested_weight_kg}
+                    explanation={suggestedLoad.explanation}
+                    onApply={onApplySuggestedLoad}
                 />
             )}
 

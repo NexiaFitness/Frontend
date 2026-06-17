@@ -17,6 +17,30 @@ import {
 
 const DAY_LABELS_SHORT = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"] as const;
 
+/** F3c-FE-02 — completed con cumplimiento de series por debajo de este umbral. */
+export const PARTIAL_SESSION_COMPLETION_THRESHOLD = 50;
+
+export interface SessionCompletionView {
+    status?: string | null;
+    completion_percentage?: number | null;
+}
+
+/** Cumplimiento 0–100 para sesiones completed; null si no aplica o sin dato. */
+export function getCompletedSessionCompletionPercent(
+    session: SessionCompletionView
+): number | null {
+    if (session.status !== "completed") return null;
+    const pct = session.completion_percentage;
+    if (pct == null || !Number.isFinite(pct)) return null;
+    return Math.min(100, Math.max(0, pct));
+}
+
+/** Sesión marcada completed pero con pocas series registradas (F3c-FE-02). */
+export function isPartiallyClosedSession(session: SessionCompletionView): boolean {
+    const pct = getCompletedSessionCompletionPercent(session);
+    return pct != null && pct < PARTIAL_SESSION_COMPLETION_THRESHOLD;
+}
+
 /** Fecha local YYYY-MM-DD (sin UTC drift). */
 export function toLocalDateKey(date: Date): string {
     const y = date.getFullYear();
@@ -193,7 +217,9 @@ export function filterAthleteSessions(
 
 export function getSessionStatusLabel(session: TrainingSession, today = new Date()): string {
     if (isSessionToday(session, today)) return "Hoy";
-    if (session.status === "completed") return "Completada";
+    if (session.status === "completed") {
+        return isPartiallyClosedSession(session) ? "Cerrada parcial" : "Completada";
+    }
     if (session.status === "skipped") return "Omitida";
     if (session.session_date && session.status === "planned") {
         const sessionDay = parseSessionDateLocal(session.session_date);

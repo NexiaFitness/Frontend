@@ -7,7 +7,12 @@ import type {
     AthleteWeeklySummary,
     AthleteWeeklySummaryQuery,
 } from "../types/athleteWeeklySummary";
+import type {
+    AiWeeklySummary,
+    AiWeeklySummaryRequest,
+} from "../types/athleteAiWeeklySummary";
 import type { AthleteLastPerformance } from "../types/athleteLastPerformance";
+import type { AthleteSuggestedLoad } from "../types/athleteSuggestedLoad";
 
 export const athleteApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
@@ -32,6 +37,21 @@ export const athleteApi = baseApi.injectEndpoints({
                 { type: "AthleteLastPerformance" as const, id: exerciseId },
             ],
         }),
+
+        getAthleteSuggestedLoad: builder.query<AthleteSuggestedLoad, number>({
+            query: (exerciseId) => `/athlete/exercises/${exerciseId}/suggested-load`,
+            providesTags: (_result, _error, exerciseId) => [
+                { type: "AthleteSuggestedLoad" as const, id: exerciseId },
+            ],
+        }),
+
+        postAiWeeklySummary: builder.mutation<AiWeeklySummary, AiWeeklySummaryRequest | void>({
+            query: (body) => ({
+                url: "/ai/weekly-summary",
+                method: "POST",
+                body: body ?? {},
+            }),
+        }),
     }),
     overrideExisting: false,
 });
@@ -39,4 +59,6 @@ export const athleteApi = baseApi.injectEndpoints({
 export const {
     useGetAthleteWeeklySummaryQuery,
     useGetAthleteLastPerformanceQuery,
+    useGetAthleteSuggestedLoadQuery,
+    usePostAiWeeklySummaryMutation,
 } = athleteApi;

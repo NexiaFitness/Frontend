@@ -359,17 +359,19 @@ function SessionSummarySkeleton() {
 
             <div className="flex-1 space-y-6">
 
-                <div className="flex flex-col items-center space-y-3 pt-4">
+                <Block className="h-[148px] w-full rounded-xl" />
 
-                    <Block className="size-16 rounded-full" />
+                <div className="space-y-2">
 
-                    <Block className="h-8 w-56" />
+                    {Array.from({ length: 2 }).map((_, i) => (
 
-                    <Block className="h-4 w-40" />
+                        <Block key={i} className="h-12 w-full rounded-lg" />
+
+                    ))}
 
                 </div>
 
-                <Block className="h-36 w-full rounded-xl" />
+                <Block className="h-28 w-full rounded-xl" />
 
                 <div className="space-y-2">
 

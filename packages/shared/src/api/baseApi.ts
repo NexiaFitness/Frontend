@@ -348,5 +348,6 @@ export const baseApi = createApi({
         "ExerciseSafety",
         "AthleteWeeklySummary",
         "AthleteLastPerformance",
+        "AthleteSuggestedLoad",
     ],
 });

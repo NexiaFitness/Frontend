@@ -57,6 +57,8 @@ export const AthleteSessionRunPage: React.FC = () => {
         prCelebration,
         lastPerformance,
         applyLastPerformance,
+        suggestedLoad,
+        applySuggestedLoad,
     } = useAthleteSessionRun({
         sessionId,
         onSetSaved: (result) => {
@@ -203,6 +205,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                 lastPerformance={lastPerformance}
                 lastPerformanceDateLabel={lastPerformanceDateLabel}
                 onApplyLastPerformance={applyLastPerformance}
+                suggestedLoad={suggestedLoad}
+                onApplySuggestedLoad={applySuggestedLoad}
             />
 
             <AthleteStickyActionBar

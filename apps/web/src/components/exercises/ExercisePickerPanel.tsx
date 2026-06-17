@@ -85,7 +85,12 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
 
     const exercises = useMemo(() => data?.exercises ?? [], [data]);
 
-    // Batch safety-check al montar o cuando cambia clientId / exercises
+    const activeInjuriesKey = useMemo(
+        () => activeInjuries.map((i) => i.id).sort((a, b) => a - b).join(","),
+        [activeInjuries]
+    );
+
+    // Batch safety-check al montar o cuando cambia clientId / exercises / lesiones activas
     useEffect(() => {
         if (!clientId || exercises.length === 0) {
             setSafetyResults(new Map());
@@ -105,7 +110,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                 // Fallback: no safety data => all exercises appear safe
                 setSafetyResults(new Map());
             });
-    }, [clientId, exercises, checkBatch]);
+    }, [clientId, exercises, checkBatch, activeInjuriesKey]);
 
     const filteredAndGrouped = useMemo(() => {
         const term = foldForSearch(search.trim());

@@ -11,7 +11,9 @@ import { cn } from "@/lib/utils";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     formatAthleteDate,
+    getCompletedSessionCompletionPercent,
     getSessionStatusLabel,
+    isPartiallyClosedSession,
     isSessionToday,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 
@@ -20,18 +22,15 @@ export interface AthleteSessionListItemProps {
     onSelect: (sessionId: number) => void;
 }
 
-function statusVariant(session: TrainingSession): "default" | "secondary" | "outline" | "destructive" {
+function statusVariant(
+    session: TrainingSession
+): "default" | "secondary" | "outline" | "destructive" | "subtle-warning" {
     if (isSessionToday(session)) return "default";
-    if (session.status === "completed") return "secondary";
+    if (session.status === "completed") {
+        return isPartiallyClosedSession(session) ? "subtle-warning" : "secondary";
+    }
     if (session.status === "skipped") return "destructive";
     return "outline";
-}
-
-function completionPercent(session: TrainingSession): number | null {
-    if (session.status !== "completed") return null;
-    const pct = session.completion_percentage;
-    if (pct == null || !Number.isFinite(pct)) return null;
-    return Math.min(100, Math.max(0, pct));
 }
 
 export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
@@ -39,7 +38,8 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
     onSelect,
 }) => {
     const statusLabel = getSessionStatusLabel(session);
-    const completion = completionPercent(session);
+    const completion = getCompletedSessionCompletionPercent(session);
+    const isPartial = isPartiallyClosedSession(session);
 
     return (
         <button
@@ -59,7 +59,12 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                         </span>
                     )}
                     {completion != null && (
-                        <span className="text-caption font-medium text-success">
+                        <span
+                            className={cn(
+                                "text-caption font-medium",
+                                isPartial ? "text-warning" : "text-success"
+                            )}
+                        >
                             {Math.round(completion)}%
                         </span>
                     )}
@@ -79,11 +84,13 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                             <div
                                 className={cn(
                                     "h-full rounded-full transition-all",
-                                    completion >= 90
-                                        ? "bg-success"
-                                        : completion >= 70
-                                          ? "bg-primary"
-                                          : "bg-warning"
+                                    isPartial
+                                        ? "bg-warning"
+                                        : completion >= 90
+                                          ? "bg-success"
+                                          : completion >= 70
+                                            ? "bg-primary"
+                                            : "bg-warning"
                                 )}
                                 style={{ width: `${completion}%` }}
                             />

@@ -44,7 +44,10 @@ export const useClientInjuries = ({
     const {
         data: injuriesRaw,
         isLoading,
-    } = useGetClientInjuriesQuery({ clientId, activeOnly: false });
+    } = useGetClientInjuriesQuery(
+        { clientId, activeOnly: false },
+        { refetchOnFocus: true, refetchOnReconnect: true }
+    );
 
     const { data: musclesData } = useGetMusclesQuery();
 

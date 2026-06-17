@@ -11,7 +11,9 @@ import { Clock, Dumbbell } from "lucide-react";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     formatAthleteDateLong,
+    getCompletedSessionCompletionPercent,
     getSessionStatusLabel,
+    isPartiallyClosedSession,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
 import { Badge } from "@/components/ui/Badge";
@@ -37,14 +39,8 @@ export const AthleteSessionPeekSheet: React.FC<AthleteSessionPeekSheetProps> = (
 }) => {
     if (!session) return null;
 
-    const completion =
-        session.status === "completed" &&
-        session.completion_percentage != null &&
-        Number.isFinite(session.completion_percentage)
-            ? Math.round(
-                  Math.min(100, Math.max(0, session.completion_percentage))
-              )
-            : null;
+    const completion = getCompletedSessionCompletionPercent(session);
+    const isPartial = isPartiallyClosedSession(session);
 
     return (
         <BottomSheet
@@ -66,15 +62,31 @@ export const AthleteSessionPeekSheet: React.FC<AthleteSessionPeekSheetProps> = (
         >
             <div className="space-y-3 pb-2">
                 <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="outline">{getSessionStatusLabel(session)}</Badge>
+                    <Badge
+                        variant={
+                            isPartial
+                                ? "subtle-warning"
+                                : session.status === "completed"
+                                  ? "secondary"
+                                  : "outline"
+                        }
+                    >
+                        {getSessionStatusLabel(session)}
+                    </Badge>
                     {session.session_date && (
                         <span className="text-caption text-muted-foreground">
                             {formatAthleteDateLong(session.session_date)}
                         </span>
                     )}
                     {completion != null && (
-                        <span className="text-caption font-medium text-success">
-                            {completion}% cumplimiento
+                        <span
+                            className={
+                                isPartial
+                                    ? "text-caption font-medium text-warning"
+                                    : "text-caption font-medium text-success"
+                            }
+                        >
+                            {Math.round(completion)}% cumplimiento
                         </span>
                     )}
                 </div>
