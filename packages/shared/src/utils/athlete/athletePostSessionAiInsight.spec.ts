@@ -110,7 +110,7 @@ describe("shouldFetchPostSessionAiInsight", () => {
 });
 
 describe("buildPostSessionCelebrationCopy", () => {
-    it("builds week closed copy", () => {
+    it("builds minimal week closed hero copy", () => {
         const copy = buildPostSessionCelebrationCopy(
             {
                 status: "completed",
@@ -121,6 +121,29 @@ describe("buildPostSessionCelebrationCopy", () => {
                 adherence: {
                     sessions_planned: 1,
                     sessions_completed: 1,
+                    adherence_rate: 100,
+                    has_active_plan: true,
+                    plan_name: "Hipertrofia",
+                },
+            })
+        );
+        expect(copy.variant).toBe("week_closed");
+        expect(copy.headline).toBe("Semana cerrada");
+        expect(copy.subline).toBe("Pierna A al 100%.");
+        expect(copy.subline).not.toContain("Sostén");
+    });
+
+    it("builds high-volume week closed copy", () => {
+        const copy = buildPostSessionCelebrationCopy(
+            {
+                status: "completed",
+                completion_percentage: 100,
+                session_name: "Pierna A",
+            },
+            baseWeekly({
+                adherence: {
+                    sessions_planned: 4,
+                    sessions_completed: 4,
                     adherence_rate: 1,
                     has_active_plan: true,
                     plan_name: "Hipertrofia",
@@ -128,6 +151,7 @@ describe("buildPostSessionCelebrationCopy", () => {
             })
         );
         expect(copy.variant).toBe("week_closed");
-        expect(copy.headline).toContain("Semana cerrada");
+        expect(copy.headline).toBe("Semana cerrada");
+        expect(copy.subline).toBe("Pierna A al 100%.");
     });
 });

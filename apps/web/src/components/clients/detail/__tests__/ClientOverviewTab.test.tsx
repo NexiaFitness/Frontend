@@ -117,6 +117,20 @@ describe("ClientOverviewTab", () => {
                     { status: 200 }
                 )
         );
+        const getClientLoadInsightsHandler = http.get(
+            "*/clients/:clientId/load-insights",
+            () =>
+                HttpResponse.json(
+                    {
+                        client_id: 1,
+                        completed_sessions_count: 0,
+                        has_sufficient_data: false,
+                        signals: [],
+                        recent_loads: [],
+                    },
+                    { status: 200 }
+                )
+        );
 
         server.use(
             getClientCoherenceHandler,
@@ -127,7 +141,8 @@ describe("ClientOverviewTab", () => {
             getClientTestResultsHandler,
             getClientHabitInsightsHandler,
             getClientRatingsHandler,
-            getTrainingPlanRecommendationsHandler
+            getTrainingPlanRecommendationsHandler,
+            getClientLoadInsightsHandler
         );
     });
 
@@ -365,7 +380,9 @@ describe("ClientOverviewTab", () => {
 
             await waitFor(() => {
                 expect(screen.getByText(/nivel de riesgo/i)).toBeInTheDocument();
-                expect(screen.getByText(/alto/i)).toBeInTheDocument();
+                expect(
+                    screen.getByRole("button", { name: /ver análisis de fatiga/i })
+                ).toBeInTheDocument();
             });
         });
 
@@ -551,7 +568,6 @@ describe("ClientOverviewTab", () => {
                 },
                 { timeout: 10000 }
             );
-            expect(screen.getByText(/alto/i)).toBeInTheDocument();
 
             const progressLink = await screen.findByRole(
                 "button",

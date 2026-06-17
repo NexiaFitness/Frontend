@@ -82,7 +82,7 @@ export function buildPostSessionCelebrationCopy(
             variant: "record",
             badge: "Semana cerrada",
             headline: "Semana cerrada con récord",
-            subline: `${report.session_name} — ${pct}% de cumplimiento. Marcaste un hito esta semana.`,
+            subline: `${report.session_name} al ${pct}%.`,
         };
     }
 
@@ -90,17 +90,20 @@ export function buildPostSessionCelebrationCopy(
         return {
             variant: "week_closed",
             badge: "Semana cerrada",
-            headline: "Semana cerrada. Buen trabajo.",
-            subline: `${report.session_name} completada al ${pct}%. Objetivo semanal cumplido.`,
+            headline: "Semana cerrada",
+            subline: `${report.session_name} al ${pct}%.`,
         };
     }
 
     if (hasPr) {
+        const prName = weeklySummary?.personal_records[0]?.exercise_name;
         return {
             variant: "record",
             badge: "Nuevo récord",
             headline: "Sesión con récord personal",
-            subline: `${report.session_name} — ${pct}% de cumplimiento. Sigue construyendo sobre este impulso.`,
+            subline: prName
+                ? `${report.session_name} al ${pct}%. ${prName}.`
+                : `${report.session_name} al ${pct}%.`,
         };
     }
 
@@ -108,6 +111,6 @@ export function buildPostSessionCelebrationCopy(
         variant: "full",
         badge: "Sesión completada",
         headline: "Sesión completada",
-        subline: `${report.session_name} — ${pct}% de cumplimiento.`,
+        subline: `${report.session_name} al ${pct}%.`,
     };
 }

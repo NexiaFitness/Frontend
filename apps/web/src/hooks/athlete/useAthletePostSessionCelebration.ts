@@ -16,19 +16,20 @@ import {
     shouldFetchPostSessionAiInsight,
     type PostSessionCelebrationCopy,
 } from "@nexia/shared/utils/athlete/athletePostSessionAiInsight";
+import { buildDeterministicWeeklyProse, isLowVolumeWeek } from "@nexia/shared/utils/athlete/athleteWeeklyProse";
 
 function buildWeeklyTemplateFallback(
     weekly: AthleteWeeklySummary
 ): AiWeeklySummary | undefined {
-    const highlights = weekly.highlights.filter(Boolean);
-    if (highlights.length === 0) {
+    const summaryText = buildDeterministicWeeklyProse(weekly);
+    if (!summaryText) {
         return undefined;
     }
     return {
         client_id: weekly.client_id,
         week_start: weekly.week_start,
         week_end: weekly.week_end,
-        summary_text: highlights.join(" "),
+        summary_text: summaryText,
         source: "template",
         generated_at: new Date().toISOString(),
         model: null,
@@ -97,13 +98,21 @@ export function useAthletePostSessionCelebration(
         }
         requestKeyRef.current = requestKey;
         setAiSlotActive(true);
+
+        const planned = weeklySummary.adherence.sessions_planned;
+        if (isLowVolumeWeek(planned)) {
+            setAiInsight(buildWeeklyTemplateFallback(weeklySummary));
+            setIsAiLoading(false);
+            return;
+        }
+
         setIsAiLoading(true);
 
         let cancelled = false;
 
         void postAiSummary({
             week_start: weeklySummary.week_start,
-            force_refresh: false,
+            force_refresh: true,
         })
             .unwrap()
             .then((data) => {
