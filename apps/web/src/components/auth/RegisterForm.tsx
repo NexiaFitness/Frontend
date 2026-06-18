@@ -23,6 +23,13 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import {
+    AUTH_INPUT_MOBILE,
+    AUTH_LINK,
+    AUTH_LINK_MUTED,
+    AUTH_SELECT_MOBILE,
+    AUTH_SUBMIT_MOBILE,
+} from "@/components/auth/authFormPresentation";
 import { useRegisterMutation, loginSuccess, loginFailure } from "@nexia/shared";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
 import { USER_ROLES } from "@nexia/shared/config/constants";
@@ -207,6 +214,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Introduce tu correo electrónico"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -220,6 +228,7 @@ export const RegisterForm: React.FC = () => {
                         placeholder="Tu nombre"
                         isRequired
                         disabled={isLoading}
+                        className={AUTH_INPUT_MOBILE}
                     />
 
                     <Input
@@ -232,6 +241,7 @@ export const RegisterForm: React.FC = () => {
                         placeholder="Tus apellidos"
                         isRequired
                         disabled={isLoading}
+                        className={AUTH_INPUT_MOBILE}
                     />
                 </div>
 
@@ -245,6 +255,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Selecciona tu tipo de cuenta"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_SELECT_MOBILE}
                 />
 
                 <Input
@@ -257,6 +268,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Mínimo 6 caracteres"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Input
@@ -269,6 +281,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Repite tu contraseña"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Button
@@ -277,17 +290,17 @@ export const RegisterForm: React.FC = () => {
                     size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="w-full"
+                    className={`w-full ${AUTH_SUBMIT_MOBILE}`}
                 >
                     {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
 
-                <div className="text-center text-sm text-muted-foreground">
+                <div className={`text-center ${AUTH_LINK_MUTED}`}>
                     ¿Ya tienes cuenta?{" "}
                     <button
                         type="button"
                         onClick={handleLogin}
-                        className="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors disabled:opacity-50"
+                        className={`${AUTH_LINK} disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         Inicia sesión
