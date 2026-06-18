@@ -5,7 +5,8 @@
 import React from "react";
 import { CalendarDays, ChevronRight } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { ATHLETE_SECTION_LABEL, ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
+import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { cn } from "@/lib/utils";
@@ -22,10 +23,10 @@ export const AthleteProgressSessionsSection: React.FC<AthleteProgressSessionsSec
 }) => {
     return (
         <section className="space-y-3" aria-label="Últimas sesiones">
-            <h2 className={`flex items-center gap-2 ${ATHLETE_SECTION_LABEL}`}>
-                <CalendarDays className="size-3.5" aria-hidden />
-                Últimas sesiones
-            </h2>
+            <AthleteSectionHeading
+                title="Últimas sesiones"
+                icon={<CalendarDays className="size-3.5" aria-hidden />}
+            />
             {sessions.length === 0 ? (
                 <p className={ATHLETE_PROGRESS_EMPTY}>
                     Aún no tienes sesiones completadas. Cuando cierres la primera, aparecerá aquí.

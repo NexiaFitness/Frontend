@@ -5,8 +5,8 @@
 import React from "react";
 import { History, Trophy } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import {
-    ATHLETE_SECTION_LABEL,
     ATHLETE_SETTINGS_CARD,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import type { ProgressTracking } from "@nexia/shared/types/progress";
@@ -34,10 +34,10 @@ export const AthleteProgressExerciseHistory: React.FC<AthleteProgressExerciseHis
 
     return (
         <section className="space-y-3" aria-label="Historial de cargas">
-            <h2 className={`flex items-center gap-2 ${ATHLETE_SECTION_LABEL}`}>
-                <History className="size-3.5" aria-hidden />
-                Historial reciente
-            </h2>
+            <AthleteSectionHeading
+                title="Historial reciente"
+                icon={<History className="size-3.5" aria-hidden />}
+            />
             {highlightDate && hasHighlight && (
                 <p className={ATHLETE_TROPHY_BANNER}>
                     <Trophy className="size-4 shrink-0" aria-hidden />

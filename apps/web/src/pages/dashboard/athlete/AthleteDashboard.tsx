@@ -18,7 +18,8 @@ import { AthleteWeekInsight } from "@/components/athlete/AthleteWeekInsight";
 import { SessionTodayCard } from "@/components/athlete/SessionTodayCard";
 import { WeekStrip } from "@/components/athlete/WeekStrip";
 import { Alert } from "@/components/ui/feedback";
-import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import { Button } from "@/components/ui/buttons";
 import { useAthleteDashboard } from "@/hooks/athlete/useAthleteDashboard";
 import { useAthleteWeeklyInsight } from "@/hooks/athlete/useAthleteWeeklyInsight";
@@ -26,9 +27,10 @@ import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import type { SessionHeroCtaAction } from "@nexia/shared/utils/athlete/athleteDashboardHeroCopy";
 import type { InsightDeepLink } from "@nexia/shared/utils/athlete/athleteInsightDeepLinks";
 import type { WeekDayStripItem } from "@nexia/shared/utils/athlete/athleteSessionUtils";
-import { CalendarDays } from "lucide-react";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
+import { ATHLETE_STICKY_FOOTER_CONTENT_PB } from "@/components/athlete/layout/athleteLayoutClasses";
 import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
+import { cn } from "@/lib/utils";
 
 export const AthleteDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -163,7 +165,10 @@ export const AthleteDashboard: React.FC = () => {
         <>
             <PullToRefresh onRefresh={handleRefresh}>
                 <div
-                    className={`space-y-6 px-4 pt-4 lg:px-8 lg:pb-8 ${showStickyCta ? "" : "pb-24"}`}
+                    className={cn(
+                        "space-y-6 px-4 pt-4 lg:px-8",
+                        showStickyCta ? ATHLETE_STICKY_FOOTER_CONTENT_PB : "pb-24 lg:pb-8"
+                    )}
                 >
                     <AthleteDashboardHeader
                         userName={userName}
@@ -181,6 +186,7 @@ export const AthleteDashboard: React.FC = () => {
                         hero={sessionHero}
                         planProgressPercent={planProgressPercent}
                         onCta={handleHeroCta}
+                        hideStartCtaOnMobile={showStickyCta}
                     />
 
                     {hasActivePlan && (
@@ -208,14 +214,12 @@ export const AthleteDashboard: React.FC = () => {
                     )}
 
                     {!hasActivePlan && (
-                        <EmptyState
-                            icon={<CalendarDays />}
-                            title="Sin plan activo"
-                            description="Cuando tu entrenador publique tu plan, lo verás aquí."
+                        <AthleteEmptyState
+                            variant="plan"
                             action={
                                 <Button
-                                    variant="secondary"
-                                    className="min-h-touch-athlete"
+                                    variant="primary"
+                                    className={ATHLETE_PRIMARY_CTA}
                                     onClick={() => navigate("/dashboard/account")}
                                 >
                                     Ver mi cuenta
@@ -228,10 +232,10 @@ export const AthleteDashboard: React.FC = () => {
 
             {showStickyCta && todaySession && (
                 <div className="lg:hidden">
-                    <AthleteFixedFooter size="single">
+                    <AthleteFixedFooter size="single" scrollSpacer={false}>
                         <Button
                             variant="primary"
-                            className="min-h-touch-athlete w-full"
+                            className={ATHLETE_PRIMARY_CTA}
                             onClick={() => handleStart(todaySession.id)}
                         >
                             Empezar sesión

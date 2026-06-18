@@ -4,6 +4,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { NEXIA_DIVIDER_GLOW, NEXIA_DIVIDER_GLOW_BAND } from "./nexiaDividerPresentation";
 
 export interface NexiaGlassAccentRimProps {
     className?: string;
@@ -23,7 +24,7 @@ export const NexiaGlassAccentRim: React.FC<NexiaGlassAccentRimProps> = ({
         )}
         aria-hidden
     >
-        <div className="h-3 bg-gradient-to-b from-primary/15 to-transparent" />
-        <div className="absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-primary/65 to-transparent shadow-[0_0_14px_1px] shadow-primary/30" />
+        <div className={NEXIA_DIVIDER_GLOW_BAND} />
+        <div className={cn("absolute inset-x-3 top-0", NEXIA_DIVIDER_GLOW)} />
     </div>
 );

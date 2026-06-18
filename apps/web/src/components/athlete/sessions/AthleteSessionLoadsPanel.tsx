@@ -5,8 +5,8 @@
 import React from "react";
 import { Scale, TrendingDown, TrendingUp } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import {
-    ATHLETE_SECTION_LABEL,
     ATHLETE_SETTINGS_CARD,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import type { SessionLoadRow } from "@nexia/shared/utils/athlete/athleteProgressUtils";
@@ -25,23 +25,20 @@ export const AthleteSessionLoadsPanel: React.FC<AthleteSessionLoadsPanelProps> =
 }) => {
     if (loads.length === 0) return null;
 
+    const comparisonHint =
+        previousSession?.session_date != null
+            ? `Comparado con ${formatAthleteDateLong(previousSession.session_date)}${
+                  previousSession.session_name ? ` · ${previousSession.session_name}` : ""
+              }`
+            : undefined;
+
     return (
         <section className="space-y-3" aria-label="Cargas de la sesión">
-            <div className="space-y-1">
-                <h2 className={`flex items-center gap-2 ${ATHLETE_SECTION_LABEL}`}>
-                    <Scale className="size-3.5" aria-hidden />
-                    Cargas registradas
-                </h2>
-                {previousSession?.session_date && (
-                    <p className="text-caption text-muted-foreground">
-                        Comparado con{" "}
-                        {formatAthleteDateLong(previousSession.session_date)}
-                        {previousSession.session_name
-                            ? ` · ${previousSession.session_name}`
-                            : ""}
-                    </p>
-                )}
-            </div>
+            <AthleteSectionHeading
+                title="Cargas registradas"
+                icon={<Scale className="size-3.5" aria-hidden />}
+                description={comparisonHint}
+            />
             <ul className={cn(ATHLETE_SETTINGS_CARD, "relative divide-y divide-border/60")}>
                 <NexiaGlassAccentRim />
                 {loads.map((row) => (

@@ -5,7 +5,7 @@
 import React from "react";
 import { TrendingUp } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { ATHLETE_SECTION_LABEL } from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import type { TrainingPlanDistributionItem } from "@nexia/shared/types/trainingAnalytics";
 import { AthleteProgressBar } from "@/components/athlete/AthleteProgressBar";
 import { ATHLETE_PLAN_QUALITY_ROW } from "./athletePlanPresentation";
@@ -21,10 +21,10 @@ export const AthletePlanQualitiesSection: React.FC<AthletePlanQualitiesSectionPr
 
     return (
         <section className="space-y-3" aria-label="Énfasis del plan">
-            <h2 className={`flex items-center gap-2 ${ATHLETE_SECTION_LABEL}`}>
-                <TrendingUp className="size-3.5" aria-hidden />
-                Énfasis del plan
-            </h2>
+            <AthleteSectionHeading
+                title="Énfasis del plan"
+                icon={<TrendingUp className="size-3.5" aria-hidden />}
+            />
             <ul className="space-y-2">
                 {qualities.map((quality) => (
                     <li key={quality.name} className={`${ATHLETE_PLAN_QUALITY_ROW} relative`}>

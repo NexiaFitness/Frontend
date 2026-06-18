@@ -7,8 +7,8 @@
 
 import React, { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { Calendar } from "lucide-react";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
+import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
 import { AthleteSessionListItem } from "@/components/athlete/AthleteSessionListItem";
 import { AthleteSessionPeekSheet } from "@/components/athlete/AthleteSessionPeekSheet";
 import {
@@ -19,7 +19,7 @@ import {
     AthleteSessionsHeader,
 } from "@/components/athlete/sessions/AthleteSessionsHeader";
 import { AUTH_LINK } from "@/components/auth/authFormPresentation";
-import { Alert, EmptyState } from "@/components/ui/feedback";
+import { Alert } from "@/components/ui/feedback";
 import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
 import {
     useAthleteSessionSwipePeek,
@@ -104,13 +104,12 @@ export const AthleteSessionsPage: React.FC = () => {
                     )}
 
                     {displayedSessions.length === 0 ? (
-                        <EmptyState
-                            icon={<Calendar />}
-                            title="No hay sesiones"
+                        <AthleteEmptyState
+                            variant="sessions"
                             description={
                                 filter === "upcoming"
                                     ? "No tienes sesiones próximas programadas."
-                                    : "Tu entrenador aún no ha programado sesiones para ti."
+                                    : undefined
                             }
                         />
                     ) : (

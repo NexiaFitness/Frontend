@@ -5,10 +5,10 @@
 import React from "react";
 import { CalendarDays } from "lucide-react";
 import {
-    ATHLETE_DIVIDER,
     ATHLETE_PAGE_HEADER_ICON,
-    ATHLETE_SECTION_LABEL,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 
 export interface AthleteSessionsHeaderProps {
     showSwipeHint?: boolean;
@@ -36,11 +36,11 @@ export const AthleteSessionsHeader: React.FC<AthleteSessionsHeaderProps> = ({
                 </div>
             </div>
 
-            <div className={`w-full ${ATHLETE_DIVIDER}`} aria-hidden />
+            <NexiaPremiumDivider className="w-full" />
         </header>
     );
 };
 
 export const AthleteSessionsFilterLabel: React.FC = () => (
-    <p className={ATHLETE_SECTION_LABEL}>Filtrar</p>
+    <AthleteSectionHeading title="Filtrar" as="p" />
 );

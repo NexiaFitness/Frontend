@@ -10,10 +10,10 @@ import { Alert } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import {
     ATHLETE_BACK_LINK,
-    ATHLETE_DIVIDER,
     ATHLETE_PAGE_HEADER_ICON,
     ATHLETE_SECTION_LABEL,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 import { scrollDashboardMainToElementAfterPaint } from "@/lib/dashboardScroll";
 import { useAthleteExerciseProgress } from "@/hooks/athlete/useAthleteExerciseProgress";
@@ -135,7 +135,7 @@ export const AthleteExerciseProgressPage: React.FC = () => {
                         )}
                     </div>
                 </div>
-                <div className={`w-full ${ATHLETE_DIVIDER}`} aria-hidden />
+                <NexiaPremiumDivider className="w-full" />
             </header>
 
             <AthleteProgressExerciseChart data={chartData} />

@@ -7,6 +7,10 @@
 import React, { useEffect, useId, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
+import {
+    NEXIA_DIVIDER_GLOW,
+    NEXIA_DIVIDER_GLOW_BAND,
+} from "@/components/ui/surface/nexiaDividerPresentation";
 
 export interface BottomSheetProps {
     isOpen: boolean;
@@ -81,14 +85,8 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 aria-labelledby={titleId}
             >
                 <div className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden rounded-t-[1.35rem]">
-                    <div
-                        className="h-3 bg-gradient-to-b from-primary/15 to-transparent"
-                        aria-hidden
-                    />
-                    <div
-                        className="absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-primary/65 to-transparent shadow-[0_0_14px_1px] shadow-primary/30"
-                        aria-hidden
-                    />
+                    <div className={NEXIA_DIVIDER_GLOW_BAND} aria-hidden />
+                    <div className={cn("absolute inset-x-3 top-0", NEXIA_DIVIDER_GLOW)} aria-hidden />
                 </div>
 
                 <div className="flex shrink-0 flex-col items-center px-5 pb-3 pt-3">

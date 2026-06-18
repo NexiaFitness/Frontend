@@ -11,6 +11,8 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
+import { AthleteProgressBar } from "@/components/athlete/AthleteProgressBar";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import { cn } from "@/lib/utils";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type {
@@ -24,6 +26,8 @@ export interface SessionTodayCardProps {
     hero: SessionHeroCopy;
     planProgressPercent: number | null;
     onCta: (action: SessionHeroCtaAction, sessionId: number | null) => void;
+    /** Móvil: el footer sticky ya muestra «Empezar sesión» — evitar CTA duplicado en card. */
+    hideStartCtaOnMobile?: boolean;
 }
 
 export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
@@ -31,6 +35,7 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
     hero,
     planProgressPercent,
     onCta,
+    hideStartCtaOnMobile = false,
 }) => {
     const style = SESSION_HERO_TONE_STYLES[hero.tone];
     const progressLabel =
@@ -46,12 +51,17 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
         session &&
         (session.planned_duration != null || session.session_type);
 
+    const suppressStartCtaMobile =
+        hideStartCtaOnMobile && hero.cta?.action === "start";
+
     return (
         <div
             className={cn(
                 "relative overflow-hidden rounded-xl border p-4",
                 style.container,
-                hero.cta ? "space-y-4" : "space-y-2"
+                hero.cta
+                    ? cn("space-y-4", suppressStartCtaMobile && "max-lg:space-y-3")
+                    : "space-y-2"
             )}
         >
             <div
@@ -107,20 +117,17 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                 </div>
             )}
 
-            {style.showProgressBar && progressLabel && (
-                <div className="relative space-y-1">
+            {style.showProgressBar && progressLabel && planProgressPercent != null && (
+                <div className="relative space-y-1.5">
                     <div className="flex justify-between text-caption text-muted-foreground">
                         <span>Progreso del plan</span>
-                        <span>{progressLabel}</span>
+                        <span className="tabular-nums">{progressLabel}</span>
                     </div>
-                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                        <div
-                            className="h-full rounded-full bg-primary transition-all duration-500"
-                            style={{
-                                width: `${Math.min(100, planProgressPercent ?? 0)}%`,
-                            }}
-                        />
-                    </div>
+                    <AthleteProgressBar
+                        value={planProgressPercent}
+                        tone="primary"
+                        aria-label={`Progreso del plan ${Math.round(planProgressPercent)} por ciento`}
+                    />
                 </div>
             )}
 
@@ -128,9 +135,11 @@ export const SessionTodayCard: React.FC<SessionTodayCardProps> = ({
                 <Button
                     variant={style.ctaVariant}
                     className={cn(
-                        "relative min-h-touch-athlete w-full gap-2 font-semibold",
-                        style.ctaVariant === "primary" && "text-base",
-                        style.ctaClass
+                        "relative w-full gap-2 font-semibold",
+                        style.ctaVariant === "primary"
+                            ? ATHLETE_PRIMARY_CTA
+                            : cn("min-h-touch-athlete", style.ctaClass),
+                        suppressStartCtaMobile && "max-lg:hidden"
                     )}
                     onClick={handleCta}
                 >

@@ -6,9 +6,9 @@ import React from "react";
 import { ArrowLeft, MessageSquare } from "lucide-react";
 import {
     ATHLETE_BACK_LINK,
-    ATHLETE_DIVIDER,
     ATHLETE_PAGE_HEADER_ICON,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 
 export interface AthleteFeedbackHistoryHeaderProps {
     onBack: () => void;
@@ -42,7 +42,7 @@ export const AthleteFeedbackHistoryHeader: React.FC<AthleteFeedbackHistoryHeader
                 </div>
             </div>
 
-            <div className={`w-full ${ATHLETE_DIVIDER}`} aria-hidden />
+            <NexiaPremiumDivider className="w-full" />
         </header>
     );
 };

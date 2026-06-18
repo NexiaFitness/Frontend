@@ -5,6 +5,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { ATHLETE_SETTINGS_CARD } from "./athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 
 export interface AthleteSettingsSectionProps {
     title: string;
@@ -21,14 +22,7 @@ export const AthleteSettingsSection: React.FC<AthleteSettingsSectionProps> = ({
 }) => {
     return (
         <section className={cn("space-y-3", className)} aria-label={title}>
-            <div className="space-y-1">
-                <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                    {title}
-                </h2>
-                {description && (
-                    <p className="text-sm text-muted-foreground">{description}</p>
-                )}
-            </div>
+            <AthleteSectionHeading title={title} as="h2" description={description} />
             <div className={ATHLETE_SETTINGS_CARD}>{children}</div>
         </section>
     );

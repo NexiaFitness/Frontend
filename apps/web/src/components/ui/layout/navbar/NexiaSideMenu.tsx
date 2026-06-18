@@ -12,10 +12,10 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePublicNavigation } from "@nexia/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import { SideMenuFooterBrand } from "./SideMenuFooterBrand";
 import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
 import {
-    SIDE_MENU_DIVIDER,
     SIDE_MENU_OVERLAY,
     SIDE_MENU_PANEL,
     SIDE_MENU_SECTION_LABEL,
@@ -67,8 +67,8 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
                 <div className="flex h-full flex-col">
                     <nav className={`flex-1 overflow-y-auto px-6 pt-10 ${NEXIA_SCROLLBAR}`}>
                         <div>
-                            <h3 className={`mb-4 ${SIDE_MENU_SECTION_LABEL}`}>Navegación</h3>
-                            <div className={`mb-6 w-full ${SIDE_MENU_DIVIDER}`} />
+                            <h3 className={`mb-3 ${SIDE_MENU_SECTION_LABEL}`}>Navegación</h3>
+                            <NexiaPremiumDivider className="mb-6 w-full" />
                             <ul className="space-y-2">
                                 {visibleNavigationItems.map(({ path, label }) => (
                                     <li key={path}>

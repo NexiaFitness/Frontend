@@ -15,6 +15,7 @@ import { PostSessionHighlightsStrip } from "@/components/athlete/postSession/Pos
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import { cn } from "@/lib/utils";
 import { useAthletePostSessionCelebration } from "@/hooks/athlete/useAthletePostSessionCelebration";
 import { useAthleteSessionShare } from "@/hooks/athlete/useAthleteSessionShare";
@@ -66,6 +67,8 @@ export const AthleteSessionSummaryPage: React.FC = () => {
                     isSharing={isSharing}
                     onShare={() => void share()}
                 />
+
+                <NexiaPremiumDivider className="w-full" />
 
                 <PostSessionHighlightsStrip highlights={report.highlights} />
 

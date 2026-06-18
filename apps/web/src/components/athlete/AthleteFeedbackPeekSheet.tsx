@@ -8,12 +8,12 @@
 
 import React, { useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare } from "lucide-react";
 import { markTrainerResponsesSeen } from "@nexia/shared/utils/athlete/athleteFeedbackUtils";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
 import { Button } from "@/components/ui/buttons";
 import { AthleteInlineListSkeleton } from "@/components/athlete/AthletePageSkeleton";
-import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import { FeedbackHistoryCard } from "@/components/athlete/FeedbackHistoryCard";
 import { useAthleteFeedbackHistory } from "@/hooks/athlete/useAthleteFeedbackHistory";
 
@@ -57,7 +57,7 @@ export const AthleteFeedbackPeekSheet: React.FC<AthleteFeedbackPeekSheetProps> =
                 sorted.length > 0 ? (
                     <Button
                         variant="primary"
-                        className="min-h-touch-athlete w-full"
+                        className={ATHLETE_PRIMARY_CTA}
                         onClick={handleViewAll}
                     >
                         Ver historial completo
@@ -68,14 +68,13 @@ export const AthleteFeedbackPeekSheet: React.FC<AthleteFeedbackPeekSheetProps> =
             {isLoading ? (
                 <AthleteInlineListSkeleton count={3} itemClassName="h-[96px] rounded-xl" className="py-2" />
             ) : sorted.length === 0 ? (
-                <EmptyState
-                    icon={<MessageSquare />}
-                    title="Sin feedback todavía"
-                    description="Tras completar una sesión podrás enviar sensaciones y ver la respuesta aquí."
+                <AthleteEmptyState
+                    variant="feedback"
+                    compact
                     action={
                         <Button
-                            variant="secondary"
-                            className="min-h-touch-athlete"
+                            variant="primary"
+                            className={ATHLETE_PRIMARY_CTA}
                             onClick={() => {
                                 onClose();
                                 navigate("/dashboard/sessions");

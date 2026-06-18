@@ -5,7 +5,8 @@
 import React from "react";
 import { ChevronRight, TrendingUp } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { ATHLETE_SECTION_LABEL, ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
+import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
 import { cn } from "@/lib/utils";
 import { ATHLETE_PROGRESS_LIST_ROW } from "./athleteProgressViewPresentation";
 
@@ -21,10 +22,10 @@ export const AthleteProgressTopExercisesSection: React.FC<
 
     return (
         <section className="space-y-3" aria-label="Top ejercicios">
-            <h2 className={`flex items-center gap-2 ${ATHLETE_SECTION_LABEL}`}>
-                <TrendingUp className="size-3.5" aria-hidden />
-                Progreso por ejercicio
-            </h2>
+            <AthleteSectionHeading
+                title="Progreso por ejercicio"
+                icon={<TrendingUp className="size-3.5" aria-hidden />}
+            />
             <div className={cn(ATHLETE_SETTINGS_CARD, "relative overflow-hidden")}>
                 <NexiaGlassAccentRim />
                 <ul className="relative divide-y divide-border/60">

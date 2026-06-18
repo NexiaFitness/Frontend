@@ -1,19 +1,24 @@
 /**
- * AthleteKpiStrip.tsx — KPIs semanales en cards con affordance clara.
+ * AthleteKpiStrip.tsx — KPIs semanales glass (V01 insight).
  */
 
 import React from "react";
 import { ChevronRight, Flame, Target } from "lucide-react";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import type { AthleteKpiStripData } from "@nexia/shared/utils/athlete/athleteKpiStrip";
+import {
+    ATHLETE_DASHBOARD_KPI_CARD,
+    ATHLETE_DASHBOARD_KPI_CARD_INTERACTIVE,
+    ATHLETE_DASHBOARD_KPI_HINT,
+    ATHLETE_DASHBOARD_KPI_LABEL,
+    ATHLETE_DASHBOARD_KPI_VALUE,
+} from "@/components/athlete/dashboard/athleteDashboardPresentation";
 
 export interface AthleteKpiStripProps {
     data: AthleteKpiStripData;
     onAdherenceClick?: () => void;
 }
-
-const CARD_BASE =
-    "rounded-lg border border-border/80 bg-card/40 px-3 py-3 transition-colors";
 
 export const AthleteKpiStrip: React.FC<AthleteKpiStripProps> = ({
     data,
@@ -23,8 +28,9 @@ export const AthleteKpiStrip: React.FC<AthleteKpiStripProps> = ({
 
     const adherenceContent = (
         <>
-            <div className="mb-1 flex items-center justify-between gap-1">
-                <div className="flex items-center gap-1.5 text-caption font-medium uppercase tracking-wide text-muted-foreground">
+            <NexiaGlassAccentRim />
+            <div className="relative mb-1 flex items-center justify-between gap-1">
+                <div className={ATHLETE_DASHBOARD_KPI_LABEL}>
                     <Target className="size-3.5 text-success" aria-hidden />
                     Adherencia
                 </div>
@@ -35,10 +41,10 @@ export const AthleteKpiStrip: React.FC<AthleteKpiStripProps> = ({
                     />
                 )}
             </div>
-            <p className="text-2xl font-bold tabular-nums text-foreground">
+            <p className={cn(ATHLETE_DASHBOARD_KPI_VALUE, "relative")}>
                 {data.adherencePrimary}
             </p>
-            <p className="mt-0.5 text-caption text-muted-foreground">
+            <p className={cn(ATHLETE_DASHBOARD_KPI_HINT, "relative")}>
                 {data.adherenceLabel}
             </p>
         </>
@@ -51,21 +57,17 @@ export const AthleteKpiStrip: React.FC<AthleteKpiStripProps> = ({
                     type="button"
                     onClick={onAdherenceClick}
                     aria-label="Adherencia semanal. Ver mi progreso"
-                    className={cn(
-                        CARD_BASE,
-                        "group text-left",
-                        "hover:border-primary/35 hover:bg-surface-2 active:bg-surface-2",
-                        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
-                    )}
+                    className={ATHLETE_DASHBOARD_KPI_CARD_INTERACTIVE}
                 >
                     {adherenceContent}
                 </button>
             ) : (
-                <div className={CARD_BASE}>{adherenceContent}</div>
+                <div className={ATHLETE_DASHBOARD_KPI_CARD}>{adherenceContent}</div>
             )}
 
-            <div className={CARD_BASE}>
-                <div className="mb-1 flex items-center gap-1.5 text-caption font-medium uppercase tracking-wide text-muted-foreground">
+            <div className={ATHLETE_DASHBOARD_KPI_CARD}>
+                <NexiaGlassAccentRim />
+                <div className={cn(ATHLETE_DASHBOARD_KPI_LABEL, "relative mb-1")}>
                     <Flame
                         className={
                             data.showFlame
@@ -78,8 +80,8 @@ export const AthleteKpiStrip: React.FC<AthleteKpiStripProps> = ({
                 </div>
                 <p
                     className={cn(
-                        "flex items-center gap-1 font-bold tabular-nums text-foreground",
-                        data.streakMotivational ? "text-lg" : "text-2xl"
+                        "relative flex items-center gap-1 font-bold tabular-nums text-foreground",
+                        data.streakMotivational ? "text-lg" : ATHLETE_DASHBOARD_KPI_VALUE
                     )}
                 >
                     {data.showFlame && (
@@ -87,7 +89,7 @@ export const AthleteKpiStrip: React.FC<AthleteKpiStripProps> = ({
                     )}
                     {data.streakPrimary}
                 </p>
-                <p className="mt-0.5 text-caption text-muted-foreground">
+                <p className={cn(ATHLETE_DASHBOARD_KPI_HINT, "relative")}>
                     {data.streakLabel}
                 </p>
             </div>

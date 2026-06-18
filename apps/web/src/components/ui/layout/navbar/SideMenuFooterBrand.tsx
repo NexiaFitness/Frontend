@@ -5,16 +5,23 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import {
-    SIDE_MENU_DIVIDER,
+    NEXIA_DIVIDER_GLOW_BAND,
+    NEXIA_DIVIDER_STRONG,
+} from "@/components/ui/surface/nexiaDividerPresentation";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import {
     SIDE_MENU_FOOTER,
     SIDE_MENU_FOOTER_COPY,
 } from "./sideMenuPresentation";
 
 export const SideMenuFooterBrand: React.FC = () => (
     <div className={cn("relative text-center", SIDE_MENU_FOOTER)}>
-        <div className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden rounded-t-xl" aria-hidden>
-            <div className="h-3 bg-gradient-to-b from-primary/18 to-transparent" />
-            <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent shadow-[0_0_12px_1px] shadow-primary/25" />
+        <div
+            className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden rounded-t-xl"
+            aria-hidden
+        >
+            <div className={NEXIA_DIVIDER_GLOW_BAND} />
+            <div className={cn("absolute inset-x-5 top-0", NEXIA_DIVIDER_STRONG)} />
         </div>
 
         <div
@@ -29,7 +36,7 @@ export const SideMenuFooterBrand: React.FC = () => (
             <span className="text-foreground/95">Fitness</span>
         </h4>
 
-        <div className={`mx-auto my-4 w-16 ${SIDE_MENU_DIVIDER}`} aria-hidden />
+        <NexiaPremiumDivider tone="subtle" className="mx-auto my-4 w-16" />
 
         <p className={SIDE_MENU_FOOTER_COPY}>
             Programas y seguimiento pensados para profesionales del fitness.

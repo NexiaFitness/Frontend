@@ -4,13 +4,12 @@
 
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { MessageSquare } from "lucide-react";
 import { markTrainerResponsesSeen } from "@nexia/shared/utils/athlete/athleteFeedbackUtils";
 import { FeedbackHistoryCard } from "@/components/athlete/FeedbackHistoryCard";
 import { AthleteFeedbackHistoryHeader } from "@/components/athlete/feedback/AthleteFeedbackHistoryHeader";
+import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
 import { Button } from "@/components/ui/buttons";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
-import { EmptyState } from "@/components/ui/feedback/EmptyState";
 import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 import { useAthleteFeedbackHistory } from "@/hooks/athlete/useAthleteFeedbackHistory";
@@ -35,10 +34,8 @@ export const AthleteFeedbackHistoryPage: React.FC = () => {
             <AthleteFeedbackHistoryHeader onBack={() => navigate("/dashboard")} />
 
             {sorted.length === 0 ? (
-                <EmptyState
-                    icon={<MessageSquare />}
-                    title="Sin feedback todavía"
-                    description="Tras completar una sesión podrás enviar sensaciones y ver la respuesta aquí."
+                <AthleteEmptyState
+                    variant="feedback"
                     action={
                         <Button
                             variant="primary"

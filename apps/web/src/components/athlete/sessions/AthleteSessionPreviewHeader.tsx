@@ -4,10 +4,8 @@
 
 import React from "react";
 import { Clock, Dumbbell } from "lucide-react";
-import {
-    ATHLETE_DIVIDER,
-    ATHLETE_SECTION_LABEL,
-} from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import {
     ATHLETE_SESSION_META_PILL,
     ATHLETE_SESSION_STATUS_BADGE,
@@ -62,11 +60,11 @@ export const AthleteSessionPreviewHeader: React.FC<AthleteSessionPreviewHeaderPr
                 </span>
             </div>
 
-            <div className={`w-full ${ATHLETE_DIVIDER}`} aria-hidden />
+            <NexiaPremiumDivider className="w-full" />
         </header>
     );
 };
 
 export const AthleteSessionExercisesLabel: React.FC = () => (
-    <p className={ATHLETE_SECTION_LABEL}>Ejercicios</p>
+    <AthleteSectionHeading title="Ejercicios" as="p" />
 );

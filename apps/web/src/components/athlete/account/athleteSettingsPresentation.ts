@@ -5,6 +5,7 @@
 
 import { cn } from "@/lib/utils";
 import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
+import { NEXIA_DIVIDER_SUBTLE } from "@/components/ui/surface/nexiaDividerPresentation";
 
 /** Contenedor glass — misma receta que login auth. */
 export const ATHLETE_SETTINGS_CARD = NEXIA_GLASS_CARD;
@@ -20,8 +21,7 @@ export const ATHLETE_PRIMARY_CTA = cn(
 export const ATHLETE_SECTION_LABEL =
     "text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75";
 
-export const ATHLETE_DIVIDER =
-    "h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent";
+export const ATHLETE_DIVIDER = NEXIA_DIVIDER_SUBTLE;
 
 /** Enlace «Volver» — cyan visible en reposo (§6.7). */
 export const ATHLETE_BACK_LINK = cn(

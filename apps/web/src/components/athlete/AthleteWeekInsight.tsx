@@ -8,6 +8,10 @@ import { MessageCircle, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { AthleteKpiStrip } from "@/components/athlete/AthleteKpiStrip";
 import { AthleteInsightActions } from "@/components/athlete/AthleteInsightActions";
+import {
+    ATHLETE_DASHBOARD_INSIGHT_CHIP_PR,
+    ATHLETE_DASHBOARD_INSIGHT_CHIP_TRAINER,
+} from "@/components/athlete/dashboard/athleteDashboardPresentation";
 import type {
     AthleteWeeklyInsightData,
     WeeklyInsightChip,
@@ -48,11 +52,9 @@ function InsightChip({
             type="button"
             onClick={handleClick}
             className={cn(
-                "inline-flex min-h-touch-athlete items-center gap-1.5 rounded-full border px-3 py-1.5",
-                "text-sm font-medium transition-colors",
                 isPr
-                    ? "border-success/30 bg-success/10 text-success hover:bg-success/15"
-                    : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/15"
+                    ? ATHLETE_DASHBOARD_INSIGHT_CHIP_PR
+                    : ATHLETE_DASHBOARD_INSIGHT_CHIP_TRAINER
             )}
         >
             {isPr ? (
@@ -75,8 +77,8 @@ function InsightSkeleton() {
             <div className="h-5 w-4/5 max-w-sm animate-pulse rounded-md bg-surface-2 motion-reduce:animate-none" />
             <div className="h-4 w-3/5 max-w-xs animate-pulse rounded-md bg-surface-2 motion-reduce:animate-none" />
             <div className="grid grid-cols-2 gap-3">
-                <div className="h-20 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
-                <div className="h-20 animate-pulse rounded-lg bg-surface-2 motion-reduce:animate-none" />
+                <div className="h-[5.25rem] animate-pulse rounded-xl border border-border/50 bg-card/30 motion-reduce:animate-none" />
+                <div className="h-[5.25rem] animate-pulse rounded-xl border border-border/50 bg-card/30 motion-reduce:animate-none" />
             </div>
         </div>
     );

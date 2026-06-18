@@ -9,6 +9,10 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import { Calendar, ClipboardList, LayoutDashboard, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    ATHLETE_CHROME_BAR,
+    ATHLETE_CHROME_BAR_TOP_DIVIDER,
+} from "@/components/athlete/layout/athleteLayoutClasses";
 
 const NAV_ITEMS = [
     { to: "/dashboard", label: "Inicio", icon: LayoutDashboard, end: true },
@@ -20,9 +24,13 @@ const NAV_ITEMS = [
 export const AthleteBottomNav: React.FC = () => {
     return (
         <nav
-            className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur supports-[backdrop-filter]:bg-background/80 lg:hidden"
+            className={cn(
+                ATHLETE_CHROME_BAR,
+                "fixed inset-x-0 bottom-0 z-40 pb-[env(safe-area-inset-bottom)] lg:hidden"
+            )}
             aria-label="Navegación principal atleta"
         >
+            <div className={ATHLETE_CHROME_BAR_TOP_DIVIDER} aria-hidden />
             <ul className="mx-auto flex h-16 max-w-lg items-stretch justify-around">
                 {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
                     <li key={to} className="flex flex-1">

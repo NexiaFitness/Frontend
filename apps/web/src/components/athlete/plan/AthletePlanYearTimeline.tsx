@@ -4,7 +4,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
-import { ATHLETE_SECTION_LABEL } from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import type { AthletePlanMonthTimelineItem } from "@nexia/shared/utils/athlete/athletePlanViewUtils";
 import { formatAthleteLoadLevel } from "@nexia/shared/utils/athlete/athletePlanViewUtils";
 import {
@@ -21,7 +21,7 @@ export const AthletePlanYearTimeline: React.FC<AthletePlanYearTimelineProps> = (
 
     return (
         <section className="space-y-3" aria-label="Carga por mes">
-            <h2 className={ATHLETE_SECTION_LABEL}>Carga por mes</h2>
+            <AthleteSectionHeading title="Carga por mes" />
             <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 [scrollbar-width:thin]">
                 {months.map((month) => (
                     <div

@@ -4,8 +4,8 @@
 
 import React from "react";
 import { Dumbbell } from "lucide-react";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import type { PostSessionExerciseReport } from "@nexia/shared/types/trainingSessions";
-import { ATHLETE_SECTION_LABEL } from "@/components/athlete/account/athleteSettingsPresentation";
 import {
     POST_SESSION_EXERCISES_LIST,
 } from "./postSessionPresentation";
@@ -23,10 +23,10 @@ export const PostSessionExercisesPanel: React.FC<PostSessionExercisesPanelProps>
 
     return (
         <div className="space-y-3">
-            <div className="flex items-center gap-2">
-                <Dumbbell className="size-4 text-primary/80" aria-hidden />
-                <h2 className={ATHLETE_SECTION_LABEL}>Ejercicios</h2>
-            </div>
+            <AthleteSectionHeading
+                title="Ejercicios"
+                icon={<Dumbbell className="size-4 text-primary/80" aria-hidden />}
+            />
             <ul className={`divide-y divide-border/50 ${POST_SESSION_EXERCISES_LIST}`}>
                 {exercises.map((ex) => (
                     <li

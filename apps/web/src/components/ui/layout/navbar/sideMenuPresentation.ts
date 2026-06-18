@@ -3,6 +3,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { NEXIA_DIVIDER_SUBTLE } from "@/components/ui/surface/nexiaDividerPresentation";
 
 export const SIDE_MENU_PANEL = cn(
     "bg-background/95 backdrop-blur-xl",
@@ -15,8 +16,7 @@ export const SIDE_MENU_OVERLAY = "bg-black/70 backdrop-blur-[2px]";
 export const SIDE_MENU_SECTION_LABEL =
     "text-xs font-semibold uppercase tracking-wider text-primary/75";
 
-export const SIDE_MENU_DIVIDER =
-    "h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent";
+export const SIDE_MENU_DIVIDER = NEXIA_DIVIDER_SUBTLE;
 
 export function sideMenuLinkClass(isActive: boolean): string {
     return cn(
@@ -39,15 +39,13 @@ export const SIDE_MENU_FOOTER = cn(
 export const SIDE_MENU_FOOTER_COPY =
     "mx-auto max-w-[16rem] text-sm leading-relaxed text-muted-foreground/90";
 
-/** Hamburguesa — icono limpio; solo tinte cyan al abrir (sin caja pesada). */
-export function mobileTriggerClass(isOpen: boolean): string {
+/** Hamburguesa / X — siempre cyan (mismo tono abierto y cerrado). */
+export function mobileTriggerClass(_isOpen: boolean): string {
     return cn(
         "flex min-h-touch min-w-touch items-center justify-center rounded-lg p-1.5",
-        "transition-colors duration-150 motion-reduce:transition-none",
+        "text-primary transition-opacity duration-150 motion-reduce:transition-none",
+        "hover:text-primary/85 active:opacity-80",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent",
-        "-mr-1",
-        isOpen
-            ? "text-primary"
-            : "text-foreground/85 hover:text-primary active:text-primary"
+        "-mr-1"
     );
 }

@@ -5,10 +5,10 @@
 import React from "react";
 import { ClipboardList, Target } from "lucide-react";
 import {
-    ATHLETE_DIVIDER,
     ATHLETE_PAGE_HEADER_ICON,
     ATHLETE_SECTION_LABEL,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 
 export interface AthletePlanPageHeaderProps {
     planTitle: string;
@@ -34,7 +34,7 @@ export const AthletePlanPageHeader: React.FC<AthletePlanPageHeaderProps> = ({
                     </div>
                 </div>
             </div>
-            <div className={`w-full ${ATHLETE_DIVIDER}`} aria-hidden />
+            <NexiaPremiumDivider className="w-full" />
         </header>
     );
 };

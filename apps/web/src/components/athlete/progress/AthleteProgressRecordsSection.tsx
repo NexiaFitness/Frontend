@@ -5,7 +5,7 @@
 import React from "react";
 import { Trophy } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { ATHLETE_SECTION_LABEL } from "@/components/athlete/account/athleteSettingsPresentation";
+import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import type { RecentRecordRow } from "@nexia/shared/utils/athlete/athleteProgressUtils";
 import { formatAthleteDateLong } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { ATHLETE_PROGRESS_RECORD_ROW, ATHLETE_TROPHY_ICON } from "./athleteProgressViewPresentation";
@@ -23,10 +23,10 @@ export const AthleteProgressRecordsSection: React.FC<AthleteProgressRecordsSecti
 
     return (
         <section className="space-y-3" aria-label="Records recientes">
-            <h2 className={`flex items-center gap-2 ${ATHLETE_SECTION_LABEL}`}>
-                <Trophy className="size-3.5 text-warning" aria-hidden />
-                Marcas personales
-            </h2>
+            <AthleteSectionHeading
+                title="Marcas personales"
+                icon={<Trophy className="size-3.5 text-warning" aria-hidden />}
+            />
             <ul className="space-y-2">
                 {records.map((rec) => (
                     <li key={`${rec.exerciseId}-${rec.trackingDate}`}>
