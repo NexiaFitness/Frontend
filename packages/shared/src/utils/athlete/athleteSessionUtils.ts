@@ -10,6 +10,7 @@ import type { TrainingSession } from "../../types/trainingSessions";
 import type { ClientFeedback } from "../../types/training";
 import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
+import { buildAthleteRunSteps, runStepToFlatExercise } from "./buildAthleteRunSteps";
 import {
     formatTrainerNoteForAthlete,
     hasHumanTrainerNote,
@@ -327,61 +328,7 @@ export function parseAthleteReps(value: string | number | null | undefined): num
     return Number.isFinite(n) && n > 0 ? n : 8;
 }
 
-/** Etiqueta de prescripción para run atleta (sin kg planificado residual — F3c-FE-03). */
-function buildAthletePlannedLabel(set: {
-    label: string;
-    plannedReps: string | null;
-    plannedDuration: number | null;
-    effortCharacter: string | null;
-    effortValue: number | null;
-}): string {
-    const parts: string[] = [];
-    if (set.label) parts.push(set.label);
-    if (set.plannedReps) parts.push(`${set.plannedReps} reps`);
-    if (set.effortValue != null) {
-        if (set.effortCharacter === "rpe") {
-            parts.push(`RPE ${set.effortValue}`);
-        } else if (set.effortCharacter === "rir") {
-            parts.push(`RIR ${set.effortValue}`);
-        } else if (set.effortCharacter === "pct_rm") {
-            parts.push(`${set.effortValue}% RM`);
-        }
-    }
-    if (set.plannedDuration != null) parts.push(`${set.plannedDuration}s`);
-    return parts.join(" · ") || "Según prescripción";
-}
-
 /** Aplana la estructura de sesión en pasos de logger (1 paso = 1 serie). */
 export function flattenAthleteExercises(view: SessionStructureView): AthleteFlatExercise[] {
-    const items: AthleteFlatExercise[] = [];
-
-    for (const block of view.blocks) {
-        for (const group of block.groups) {
-            for (const slot of group.slots) {
-                for (const set of slot.sets) {
-                    items.push({
-                        stepKey: `${set.sourceLineId}-${set.index}`,
-                        blockExerciseId: set.sourceLineId,
-                        exerciseId: slot.exerciseId,
-                        name: slot.exerciseName,
-                        blockName: block.blockTypeName,
-                        groupKind: group.kind,
-                        setLabel: set.label,
-                        setIndex: set.index,
-                        totalSetsInSlot: slot.sets.length,
-                        plannedLabel: buildAthletePlannedLabel(set),
-                        plannedWeight: set.plannedWeight ?? null,
-                        defaultWeight: set.actualWeight ?? 0,
-                        defaultReps: parseAthleteReps(set.plannedReps ?? set.actualReps),
-                        restSeconds: set.plannedRest ?? group.restBetweenSeconds ?? null,
-                        defaultRpe: set.actualEffortValue ?? set.effortValue ?? null,
-                        videoUrl: null,
-                        loggedSets: set.rowLoggedSets ?? 0,
-                    });
-                }
-            }
-        }
-    }
-
-    return items;
+    return buildAthleteRunSteps(view).map(runStepToFlatExercise);
 }
