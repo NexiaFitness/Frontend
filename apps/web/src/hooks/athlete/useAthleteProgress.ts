@@ -1,5 +1,5 @@
 /**
- * useAthleteProgress.ts — Datos completos V10 progreso atleta (F2).
+ * useAthleteProgress.ts — Datos completos V10 progreso atleta (F2 / F3b premium).
  */
 
 import { useMemo } from "react";
@@ -27,18 +27,37 @@ function monthPeriodBounds(): { periodStart: string; periodEnd: string } {
     return { periodStart: fmt(start), periodEnd: fmt(end) };
 }
 
+function formatWeightTrendLabel(
+    trend: ReturnType<typeof useClientProgress>["trend"]
+): string {
+    switch (trend) {
+        case "gaining_weight":
+            return "Tendencia al alza";
+        case "losing_weight":
+            return "Tendencia a la baja";
+        case "maintaining_weight":
+            return "Mantenimiento";
+        case "stable":
+            return "Estable";
+        default:
+            return "Lo registra tu entrenador";
+    }
+}
+
 export function useAthleteProgress() {
-    const { clientId, isLoading: profileLoading } = useAthleteContext();
+    const { clientId, profile, isLoading: profileLoading } = useAthleteContext();
     const period = useMemo(() => monthPeriodBounds(), []);
 
     const {
         weightChartData,
-        latestWeight,
+        latestWeight: progressLatestWeight,
         weightChange,
         trend,
         isLoading: progressLoading,
         error: progressError,
-    } = useClientProgress(clientId ?? 0);
+    } = useClientProgress(clientId, profile);
+
+    const latestWeight = progressLatestWeight ?? profile?.peso ?? null;
 
     const {
         data: sessions = [],
@@ -114,20 +133,30 @@ export function useAthleteProgress() {
         [sessions]
     );
 
+    const weightSubtitle = useMemo(() => {
+        if (weightChange != null) {
+            return `${weightChange > 0 ? "+" : ""}${weightChange.toFixed(1)} kg en el periodo`;
+        }
+        return formatWeightTrendLabel(trend);
+    }, [weightChange, trend]);
+
     return {
         clientId,
         weightChartData,
         latestWeight,
         weightChange,
         trend,
+        weightSubtitle,
         adherencePercent30d,
         adherence30d,
         weeklyActivity,
         topExercises,
         recentRecords,
+        personalRecordCount: recentRecords.length,
         completedSessions,
         completedCount,
         totalSessions: sessions.length,
+        averageSrpe: coherence?.kpis?.average_srpe ?? null,
         isLoading:
             profileLoading ||
             progressLoading ||

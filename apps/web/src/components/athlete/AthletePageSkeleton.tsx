@@ -15,7 +15,6 @@
 
 
 import React from "react";
-
 import { cn } from "@/lib/utils";
 
 
@@ -218,47 +217,30 @@ function SessionsListSkeleton() {
 
 
 function ProgressSkeleton() {
-
     return (
-
         <div className="space-y-6">
-
             <Block className="h-5 w-20" />
-
-            <div className="space-y-2">
-
-                <Block className="h-8 w-40" />
-
-                <Block className="h-4 w-56" />
-
+            <div className="flex gap-3">
+                <Block className="size-11 shrink-0 rounded-xl" />
+                <div className="flex-1 space-y-2">
+                    <Block className="h-3 w-24" />
+                    <Block className="h-8 w-40" />
+                    <Block className="h-4 w-56" />
+                </div>
             </div>
-
+            <Block className="h-px w-full" />
             <div className="grid gap-3 sm:grid-cols-3">
-
                 {Array.from({ length: 3 }).map((_, i) => (
-
-                    <Block key={i} className="h-24 rounded-lg" />
-
+                    <Block key={i} className="h-32 rounded-xl" />
                 ))}
-
             </div>
-
-            <Block className="h-[200px] w-full rounded-lg" />
-
-            <Block className="h-[200px] w-full rounded-lg" />
-
-            <div className="space-y-2">
-
-                <Block className="h-4 w-28" />
-
-                <Block className="h-32 w-full rounded-lg" />
-
-            </div>
-
+            <Block className="h-[260px] w-full rounded-xl" />
+            <Block className="h-40 w-full rounded-xl" />
+            <Block className="h-40 w-full rounded-xl" />
+            <Block className="h-[260px] w-full rounded-xl" />
+            <Block className="h-36 w-full rounded-xl" />
         </div>
-
     );
-
 }
 
 
@@ -482,47 +464,56 @@ function FeedbackHistorySkeleton() {
 
 
 function PlanSkeleton() {
-
     return (
+        <div className="space-y-6" role="status" aria-busy="true" aria-label="Cargando plan">
+            <span className="sr-only">Cargando tu plan</span>
 
-        <div className="space-y-6">
-
-            <div className="space-y-2 rounded-lg border border-border p-4">
-
-                <Block className="h-4 w-20" />
-
-                <Block className="h-7 w-3/4 max-w-xs" />
-
-                <Block className="h-4 w-40" />
-
+            <div className="flex items-start gap-3">
+                <Block className="size-11 shrink-0 rounded-xl" />
+                <div className="min-w-0 flex-1 space-y-2">
+                    <Block className="h-3 w-20" />
+                    <Block className="h-8 w-3/4 max-w-xs" />
+                    <Block className="h-4 w-40" />
+                </div>
             </div>
+            <Block className="h-px w-full opacity-60" />
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <Block className="h-[280px] w-full rounded-xl" />
 
-                {Array.from({ length: 3 }).map((_, i) => (
-
-                    <Block key={i} className="h-24 rounded-lg" />
-
-                ))}
-
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                    <Block className="h-3 w-24" />
+                    <Block className="h-3 w-16" />
+                </div>
+                <div className="flex items-center gap-2">
+                    <div className="grid min-w-0 flex-1 grid-cols-7 gap-0.5">
+                        {Array.from({ length: 7 }).map((_, i) => (
+                            <Block key={i} className="h-[3.25rem] rounded-md" />
+                        ))}
+                    </div>
+                    <Block className="size-14 shrink-0 rounded-full" />
+                </div>
             </div>
 
             <div className="space-y-3">
-
-                <Block className="h-5 w-36" />
-
+                <Block className="h-3 w-28" />
                 {Array.from({ length: 2 }).map((_, i) => (
-
-                    <Block key={i} className="h-16 w-full rounded-lg" />
-
+                    <Block key={i} className="h-16 w-full rounded-xl" />
                 ))}
-
             </div>
 
+            <div className="space-y-3">
+                <Block className="h-3 w-24" />
+                <div className="flex gap-2 overflow-hidden">
+                    {Array.from({ length: 6 }).map((_, i) => (
+                        <Block key={i} className="h-16 min-w-[3.25rem] shrink-0 rounded-lg" />
+                    ))}
+                </div>
+            </div>
+
+            <Block className="h-12 w-full rounded-lg" />
         </div>
-
     );
-
 }
 
 

@@ -42,17 +42,6 @@ export const ATHLETE_SESSION_LIST_ITEM = cn(
 export const ATHLETE_SESSION_LIST_ITEM_TODAY =
     "border-primary/25 shadow-[0_12px_40px_-14px] shadow-primary/15";
 
-export const ATHLETE_SESSION_PROGRESS_TRACK = cn(
-    "h-1 overflow-hidden rounded-full bg-muted/30",
-    "shadow-[inset_0_1px_2px] shadow-black/20"
-);
-
-export const ATHLETE_SESSION_PROGRESS_FILL = {
-    success: "h-full rounded-full bg-gradient-to-r from-success/90 to-success/50",
-    warning: "h-full rounded-full bg-gradient-to-r from-warning/90 to-warning/50",
-    primary: "h-full rounded-full bg-gradient-to-r from-primary/90 to-primary/45",
-};
-
 /** Badge base meta en card sesión (estado + %). */
 export const ATHLETE_SESSION_META_BADGE = cn(
     "inline-flex items-center rounded-md border px-2 py-0.5 backdrop-blur-sm",

@@ -1,29 +1,28 @@
 /**
  * AthletePlanPage.tsx — Mi plan lectura (V08).
- * @author Frontend Team
- * @since v6.1.0
  */
 
 import React from "react";
-import { AthletePlanOverview } from "@/components/athlete/AthletePlanOverview";
+import { useNavigate } from "react-router-dom";
+import { ClipboardList } from "lucide-react";
+import { AthletePlanOverview } from "@/components/athlete/plan/AthletePlanOverview";
 import { Alert, EmptyState } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { Button } from "@/components/ui/buttons";
 import { useAthletePlan } from "@/hooks/athlete/useAthletePlan";
-import { useNavigate } from "react-router-dom";
-import { ClipboardList } from "lucide-react";
+import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthletePlanPage: React.FC = () => {
     const navigate = useNavigate();
-    const { summary, planGoalLabel, isLoading, isError } = useAthletePlan();
+    const plan = useAthletePlan();
 
-    if (isLoading) {
+    if (plan.isLoading) {
         return <AthletePageLoading variant="plan" />;
     }
 
-    if (isError) {
+    if (plan.isError) {
         return (
-            <div className="space-y-4 px-4 pb-24 pt-4">
+            <div className={ATHLETE_PAGE}>
                 <Alert variant="error">
                     <p className="font-medium">No pudimos cargar tu plan</p>
                     <p className="mt-1 text-muted-foreground">Inténtalo de nuevo más tarde.</p>
@@ -32,9 +31,9 @@ export const AthletePlanPage: React.FC = () => {
         );
     }
 
-    if (!summary?.has_active_plan) {
+    if (!plan.summary?.has_active_plan) {
         return (
-            <div className="px-4 pb-24 pt-4 lg:px-8">
+            <div className={ATHLETE_PAGE}>
                 <EmptyState
                     icon={<ClipboardList />}
                     title="Sin plan activo"
@@ -54,8 +53,8 @@ export const AthletePlanPage: React.FC = () => {
     }
 
     return (
-        <div className="px-4 pb-24 pt-4 lg:px-8 lg:pb-8">
-            <AthletePlanOverview summary={summary} planGoalLabel={planGoalLabel} />
+        <div className={ATHLETE_PAGE}>
+            <AthletePlanOverview viewModel={plan} />
         </div>
     );
 };

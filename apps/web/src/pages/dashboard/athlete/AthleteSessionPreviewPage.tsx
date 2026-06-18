@@ -33,16 +33,18 @@ import {
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { AthleteSessionPreviewHeader, AthleteSessionExercisesLabel } from "@/components/athlete/sessions/AthleteSessionPreviewHeader";
 import { AthleteSessionExerciseList } from "@/components/athlete/sessions/AthleteSessionExerciseList";
+import { AthleteSessionLoadsPanel } from "@/components/athlete/sessions/AthleteSessionLoadsPanel";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import {
     ATHLETE_PAGE,
     ATHLETE_STICKY_FOOTER_SPACER,
 } from "@/components/athlete/layout/athleteLayoutClasses";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
-import { WellbeingCheckInModal } from "@/components/athlete/WellbeingCheckInModal";
+import { WellbeingCheckInSheet } from "@/components/athlete/wellbeing/WellbeingCheckInSheet";
 import { useWellbeingCheckIn } from "@/hooks/athlete/useWellbeingCheckIn";
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
 import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
+import { useAthleteSessionLoads } from "@/hooks/athlete/useAthleteSessionLoads";
 import { cn } from "@/lib/utils";
 
 export const AthleteSessionPreviewPage: React.FC = () => {
@@ -60,6 +62,10 @@ export const AthleteSessionPreviewPage: React.FC = () => {
     const { data: session, isLoading: loadingSession } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId,
     });
+
+    const sessionLoads = useAthleteSessionLoads(
+        session?.status === "completed" ? session.session_date : null
+    );
     const { view, isLoading: loadingStructure } = useSessionStructureView(sessionId);
 
     const { data: feedbackList = [] } = useGetClientFeedbackQuery(
@@ -210,6 +216,13 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                         </p>
                     </Alert>
                 )}
+
+                {session.status === "completed" && (
+                    <AthleteSessionLoadsPanel
+                        loads={sessionLoads.loads}
+                        previousSession={sessionLoads.previousSession}
+                    />
+                )}
             </div>
 
             <AthleteFixedFooter size="single">
@@ -239,7 +252,7 @@ export const AthleteSessionPreviewPage: React.FC = () => {
                 )}
             </AthleteFixedFooter>
 
-            <WellbeingCheckInModal
+            <WellbeingCheckInSheet
                 isOpen={wellbeingOpen}
                 onClose={() => setWellbeingOpen(false)}
                 onSubmit={handleWellbeingSubmit}

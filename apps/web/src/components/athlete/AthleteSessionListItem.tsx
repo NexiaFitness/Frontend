@@ -6,12 +6,11 @@ import React from "react";
 import { ChevronRight, Clock } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
+import { AthleteProgressBar } from "@/components/athlete/AthleteProgressBar";
 import {
     ATHLETE_SESSION_COMPLETION_BADGE,
     ATHLETE_SESSION_LIST_ITEM,
     ATHLETE_SESSION_LIST_ITEM_TODAY,
-    ATHLETE_SESSION_PROGRESS_FILL,
-    ATHLETE_SESSION_PROGRESS_TRACK,
     ATHLETE_SESSION_STATUS_BADGE,
     resolveAthleteSessionStatusBadge,
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
@@ -95,15 +94,11 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
                 )}
 
                 {completion != null && tone && (
-                    <div
-                        className={ATHLETE_SESSION_PROGRESS_TRACK}
+                    <AthleteProgressBar
+                        value={completion}
+                        tone={tone}
                         aria-label={`Cumplimiento ${Math.round(completion)} por ciento`}
-                    >
-                        <div
-                            className={ATHLETE_SESSION_PROGRESS_FILL[tone]}
-                            style={{ width: `${completion}%` }}
-                        />
-                    </div>
+                    />
                 )}
             </div>
 

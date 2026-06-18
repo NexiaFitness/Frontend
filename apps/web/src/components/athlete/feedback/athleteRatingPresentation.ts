@@ -4,6 +4,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { ATHLETE_PROGRESS_TRACK_SHELL } from "@/components/athlete/athleteProgressPresentation";
 
 export type AthleteRatingColor = "primary" | "warning";
 
@@ -27,8 +28,8 @@ export const ATHLETE_RATING_VALUE_PILL: Record<AthleteRatingColor, string> = {
 };
 
 export const ATHLETE_RATING_TRACK = cn(
-    "relative overflow-hidden rounded-lg border border-border/60 bg-background/35 p-1",
-    "backdrop-blur-sm shadow-[inset_0_1px_0] shadow-foreground/[0.06]"
+    ATHLETE_PROGRESS_TRACK_SHELL,
+    "rounded-lg p-1"
 );
 
 export const ATHLETE_RATING_SEGMENT_ROW = "relative flex gap-0.5";

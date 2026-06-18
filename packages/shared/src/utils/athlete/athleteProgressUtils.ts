@@ -222,15 +222,125 @@ export function buildExerciseProgressChart(
         }));
 }
 
-/** Últimas N entradas de tracking para tabla V11. */
+/** Fecha ISO → clave YYYY-MM-DD para comparar tracking y sesiones. */
+export function normalizeTrackingDateKey(value: string): string {
+    return value.slice(0, 10);
+}
+
+export function trackingDatesMatch(a: string, b: string): boolean {
+    return normalizeTrackingDateKey(a) === normalizeTrackingDateKey(b);
+}
+
+/** Últimas N entradas; si ensureDate está fuera del top, la incluye (p. ej. PR). */
 export function buildExerciseHistoryTable(
     tracking: ProgressTracking[],
-    limit = 5
+    limit = 8,
+    ensureDate?: string | null
 ): ProgressTracking[] {
-    return [...tracking]
-        .filter((t) => t.is_active)
-        .sort((a, b) => b.tracking_date.localeCompare(a.tracking_date))
-        .slice(0, limit);
+    const active = [...tracking]
+        .filter((t) => t.is_active !== false)
+        .sort((a, b) => b.tracking_date.localeCompare(a.tracking_date));
+
+    const sliced = active.slice(0, limit);
+
+    if (!ensureDate) return sliced;
+
+    const pinKey = normalizeTrackingDateKey(ensureDate);
+    const pinned = active.find(
+        (row) => normalizeTrackingDateKey(row.tracking_date) === pinKey
+    );
+    if (!pinned) return sliced;
+    if (sliced.some((row) => row.id === pinned.id)) return sliced;
+
+    return [pinned, ...sliced.slice(0, Math.max(0, limit - 1))];
+}
+
+export interface SessionLoadRow {
+    exerciseId: number;
+    exerciseName: string;
+    maxWeight: number | null;
+    maxReps: number | null;
+    previousWeight: number | null;
+    weightDelta: number | null;
+}
+
+/** Cargas registradas en una fecha de sesión (progress_tracking). */
+export function buildSessionLoadsForDate(
+    tracking: ProgressTracking[],
+    sessionDate: string,
+    exerciseNames: Map<number, string>
+): SessionLoadRow[] {
+    const key = normalizeTrackingDateKey(sessionDate);
+    return tracking
+        .filter(
+            (row) =>
+                row.is_active !== false &&
+                normalizeTrackingDateKey(row.tracking_date) === key
+        )
+        .map((row) => ({
+            exerciseId: row.exercise_id,
+            exerciseName:
+                exerciseNames.get(row.exercise_id) ?? `Ejercicio #${row.exercise_id}`,
+            maxWeight: row.max_weight,
+            maxReps: row.max_reps,
+            previousWeight: null,
+            weightDelta: null,
+        }))
+        .sort((a, b) => a.exerciseName.localeCompare(b.exerciseName));
+}
+
+/** Sesión completada inmediatamente anterior a una fecha. */
+export function findPreviousCompletedSession(
+    sessions: TrainingSession[],
+    beforeDate: string
+): TrainingSession | undefined {
+    const beforeKey = normalizeTrackingDateKey(beforeDate);
+    return [...sessions]
+        .filter(
+            (s) =>
+                s.status === "completed" &&
+                s.session_date &&
+                normalizeTrackingDateKey(s.session_date) < beforeKey
+        )
+        .sort((a, b) => (b.session_date ?? "").localeCompare(a.session_date ?? ""))[0];
+}
+
+/** Cargas de sesión + delta vs sesión anterior (mismo ejercicio). */
+export function buildSessionLoadsWithComparison(
+    tracking: ProgressTracking[],
+    sessions: TrainingSession[],
+    sessionDate: string,
+    exerciseNames: Map<number, string>
+): SessionLoadRow[] {
+    const current = buildSessionLoadsForDate(tracking, sessionDate, exerciseNames);
+    const previousSession = findPreviousCompletedSession(sessions, sessionDate);
+    if (!previousSession?.session_date) return current;
+
+    const previousByExercise = new Map<number, ProgressTracking>();
+    const prevKey = normalizeTrackingDateKey(previousSession.session_date);
+    for (const row of tracking) {
+        if (
+            row.is_active !== false &&
+            normalizeTrackingDateKey(row.tracking_date) === prevKey
+        ) {
+            previousByExercise.set(row.exercise_id, row);
+        }
+    }
+
+    return current.map((row) => {
+        const prev = previousByExercise.get(row.exerciseId);
+        const previousWeight =
+            prev?.max_weight != null && prev.max_weight > 0 ? prev.max_weight : null;
+        let weightDelta: number | null = null;
+        if (
+            row.maxWeight != null &&
+            row.maxWeight > 0 &&
+            previousWeight != null
+        ) {
+            weightDelta = Math.round((row.maxWeight - previousWeight) * 10) / 10;
+        }
+        return { ...row, previousWeight, weightDelta };
+    });
 }
 
 /** Sesión completada en la misma fecha que un registro de tracking. */
@@ -241,6 +351,7 @@ export function findSessionByTrackingDate(
     return sessions.find(
         (s) =>
             s.status === "completed" &&
-            s.session_date === trackingDate
+            s.session_date &&
+            trackingDatesMatch(s.session_date, trackingDate)
     );
 }
