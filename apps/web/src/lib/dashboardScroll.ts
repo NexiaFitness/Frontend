@@ -52,6 +52,83 @@ export function scrollDashboardMainToTopAfterPaint(
     window.setTimeout(() => scrollDashboardMainToTop(behavior), 300);
 }
 
+export interface ScrollDashboardElementOptions {
+    behavior?: ScrollBehavior;
+    /** Margen respecto al borde superior visible del main (px). */
+    offsetTop?: number;
+    /** Reserva inferior (footer fijo + bottom nav). */
+    offsetBottom?: number;
+    /** `start` = anclar arriba (focus en formularios); `contain` = mínimo desplazamiento. */
+    align?: "start" | "contain";
+}
+
+/** Desplaza el main del dashboard hasta dejar `target` visible. */
+export function scrollDashboardMainToElement(
+    target: HTMLElement,
+    options: ScrollDashboardElementOptions = {},
+): void {
+    const main = getDashboardMainScrollElement();
+    const behavior = options.behavior ?? "auto";
+    const offsetTop = options.offsetTop ?? 16;
+    const offsetBottom = options.offsetBottom ?? 160;
+    const align = options.align ?? "contain";
+
+    if (!main) {
+        target.scrollIntoView({ behavior, block: align === "start" ? "start" : "nearest" });
+        if (target instanceof HTMLElement && "focus" in target) {
+            target.focus({ preventScroll: true });
+        }
+        return;
+    }
+
+    const mainRect = main.getBoundingClientRect();
+    const targetRect = target.getBoundingClientRect();
+    const visibleTop = mainRect.top + offsetTop;
+    const visibleBottom = mainRect.bottom - offsetBottom;
+
+    let scrollDelta = 0;
+    if (align === "start") {
+        scrollDelta = targetRect.top - visibleTop;
+    } else if (targetRect.top < visibleTop) {
+        scrollDelta = targetRect.top - visibleTop;
+    } else if (targetRect.bottom > visibleBottom) {
+        scrollDelta = targetRect.bottom - visibleBottom;
+    }
+
+    if (Math.abs(scrollDelta) > 1) {
+        main.scrollBy({ top: scrollDelta, behavior });
+    }
+
+    if (target instanceof HTMLElement && "focus" in target) {
+        target.focus({ preventScroll: true });
+    }
+}
+
+/** Reintenta tras paint/layout (p. ej. datos async o secciones colapsables). */
+export function scrollDashboardMainToElementAfterPaint(
+    getTarget: () => HTMLElement | null,
+    options: ScrollDashboardElementOptions = {},
+): () => void {
+    const run = () => {
+        const el = getTarget();
+        if (el) scrollDashboardMainToElement(el, options);
+    };
+
+    run();
+    requestAnimationFrame(() => {
+        run();
+        requestAnimationFrame(run);
+    });
+    const timer = window.setTimeout(run, 0);
+
+    return () => window.clearTimeout(timer);
+}
+
+/** Rutas con ?focus=… delegan el scroll a la vista destino. */
+export function dashboardRouteDefersScrollReset(search: string): boolean {
+    return new URLSearchParams(search).has("focus");
+}
+
 /** Selector estable para anclar scroll al abrir/cerrar el picker inline del constructor. */
 export function getConstructorRowAnchorSelector(rowId: string): string {
     return `[data-constructor-row-id="${CSS.escape(rowId)}"]`;

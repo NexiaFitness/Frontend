@@ -5,14 +5,18 @@
  * @since v6.1.0
  */
 
-import React, { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useLayoutEffect, useRef, useState } from "react";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import { AthleteRatingScale } from "@/components/athlete/feedback/AthleteRatingScale";
 import { Button } from "@/components/ui/buttons";
 import { Alert, useToast } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteSessionFeedbackHeader } from "@/components/athlete/feedback/AthleteSessionFeedbackHeader";
+import {
+    feedbackFormExpandsDetails,
+    feedbackFormFocusesPain,
+} from "@/components/athlete/feedback/athleteSessionFeedbackNavigation";
 import {
     ATHLETE_FORM_FIELD_LABEL,
     ATHLETE_FORM_TEXTAREA,
@@ -34,13 +38,18 @@ import {
     ATHLETE_STICKY_FOOTER_SPACER,
 } from "@/components/athlete/layout/athleteLayoutClasses";
 import { cn } from "@/lib/utils";
+import { scrollDashboardMainToElementAfterPaint } from "@/lib/dashboardScroll";
 
 export const AthleteSessionFeedbackPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const sessionId = Number(id);
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
     const { showToast } = useToast();
     const { clientId } = useAthleteContext();
+    const expandDetails = feedbackFormExpandsDetails(searchParams);
+    const focusPain = feedbackFormFocusesPain(searchParams);
+    const painRef = useRef<HTMLTextAreaElement>(null);
 
     const { data: session, isLoading } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId,
@@ -54,6 +63,16 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     const [motivation, setMotivation] = useState(7);
     const [pain, setPain] = useState("");
     const [notes, setNotes] = useState("");
+
+    useLayoutEffect(() => {
+        if (!focusPain || isLoading) return;
+        return scrollDashboardMainToElementAfterPaint(() => painRef.current, {
+            behavior: "auto",
+            align: "start",
+            offsetTop: 8,
+            offsetBottom: 176,
+        });
+    }, [focusPain, isLoading]);
 
     const handleSubmit = async () => {
         if (!clientId) return;
@@ -80,6 +99,78 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     if (isLoading) {
         return <AthletePageLoading variant="session-feedback" />;
     }
+
+    if (session && session.status !== "completed") {
+        return <Navigate to={`/dashboard/sessions/${sessionId}`} replace />;
+    }
+
+    const painField = (
+        <div>
+            <label className={ATHLETE_FORM_FIELD_LABEL} htmlFor="athlete-feedback-pain">
+                Dolor o molestias
+            </label>
+            <textarea
+                id="athlete-feedback-pain"
+                ref={painRef}
+                value={pain}
+                onChange={(e) => setPain(e.target.value)}
+                rows={2}
+                className={ATHLETE_FORM_TEXTAREA}
+                placeholder="Opcional — zona, intensidad…"
+            />
+        </div>
+    );
+
+    const notesField = (
+        <div>
+            <label className={ATHLETE_FORM_FIELD_LABEL}>Notas</label>
+            <textarea
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={3}
+                className={ATHLETE_FORM_TEXTAREA}
+                placeholder="Cuéntale cómo te sentiste en la sesión…"
+            />
+        </div>
+    );
+
+    const sleepField = (
+        <AthleteRatingScale
+            label="Calidad del sueño"
+            value={sleep}
+            onChange={setSleep}
+            lowAnchor="Mala"
+            highAnchor="Excelente"
+        />
+    );
+
+    const motivationField = (
+        <AthleteRatingScale
+            label="Motivación"
+            value={motivation}
+            onChange={setMotivation}
+            lowAnchor="Baja"
+            highAnchor="Alta"
+        />
+    );
+
+    const optionalDetailFields = focusPain
+        ? (
+              [
+                  ["pain", painField],
+                  ["notes", notesField],
+                  ["sleep", sleepField],
+                  ["motivation", motivationField],
+              ] as const
+          )
+        : (
+              [
+                  ["sleep", sleepField],
+                  ["motivation", motivationField],
+                  ["pain", painField],
+                  ["notes", notesField],
+              ] as const
+          );
 
     return (
         <div className={cn(ATHLETE_PAGE, "flex min-h-full flex-col")}>
@@ -120,46 +211,13 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
 
                     <CollapsibleFormGroup
                         title="Más detalles (opcional)"
-                        defaultOpen={false}
+                        defaultOpen={expandDetails}
                         className="relative border-0 pt-0"
                     >
                         <div className="space-y-5">
-                            <AthleteRatingScale
-                                label="Calidad del sueño"
-                                value={sleep}
-                                onChange={setSleep}
-                                lowAnchor="Mala"
-                                highAnchor="Excelente"
-                            />
-                            <AthleteRatingScale
-                                label="Motivación"
-                                value={motivation}
-                                onChange={setMotivation}
-                                lowAnchor="Baja"
-                                highAnchor="Alta"
-                            />
-                            <div>
-                                <label className={ATHLETE_FORM_FIELD_LABEL}>
-                                    Dolor o molestias
-                                </label>
-                                <textarea
-                                    value={pain}
-                                    onChange={(e) => setPain(e.target.value)}
-                                    rows={2}
-                                    className={ATHLETE_FORM_TEXTAREA}
-                                    placeholder="Opcional — zona, intensidad…"
-                                />
-                            </div>
-                            <div>
-                                <label className={ATHLETE_FORM_FIELD_LABEL}>Notas</label>
-                                <textarea
-                                    value={notes}
-                                    onChange={(e) => setNotes(e.target.value)}
-                                    rows={3}
-                                    className={ATHLETE_FORM_TEXTAREA}
-                                    placeholder="Cuéntale cómo te sentiste en la sesión…"
-                                />
-                            </div>
+                            {optionalDetailFields.map(([key, field]) => (
+                                <React.Fragment key={key}>{field}</React.Fragment>
+                            ))}
                         </div>
                     </CollapsibleFormGroup>
                 </section>

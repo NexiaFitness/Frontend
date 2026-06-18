@@ -1,14 +1,20 @@
 /**
- * AthleteSessionListItem.tsx — Fila sesión en lista V02.
- * @author Frontend Team
- * @since v6.1.0
+ * AthleteSessionListItem.tsx — Fila sesión premium en lista V02.
  */
 
 import React from "react";
 import { ChevronRight, Clock } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
-import { ATHLETE_SURFACE_CARD_INTERACTIVE } from "@/components/athlete/account/athleteSettingsPresentation";
+import {
+    ATHLETE_SESSION_COMPLETION_BADGE,
+    ATHLETE_SESSION_LIST_ITEM,
+    ATHLETE_SESSION_LIST_ITEM_TODAY,
+    ATHLETE_SESSION_PROGRESS_FILL,
+    ATHLETE_SESSION_PROGRESS_TRACK,
+    ATHLETE_SESSION_STATUS_BADGE,
+    resolveAthleteSessionStatusBadge,
+} from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     formatAthleteDate,
@@ -23,15 +29,18 @@ export interface AthleteSessionListItemProps {
     onSelect: (sessionId: number) => void;
 }
 
-function statusVariant(
-    session: TrainingSession
-): "default" | "secondary" | "outline" | "destructive" | "subtle-warning" {
-    if (isSessionToday(session)) return "default";
-    if (session.status === "completed") {
-        return isPartiallyClosedSession(session) ? "subtle-warning" : "secondary";
-    }
-    if (session.status === "skipped") return "destructive";
-    return "outline";
+function statusBadgeVariant(session: TrainingSession) {
+    return resolveAthleteSessionStatusBadge(session);
+}
+
+function completionTone(
+    completion: number,
+    isPartial: boolean
+): "success" | "warning" | "primary" {
+    if (isPartial) return "warning";
+    if (completion >= 90) return "success";
+    if (completion >= 70) return "primary";
+    return "warning";
 }
 
 export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
@@ -41,65 +50,67 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
     const statusLabel = getSessionStatusLabel(session);
     const completion = getCompletedSessionCompletionPercent(session);
     const isPartial = isPartiallyClosedSession(session);
+    const isToday = isSessionToday(session);
+    const tone = completion != null ? completionTone(completion, isPartial) : null;
+    const statusVariant = statusBadgeVariant(session);
 
     return (
         <button
             type="button"
             onClick={() => onSelect(session.id)}
             className={cn(
-                "flex w-full min-h-touch-athlete items-center gap-3",
-                ATHLETE_SURFACE_CARD_INTERACTIVE
+                ATHLETE_SESSION_LIST_ITEM,
+                isToday && cn(ATHLETE_SESSION_LIST_ITEM_TODAY, "pt-5"),
+                !isToday && "pt-4"
             )}
         >
-            <div className="min-w-0 flex-1 space-y-2">
+            {isToday && <NexiaGlassAccentRim />}
+
+            <div className="relative min-w-0 flex-1 space-y-2.5">
                 <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={statusVariant(session)}>{statusLabel}</Badge>
+                    <span className={ATHLETE_SESSION_STATUS_BADGE[statusVariant]}>
+                        {statusLabel}
+                    </span>
                     {session.session_date && (
                         <span className="text-caption text-muted-foreground">
                             {formatAthleteDate(session.session_date)}
                         </span>
                     )}
-                    {completion != null && (
-                        <span
-                            className={cn(
-                                "text-caption font-medium",
-                                isPartial ? "text-warning" : "text-success"
-                            )}
-                        >
+                    {completion != null && tone && (
+                        <span className={ATHLETE_SESSION_COMPLETION_BADGE[tone]}>
                             {Math.round(completion)}%
                         </span>
                     )}
                 </div>
-                <p className="truncate font-semibold text-foreground">{session.session_name}</p>
-                <div className="flex flex-wrap items-center gap-3">
-                    {session.planned_duration != null && (
-                        <p className="flex items-center gap-1 text-caption text-muted-foreground">
-                            <Clock className="size-3.5" aria-hidden />
-                            {session.planned_duration} min
-                        </p>
-                    )}
-                </div>
-                {completion != null && (
-                    <div className="space-y-1" aria-label={`Cumplimiento ${Math.round(completion)} por ciento`}>
-                        <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-                            <div
-                                className={cn(
-                                    "h-full rounded-full transition-all",
-                                    isPartial
-                                        ? "bg-warning"
-                                        : completion >= 90
-                                          ? "bg-success"
-                                          : completion >= 70
-                                            ? "bg-primary"
-                                            : "bg-warning"
-                                )}
-                                style={{ width: `${completion}%` }}
-                            />
-                        </div>
+
+                <p className="truncate text-left font-semibold leading-snug text-foreground">
+                    {session.session_name}
+                </p>
+
+                {session.planned_duration != null && (
+                    <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
+                        <Clock className="size-3.5 text-primary/60" aria-hidden />
+                        {session.planned_duration} min
+                    </p>
+                )}
+
+                {completion != null && tone && (
+                    <div
+                        className={ATHLETE_SESSION_PROGRESS_TRACK}
+                        aria-label={`Cumplimiento ${Math.round(completion)} por ciento`}
+                    >
+                        <div
+                            className={ATHLETE_SESSION_PROGRESS_FILL[tone]}
+                            style={{ width: `${completion}%` }}
+                        />
                     </div>
                 )}
             </div>
-            <ChevronRight className="size-5 shrink-0 text-muted-foreground" aria-hidden />
+
+            <ChevronRight
+                className="relative size-5 shrink-0 text-primary/55"
+                aria-hidden
+            />
         </button>
     );
 };

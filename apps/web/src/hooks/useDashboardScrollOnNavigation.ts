@@ -4,17 +4,23 @@
 
 import { useEffect, useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { scrollDashboardMainToTopAfterPaint } from "@/lib/dashboardScroll";
+import {
+    dashboardRouteDefersScrollReset,
+    scrollDashboardMainToTopAfterPaint,
+} from "@/lib/dashboardScroll";
 
 export function useDashboardScrollOnNavigation(): void {
     const location = useLocation();
     const scrollKey = `${location.pathname}${location.search}${location.key ?? ""}`;
+    const deferScrollReset = dashboardRouteDefersScrollReset(location.search);
 
     useLayoutEffect(() => {
+        if (deferScrollReset) return;
         scrollDashboardMainToTopAfterPaint();
-    }, [scrollKey]);
+    }, [scrollKey, deferScrollReset]);
 
     useEffect(() => {
+        if (deferScrollReset) return;
         scrollDashboardMainToTopAfterPaint();
-    }, [scrollKey]);
+    }, [scrollKey, deferScrollReset]);
 }

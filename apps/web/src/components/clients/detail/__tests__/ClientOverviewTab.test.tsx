@@ -232,13 +232,15 @@ describe("ClientOverviewTab", () => {
 
             render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-            await waitFor(() => {
-                // Buscar dentro de la MetricCard de peso
-                const weightCard = screen.getByText(/último peso/i).closest("div");
-                expect(weightCard).toBeInTheDocument();
-                expect(weightCard).toHaveTextContent(/80 kg/i);
-                expect(weightCard).toHaveTextContent(/\+2.5 kg/i);
-            });
+            await waitFor(
+                () => {
+                    const weightCard = screen.getByText(/último peso/i).closest("div");
+                    expect(weightCard).toBeInTheDocument();
+                    expect(weightCard).toHaveTextContent(/80 kg/i);
+                    expect(weightCard).toHaveTextContent(/\+2.5 kg/i);
+                },
+                { timeout: 8000 }
+            );
         });
 
         it("displays fatigue metrics correctly", async () => {

@@ -6,13 +6,21 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
-import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
+import {
+    ATHLETE_PRIMARY_CTA,
+    ATHLETE_SETTINGS_CARD,
+} from "@/components/athlete/account/athleteSettingsPresentation";
+import { athleteSessionFeedbackPath } from "@/components/athlete/feedback/athleteSessionFeedbackNavigation";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 
 export interface AthleteInjuryConsultSheetProps {
     isOpen: boolean;
     onClose: () => void;
     injuries: InjuryWithDetails[];
+    /** Contexto sesión — define CTA coherente con el flujo. */
+    sessionId?: number;
+    sessionCompleted?: boolean;
+    hasSessionFeedback?: boolean;
 }
 
 function injuryLabel(injury: InjuryWithDetails): string {
@@ -25,8 +33,31 @@ export const AthleteInjuryConsultSheet: React.FC<AthleteInjuryConsultSheetProps>
     isOpen,
     onClose,
     injuries,
+    sessionId,
+    sessionCompleted = false,
+    hasSessionFeedback = false,
 }) => {
     const navigate = useNavigate();
+
+    const footerLabel =
+        sessionCompleted && sessionId
+            ? hasSessionFeedback
+                ? "Ver mis notas de esta sesión"
+                : "Cuéntale en el feedback"
+            : "Entendido";
+
+    const handleFooterClick = () => {
+        if (sessionCompleted && sessionId) {
+            onClose();
+            if (hasSessionFeedback) {
+                navigate("/dashboard/feedback");
+            } else {
+                navigate(athleteSessionFeedbackPath(sessionId, { focusPain: true }));
+            }
+            return;
+        }
+        onClose();
+    };
 
     return (
         <BottomSheet
@@ -36,13 +67,10 @@ export const AthleteInjuryConsultSheet: React.FC<AthleteInjuryConsultSheetProps>
             footer={
                 <Button
                     variant="primary"
-                    className="min-h-touch-athlete w-full"
-                    onClick={() => {
-                        onClose();
-                        navigate("/dashboard/feedback");
-                    }}
+                    className={ATHLETE_PRIMARY_CTA}
+                    onClick={handleFooterClick}
                 >
-                    Habla con tu entrenador
+                    {footerLabel}
                 </Button>
             }
         >

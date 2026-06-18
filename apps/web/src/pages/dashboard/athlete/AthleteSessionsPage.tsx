@@ -7,10 +7,18 @@
 
 import React, { useCallback, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { Calendar } from "lucide-react";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { AthleteSessionListItem } from "@/components/athlete/AthleteSessionListItem";
 import { AthleteSessionPeekSheet } from "@/components/athlete/AthleteSessionPeekSheet";
-import { SegmentButton } from "@/components/ui/buttons";
+import {
+    AthleteSessionFilterChips,
+} from "@/components/athlete/sessions/AthleteSessionFilterChips";
+import {
+    AthleteSessionsFilterLabel,
+    AthleteSessionsHeader,
+} from "@/components/athlete/sessions/AthleteSessionsHeader";
+import { AUTH_LINK } from "@/components/auth/authFormPresentation";
 import { Alert, EmptyState } from "@/components/ui/feedback";
 import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
 import {
@@ -19,16 +27,9 @@ import {
 } from "@/hooks/athlete/useAthleteSessionSwipePeek";
 import { useAthleteSessionsList } from "@/hooks/athlete/useAthleteSessionsList";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
+import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
-import type { AthleteSessionFilter } from "@nexia/shared/utils/athlete/athleteSessionUtils";
-import { Calendar } from "lucide-react";
-
-const FILTER_OPTIONS: { id: AthleteSessionFilter; label: string }[] = [
-    { id: "all", label: "Todas" },
-    { id: "upcoming", label: "Próximas" },
-    { id: "completed", label: "Completadas" },
-    { id: "month", label: "Este mes" },
-];
+import { cn } from "@/lib/utils";
 
 export const AthleteSessionsPage: React.FC = () => {
     const navigate = useNavigate();
@@ -70,16 +71,8 @@ export const AthleteSessionsPage: React.FC = () => {
     return (
         <>
             <PullToRefresh onRefresh={refreshSessions}>
-                <div className="space-y-4 px-4 pb-24 pt-4 lg:px-8 lg:pb-8">
-                    <header>
-                        <h1 className="text-xl font-bold text-foreground">Mis sesiones</h1>
-                        <p className="text-sm text-muted-foreground">
-                            Historial y sesiones programadas
-                            {!isDesktop && (
-                                <span className="text-caption"> · Desliza una fila para vista rápida</span>
-                            )}
-                        </p>
-                    </header>
+                <div className={cn(ATHLETE_PAGE, "space-y-5")}>
+                    <AthleteSessionsHeader showSwipeHint={!isDesktop} />
 
                     {isError && (
                         <Alert variant="error">
@@ -90,17 +83,9 @@ export const AthleteSessionsPage: React.FC = () => {
                         </Alert>
                     )}
 
-                    <div className="flex flex-wrap gap-2">
-                        {FILTER_OPTIONS.map((opt) => (
-                            <SegmentButton
-                                key={opt.id}
-                                selected={filter === opt.id}
-                                onClick={() => setFilter(opt.id)}
-                                size="sm"
-                            >
-                                {opt.label}
-                            </SegmentButton>
-                        ))}
+                    <div className="space-y-3">
+                        <AthleteSessionsFilterLabel />
+                        <AthleteSessionFilterChips value={filter} onChange={setFilter} />
                     </div>
 
                     {filterDate && (
@@ -108,7 +93,7 @@ export const AthleteSessionsPage: React.FC = () => {
                             Filtrado por día ·{" "}
                             <button
                                 type="button"
-                                className="text-primary underline"
+                                className={cn(AUTH_LINK, "text-caption")}
                                 onClick={() =>
                                     navigate("/dashboard/sessions", { replace: true })
                                 }

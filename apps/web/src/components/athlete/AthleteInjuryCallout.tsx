@@ -5,6 +5,7 @@
 import React from "react";
 import { AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AUTH_LINK } from "@/components/auth/authFormPresentation";
 
 export interface AthleteInjuryCalloutProps {
     message: string;
@@ -22,10 +23,11 @@ export const AthleteInjuryCallout: React.FC<AthleteInjuryCalloutProps> = ({
     return (
         <div
             className={cn(
-                "flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm",
+                "relative flex items-center gap-2.5 overflow-hidden rounded-lg border px-3 py-2.5",
+                "backdrop-blur-sm shadow-[inset_0_1px_0] shadow-foreground/[0.05]",
                 isDanger
-                    ? "border-destructive/35 bg-destructive/5"
-                    : "border-warning/35 bg-warning/5",
+                    ? "border-destructive/30 bg-destructive/8"
+                    : "border-warning/28 bg-warning/8",
                 className
             )}
             role="status"
@@ -37,12 +39,14 @@ export const AthleteInjuryCallout: React.FC<AthleteInjuryCalloutProps> = ({
                 )}
                 aria-hidden
             />
-            <p className="min-w-0 flex-1 leading-snug text-muted-foreground">{message}</p>
+            <p className="min-w-0 flex-1 text-sm leading-snug text-foreground/90">
+                {message}
+            </p>
             {onConsult && (
                 <button
                     type="button"
                     onClick={onConsult}
-                    className="shrink-0 text-xs font-semibold text-primary hover:underline"
+                    className={cn(AUTH_LINK, "shrink-0 text-xs")}
                 >
                     Consultar
                 </button>
