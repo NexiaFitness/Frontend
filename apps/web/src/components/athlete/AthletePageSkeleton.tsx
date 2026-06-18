@@ -566,39 +566,20 @@ function ExerciseDetailSkeleton() {
 
 
 function AccountSkeleton() {
-
     return (
-
-        <div className="space-y-6">
-
-            <div className="space-y-2">
-
-                <Block className="h-8 w-36" />
-
-                <Block className="h-4 w-64" />
-
+        <div className={`space-y-6 px-4 pt-4 pb-24 lg:px-8`}>
+            <div className="flex items-center gap-4">
+                <Block className="size-16 rounded-2xl" />
+                <div className="flex-1 space-y-2">
+                    <Block className="h-3 w-20" />
+                    <Block className="h-7 w-40" />
+                    <Block className="h-4 w-52" />
+                </div>
             </div>
-
-            <Block className="h-28 w-full rounded-lg" />
-
-            <div className="space-y-4">
-
-                <Block className="h-5 w-40" />
-
-                <Block className="h-12 w-full rounded-lg" />
-
-                <Block className="h-12 w-full rounded-lg" />
-
-                <Block className="h-12 w-full rounded-lg" />
-
-            </div>
-
-            <Block className="h-32 w-full rounded-lg" />
-
+            <Block className="h-56 w-full rounded-xl" />
+            <Block className="h-40 w-full rounded-xl" />
         </div>
-
     );
-
 }
 
 

@@ -1,97 +1,37 @@
 /**
- * ChangePasswordForm.tsx — Formulario de cambio de contraseña profesional.
- *
- * Contexto:
- * - Usa useAuthForm para validaciones consistentes.
- * - Conectado a RTK Query (useChangePasswordMutation).
- * - Feedback de loading y tipografía unificada con auth forms.
- *
- * Notas de mantenimiento:
- * - Success y error usan tipografía consistente.
- * - Botón unificado con BUTTON_PRESETS.
- *
- * @author Frontend
- * @since v4.2.0
- * @updated v4.3.6 - Typography system integration + BUTTON_PRESETS unificado
+ * ChangePasswordForm.tsx — Formulario de cambio de contraseña (plataforma).
  */
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
-import { useChangePasswordMutation, useAuthForm, validateChangePasswordForm } from "@nexia/shared";
-
-interface ChangePasswordFormData {
-    currentPassword: string;
-    newPassword: string;
-    confirmPassword: string;
-    [key: string]: unknown;
-}
+import { useChangePasswordForm } from "@/hooks/account/useChangePasswordForm";
 
 export const ChangePasswordForm: React.FC = () => {
-    const [changePassword, { isLoading }] = useChangePasswordMutation();
-
     const {
         formData,
         errors,
         serverError,
-        handleInputChange,
-        validateForm,
-        handleServerError,
+        successMessage,
+        isLoading,
+        handleSubmit,
         clearErrors,
-        resetForm,
-    } = useAuthForm<ChangePasswordFormData>({
-        initialState: {
-            currentPassword: "",
-            newPassword: "",
-            confirmPassword: "",
-        },
-        validate: validateChangePasswordForm,
-    });
-
-    const [successMessage, setSuccessMessage] = React.useState<string | null>(
-        null
-    );
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setSuccessMessage(null);
-
-        if (!validateForm()) return;
-        clearErrors();
-
-        try {
-            await changePassword({
-                current_password: formData.currentPassword,
-                new_password: formData.newPassword,
-            }).unwrap();
-
-            setSuccessMessage("Contraseña actualizada correctamente");
-            resetForm();
-
-            setTimeout(() => setSuccessMessage(null), 3000);
-        } catch (error) {
-            handleServerError(error as Parameters<typeof handleServerError>[0]);
-        }
-    };
+        onFieldChange,
+    } = useChangePasswordForm();
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="mb-8 text-center md:text-left">
-                <h2 className="text-xl font-bold text-foreground mb-2">
-                    Seguridad
-                </h2>
+                <h2 className="mb-2 text-xl font-bold text-foreground">Seguridad</h2>
                 <p className="text-sm text-muted-foreground">
                     Cambia tu contraseña para mantener tu cuenta segura
                 </p>
             </div>
 
             {successMessage && (
-                <div className="bg-success/10 border border-success/30 rounded-lg p-4">
-                    <p className="text-sm font-medium text-success">
-                        {successMessage}
-                    </p>
+                <div className="rounded-lg border border-success/30 bg-success/10 p-4">
+                    <p className="text-sm font-medium text-success">{successMessage}</p>
                 </div>
             )}
 
@@ -102,19 +42,19 @@ export const ChangePasswordForm: React.FC = () => {
                     type="password"
                     label="Contraseña actual"
                     value={formData.currentPassword}
-                    onChange={handleInputChange("currentPassword")}
+                    onChange={onFieldChange("currentPassword")}
                     error={errors.currentPassword}
                     placeholder="Introduce tu contraseña actual"
                     isRequired
                     disabled={isLoading}
                 />
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <Input
                         type="password"
                         label="Nueva contraseña"
                         value={formData.newPassword}
-                        onChange={handleInputChange("newPassword")}
+                        onChange={onFieldChange("newPassword")}
                         error={errors.newPassword}
                         placeholder="Mínimo 6 caracteres"
                         isRequired
@@ -125,7 +65,7 @@ export const ChangePasswordForm: React.FC = () => {
                         type="password"
                         label="Confirmar nueva contraseña"
                         value={formData.confirmPassword}
-                        onChange={handleInputChange("confirmPassword")}
+                        onChange={onFieldChange("confirmPassword")}
                         error={errors.confirmPassword}
                         placeholder="Repite tu nueva contraseña"
                         isRequired
@@ -140,7 +80,7 @@ export const ChangePasswordForm: React.FC = () => {
                         size="md"
                         isLoading={isLoading}
                         disabled={isLoading}
-                        className="w-full text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3 md:w-auto md:min-w-[180px]"
+                        className="w-full px-4 py-2.5 text-base md:w-auto md:min-w-[180px] lg:px-6 lg:py-3 lg:text-lg"
                     >
                         {isLoading ? "Actualizando..." : "Actualizar"}
                     </Button>
