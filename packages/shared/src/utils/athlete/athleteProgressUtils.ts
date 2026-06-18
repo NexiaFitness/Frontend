@@ -99,8 +99,11 @@ export function buildTopExercises(
         const recent = sorted.filter((r) => withinLast30Days(r.tracking_date));
         if (recent.length === 0) continue;
 
-        const latest = recent[recent.length - 1];
-        const previous = recent.length >= 2 ? recent[recent.length - 2] : null;
+        const meaningful = recent.filter((r) => (r.max_weight ?? 0) > 0);
+        const pool = meaningful.length > 0 ? meaningful : recent;
+        const latest = pool[pool.length - 1];
+        const previous =
+            pool.length >= 2 ? pool[pool.length - 2] : null;
         const latestWeight = latest.max_weight;
         let weightDelta: number | null = null;
         if (
