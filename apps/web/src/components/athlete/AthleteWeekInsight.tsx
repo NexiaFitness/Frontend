@@ -137,6 +137,7 @@ export const AthleteWeekInsight: React.FC<AthleteWeekInsightProps> = ({
                 <AthleteInsightActions
                     links={insight.deepLinks}
                     onLinkClick={onDeepLinkClick}
+                    className="mt-1"
                 />
             )}
         </section>

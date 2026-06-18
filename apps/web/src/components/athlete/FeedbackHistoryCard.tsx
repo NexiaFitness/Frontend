@@ -1,12 +1,23 @@
 /**
  * FeedbackHistoryCard.tsx — Tarjeta feedback + respuesta entrenador (V12 / sheet peek).
- * @author Frontend Team
- * @since v6.2.0
+ * Superficie §6.7 — paridad cuenta / drawer / post-sesión.
  */
 
 import React from "react";
 import type { ClientFeedback } from "@nexia/shared/types/training";
-import { Badge } from "@/components/ui/Badge";
+import { cn } from "@/lib/utils";
+import { AthleteSurfaceAccentRim } from "@/components/athlete/AthleteSurfaceAccentRim";
+import {
+    ATHLETE_ATHLETE_MESSAGE_BLOCK,
+    ATHLETE_ATHLETE_MESSAGE_LABEL,
+    ATHLETE_ATHLETE_MESSAGE_ACCENT,
+    ATHLETE_FEEDBACK_CARD,
+    ATHLETE_FEEDBACK_METRIC_PILL,
+    ATHLETE_FEEDBACK_METRIC_VALUE,
+    ATHLETE_FEEDBACK_RESPONDED_BADGE,
+    ATHLETE_TRAINER_QUOTE_BLOCK,
+    ATHLETE_TRAINER_QUOTE_LABEL,
+} from "@/components/athlete/account/athleteSettingsPresentation";
 
 function formatDate(iso: string): string {
     return new Date(iso).toLocaleDateString("es-ES", {
@@ -28,6 +39,45 @@ function formatCompactMetrics(item: ClientFeedback): string | null {
     return parts.length > 0 ? parts.join(" · ") : null;
 }
 
+function FeedbackMetrics({
+    item,
+    compact,
+}: {
+    item: ClientFeedback;
+    compact: boolean;
+}) {
+    if (compact) {
+        const text = formatCompactMetrics(item);
+        if (!text) return null;
+        return <p className="text-caption leading-relaxed text-muted-foreground">{text}</p>;
+    }
+
+    if (item.perceived_effort == null && item.fatigue_level == null) {
+        return null;
+    }
+
+    return (
+        <div className="flex flex-wrap gap-2">
+            {item.perceived_effort != null && (
+                <span className={ATHLETE_FEEDBACK_METRIC_PILL}>
+                    Esfuerzo{" "}
+                    <span className={ATHLETE_FEEDBACK_METRIC_VALUE}>
+                        {item.perceived_effort}/10
+                    </span>
+                </span>
+            )}
+            {item.fatigue_level != null && (
+                <span className={ATHLETE_FEEDBACK_METRIC_PILL}>
+                    Fatiga{" "}
+                    <span className={ATHLETE_FEEDBACK_METRIC_VALUE}>
+                        {item.fatigue_level}/10
+                    </span>
+                </span>
+            )}
+        </div>
+    );
+}
+
 export interface FeedbackHistoryCardProps {
     item: ClientFeedback;
     sessionName: string;
@@ -41,72 +91,60 @@ export const FeedbackHistoryCard: React.FC<FeedbackHistoryCardProps> = ({
     compact = false,
 }) => {
     const hasResponse = Boolean(item.trainer_response?.trim());
-    const compactMetrics = compact ? formatCompactMetrics(item) : null;
 
     return (
-        <article
-            className={`rounded-lg border border-border bg-card space-y-3 ${compact ? "p-3" : "p-4"}`}
-        >
-            <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">{sessionName}</h3>
-                <span className="text-caption text-muted-foreground">
-                    {formatDate(item.feedback_date)}
-                </span>
-                {hasResponse && <Badge variant="subtle-success">Respondido</Badge>}
+        <article className={cn(ATHLETE_FEEDBACK_CARD, "space-y-3", compact && "pt-4")}>
+            <AthleteSurfaceAccentRim />
+
+            <div className="relative flex flex-wrap items-start justify-between gap-x-2 gap-y-2">
+                <div className="min-w-0 space-y-0.5">
+                    <h3 className="text-base font-semibold leading-snug text-foreground">
+                        {sessionName}
+                    </h3>
+                    <p className="text-caption text-muted-foreground">
+                        {formatDate(item.feedback_date)}
+                    </p>
+                </div>
+                {hasResponse && (
+                    <span className={ATHLETE_FEEDBACK_RESPONDED_BADGE}>Respondido</span>
+                )}
             </div>
 
-            {compact && compactMetrics && (
-                <p className="text-caption text-muted-foreground">{compactMetrics}</p>
-            )}
-
-            {!compact && (
-                <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
-                    {item.perceived_effort != null && (
-                        <span>
-                            Esfuerzo:{" "}
-                            <strong className="text-foreground">{item.perceived_effort}/10</strong>
-                        </span>
-                    )}
-                    {item.fatigue_level != null && (
-                        <span>
-                            Fatiga:{" "}
-                            <strong className="text-foreground">{item.fatigue_level}/10</strong>
-                        </span>
-                    )}
-                </div>
-            )}
+            <FeedbackMetrics item={item} compact={compact} />
 
             {(item.notes || item.pain_or_discomfort) && !compact && (
-                <div className="rounded-md bg-surface/40 p-3">
-                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                        Tu mensaje
-                    </p>
-                    <p className="mt-1 text-sm text-foreground">
+                <div className={ATHLETE_ATHLETE_MESSAGE_BLOCK}>
+                    <div className={ATHLETE_ATHLETE_MESSAGE_ACCENT} aria-hidden />
+                    <p className={ATHLETE_ATHLETE_MESSAGE_LABEL}>Tu mensaje</p>
+                    <p className="mt-1.5 pl-2 text-sm leading-relaxed text-foreground">
                         {item.pain_or_discomfort || item.notes}
                     </p>
                 </div>
             )}
 
             {hasResponse ? (
-                <div
-                    className={`rounded-md border border-primary/20 bg-primary/5 ${compact ? "p-2.5" : "p-3"}`}
-                >
-                    <p className="text-xs font-medium uppercase tracking-wide text-primary">
-                        Tu entrenador
-                    </p>
+                <div className={cn(ATHLETE_TRAINER_QUOTE_BLOCK, compact && "p-3")}>
+                    <div
+                        className="pointer-events-none absolute inset-y-2 left-0 w-0.5 rounded-full bg-gradient-to-b from-primary/80 to-primary/20"
+                        aria-hidden
+                    />
+                    <p className={ATHLETE_TRAINER_QUOTE_LABEL}>Tu entrenador</p>
                     <p
-                        className={`mt-1 text-sm text-foreground ${compact ? "line-clamp-3" : "line-clamp-4"}`}
+                        className={cn(
+                            "mt-1.5 pl-2 text-sm leading-relaxed text-foreground",
+                            compact ? "line-clamp-3" : undefined
+                        )}
                     >
                         {item.trainer_response}
                     </p>
                     {!compact && item.trainer_response_at && (
-                        <p className="mt-2 text-caption text-muted-foreground">
+                        <p className="mt-2 pl-2 text-caption text-muted-foreground">
                             {formatDate(item.trainer_response_at)}
                         </p>
                     )}
                 </div>
             ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="rounded-lg border border-dashed border-border/60 bg-surface/20 px-3 py-2.5 text-sm text-muted-foreground">
                     Tu entrenador aún no ha respondido a este feedback.
                 </p>
             )}

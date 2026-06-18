@@ -13,7 +13,9 @@ import {
 } from "@nexia/shared/utils/athlete/athleteKpiStrip";
 import {
     buildInsightDeepLinks,
+    resolveInsightDeepLinkSessionContext,
     type InsightDeepLink,
+    type InsightDeepLinkContext,
 } from "@nexia/shared/utils/athlete/athleteInsightDeepLinks";
 import type { WeekDayStripItem } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { computeDaysUntilSession } from "@nexia/shared/utils/athlete/athleteSessionUtils";
@@ -57,7 +59,8 @@ export function useAthleteWeeklyInsight(
     _weekStrip: WeekDayStripItem[],
     nextSession: TrainingSession | undefined,
     dashboardMode: AthleteDashboardMode,
-    clientId?: number | null
+    clientId?: number | null,
+    deepLinkContext?: InsightDeepLinkContext | null
 ): AthleteWeeklyInsightData {
     const { data, isLoading, isError, refetch } = useGetAthleteWeeklySummaryQuery(undefined, {
         skip: !hasActivePlan,
@@ -141,12 +144,17 @@ export function useAthleteWeeklyInsight(
             daysUntilNextSession,
         });
 
+        const sessionContext = resolveInsightDeepLinkSessionContext(
+            deepLinkContext ?? undefined
+        );
+
         const deepLinks = buildInsightDeepLinks({
             mode: dashboardMode,
             hasTrainerResponse: data.feedback.has_trainer_response,
             hasPersonalRecord: topRecord != null,
             topRecordExerciseId: topRecord?.exercise_id,
             topRecordExerciseName: topRecord?.exercise_name,
+            ...sessionContext,
         });
 
         return {
@@ -171,5 +179,6 @@ export function useAthleteWeeklyInsight(
         isLoading,
         nextSession,
         refetchSummary,
+        deepLinkContext,
     ]);
 }

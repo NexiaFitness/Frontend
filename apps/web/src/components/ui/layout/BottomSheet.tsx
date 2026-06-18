@@ -6,6 +6,7 @@
 
 import React, { useEffect, useId, useRef } from "react";
 import { cn } from "@/lib/utils";
+import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
 
 export interface BottomSheetProps {
     isOpen: boolean;
@@ -111,6 +112,7 @@ export const BottomSheet: React.FC<BottomSheetProps> = ({
                 <div
                     className={cn(
                         "min-h-0 flex-1 overflow-y-auto overscroll-contain px-5",
+                        NEXIA_SCROLLBAR,
                         footer ? "pb-3" : "pb-[calc(1.25rem+env(safe-area-inset-bottom))]"
                     )}
                 >

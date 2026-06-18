@@ -53,6 +53,7 @@ export const AthleteDashboard: React.FC = () => {
         sessionHero,
         refreshFeedbackBadge,
         refreshDashboard,
+        insightDeepLinkContext,
     } = useAthleteDashboard();
 
     const weeklyInsight = useAthleteWeeklyInsight(
@@ -60,7 +61,8 @@ export const AthleteDashboard: React.FC = () => {
         weekStrip,
         nextSession,
         dashboardMode,
-        clientId
+        clientId,
+        insightDeepLinkContext
     );
     const refetchWeeklyInsight = weeklyInsight.refetch;
 
@@ -97,12 +99,8 @@ export const AthleteDashboard: React.FC = () => {
     );
 
     const handleBellClick = useCallback(() => {
-        if (isDesktop) {
-            navigate("/dashboard/feedback");
-        } else {
-            setFeedbackSheetOpen(true);
-        }
-    }, [isDesktop, navigate]);
+        setFeedbackSheetOpen(true);
+    }, []);
 
     const handleDeepLink = useCallback(
         (link: InsightDeepLink) => {
@@ -116,15 +114,19 @@ export const AthleteDashboard: React.FC = () => {
                     }
                     break;
                 case "feedback_history":
-                    if (isDesktop) {
-                        navigate("/dashboard/feedback");
-                    } else {
-                        setFeedbackSheetOpen(true);
+                    setFeedbackSheetOpen(true);
+                    break;
+                case "submit_session_feedback":
+                    if (link.sessionId != null) {
+                        navigate(`/dashboard/sessions/${link.sessionId}/feedback`);
                     }
+                    break;
+                case "view_session_feedback":
+                    navigate("/dashboard/feedback");
                     break;
             }
         },
-        [isDesktop, navigate]
+        [navigate]
     );
 
     const handleTrainerMessageClick = useCallback(() => {

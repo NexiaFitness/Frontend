@@ -18,15 +18,17 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import { AppNavbar } from "./navbar/AppNavbar";
+import { NEXIA_SCROLLBAR } from "./scrollPresentation";
+import { cn } from "@/lib/utils";
 
 export const PublicLayout: React.FC = () => {
     return (
-        <div className="min-h-screen flex flex-col bg-background">
+        <div className="flex h-[100dvh] max-h-[100dvh] flex-col overflow-hidden bg-background">
             {/* Navbar unificada (variante explícita decidida por layout) */}
             <AppNavbar variant="public" />
 
             {/* Contenido principal, con scroll controlado */}
-            <main className="flex-1 overflow-y-auto">
+            <main className={cn("min-h-0 flex-1 overflow-x-hidden overflow-y-auto", NEXIA_SCROLLBAR)}>
                 <Outlet />
             </main>
         </div>

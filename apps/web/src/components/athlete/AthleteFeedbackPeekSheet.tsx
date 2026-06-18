@@ -66,7 +66,7 @@ export const AthleteFeedbackPeekSheet: React.FC<AthleteFeedbackPeekSheetProps> =
             }
         >
             {isLoading ? (
-                <AthleteInlineListSkeleton count={3} itemClassName="h-[88px] rounded-lg" className="py-2" />
+                <AthleteInlineListSkeleton count={3} itemClassName="h-[96px] rounded-xl" className="py-2" />
             ) : sorted.length === 0 ? (
                 <EmptyState
                     icon={<MessageSquare />}

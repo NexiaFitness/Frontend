@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { PostSessionCelebrationCopy } from "@nexia/shared/utils/athlete/athletePostSessionAiInsight";
+import { AthleteSurfaceAccentRim } from "@/components/athlete/AthleteSurfaceAccentRim";
 import { PostSessionCompletionRing } from "./PostSessionCompletionRing";
 import { POST_SESSION_CELEBRATION_STYLES } from "./postSessionPresentation";
 
@@ -36,10 +37,11 @@ export const PostSessionCelebrationHero: React.FC<PostSessionCelebrationHeroProp
         <div className="relative">
             <div
                 className={cn(
-                    "relative overflow-hidden rounded-xl border p-4",
+                    "relative overflow-hidden rounded-xl border p-4 pt-5",
                     style.heroContainer
                 )}
             >
+                <AthleteSurfaceAccentRim />
                 <div
                     className={cn(
                         "pointer-events-none absolute -right-6 -top-6 size-20 rounded-full blur-2xl",

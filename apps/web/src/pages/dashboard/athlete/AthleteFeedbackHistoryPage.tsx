@@ -4,13 +4,17 @@
 
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MessageSquare } from "lucide-react";
+import { MessageSquare } from "lucide-react";
 import { markTrainerResponsesSeen } from "@nexia/shared/utils/athlete/athleteFeedbackUtils";
 import { FeedbackHistoryCard } from "@/components/athlete/FeedbackHistoryCard";
+import { AthleteFeedbackHistoryHeader } from "@/components/athlete/feedback/AthleteFeedbackHistoryHeader";
 import { Button } from "@/components/ui/buttons";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
+import { ATHLETE_PAGE } from "@/components/athlete/layout/athleteLayoutClasses";
 import { useAthleteFeedbackHistory } from "@/hooks/athlete/useAthleteFeedbackHistory";
+import { cn } from "@/lib/utils";
 
 export const AthleteFeedbackHistoryPage: React.FC = () => {
     const navigate = useNavigate();
@@ -27,24 +31,8 @@ export const AthleteFeedbackHistoryPage: React.FC = () => {
     }
 
     return (
-        <div className="space-y-4 px-4 pb-24 pt-4 lg:px-8 lg:pb-8">
-            <div className="flex items-center gap-3">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="min-h-touch-athlete shrink-0 px-2"
-                    onClick={() => navigate("/dashboard")}
-                    aria-label="Volver al inicio"
-                >
-                    <ArrowLeft className="size-5" aria-hidden />
-                </Button>
-                <div>
-                    <h1 className="text-xl font-bold text-foreground">Mis notas</h1>
-                    <p className="text-sm text-muted-foreground">
-                        Feedback enviado y respuestas de tu entrenador
-                    </p>
-                </div>
-            </div>
+        <div className={cn(ATHLETE_PAGE, "space-y-5")}>
+            <AthleteFeedbackHistoryHeader onBack={() => navigate("/dashboard")} />
 
             {sorted.length === 0 ? (
                 <EmptyState
@@ -53,8 +41,8 @@ export const AthleteFeedbackHistoryPage: React.FC = () => {
                     description="Tras completar una sesión podrás enviar sensaciones y ver la respuesta aquí."
                     action={
                         <Button
-                            variant="secondary"
-                            className="min-h-touch-athlete"
+                            variant="primary"
+                            className={ATHLETE_PRIMARY_CTA}
                             onClick={() => navigate("/dashboard/sessions")}
                         >
                             Ver sesiones
@@ -62,7 +50,7 @@ export const AthleteFeedbackHistoryPage: React.FC = () => {
                     }
                 />
             ) : (
-                <ul className="space-y-3">
+                <ul className="space-y-4">
                     {sorted.map((item) => (
                         <li key={item.id}>
                             <FeedbackHistoryCard

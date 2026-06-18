@@ -1,48 +1,59 @@
 /**
  * AthleteInsightActions.tsx — Enlaces profundos explícitos (descubribilidad).
+ * Reutiliza filas V13 cuenta (AthleteSettingsRow + card §6.7).
  */
 
 import React from "react";
-import { ChevronRight } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { BarChart3, CheckCircle2, History, MessageCircle, Trophy } from "lucide-react";
+import { AthleteSettingsRow } from "@/components/athlete/account/AthleteSettingsRow";
+import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
 import type { InsightDeepLink } from "@nexia/shared/utils/athlete/athleteInsightDeepLinks";
+import { cn } from "@/lib/utils";
 
 export interface AthleteInsightActionsProps {
     links: InsightDeepLink[];
     onLinkClick: (link: InsightDeepLink) => void;
+    className?: string;
+}
+
+function iconForLink(link: InsightDeepLink): LucideIcon {
+    switch (link.action) {
+        case "progress":
+            return BarChart3;
+        case "progress_exercise":
+            return Trophy;
+        case "submit_session_feedback":
+            return MessageCircle;
+        case "view_session_feedback":
+            return CheckCircle2;
+        case "feedback_history":
+            return link.id === "feedback-after-session" ? MessageCircle : History;
+        default:
+            return BarChart3;
+    }
 }
 
 export const AthleteInsightActions: React.FC<AthleteInsightActionsProps> = ({
     links,
     onLinkClick,
+    className,
 }) => {
     if (links.length === 0) {
         return null;
     }
 
     return (
-        <div className="overflow-hidden rounded-lg border border-border/80 bg-card/30">
+        <div className={cn(ATHLETE_SETTINGS_CARD, className)}>
             {links.map((link, index) => (
-                <button
+                <AthleteSettingsRow
                     key={link.id}
-                    type="button"
+                    label={link.label}
+                    hint={link.hint}
+                    icon={iconForLink(link)}
                     onClick={() => onLinkClick(link)}
-                    className={`flex min-h-touch-athlete w-full items-center gap-3 px-3 text-left transition-colors hover:bg-surface-2 active:bg-surface-2 ${
-                        index < links.length - 1 ? "border-b border-border/60" : ""
-                    }`}
-                >
-                    <span className="min-w-0 flex-1">
-                        <span className="block text-sm font-medium text-foreground">
-                            {link.label}
-                        </span>
-                        <span className="block text-caption text-muted-foreground">
-                            {link.hint}
-                        </span>
-                    </span>
-                    <ChevronRight
-                        className="size-4 shrink-0 text-muted-foreground"
-                        aria-hidden
-                    />
-                </button>
+                    isLast={index === links.length - 1}
+                />
             ))}
         </div>
     );

@@ -14,6 +14,8 @@ import { PostSessionExercisesPanel } from "@/components/athlete/postSession/Post
 import { PostSessionHighlightsStrip } from "@/components/athlete/postSession/PostSessionHighlightsStrip";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
+import { cn } from "@/lib/utils";
 import { useAthletePostSessionCelebration } from "@/hooks/athlete/useAthletePostSessionCelebration";
 import { useAthleteSessionShare } from "@/hooks/athlete/useAthleteSessionShare";
 
@@ -77,10 +79,14 @@ export const AthleteSessionSummaryPage: React.FC = () => {
             <AthleteFixedFooter size="double">
                 <Button
                     variant="primary"
-                    className="min-h-touch-athlete w-full font-semibold shadow-lg shadow-primary/20"
-                    onClick={() => navigate(`/dashboard/sessions/${sessionId}/feedback`)}
+                    className={cn(ATHLETE_PRIMARY_CTA, "font-semibold")}
+                    onClick={() =>
+                        report.has_feedback
+                            ? navigate("/dashboard/feedback")
+                            : navigate(`/dashboard/sessions/${sessionId}/feedback`)
+                    }
                 >
-                    {report.has_feedback ? "Ver feedback" : "Contar cómo me sentí"}
+                    {report.has_feedback ? "Ver lo que enviaste" : "Contar cómo me sentí"}
                 </Button>
                 <Button
                     variant="secondary"

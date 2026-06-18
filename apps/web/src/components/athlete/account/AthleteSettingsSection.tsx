@@ -4,6 +4,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { ATHLETE_SETTINGS_CARD } from "./athleteSettingsPresentation";
 
 export interface AthleteSettingsSectionProps {
     title: string;
@@ -28,9 +29,7 @@ export const AthleteSettingsSection: React.FC<AthleteSettingsSectionProps> = ({
                     <p className="text-sm text-muted-foreground">{description}</p>
                 )}
             </div>
-            <div className="overflow-hidden rounded-xl border border-border/80 bg-card/40">
-                {children}
-            </div>
+            <div className={ATHLETE_SETTINGS_CARD}>{children}</div>
         </section>
     );
 };

@@ -69,3 +69,11 @@ export function dedupeFeedbackBySession(items: ClientFeedback[]): ClientFeedback
     }
     return Array.from(bySession.values());
 }
+
+/** True si el atleta ya envió feedback para esa sesión. */
+export function sessionHasClientFeedback(
+    sessionId: number,
+    feedbackItems: ClientFeedback[]
+): boolean {
+    return feedbackItems.some((item) => item.training_session_id === sessionId);
+}

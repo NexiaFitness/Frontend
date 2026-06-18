@@ -1,8 +1,12 @@
 /**
- * postSessionPresentation.ts — Tokens visuales celebración post-sesión (F3d-FE-01).
- * Premium sobrio: acentos mínimos, sin saturación de color.
+ * postSessionPresentation.ts — Tokens visuales celebración post-sesión (F3d + §6.7 glass).
  */
 
+import { cn } from "@/lib/utils";
+import {
+    ATHLETE_SECTION_LABEL,
+    ATHLETE_SETTINGS_CARD,
+} from "@/components/athlete/account/athleteSettingsPresentation";
 import type { PostSessionCelebrationVariant } from "@nexia/shared/utils/athlete/athletePostSessionAiInsight";
 
 export interface PostSessionCelebrationStyle {
@@ -16,60 +20,73 @@ export interface PostSessionCelebrationStyle {
     sublineClass: string;
 }
 
+const HERO_GLASS = cn(
+    ATHLETE_SETTINGS_CARD,
+    "backdrop-blur-md",
+    "shadow-[0_12px_40px_-16px] shadow-black/45",
+    "shadow-[inset_0_1px_0] shadow-primary/8"
+);
+
 export const POST_SESSION_CELEBRATION_STYLES: Record<
     PostSessionCelebrationVariant,
     PostSessionCelebrationStyle
 > = {
     full: {
-        heroContainer:
-            "border-border/80 bg-card/60 shadow-[0_4px_20px_-12px] shadow-black/25",
-        heroGlow: "bg-primary/8",
+        heroContainer: cn(HERO_GLASS, "border-primary/20"),
+        heroGlow: "bg-primary/10",
         ringStroke: "stroke-primary",
-        ringTrack: "stroke-muted/30",
-        pctClass: "text-foreground",
-        badgeClass: "border-border/70 bg-foreground/5 text-muted-foreground",
+        ringTrack: "stroke-muted/25",
+        pctClass: "text-primary",
+        badgeClass: "border-primary/30 bg-primary/10 text-primary",
         headlineClass: "text-foreground",
         sublineClass: "text-muted-foreground",
     },
     partial: {
-        heroContainer:
-            "border-warning/25 bg-card/60 shadow-[0_4px_20px_-12px] shadow-black/25",
-        heroGlow: "bg-warning/6",
+        heroContainer: cn(HERO_GLASS, "border-warning/25"),
+        heroGlow: "bg-warning/8",
         ringStroke: "stroke-warning",
-        ringTrack: "stroke-muted/30",
-        pctClass: "text-foreground",
-        badgeClass: "border-warning/25 bg-warning/8 text-warning/90",
+        ringTrack: "stroke-muted/25",
+        pctClass: "text-warning",
+        badgeClass: "border-warning/30 bg-warning/10 text-warning",
         headlineClass: "text-foreground",
         sublineClass: "text-muted-foreground",
     },
     week_closed: {
-        heroContainer:
-            "border-success/25 bg-card/60 shadow-[0_4px_20px_-12px] shadow-black/25",
+        heroContainer: cn(HERO_GLASS, "border-success/25"),
         heroGlow: "bg-success/8",
         ringStroke: "stroke-success",
-        ringTrack: "stroke-muted/30",
-        pctClass: "text-foreground",
-        badgeClass: "border-success/25 bg-success/8 text-success",
+        ringTrack: "stroke-muted/25",
+        pctClass: "text-success",
+        badgeClass: "border-success/30 bg-success/10 text-success",
         headlineClass: "text-foreground",
         sublineClass: "text-muted-foreground",
     },
     record: {
-        heroContainer:
-            "border-border/80 bg-card/60 shadow-[0_4px_20px_-12px] shadow-black/25",
-        heroGlow: "bg-primary/6",
+        heroContainer: cn(HERO_GLASS, "border-primary/25"),
+        heroGlow: "bg-primary/12",
         ringStroke: "stroke-primary",
-        ringTrack: "stroke-muted/30",
-        pctClass: "text-foreground",
-        badgeClass: "border-border/70 bg-foreground/5 text-muted-foreground",
+        ringTrack: "stroke-muted/25",
+        pctClass: "text-primary",
+        badgeClass: "border-primary/30 bg-primary/10 text-primary",
         headlineClass: "text-foreground",
         sublineClass: "text-muted-foreground",
     },
 };
 
 export const POST_SESSION_AI_INSIGHT_STYLE = {
-    container:
-        "rounded-xl border border-border/80 border-l-2 border-l-foreground/10 bg-card/40 px-4 py-4",
-    titleClass: "text-caption font-medium uppercase tracking-wider text-muted-foreground",
+    container: cn(
+        ATHLETE_SETTINGS_CARD,
+        "relative px-4 py-4 backdrop-blur-md",
+        "shadow-[0_12px_40px_-16px] shadow-black/40"
+    ),
+    titleClass: ATHLETE_SECTION_LABEL,
     bodyClass: "text-sm leading-relaxed text-foreground/90",
     footnoteClass: "text-caption text-muted-foreground/80",
 };
+
+export const POST_SESSION_EXERCISES_LIST = ATHLETE_SETTINGS_CARD;
+
+export const POST_SESSION_HIGHLIGHT_ITEM = cn(
+    ATHLETE_SETTINGS_CARD,
+    "flex items-start gap-2.5 px-3.5 py-3 text-sm backdrop-blur-md"
+);

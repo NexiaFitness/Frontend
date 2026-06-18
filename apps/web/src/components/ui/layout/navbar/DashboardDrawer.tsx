@@ -14,6 +14,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogoutButton } from "@/components/ui/buttons";
+import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
 
 export interface DashboardDrawerProps {
     isOpen: boolean;
@@ -76,7 +77,7 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
                 aria-label="Menú de navegación"
             >
                 <div className="flex flex-col h-full">
-                    <nav className="flex-1 overflow-y-auto pt-8 px-6">
+                    <nav className={`flex-1 overflow-y-auto pt-8 px-6 ${NEXIA_SCROLLBAR}`}>
                         <ul className="space-y-2">
                             {menuItems.map(({ path, label }, index) => (
                                 <li key={`${path}-${label}-${index}`}>

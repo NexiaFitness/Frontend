@@ -14,6 +14,7 @@ import { useGetTrainingSessionsByClientQuery } from "@nexia/shared/api/trainingS
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import type { RootState } from "@nexia/shared/store";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
+import type { InsightDeepLinkContext } from "@nexia/shared/utils/athlete/athleteInsightDeepLinks";
 import {
     buildDashboardHeaderCopy,
     buildSessionHeroCopy,
@@ -56,6 +57,7 @@ export interface AthleteDashboardData {
     sessionHero: SessionHeroCopy;
     refreshFeedbackBadge: () => void;
     refreshDashboard: () => Promise<void>;
+    insightDeepLinkContext: InsightDeepLinkContext;
 }
 
 export function useAthleteDashboard(): AthleteDashboardData {
@@ -189,5 +191,9 @@ export function useAthleteDashboard(): AthleteDashboardData {
         sessionHero,
         refreshFeedbackBadge,
         refreshDashboard,
+        insightDeepLinkContext: {
+            sessions,
+            feedbackItems,
+        },
     };
 }

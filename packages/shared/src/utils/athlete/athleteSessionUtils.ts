@@ -175,6 +175,13 @@ export function findNextUpcomingSession(
         })[0];
 }
 
+/** Última sesión completed (fecha más reciente). */
+export function findLatestCompletedSession(
+    sessions: TrainingSession[]
+): TrainingSession | undefined {
+    return filterAthleteSessions(sessions, "completed")[0];
+}
+
 export type AthleteSessionFilter = "all" | "upcoming" | "completed" | "month";
 
 export function filterAthleteSessions(

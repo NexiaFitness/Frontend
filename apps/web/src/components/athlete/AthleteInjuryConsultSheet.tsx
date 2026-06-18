@@ -6,6 +6,7 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
+import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 
 export interface AthleteInjuryConsultSheetProps {
@@ -51,10 +52,7 @@ export const AthleteInjuryConsultSheet: React.FC<AthleteInjuryConsultSheetProps>
             </p>
             <ul className="mt-4 space-y-3">
                 {injuries.map((injury) => (
-                    <li
-                        key={injury.id}
-                        className="rounded-lg border border-border bg-card p-3"
-                    >
+                    <li key={injury.id} className={`${ATHLETE_SETTINGS_CARD} p-4`}>
                         <p className="font-medium text-foreground">{injuryLabel(injury)}</p>
                         <p className="mt-1 text-caption text-muted-foreground">
                             Dolor {injury.pain_level}/5

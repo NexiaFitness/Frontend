@@ -13,6 +13,7 @@
 
 import React from "react";
 import clsx from "clsx";
+import { mobileTriggerClass } from "./sideMenuPresentation";
 
 export interface NavbarMobileTriggerProps {
     onClick: () => void;
@@ -33,17 +34,10 @@ export const NavbarMobileTrigger: React.FC<NavbarMobileTriggerProps> = ({
             onClick={onClick}
             aria-label={ariaLabel}
             aria-expanded={isOpen}
-            className={clsx(
-                "flex min-h-[48px] min-w-[48px] items-center justify-center rounded-lg p-3",
-                "text-sidebar-foreground transition-colors",
-                "hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
-                "focus:outline-none focus:text-primary focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-transparent",
-                "-mr-3",
-                className
-            )}
+            className={clsx(mobileTriggerClass(isOpen), className)}
         >
             <svg
-                className="h-8 w-8"
+                className="h-6 w-6"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"

@@ -18,6 +18,8 @@ import {
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
+import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
+import { cn } from "@/lib/utils";
 
 export interface AthleteSessionPeekSheetProps {
     session: TrainingSession | null;
@@ -60,7 +62,7 @@ export const AthleteSessionPeekSheet: React.FC<AthleteSessionPeekSheetProps> = (
                 </Button>
             }
         >
-            <div className="space-y-3 pb-2">
+            <div className={cn(ATHLETE_SETTINGS_CARD, "space-y-3 p-4 pb-2")}>
                 <div className="flex flex-wrap items-center gap-2">
                     <Badge
                         variant={

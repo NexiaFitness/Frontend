@@ -36,14 +36,14 @@ export const HeroSection: React.FC = () => {
                             
                             {/* Subtitle */}
                             <p className="text-lg sm:text-xl text-muted-foreground leading-relaxed max-w-lg mx-auto lg:mx-0">
-                                Revoluciona la creación de programas de entrenamiento con la
-                                plataforma científica diseñada por profesionales del fitness.
+                                Revoluciona la creación de programas de entrenamiento con una
+                                plataforma pensada para profesionales del fitness.
                             </p>
                             
                             {/* Value Proposition */}
                             <p className="text-base text-foreground max-w-lg mx-auto lg:mx-0">
                                 Ahorra tiempo, mejora resultados y gestiona tus clientes con
-                                herramientas inteligentes basadas en ciencia del deporte.
+                                herramientas claras y eficientes.
                             </p>
                         </div>
                         
@@ -62,13 +62,30 @@ export const HeroSection: React.FC = () => {
                     </div>
                 </div>
                 
-                {/* Visual Right */}
-                <div className="relative h-full min-h-[300px] lg:min-h-[calc(100vh-128px)]">
-                    <img
-                        src="https://res.cloudinary.com/dcpirdjji/image/upload/v1757630415/Imagen_home_ndpgld.webp"
-                        alt="Atleta profesional en entrenamiento"
-                        className="w-full h-full object-cover"
-                    />
+                {/* Visual Right — premium mobile frame + vignette desktop */}
+                <div className="relative flex min-h-[280px] items-stretch px-4 pb-10 sm:px-8 lg:min-h-[calc(100vh-128px)] lg:px-0 lg:pb-0">
+                    <div className="relative w-full overflow-hidden rounded-2xl border border-border/70 shadow-[0_20px_50px_-20px] shadow-black/55 lg:min-h-[calc(100vh-128px)] lg:rounded-none lg:border-0 lg:shadow-none">
+                        <div
+                            className="pointer-events-none absolute inset-x-0 top-0 z-10 overflow-hidden rounded-t-2xl lg:rounded-none"
+                            aria-hidden
+                        >
+                            <div className="h-4 bg-gradient-to-b from-primary/20 to-transparent lg:from-primary/10" />
+                            <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-primary/55 to-transparent shadow-[0_0_12px_1px] shadow-primary/25" />
+                        </div>
+                        <img
+                            src="https://res.cloudinary.com/dcpirdjji/image/upload/v1757630415/Imagen_home_ndpgld.webp"
+                            alt="Atleta profesional en entrenamiento"
+                            className="h-full min-h-[280px] w-full object-cover lg:min-h-[calc(100vh-128px)]"
+                        />
+                        <div
+                            className="pointer-events-none absolute inset-0 bg-gradient-to-t from-background via-background/25 to-transparent lg:from-background/70 lg:via-background/15"
+                            aria-hidden
+                        />
+                        <div
+                            className="pointer-events-none absolute inset-0 ring-1 ring-inset ring-primary/10 lg:ring-0"
+                            aria-hidden
+                        />
+                    </div>
                 </div>
             </div>
         </section>

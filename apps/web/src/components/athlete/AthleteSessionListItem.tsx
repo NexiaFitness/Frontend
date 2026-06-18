@@ -8,6 +8,7 @@ import React from "react";
 import { ChevronRight, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils";
+import { ATHLETE_SURFACE_CARD_INTERACTIVE } from "@/components/athlete/account/athleteSettingsPresentation";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import {
     formatAthleteDate,
@@ -46,8 +47,8 @@ export const AthleteSessionListItem: React.FC<AthleteSessionListItemProps> = ({
             type="button"
             onClick={() => onSelect(session.id)}
             className={cn(
-                "flex w-full min-h-touch-athlete items-center gap-3 rounded-lg border border-border bg-card p-4 text-left",
-                "transition-colors hover:bg-surface-2 active:bg-surface-2"
+                "flex w-full min-h-touch-athlete items-center gap-3",
+                ATHLETE_SURFACE_CARD_INTERACTIVE
             )}
         >
             <div className="min-w-0 flex-1 space-y-2">
