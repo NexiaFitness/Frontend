@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { PostSessionCelebrationCopy } from "@nexia/shared/utils/athlete/athletePostSessionAiInsight";
-import { AthleteSurfaceAccentRim } from "@/components/athlete/AthleteSurfaceAccentRim";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { PostSessionCompletionRing } from "./PostSessionCompletionRing";
 import { POST_SESSION_CELEBRATION_STYLES } from "./postSessionPresentation";
 
@@ -41,7 +41,7 @@ export const PostSessionCelebrationHero: React.FC<PostSessionCelebrationHeroProp
                     style.heroContainer
                 )}
             >
-                <AthleteSurfaceAccentRim />
+                <NexiaGlassAccentRim />
                 <div
                     className={cn(
                         "pointer-events-none absolute -right-6 -top-6 size-20 rounded-full blur-2xl",

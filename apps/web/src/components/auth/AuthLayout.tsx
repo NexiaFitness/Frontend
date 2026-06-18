@@ -8,7 +8,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { NexiaLogo } from "./NexiaLogo";
-import { AuthCardAccentRim } from "./AuthCardAccentRim";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     AUTH_CARD_DESKTOP,
     AUTH_CARD_MOBILE,
@@ -49,7 +49,7 @@ export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
             AUTH_CARD_DESKTOP
           )}
         >
-          <AuthCardAccentRim />
+          <NexiaGlassAccentRim mobileOnly />
           {children}
         </div>
       </div>

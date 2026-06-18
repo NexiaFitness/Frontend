@@ -11,7 +11,7 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePublicNavigation } from "@nexia/shared";
-import { SideMenuAccentRim } from "./SideMenuAccentRim";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { SideMenuFooterBrand } from "./SideMenuFooterBrand";
 import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
 import {
@@ -63,7 +63,7 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
                 aria-label="Menú de navegación"
                 aria-hidden={!isOpen}
             >
-                <SideMenuAccentRim />
+                <NexiaGlassAccentRim />
                 <div className="flex h-full flex-col">
                     <nav className={`flex-1 overflow-y-auto px-6 pt-10 ${NEXIA_SCROLLBAR}`}>
                         <div>

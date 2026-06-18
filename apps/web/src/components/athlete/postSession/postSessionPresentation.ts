@@ -5,8 +5,8 @@
 import { cn } from "@/lib/utils";
 import {
     ATHLETE_SECTION_LABEL,
-    ATHLETE_SETTINGS_CARD,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 import type { PostSessionCelebrationVariant } from "@nexia/shared/utils/athlete/athletePostSessionAiInsight";
 
 export interface PostSessionCelebrationStyle {
@@ -20,12 +20,7 @@ export interface PostSessionCelebrationStyle {
     sublineClass: string;
 }
 
-const HERO_GLASS = cn(
-    ATHLETE_SETTINGS_CARD,
-    "backdrop-blur-md",
-    "shadow-[0_12px_40px_-16px] shadow-black/45",
-    "shadow-[inset_0_1px_0] shadow-primary/8"
-);
+const HERO_GLASS = NEXIA_GLASS_CARD;
 
 export const POST_SESSION_CELEBRATION_STYLES: Record<
     PostSessionCelebrationVariant,
@@ -74,19 +69,15 @@ export const POST_SESSION_CELEBRATION_STYLES: Record<
 };
 
 export const POST_SESSION_AI_INSIGHT_STYLE = {
-    container: cn(
-        ATHLETE_SETTINGS_CARD,
-        "relative px-4 py-4 backdrop-blur-md",
-        "shadow-[0_12px_40px_-16px] shadow-black/40"
-    ),
+    container: cn(NEXIA_GLASS_CARD, "px-4 py-4"),
     titleClass: ATHLETE_SECTION_LABEL,
     bodyClass: "text-sm leading-relaxed text-foreground/90",
     footnoteClass: "text-caption text-muted-foreground/80",
 };
 
-export const POST_SESSION_EXERCISES_LIST = ATHLETE_SETTINGS_CARD;
+export const POST_SESSION_EXERCISES_LIST = NEXIA_GLASS_CARD;
 
 export const POST_SESSION_HIGHLIGHT_ITEM = cn(
-    ATHLETE_SETTINGS_CARD,
-    "flex items-start gap-2.5 px-3.5 py-3 text-sm backdrop-blur-md"
+    NEXIA_GLASS_CARD,
+    "flex items-start gap-2.5 px-3.5 py-3 text-sm"
 );

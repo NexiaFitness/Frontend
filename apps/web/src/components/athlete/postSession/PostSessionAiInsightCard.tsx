@@ -5,7 +5,7 @@
 import React from "react";
 import { Sparkles } from "lucide-react";
 import type { AiWeeklySummary } from "@nexia/shared/types/athleteAiWeeklySummary";
-import { AthleteSurfaceAccentRim } from "@/components/athlete/AthleteSurfaceAccentRim";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { POST_SESSION_AI_INSIGHT_STYLE } from "./postSessionPresentation";
 
 export interface PostSessionAiInsightCardProps {
@@ -45,7 +45,7 @@ export const PostSessionAiInsightCard: React.FC<PostSessionAiInsightCardProps> =
 
     return (
         <section aria-label="Nota motivacional" className={POST_SESSION_AI_INSIGHT_STYLE.container}>
-            <AthleteSurfaceAccentRim />
+            <NexiaGlassAccentRim />
             <div className="relative space-y-2.5">
                 <div className="flex items-center gap-1.5">
                     <Sparkles className="size-3.5 text-primary/80" aria-hidden />

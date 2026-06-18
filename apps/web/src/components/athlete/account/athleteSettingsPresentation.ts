@@ -1,13 +1,13 @@
 /**
  * athleteSettingsPresentation.ts — Superficies glass atleta (cuenta, dashboard, sheets).
- * DESIGN_MOBILE §6.7
+ * DESIGN_MOBILE §6.7 — alias de NEXIA_GLASS_CARD.
  */
 
 import { cn } from "@/lib/utils";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 
-/** Contenedor glass — listas settings, acciones, cards en sheet. */
-export const ATHLETE_SETTINGS_CARD =
-    "overflow-hidden rounded-xl border border-border/80 bg-card/40 backdrop-blur-sm";
+/** Contenedor glass — misma receta que login auth. */
+export const ATHLETE_SETTINGS_CARD = NEXIA_GLASS_CARD;
 
 /** CTA principal atleta (footer fijo, sheets). */
 export const ATHLETE_PRIMARY_CTA = cn(
@@ -22,6 +22,20 @@ export const ATHLETE_SECTION_LABEL =
 
 export const ATHLETE_DIVIDER =
     "h-px bg-gradient-to-r from-transparent via-primary/45 to-transparent";
+
+/** Enlace «Volver» — cyan visible en reposo (§6.7). */
+export const ATHLETE_BACK_LINK = cn(
+    "inline-flex min-h-touch-athlete items-center gap-2 text-sm font-medium",
+    "text-primary/85 transition-colors hover:text-primary",
+    "motion-safe:active:opacity-80 motion-reduce:active:opacity-100"
+);
+
+/** Icono cabecera secundaria (historial, progreso, etc.). */
+export const ATHLETE_PAGE_HEADER_ICON = cn(
+    "flex size-11 shrink-0 items-center justify-center rounded-xl",
+    "border border-primary/30 bg-primary/12 text-primary backdrop-blur-sm",
+    "shadow-[inset_0_1px_0] shadow-primary/15"
+);
 
 /** Card táctil en sheet (sesiones, etc.). */
 export const ATHLETE_SURFACE_CARD_INTERACTIVE = cn(
@@ -47,14 +61,6 @@ export const ATHLETE_FEEDBACK_RESPONDED_BADGE = cn(
     "px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary"
 );
 
-/** Card historial feedback (página + peek). */
-export const ATHLETE_FEEDBACK_CARD = cn(
-    ATHLETE_SETTINGS_CARD,
-    "relative backdrop-blur-md p-4 pt-5",
-    "shadow-[0_12px_40px_-16px] shadow-black/45",
-    "shadow-[inset_0_1px_0] shadow-primary/8"
-);
-
 /** Bloque mensaje del atleta — misma receta que entrenador, token `warning` (≠ cyan). */
 export const ATHLETE_ATHLETE_MESSAGE_BLOCK = cn(
     "relative overflow-hidden rounded-lg border border-warning/25",
@@ -76,3 +82,15 @@ export const ATHLETE_FEEDBACK_METRIC_PILL = cn(
 );
 
 export const ATHLETE_FEEDBACK_METRIC_VALUE = "font-semibold tabular-nums text-foreground";
+
+/** Textarea / input en formularios atleta (paridad auth). */
+export const ATHLETE_FORM_TEXTAREA = cn(
+    "w-full rounded-lg border border-border/70 bg-background/80 px-3 py-2.5 text-sm backdrop-blur-sm",
+    "placeholder:text-muted-foreground/60",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+);
+
+export const ATHLETE_FORM_FIELD_LABEL = "mb-1.5 block text-sm font-medium text-foreground";
+
+/** Separador interior en card glass. */
+export const ATHLETE_INNER_DIVIDER = ATHLETE_DIVIDER;

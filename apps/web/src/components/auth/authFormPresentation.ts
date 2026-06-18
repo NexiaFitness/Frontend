@@ -4,6 +4,10 @@
  */
 
 import { cn } from "@/lib/utils";
+import {
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+} from "@/components/ui/surface/glassSurfacePresentation";
 
 /** Inputs táctiles en móvil (44px). Desktop mantiene h-9. */
 export const AUTH_INPUT_MOBILE = cn(
@@ -31,12 +35,7 @@ export const AUTH_LINK =
 export const AUTH_LINK_MUTED = "text-sm text-muted-foreground";
 
 /** Card contenedor auth (mobile). */
-export const AUTH_CARD_MOBILE = cn(
-    "relative overflow-hidden",
-    "rounded-xl border border-border/80 bg-card/40 backdrop-blur-md",
-    "shadow-[0_12px_40px_-12px] shadow-black/45",
-    "max-lg:shadow-[0_16px_48px_-12px] max-lg:shadow-black/50"
-);
+export const AUTH_CARD_MOBILE = NEXIA_GLASS_CARD;
 
 /** Card desktop — mantiene look plataforma previo. */
-export const AUTH_CARD_DESKTOP = "lg:bg-card/50 lg:backdrop-blur-sm lg:border-border lg:shadow-xl";
+export const AUTH_CARD_DESKTOP = NEXIA_GLASS_CARD_DESKTOP;

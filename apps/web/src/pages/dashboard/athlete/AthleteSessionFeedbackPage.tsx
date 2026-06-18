@@ -8,17 +8,32 @@
 import React, { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
-import { Slider } from "@/components/ui/forms/Slider";
+import { AthleteRatingScale } from "@/components/athlete/feedback/AthleteRatingScale";
 import { Button } from "@/components/ui/buttons";
 import { Alert, useToast } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
+import { AthleteSessionFeedbackHeader } from "@/components/athlete/feedback/AthleteSessionFeedbackHeader";
+import {
+    ATHLETE_FORM_FIELD_LABEL,
+    ATHLETE_FORM_TEXTAREA,
+    ATHLETE_INNER_DIVIDER,
+    ATHLETE_PRIMARY_CTA,
+    ATHLETE_SECTION_LABEL,
+} from "@/components/athlete/account/athleteSettingsPresentation";
+import { AUTH_LINK } from "@/components/auth/authFormPresentation";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import {
     useCreateSessionFeedbackMutation,
     useGetTrainingSessionQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
-import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
+import {
+    ATHLETE_PAGE,
+    ATHLETE_STICKY_FOOTER_SPACER,
+} from "@/components/athlete/layout/athleteLayoutClasses";
+import { cn } from "@/lib/utils";
 
 export const AthleteSessionFeedbackPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -67,68 +82,87 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     }
 
     return (
-        <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
-            <header className="mb-6 space-y-1">
-                <h1 className="text-xl font-bold text-foreground">¿Cómo fue la sesión?</h1>
-                <p className="text-sm text-muted-foreground">
-                    {session?.session_name ?? "Tu entrenamiento"} · Tu entrenador verá esto al
-                    revisar tu ficha
-                </p>
-            </header>
+        <div className={cn(ATHLETE_PAGE, "flex min-h-full flex-col")}>
+            <AthleteSessionFeedbackHeader
+                onBack={() => navigate(-1)}
+                sessionName={session?.session_name}
+            />
 
-            <div className="flex-1 space-y-6">
-                <Slider
-                    label="Esfuerzo percibido"
-                    value={effort}
-                    min={1}
-                    max={10}
-                    onChange={setEffort}
-                />
-                <Slider
-                    label="Fatiga"
-                    value={fatigue}
-                    min={1}
-                    max={10}
-                    color="warning"
-                    onChange={setFatigue}
-                />
+            <div
+                className={cn(
+                    "flex-1 space-y-4 pt-5",
+                    ATHLETE_STICKY_FOOTER_SPACER.withSecondaryLink
+                )}
+            >
+                <section className={cn(NEXIA_GLASS_CARD, "relative space-y-6 p-4 pt-5")}>
+                    <NexiaGlassAccentRim />
 
-                <CollapsibleFormGroup title="Más detalles (opcional)" defaultOpen={false}>
-                    <div className="space-y-4 pt-2">
-                        <Slider label="Calidad del sueño" value={sleep} min={1} max={10} onChange={setSleep} />
-                        <Slider
-                            label="Motivación"
-                            value={motivation}
-                            min={1}
-                            max={10}
-                            onChange={setMotivation}
+                    <div className="relative space-y-5">
+                        <p className={ATHLETE_SECTION_LABEL}>Sensaciones principales</p>
+                        <AthleteRatingScale
+                            label="Esfuerzo percibido"
+                            value={effort}
+                            onChange={setEffort}
+                            lowAnchor="Fácil"
+                            highAnchor="Máximo"
                         />
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-foreground">
-                                Dolor o molestias
-                            </label>
-                            <textarea
-                                value={pain}
-                                onChange={(e) => setPain(e.target.value)}
-                                rows={2}
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="Opcional"
-                            />
-                        </div>
-                        <div>
-                            <label className="mb-1 block text-sm font-medium text-foreground">
-                                Notas
-                            </label>
-                            <textarea
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
-                                rows={2}
-                                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                                placeholder="Opcional"
-                            />
-                        </div>
+                        <AthleteRatingScale
+                            label="Fatiga"
+                            value={fatigue}
+                            color="warning"
+                            onChange={setFatigue}
+                            lowAnchor="Fresco"
+                            highAnchor="Agotado"
+                        />
                     </div>
-                </CollapsibleFormGroup>
+
+                    <div className={ATHLETE_INNER_DIVIDER} aria-hidden />
+
+                    <CollapsibleFormGroup
+                        title="Más detalles (opcional)"
+                        defaultOpen={false}
+                        className="relative border-0 pt-0"
+                    >
+                        <div className="space-y-5">
+                            <AthleteRatingScale
+                                label="Calidad del sueño"
+                                value={sleep}
+                                onChange={setSleep}
+                                lowAnchor="Mala"
+                                highAnchor="Excelente"
+                            />
+                            <AthleteRatingScale
+                                label="Motivación"
+                                value={motivation}
+                                onChange={setMotivation}
+                                lowAnchor="Baja"
+                                highAnchor="Alta"
+                            />
+                            <div>
+                                <label className={ATHLETE_FORM_FIELD_LABEL}>
+                                    Dolor o molestias
+                                </label>
+                                <textarea
+                                    value={pain}
+                                    onChange={(e) => setPain(e.target.value)}
+                                    rows={2}
+                                    className={ATHLETE_FORM_TEXTAREA}
+                                    placeholder="Opcional — zona, intensidad…"
+                                />
+                            </div>
+                            <div>
+                                <label className={ATHLETE_FORM_FIELD_LABEL}>Notas</label>
+                                <textarea
+                                    value={notes}
+                                    onChange={(e) => setNotes(e.target.value)}
+                                    rows={3}
+                                    className={ATHLETE_FORM_TEXTAREA}
+                                    placeholder="Cuéntale cómo te sentiste en la sesión…"
+                                />
+                            </div>
+                        </div>
+                    </CollapsibleFormGroup>
+                </section>
 
                 {pain.trim().length > 0 && (
                     <Alert variant="warning">
@@ -143,7 +177,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
             <AthleteFixedFooter size="withSecondaryLink">
                 <Button
                     variant="primary"
-                    className="min-h-touch-athlete w-full"
+                    className={ATHLETE_PRIMARY_CTA}
                     disabled={isSubmitting || !clientId}
                     onClick={handleSubmit}
                 >
@@ -151,7 +185,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                 </Button>
                 <button
                     type="button"
-                    className="w-full py-2 text-center text-sm text-muted-foreground hover:text-foreground"
+                    className={cn(AUTH_LINK, "w-full py-2 text-center")}
                     onClick={() => navigate("/dashboard")}
                 >
                     Omitir por ahora

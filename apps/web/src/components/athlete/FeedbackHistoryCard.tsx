@@ -6,12 +6,12 @@
 import React from "react";
 import type { ClientFeedback } from "@nexia/shared/types/training";
 import { cn } from "@/lib/utils";
-import { AthleteSurfaceAccentRim } from "@/components/athlete/AthleteSurfaceAccentRim";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 import {
     ATHLETE_ATHLETE_MESSAGE_BLOCK,
     ATHLETE_ATHLETE_MESSAGE_LABEL,
     ATHLETE_ATHLETE_MESSAGE_ACCENT,
-    ATHLETE_FEEDBACK_CARD,
     ATHLETE_FEEDBACK_METRIC_PILL,
     ATHLETE_FEEDBACK_METRIC_VALUE,
     ATHLETE_FEEDBACK_RESPONDED_BADGE,
@@ -93,8 +93,8 @@ export const FeedbackHistoryCard: React.FC<FeedbackHistoryCardProps> = ({
     const hasResponse = Boolean(item.trainer_response?.trim());
 
     return (
-        <article className={cn(ATHLETE_FEEDBACK_CARD, "space-y-3", compact && "pt-4")}>
-            <AthleteSurfaceAccentRim />
+        <article className={cn(NEXIA_GLASS_CARD, "p-4 pt-5 space-y-3", compact && "pt-4")}>
+            <NexiaGlassAccentRim />
 
             <div className="relative flex flex-wrap items-start justify-between gap-x-2 gap-y-2">
                 <div className="min-w-0 space-y-0.5">
