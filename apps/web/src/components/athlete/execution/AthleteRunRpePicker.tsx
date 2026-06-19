@@ -21,27 +21,41 @@ const RPE_OPTIONS = [6, 7, 8, 9, 10] as const;
 export interface AthleteRunRpePickerProps {
     value: number | null;
     onChange: (value: number | null) => void;
+    /** Ocultar título/hint — p. ej. cuando el padre ya contextualiza (ronda compartida). */
+    hideHeader?: boolean;
 }
 
-export const AthleteRunRpePicker: React.FC<AthleteRunRpePickerProps> = ({ value, onChange }) => {
+export const AthleteRunRpePicker: React.FC<AthleteRunRpePickerProps> = ({
+    value,
+    onChange,
+    hideHeader = false,
+}) => {
     const progressPercent =
         value != null ? ((value - 6) / 4) * 100 : 0;
 
     return (
         <div className="space-y-2">
-            <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 space-y-1">
-                    <span className={ATHLETE_RUN_FIELD_LABEL}>Esfuerzo percibido (RPE)</span>
-                    <p className={ATHLETE_RUN_FIELD_HINT}>
-                        Del 6 al 10: qué tan duro se sintió. Opcional — ayuda a tu entrenador.
-                    </p>
+            {!hideHeader ? (
+                <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                        <span className={ATHLETE_RUN_FIELD_LABEL}>Esfuerzo percibido (RPE)</span>
+                        <p className={ATHLETE_RUN_FIELD_HINT}>
+                            Del 6 al 10: qué tan duro se sintió. Opcional — ayuda a tu entrenador.
+                        </p>
+                    </div>
+                    {value != null && (
+                        <span className={ATHLETE_RATING_VALUE_PILL.warning} aria-hidden>
+                            {value}
+                        </span>
+                    )}
                 </div>
-                {value != null && (
+            ) : value != null ? (
+                <div className="flex justify-end">
                     <span className={ATHLETE_RATING_VALUE_PILL.warning} aria-hidden>
                         {value}
                     </span>
-                )}
-            </div>
+                </div>
+            ) : null}
 
             <div className={ATHLETE_RATING_TRACK} role="radiogroup" aria-label="RPE esfuerzo percibido">
                 {value != null && (

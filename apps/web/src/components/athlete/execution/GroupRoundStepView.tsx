@@ -32,6 +32,8 @@ export interface GroupRoundStepViewProps {
     groupContext: AthleteRunGroupContextView;
     slotLogs: Record<string, SlotLogValues>;
     onSlotChange: (slotKey: string, patch: Partial<SlotLogValues>) => void;
+    roundRpe: number | null;
+    onRoundRpeChange: (value: number | null) => void;
     restPhase: AthleteRunRestPhase;
     showLogger?: boolean;
     onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
@@ -49,6 +51,8 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
     groupContext,
     slotLogs,
     onSlotChange,
+    roundRpe,
+    onRoundRpeChange,
     restPhase,
     showLogger = true,
     onViewTechnique,
@@ -74,19 +78,46 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
             exerciseId: first.exerciseId,
             exerciseName: first.exerciseName,
             videoUrl: null,
-            instruction: runStep.instruction || null,
+            instruction: null,
         };
-    }, [runStep.instruction, runStep.slots]);
+    }, [runStep.slots]);
 
     const slotMeta = useMemo<GroupContextSlotMeta[]>(
         () =>
             runStep.slots?.map((slot) => ({
                 exerciseId: slot.exerciseId,
                 videoUrl: null,
-                instruction: runStep.instruction || null,
+                instruction: null,
             })) ?? [],
-        [runStep.instruction, runStep.slots]
+        [runStep.slots]
     );
+
+    const injuryAlerts = useMemo(() => {
+        if (!runStep.slots?.length || !injuryConflicts?.size) return [];
+        const seen = new Set<string>();
+        const rows: Array<{
+            key: string;
+            exerciseName: string;
+            alert: InjuryAlert;
+            onConsultTrainer: () => void;
+        }> = [];
+
+        for (const slot of runStep.slots) {
+            const conflict = injuryConflicts.get(slot.exerciseId);
+            if (!conflict) continue;
+            const dedupeKey = `${conflict.alert.severity ?? ""}|${conflict.alert.message ?? ""}`;
+            if (seen.has(dedupeKey)) continue;
+            seen.add(dedupeKey);
+            rows.push({
+                key: `${dedupeKey}-${slot.exerciseId}`,
+                exerciseName: slot.exerciseName,
+                alert: conflict.alert,
+                onConsultTrainer: conflict.onConsultTrainer,
+            });
+        }
+
+        return rows;
+    }, [injuryConflicts, runStep.slots]);
 
     if (sessionReadyToFinish && isDoingPhase) {
         return <AthleteRunSessionReadyCard />;
@@ -115,22 +146,19 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
                                 context={groupContext}
                                 slotMeta={slotMeta}
                                 onViewTechnique={onViewTechnique}
+                                suppressHeaderMeta
                             />
                         )}
 
-                        {runStep.slots?.map((slot) => {
-                            const conflict = injuryConflicts?.get(slot.exerciseId);
-                            if (!conflict) return null;
-                            return (
-                                <AthleteExerciseInjuryAlert
-                                    key={`injury-${slot.exerciseId}`}
-                                    exerciseName={slot.exerciseName}
-                                    alert={conflict.alert}
-                                    onConsultTrainer={conflict.onConsultTrainer}
-                                    compact
-                                />
-                            );
-                        })}
+                        {injuryAlerts.map((row) => (
+                            <AthleteExerciseInjuryAlert
+                                key={row.key}
+                                exerciseName={row.exerciseName}
+                                alert={row.alert}
+                                onConsultTrainer={row.onConsultTrainer}
+                                compact
+                            />
+                        ))}
                 </div>
             ) : null}
 
@@ -150,12 +178,16 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
                             slots={runStep.slots}
                             slotLogs={slotLogs}
                             onSlotChange={onSlotChange}
+                            roundRpe={roundRpe}
+                            onRoundRpeChange={onRoundRpeChange}
                         />
                     ) : (
                         <AthleteMultiSlotLogger
                             slots={runStep.slots}
                             slotLogs={slotLogs}
                             onSlotChange={onSlotChange}
+                            roundRpe={roundRpe}
+                            onRoundRpeChange={onRoundRpeChange}
                         />
                     )}
                 </div>

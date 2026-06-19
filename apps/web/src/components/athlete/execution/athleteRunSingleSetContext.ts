@@ -6,7 +6,6 @@ import type { AthleteFlatExercise } from "@nexia/shared/offline";
 import type { AthleteRunGroupContextView } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
 import {
     formatRunPrescriptionCompact,
-    formatRunSetLabel,
     formatSingleSetHeroLabels,
 } from "./athleteRunPresentation";
 

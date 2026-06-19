@@ -12,6 +12,9 @@ import {
     ATHLETE_RUN_DOING_ENTER,
     ATHLETE_RUN_FIELD_HINT,
     ATHLETE_RUN_GROUP_SECTION_LABEL,
+    ATHLETE_RUN_GROUP_SLOT_LIST,
+    ATHLETE_RUN_GROUP_SLOT_LIST_SCROLL,
+    ATHLETE_RUN_GROUP_SLOT_SCROLL_THRESHOLD,
     ATHLETE_RUN_HINT_CARD,
 } from "./athleteRunPresentation";
 
@@ -25,6 +28,8 @@ export interface AthleteRunGroupContextCardProps {
     context: AthleteRunGroupContextView;
     slotMeta?: GroupContextSlotMeta[];
     onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
+    /** Hero B.2 ya muestra badge + ronda — ocultar cabecera duplicada en card. */
+    suppressHeaderMeta?: boolean;
     className?: string;
 }
 
@@ -32,28 +37,39 @@ export const AthleteRunGroupContextCard: React.FC<AthleteRunGroupContextCardProp
     context,
     slotMeta,
     onViewTechnique,
+    suppressHeaderMeta = false,
     className,
 }) => {
+    const slotListClass =
+        context.slots.length > ATHLETE_RUN_GROUP_SLOT_SCROLL_THRESHOLD
+            ? ATHLETE_RUN_GROUP_SLOT_LIST_SCROLL
+            : ATHLETE_RUN_GROUP_SLOT_LIST;
+
     return (
         <div className={cn("relative", ATHLETE_RUN_HINT_CARD, ATHLETE_RUN_DOING_ENTER, className)}>
             <NexiaGlassAccentRim />
             <div className="relative z-[1] space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className={ATHLETE_RUN_GROUP_SECTION_LABEL}>
-                        {context.groupBadgeLabel ?? context.sectionLabel}
-                    </p>
-                    {context.roundLabel ? (
-                        <span className="text-xs font-medium tabular-nums text-muted-foreground">
-                            {context.roundLabel}
-                        </span>
-                    ) : null}
-                </div>
+                {!suppressHeaderMeta ? (
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <p className={ATHLETE_RUN_GROUP_SECTION_LABEL}>
+                            {context.groupBadgeLabel ?? context.sectionLabel}
+                        </p>
+                        {context.roundLabel ? (
+                            <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                                {context.roundLabel}
+                            </span>
+                        ) : null}
+                    </div>
+                ) : null}
 
                 {context.explanation ? (
                     <p className={ATHLETE_RUN_FIELD_HINT}>{context.explanation}</p>
                 ) : null}
 
-                <ul className="space-y-2" aria-label={`Ejercicios de ${context.sectionLabel}`}>
+                <ul
+                    className={slotListClass}
+                    aria-label={`Ejercicios de ${context.sectionLabel}`}
+                >
                     {context.slots.map((slot, index) => {
                         const meta = slotMeta?.[index];
                         const techniqueTarget: AthleteExerciseTechniqueTarget | undefined = meta

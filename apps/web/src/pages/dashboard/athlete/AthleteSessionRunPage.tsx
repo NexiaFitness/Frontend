@@ -59,6 +59,8 @@ export const AthleteSessionRunPage: React.FC = () => {
         setRpe,
         slotLogs,
         updateSlotLog,
+        roundRpe,
+        setRoundRpe,
         saving,
         completing,
         restFlow,
@@ -264,6 +266,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         groupContext={groupContext}
                         slotLogs={slotLogs}
                         onSlotChange={updateSlotLog}
+                        roundRpe={roundRpe}
+                        onRoundRpeChange={setRoundRpe}
                         restPhase={restFlow.phase}
                         showLogger={restFlow.showLogger}
                         onViewTechnique={setTechniqueTarget}

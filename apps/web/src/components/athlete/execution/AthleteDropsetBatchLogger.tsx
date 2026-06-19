@@ -1,12 +1,13 @@
 /**
  * AthleteDropsetBatchLogger.tsx — Registro batch post-secuencia (V05 B.2.1).
- * Un ejercicio, N escalones — rellenar todos de golpe tras ejecutar sin tocar el móvil.
+ * Un ejercicio, N escalones — peso/reps por escalón; RPE compartido al cierre.
  */
 
 import React from "react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import type { AthleteRunRoundSlot } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import { AthleteSetLogger } from "./AthleteSetLogger";
+import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import {
     ATHLETE_RUN_LOGGER_REVEAL,
     ATHLETE_RUN_SLOT_LOGGER_CARD,
@@ -21,12 +22,16 @@ export interface AthleteDropsetBatchLoggerProps {
     slots: AthleteRunRoundSlot[];
     slotLogs: Record<string, SlotLogValues>;
     onSlotChange: (slotKey: string, patch: Partial<SlotLogValues>) => void;
+    roundRpe: number | null;
+    onRoundRpeChange: (value: number | null) => void;
 }
 
 export const AthleteDropsetBatchLogger: React.FC<AthleteDropsetBatchLoggerProps> = ({
     slots,
     slotLogs,
     onSlotChange,
+    roundRpe,
+    onRoundRpeChange,
 }) => {
     if (!slots.length) return null;
 
@@ -37,7 +42,7 @@ export const AthleteDropsetBatchLogger: React.FC<AthleteDropsetBatchLoggerProps>
             <div className="space-y-0.5 px-0.5">
                 <p className={ATHLETE_RUN_DROPSET_LOGGER_HEADER}>{exerciseName}</p>
                 <p className={ATHLETE_RUN_DROPSET_LOGGER_SUB}>
-                    Registra peso, reps y RPE de cada escalón (baja ~15–25&nbsp;% respecto al
+                    Registra peso y reps de cada escalón (baja ~15–25&nbsp;% respecto al
                     anterior)
                 </p>
             </div>
@@ -46,7 +51,6 @@ export const AthleteDropsetBatchLogger: React.FC<AthleteDropsetBatchLoggerProps>
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
                     reps: slot.defaultReps,
-                    rpe: slot.defaultRpe,
                 };
                 const stepTitle = formatRunSetLabel(slot.setLabel || slot.slotLabel);
 
@@ -60,21 +64,24 @@ export const AthleteDropsetBatchLogger: React.FC<AthleteDropsetBatchLoggerProps>
                             <AthleteSetLogger
                                 weight={log.weight}
                                 reps={log.reps}
-                                rpe={log.rpe}
+                                showRpe={false}
                                 onWeightChange={(value) =>
                                     onSlotChange(slot.stepKey, { weight: value })
                                 }
                                 onRepsChange={(value) =>
                                     onSlotChange(slot.stepKey, { reps: value })
                                 }
-                                onRpeChange={(value) =>
-                                    onSlotChange(slot.stepKey, { rpe: value })
-                                }
                             />
                         </div>
                     </div>
                 );
             })}
+
+            <AthleteRoundEffortSection
+                variant="dropset"
+                value={roundRpe}
+                onChange={onRoundRpeChange}
+            />
         </div>
     );
 };

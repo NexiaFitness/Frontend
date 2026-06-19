@@ -9,18 +9,21 @@ import { AthleteRunRpePicker } from "./AthleteRunRpePicker";
 export interface AthleteSetLoggerProps {
     weight: number;
     reps: number;
-    rpe: number | null;
     onWeightChange: (value: number) => void;
     onRepsChange: (value: number) => void;
-    onRpeChange: (value: number | null) => void;
+    /** Single set: RPE por serie. Batch slots: false y usar AthleteRoundEffortSection. */
+    showRpe?: boolean;
+    rpe?: number | null;
+    onRpeChange?: (value: number | null) => void;
 }
 
 export const AthleteSetLogger: React.FC<AthleteSetLoggerProps> = ({
     weight,
     reps,
-    rpe,
     onWeightChange,
     onRepsChange,
+    showRpe = true,
+    rpe = null,
     onRpeChange,
 }) => {
     return (
@@ -42,7 +45,9 @@ export const AthleteSetLogger: React.FC<AthleteSetLoggerProps> = ({
                 decreaseDisabled={reps <= 1}
             />
 
-            <AthleteRunRpePicker value={rpe} onChange={onRpeChange} />
+            {showRpe && onRpeChange ? (
+                <AthleteRunRpePicker value={rpe} onChange={onRpeChange} />
+            ) : null}
         </div>
     );
 };

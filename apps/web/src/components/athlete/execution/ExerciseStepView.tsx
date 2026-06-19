@@ -104,10 +104,10 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
             {
                 exerciseId: exercise.exerciseId,
                 videoUrl: exercise.videoUrl,
-                instruction: exercise.instruction ?? null,
+                instruction: null,
             },
         ],
-        [exercise.exerciseId, exercise.instruction, exercise.videoUrl]
+        [exercise.exerciseId, exercise.videoUrl]
     );
 
     if (sessionReadyToFinish && isDoingPhase) {

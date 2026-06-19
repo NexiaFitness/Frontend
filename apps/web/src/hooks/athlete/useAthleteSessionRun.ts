@@ -141,6 +141,7 @@ export function useAthleteSessionRun({
     const [reps, setReps] = useState(8);
     const [rpe, setRpe] = useState<number | null>(null);
     const [slotLogs, setSlotLogs] = useState<Record<string, SlotLogValues>>({});
+    const [roundRpe, setRoundRpe] = useState<number | null>(null);
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
@@ -155,6 +156,7 @@ export function useAthleteSessionRun({
         completedStepKeysRef.current = new Set();
         setSavedStepKeys(new Set());
         setSlotLogs({});
+        setRoundRpe(null);
     }, [sessionId]);
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
@@ -223,6 +225,7 @@ export function useAthleteSessionRun({
         const runStep = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
         if (!runStep || runStep.kind !== "group_round" || !runStep.slots?.length) {
             setSlotLogs((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+            setRoundRpe((prev) => (prev === null ? prev : null));
             return;
         }
 
@@ -231,9 +234,11 @@ export function useAthleteSessionRun({
             initial[slot.stepKey] = {
                 weight: slot.defaultWeight,
                 reps: slot.defaultReps,
-                rpe: slot.defaultRpe,
             };
         }
+
+        const prescribedRpe =
+            runStep.slots.find((slot) => slot.defaultRpe != null)?.defaultRpe ?? null;
 
         setSlotLogs((prev) => {
             const keys = Object.keys(initial);
@@ -246,8 +251,7 @@ export function useAthleteSessionRun({
                         previous &&
                         next &&
                         previous.weight === next.weight &&
-                        previous.reps === next.reps &&
-                        previous.rpe === next.rpe
+                        previous.reps === next.reps
                     );
                 })
             ) {
@@ -255,6 +259,8 @@ export function useAthleteSessionRun({
             }
             return initial;
         });
+
+        setRoundRpe((prev) => (prev === prescribedRpe ? prev : prescribedRpe));
     }, [currentStepKey]);
 
     useEffect(() => {
@@ -316,7 +322,7 @@ export function useAthleteSessionRun({
 
             onSetSaved?.(result, {
                 isGroupRound: false,
-                groupKind: current.groupKind,
+                groupKind: current.groupKind ?? undefined,
             });
         } catch {
             onError?.("No se pudo guardar la serie");
@@ -352,7 +358,6 @@ export function useAthleteSessionRun({
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
                     reps: slot.defaultReps,
-                    rpe: slot.defaultRpe,
                 };
 
                 const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
@@ -362,7 +367,7 @@ export function useAthleteSessionRun({
                     actual_weight: log.weight,
                     actual_reps: String(log.reps),
                     actual_sets: nextSets,
-                    actual_effort_value: log.rpe ?? undefined,
+                    actual_effort_value: roundRpe ?? undefined,
                 });
 
                 completedStepKeysRef.current.add(slot.stepKey);
@@ -380,7 +385,7 @@ export function useAthleteSessionRun({
         } finally {
             setSaving(false);
         }
-    }, [currentRunStep, getNextActualSets, logSet, onError, onSetSaved, slotLogs]);
+    }, [currentRunStep, getNextActualSets, logSet, onError, onSetSaved, roundRpe, slotLogs]);
 
     const onConfirm = isGroupRound ? handleSaveRound : handleSaveSet;
 
@@ -409,7 +414,6 @@ export function useAthleteSessionRun({
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
                     reps: slot.defaultReps,
-                    rpe: slot.defaultRpe,
                 };
                 return log.reps > 0 && log.weight >= 0;
             });
@@ -467,6 +471,8 @@ export function useAthleteSessionRun({
         groupContext,
         slotLogs,
         updateSlotLog,
+        roundRpe,
+        setRoundRpe,
         weight,
         reps,
         rpe,

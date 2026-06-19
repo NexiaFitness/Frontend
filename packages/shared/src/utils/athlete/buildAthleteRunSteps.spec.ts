@@ -8,11 +8,16 @@ import {
     groupBlockExercisesIntoGroups,
     type SessionStructureView,
 } from "../../sessionProgramming/sessionBlockView";
+import { buildAthleteRunGroupContextFromStep } from "./athleteRunGroupContext";
 import { buildAthleteRunSteps, resolveRestAfterCompletingRunStep } from "./buildAthleteRunSteps";
 
 function block(
     id: number,
-    setType: typeof SET_TYPE.DROPSET | typeof SET_TYPE.SUPERSET | typeof SET_TYPE.SINGLE_SET,
+    setType:
+        | typeof SET_TYPE.DROPSET
+        | typeof SET_TYPE.SUPERSET
+        | typeof SET_TYPE.GIANT_SET
+        | typeof SET_TYPE.SINGLE_SET,
     rounds: number | null = 3
 ): SessionBlock {
     return {
@@ -43,14 +48,15 @@ function parallelLine(
     exerciseId: number,
     order: number,
     planned_sets: number | null = 3,
-    reps = "10"
+    reps = "10",
+    setType: typeof SET_TYPE.SUPERSET | typeof SET_TYPE.GIANT_SET = SET_TYPE.SUPERSET
 ): SessionBlockExercise {
     return {
         id,
         session_block_id: 62,
         exercise_id: exerciseId,
         order_in_block: order,
-        set_type: SET_TYPE.SUPERSET,
+        set_type: setType,
         superset_group_id: 1,
         dropset_sequence: null,
         planned_sets,
@@ -73,6 +79,16 @@ function parallelLine(
         updated_at: "",
         is_active: true,
     };
+}
+
+function giantLine(
+    id: number,
+    exerciseId: number,
+    order: number,
+    planned_sets: number | null = 3,
+    reps = "10"
+): SessionBlockExercise {
+    return parallelLine(id, exerciseId, order, planned_sets, reps, SET_TYPE.GIANT_SET);
 }
 
 function dropLine(
@@ -205,6 +221,87 @@ describe("buildAthleteRunSteps superset", () => {
         expect(new Set(keys).size).toBe(keys.length);
         expect(keys[0]).toContain("-round-1");
         expect(keys[1]).toContain("-round-2");
+    });
+});
+
+describe("buildAthleteRunSteps giant_set", () => {
+    it("emite 1 paso group_round por ronda (A1…A4 juntos)", () => {
+        const lines = [
+            giantLine(1, 8, 1, 3, "10"),
+            giantLine(2, 12, 2, 3, "12"),
+            giantLine(3, 15, 3, 3, "10"),
+            giantLine(4, 18, 4, 3, "15"),
+        ];
+        const view = viewFromBlock(block(70, SET_TYPE.GIANT_SET, 3), lines, {
+            8: "Press banca",
+            12: "Remo",
+            15: "Curl martillo",
+            18: "Ext. tríceps",
+        });
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps).toHaveLength(3);
+        expect(steps.every((s) => s.kind === "group_round")).toBe(true);
+        expect(steps.every((s) => s.groupKind === "giant_set")).toBe(true);
+        expect(steps.map((s) => s.roundIndex)).toEqual([1, 2, 3]);
+        expect(steps[0]?.slots?.map((s) => s.slotLabel)).toEqual(["A1", "A2", "A3", "A4"]);
+        expect(steps[0]?.slots?.map((s) => s.exerciseName)).toEqual([
+            "Press banca",
+            "Remo",
+            "Curl martillo",
+            "Ext. tríceps",
+        ]);
+        expect(steps[0]?.instruction).toContain("ejercicios");
+    });
+
+    it("descanso al cerrar ronda (restBetweenSeconds en el paso)", () => {
+        const lines = [
+            giantLine(1, 8, 1),
+            giantLine(2, 12, 2),
+            giantLine(3, 15, 3),
+        ];
+        const view = viewFromBlock(block(70, SET_TYPE.GIANT_SET, 2), lines);
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps[0]?.restAfterSeconds).toBe(90);
+        expect(resolveRestAfterCompletingRunStep(steps[1]!, undefined)).toBeNull();
+    });
+
+    it("formato API expandido 4 slots × 3 rondas → 3 pasos group_round", () => {
+        const lines = [
+            giantLine(1, 8, 1, 1, "10"),
+            giantLine(2, 8, 2, 1, "10"),
+            giantLine(3, 8, 3, 1, "10"),
+            giantLine(4, 12, 4, 1, "12"),
+            giantLine(5, 12, 5, 1, "12"),
+            giantLine(6, 12, 6, 1, "12"),
+            giantLine(7, 15, 7, 1, "10"),
+            giantLine(8, 15, 8, 1, "10"),
+            giantLine(9, 15, 9, 1, "10"),
+            giantLine(10, 18, 10, 1, "15"),
+            giantLine(11, 18, 11, 1, "15"),
+            giantLine(12, 18, 12, 1, "15"),
+        ];
+        const view = viewFromBlock(block(70, SET_TYPE.GIANT_SET, 3), lines);
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps).toHaveLength(3);
+        expect(steps.every((s) => s.kind === "group_round")).toBe(true);
+        expect(steps[0]?.slots?.map((s) => s.slotLabel)).toEqual(["A1", "A2", "A3", "A4"]);
+    });
+
+    it("contexto UI usa copy dinámico por número de slots", () => {
+        const lines = [
+            giantLine(1, 8, 1, 3, "10"),
+            giantLine(2, 12, 2, 3, "12"),
+            giantLine(3, 15, 3, 3, "10"),
+            giantLine(4, 18, 4, 3, "15"),
+        ];
+        const view = viewFromBlock(block(70, SET_TYPE.GIANT_SET, 3), lines);
+        const steps = buildAthleteRunSteps(view);
+        const ctx = buildAthleteRunGroupContextFromStep(steps[0]!);
+
+        expect(ctx?.explanation).toContain("cuatro ejercicios");
     });
 });
 

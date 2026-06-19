@@ -29,7 +29,11 @@ export const AthleteExerciseTechniqueSheet: React.FC<AthleteExerciseTechniqueShe
             isOpen={isOpen}
             onClose={onClose}
             title={target?.exerciseName ?? "Técnica"}
-            subtitle="Demostración del ejercicio"
+            subtitle={
+                hasVideo || hasInstruction
+                    ? "Demostración del ejercicio"
+                    : "Contenido próximamente"
+            }
             footer={
                 <Button variant="primary" className={ATHLETE_PRIMARY_CTA} onClick={onClose}>
                     Cerrar

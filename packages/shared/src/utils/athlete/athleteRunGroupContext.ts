@@ -53,7 +53,7 @@ function exerciseCountWord(count: number): string {
     return COUNT_WORDS[count] ?? String(count);
 }
 
-function buildGroupExplanation(groupKind: string, slotCount: number, fallback = ""): string {
+export function buildGroupExplanation(groupKind: string, slotCount: number, fallback = ""): string {
     if (groupKind === "dropset") {
         return GROUP_EXPLANATION.dropset ?? fallback;
     }
@@ -228,7 +228,11 @@ export function buildAthleteRunGroupContextFromStep(
         groupKind: step.groupKind,
         sectionLabel,
         groupBadgeLabel: step.badgeLabel ?? null,
-        explanation: step.instruction,
+        explanation: buildGroupExplanation(
+            step.groupKind,
+            step.slots.length,
+            step.instruction ?? ""
+        ),
         roundLabel,
         slots: step.slots.map((slot) => ({
             slotLabel: slot.slotLabel,

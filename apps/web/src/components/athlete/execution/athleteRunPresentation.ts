@@ -173,17 +173,107 @@ export const ATHLETE_RUN_GROUP_HERO_ROUND = cn(
 export const ATHLETE_RUN_GROUP_HERO = "space-y-1";
 
 export const ATHLETE_RUN_SLOT_ROW = cn(
-    "flex items-center gap-3 rounded-lg border border-primary/40 bg-primary/12 px-3 py-2.5",
-    "shadow-[0_0_16px_-6px] shadow-primary/35"
+    "flex items-start gap-3 rounded-lg border border-primary/40 bg-primary/12 px-3 py-2.5",
+    "shadow-[0_0_16px_-6px] shadow-primary/35",
+    "lg:items-center"
 );
 
 export const ATHLETE_RUN_SLOT_ROW_MUTED = "opacity-70 border-primary/20 bg-primary/6";
+
+export const ATHLETE_RUN_SLOT_ROW_CONTENT = "relative min-w-0 flex-1";
+
+/** Nombre corto (1 línea): fila 1 — truncate solo en lg+. */
+export const ATHLETE_RUN_SLOT_ROW_NAME_COMPACT = cn(
+    "text-sm font-medium text-foreground",
+    "lg:truncate"
+);
+
+/** Nombre largo (2 líneas max) + prescripción inline al cierre de la 2.ª. */
+export const ATHLETE_RUN_SLOT_ROW_NAME_WRAPPED = cn(
+    "text-sm leading-snug text-foreground line-clamp-2 break-words"
+);
+
+export const ATHLETE_RUN_SLOT_ROW_RX_STACKED = cn(
+    "text-xs text-muted-foreground/80",
+    "lg:truncate"
+);
+
+export const ATHLETE_RUN_SLOT_ROW_RX_INLINE = cn(
+    "text-xs font-normal text-muted-foreground/80 whitespace-nowrap"
+);
+
+/** Lista de slots en card de ronda (superset / giant set). */
+export const ATHLETE_RUN_GROUP_SLOT_LIST = "space-y-2";
+
+/** Giant set 5+ ejercicios: scroll interno para no empujar el sticky CTA (DESIGN_MOBILE §7.4). */
+export const ATHLETE_RUN_GROUP_SLOT_LIST_SCROLL = cn(
+    ATHLETE_RUN_GROUP_SLOT_LIST,
+    "max-h-[min(42vh,17.5rem)] overflow-y-auto overscroll-contain",
+    "[scrollbar-width:thin]"
+);
+
+/** Umbral a partir del cual la lista de slots usa scroll en fase doing. */
+export const ATHLETE_RUN_GROUP_SLOT_SCROLL_THRESHOLD = 4;
 
 export const ATHLETE_RUN_SLOT_LOGGER_CARD = cn(NEXIA_GLASS_CARD, "relative space-y-3 p-3 pt-4");
 
 export const ATHLETE_RUN_SLOT_LOGGER_LABEL = cn(
     "text-[10px] font-bold uppercase tracking-wider text-primary"
 );
+
+/** Puente visual entre cards de slot y esfuerzo compartido de ronda (V05 §5b). */
+export const ATHLETE_RUN_ROUND_EFFORT_BRIDGE = cn(
+    "relative flex items-center gap-3 py-1",
+    "before:h-px before:flex-1 before:bg-gradient-to-r before:from-transparent before:via-border/70 before:to-border/40",
+    "after:h-px after:flex-1 after:bg-gradient-to-l after:from-transparent after:via-border/70 after:to-border/40"
+);
+
+export const ATHLETE_RUN_ROUND_EFFORT_BRIDGE_LABEL = cn(
+    "shrink-0 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground/75"
+);
+
+export const ATHLETE_RUN_ROUND_EFFORT_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-4 p-4 pt-5",
+    "border-primary/25 shadow-[0_0_28px_-10px] shadow-primary/30"
+);
+
+export const ATHLETE_RUN_ROUND_EFFORT_TITLE = cn(
+    "text-sm font-semibold tracking-tight text-foreground"
+);
+
+export const ATHLETE_RUN_ROUND_EFFORT_SUB = "text-xs leading-relaxed text-muted-foreground/90";
+
+export type AthleteRoundEffortVariant = "round" | "dropset";
+
+export interface AthleteRoundEffortCopy {
+    bridgeLabel: string;
+    title: string;
+    subtitle: string;
+    ariaLabel: string;
+}
+
+export function getAthleteRoundEffortCopy(
+    variant: AthleteRoundEffortVariant
+): AthleteRoundEffortCopy {
+    if (variant === "dropset") {
+        return {
+            bridgeLabel: "Cierre dropset",
+            title: "Esfuerzo del dropset",
+            subtitle:
+                "Un solo valor para toda la secuencia (MAIN y escalones). Opcional — ayuda a tu entrenador.",
+            ariaLabel: "Esfuerzo percibido del dropset completo",
+        };
+    }
+
+    return {
+        bridgeLabel: "Cierre de ronda",
+        title: "Esfuerzo de la ronda",
+        subtitle:
+            "Un solo valor para todos los ejercicios de esta ronda. Opcional — ayuda a tu entrenador.",
+        ariaLabel: "Esfuerzo percibido de la ronda completa",
+    };
+}
 
 export const ATHLETE_RUN_GROUP_HERO_ENTER = cn(
     "motion-safe:animate-in motion-safe:fade-in motion-safe:duration-150",
@@ -198,6 +288,17 @@ export const ATHLETE_RUN_TECHNIQUE_BTN = cn(
     "text-[11px] font-semibold text-primary",
     "transition-colors hover:bg-primary/20",
     "motion-safe:active:scale-[0.98] motion-reduce:active:scale-100"
+);
+
+export const ATHLETE_RUN_SLOT_ROW_TECHNIQUE = cn(
+    ATHLETE_RUN_TECHNIQUE_BTN,
+    "shrink-0 self-start lg:self-center"
+);
+
+/** Nombre en card logger batch — 2 líneas solo si no cabe en una (mismo criterio que slot row). */
+export const ATHLETE_RUN_SLOT_LOGGER_NAME = cn(
+    "text-sm font-medium leading-snug text-foreground",
+    "line-clamp-2 break-words lg:truncate lg:line-clamp-none lg:leading-normal"
 );
 
 export const ATHLETE_RUN_LOGGING_SUMMARY = cn(
