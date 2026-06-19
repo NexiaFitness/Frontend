@@ -30,6 +30,7 @@ import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentati
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import {
     useCreateSessionFeedbackMutation,
+    useGetPostSessionReportQuery,
     useGetTrainingSessionQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
@@ -49,11 +50,17 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     const { clientId } = useAthleteContext();
     const expandDetails = feedbackFormExpandsDetails(searchParams);
     const focusPain = feedbackFormFocusesPain(searchParams);
+    const fromFinish = searchParams.get("from") === "finish";
+    const summaryPath = `/dashboard/sessions/${sessionId}/summary`;
     const painRef = useRef<HTMLTextAreaElement>(null);
 
-    const { data: session, isLoading } = useGetTrainingSessionQuery(sessionId, {
+    const { data: session, isLoading: isLoadingSession } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId,
     });
+    const { data: report, isLoading: isLoadingReport } = useGetPostSessionReportQuery(sessionId, {
+        skip: !sessionId,
+    });
+    const isLoading = isLoadingSession || isLoadingReport;
 
     const [createFeedback, { isLoading: isSubmitting }] = useCreateSessionFeedbackMutation();
 
@@ -90,7 +97,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                 },
             }).unwrap();
             showToast("success", "Feedback enviado a tu entrenador");
-            navigate("/dashboard");
+            navigate(summaryPath);
         } catch {
             showToast("error", "No se pudo enviar el feedback");
         }
@@ -102,6 +109,10 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
 
     if (session && session.status !== "completed") {
         return <Navigate to={`/dashboard/sessions/${sessionId}`} replace />;
+    }
+
+    if (report?.has_feedback) {
+        return <Navigate to={summaryPath} replace />;
     }
 
     const painField = (
@@ -175,7 +186,7 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     return (
         <div className={cn(ATHLETE_PAGE, "flex min-h-full flex-col")}>
             <AthleteSessionFeedbackHeader
-                onBack={() => navigate(-1)}
+                onBack={() => (fromFinish ? navigate(summaryPath) : navigate(-1))}
                 sessionName={session?.session_name}
             />
 
@@ -244,9 +255,9 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                 <button
                     type="button"
                     className={cn(AUTH_LINK, "w-full py-2 text-center")}
-                    onClick={() => navigate("/dashboard")}
+                    onClick={() => navigate(summaryPath)}
                 >
-                    Omitir por ahora
+                    Ver mi resumen
                 </button>
             </AthleteFixedFooter>
         </div>

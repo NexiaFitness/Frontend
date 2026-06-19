@@ -1,5 +1,5 @@
 /**
- * useAthleteSessionRun.ts — Lógica de ejecución sesión atleta (F1 100%).
+ * useAthleteSessionRun.ts — Lógica de ejecución sesión atleta (F1 100%, V05 B.2).
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -16,14 +16,21 @@ import { shouldShowSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoa
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
-import type { AthleteFlatExercise } from "@nexia/shared/offline";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import {
+    buildAthleteRunSteps,
+    resolveRestAfterCompletingRunStep,
+    runStepToFlatExercise,
+    type AthleteRunStep,
+} from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import {
     buildAthleteRunGroupContext,
-    shouldRestAfterCompletingStep,
+    buildAthleteRunGroupContextFromStep,
     type AthleteRunGroupContextView,
 } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
+import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
+import { useAthleteRunRestFlow } from "@/hooks/athlete/useAthleteRunRestFlow";
 
 export interface AthletePrCelebration {
     exerciseName: string;
@@ -31,9 +38,14 @@ export interface AthletePrCelebration {
     previousMaxWeight: number | null;
 }
 
+export interface AthleteSessionRunSaveContext {
+    isGroupRound: boolean;
+    groupKind?: AthleteRunStep["groupKind"];
+}
+
 export interface UseAthleteSessionRunOptions {
     sessionId: number;
-    onSetSaved?: (result: "synced" | "queued" | "offline") => void;
+    onSetSaved?: (result: "synced" | "queued" | "offline", context: AthleteSessionRunSaveContext) => void;
     onSessionFinished?: (result: "synced" | "queued" | "offline") => void;
     onSyncSuccess?: () => void;
     onConflict?: () => void;
@@ -60,6 +72,7 @@ export function useAthleteSessionRun({
     const [updateSessionExercise] = useUpdateSessionExerciseMutation();
     const [updateSession] = useUpdateTrainingSessionMutation();
 
+    const runSteps = useMemo(() => buildAthleteRunSteps(view), [view]);
     const flatExercisesFromApi = useMemo(() => flattenAthleteExercises(view), [view]);
 
     const adapter = useMemo(
@@ -107,23 +120,29 @@ export function useAthleteSessionRun({
         onConflict,
     });
 
-    const flatExercises =
-        flatExercisesFromApi.length > 0
-            ? flatExercisesFromApi
-            : isUsingCache
-              ? (cachedSnapshot?.flatExercises ?? [])
-              : [];
+    const flatExercises = useMemo(
+        () =>
+            flatExercisesFromApi.length > 0
+                ? flatExercisesFromApi
+                : isUsingCache
+                  ? (cachedSnapshot?.flatExercises ?? [])
+                  : [],
+        [flatExercisesFromApi, isUsingCache, cachedSnapshot?.flatExercises]
+    );
 
     const flatExercisesRef = useRef(flatExercises);
     flatExercisesRef.current = flatExercises;
+
+    const runStepsRef = useRef(runSteps);
+    runStepsRef.current = runSteps;
 
     const [step, setStep] = useState(0);
     const [weight, setWeight] = useState(0);
     const [reps, setReps] = useState(8);
     const [rpe, setRpe] = useState<number | null>(null);
+    const [slotLogs, setSlotLogs] = useState<Record<string, SlotLogValues>>({});
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
-    const [restSeconds, setRestSeconds] = useState<number | null>(null);
     const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
 
     const loggedSetsRef = useRef<Map<number, number>>(new Map());
@@ -135,30 +154,41 @@ export function useAthleteSessionRun({
         loggedSetsRef.current = new Map();
         completedStepKeysRef.current = new Set();
         setSavedStepKeys(new Set());
+        setSlotLogs({});
     }, [sessionId]);
 
-    const current = flatExercises[step];
-    const currentStepKey = current?.stepKey ?? null;
-    const nextExercise = step < flatExercises.length - 1 ? flatExercises[step + 1] : undefined;
+    const currentRunStep: AthleteRunStep | undefined = runSteps[step];
+    const currentStepKey = currentRunStep?.stepKey ?? null;
+    const isGroupRound = currentRunStep?.kind === "group_round";
+
+    const current = useMemo(() => {
+        if (!currentRunStep || isGroupRound) return undefined;
+        return runStepToFlatExercise(currentRunStep);
+    }, [currentRunStep, isGroupRound]);
+
+    const nextRunStep = step < runSteps.length - 1 ? runSteps[step + 1] : undefined;
 
     const groupContext: AthleteRunGroupContextView | null = useMemo(() => {
-        if (!currentStepKey) return null;
+        if (!currentRunStep) return null;
+        if (currentRunStep.kind === "group_round") {
+            return buildAthleteRunGroupContextFromStep(currentRunStep);
+        }
+        if (!currentStepKey || !current) return null;
         return buildAthleteRunGroupContext(flatExercises, currentStepKey);
-    }, [flatExercises, currentStepKey]);
+    }, [current, currentRunStep, currentStepKey, flatExercises]);
 
-    const { evaluatePr } = useAthleteExercisePr(
-        clientId,
-        current?.exerciseId ?? null
-    );
+    const singleExerciseId = isGroupRound ? null : (current?.exerciseId ?? null);
+
+    const { evaluatePr } = useAthleteExercisePr(clientId, singleExerciseId);
 
     const { data: lastPerformance } = useGetAthleteLastPerformanceQuery(
-        current?.exerciseId ?? 0,
-        { skip: !current?.exerciseId }
+        singleExerciseId ?? 0,
+        { skip: !singleExerciseId }
     );
 
     const { data: suggestedLoad } = useGetAthleteSuggestedLoadQuery(
-        current?.exerciseId ?? 0,
-        { skip: !current?.exerciseId }
+        singleExerciseId ?? 0,
+        { skip: !singleExerciseId }
     );
 
     const applyLastPerformance = useCallback(() => {
@@ -187,27 +217,74 @@ export function useAthleteSessionRun({
         setPrCelebration(null);
     }, [currentStepKey]);
 
-    // Sincronizar steppers solo al cambiar de paso (stepKey), no en refetch RTK del mismo paso.
-    // flatExercisesRef evita listar flatExercises en deps (HF-01).
     useEffect(() => {
         if (!currentStepKey) return;
-        const exercise = flatExercisesRef.current.find(
-            (item) => item.stepKey === currentStepKey
-        );
-        if (!exercise) return;
+
+        const runStep = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
+        if (!runStep || runStep.kind !== "group_round" || !runStep.slots?.length) {
+            setSlotLogs((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+            return;
+        }
+
+        const initial: Record<string, SlotLogValues> = {};
+        for (const slot of runStep.slots) {
+            initial[slot.stepKey] = {
+                weight: slot.defaultWeight,
+                reps: slot.defaultReps,
+                rpe: slot.defaultRpe,
+            };
+        }
+
+        setSlotLogs((prev) => {
+            const keys = Object.keys(initial);
+            if (
+                keys.length === Object.keys(prev).length &&
+                keys.every((key) => {
+                    const previous = prev[key];
+                    const next = initial[key];
+                    return (
+                        previous &&
+                        next &&
+                        previous.weight === next.weight &&
+                        previous.reps === next.reps &&
+                        previous.rpe === next.rpe
+                    );
+                })
+            ) {
+                return prev;
+            }
+            return initial;
+        });
+    }, [currentStepKey]);
+
+    useEffect(() => {
+        if (!currentStepKey || isGroupRound) return;
+        const exercise = flatExercisesRef.current.find((item) => item.stepKey === currentStepKey);
+        if (!exercise) {
+            const fromRun = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
+            if (!fromRun) return;
+            setWeight(fromRun.defaultWeight);
+            setReps(fromRun.defaultReps);
+            setRpe(fromRun.defaultRpe);
+            return;
+        }
         setWeight(exercise.defaultWeight);
         setReps(exercise.defaultReps);
         setRpe(exercise.defaultRpe);
-    }, [currentStepKey]);
+    }, [currentStepKey, isGroupRound]);
 
-    const getNextActualSets = useCallback(
-        (exercise: AthleteFlatExercise) => {
-            const fromRef = loggedSetsRef.current.get(exercise.blockExerciseId) ?? 0;
-            const fromBackend = exercise.loggedSets ?? 0;
-            return Math.max(fromRef, fromBackend) + 1;
-        },
-        []
-    );
+    const updateSlotLog = useCallback((slotKey: string, patch: Partial<SlotLogValues>) => {
+        setSlotLogs((prev) => {
+            const current = prev[slotKey];
+            if (!current) return prev;
+            return { ...prev, [slotKey]: { ...current, ...patch } };
+        });
+    }, []);
+
+    const getNextActualSets = useCallback((blockExerciseId: number, loggedSets = 0) => {
+        const fromRef = loggedSetsRef.current.get(blockExerciseId) ?? 0;
+        return Math.max(fromRef, loggedSets) + 1;
+    }, []);
 
     const handleSaveSet = useCallback(async () => {
         if (!current) return;
@@ -215,7 +292,7 @@ export function useAthleteSessionRun({
 
         setSaving(true);
         try {
-            const nextSets = getNextActualSets(current);
+            const nextSets = getNextActualSets(current.blockExerciseId, current.loggedSets ?? 0);
             loggedSetsRef.current.set(current.blockExerciseId, nextSets);
 
             const result = await logSet(current.blockExerciseId, {
@@ -237,23 +314,18 @@ export function useAthleteSessionRun({
                 });
             }
 
-            onSetSaved?.(result);
-
-            const shouldRest = shouldRestAfterCompletingStep(current, nextExercise);
-
-            if (shouldRest && step < flatExercises.length - 1) {
-                setRestSeconds(current.restSeconds);
-            } else if (step < flatExercises.length - 1) {
-                setStep((s) => s + 1);
-            }
+            onSetSaved?.(result, {
+                isGroupRound: false,
+                groupKind: current.groupKind,
+            });
         } catch {
             onError?.("No se pudo guardar la serie");
+            throw new Error("save failed");
         } finally {
             setSaving(false);
         }
     }, [
         current,
-        flatExercises.length,
         getNextActualSets,
         logSet,
         onError,
@@ -261,17 +333,100 @@ export function useAthleteSessionRun({
         evaluatePr,
         reps,
         rpe,
-        nextExercise,
-        step,
         weight,
     ]);
 
-    const handleRestComplete = useCallback(() => {
-        setRestSeconds(null);
-        if (step < flatExercises.length - 1) {
+    const handleSaveRound = useCallback(async () => {
+        if (!currentRunStep || currentRunStep.kind !== "group_round" || !currentRunStep.slots?.length) {
+            return;
+        }
+        if (completedStepKeysRef.current.has(currentRunStep.stepKey)) return;
+
+        setSaving(true);
+        let lastResult: "synced" | "queued" | "offline" = "synced";
+
+        try {
+            for (const slot of currentRunStep.slots) {
+                if (completedStepKeysRef.current.has(slot.stepKey)) continue;
+
+                const log = slotLogs[slot.stepKey] ?? {
+                    weight: slot.defaultWeight,
+                    reps: slot.defaultReps,
+                    rpe: slot.defaultRpe,
+                };
+
+                const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
+                loggedSetsRef.current.set(slot.blockExerciseId, nextSets);
+
+                lastResult = await logSet(slot.blockExerciseId, {
+                    actual_weight: log.weight,
+                    actual_reps: String(log.reps),
+                    actual_sets: nextSets,
+                    actual_effort_value: log.rpe ?? undefined,
+                });
+
+                completedStepKeysRef.current.add(slot.stepKey);
+            }
+
+            completedStepKeysRef.current.add(currentRunStep.stepKey);
+            setSavedStepKeys(new Set(completedStepKeysRef.current));
+            onSetSaved?.(lastResult, {
+                isGroupRound: true,
+                groupKind: currentRunStep.groupKind,
+            });
+        } catch {
+            onError?.("No se pudo guardar la ronda");
+            throw new Error("save failed");
+        } finally {
+            setSaving(false);
+        }
+    }, [currentRunStep, getNextActualSets, logSet, onError, onSetSaved, slotLogs]);
+
+    const onConfirm = isGroupRound ? handleSaveRound : handleSaveSet;
+
+    const advanceAfterRest = useCallback(() => {
+        if (step < runSteps.length - 1) {
             setStep((s) => s + 1);
         }
-    }, [flatExercises.length, step]);
+    }, [runSteps.length, step]);
+
+    const restAfterSeconds = useMemo(() => {
+        if (!currentRunStep) return null;
+        return resolveRestAfterCompletingRunStep(currentRunStep, nextRunStep);
+    }, [currentRunStep, nextRunStep]);
+
+    const isDropsetRound = currentRunStep?.groupKind === "dropset";
+
+    const confirmLabel = isGroupRound
+        ? isDropsetRound
+            ? "Dropset completado"
+            : "Ronda completada"
+        : "Serie completada";
+
+    const isConfirmValid = useMemo(() => {
+        if (isGroupRound && currentRunStep?.slots?.length) {
+            return currentRunStep.slots.every((slot) => {
+                const log = slotLogs[slot.stepKey] ?? {
+                    weight: slot.defaultWeight,
+                    reps: slot.defaultReps,
+                    rpe: slot.defaultRpe,
+                };
+                return log.reps > 0 && log.weight >= 0;
+            });
+        }
+        return reps > 0 && weight >= 0;
+    }, [currentRunStep, isGroupRound, slotLogs, reps, weight]);
+
+    const restFlow = useAthleteRunRestFlow({
+        restAfterSeconds,
+        confirmLabel,
+        stepKey: currentStepKey,
+        onConfirm,
+        onRestComplete: advanceAfterRest,
+        isConfirmValid,
+        requireStartBeforeLog: isDropsetRound,
+        startRestLabel: isDropsetRound ? "Registrar dropset" : "Empezar descanso",
+    });
 
     const handleFinish = useCallback(async () => {
         setCompleting(true);
@@ -279,7 +434,7 @@ export function useAthleteSessionRun({
             const result = await finishSession();
             onSessionFinished?.(result);
             if (result === "synced") {
-                navigate(`/dashboard/sessions/${sessionId}/summary`);
+                navigate(`/dashboard/sessions/${sessionId}/feedback?from=finish`);
             } else {
                 navigate("/dashboard/sessions");
             }
@@ -293,18 +448,25 @@ export function useAthleteSessionRun({
     const loadingFromNetwork = loadingSession || loadingStructure;
     const waitingForCache = !isOnline && loadingFromNetwork && !cachedSnapshot;
     const isLoading = (loadingFromNetwork && !isUsingCache && isOnline) || waitingForCache;
-    const isLastStep = step === flatExercises.length - 1;
-    const isCurrentStepSaved = current ? savedStepKeys.has(current.stepKey) : false;
-    const showSaveSetButton = Boolean(current) && !isCurrentStepSaved;
+    const isLastStep = step === runSteps.length - 1;
+    const isCurrentStepSaved = currentStepKey
+        ? savedStepKeys.has(currentStepKey)
+        : false;
+    const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
     return {
         session,
         isOnline,
         pendingCount,
+        runSteps,
         flatExercises,
         step,
+        currentRunStep,
+        isGroupRound,
         current,
         groupContext,
+        slotLogs,
+        updateSlotLog,
         weight,
         reps,
         rpe,
@@ -313,14 +475,12 @@ export function useAthleteSessionRun({
         setRpe,
         saving,
         completing,
-        restSeconds,
-        setRestSeconds,
-        handleSaveSet,
-        handleRestComplete,
+        restFlow,
         handleFinish,
         isLoading,
         isLastStep,
-        showSaveSetButton,
+        showStepActions,
+        isCurrentStepSaved,
         prCelebration,
         lastPerformance,
         applyLastPerformance,

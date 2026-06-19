@@ -3,37 +3,39 @@
  */
 
 import React from "react";
-import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import type { AthleteRunGroupContextView } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
+import { AthleteExerciseSlotRow } from "./AthleteExerciseSlotRow";
+import type { AthleteExerciseTechniqueTarget } from "./athleteExerciseTechniqueUtils";
 import {
+    ATHLETE_RUN_DOING_ENTER,
     ATHLETE_RUN_FIELD_HINT,
     ATHLETE_RUN_GROUP_SECTION_LABEL,
     ATHLETE_RUN_HINT_CARD,
 } from "./athleteRunPresentation";
 
+export interface GroupContextSlotMeta {
+    exerciseId: number;
+    videoUrl?: string | null;
+    instruction?: string | null;
+}
+
 export interface AthleteRunGroupContextCardProps {
     context: AthleteRunGroupContextView;
+    slotMeta?: GroupContextSlotMeta[];
+    onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
     className?: string;
 }
 
-const SLOT_ROW = cn(
-    "flex items-center gap-3 rounded-lg border border-primary/40 bg-primary/12 px-3 py-2.5",
-    "shadow-[0_0_16px_-6px] shadow-primary/35"
-);
-
-const SLOT_LABEL = cn(
-    "flex size-7 shrink-0 items-center justify-center rounded-md",
-    "bg-primary/20 text-[11px] font-semibold tabular-nums text-primary"
-);
-
 export const AthleteRunGroupContextCard: React.FC<AthleteRunGroupContextCardProps> = ({
     context,
+    slotMeta,
+    onViewTechnique,
     className,
 }) => {
     return (
-        <div className={cn("relative", ATHLETE_RUN_HINT_CARD, className)}>
+        <div className={cn("relative", ATHLETE_RUN_HINT_CARD, ATHLETE_RUN_DOING_ENTER, className)}>
             <NexiaGlassAccentRim />
             <div className="relative z-[1] space-y-3">
                 <div className="flex flex-wrap items-center justify-between gap-2">
@@ -47,34 +49,35 @@ export const AthleteRunGroupContextCard: React.FC<AthleteRunGroupContextCardProp
                     ) : null}
                 </div>
 
-                <p className={ATHLETE_RUN_FIELD_HINT}>{context.explanation}</p>
+                {context.explanation ? (
+                    <p className={ATHLETE_RUN_FIELD_HINT}>{context.explanation}</p>
+                ) : null}
 
                 <ul className="space-y-2" aria-label={`Ejercicios de ${context.sectionLabel}`}>
-                    {context.slots.map((slot) => (
-                        <li
-                            key={`${slot.slotLabel}-${slot.exerciseName}`}
-                            className={cn(
-                                SLOT_ROW,
-                                slot.status === "done" && "border-primary/25 bg-primary/8 opacity-80"
-                            )}
-                        >
-                            <span className={SLOT_LABEL}>
-                                {slot.status === "done" ? (
-                                    <Check className="size-3.5" aria-hidden />
-                                ) : (
-                                    slot.slotLabel
-                                )}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-foreground">
-                                    {slot.exerciseName}
-                                </p>
-                                <p className="truncate text-xs text-muted-foreground/80">
-                                    {slot.prescription}
-                                </p>
-                            </div>
-                        </li>
-                    ))}
+                    {context.slots.map((slot, index) => {
+                        const meta = slotMeta?.[index];
+                        const techniqueTarget: AthleteExerciseTechniqueTarget | undefined = meta
+                            ? {
+                                  exerciseId: meta.exerciseId,
+                                  exerciseName: slot.exerciseName,
+                                  videoUrl: meta.videoUrl,
+                                  instruction: meta.instruction,
+                              }
+                            : undefined;
+
+                        return (
+                            <li key={`${slot.slotLabel}-${slot.exerciseName}-${index}`}>
+                                <AthleteExerciseSlotRow
+                                    slotLabel={slot.slotLabel}
+                                    exerciseName={slot.exerciseName}
+                                    prescription={slot.prescription}
+                                    status={slot.status}
+                                    techniqueTarget={techniqueTarget}
+                                    onViewTechnique={onViewTechnique}
+                                />
+                            </li>
+                        );
+                    })}
                 </ul>
             </div>
         </div>

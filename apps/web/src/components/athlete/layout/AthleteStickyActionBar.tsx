@@ -18,6 +18,8 @@ export interface AthleteStickyActionBarProps {
     secondaryDisabled?: boolean;
     secondaryLoading?: boolean;
     onSecondary?: () => void;
+    /** Timer u otro accessory encima del CTA (§5a — no fixed, vive en la barra) */
+    footerAccessory?: React.ReactNode;
 }
 
 export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
@@ -30,14 +32,24 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
     secondaryDisabled,
     secondaryLoading,
     onSecondary,
+    footerAccessory,
 }) => {
     const hasPrimary = Boolean(primaryLabel && onPrimary);
     const hasSecondary = Boolean(secondaryLabel && onSecondary);
     const size: AthleteStickyFooterSize =
-        hasPrimary && hasSecondary ? "double" : "single";
+        hasPrimary && hasSecondary
+            ? footerAccessory
+                ? "withSecondaryLink"
+                : "double"
+            : footerAccessory
+              ? "withSecondaryLink"
+              : "single";
 
     return (
         <AthleteFixedFooter size={size}>
+            {footerAccessory ? (
+                <div className="flex justify-center pb-1">{footerAccessory}</div>
+            ) : null}
             {hasPrimary && (
                 <Button
                     variant="primary"

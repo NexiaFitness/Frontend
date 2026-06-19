@@ -209,3 +209,34 @@ export function buildAthleteRunGroupContext(
         transitionHint,
     };
 }
+
+/** Contexto de grupo desde paso `group_round` (B.2). */
+export function buildAthleteRunGroupContextFromStep(
+    step: import("./buildAthleteRunSteps").AthleteRunStep
+): AthleteRunGroupContextView | null {
+    if (step.kind !== "group_round" || !step.slots?.length) return null;
+
+    const roundLabel =
+        step.roundIndex != null && step.roundTotal != null
+            ? `Ronda ${step.roundIndex} de ${step.roundTotal}`
+            : null;
+
+    const sectionLabel =
+        GROUP_SECTION_LABEL[step.groupKind] ?? step.badgeLabel ?? "Grupo de ejercicios";
+
+    return {
+        groupKind: step.groupKind,
+        sectionLabel,
+        groupBadgeLabel: step.badgeLabel ?? null,
+        explanation: step.instruction,
+        roundLabel,
+        slots: step.slots.map((slot) => ({
+            slotLabel: slot.slotLabel,
+            exerciseName: slot.exerciseName,
+            status: "upcoming" as const,
+            prescription: slot.plannedLabel,
+        })),
+        nextExerciseName: null,
+        transitionHint: null,
+    };
+}

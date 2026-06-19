@@ -14,16 +14,33 @@ import type {
     SessionStructureView,
 } from "../../sessionProgramming/sessionBlockView";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
+import { shouldRestAfterCompletingStep } from "./athleteRunGroupContext";
 import { parseAthleteReps } from "./athleteSessionUtils";
 
 export type AthleteRunStepKind =
     | "single_set"
+    | "group_round"
     | "parallel_slot"
     | "dropset_step"
     | "sequential_slot"
     | "timed_block";
 
 export type AthleteRunInputMode = "weight_reps" | "reps_only" | "duration" | "rounds_only";
+
+export interface AthleteRunRoundSlot {
+    stepKey: string;
+    slotLabel: string;
+    exerciseId: number;
+    exerciseName: string;
+    setLabel: string;
+    plannedLabel: string;
+    blockExerciseId: number;
+    inputMode: AthleteRunInputMode;
+    defaultWeight: number;
+    defaultReps: number;
+    defaultRpe: number | null;
+    loggedSets: number;
+}
 
 export interface AthleteRunStep {
     stepKey: string;
@@ -53,6 +70,8 @@ export interface AthleteRunStep {
     totalSetsInSlot: number;
     timeCapMinutes: number | null;
     intervalSeconds: number | null;
+    /** B.2 — todos los slots de la ronda (superset / giant / dropset) */
+    slots?: AthleteRunRoundSlot[];
 }
 
 const GROUP_INSTRUCTION: Partial<Record<SessionGroupKind, string>> = {
@@ -144,7 +163,146 @@ function buildStep(ctx: StepBuildContext): AthleteRunStep {
     };
 }
 
-/** Rondas × slots en orden (superset, giant_set, for_time). */
+function buildRoundSlot(ctx: StepBuildContext): AthleteRunRoundSlot {
+    const { slot, set, group } = ctx;
+    const slotLabel = group.kind === "dropset" ? set.label : slot.slotLabel;
+
+    return {
+        stepKey: makeStepKey(ctx.group.groupId, ctx.roundIndex, slot, set),
+        slotLabel,
+        exerciseId: slot.exerciseId,
+        exerciseName: slot.exerciseName,
+        setLabel: set.label,
+        plannedLabel: buildPlannedLabel(set),
+        blockExerciseId: set.sourceLineId,
+        inputMode: resolveInputMode(set),
+        defaultWeight: set.actualWeight ?? 0,
+        defaultReps: parseAthleteReps(set.plannedReps ?? set.actualReps),
+        defaultRpe: set.actualEffortValue ?? set.effortValue ?? null,
+        loggedSets: set.rowLoggedSets ?? 0,
+    };
+}
+
+function buildGroupRoundStep(
+    blockId: number,
+    blockName: string,
+    group: SessionExerciseGroupView,
+    roundIndex: number,
+    roundTotal: number,
+    roundSlots: AthleteRunRoundSlot[]
+): AthleteRunStep {
+    const first = roundSlots[0];
+    const firstSet = group.slots[0]?.sets[roundIndex - 1] ?? group.slots[0]?.sets[0];
+    return {
+        stepKey: `${group.groupId}-round-${roundIndex}`,
+        kind: "group_round",
+        groupKind: group.kind,
+        blockId,
+        blockName,
+        groupId: group.groupId,
+        badgeLabel: group.badgeLabel,
+        roundIndex,
+        roundTotal,
+        slotLabel: first?.slotLabel ?? "",
+        exerciseId: first?.exerciseId ?? 0,
+        exerciseName: first?.exerciseName ?? "",
+        setLabel: first?.setLabel ?? "",
+        setIndex: firstSet?.index ?? roundIndex,
+        instruction: GROUP_INSTRUCTION[group.kind] ?? "",
+        plannedLabel: first?.plannedLabel ?? "",
+        restAfterSeconds: group.restBetweenSeconds,
+        inputMode: first?.inputMode ?? "weight_reps",
+        blockExerciseId: first?.blockExerciseId ?? 0,
+        plannedWeight: firstSet?.plannedWeight ?? null,
+        defaultWeight: first?.defaultWeight ?? 0,
+        defaultReps: first?.defaultReps ?? 0,
+        defaultRpe: first?.defaultRpe ?? null,
+        loggedSets: first?.loggedSets ?? 0,
+        totalSetsInSlot: roundSlots.length,
+        timeCapMinutes: group.timeCapMinutes,
+        intervalSeconds: group.intervalSeconds,
+        slots: roundSlots,
+    };
+}
+
+/** Una pantalla UI por ronda (superset, giant_set). */
+function expandGroupRoundRobin(
+    blockId: number,
+    blockName: string,
+    group: SessionExerciseGroupView
+): AthleteRunStep[] {
+    const rounds = effectiveRounds(group);
+    const steps: AthleteRunStep[] = [];
+
+    for (let r = 0; r < rounds; r += 1) {
+        const roundSlots: AthleteRunRoundSlot[] = [];
+
+        for (const slot of group.slots) {
+            const set = slot.sets[r];
+            if (!set) continue;
+            roundSlots.push(
+                buildRoundSlot({
+                    blockId,
+                    blockName,
+                    group,
+                    slot,
+                    set,
+                    roundIndex: r + 1,
+                    roundTotal: rounds,
+                    kind: "group_round",
+                    restAfterSeconds: null,
+                })
+            );
+        }
+
+        if (roundSlots.length > 0) {
+            steps.push(buildGroupRoundStep(blockId, blockName, group, r + 1, rounds, roundSlots));
+        }
+    }
+
+    return steps;
+}
+
+/** Una pantalla UI por secuencia dropset (MAIN → DROP…). */
+function expandDropsetGroupRounds(
+    blockId: number,
+    blockName: string,
+    group: SessionExerciseGroupView
+): AthleteRunStep[] {
+    const slot = group.slots[0];
+    if (!slot) return [];
+
+    const rounds = effectiveRounds(group);
+    const steps: AthleteRunStep[] = [];
+
+    for (let r = 0; r < rounds; r += 1) {
+        const roundSlots: AthleteRunRoundSlot[] = [];
+
+        for (const set of slot.sets) {
+            roundSlots.push(
+                buildRoundSlot({
+                    blockId,
+                    blockName,
+                    group,
+                    slot,
+                    set,
+                    roundIndex: r + 1,
+                    roundTotal: rounds,
+                    kind: "group_round",
+                    restAfterSeconds: null,
+                })
+            );
+        }
+
+        if (roundSlots.length > 0) {
+            steps.push(buildGroupRoundStep(blockId, blockName, group, r + 1, rounds, roundSlots));
+        }
+    }
+
+    return steps;
+}
+
+/** Rondas × slots en orden — AMRAP / EMOM / for_time (Fase C, paso por slot). */
 function expandRoundRobinSlots(
     blockId: number,
     blockName: string,
@@ -172,40 +330,6 @@ function expandRoundRobinSlots(
                     roundTotal: rounds,
                     kind,
                     restAfterSeconds: isLastInRound ? group.restBetweenSeconds : null,
-                })
-            );
-        }
-    }
-
-    return steps;
-}
-
-function expandDropsetGroup(
-    blockId: number,
-    blockName: string,
-    group: SessionExerciseGroupView
-): AthleteRunStep[] {
-    const slot = group.slots[0];
-    if (!slot) return [];
-
-    const rounds = effectiveRounds(group);
-    const steps: AthleteRunStep[] = [];
-
-    for (let r = 0; r < rounds; r += 1) {
-        for (let stepIdx = 0; stepIdx < slot.sets.length; stepIdx += 1) {
-            const set = slot.sets[stepIdx];
-            const isLastInSequence = stepIdx === slot.sets.length - 1;
-            steps.push(
-                buildStep({
-                    blockId,
-                    blockName,
-                    group,
-                    slot,
-                    set,
-                    roundIndex: r + 1,
-                    roundTotal: rounds,
-                    kind: "dropset_step",
-                    restAfterSeconds: isLastInSequence ? group.restBetweenSeconds : null,
                 })
             );
         }
@@ -270,9 +394,9 @@ function expandGroup(
     switch (group.kind) {
         case "superset":
         case "giant_set":
-            return expandRoundRobinSlots(blockId, blockName, group, "parallel_slot");
+            return expandGroupRoundRobin(blockId, blockName, group);
         case "dropset":
-            return expandDropsetGroup(blockId, blockName, group);
+            return expandDropsetGroupRounds(blockId, blockName, group);
         case "for_time":
             return expandRoundRobinSlots(blockId, blockName, group, "sequential_slot");
         case "amrap":
@@ -296,6 +420,47 @@ export function buildAthleteRunSteps(view: SessionStructureView): AthleteRunStep
     }
 
     return steps;
+}
+
+/** Expande pasos UI a filas planas para offline / compat F1. */
+export function flattenRunStepsToFlatExercises(steps: AthleteRunStep[]): AthleteFlatExercise[] {
+    const flat: AthleteFlatExercise[] = [];
+
+    for (const step of steps) {
+        if (step.kind === "group_round" && step.slots?.length) {
+            for (const slot of step.slots) {
+                flat.push({
+                    stepKey: slot.stepKey,
+                    blockExerciseId: slot.blockExerciseId,
+                    exerciseId: slot.exerciseId,
+                    name: slot.exerciseName,
+                    blockName: step.blockName,
+                    groupKind: step.groupKind,
+                    setLabel: slot.setLabel,
+                    setIndex: step.roundIndex,
+                    totalSetsInSlot: step.roundTotal ?? 1,
+                    plannedLabel: slot.plannedLabel,
+                    plannedWeight: null,
+                    defaultWeight: slot.defaultWeight,
+                    defaultReps: slot.defaultReps,
+                    restSeconds: step.restAfterSeconds,
+                    defaultRpe: slot.defaultRpe,
+                    videoUrl: null,
+                    loggedSets: slot.loggedSets,
+                    badgeLabel: step.badgeLabel,
+                    groupId: step.groupId,
+                    roundIndex: step.roundIndex,
+                    roundTotal: step.roundTotal,
+                    slotLabel: slot.slotLabel,
+                    instruction: step.instruction || undefined,
+                });
+            }
+            continue;
+        }
+        flat.push(runStepToFlatExercise(step));
+    }
+
+    return flat;
 }
 
 /** Adapta un paso de run al contrato offline/logger existente (F1). */
@@ -325,4 +490,27 @@ export function runStepToFlatExercise(step: AthleteRunStep): AthleteFlatExercise
         slotLabel: step.slotLabel,
         instruction: step.instruction || undefined,
     };
+}
+
+/**
+ * Descanso tras confirmar el paso actual — regla canónica §5a.
+ * Sin paso siguiente → null (fin de sesión; no overlay aunque el bloque prescriba rest).
+ */
+export function resolveRestAfterCompletingRunStep(
+    current: AthleteRunStep,
+    next: AthleteRunStep | undefined
+): number | null {
+    if (!next) return null;
+
+    if (current.kind === "group_round") {
+        const rest = current.restAfterSeconds;
+        return rest != null && rest > 0 ? rest : null;
+    }
+
+    const flatCurrent = runStepToFlatExercise(current);
+    const flatNext = runStepToFlatExercise(next);
+    if (!shouldRestAfterCompletingStep(flatCurrent, flatNext)) return null;
+
+    const seconds = flatCurrent.restSeconds;
+    return seconds != null && seconds > 0 ? seconds : null;
 }

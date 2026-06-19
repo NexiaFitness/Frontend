@@ -10,7 +10,7 @@ export interface PostSessionCompletionRingProps {
     strokeClass: string;
     trackClass: string;
     valueClass: string;
-    size?: "sm" | "md";
+    size?: "sm" | "md" | "lg";
 }
 
 const SIZE_CONFIG = {
@@ -30,6 +30,15 @@ const SIZE_CONFIG = {
         radius: 38,
         strokeWidth: 5,
         pct: "text-xl",
+        label: "text-[10px]",
+    },
+    lg: {
+        box: "size-44",
+        viewBox: "0 0 176 176",
+        cx: 88,
+        radius: 78,
+        strokeWidth: 5,
+        pct: "text-4xl",
         label: "text-[10px]",
     },
 } as const;

@@ -8,7 +8,7 @@ import {
     groupBlockExercisesIntoGroups,
     type SessionStructureView,
 } from "../../sessionProgramming/sessionBlockView";
-import { buildAthleteRunSteps } from "./buildAthleteRunSteps";
+import { buildAthleteRunSteps, resolveRestAfterCompletingRunStep } from "./buildAthleteRunSteps";
 
 function block(
     id: number,
@@ -169,7 +169,7 @@ function viewFromBlock(
 }
 
 describe("buildAthleteRunSteps superset", () => {
-    it("ordena A1·R1 → A2·R1 → A1·R2 → A2·R2 → A1·R3 → A2·R3", () => {
+    it("emite 1 paso group_round por ronda (A1+A2 juntos)", () => {
         const lines = [
             parallelLine(1, 8, 1, 3, "10"),
             parallelLine(2, 12, 2, 3, "8"),
@@ -180,28 +180,21 @@ describe("buildAthleteRunSteps superset", () => {
         });
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps).toHaveLength(6);
-        expect(steps.map((s) => `${s.slotLabel}·${s.setLabel}`)).toEqual([
-            "A1·R1",
-            "A2·R1",
-            "A1·R2",
-            "A2·R2",
-            "A1·R3",
-            "A2·R3",
-        ]);
-        expect(steps[0]?.exerciseName).toBe("Press banca");
-        expect(steps[1]?.exerciseName).toBe("Remo");
+        expect(steps).toHaveLength(3);
+        expect(steps.every((s) => s.kind === "group_round")).toBe(true);
+        expect(steps.map((s) => s.roundIndex)).toEqual([1, 2, 3]);
+        expect(steps[0]?.slots?.map((s) => s.slotLabel)).toEqual(["A1", "A2"]);
+        expect(steps[0]?.slots?.map((s) => s.exerciseName)).toEqual(["Press banca", "Remo"]);
+        expect(steps[0]?.slots?.map((s) => s.setLabel)).toEqual(["R1", "R1"]);
     });
 
-    it("descanso solo al cerrar ronda, no entre A1 y A2", () => {
+    it("descanso al cerrar ronda (restBetweenSeconds en el paso)", () => {
         const lines = [parallelLine(1, 8, 1), parallelLine(2, 12, 2)];
         const view = viewFromBlock(block(62, SET_TYPE.SUPERSET, 2), lines);
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps[0]?.restAfterSeconds).toBeNull();
+        expect(steps[0]?.restAfterSeconds).toBe(90);
         expect(steps[1]?.restAfterSeconds).toBe(90);
-        expect(steps[2]?.restAfterSeconds).toBeNull();
-        expect(steps[3]?.restAfterSeconds).toBe(90);
     });
 
     it("stepKey estable y único por ronda", () => {
@@ -210,13 +203,13 @@ describe("buildAthleteRunSteps superset", () => {
         const steps = buildAthleteRunSteps(view);
         const keys = steps.map((s) => s.stepKey);
         expect(new Set(keys).size).toBe(keys.length);
-        expect(keys[0]).toContain("-r1-");
-        expect(keys[2]).toContain("-r2-");
+        expect(keys[0]).toContain("-round-1");
+        expect(keys[1]).toContain("-round-2");
     });
 });
 
 describe("buildAthleteRunSteps dropset", () => {
-    it("ordena MAIN → DROP 1 → DROP 2 por ronda", () => {
+    it("emite 1 paso group_round por ronda (MAIN → DROP 1 → DROP 2)", () => {
         const lines = [
             dropLine(275, 0, 1, "10", 2),
             dropLine(276, 1, 2, "7"),
@@ -227,18 +220,13 @@ describe("buildAthleteRunSteps dropset", () => {
         });
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps).toHaveLength(6);
-        expect(steps.map((s) => s.setLabel)).toEqual([
-            "MAIN",
-            "DROP 1",
-            "DROP 2",
-            "MAIN",
-            "DROP 1",
-            "DROP 2",
-        ]);
+        expect(steps).toHaveLength(2);
+        expect(steps.every((s) => s.kind === "group_round")).toBe(true);
+        expect(steps[0]?.slots?.map((s) => s.setLabel)).toEqual(["MAIN", "DROP 1", "DROP 2"]);
+        expect(steps[1]?.slots?.map((s) => s.setLabel)).toEqual(["MAIN", "DROP 1", "DROP 2"]);
     });
 
-    it("descanso solo tras DROP 2 de cada ronda", () => {
+    it("descanso al cerrar cada ronda dropset", () => {
         const lines = [
             dropLine(275, 0, 1, "10", 2),
             dropLine(276, 1, 2, "7"),
@@ -247,11 +235,40 @@ describe("buildAthleteRunSteps dropset", () => {
         const view = viewFromBlock(block(62, SET_TYPE.DROPSET, 2), lines);
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps[0]?.restAfterSeconds).toBeNull();
-        expect(steps[1]?.restAfterSeconds).toBeNull();
-        expect(steps[2]?.restAfterSeconds).toBe(60);
-        expect(steps[3]?.restAfterSeconds).toBeNull();
-        expect(steps[5]?.restAfterSeconds).toBe(60);
+        expect(steps[0]?.restAfterSeconds).toBe(60);
+        expect(steps[1]?.restAfterSeconds).toBe(60);
+    });
+
+    it("resolveRestAfterCompletingRunStep: último paso → sin descanso aunque prescrito", () => {
+        const lines = [
+            dropLine(275, 0, 1, "10", 2),
+            dropLine(276, 1, 2, "7"),
+            dropLine(296, 2, 3, "5"),
+        ];
+        const view = viewFromBlock(block(62, SET_TYPE.DROPSET, 2), lines);
+        const steps = buildAthleteRunSteps(view);
+
+        expect(resolveRestAfterCompletingRunStep(steps[0]!, steps[1]!)).toBe(60);
+        expect(resolveRestAfterCompletingRunStep(steps[1]!, undefined)).toBeNull();
+    });
+
+    it("slotLabel único por drop (MAIN, DROP 1, DROP 2) — no duplicar MAIN", () => {
+        const lines = [
+            dropLine(275, 0, 1, "10", 2),
+            dropLine(276, 1, 2, "7"),
+            dropLine(296, 2, 3, "5"),
+        ];
+        const view = viewFromBlock(block(62, SET_TYPE.DROPSET, 2), lines, {
+            8: "French press",
+        });
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps[0]?.slots?.map((s) => s.slotLabel)).toEqual(["MAIN", "DROP 1", "DROP 2"]);
+        expect(steps[0]?.slots?.map((s) => s.exerciseName)).toEqual([
+            "French press",
+            "French press",
+            "French press",
+        ]);
     });
 });
 
@@ -269,7 +286,7 @@ describe("buildAthleteRunSteps single_set", () => {
 });
 
 describe("buildAthleteRunSteps vs flatten legacy", () => {
-    it("superset expandido 6 filas no produce orden slot-major", () => {
+    it("superset 3 rondas produce 3 pasos group_round, no slot-major", () => {
         const lines = [
             parallelLine(1, 8, 1, 3, "10"),
             parallelLine(2, 8, 2, 3, "10"),
@@ -281,13 +298,9 @@ describe("buildAthleteRunSteps vs flatten legacy", () => {
         const view = viewFromBlock(block(62, SET_TYPE.SUPERSET, 3), lines);
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps.map((s) => s.slotLabel)).toEqual([
-            "A1",
-            "A2",
-            "A1",
-            "A2",
-            "A1",
-            "A2",
-        ]);
+        expect(steps).toHaveLength(3);
+        expect(steps.every((s) => s.kind === "group_round")).toBe(true);
+        expect(steps[0]?.slots?.map((s) => s.slotLabel)).toEqual(["A1", "A2"]);
+        expect(resolveRestAfterCompletingRunStep(steps[2]!, undefined)).toBeNull();
     });
 });

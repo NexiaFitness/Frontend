@@ -79,25 +79,23 @@ export const AthleteSessionSummaryPage: React.FC = () => {
                 <PostSessionExercisesPanel exercises={report.exercises} />
             </div>
 
-            <AthleteFixedFooter size="double">
+            <AthleteFixedFooter size={report.has_feedback ? "double" : "single"}>
                 <Button
                     variant="primary"
                     className={cn(ATHLETE_PRIMARY_CTA, "font-semibold")}
-                    onClick={() =>
-                        report.has_feedback
-                            ? navigate("/dashboard/feedback")
-                            : navigate(`/dashboard/sessions/${sessionId}/feedback`)
-                    }
-                >
-                    {report.has_feedback ? "Ver lo que enviaste" : "Contar cómo me sentí"}
-                </Button>
-                <Button
-                    variant="secondary"
-                    className="min-h-touch-athlete w-full"
                     onClick={() => navigate("/dashboard")}
                 >
                     Volver al inicio
                 </Button>
+                {report.has_feedback && (
+                    <Button
+                        variant="secondary"
+                        className="min-h-touch-athlete w-full"
+                        onClick={() => navigate("/dashboard/feedback")}
+                    >
+                        Ver mis notas
+                    </Button>
+                )}
             </AthleteFixedFooter>
         </div>
     );

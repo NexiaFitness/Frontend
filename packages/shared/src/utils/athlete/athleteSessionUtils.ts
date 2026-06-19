@@ -10,7 +10,7 @@ import type { TrainingSession } from "../../types/trainingSessions";
 import type { ClientFeedback } from "../../types/training";
 import type { SessionStructureView } from "../../sessionProgramming/sessionBlockView";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
-import { buildAthleteRunSteps, runStepToFlatExercise } from "./buildAthleteRunSteps";
+import { buildAthleteRunSteps, flattenRunStepsToFlatExercises } from "./buildAthleteRunSteps";
 import {
     formatTrainerNoteForAthlete,
     hasHumanTrainerNote,
@@ -328,7 +328,7 @@ export function parseAthleteReps(value: string | number | null | undefined): num
     return Number.isFinite(n) && n > 0 ? n : 8;
 }
 
-/** Aplana la estructura de sesión en pasos de logger (1 paso = 1 serie). */
+/** Aplana la estructura de sesión en filas para offline (expande group_round). */
 export function flattenAthleteExercises(view: SessionStructureView): AthleteFlatExercise[] {
-    return buildAthleteRunSteps(view).map(runStepToFlatExercise);
+    return flattenRunStepsToFlatExercises(buildAthleteRunSteps(view));
 }

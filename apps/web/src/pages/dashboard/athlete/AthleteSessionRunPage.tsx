@@ -1,5 +1,5 @@
 /**
- * AthleteSessionRunPage.tsx — Ejecución sesión atleta (F1 100%, DESIGN §7.4).
+ * AthleteSessionRunPage.tsx — Ejecución sesión atleta (F1 100%, DESIGN §7.4, §5a/B.2 rest).
  */
 
 import React, { useEffect, useMemo, useState } from "react";
@@ -10,8 +10,11 @@ import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryCon
 import { AthletePrBanner } from "@/components/athlete/AthletePrBanner";
 import { OfflineSessionBadge } from "@/components/athlete/OfflineSessionBadge";
 import { ExerciseStepView } from "@/components/athlete/execution/ExerciseStepView";
+import { GroupRoundStepView } from "@/components/athlete/execution/GroupRoundStepView";
+import { AthleteRunStepShell } from "@/components/athlete/execution/AthleteRunStepShell";
+import { AthleteExerciseTechniqueSheet } from "@/components/athlete/execution/AthleteExerciseTechniqueSheet";
+import type { AthleteExerciseTechniqueTarget } from "@/components/athlete/execution/athleteExerciseTechniqueUtils";
 import { RestTimerOverlay } from "@/components/athlete/execution/RestTimerOverlay";
-import { AthleteStickyActionBar } from "@/components/athlete/layout/AthleteStickyActionBar";
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
 import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
@@ -22,7 +25,6 @@ import { formatAthleteLastPerformanceDate } from "@/utils/athlete/formatAthleteL
 import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
-import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import {
     ATHLETE_PAGE_X,
     ATHLETE_STICKY_FOOTER_CONTENT_PB,
@@ -37,12 +39,17 @@ export const AthleteSessionRunPage: React.FC = () => {
     const { clientId } = useAthleteContext();
     const { activeInjuries, hasActiveInjuries } = useAthleteInjuries();
     const [injurySheetOpen, setInjurySheetOpen] = useState(false);
+    const [techniqueTarget, setTechniqueTarget] = useState<AthleteExerciseTechniqueTarget | null>(
+        null
+    );
 
     const {
         isOnline,
         pendingCount,
-        flatExercises,
+        runSteps,
         step,
+        currentRunStep,
+        isGroupRound,
         current,
         weight,
         reps,
@@ -50,17 +57,17 @@ export const AthleteSessionRunPage: React.FC = () => {
         setWeight,
         setReps,
         setRpe,
+        slotLogs,
+        updateSlotLog,
         saving,
         completing,
-        restSeconds,
-        setRestSeconds,
+        restFlow,
         groupContext,
-        handleSaveSet,
-        handleRestComplete,
         handleFinish,
         isLoading,
         isLastStep,
-        showSaveSetButton,
+        showStepActions,
+        isCurrentStepSaved,
         prCelebration,
         lastPerformance,
         applyLastPerformance,
@@ -68,16 +75,33 @@ export const AthleteSessionRunPage: React.FC = () => {
         applySuggestedLoad,
     } = useAthleteSessionRun({
         sessionId,
-        onSetSaved: (result) => {
+        onSetSaved: (result, { isGroupRound, groupKind }) => {
             if (typeof navigator !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
                 navigator.vibrate?.(20);
             }
+            const isDropset = groupKind === "dropset";
+            const savedLabel = isGroupRound
+                ? isDropset
+                    ? "Dropset registrado"
+                    : "Ronda registrada"
+                : "Serie registrada";
+            const savedLocalLabel = isGroupRound
+                ? isDropset
+                    ? "Dropset guardado localmente"
+                    : "Ronda guardada localmente"
+                : "Serie guardada localmente";
+            const queuedLabel = isGroupRound
+                ? isDropset
+                    ? "Dropset en cola — se sincronizará pronto"
+                    : "Ronda en cola — se sincronizará pronto"
+                : "Serie en cola — se sincronizará pronto";
+
             if (result === "offline") {
-                showToast("info", "Serie guardada localmente");
+                showToast("info", savedLocalLabel);
             } else if (result === "queued") {
-                showToast("info", "Serie en cola — se sincronizará pronto");
+                showToast("info", queuedLabel);
             } else {
-                showToast("success", "Serie registrada");
+                showToast("success", savedLabel);
             }
         },
         onSyncSuccess: () => showToast("success", "Sesión sincronizada"),
@@ -104,23 +128,22 @@ export const AthleteSessionRunPage: React.FC = () => {
         navigator.vibrate?.(50);
     }, [prCelebration, isDesktop, showToast]);
 
-    const currentExerciseRef = useMemo(
-        () =>
-            current
-                ? [{ exerciseId: current.exerciseId, exerciseName: current.name }]
-                : [],
-        [current]
-    );
+    const currentExerciseRef = useMemo(() => {
+        if (!currentRunStep) return [];
+        if (isGroupRound && currentRunStep.slots?.length) {
+            return currentRunStep.slots.map((slot) => ({
+                exerciseId: slot.exerciseId,
+                exerciseName: slot.exerciseName,
+            }));
+        }
+        return [{ exerciseId: currentRunStep.exerciseId, exerciseName: currentRunStep.exerciseName }];
+    }, [currentRunStep, isGroupRound]);
 
     const { conflictByExerciseId } = useAthleteSessionInjuryAlerts(
         clientId,
         currentExerciseRef,
-        hasActiveInjuries && current != null
+        hasActiveInjuries && currentRunStep != null
     );
-
-    const currentConflict = current
-        ? conflictByExerciseId.get(current.exerciseId)
-        : undefined;
 
     const handleConsultTrainer = () => {
         setInjurySheetOpen(true);
@@ -131,11 +154,26 @@ export const AthleteSessionRunPage: React.FC = () => {
             ? formatAthleteLastPerformanceDate(lastPerformance.performed_at)
             : null;
 
+    const desktopInjuryConflict =
+        !isGroupRound && current ? conflictByExerciseId.get(current.exerciseId) : undefined;
+
+    const mobileInjuryConflicts = useMemo(() => {
+        if (isDesktop || !isGroupRound) return undefined;
+        const map = new Map<
+            number,
+            { alert: NonNullable<ReturnType<typeof conflictByExerciseId.get>>["alert"]; onConsultTrainer: () => void }
+        >();
+        for (const [exerciseId, conflict] of conflictByExerciseId) {
+            map.set(exerciseId, { alert: conflict.alert, onConsultTrainer: handleConsultTrainer });
+        }
+        return map;
+    }, [conflictByExerciseId, isDesktop, isGroupRound]);
+
     if (isLoading) {
         return <AthletePageLoading variant="session-run" />;
     }
 
-    if (flatExercises.length === 0) {
+    if (runSteps.length === 0) {
         return (
             <div className="space-y-4 px-4 pb-24 pt-4">
                 {isDesktop ? (
@@ -159,11 +197,12 @@ export const AthleteSessionRunPage: React.FC = () => {
         );
     }
 
-    if (!current) {
+    if (!currentRunStep) {
         return null;
     }
 
-    // V05: strip móvil solo offline/sync — lesión ya informada en preview; conflicto → callout bajo título
+    const showFinishSession = isLastStep && isCurrentStepSaved;
+
     const contextStripInjuries: typeof activeInjuries = [];
 
     return (
@@ -188,62 +227,89 @@ export const AthleteSessionRunPage: React.FC = () => {
                 />
             )}
 
-            {isDesktop && hasActiveInjuries && currentConflict && (
+            {isDesktop && hasActiveInjuries && desktopInjuryConflict && current && (
                 <AthleteExerciseInjuryAlert
                     exerciseName={current.name}
-                    alert={currentConflict.alert}
+                    alert={desktopInjuryConflict.alert}
                     onConsultTrainer={handleConsultTrainer}
                 />
             )}
 
-            <ExerciseStepView
-                exercise={current}
-                step={step}
-                totalSteps={flatExercises.length}
-                weight={weight}
-                reps={reps}
-                rpe={rpe}
-                onWeightChange={setWeight}
-                onRepsChange={setReps}
-                onRpeChange={setRpe}
-                injuryConflict={
-                    !isDesktop && currentConflict
-                        ? {
-                              alert: currentConflict.alert,
-                              onConsultTrainer: handleConsultTrainer,
-                          }
-                        : undefined
+            <AthleteRunStepShell
+                showRestChip={restFlow.showRestChip}
+                remainingSeconds={restFlow.remainingSeconds}
+                stickyPrimaryLabel={
+                    showStepActions ? restFlow.stickyPrimaryLabel : undefined
                 }
-                lastPerformance={lastPerformance}
-                lastPerformanceDateLabel={lastPerformanceDateLabel}
-                onApplyLastPerformance={applyLastPerformance}
-                suggestedLoad={suggestedLoad}
-                onApplySuggestedLoad={applySuggestedLoad}
-                groupContext={groupContext}
-            />
-
-            <AthleteStickyActionBar
-                primaryLabel={showSaveSetButton ? "Serie completada" : undefined}
-                primaryDisabled={saving}
-                primaryLoading={saving}
-                onPrimary={showSaveSetButton ? handleSaveSet : undefined}
-                primaryClassName={ATHLETE_PRIMARY_CTA}
-                secondaryLabel={isLastStep ? "Finalizar sesión" : undefined}
+                stickyPrimaryDisabled={restFlow.stickyPrimaryDisabled}
+                stickyPrimaryLoading={restFlow.stickyPrimaryLoading || saving}
+                onStickyPrimary={
+                    showStepActions ? restFlow.stickyPrimaryAction : undefined
+                }
+                stickyPrimaryGlow={
+                    showStepActions &&
+                    restFlow.phase === "doing" &&
+                    restFlow.hasRestTimer
+                }
+                secondaryLabel={showFinishSession ? "Finalizar sesión" : undefined}
                 secondaryDisabled={completing}
                 secondaryLoading={completing}
-                onSecondary={isLastStep ? handleFinish : undefined}
-            />
+                onSecondary={showFinishSession ? handleFinish : undefined}
+            >
+                {isGroupRound && groupContext ? (
+                    <GroupRoundStepView
+                        runStep={currentRunStep}
+                        step={step}
+                        totalSteps={runSteps.length}
+                        groupContext={groupContext}
+                        slotLogs={slotLogs}
+                        onSlotChange={updateSlotLog}
+                        restPhase={restFlow.phase}
+                        showLogger={restFlow.showLogger}
+                        onViewTechnique={setTechniqueTarget}
+                        injuryConflicts={mobileInjuryConflicts}
+                        sessionReadyToFinish={showFinishSession}
+                    />
+                ) : current ? (
+                    <ExerciseStepView
+                        exercise={current}
+                        step={step}
+                        totalSteps={runSteps.length}
+                        weight={weight}
+                        reps={reps}
+                        rpe={rpe}
+                        onWeightChange={setWeight}
+                        onRepsChange={setReps}
+                        onRpeChange={setRpe}
+                        restPhase={restFlow.phase}
+                        injuryConflict={
+                            !isDesktop && desktopInjuryConflict
+                                ? {
+                                      alert: desktopInjuryConflict.alert,
+                                      onConsultTrainer: handleConsultTrainer,
+                                  }
+                                : undefined
+                        }
+                        lastPerformance={lastPerformance}
+                        lastPerformanceDateLabel={lastPerformanceDateLabel}
+                        onApplyLastPerformance={applyLastPerformance}
+                        suggestedLoad={suggestedLoad}
+                        onApplySuggestedLoad={applySuggestedLoad}
+                        groupContext={groupContext}
+                        showLogger={restFlow.showLogger}
+                        onViewTechnique={setTechniqueTarget}
+                        sessionReadyToFinish={showFinishSession}
+                    />
+                ) : null}
+            </AthleteRunStepShell>
 
-            {restSeconds != null && restSeconds > 0 && (
+            {restFlow.showRestOverlay ? (
                 <RestTimerOverlay
-                    seconds={restSeconds}
-                    onComplete={handleRestComplete}
-                    onSkip={() => {
-                        setRestSeconds(null);
-                        handleRestComplete();
-                    }}
+                    remainingSeconds={restFlow.remainingSeconds}
+                    totalSeconds={restFlow.restTotalSeconds}
+                    onSkip={restFlow.skipRest}
                 />
-            )}
+            ) : null}
 
             {hasActiveInjuries && (
                 <AthleteInjuryConsultSheet
@@ -254,6 +320,11 @@ export const AthleteSessionRunPage: React.FC = () => {
                     sessionCompleted={false}
                 />
             )}
+
+            <AthleteExerciseTechniqueSheet
+                target={techniqueTarget}
+                onClose={() => setTechniqueTarget(null)}
+            />
         </div>
     );
 };
