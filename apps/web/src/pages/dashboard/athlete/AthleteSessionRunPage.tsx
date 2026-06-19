@@ -2,10 +2,11 @@
  * AthleteSessionRunPage.tsx — Ejecución sesión atleta (F1 100%, DESIGN §7.4).
  */
 
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { AthleteContextStrip } from "@/components/athlete/AthleteContextStrip";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
+import { AthleteInjuryConsultSheet } from "@/components/athlete/AthleteInjuryConsultSheet";
 import { AthletePrBanner } from "@/components/athlete/AthletePrBanner";
 import { OfflineSessionBadge } from "@/components/athlete/OfflineSessionBadge";
 import { ExerciseStepView } from "@/components/athlete/execution/ExerciseStepView";
@@ -21,7 +22,11 @@ import { formatAthleteLastPerformanceDate } from "@/utils/athlete/formatAthleteL
 import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
-import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
+import {
+    ATHLETE_PAGE_X,
+    ATHLETE_STICKY_FOOTER_CONTENT_PB,
+} from "@/components/athlete/layout/athleteLayoutClasses";
 
 export const AthleteSessionRunPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -31,6 +36,7 @@ export const AthleteSessionRunPage: React.FC = () => {
     const isDesktop = useIsAthleteDesktopLayout();
     const { clientId } = useAthleteContext();
     const { activeInjuries, hasActiveInjuries } = useAthleteInjuries();
+    const [injurySheetOpen, setInjurySheetOpen] = useState(false);
 
     const {
         isOnline,
@@ -48,6 +54,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         completing,
         restSeconds,
         setRestSeconds,
+        groupContext,
         handleSaveSet,
         handleRestComplete,
         handleFinish,
@@ -62,6 +69,9 @@ export const AthleteSessionRunPage: React.FC = () => {
     } = useAthleteSessionRun({
         sessionId,
         onSetSaved: (result) => {
+            if (typeof navigator !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+                navigator.vibrate?.(20);
+            }
             if (result === "offline") {
                 showToast("info", "Serie guardada localmente");
             } else if (result === "queued") {
@@ -88,7 +98,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 ? ` (antes ${prCelebration.previousMaxWeight} kg)`
                 : "";
         showToast(
-            "success",
+            "warning",
             `¡Nuevo récord! ${prCelebration.exerciseName}: ${prCelebration.weight} kg${prev}`
         );
         navigator.vibrate?.(50);
@@ -113,7 +123,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         : undefined;
 
     const handleConsultTrainer = () => {
-        navigate("/dashboard/feedback");
+        setInjurySheetOpen(true);
     };
 
     const lastPerformanceDateLabel =
@@ -157,7 +167,9 @@ export const AthleteSessionRunPage: React.FC = () => {
     const contextStripInjuries: typeof activeInjuries = [];
 
     return (
-        <div className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 lg:pb-8`}>
+        <div
+            className={`flex min-h-full flex-col ${ATHLETE_PAGE_X} pt-4 ${ATHLETE_STICKY_FOOTER_CONTENT_PB} lg:pb-8`}
+        >
             {isDesktop ? (
                 <OfflineSessionBadge isOnline={isOnline} pendingCount={pendingCount} />
             ) : (
@@ -207,6 +219,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 onApplyLastPerformance={applyLastPerformance}
                 suggestedLoad={suggestedLoad}
                 onApplySuggestedLoad={applySuggestedLoad}
+                groupContext={groupContext}
             />
 
             <AthleteStickyActionBar
@@ -214,6 +227,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 primaryDisabled={saving}
                 primaryLoading={saving}
                 onPrimary={showSaveSetButton ? handleSaveSet : undefined}
+                primaryClassName={ATHLETE_PRIMARY_CTA}
                 secondaryLabel={isLastStep ? "Finalizar sesión" : undefined}
                 secondaryDisabled={completing}
                 secondaryLoading={completing}
@@ -228,6 +242,16 @@ export const AthleteSessionRunPage: React.FC = () => {
                         setRestSeconds(null);
                         handleRestComplete();
                     }}
+                />
+            )}
+
+            {hasActiveInjuries && (
+                <AthleteInjuryConsultSheet
+                    isOpen={injurySheetOpen}
+                    onClose={() => setInjurySheetOpen(false)}
+                    injuries={activeInjuries}
+                    sessionId={sessionId}
+                    sessionCompleted={false}
                 />
             )}
         </div>

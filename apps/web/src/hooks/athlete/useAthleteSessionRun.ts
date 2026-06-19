@@ -18,6 +18,11 @@ import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
 import type { AthleteFlatExercise } from "@nexia/shared/offline";
 import { flattenAthleteExercises } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import {
+    buildAthleteRunGroupContext,
+    shouldRestAfterCompletingStep,
+    type AthleteRunGroupContextView,
+} from "@nexia/shared/utils/athlete/athleteRunGroupContext";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
 
 export interface AthletePrCelebration {
@@ -134,6 +139,12 @@ export function useAthleteSessionRun({
 
     const current = flatExercises[step];
     const currentStepKey = current?.stepKey ?? null;
+    const nextExercise = step < flatExercises.length - 1 ? flatExercises[step + 1] : undefined;
+
+    const groupContext: AthleteRunGroupContextView | null = useMemo(() => {
+        if (!currentStepKey) return null;
+        return buildAthleteRunGroupContext(flatExercises, currentStepKey);
+    }, [flatExercises, currentStepKey]);
 
     const { evaluatePr } = useAthleteExercisePr(
         clientId,
@@ -228,7 +239,9 @@ export function useAthleteSessionRun({
 
             onSetSaved?.(result);
 
-            if (current.restSeconds && current.restSeconds > 0 && step < flatExercises.length - 1) {
+            const shouldRest = shouldRestAfterCompletingStep(current, nextExercise);
+
+            if (shouldRest && step < flatExercises.length - 1) {
                 setRestSeconds(current.restSeconds);
             } else if (step < flatExercises.length - 1) {
                 setStep((s) => s + 1);
@@ -248,6 +261,7 @@ export function useAthleteSessionRun({
         evaluatePr,
         reps,
         rpe,
+        nextExercise,
         step,
         weight,
     ]);
@@ -290,6 +304,7 @@ export function useAthleteSessionRun({
         flatExercises,
         step,
         current,
+        groupContext,
         weight,
         reps,
         rpe,

@@ -1,33 +1,49 @@
 /**
- * AthleteSuggestedLoadHint.tsx — Sugerencia de carga rule-based (F3d-FE-03).
+ * AthleteSuggestedLoadHint.tsx — Sugerencia de carga premium (F3d-FE-03).
  */
 
 import React from "react";
 import { Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import {
+    ATHLETE_RUN_FIELD_HINT,
+    ATHLETE_RUN_HINT_APPLY_BTN,
+    ATHLETE_RUN_HINT_VALUE,
+    ATHLETE_RUN_LOGGER_SECTION_LABEL,
+} from "./athleteRunPresentation";
 
 export interface AthleteSuggestedLoadHintProps {
     suggestedWeightKg: number;
     explanation: string;
     onApply: () => void;
+    className?: string;
 }
 
 export const AthleteSuggestedLoadHint: React.FC<AthleteSuggestedLoadHintProps> = ({
     suggestedWeightKg,
     explanation,
     onApply,
+    className,
 }) => {
     return (
-        <div className="flex items-start gap-3 rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3">
-            <Sparkles className="mt-0.5 size-5 shrink-0 text-emerald-600 dark:text-emerald-400" aria-hidden />
-            <div className="min-w-0 flex-1 space-y-2">
-                <p className="text-sm text-foreground">
-                    <span className="font-medium">Sugerencia:</span> {suggestedWeightKg} kg
-                </p>
-                <p className="text-caption text-muted-foreground">{explanation}</p>
-                <Button type="button" variant="secondary" size="sm" onClick={onApply}>
-                    Usar sugerencia
-                </Button>
+        <div className={cn("relative", className)}>
+            <NexiaGlassAccentRim />
+            <div className="relative z-[1] space-y-3">
+                <div className="flex items-center gap-2">
+                    <Sparkles className="size-4 shrink-0 text-primary/80" aria-hidden />
+                    <p className={ATHLETE_RUN_LOGGER_SECTION_LABEL}>Sugerencia de carga</p>
+                </div>
+
+                <div className="flex items-end justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                        <p className={ATHLETE_RUN_HINT_VALUE}>{suggestedWeightKg} kg</p>
+                        <p className={ATHLETE_RUN_FIELD_HINT}>{explanation}</p>
+                    </div>
+                    <button type="button" className={ATHLETE_RUN_HINT_APPLY_BTN} onClick={onApply}>
+                        Usar
+                    </button>
+                </div>
             </div>
         </div>
     );

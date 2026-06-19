@@ -27,6 +27,13 @@ export interface AthleteFlatExercise {
     videoUrl: string | null;
     /** Series ya registradas en backend para esta fila. */
     loggedSets: number;
+    /** Contexto V05 Fase B — opcional en snapshots offline antiguos. */
+    badgeLabel?: string;
+    groupId?: string;
+    roundIndex?: number;
+    roundTotal?: number | null;
+    slotLabel?: string;
+    instruction?: string;
 }
 
 /** Snapshot de sesión persistido al abrir (lectura offline). */

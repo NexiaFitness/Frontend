@@ -4,6 +4,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
 import { AthleteFixedFooter } from "./AthleteFixedFooter";
 import type { AthleteStickyFooterSize } from "./athleteLayoutClasses";
 
@@ -12,6 +13,7 @@ export interface AthleteStickyActionBarProps {
     primaryDisabled?: boolean;
     primaryLoading?: boolean;
     onPrimary?: () => void;
+    primaryClassName?: string;
     secondaryLabel?: string;
     secondaryDisabled?: boolean;
     secondaryLoading?: boolean;
@@ -23,6 +25,7 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
     primaryDisabled,
     primaryLoading,
     onPrimary,
+    primaryClassName,
     secondaryLabel,
     secondaryDisabled,
     secondaryLoading,
@@ -38,7 +41,10 @@ export const AthleteStickyActionBar: React.FC<AthleteStickyActionBarProps> = ({
             {hasPrimary && (
                 <Button
                     variant="primary"
-                    className="min-h-touch-athlete w-full active:scale-[0.98]"
+                    className={cn(
+                        "min-h-touch-athlete w-full active:scale-[0.98]",
+                        primaryClassName
+                    )}
                     disabled={primaryDisabled || primaryLoading}
                     onClick={onPrimary}
                 >

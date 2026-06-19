@@ -1,10 +1,17 @@
 /**
- * AthleteLastPerformanceHint.tsx — Hint "Última vez" en run (F3c-FE-01).
+ * AthleteLastPerformanceHint.tsx — Hint "Última vez" premium (F3c-FE-01).
  */
 
 import React from "react";
-import { Lightbulb } from "lucide-react";
-import { Button } from "@/components/ui/buttons";
+import { History } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import {
+    ATHLETE_RUN_HINT_APPLY_BTN,
+    ATHLETE_RUN_HINT_VALUE,
+    ATHLETE_RUN_LOGGER_SECTION_LABEL,
+    formatRunLastPerformanceLine,
+} from "./athleteRunPresentation";
 
 export interface AthleteLastPerformanceHintProps {
     weightKg: number;
@@ -12,13 +19,7 @@ export interface AthleteLastPerformanceHintProps {
     rpe: number | null;
     performedAtLabel: string;
     onApply: () => void;
-}
-
-function formatHintLine(weightKg: number, reps: number | null, rpe: number | null): string {
-    const parts = [`${weightKg} kg`];
-    if (reps != null) parts.push(`${reps} reps`);
-    if (rpe != null) parts.push(`RPE ${rpe}`);
-    return parts.join(" · ");
+    className?: string;
 }
 
 export const AthleteLastPerformanceHint: React.FC<AthleteLastPerformanceHintProps> = ({
@@ -27,19 +28,30 @@ export const AthleteLastPerformanceHint: React.FC<AthleteLastPerformanceHintProp
     rpe,
     performedAtLabel,
     onApply,
+    className,
 }) => {
+    const valueLine = formatRunLastPerformanceLine(weightKg, reps, rpe);
+
     return (
-        <div className="flex items-start gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3">
-            <Lightbulb className="mt-0.5 size-5 shrink-0 text-primary" aria-hidden />
-            <div className="min-w-0 flex-1 space-y-2">
-                <p className="text-sm text-foreground">
-                    <span className="font-medium">Última vez:</span>{" "}
-                    {formatHintLine(weightKg, reps, rpe)}
-                    {performedAtLabel ? ` (${performedAtLabel})` : ""}
-                </p>
-                <Button type="button" variant="secondary" size="sm" onClick={onApply}>
-                    Usar
-                </Button>
+        <div className={cn("relative", className)}>
+            <NexiaGlassAccentRim />
+            <div className="relative z-[1] space-y-3">
+                <div className="flex items-center gap-2">
+                    <History className="size-4 shrink-0 text-primary/80" aria-hidden />
+                    <p className={ATHLETE_RUN_LOGGER_SECTION_LABEL}>Última vez</p>
+                </div>
+
+                <div className="flex items-end justify-between gap-3">
+                    <div className="min-w-0 space-y-1">
+                        <p className={ATHLETE_RUN_HINT_VALUE}>{valueLine}</p>
+                        {performedAtLabel ? (
+                            <p className="text-xs text-muted-foreground/75">{performedAtLabel}</p>
+                        ) : null}
+                    </div>
+                    <button type="button" className={ATHLETE_RUN_HINT_APPLY_BTN} onClick={onApply}>
+                        Usar
+                    </button>
+                </div>
             </div>
         </div>
     );

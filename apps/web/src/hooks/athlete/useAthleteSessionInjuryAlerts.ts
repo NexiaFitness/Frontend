@@ -2,7 +2,7 @@
  * useAthleteSessionInjuryAlerts.ts — Conflictos ejercicio↔lesión vía check-alert (F3b-FE-01).
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useCheckInjuryAlertMutation } from "@nexia/shared/api/injuriesApi";
 import type {
     ExerciseInjuryConflict,
@@ -16,14 +16,31 @@ export interface AthleteSessionInjuryAlertsResult {
     hasConflicts: boolean;
 }
 
+interface CheckState {
+    requestKey: string;
+    conflicts: ExerciseInjuryConflict[];
+    isChecking: boolean;
+}
+
+const IDLE_STATE: CheckState = {
+    requestKey: "",
+    conflicts: [],
+    isChecking: false,
+};
+
 export function useAthleteSessionInjuryAlerts(
     clientId: number | null | undefined,
     exercises: SessionExerciseRef[],
     enabled = true
 ): AthleteSessionInjuryAlertsResult {
     const [checkAlert] = useCheckInjuryAlertMutation();
-    const [conflicts, setConflicts] = useState<ExerciseInjuryConflict[]>([]);
-    const [isChecking, setIsChecking] = useState(false);
+    const [checkState, setCheckState] = useState<CheckState>(IDLE_STATE);
+    const checkAlertRef = useRef(checkAlert);
+    checkAlertRef.current = checkAlert;
+    const exercisesRef = useRef(exercises);
+    exercisesRef.current = exercises;
+
+    const isActive = Boolean(enabled && clientId && exercises.length > 0);
 
     const exerciseKey = useMemo(
         () =>
@@ -34,28 +51,34 @@ export function useAthleteSessionInjuryAlerts(
         [exercises]
     );
 
+    const requestKey = isActive ? `${clientId}:${exerciseKey}` : "";
+
     useEffect(() => {
-        if (!enabled || !clientId || exercises.length === 0) {
-            setConflicts([]);
-            setIsChecking(false);
+        if (!isActive || !clientId) {
             return;
         }
 
         let cancelled = false;
-        setIsChecking(true);
+        const activeKey = requestKey;
 
-        const exerciseList = exercises;
+        setCheckState({
+            requestKey: activeKey,
+            conflicts: [],
+            isChecking: true,
+        });
 
         void (async () => {
             const found: ExerciseInjuryConflict[] = [];
 
-            for (const exercise of exerciseList) {
+            for (const exercise of exercisesRef.current) {
                 if (cancelled) break;
                 try {
-                    const alert = await checkAlert({
-                        client_id: clientId,
-                        exercise_id: exercise.exerciseId,
-                    }).unwrap();
+                    const alert = await checkAlertRef
+                        .current({
+                            client_id: clientId,
+                            exercise_id: exercise.exerciseId,
+                        })
+                        .unwrap();
 
                     if (alert.has_conflict) {
                         found.push({
@@ -74,17 +97,23 @@ export function useAthleteSessionInjuryAlerts(
             }
 
             if (!cancelled) {
-                setConflicts(found);
-                setIsChecking(false);
+                setCheckState({
+                    requestKey: activeKey,
+                    conflicts: found,
+                    isChecking: false,
+                });
             }
         })();
 
         return () => {
             cancelled = true;
         };
-        // exerciseKey estabiliza la lista; checkAlert (RTK) no va en deps
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [clientId, enabled, exerciseKey]);
+    }, [clientId, isActive, requestKey]);
+
+    const isCurrentRequest = isActive && checkState.requestKey === requestKey;
+
+    const conflicts = isCurrentRequest ? checkState.conflicts : [];
+    const isChecking = isCurrentRequest ? checkState.isChecking : false;
 
     const conflictByExerciseId = useMemo(
         () => new Map(conflicts.map((c) => [c.exerciseId, c])),

@@ -318,5 +318,11 @@ export function runStepToFlatExercise(step: AthleteRunStep): AthleteFlatExercise
         defaultRpe: step.defaultRpe,
         videoUrl: null,
         loggedSets: step.loggedSets,
+        badgeLabel: step.badgeLabel,
+        groupId: step.groupId,
+        roundIndex: step.roundIndex,
+        roundTotal: step.roundTotal,
+        slotLabel: step.slotLabel,
+        instruction: step.instruction || undefined,
     };
 }

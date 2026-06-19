@@ -15,6 +15,7 @@ import {
 } from "@/components/athlete/sessions/athleteSessionsPresentation";
 import type { SessionBlockView } from "@nexia/shared/sessionProgramming/sessionBlockView";
 import { getBlockDisplayName } from "@nexia/shared/sessionProgramming/sessionBlockView";
+import { buildAthletePreviewGroupRows } from "@nexia/shared/utils/athlete/athleteSessionPreviewUtils";
 import { formatInjuryPrecautionCount } from "@nexia/shared/utils/athlete/athleteInjuryAlertUtils";
 
 export interface AthleteSessionExerciseListProps {
@@ -63,11 +64,13 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
 
                     <ul className="relative space-y-2">
                         {block.groups.flatMap((group) =>
-                            group.slots.map((slot) => {
-                                const hasConflict = conflictByExerciseId.has(slot.exerciseId);
+                            buildAthletePreviewGroupRows(group).map((row) => {
+                                const hasConflict = row.exerciseIds.some((id) =>
+                                    conflictByExerciseId.has(id)
+                                );
                                 return (
                                     <li
-                                        key={`${group.groupId}-${slot.slotLabel}`}
+                                        key={row.key}
                                         className={
                                             hasConflict
                                                 ? ATHLETE_SESSION_EXERCISE_ITEM_CAUTION
@@ -80,13 +83,26 @@ export const AthleteSessionExerciseList: React.FC<AthleteSessionExerciseListProp
                                                 aria-label="Precaución por lesión activa"
                                             />
                                         )}
-                                        <span className={ATHLETE_SESSION_EXERCISE_NAME}>
-                                            {slot.exerciseName}
-                                        </span>
-                                        <span className={ATHLETE_SESSION_EXERCISE_SETS}>
-                                            {slot.sets.length}{" "}
-                                            {slot.sets.length === 1 ? "serie" : "series"}
-                                        </span>
+                                        <div className="min-w-0 flex-1">
+                                            <span
+                                                className={
+                                                    row.hasCompoundLayout
+                                                        ? "block text-xs font-semibold uppercase tracking-wide text-primary/85"
+                                                        : ATHLETE_SESSION_EXERCISE_NAME
+                                                }
+                                            >
+                                                {row.title}
+                                            </span>
+                                            <span
+                                                className={
+                                                    row.hasCompoundLayout
+                                                        ? "mt-0.5 block text-sm text-muted-foreground"
+                                                        : ATHLETE_SESSION_EXERCISE_SETS
+                                                }
+                                            >
+                                                {row.detail}
+                                            </span>
+                                        </div>
                                     </li>
                                 );
                             })

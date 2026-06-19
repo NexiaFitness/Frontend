@@ -1,12 +1,10 @@
 /**
- * AthleteSetLogger.tsx — Steppers peso/reps + chips RPE (DESIGN §7.4).
+ * AthleteSetLogger.tsx — Steppers peso/reps + RPE escala V07 (DESIGN §7.4).
  */
 
 import React from "react";
-import { Minus, Plus } from "lucide-react";
-import { Button, SegmentButton } from "@/components/ui/buttons";
-
-const RPE_OPTIONS = [6, 7, 8, 9, 10] as const;
+import { AthleteRunStepperControl } from "./AthleteRunStepperControl";
+import { AthleteRunRpePicker } from "./AthleteRunRpePicker";
 
 export interface AthleteSetLoggerProps {
     weight: number;
@@ -26,76 +24,25 @@ export const AthleteSetLogger: React.FC<AthleteSetLoggerProps> = ({
     onRpeChange,
 }) => {
     return (
-        <div className="space-y-6">
-            <div>
-                <p className="mb-2 text-sm font-medium text-foreground">Peso (kg)</p>
-                <div className="flex items-center gap-3">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="min-h-touch-athlete min-w-touch-athlete"
-                        onClick={() => onWeightChange(Math.max(0, weight - 2.5))}
-                    >
-                        <Minus className="size-5" />
-                    </Button>
-                    <span className="min-w-[4rem] text-center text-2xl font-bold tabular-nums">
-                        {weight}
-                    </span>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="min-h-touch-athlete min-w-touch-athlete"
-                        onClick={() => onWeightChange(weight + 2.5)}
-                    >
-                        <Plus className="size-5" />
-                    </Button>
-                </div>
-            </div>
+        <div className="space-y-5">
+            <AthleteRunStepperControl
+                label="Peso"
+                unit="kg"
+                value={weight}
+                onDecrease={() => onWeightChange(Math.max(0, weight - 2.5))}
+                onIncrease={() => onWeightChange(weight + 2.5)}
+                decreaseDisabled={weight <= 0}
+            />
 
-            <div>
-                <p className="mb-2 text-sm font-medium text-foreground">Reps</p>
-                <div className="flex items-center gap-3">
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="min-h-touch-athlete min-w-touch-athlete"
-                        onClick={() => onRepsChange(Math.max(1, reps - 1))}
-                    >
-                        <Minus className="size-5" />
-                    </Button>
-                    <span className="min-w-[4rem] text-center text-2xl font-bold tabular-nums">
-                        {reps}
-                    </span>
-                    <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon"
-                        className="min-h-touch-athlete min-w-touch-athlete"
-                        onClick={() => onRepsChange(reps + 1)}
-                    >
-                        <Plus className="size-5" />
-                    </Button>
-                </div>
-            </div>
+            <AthleteRunStepperControl
+                label="Repeticiones"
+                value={reps}
+                onDecrease={() => onRepsChange(Math.max(1, reps - 1))}
+                onIncrease={() => onRepsChange(reps + 1)}
+                decreaseDisabled={reps <= 1}
+            />
 
-            <div>
-                <p className="mb-2 text-sm font-medium text-foreground">RPE (opcional)</p>
-                <div className="flex flex-wrap gap-2">
-                    {RPE_OPTIONS.map((value) => (
-                        <SegmentButton
-                            key={value}
-                            selected={rpe === value}
-                            onClick={() => onRpeChange(rpe === value ? null : value)}
-                            size="md"
-                        >
-                            {value}
-                        </SegmentButton>
-                    ))}
-                </div>
-            </div>
+            <AthleteRunRpePicker value={rpe} onChange={onRpeChange} />
         </div>
     );
 };
