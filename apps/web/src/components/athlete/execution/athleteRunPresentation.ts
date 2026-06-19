@@ -306,6 +306,51 @@ export const ATHLETE_RUN_LOGGING_SUMMARY = cn(
     "text-sm font-medium text-foreground"
 );
 
+/** Cronómetro de bloque — Fase C (distinto del chip descanso §5a). */
+export const ATHLETE_RUN_BLOCK_TIMER_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative flex flex-col items-center px-4 pb-5 pt-6",
+    "border-primary/30 shadow-[0_0_32px_-10px] shadow-primary/35"
+);
+
+export const ATHLETE_RUN_BLOCK_TIMER_LABEL = cn(
+    "text-xs font-bold uppercase tracking-[0.14em] text-primary"
+);
+
+export const ATHLETE_RUN_BLOCK_TIMER_TIME = cn(
+    "text-4xl font-bold tabular-nums tracking-tight text-foreground"
+);
+
+export const ATHLETE_RUN_BLOCK_TIMER_TIME_URGENT = "text-warning";
+
+export const ATHLETE_RUN_BLOCK_TIMER_HINT = "text-xs text-muted-foreground/90 text-center";
+
+export const ATHLETE_RUN_BLOCK_TIMER_RING = "relative mx-auto size-36";
+
+export const ATHLETE_RUN_AMRAP_ROUNDS_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4 pt-5"
+);
+
+export const ATHLETE_RUN_AMRAP_ROUNDS_LABEL = cn(
+    "text-[10px] font-bold uppercase tracking-wider text-primary"
+);
+
+export function getAthleteBlockTimerHint(
+    groupKind: string,
+    isCountup: boolean
+): string {
+    if (isCountup) return "Cronómetro activo — completa la ronda lo antes posible.";
+    if (groupKind === "emom") return "Completa la ventana antes de que llegue a cero.";
+    return "Máximo de rondas posibles antes de que llegue a cero.";
+}
+
+export function getAthleteBlockTimerLabel(groupKind: string, isCountup: boolean): string {
+    if (isCountup) return "Tiempo de ronda";
+    if (groupKind === "emom") return "Intervalo";
+    return "Time cap";
+}
+
 export const ATHLETE_RUN_DOING_ENTER = ATHLETE_RUN_GROUP_HERO_ENTER;
 
 /** Puente pre-resumen — paridad layout RestTimerOverlay (§5b.1 / Fase E). */

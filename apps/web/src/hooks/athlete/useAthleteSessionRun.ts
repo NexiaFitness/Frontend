@@ -31,6 +31,7 @@ import {
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
 import { useAthleteRunRestFlow } from "@/hooks/athlete/useAthleteRunRestFlow";
+import { useAthleteBlockTimer } from "@/hooks/athlete/useAthleteBlockTimer";
 
 export interface AthletePrCelebration {
     exerciseName: string;
@@ -40,6 +41,7 @@ export interface AthletePrCelebration {
 
 export interface AthleteSessionRunSaveContext {
     isGroupRound: boolean;
+    isTimedBlock?: boolean;
     groupKind?: AthleteRunStep["groupKind"];
 }
 
@@ -142,6 +144,7 @@ export function useAthleteSessionRun({
     const [rpe, setRpe] = useState<number | null>(null);
     const [slotLogs, setSlotLogs] = useState<Record<string, SlotLogValues>>({});
     const [roundRpe, setRoundRpe] = useState<number | null>(null);
+    const [amrapRounds, setAmrapRounds] = useState(0);
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
@@ -157,29 +160,32 @@ export function useAthleteSessionRun({
         setSavedStepKeys(new Set());
         setSlotLogs({});
         setRoundRpe(null);
+        setAmrapRounds(0);
     }, [sessionId]);
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
     const currentStepKey = currentRunStep?.stepKey ?? null;
     const isGroupRound = currentRunStep?.kind === "group_round";
+    const isTimedBlock = currentRunStep?.kind === "timed_block";
+    const isBatchStep = isGroupRound || isTimedBlock;
 
     const current = useMemo(() => {
-        if (!currentRunStep || isGroupRound) return undefined;
+        if (!currentRunStep || isBatchStep) return undefined;
         return runStepToFlatExercise(currentRunStep);
-    }, [currentRunStep, isGroupRound]);
+    }, [currentRunStep, isBatchStep]);
 
     const nextRunStep = step < runSteps.length - 1 ? runSteps[step + 1] : undefined;
 
     const groupContext: AthleteRunGroupContextView | null = useMemo(() => {
         if (!currentRunStep) return null;
-        if (currentRunStep.kind === "group_round") {
+        if (currentRunStep.kind === "group_round" || currentRunStep.kind === "timed_block") {
             return buildAthleteRunGroupContextFromStep(currentRunStep);
         }
         if (!currentStepKey || !current) return null;
         return buildAthleteRunGroupContext(flatExercises, currentStepKey);
     }, [current, currentRunStep, currentStepKey, flatExercises]);
 
-    const singleExerciseId = isGroupRound ? null : (current?.exerciseId ?? null);
+    const singleExerciseId = isBatchStep ? null : (current?.exerciseId ?? null);
 
     const { evaluatePr } = useAthleteExercisePr(clientId, singleExerciseId);
 
@@ -223,9 +229,10 @@ export function useAthleteSessionRun({
         if (!currentStepKey) return;
 
         const runStep = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
-        if (!runStep || runStep.kind !== "group_round" || !runStep.slots?.length) {
+        if (!runStep || (runStep.kind !== "group_round" && runStep.kind !== "timed_block") || !runStep.slots?.length) {
             setSlotLogs((prev) => (Object.keys(prev).length === 0 ? prev : {}));
             setRoundRpe((prev) => (prev === null ? prev : null));
+            setAmrapRounds((prev) => (prev === 0 ? prev : 0));
             return;
         }
 
@@ -261,10 +268,11 @@ export function useAthleteSessionRun({
         });
 
         setRoundRpe((prev) => (prev === prescribedRpe ? prev : prescribedRpe));
+        setAmrapRounds((prev) => (prev === 0 ? prev : 0));
     }, [currentStepKey]);
 
     useEffect(() => {
-        if (!currentStepKey || isGroupRound) return;
+        if (!currentStepKey || isBatchStep) return;
         const exercise = flatExercisesRef.current.find((item) => item.stepKey === currentStepKey);
         if (!exercise) {
             const fromRun = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
@@ -277,7 +285,9 @@ export function useAthleteSessionRun({
         setWeight(exercise.defaultWeight);
         setReps(exercise.defaultReps);
         setRpe(exercise.defaultRpe);
-    }, [currentStepKey, isGroupRound]);
+    }, [currentStepKey, isBatchStep]);
+
+    const blockTimerRef = useRef(0);
 
     const updateSlotLog = useCallback((slotKey: string, patch: Partial<SlotLogValues>) => {
         setSlotLogs((prev) => {
@@ -322,7 +332,8 @@ export function useAthleteSessionRun({
 
             onSetSaved?.(result, {
                 isGroupRound: false,
-                groupKind: current.groupKind ?? undefined,
+                isTimedBlock: false,
+                groupKind: currentRunStep?.groupKind,
             });
         } catch {
             onError?.("No se pudo guardar la serie");
@@ -336,23 +347,28 @@ export function useAthleteSessionRun({
         logSet,
         onError,
         onSetSaved,
+        currentRunStep,
         evaluatePr,
         reps,
         rpe,
         weight,
     ]);
 
-    const handleSaveRound = useCallback(async () => {
-        if (!currentRunStep || currentRunStep.kind !== "group_round" || !currentRunStep.slots?.length) {
+    const handleSaveBatch = useCallback(async () => {
+        if (!currentRunStep?.slots?.length) return;
+        if (currentRunStep.kind !== "group_round" && currentRunStep.kind !== "timed_block") {
             return;
         }
         if (completedStepKeysRef.current.has(currentRunStep.stepKey)) return;
 
         setSaving(true);
         let lastResult: "synced" | "queued" | "offline" = "synced";
+        const isAmrap = currentRunStep.groupKind === "amrap";
+        const isForTime = currentRunStep.groupKind === "for_time";
+        const elapsedSeconds = blockTimerRef.current;
 
         try {
-            for (const slot of currentRunStep.slots) {
+            for (const [index, slot] of currentRunStep.slots.entries()) {
                 if (completedStepKeysRef.current.has(slot.stepKey)) continue;
 
                 const log = slotLogs[slot.stepKey] ?? {
@@ -365,9 +381,10 @@ export function useAthleteSessionRun({
 
                 lastResult = await logSet(slot.blockExerciseId, {
                     actual_weight: log.weight,
-                    actual_reps: String(log.reps),
+                    actual_reps: isAmrap && index === 0 ? String(amrapRounds) : String(log.reps),
                     actual_sets: nextSets,
                     actual_effort_value: roundRpe ?? undefined,
+                    ...(isForTime && index === 0 ? { actual_duration: elapsedSeconds } : {}),
                 });
 
                 completedStepKeysRef.current.add(slot.stepKey);
@@ -376,7 +393,8 @@ export function useAthleteSessionRun({
             completedStepKeysRef.current.add(currentRunStep.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
             onSetSaved?.(lastResult, {
-                isGroupRound: true,
+                isGroupRound,
+                isTimedBlock,
                 groupKind: currentRunStep.groupKind,
             });
         } catch {
@@ -385,9 +403,20 @@ export function useAthleteSessionRun({
         } finally {
             setSaving(false);
         }
-    }, [currentRunStep, getNextActualSets, logSet, onError, onSetSaved, roundRpe, slotLogs]);
+    }, [
+        amrapRounds,
+        currentRunStep,
+        getNextActualSets,
+        isGroupRound,
+        isTimedBlock,
+        logSet,
+        onError,
+        onSetSaved,
+        roundRpe,
+        slotLogs,
+    ]);
 
-    const onConfirm = isGroupRound ? handleSaveRound : handleSaveSet;
+    const onConfirm = isBatchStep ? handleSaveBatch : handleSaveSet;
 
     const advanceAfterRest = useCallback(() => {
         if (step < runSteps.length - 1) {
@@ -401,25 +430,42 @@ export function useAthleteSessionRun({
     }, [currentRunStep, nextRunStep]);
 
     const isDropsetRound = currentRunStep?.groupKind === "dropset";
+    const isAmrapBlock = currentRunStep?.groupKind === "amrap";
+    const isEmomBlock = currentRunStep?.groupKind === "emom";
+    const isForTimeBlock = currentRunStep?.groupKind === "for_time";
 
-    const confirmLabel = isGroupRound
-        ? isDropsetRound
-            ? "Dropset completado"
-            : "Ronda completada"
-        : "Serie completada";
+    const confirmLabel = isTimedBlock
+        ? isAmrapBlock
+            ? "Bloque completado"
+            : isEmomBlock
+              ? "Intervalo confirmado"
+              : "Ronda completada"
+        : isGroupRound
+          ? isDropsetRound
+              ? "Dropset completado"
+              : "Ronda completada"
+          : "Serie completada";
 
     const isConfirmValid = useMemo(() => {
-        if (isGroupRound && currentRunStep?.slots?.length) {
-            return currentRunStep.slots.every((slot) => {
+        if (isBatchStep && currentRunStep?.slots?.length) {
+            const slotsValid = currentRunStep.slots.every((slot) => {
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
                     reps: slot.defaultReps,
                 };
                 return log.reps > 0 && log.weight >= 0;
             });
+            if (isAmrapBlock) return amrapRounds >= 0 && slotsValid;
+            return slotsValid;
         }
         return reps > 0 && weight >= 0;
-    }, [currentRunStep, isGroupRound, slotLogs, reps, weight]);
+    }, [amrapRounds, currentRunStep, isAmrapBlock, isBatchStep, slotLogs, reps, weight]);
+
+    const isLastStep = step === runSteps.length - 1;
+    const isCurrentStepSaved = currentStepKey
+        ? savedStepKeys.has(currentStepKey)
+        : false;
+    const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
     const restFlow = useAthleteRunRestFlow({
         restAfterSeconds,
@@ -428,9 +474,23 @@ export function useAthleteSessionRun({
         onConfirm,
         onRestComplete: advanceAfterRest,
         isConfirmValid,
-        requireStartBeforeLog: isDropsetRound,
-        startRestLabel: isDropsetRound ? "Registrar dropset" : "Empezar descanso",
+        requireStartBeforeLog: isDropsetRound || isTimedBlock,
+        startRestLabel: isDropsetRound
+            ? "Registrar dropset"
+            : isAmrapBlock
+              ? "Registrar AMRAP"
+              : isEmomBlock
+                ? "Intervalo completado"
+                : isForTimeBlock
+                  ? "Registrar ronda"
+                  : "Empezar descanso",
     });
+
+    const blockTimer = useAthleteBlockTimer(
+        currentRunStep,
+        isTimedBlock && restFlow.phase === "doing" && showStepActions
+    );
+    blockTimerRef.current = blockTimer.elapsedSeconds;
 
     const handleFinish = useCallback(async () => {
         setCompleting(true);
@@ -452,11 +512,6 @@ export function useAthleteSessionRun({
     const loadingFromNetwork = loadingSession || loadingStructure;
     const waitingForCache = !isOnline && loadingFromNetwork && !cachedSnapshot;
     const isLoading = (loadingFromNetwork && !isUsingCache && isOnline) || waitingForCache;
-    const isLastStep = step === runSteps.length - 1;
-    const isCurrentStepSaved = currentStepKey
-        ? savedStepKeys.has(currentStepKey)
-        : false;
-    const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
     return {
         session,
@@ -467,12 +522,16 @@ export function useAthleteSessionRun({
         step,
         currentRunStep,
         isGroupRound,
+        isTimedBlock,
         current,
         groupContext,
         slotLogs,
         updateSlotLog,
         roundRpe,
         setRoundRpe,
+        amrapRounds,
+        setAmrapRounds,
+        blockTimer,
         weight,
         reps,
         rpe,

@@ -8,6 +8,7 @@ import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim
 import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 import { ATHLETE_SETTINGS_CARD } from "@/components/athlete/account/athleteSettingsPresentation";
 import { cn } from "@/lib/utils";
+import type { TopExerciseRow } from "@nexia/shared/utils/athlete/athleteProgressUtils";
 import { ATHLETE_PROGRESS_LIST_ROW } from "./athleteProgressViewPresentation";
 
 export interface AthleteProgressTopExercisesSectionProps {

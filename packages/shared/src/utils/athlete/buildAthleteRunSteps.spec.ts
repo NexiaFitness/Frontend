@@ -17,8 +17,12 @@ function block(
         | typeof SET_TYPE.DROPSET
         | typeof SET_TYPE.SUPERSET
         | typeof SET_TYPE.GIANT_SET
-        | typeof SET_TYPE.SINGLE_SET,
-    rounds: number | null = 3
+        | typeof SET_TYPE.SINGLE_SET
+        | typeof SET_TYPE.AMRAP
+        | typeof SET_TYPE.EMOM
+        | typeof SET_TYPE.FOR_TIME,
+    rounds: number | null = 3,
+    options?: { timeCap?: number | null; intervalSeconds?: number | null }
 ): SessionBlock {
     return {
         id,
@@ -27,8 +31,8 @@ function block(
         order_in_session: id,
         set_type: setType,
         rounds,
-        time_cap: null,
-        interval_seconds: null,
+        time_cap: options?.timeCap ?? null,
+        interval_seconds: options?.intervalSeconds ?? null,
         objective_text: null,
         planned_intensity: null,
         planned_volume: null,
@@ -145,6 +149,43 @@ function singleLine(id: number, exerciseId: number, planned_sets = 4, reps = "8"
         planned_rest: 120,
         effort_character: "rpe",
         effort_value: 8,
+        actual_sets: null,
+        actual_reps: null,
+        actual_weight: null,
+        actual_duration: null,
+        actual_distance: null,
+        actual_rest: null,
+        actual_effort_value: null,
+        notes: null,
+        created_at: "",
+        updated_at: "",
+        is_active: true,
+    };
+}
+
+function timedLine(
+    id: number,
+    exerciseId: number,
+    order: number,
+    setType: typeof SET_TYPE.AMRAP | typeof SET_TYPE.FOR_TIME | typeof SET_TYPE.EMOM,
+    options?: { plannedSets?: number | null; supersetGroupId?: number | null; reps?: string }
+): SessionBlockExercise {
+    return {
+        id,
+        session_block_id: 88,
+        exercise_id: exerciseId,
+        order_in_block: order,
+        set_type: setType,
+        superset_group_id: options?.supersetGroupId ?? null,
+        dropset_sequence: null,
+        planned_sets: options?.plannedSets ?? 1,
+        planned_reps: options?.reps ?? "10",
+        planned_weight: null,
+        planned_duration: null,
+        planned_distance: null,
+        planned_rest: null,
+        effort_character: null,
+        effort_value: null,
         actual_sets: null,
         actual_reps: null,
         actual_weight: null,
@@ -379,6 +420,78 @@ describe("buildAthleteRunSteps single_set", () => {
         expect(steps).toHaveLength(4);
         expect(steps.map((s) => s.setLabel)).toEqual(["S1", "S2", "S3", "S4"]);
         expect(steps.every((s) => s.groupKind === "single_set")).toBe(true);
+    });
+});
+
+describe("buildAthleteRunSteps timed blocks", () => {
+    it("amrap genera un unico timed_block con todos los ejercicios del circuito", () => {
+        const lines = [
+            timedLine(500, 8, 1, SET_TYPE.AMRAP, { reps: "10" }),
+            timedLine(501, 12, 2, SET_TYPE.AMRAP, { reps: "12" }),
+            timedLine(502, 15, 3, SET_TYPE.AMRAP, { reps: "14" }),
+        ];
+        const view = viewFromBlock(
+            block(80, SET_TYPE.AMRAP, null, { timeCap: 900 }),
+            lines,
+            {
+                8: "Burpee",
+                12: "Row",
+                15: "Air squat",
+            }
+        );
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps).toHaveLength(1);
+        expect(steps[0]?.kind).toBe("timed_block");
+        expect(steps[0]?.timedMode).toBe("countdown_block");
+        expect(steps[0]?.timeCapMinutes).toBe(15);
+        expect(steps[0]?.slots?.map((slot) => slot.exerciseName)).toEqual(["Burpee", "Row", "Air squat"]);
+    });
+
+    it("for_time genera un timed_block por ronda en modo countup", () => {
+        const lines = [
+            timedLine(510, 20, 1, SET_TYPE.FOR_TIME, { plannedSets: 2 }),
+            timedLine(511, 30, 2, SET_TYPE.FOR_TIME, { plannedSets: 2 }),
+        ];
+        const view = viewFromBlock(block(81, SET_TYPE.FOR_TIME, 2), lines, {
+            20: "Thruster",
+            30: "Pull-up",
+        });
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps).toHaveLength(2);
+        expect(steps.map((step) => step.kind)).toEqual(["timed_block", "timed_block"]);
+        expect(steps.map((step) => step.timedMode)).toEqual(["countup", "countup"]);
+        expect(steps.map((step) => step.roundIndex)).toEqual([1, 2]);
+        expect(steps[0]?.slots?.map((slot) => slot.slotLabel)).toEqual(["1", "2"]);
+    });
+
+    it("emom genera un timed_block por intervalo (ventanas por ronda)", () => {
+        const lines = [
+            timedLine(520, 101, 1, SET_TYPE.EMOM, { supersetGroupId: 1 }),
+            timedLine(521, 102, 2, SET_TYPE.EMOM, { supersetGroupId: 1 }),
+            timedLine(522, 201, 3, SET_TYPE.EMOM, { supersetGroupId: 2 }),
+            timedLine(523, 202, 4, SET_TYPE.EMOM, { supersetGroupId: 2 }),
+        ];
+        const view = viewFromBlock(
+            block(82, SET_TYPE.EMOM, 2, { intervalSeconds: 60 }),
+            lines,
+            {
+                101: "Bike",
+                102: "Sit-up",
+                201: "Wall ball",
+                202: "Box jump",
+            }
+        );
+        const steps = buildAthleteRunSteps(view);
+
+        expect(steps).toHaveLength(4);
+        expect(steps.every((step) => step.kind === "timed_block")).toBe(true);
+        expect(steps.every((step) => step.timedMode === "countdown_interval")).toBe(true);
+        expect(steps.map((step) => step.minuteIndex)).toEqual([1, 2, 3, 4]);
+        expect(steps.map((step) => step.minuteTotal)).toEqual([4, 4, 4, 4]);
+        expect(steps[0]?.slots?.map((slot) => slot.slotLabel)).toEqual(["V1", "V1"]);
+        expect(steps[1]?.slots?.map((slot) => slot.slotLabel)).toEqual(["V2", "V2"]);
     });
 });
 

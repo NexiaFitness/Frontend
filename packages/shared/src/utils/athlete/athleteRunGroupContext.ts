@@ -39,6 +39,9 @@ const GROUP_SECTION_LABEL: Record<string, string> = {
     superset: "Superset",
     giant_set: "Circuito",
     dropset: "Drop set",
+    amrap: "AMRAP",
+    emom: "EMOM",
+    for_time: "For Time",
 };
 
 const COUNT_WORDS: Record<number, string> = {
@@ -214,25 +217,52 @@ export function buildAthleteRunGroupContext(
 export function buildAthleteRunGroupContextFromStep(
     step: import("./buildAthleteRunSteps").AthleteRunStep
 ): AthleteRunGroupContextView | null {
-    if (step.kind !== "group_round" || !step.slots?.length) return null;
+    if ((step.kind !== "group_round" && step.kind !== "timed_block") || !step.slots?.length) {
+        return null;
+    }
 
-    const roundLabel =
-        step.roundIndex != null && step.roundTotal != null
-            ? `Ronda ${step.roundIndex} de ${step.roundTotal}`
-            : null;
+    let roundLabel: string | null = null;
+    if (step.kind === "timed_block" && step.groupKind === "amrap") {
+        roundLabel =
+            step.timeCapMinutes != null ? `${step.timeCapMinutes} min` : "AMRAP";
+    } else if (step.kind === "timed_block" && step.groupKind === "emom") {
+        roundLabel =
+            step.minuteIndex != null && step.minuteTotal != null
+                ? `Intervalo ${step.minuteIndex} de ${step.minuteTotal}`
+                : null;
+    } else if (step.roundIndex != null && step.roundTotal != null) {
+        roundLabel = `Ronda ${step.roundIndex} de ${step.roundTotal}`;
+    }
 
     const sectionLabel =
         GROUP_SECTION_LABEL[step.groupKind] ?? step.badgeLabel ?? "Grupo de ejercicios";
+
+    let explanation = buildGroupExplanation(
+        step.groupKind,
+        step.slots.length,
+        step.instruction ?? ""
+    );
+    if (step.kind === "timed_block") {
+        if (step.groupKind === "amrap") {
+            explanation =
+                step.timeCapMinutes != null
+                    ? `Completa el circuito durante ${step.timeCapMinutes} minutos sin perder técnica.`
+                    : "Completa el circuito durante el tiempo objetivo sin perder técnica.";
+        } else if (step.groupKind === "emom") {
+            explanation =
+                step.intervalSeconds != null
+                    ? `Tienes ${step.intervalSeconds} segundos para completar esta ventana antes del siguiente intervalo.`
+                    : "Completa esta ventana antes de que inicie el siguiente intervalo.";
+        } else if (step.groupKind === "for_time") {
+            explanation = "Completa la secuencia de la ronda lo antes posible manteniendo calidad de ejecución.";
+        }
+    }
 
     return {
         groupKind: step.groupKind,
         sectionLabel,
         groupBadgeLabel: step.badgeLabel ?? null,
-        explanation: buildGroupExplanation(
-            step.groupKind,
-            step.slots.length,
-            step.instruction ?? ""
-        ),
+        explanation,
         roundLabel,
         slots: step.slots.map((slot) => ({
             slotLabel: slot.slotLabel,

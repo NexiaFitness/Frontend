@@ -18,7 +18,7 @@ import { ATHLETE_PROGRESS_EMPTY, ATHLETE_PROGRESS_LIST_ROW, ATHLETE_TROPHY_BADGE
 export interface AthleteProgressExerciseHistoryProps {
     rows: ProgressTracking[];
     highlightDate?: string | null;
-    highlightRef?: React.RefObject<HTMLLIElement | null>;
+    highlightRef?: React.Ref<HTMLLIElement>;
     onViewSession: (trackingDate: string) => void;
 }
 

@@ -72,6 +72,9 @@ export interface AthleteRunStep {
     intervalSeconds: number | null;
     /** B.2 — todos los slots de la ronda (superset / giant / dropset) */
     slots?: AthleteRunRoundSlot[];
+    timedMode?: "countdown_block" | "countdown_interval" | "countup";
+    minuteIndex?: number;
+    minuteTotal?: number;
 }
 
 const GROUP_INSTRUCTION: Partial<Record<SessionGroupKind, string>> = {
@@ -225,6 +228,54 @@ function buildGroupRoundStep(
     };
 }
 
+function buildTimedBlockStep(
+    blockId: number,
+    blockName: string,
+    group: SessionExerciseGroupView,
+    roundIndex: number,
+    roundTotal: number | null,
+    roundSlots: AthleteRunRoundSlot[],
+    timedMode: "countdown_block" | "countdown_interval" | "countup",
+    minuteIndex?: number,
+    minuteTotal?: number
+): AthleteRunStep {
+    const first = roundSlots[0];
+    const firstSet = group.slots[0]?.sets[roundIndex - 1] ?? group.slots[0]?.sets[0];
+    return {
+        stepKey: `${group.groupId}-timed-${roundIndex}${minuteIndex ? `-m${minuteIndex}` : ""}`,
+        kind: "timed_block",
+        groupKind: group.kind,
+        blockId,
+        blockName,
+        groupId: group.groupId,
+        badgeLabel: group.badgeLabel,
+        roundIndex,
+        roundTotal,
+        slotLabel: first?.slotLabel ?? "",
+        exerciseId: first?.exerciseId ?? 0,
+        exerciseName: first?.exerciseName ?? "",
+        setLabel: first?.setLabel ?? "",
+        setIndex: firstSet?.index ?? roundIndex,
+        instruction: GROUP_INSTRUCTION[group.kind] ?? "",
+        plannedLabel: first?.plannedLabel ?? "",
+        restAfterSeconds: group.restBetweenSeconds,
+        inputMode: first?.inputMode ?? "weight_reps",
+        blockExerciseId: first?.blockExerciseId ?? 0,
+        plannedWeight: firstSet?.plannedWeight ?? null,
+        defaultWeight: first?.defaultWeight ?? 0,
+        defaultReps: first?.defaultReps ?? 0,
+        defaultRpe: first?.defaultRpe ?? null,
+        loggedSets: first?.loggedSets ?? 0,
+        totalSetsInSlot: roundSlots.length,
+        timeCapMinutes: group.timeCapMinutes,
+        intervalSeconds: group.intervalSeconds,
+        slots: roundSlots,
+        timedMode,
+        minuteIndex,
+        minuteTotal,
+    };
+}
+
 /** Una pantalla UI por ronda (superset, giant_set). */
 function expandGroupRoundRobin(
     blockId: number,
@@ -372,10 +423,80 @@ function expandAmrapGroup(
     blockName: string,
     group: SessionExerciseGroupView
 ): AthleteRunStep[] {
-    if (group.slots.every((s) => s.sets.length <= 1) && group.rounds == null) {
-        return expandRoundRobinSlots(blockId, blockName, { ...group, rounds: 1 }, "timed_block");
+    const roundSlots: AthleteRunRoundSlot[] = [];
+    for (const slot of group.slots) {
+        const set = slot.sets[0];
+        if (!set) continue;
+        roundSlots.push(
+            buildRoundSlot({
+                blockId,
+                blockName,
+                group,
+                slot,
+                set,
+                roundIndex: 1,
+                roundTotal: 1,
+                kind: "timed_block",
+                restAfterSeconds: null,
+            })
+        );
     }
-    return expandRoundRobinSlots(blockId, blockName, group, "sequential_slot");
+    if (roundSlots.length === 0) return [];
+    return [
+        buildTimedBlockStep(
+            blockId,
+            blockName,
+            group,
+            1,
+            group.rounds,
+            roundSlots,
+            "countdown_block"
+        ),
+    ];
+}
+
+function expandForTimeGroup(
+    blockId: number,
+    blockName: string,
+    group: SessionExerciseGroupView
+): AthleteRunStep[] {
+    const rounds = effectiveRounds(group);
+    const steps: AthleteRunStep[] = [];
+
+    for (let r = 0; r < rounds; r += 1) {
+        const roundSlots: AthleteRunRoundSlot[] = [];
+        for (const slot of group.slots) {
+            const set = slot.sets[r];
+            if (!set) continue;
+            roundSlots.push(
+                buildRoundSlot({
+                    blockId,
+                    blockName,
+                    group,
+                    slot,
+                    set,
+                    roundIndex: r + 1,
+                    roundTotal: rounds,
+                    kind: "timed_block",
+                    restAfterSeconds: null,
+                })
+            );
+        }
+        if (roundSlots.length === 0) continue;
+        steps.push(
+            buildTimedBlockStep(
+                blockId,
+                blockName,
+                group,
+                r + 1,
+                rounds,
+                roundSlots,
+                "countup"
+            )
+        );
+    }
+
+    return steps;
 }
 
 function expandEmomGroup(
@@ -383,7 +504,52 @@ function expandEmomGroup(
     blockName: string,
     group: SessionExerciseGroupView
 ): AthleteRunStep[] {
-    return expandRoundRobinSlots(blockId, blockName, group, "sequential_slot");
+    const rounds = Math.max(1, group.rounds ?? 1);
+    const windows = [...new Set(group.slots.map((slot) => slot.slotLabel))];
+    const minuteTotal = windows.length * rounds;
+    const steps: AthleteRunStep[] = [];
+
+    let minuteIndex = 1;
+    for (let r = 1; r <= rounds; r += 1) {
+        for (const windowLabel of windows) {
+            const intervalSlots: AthleteRunRoundSlot[] = [];
+            for (const slot of group.slots) {
+                if (slot.slotLabel !== windowLabel) continue;
+                const set = slot.sets[0];
+                if (!set) continue;
+                intervalSlots.push(
+                    buildRoundSlot({
+                        blockId,
+                        blockName,
+                        group,
+                        slot,
+                        set,
+                        roundIndex: r,
+                        roundTotal: rounds,
+                        kind: "timed_block",
+                        restAfterSeconds: null,
+                    })
+                );
+            }
+            if (intervalSlots.length === 0) continue;
+            steps.push(
+                buildTimedBlockStep(
+                    blockId,
+                    blockName,
+                    group,
+                    r,
+                    rounds,
+                    intervalSlots,
+                    "countdown_interval",
+                    minuteIndex,
+                    minuteTotal
+                )
+            );
+            minuteIndex += 1;
+        }
+    }
+
+    return steps;
 }
 
 function expandGroup(
@@ -398,7 +564,7 @@ function expandGroup(
         case "dropset":
             return expandDropsetGroupRounds(blockId, blockName, group);
         case "for_time":
-            return expandRoundRobinSlots(blockId, blockName, group, "sequential_slot");
+            return expandForTimeGroup(blockId, blockName, group);
         case "amrap":
             return expandAmrapGroup(blockId, blockName, group);
         case "emom":
@@ -427,7 +593,7 @@ export function flattenRunStepsToFlatExercises(steps: AthleteRunStep[]): Athlete
     const flat: AthleteFlatExercise[] = [];
 
     for (const step of steps) {
-        if (step.kind === "group_round" && step.slots?.length) {
+        if ((step.kind === "group_round" || step.kind === "timed_block") && step.slots?.length) {
             for (const slot of step.slots) {
                 flat.push({
                     stepKey: slot.stepKey,
@@ -502,7 +668,7 @@ export function resolveRestAfterCompletingRunStep(
 ): number | null {
     if (!next) return null;
 
-    if (current.kind === "group_round") {
+    if (current.kind === "group_round" || current.kind === "timed_block") {
         const rest = current.restAfterSeconds;
         return rest != null && rest > 0 ? rest : null;
     }

@@ -11,6 +11,7 @@ import { AthletePrBanner } from "@/components/athlete/AthletePrBanner";
 import { OfflineSessionBadge } from "@/components/athlete/OfflineSessionBadge";
 import { ExerciseStepView } from "@/components/athlete/execution/ExerciseStepView";
 import { GroupRoundStepView } from "@/components/athlete/execution/GroupRoundStepView";
+import { TimedBlockStepView } from "@/components/athlete/execution/TimedBlockStepView";
 import { AthleteRunStepShell } from "@/components/athlete/execution/AthleteRunStepShell";
 import { AthleteExerciseTechniqueSheet } from "@/components/athlete/execution/AthleteExerciseTechniqueSheet";
 import type { AthleteExerciseTechniqueTarget } from "@/components/athlete/execution/athleteExerciseTechniqueUtils";
@@ -50,6 +51,7 @@ export const AthleteSessionRunPage: React.FC = () => {
         step,
         currentRunStep,
         isGroupRound,
+        isTimedBlock,
         current,
         weight,
         reps,
@@ -61,6 +63,9 @@ export const AthleteSessionRunPage: React.FC = () => {
         updateSlotLog,
         roundRpe,
         setRoundRpe,
+        amrapRounds,
+        setAmrapRounds,
+        blockTimer,
         saving,
         completing,
         restFlow,
@@ -77,26 +82,53 @@ export const AthleteSessionRunPage: React.FC = () => {
         applySuggestedLoad,
     } = useAthleteSessionRun({
         sessionId,
-        onSetSaved: (result, { isGroupRound, groupKind }) => {
+        onSetSaved: (result, { isGroupRound, isTimedBlock, groupKind }) => {
             if (typeof navigator !== "undefined" && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
                 navigator.vibrate?.(20);
             }
             const isDropset = groupKind === "dropset";
-            const savedLabel = isGroupRound
-                ? isDropset
-                    ? "Dropset registrado"
-                    : "Ronda registrada"
-                : "Serie registrada";
-            const savedLocalLabel = isGroupRound
-                ? isDropset
-                    ? "Dropset guardado localmente"
-                    : "Ronda guardada localmente"
-                : "Serie guardada localmente";
-            const queuedLabel = isGroupRound
-                ? isDropset
-                    ? "Dropset en cola — se sincronizará pronto"
-                    : "Ronda en cola — se sincronizará pronto"
-                : "Serie en cola — se sincronizará pronto";
+            const isAmrap = groupKind === "amrap";
+            const isEmom = groupKind === "emom";
+            const isForTime = groupKind === "for_time";
+            const savedLabel = isTimedBlock
+                ? isAmrap
+                    ? "AMRAP registrado"
+                    : isEmom
+                      ? "Intervalo registrado"
+                      : isForTime
+                        ? "Ronda FOR TIME registrada"
+                        : "Bloque registrado"
+                : isGroupRound
+                  ? isDropset
+                      ? "Dropset registrado"
+                      : "Ronda registrada"
+                  : "Serie registrada";
+            const savedLocalLabel = isTimedBlock
+                ? isAmrap
+                    ? "AMRAP guardado localmente"
+                    : isEmom
+                      ? "Intervalo guardado localmente"
+                      : isForTime
+                        ? "Ronda guardada localmente"
+                        : "Bloque guardado localmente"
+                : isGroupRound
+                  ? isDropset
+                      ? "Dropset guardado localmente"
+                      : "Ronda guardada localmente"
+                  : "Serie guardada localmente";
+            const queuedLabel = isTimedBlock
+                ? isAmrap
+                    ? "AMRAP en cola — se sincronizará pronto"
+                    : isEmom
+                      ? "Intervalo en cola — se sincronizará pronto"
+                      : isForTime
+                        ? "Ronda en cola — se sincronizará pronto"
+                        : "Bloque en cola — se sincronizará pronto"
+                : isGroupRound
+                  ? isDropset
+                      ? "Dropset en cola — se sincronizará pronto"
+                      : "Ronda en cola — se sincronizará pronto"
+                  : "Serie en cola — se sincronizará pronto";
 
             if (result === "offline") {
                 showToast("info", savedLocalLabel);
@@ -138,8 +170,14 @@ export const AthleteSessionRunPage: React.FC = () => {
                 exerciseName: slot.exerciseName,
             }));
         }
+        if (isTimedBlock && currentRunStep.slots?.length) {
+            return currentRunStep.slots.map((slot) => ({
+                exerciseId: slot.exerciseId,
+                exerciseName: slot.exerciseName,
+            }));
+        }
         return [{ exerciseId: currentRunStep.exerciseId, exerciseName: currentRunStep.exerciseName }];
-    }, [currentRunStep, isGroupRound]);
+    }, [currentRunStep, isGroupRound, isTimedBlock]);
 
     const { conflictByExerciseId } = useAthleteSessionInjuryAlerts(
         clientId,
@@ -157,10 +195,12 @@ export const AthleteSessionRunPage: React.FC = () => {
             : null;
 
     const desktopInjuryConflict =
-        !isGroupRound && current ? conflictByExerciseId.get(current.exerciseId) : undefined;
+        !isGroupRound && !isTimedBlock && current
+            ? conflictByExerciseId.get(current.exerciseId)
+            : undefined;
 
     const mobileInjuryConflicts = useMemo(() => {
-        if (isDesktop || !isGroupRound) return undefined;
+        if (isDesktop || (!isGroupRound && !isTimedBlock)) return undefined;
         const map = new Map<
             number,
             { alert: NonNullable<ReturnType<typeof conflictByExerciseId.get>>["alert"]; onConsultTrainer: () => void }
@@ -169,7 +209,7 @@ export const AthleteSessionRunPage: React.FC = () => {
             map.set(exerciseId, { alert: conflict.alert, onConsultTrainer: handleConsultTrainer });
         }
         return map;
-    }, [conflictByExerciseId, isDesktop, isGroupRound]);
+    }, [conflictByExerciseId, isDesktop, isGroupRound, isTimedBlock]);
 
     if (isLoading) {
         return <AthletePageLoading variant="session-run" />;
@@ -258,7 +298,26 @@ export const AthleteSessionRunPage: React.FC = () => {
                 secondaryLoading={completing}
                 onSecondary={showFinishSession ? handleFinish : undefined}
             >
-                {isGroupRound && groupContext ? (
+                {isTimedBlock && groupContext ? (
+                    <TimedBlockStepView
+                        runStep={currentRunStep}
+                        step={step}
+                        totalSteps={runSteps.length}
+                        groupContext={groupContext}
+                        slotLogs={slotLogs}
+                        onSlotChange={updateSlotLog}
+                        roundRpe={roundRpe}
+                        onRoundRpeChange={setRoundRpe}
+                        amrapRounds={amrapRounds}
+                        onAmrapRoundsChange={setAmrapRounds}
+                        blockTimer={blockTimer}
+                        restPhase={restFlow.phase}
+                        showLogger={restFlow.showLogger}
+                        onViewTechnique={setTechniqueTarget}
+                        injuryConflicts={mobileInjuryConflicts}
+                        sessionReadyToFinish={showFinishSession}
+                    />
+                ) : isGroupRound && groupContext ? (
                     <GroupRoundStepView
                         runStep={currentRunStep}
                         step={step}
