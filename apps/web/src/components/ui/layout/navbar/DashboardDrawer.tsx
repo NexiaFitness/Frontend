@@ -56,6 +56,7 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     return (
         <>
             <div
+                data-testid="dashboard-drawer-backdrop"
                 className={cn(
                     "fixed inset-0 z-40 transition-opacity duration-300",
                     SIDE_MENU_OVERLAY,

@@ -28,6 +28,8 @@ const IDLE_STATE: CheckState = {
     isChecking: false,
 };
 
+const EMPTY_CONFLICTS: ExerciseInjuryConflict[] = [];
+
 export function useAthleteSessionInjuryAlerts(
     clientId: number | null | undefined,
     exercises: SessionExerciseRef[],
@@ -112,7 +114,10 @@ export function useAthleteSessionInjuryAlerts(
 
     const isCurrentRequest = isActive && checkState.requestKey === requestKey;
 
-    const conflicts = isCurrentRequest ? checkState.conflicts : [];
+    const conflicts = useMemo(
+        () => (isCurrentRequest ? checkState.conflicts : EMPTY_CONFLICTS),
+        [isCurrentRequest, checkState.conflicts]
+    );
     const isChecking = isCurrentRequest ? checkState.isChecking : false;
 
     const conflictByExerciseId = useMemo(
