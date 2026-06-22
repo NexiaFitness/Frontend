@@ -1,42 +1,86 @@
 import { describe, expect, it } from "vitest";
 import {
+    buildWeeklyVolumePanelRows,
     formatVolumeRatioHoy,
-    resolveDailyVolumeStatus,
-    volumeMuscleValidationToPanelRow,
-    volumeStatusLabel,
+    mapSessionLoadDraftRowToPanelInput,
+    mapWeeklySavedRowToPanelInput,
 } from "./weeklyVolumePanelModel";
 
-describe("weeklyVolumePanelModel", () => {
-    it("resolveDailyVolumeStatus usa banda ±10 %", () => {
-        expect(resolveDailyVolumeStatus(3, 10)).toBe("deficit");
-        expect(resolveDailyVolumeStatus(10, 10)).toBe("on_target");
-        expect(resolveDailyVolumeStatus(12, 10)).toBe("excess");
-    });
-
-    it("volumeMuscleValidationToPanelRow mapea validación sin porcentaje", () => {
-        const row = volumeMuscleValidationToPanelRow({
-            muscle_group_id: 2,
-            name_es: "espalda",
-            weekly_target: 13,
-            daily_expected: 10,
-            actual_sets: 3,
+describe("mapSessionLoadDraftRowToPanelInput", () => {
+    it("usa solo draft_sets y desglose del borrador (no acumulado semanal)", () => {
+        const input = mapSessionLoadDraftRowToPanelInput({
+            muscle_group_id: 1,
+            name_es: "glúteos",
+            draft_sets: 4,
+            draft_direct: 3,
+            draft_indirect: 1,
+            daily_target: 9,
+            pattern_session_days: 2,
         });
-        expect(row.status).toBe("deficit");
-        expect(row.draftSets).toBe(3);
-        expect(row.targetToday).toBe(10);
-    });
 
-    it("formatVolumeRatioHoy session_review incluye 'series hoy'", () => {
-        const text = formatVolumeRatioHoy(
-            { draftSets: 3, targetToday: 13, accumulated: 3, rangeMax: null, targetCenter: 13 },
-            "session_review"
+        expect(input.planned_sets_sum).toBe(4);
+        expect(input.direct_sets).toBe(3);
+        expect(input.indirect_sets).toBe(1);
+        expect(input.data_scope).toBe("session_draft");
+    });
+});
+
+describe("buildWeeklyVolumePanelRows", () => {
+    it("modo diario: status según draft_sets vs daily_target", () => {
+        const rows = buildWeeklyVolumePanelRows(
+            [
+                mapSessionLoadDraftRowToPanelInput({
+                    muscle_group_id: 1,
+                    name_es: "glúteos",
+                    draft_sets: 4,
+                    draft_direct: 3,
+                    draft_indirect: 1,
+                    daily_target: 9,
+                }),
+            ],
+            18
         );
-        expect(text).toBe("3 / 13 series hoy");
+
+        expect(rows[0]?.draftSets).toBe(4);
+        expect(rows[0]?.accumulated).toBe(4);
+        expect(rows[0]?.status).toBe("deficit");
+        expect(rows[0]?.dataScope).toBe("session_draft");
     });
 
-    it("volumeStatusLabel coincide con constructor", () => {
-        expect(volumeStatusLabel("deficit")).toBe("Déficit");
-        expect(volumeStatusLabel("on_target")).toBe("En rango");
-        expect(volumeStatusLabel("excess")).toBe("Exceso");
+    it("fallback semanal: session_draft usa draft_sets como numerador, no projected_total", () => {
+        const rows = buildWeeklyVolumePanelRows(
+            [
+                {
+                    muscle_group_id: 2,
+                    name_es: "cuádriceps",
+                    planned_sets_sum: 4,
+                    direct_sets: 3,
+                    indirect_sets: 1,
+                    draft_sets: 4,
+                    daily_target: 0,
+                    data_scope: "session_draft",
+                },
+            ],
+            18
+        );
+
+        expect(rows[0]?.status).toBe("deficit");
+        expect(formatVolumeRatioHoy(rows[0]!)).toBe("4 / 18 esta sesión");
+    });
+
+    it("weekly_saved: numerador es acumulado semanal guardado", () => {
+        const rows = buildWeeklyVolumePanelRows(
+            [mapWeeklySavedRowToPanelInput({
+                muscle_group_id: 3,
+                name_es: "gemelos",
+                planned_sets_sum: 11,
+                direct_sets: 9,
+                indirect_sets: 2,
+            })],
+            18
+        );
+
+        expect(rows[0]?.accumulated).toBe(11);
+        expect(formatVolumeRatioHoy(rows[0]!)).toBe("11 / 18 semana");
     });
 });

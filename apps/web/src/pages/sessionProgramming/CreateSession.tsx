@@ -316,6 +316,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         volumeMaxSets,
         includeStandalone: true,
         draftExercises: draftExercisesForVolumePanel,
+        intent: "create_session",
     });
 
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
@@ -847,6 +848,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         isLoading={weeklyVolumePanel.isLoading}
                                         isError={weeklyVolumePanel.isError}
                                         hasClient={weeklyVolumePanel.hasClient}
+                                        intent={weeklyVolumePanel.intent}
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                         weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                     />

@@ -240,6 +240,7 @@ export const EditSession: React.FC = () => {
         excludeTrainingSessionId: sessionId > 0 ? sessionId : undefined,
         includeStandalone: true,
         draftExercises: draftExercisesForVolumePanel,
+        intent: "edit_session",
     });
 
     const dispatch = useDispatch<AppDispatch>();
@@ -821,6 +822,7 @@ export const EditSession: React.FC = () => {
                                     isLoading={weeklyVolumePanel.isLoading}
                                     isError={weeklyVolumePanel.isError}
                                     hasClient={weeklyVolumePanel.hasClient}
+                                    intent={weeklyVolumePanel.intent}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                 />

@@ -221,12 +221,6 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
                                                     />
                                                     <RepsTiempoField
                                                         exercise={ex}
-                                                        rowRepsTipo={normalized.repsTipo}
-                                                        onRowRepsTipoChange={(mode) =>
-                                                            onUpdate(normalized.id, {
-                                                                repsTipo: mode,
-                                                            })
-                                                        }
                                                         onExerciseChange={(updates) =>
                                                             handleExerciseChange(
                                                                 window.id,

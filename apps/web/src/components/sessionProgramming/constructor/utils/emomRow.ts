@@ -13,6 +13,7 @@ import type {
 } from "../../constructorTypes";
 import type { ApiExerciseLine } from "./singleSetRow";
 import { isFilledConstructorExercise } from "./supersetRow";
+import { getExerciseRepsTipo } from "./exerciseRepsMode";
 
 export const MIN_EMOM_WINDOWS = 2;
 export const DEFAULT_EMOM_WINDOWS = 2;
@@ -218,7 +219,10 @@ export function hydrateEmomConstructorRow(
                         ex.effort_character as ConstructorExercise["effortCharacter"],
                     effortValue: ex.effort_value,
                     notes: ex.notes,
-                    repsTipo: "reps" as const,
+                    repsTipo: getExerciseRepsTipo({
+                        plannedReps: ex.planned_reps,
+                        plannedDuration: ex.planned_duration,
+                    }),
                 })),
             };
         });
@@ -240,7 +244,10 @@ export function hydrateEmomConstructorRow(
                             ex.effort_character as ConstructorExercise["effortCharacter"],
                         effortValue: ex.effort_value,
                         notes: ex.notes,
-                        repsTipo: "reps" as const,
+                        repsTipo: getExerciseRepsTipo({
+                        plannedReps: ex.planned_reps,
+                        plannedDuration: ex.planned_duration,
+                    }),
                     },
                 ],
             };

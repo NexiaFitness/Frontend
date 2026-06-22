@@ -17,36 +17,16 @@ import type { ConstructorRow, ConstructorExercise } from "@/components/sessionPr
 import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
+import { mapExerciseRepsToPayload } from "@/components/sessionProgramming/constructor/utils/exerciseRepsMode";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
     ex: Pick<
         ConstructorExercise,
-        "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
+        "repsTipo" | "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
     >
-): {
-    planned_reps: string | null;
-    planned_duration: number | null;
-    effort_character: ConstructorExercise["effortCharacter"];
-    effort_value: number | null;
-} {
-    const repsTipo = row.repsTipo ?? "reps";
-
-    if (repsTipo === "tiempo") {
-        return {
-            planned_reps: null,
-            planned_duration: ex.plannedDuration ?? null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
-
-    return {
-        planned_reps: ex.plannedReps ?? null,
-        planned_duration: null,
-        effort_character: ex.effortCharacter,
-        effort_value: ex.effortValue,
-    };
+) {
+    return mapExerciseRepsToPayload(ex, row.repsTipo ?? "reps");
 }
 
 function buildTemplateExercisePayload(

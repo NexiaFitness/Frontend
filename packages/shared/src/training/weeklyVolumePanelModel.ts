@@ -10,6 +10,28 @@ export const DAILY_VOLUME_TARGET_BAND = 0.1;
 
 export type VolumeRatioHoyStyle = "constructor" | "session_review";
 
+/** Constructor create vs edit — controla fuente de datos del panel. */
+export type WeeklyClientVolumePanelIntent = "create_session" | "edit_session";
+
+/**
+ * session_draft: numerador y desglose solo de esta sesión (draft_sets).
+ * weekly_saved: acumulado semanal guardado (GET weekly-by-muscle).
+ */
+export type WeeklyVolumePanelDataScope = "session_draft" | "weekly_saved";
+
+export interface WeeklyVolumePanelApiRowInput {
+    muscle_group_id: number;
+    name_es: string;
+    planned_sets_sum: number;
+    direct_sets?: number;
+    indirect_sets?: number;
+    draft_sets?: number;
+    daily_target?: number | null;
+    accumulated_saved_without_session?: number;
+    pattern_session_days?: number | null;
+    data_scope: WeeklyVolumePanelDataScope;
+}
+
 export function resolveDailyVolumeBand(targetToday: number): {
     rangeMin: number;
     rangeMax: number;
@@ -84,7 +106,10 @@ export function volumeBarWidthPct(row: WeeklyVolumePanelRowModel): number {
 }
 
 export function formatVolumeRatioHoy(
-    row: Pick<WeeklyVolumePanelRowModel, "draftSets" | "targetToday" | "accumulated" | "rangeMax" | "targetCenter">,
+    row: Pick<
+        WeeklyVolumePanelRowModel,
+        "draftSets" | "targetToday" | "accumulated" | "rangeMax" | "targetCenter" | "dataScope"
+    >,
     style: VolumeRatioHoyStyle = "constructor"
 ): string {
     if (row.targetToday != null && row.targetToday > 0) {
@@ -92,9 +117,55 @@ export function formatVolumeRatioHoy(
         return style === "session_review" ? `${base} series hoy` : `${base} hoy`;
     }
     if (row.rangeMax != null && row.rangeMax > 0 && row.targetCenter != null) {
-        return `${row.accumulated} / ${row.targetCenter} hoy`;
+        const numerator = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
+        const unit = row.dataScope === "session_draft" ? "esta sesión" : "semana";
+        return `${numerator} / ${row.targetCenter} ${unit}`;
     }
-    return `${row.accumulated} series`;
+    const fallbackTotal = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
+    return `${fallbackTotal} series`;
+}
+
+/** Mapea fila validate-draft a input del panel: solo volumen de esta sesión. */
+export function mapSessionLoadDraftRowToPanelInput(row: {
+    muscle_group_id: number;
+    name_es: string;
+    draft_sets: number;
+    draft_direct?: number;
+    draft_indirect?: number;
+    daily_target: number;
+    pattern_session_days?: number;
+}): WeeklyVolumePanelApiRowInput {
+    const draftSets = row.draft_sets ?? 0;
+    return {
+        muscle_group_id: row.muscle_group_id,
+        name_es: row.name_es,
+        planned_sets_sum: draftSets,
+        direct_sets: row.draft_direct ?? 0,
+        indirect_sets: row.draft_indirect ?? 0,
+        draft_sets: draftSets,
+        daily_target: row.daily_target,
+        pattern_session_days: row.pattern_session_days,
+        data_scope: "session_draft",
+    };
+}
+
+/** Mapea fila GET weekly-by-muscle (sesiones ya guardadas en la semana). */
+export function mapWeeklySavedRowToPanelInput(row: {
+    muscle_group_id: number;
+    name_es: string;
+    planned_sets_sum: number;
+    direct_sets?: number;
+    indirect_sets?: number;
+}): WeeklyVolumePanelApiRowInput {
+    return {
+        muscle_group_id: row.muscle_group_id,
+        name_es: row.name_es,
+        planned_sets_sum: row.planned_sets_sum,
+        direct_sets: row.direct_sets,
+        indirect_sets: row.indirect_sets,
+        draft_sets: 0,
+        data_scope: "weekly_saved",
+    };
 }
 
 /** Mapea fila de validación de sesión (V1) al modelo del panel de volumen. */
@@ -123,6 +194,7 @@ export function volumeMuscleValidationToPanelRow(mg: {
         targetCenter: mg.weekly_target > 0 ? mg.weekly_target : null,
         status,
         patternSessionDays: null,
+        dataScope: "session_draft",
     };
 }
 
@@ -149,25 +221,17 @@ export interface WeeklyVolumePanelRowModel {
      * Sesiones semanales con este patrón para el grupo (validate-draft); null si no aplica o no llegó del API.
      */
     patternSessionDays: number | null;
+    dataScope: WeeklyVolumePanelDataScope;
 }
 
 export function buildWeeklyVolumePanelRows(
-    apiRows: Array<{
-        muscle_group_id: number;
-        name_es: string;
-        planned_sets_sum: number;
-        direct_sets?: number;
-        indirect_sets?: number;
-        draft_sets?: number;
-        daily_target?: number | null;
-        accumulated_saved_without_session?: number;
-        pattern_session_days?: number | null;
-    }>,
+    apiRows: WeeklyVolumePanelApiRowInput[],
     targetCenter: number | null
 ): WeeklyVolumePanelRowModel[] {
     return apiRows.map((r) => {
         const nameEs = r.name_es ?? "";
         const draftSets = r.draft_sets ?? 0;
+        const dataScope = r.data_scope;
         const targetToday = r.daily_target ?? null;
         const savedWeek =
             typeof r.accumulated_saved_without_session === "number"
@@ -177,6 +241,8 @@ export function buildWeeklyVolumePanelRows(
             typeof r.pattern_session_days === "number" && r.pattern_session_days > 0
                 ? r.pattern_session_days
                 : null;
+        const displayTotal =
+            dataScope === "session_draft" ? draftSets : r.planned_sets_sum;
 
         // MODO DIARIO: si tenemos targetToday valido
         if (targetToday != null && targetToday > 0) {
@@ -186,7 +252,7 @@ export function buildWeeklyVolumePanelRows(
             return {
                 muscleGroupId: r.muscle_group_id,
                 nameEs,
-                accumulated: r.planned_sets_sum,
+                accumulated: displayTotal,
                 savedWeekWithoutSession: savedWeek,
                 directSets: r.direct_sets,
                 indirectSets: r.indirect_sets,
@@ -197,16 +263,18 @@ export function buildWeeklyVolumePanelRows(
                 targetCenter,
                 status,
                 patternSessionDays,
+                dataScope,
             };
         }
 
-        // MODO SEMANAL (fallback)
-        const acc = r.planned_sets_sum;
+        // MODO SEMANAL (fallback sin daily_target del bloque)
+        const weeklyNumerator =
+            dataScope === "session_draft" ? draftSets : r.planned_sets_sum;
         if (targetCenter == null) {
             return {
                 muscleGroupId: r.muscle_group_id,
                 nameEs,
-                accumulated: acc,
+                accumulated: displayTotal,
                 savedWeekWithoutSession: savedWeek,
                 directSets: r.direct_sets,
                 indirectSets: r.indirect_sets,
@@ -217,18 +285,19 @@ export function buildWeeklyVolumePanelRows(
                 targetCenter: null,
                 status: "no_target",
                 patternSessionDays,
+                dataScope,
             };
         }
         const rangeMin = Math.max(1, Math.floor(targetCenter * 0.9));
         const rangeMax = Math.max(rangeMin, Math.ceil(targetCenter * 1.1));
         let status: WeeklyVolumeRowStatus;
-        if (acc < rangeMin) status = "deficit";
-        else if (acc > rangeMax) status = "excess";
+        if (weeklyNumerator < rangeMin) status = "deficit";
+        else if (weeklyNumerator > rangeMax) status = "excess";
         else status = "on_target";
         return {
             muscleGroupId: r.muscle_group_id,
             nameEs,
-            accumulated: acc,
+            accumulated: displayTotal,
             savedWeekWithoutSession: savedWeek,
             directSets: r.direct_sets,
             indirectSets: r.indirect_sets,
@@ -239,6 +308,7 @@ export function buildWeeklyVolumePanelRows(
             targetCenter,
             status,
             patternSessionDays,
+            dataScope,
         };
     });
 }

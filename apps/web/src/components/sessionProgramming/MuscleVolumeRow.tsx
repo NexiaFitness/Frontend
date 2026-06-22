@@ -43,6 +43,7 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
     const hasBreakdown = row.directSets != null || row.indirectSets != null;
     const context = contextLine !== undefined ? contextLine : rowContextLine(row);
     const displayName = row.nameEs || `Grupo ${row.muscleGroupId}`;
+    const totalSets = row.accumulated;
 
     if (variant === "uncovered") {
         return (
@@ -122,7 +123,7 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
                     </span>
                     <span className="tabular-nums">
                         Total:{" "}
-                        <span className="font-medium text-foreground/70">{row.accumulated}</span>
+                        <span className="font-medium text-foreground/70">{totalSets}</span>
                     </span>
                 </div>
             ) : null}

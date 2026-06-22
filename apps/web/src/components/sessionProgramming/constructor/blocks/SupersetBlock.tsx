@@ -124,7 +124,12 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
         if ("effortCharacter" in updates) mapped.effortCharacter = updates.effortCharacter ?? null;
         if ("effortValue" in updates) mapped.effortValue = updates.effortValue ?? null;
 
-        const nextExercise = updateSupersetExerciseSetData(exercise, entryId, mapped);
+        let nextExercise = exercise;
+        if ("repsTipo" in updates && updates.repsTipo) {
+            nextExercise = { ...nextExercise, repsTipo: updates.repsTipo };
+        }
+
+        nextExercise = updateSupersetExerciseSetData(nextExercise, entryId, mapped);
         const nextExercises = [...normalized.exercises];
         nextExercises[index] = nextExercise;
         onUpdate(normalized.id, { exercises: nextExercises });

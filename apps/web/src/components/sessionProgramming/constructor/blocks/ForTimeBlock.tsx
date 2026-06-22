@@ -131,7 +131,12 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
         if ("effortCharacter" in updates) mapped.effortCharacter = updates.effortCharacter ?? null;
         if ("effortValue" in updates) mapped.effortValue = updates.effortValue ?? null;
 
-        const nextExercise = updateForTimeExerciseSetData(exercise, entryId, mapped);
+        let nextExercise = exercise;
+        if ("repsTipo" in updates && updates.repsTipo) {
+            nextExercise = { ...nextExercise, repsTipo: updates.repsTipo };
+        }
+
+        nextExercise = updateForTimeExerciseSetData(nextExercise, entryId, mapped);
         const nextExercises = [...normalized.exercises];
         nextExercises[index] = nextExercise;
         onUpdate(normalized.id, { exercises: nextExercises });

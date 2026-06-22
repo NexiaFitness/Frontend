@@ -6,7 +6,7 @@ import React, { useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/feedback";
-import type { WeeklyVolumePanelRowModel } from "@nexia/shared";
+import type { WeeklyClientVolumePanelIntent, WeeklyVolumePanelRowModel } from "@nexia/shared";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
 
 export interface WeeklyClientVolumePanelProps {
@@ -15,9 +15,9 @@ export interface WeeklyClientVolumePanelProps {
     isLoading: boolean;
     isError: boolean;
     hasClient: boolean;
-    /** Fase B: el valor mostrado incluye borrador del constructor (POST validate-draft). */
+    intent?: WeeklyClientVolumePanelIntent;
+    /** True cuando el panel refleja el borrador del constructor (no acumulado semanal). */
     usesDraftProjection?: boolean;
-    /** Objetivo semanal de referencia (>0 cuando hay recomendaciones completas o validate-draft). */
     weeklyTarget?: number | null;
 }
 
@@ -27,6 +27,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     isLoading,
     isError,
     hasClient,
+    intent = "edit_session",
     usesDraftProjection = false,
     weeklyTarget = null,
 }) => {
@@ -39,9 +40,36 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
         return rows.every((r) => r.targetToday == null || r.targetToday === 0);
     }, [usesDraftProjection, rows, weeklyTarget]);
 
-    const panelTitle = noBlockMode
-        ? "Volumen semanal de referencia"
-        : "Series recomendadas para esta sesión";
+    const panelTitle = useMemo(() => {
+        if (intent === "create_session" || usesDraftProjection) {
+            return noBlockMode
+                ? "Volumen semanal de referencia"
+                : "Series recomendadas para esta sesión";
+        }
+        return "Volumen semanal del cliente";
+    }, [intent, usesDraftProjection, noBlockMode]);
+
+    const panelSubtitle = useMemo(() => {
+        if (intent === "create_session") {
+            return usesDraftProjection
+                ? "Borrador vs reparto orientativo de esta sesión (plan semanal)"
+                : "Sin ejercicios en el constructor — el panel se actualiza al añadir ejercicios";
+        }
+        if (usesDraftProjection) {
+            return "Borrador vs reparto orientativo de esta sesión (plan semanal)";
+        }
+        return "Acumulado semanal según sesiones guardadas y objetivos del plan";
+    }, [intent, usesDraftProjection]);
+
+    const emptyMessage = useMemo(() => {
+        if (intent === "create_session") {
+            return "Añade ejercicios al constructor para ver el reparto de series de esta sesión.";
+        }
+        if (usesDraftProjection) {
+            return "Aún no hay grupos musculares con reparto para esta sesión. Añade ejercicios al constructor o comprueba que el plan defina objetivos por grupo para la semana.";
+        }
+        return "No hay volumen registrado esta semana. Aparecerá al guardar sesiones con ejercicios del catálogo o cuando el plan active reparto y acumulados.";
+    }, [intent, usesDraftProjection]);
 
     if (!hasClient) {
         return null;
@@ -61,9 +89,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                 <div className="min-w-0 space-y-0.5">
                     <h3 className="text-sm font-semibold text-foreground truncate">{panelTitle}</h3>
                     <p className="text-xs text-muted-foreground truncate">
-                        {usesDraftProjection
-                            ? "Borrador vs reparto orientativo de esta sesión (plan semanal)"
-                            : "Acumulado semanal según sesiones guardadas y objetivos del plan"}
+                        {panelSubtitle}
                         {weekLabel ? ` · Semana del ${weekLabel}` : ""}
                     </p>
                 </div>
@@ -87,11 +113,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                             No se pudo cargar el volumen semanal. Revisa la conexión o vuelve a intentar.
                         </p>
                     ) : rows.length === 0 ? (
-                        <p className="py-4 text-sm text-muted-foreground leading-relaxed">
-                            {usesDraftProjection
-                                ? "Aún no hay grupos musculares con reparto para esta sesión. Añade ejercicios al constructor o comprueba que el plan defina objetivos por grupo para la semana."
-                                : "No hay volumen registrado esta semana. Aparecerá al guardar sesiones con ejercicios del catálogo o cuando el plan active reparto y acumulados."}
-                        </p>
+                        <p className="py-4 text-sm text-muted-foreground leading-relaxed">{emptyMessage}</p>
                     ) : (
                         <div className="space-y-3">
                             {noBlockMode ? (
