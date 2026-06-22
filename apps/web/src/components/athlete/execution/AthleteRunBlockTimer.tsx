@@ -13,6 +13,7 @@ import {
     ATHLETE_RUN_BLOCK_TIMER_LABEL,
     ATHLETE_RUN_BLOCK_TIMER_RING,
     ATHLETE_RUN_BLOCK_TIMER_TIME,
+    ATHLETE_RUN_BLOCK_TIMER_TIME_READY,
     ATHLETE_RUN_BLOCK_TIMER_TIME_URGENT,
     ATHLETE_RUN_DOING_ENTER,
     getAthleteBlockTimerHint,
@@ -28,6 +29,7 @@ export interface AthleteRunBlockTimerProps {
     totalSeconds: number | null;
     isCountup: boolean;
     isExpired: boolean;
+    isReady?: boolean;
 }
 
 export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
@@ -36,8 +38,10 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
     totalSeconds,
     isCountup,
     isExpired,
+    isReady = false,
 }) => {
-    const urgent = !isCountup && displaySeconds > 0 && displaySeconds <= 10;
+    const urgent =
+        !isReady && !isCountup && displaySeconds > 0 && displaySeconds <= 10;
     const total = Math.max(totalSeconds ?? displaySeconds, displaySeconds, 1);
     const progress = isCountup
         ? Math.min(1, displaySeconds / Math.max(totalSeconds ?? 600, 1))
@@ -60,12 +64,21 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
                     <Timer
                         className={cn(
                             "size-4 shrink-0",
-                            urgent || isExpired ? "text-warning" : "text-primary"
+                            isReady
+                                ? "text-muted-foreground"
+                                : urgent || isExpired
+                                  ? "text-warning"
+                                  : "text-primary"
                         )}
                         aria-hidden
                     />
-                    <p className={ATHLETE_RUN_BLOCK_TIMER_LABEL}>
-                        {getAthleteBlockTimerLabel(groupKind, isCountup)}
+                    <p
+                        className={cn(
+                            ATHLETE_RUN_BLOCK_TIMER_LABEL,
+                            isReady && "text-muted-foreground"
+                        )}
+                    >
+                        {getAthleteBlockTimerLabel(groupKind, isCountup, isReady)}
                     </p>
                 </div>
 
@@ -83,7 +96,7 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
                             className="stroke-border/35"
                             strokeWidth={RING_STROKE}
                         />
-                        {!isCountup ? (
+                        {!isCountup && !isReady ? (
                             <circle
                                 cx="70"
                                 cy="70"
@@ -104,7 +117,11 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
                         <span
                             className={cn(
                                 ATHLETE_RUN_BLOCK_TIMER_TIME,
-                                (urgent || isExpired) && !isCountup && ATHLETE_RUN_BLOCK_TIMER_TIME_URGENT
+                                isReady && ATHLETE_RUN_BLOCK_TIMER_TIME_READY,
+                                (urgent || isExpired) &&
+                                    !isCountup &&
+                                    !isReady &&
+                                    ATHLETE_RUN_BLOCK_TIMER_TIME_URGENT
                             )}
                         >
                             {formatAthleteRestCountdown(displaySeconds)}
@@ -113,7 +130,7 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
                 </div>
 
                 <p className={ATHLETE_RUN_BLOCK_TIMER_HINT}>
-                    {getAthleteBlockTimerHint(groupKind, isCountup)}
+                    {getAthleteBlockTimerHint(groupKind, isCountup, isReady)}
                 </p>
             </div>
         </div>

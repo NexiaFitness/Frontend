@@ -21,17 +21,32 @@ import {
     buildAthleteRunSteps,
     resolveRestAfterCompletingRunStep,
     runStepToFlatExercise,
+    type AthleteRunRoundSlot,
     type AthleteRunStep,
 } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
 import {
     buildAthleteRunGroupContext,
+    buildAthleteRunGroupContextFromEmomInterval,
     buildAthleteRunGroupContextFromStep,
     type AthleteRunGroupContextView,
 } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
+import {
+    applyAmrapPartialChange,
+    buildAmrapSavePayloads,
+    buildInitialAmrapPartial,
+    computeAmrapPartialTotal,
+} from "@nexia/shared/utils/athlete/amrapResult";
+import {
+    buildEmomSavePayloads,
+    buildInitialEmomOverrides,
+} from "@nexia/shared/utils/athlete/emomResult";
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
 import { useAthleteRunRestFlow } from "@/hooks/athlete/useAthleteRunRestFlow";
 import { useAthleteBlockTimer } from "@/hooks/athlete/useAthleteBlockTimer";
+import { useAthleteBlockWorkPhase } from "@/hooks/athlete/useAthleteBlockWorkPhase";
+import { useAthleteEmomFlow } from "@/hooks/athlete/useAthleteEmomFlow";
+import { getAthleteBlockStartLabel } from "@/components/athlete/execution/athleteRunPresentation";
 
 export interface AthletePrCelebration {
     exerciseName: string;
@@ -145,6 +160,12 @@ export function useAthleteSessionRun({
     const [slotLogs, setSlotLogs] = useState<Record<string, SlotLogValues>>({});
     const [roundRpe, setRoundRpe] = useState<number | null>(null);
     const [amrapRounds, setAmrapRounds] = useState(0);
+    const [amrapPartialReps, setAmrapPartialReps] = useState<Record<string, number>>({});
+    const [amrapPartialOpen, setAmrapPartialOpen] = useState(false);
+    const [emomAsPlanned, setEmomAsPlanned] = useState<boolean | null>(null);
+    const [emomOverrides, setEmomOverrides] = useState<Record<string, Record<string, number>>>(
+        {}
+    );
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
@@ -161,6 +182,10 @@ export function useAthleteSessionRun({
         setSlotLogs({});
         setRoundRpe(null);
         setAmrapRounds(0);
+        setAmrapPartialReps({});
+        setAmrapPartialOpen(false);
+        setEmomAsPlanned(null);
+        setEmomOverrides({});
     }, [sessionId]);
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
@@ -229,13 +254,45 @@ export function useAthleteSessionRun({
         if (!currentStepKey) return;
 
         const runStep = runStepsRef.current.find((item) => item.stepKey === currentStepKey);
-        if (!runStep || (runStep.kind !== "group_round" && runStep.kind !== "timed_block") || !runStep.slots?.length) {
+        if (!runStep || (runStep.kind !== "group_round" && runStep.kind !== "timed_block") || (!runStep.slots?.length && !runStep.emomIntervals?.length)) {
             setSlotLogs((prev) => (Object.keys(prev).length === 0 ? prev : {}));
             setRoundRpe((prev) => (prev === null ? prev : null));
             setAmrapRounds((prev) => (prev === 0 ? prev : 0));
+            setAmrapPartialReps((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+            setAmrapPartialOpen((prev) => (prev === false ? prev : false));
+            setEmomAsPlanned((prev) => (prev === null ? prev : null));
+            setEmomOverrides((prev) => (Object.keys(prev).length === 0 ? prev : {}));
             return;
         }
 
+        if (runStep.groupKind === "emom" && runStep.emomIntervals?.length) {
+            const initialEmomOverrides = buildInitialEmomOverrides(runStep.emomIntervals);
+            setEmomAsPlanned((prev) => (prev === null ? prev : null));
+            setEmomOverrides((prev) => {
+                const keys = Object.keys(initialEmomOverrides);
+                if (
+                    keys.length === Object.keys(prev).length &&
+                    keys.every((intervalKey) => {
+                        const previous = prev[intervalKey] ?? {};
+                        const next = initialEmomOverrides[intervalKey] ?? {};
+                        return Object.keys(next).every(
+                            (slotKey) => (previous[slotKey] ?? 0) === (next[slotKey] ?? 0)
+                        );
+                    })
+                ) {
+                    return prev;
+                }
+                return initialEmomOverrides;
+            });
+        }
+
+        if (!runStep.slots?.length) return;
+
+        const partialSlots = runStep.slots.map((slot) => ({
+            stepKey: slot.stepKey,
+            maxReps: slot.defaultReps,
+        }));
+        const initialPartial = buildInitialAmrapPartial(partialSlots);
         const initial: Record<string, SlotLogValues> = {};
         for (const slot of runStep.slots) {
             initial[slot.stepKey] = {
@@ -269,6 +326,17 @@ export function useAthleteSessionRun({
 
         setRoundRpe((prev) => (prev === prescribedRpe ? prev : prescribedRpe));
         setAmrapRounds((prev) => (prev === 0 ? prev : 0));
+        setAmrapPartialReps((prev) => {
+            const keys = Object.keys(initialPartial);
+            if (
+                keys.length === Object.keys(prev).length &&
+                keys.every((key) => (prev[key] ?? 0) === (initialPartial[key] ?? 0))
+            ) {
+                return prev;
+            }
+            return initialPartial;
+        });
+        setAmrapPartialOpen((prev) => (prev === false ? prev : false));
     }, [currentStepKey]);
 
     useEffect(() => {
@@ -296,6 +364,33 @@ export function useAthleteSessionRun({
             return { ...prev, [slotKey]: { ...current, ...patch } };
         });
     }, []);
+
+    const updateAmrapPartialReps = useCallback(
+        (stepKey: string, value: number) => {
+            if (!currentRunStep?.slots?.length) return;
+            const partialSlots = currentRunStep.slots.map((slot) => ({
+                stepKey: slot.stepKey,
+                maxReps: slot.defaultReps,
+            }));
+            setAmrapPartialReps((prev) =>
+                applyAmrapPartialChange(prev, partialSlots, stepKey, value)
+            );
+        },
+        [currentRunStep?.slots]
+    );
+
+    const updateEmomOverride = useCallback(
+        (intervalKey: string, stepKey: string, value: number) => {
+            setEmomOverrides((prev) => ({
+                ...prev,
+                [intervalKey]: {
+                    ...(prev[intervalKey] ?? {}),
+                    [stepKey]: value,
+                },
+            }));
+        },
+        []
+    );
 
     const getNextActualSets = useCallback((blockExerciseId: number, loggedSets = 0) => {
         const fromRef = loggedSetsRef.current.get(blockExerciseId) ?? 0;
@@ -355,39 +450,98 @@ export function useAthleteSessionRun({
     ]);
 
     const handleSaveBatch = useCallback(async () => {
-        if (!currentRunStep?.slots?.length) return;
+        if (!currentRunStep) return;
         if (currentRunStep.kind !== "group_round" && currentRunStep.kind !== "timed_block") {
             return;
         }
         if (completedStepKeysRef.current.has(currentRunStep.stepKey)) return;
 
+        const isAmrap = currentRunStep.groupKind === "amrap";
+        const isEmom = currentRunStep.groupKind === "emom";
+        const isForTime = currentRunStep.groupKind === "for_time";
+
+        if (isAmrap && !currentRunStep.slots?.length) return;
+        if (isEmom && !currentRunStep.emomIntervals?.length) return;
+        if (!isAmrap && !isEmom && !currentRunStep.slots?.length) return;
+
         setSaving(true);
         let lastResult: "synced" | "queued" | "offline" = "synced";
-        const isAmrap = currentRunStep.groupKind === "amrap";
-        const isForTime = currentRunStep.groupKind === "for_time";
         const elapsedSeconds = blockTimerRef.current;
 
         try {
-            for (const [index, slot] of currentRunStep.slots.entries()) {
-                if (completedStepKeysRef.current.has(slot.stepKey)) continue;
-
-                const log = slotLogs[slot.stepKey] ?? {
-                    weight: slot.defaultWeight,
-                    reps: slot.defaultReps,
-                };
-
-                const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
-                loggedSetsRef.current.set(slot.blockExerciseId, nextSets);
-
-                lastResult = await logSet(slot.blockExerciseId, {
-                    actual_weight: log.weight,
-                    actual_reps: isAmrap && index === 0 ? String(amrapRounds) : String(log.reps),
-                    actual_sets: nextSets,
-                    actual_effort_value: roundRpe ?? undefined,
-                    ...(isForTime && index === 0 ? { actual_duration: elapsedSeconds } : {}),
+            if (isAmrap && currentRunStep.slots) {
+                const payloads = buildAmrapSavePayloads({
+                    fullRounds: amrapRounds,
+                    slots: currentRunStep.slots.map((slot) => ({
+                        stepKey: slot.stepKey,
+                        blockExerciseId: slot.blockExerciseId,
+                        plannedRepsPerRound: slot.defaultReps,
+                        defaultWeight: slot.defaultWeight,
+                        loggedSets: slot.loggedSets,
+                    })),
+                    partialReps: amrapPartialReps,
+                    roundRpe,
+                    getNextActualSets,
                 });
 
-                completedStepKeysRef.current.add(slot.stepKey);
+                for (const payload of payloads) {
+                    const slot = currentRunStep.slots.find(
+                        (item) => item.blockExerciseId === payload.blockExerciseId
+                    );
+                    if (!slot || completedStepKeysRef.current.has(slot.stepKey)) continue;
+
+                    loggedSetsRef.current.set(
+                        payload.blockExerciseId,
+                        payload.data.actual_sets
+                    );
+
+                    lastResult = await logSet(payload.blockExerciseId, payload.data);
+                    completedStepKeysRef.current.add(slot.stepKey);
+                }
+            } else if (isEmom && currentRunStep.emomIntervals) {
+                if (emomAsPlanned === null) return;
+
+                const payloads = buildEmomSavePayloads({
+                    intervals: currentRunStep.emomIntervals,
+                    asPlanned: emomAsPlanned,
+                    overrides: emomOverrides,
+                    roundRpe,
+                });
+
+                for (const payload of payloads) {
+                    const nextSets = getNextActualSets(
+                        payload.blockExerciseId,
+                        payload.loggedSets
+                    );
+                    loggedSetsRef.current.set(payload.blockExerciseId, nextSets);
+
+                    lastResult = await logSet(payload.blockExerciseId, {
+                        ...payload.data,
+                        actual_sets: nextSets,
+                    });
+                }
+            } else if (currentRunStep.slots) {
+                for (const [index, slot] of currentRunStep.slots.entries()) {
+                    if (completedStepKeysRef.current.has(slot.stepKey)) continue;
+
+                    const log = slotLogs[slot.stepKey] ?? {
+                        weight: slot.defaultWeight,
+                        reps: slot.defaultReps,
+                    };
+
+                    const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
+                    loggedSetsRef.current.set(slot.blockExerciseId, nextSets);
+
+                    lastResult = await logSet(slot.blockExerciseId, {
+                        actual_weight: log.weight,
+                        actual_reps: String(log.reps),
+                        actual_sets: nextSets,
+                        actual_effort_value: roundRpe ?? undefined,
+                        ...(isForTime && index === 0 ? { actual_duration: elapsedSeconds } : {}),
+                    });
+
+                    completedStepKeysRef.current.add(slot.stepKey);
+                }
             }
 
             completedStepKeysRef.current.add(currentRunStep.stepKey);
@@ -404,8 +558,11 @@ export function useAthleteSessionRun({
             setSaving(false);
         }
     }, [
+        amrapPartialReps,
         amrapRounds,
         currentRunStep,
+        emomAsPlanned,
+        emomOverrides,
         getNextActualSets,
         isGroupRound,
         isTimedBlock,
@@ -438,7 +595,7 @@ export function useAthleteSessionRun({
         ? isAmrapBlock
             ? "Bloque completado"
             : isEmomBlock
-              ? "Intervalo confirmado"
+              ? "Bloque completado"
               : "Ronda completada"
         : isGroupRound
           ? isDropsetRound
@@ -447,7 +604,22 @@ export function useAthleteSessionRun({
           : "Serie completada";
 
     const isConfirmValid = useMemo(() => {
-        if (isBatchStep && currentRunStep?.slots?.length) {
+        if (isBatchStep && currentRunStep) {
+            if (isAmrapBlock && currentRunStep.slots?.length) {
+                const partialTotal = computeAmrapPartialTotal(
+                    currentRunStep.slots.map(
+                        (slot) => amrapPartialReps[slot.stepKey] ?? 0
+                    )
+                );
+                return amrapRounds > 0 || partialTotal > 0;
+            }
+
+            if (isEmomBlock && currentRunStep.emomIntervals?.length) {
+                return emomAsPlanned !== null;
+            }
+
+            if (!currentRunStep.slots?.length) return false;
+
             const slotsValid = currentRunStep.slots.every((slot) => {
                 const log = slotLogs[slot.stepKey] ?? {
                     weight: slot.defaultWeight,
@@ -455,11 +627,21 @@ export function useAthleteSessionRun({
                 };
                 return log.reps > 0 && log.weight >= 0;
             });
-            if (isAmrapBlock) return amrapRounds >= 0 && slotsValid;
             return slotsValid;
         }
         return reps > 0 && weight >= 0;
-    }, [amrapRounds, currentRunStep, isAmrapBlock, isBatchStep, slotLogs, reps, weight]);
+    }, [
+        amrapPartialReps,
+        amrapRounds,
+        currentRunStep,
+        emomAsPlanned,
+        isAmrapBlock,
+        isEmomBlock,
+        isBatchStep,
+        slotLogs,
+        reps,
+        weight,
+    ]);
 
     const isLastStep = step === runSteps.length - 1;
     const isCurrentStepSaved = currentStepKey
@@ -480,17 +662,136 @@ export function useAthleteSessionRun({
             : isAmrapBlock
               ? "Registrar AMRAP"
               : isEmomBlock
-                ? "Intervalo completado"
+                ? getAthleteBlockStartLabel("emom")
                 : isForTimeBlock
                   ? "Registrar ronda"
                   : "Empezar descanso",
     });
 
+    const blockWork = useAthleteBlockWorkPhase(
+        currentStepKey,
+        isTimedBlock && showStepActions
+    );
+
+    const emomFlow = useAthleteEmomFlow(
+        currentStepKey,
+        currentRunStep?.emomIntervals ?? [],
+        currentRunStep?.intervalSeconds ?? 60,
+        isEmomBlock &&
+            blockWork.isRunning &&
+            restFlow.phase === "doing" &&
+            showStepActions
+    );
+
+    const emomActiveGroupContext = useMemo(() => {
+        if (!isEmomBlock || !currentRunStep || !emomFlow.currentInterval) return null;
+        return buildAthleteRunGroupContextFromEmomInterval(
+            currentRunStep,
+            emomFlow.currentInterval
+        );
+    }, [currentRunStep, emomFlow.currentInterval, isEmomBlock]);
+
+    const displayGroupContext =
+        isEmomBlock && emomActiveGroupContext && blockWork.isRunning && restFlow.phase === "doing"
+            ? emomActiveGroupContext
+            : groupContext;
+
     const blockTimer = useAthleteBlockTimer(
         currentRunStep,
-        isTimedBlock && restFlow.phase === "doing" && showStepActions
+        isTimedBlock &&
+            !isEmomBlock &&
+            blockWork.isRunning &&
+            restFlow.phase === "doing" &&
+            showStepActions
     );
     blockTimerRef.current = blockTimer.elapsedSeconds;
+
+    const displayBlockTimer = useMemo(() => {
+        if (!isEmomBlock || !blockWork.isRunning || restFlow.phase !== "doing") {
+            return blockTimer;
+        }
+        return {
+            displaySeconds: emomFlow.displaySeconds,
+            elapsedSeconds: emomFlow.totalSeconds - emomFlow.displaySeconds,
+            totalSeconds: emomFlow.totalSeconds,
+            isExpired: false,
+            isCountup: false,
+        };
+    }, [blockTimer, blockWork.isRunning, emomFlow.displaySeconds, emomFlow.totalSeconds, isEmomBlock, restFlow.phase]);
+
+    const timedGroupKind = currentRunStep?.groupKind ?? "";
+
+    const restFlowUi = useMemo(() => {
+        if (!isTimedBlock || !showStepActions || restFlow.phase !== "doing") {
+            return restFlow;
+        }
+        if (blockWork.isReady) {
+            return {
+                ...restFlow,
+                stickyPrimaryLabel: getAthleteBlockStartLabel(timedGroupKind),
+                stickyPrimaryAction: blockWork.start,
+                stickyPrimaryDisabled: false,
+                stickyPrimaryLoading: false,
+            };
+        }
+        if (isEmomBlock && blockWork.isRunning && !emomFlow.allIntervalsComplete) {
+            return {
+                ...restFlow,
+                stickyPrimaryLabel: undefined,
+                stickyPrimaryAction: undefined,
+                stickyPrimaryDisabled: true,
+                stickyPrimaryLoading: false,
+            };
+        }
+        return restFlow;
+    }, [
+        blockWork.isReady,
+        blockWork.isRunning,
+        blockWork.start,
+        emomFlow.allIntervalsComplete,
+        isEmomBlock,
+        isTimedBlock,
+        restFlow,
+        showStepActions,
+        timedGroupKind,
+    ]);
+
+    const startRestRef = useRef(restFlow.startRest);
+    startRestRef.current = restFlow.startRest;
+
+    useEffect(() => {
+        if (isEmomBlock) return;
+        if (!isTimedBlock || !blockWork.isRunning) return;
+        if (restFlow.phase !== "doing") return;
+        if (blockTimer.isCountup || !blockTimer.isExpired) return;
+        startRestRef.current();
+    }, [
+        blockTimer.isCountup,
+        blockTimer.isExpired,
+        blockWork.isRunning,
+        isEmomBlock,
+        isTimedBlock,
+        restFlow.phase,
+    ]);
+
+    useEffect(() => {
+        if (!isEmomBlock || !emomFlow.allIntervalsComplete) return;
+        if (!blockWork.isRunning) return;
+        if (restFlow.phase !== "doing") return;
+        startRestRef.current();
+    }, [
+        blockWork.isRunning,
+        emomFlow.allIntervalsComplete,
+        isEmomBlock,
+        restFlow.phase,
+    ]);
+
+    const emomTechniqueSlots: AthleteRunRoundSlot[] = useMemo(() => {
+        if (emomFlow.currentInterval?.slots.length) {
+            return emomFlow.currentInterval.slots;
+        }
+        return currentRunStep?.emomIntervals?.[0]?.slots ?? currentRunStep?.slots ?? [];
+    }, [currentRunStep?.emomIntervals, currentRunStep?.slots, emomFlow.currentInterval]);
 
     const handleFinish = useCallback(async () => {
         setCompleting(true);
@@ -524,14 +825,25 @@ export function useAthleteSessionRun({
         isGroupRound,
         isTimedBlock,
         current,
-        groupContext,
+        groupContext: displayGroupContext,
         slotLogs,
         updateSlotLog,
         roundRpe,
         setRoundRpe,
         amrapRounds,
         setAmrapRounds,
-        blockTimer,
+        amrapPartialReps,
+        updateAmrapPartialReps,
+        amrapPartialOpen,
+        setAmrapPartialOpen,
+        emomAsPlanned,
+        setEmomAsPlanned,
+        emomOverrides,
+        updateEmomOverride,
+        emomMinuteLabel: emomFlow.minuteLabel,
+        emomTechniqueSlots,
+        blockTimer: displayBlockTimer,
+        blockWorkIsReady: blockWork.isReady,
         weight,
         reps,
         rpe,
@@ -540,7 +852,7 @@ export function useAthleteSessionRun({
         setRpe,
         saving,
         completing,
-        restFlow,
+        restFlow: restFlowUi,
         handleFinish,
         isLoading,
         isLastStep,

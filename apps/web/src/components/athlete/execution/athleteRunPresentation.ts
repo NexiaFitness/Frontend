@@ -244,7 +244,7 @@ export const ATHLETE_RUN_ROUND_EFFORT_TITLE = cn(
 
 export const ATHLETE_RUN_ROUND_EFFORT_SUB = "text-xs leading-relaxed text-muted-foreground/90";
 
-export type AthleteRoundEffortVariant = "round" | "dropset";
+export type AthleteRoundEffortVariant = "round" | "dropset" | "block";
 
 export interface AthleteRoundEffortCopy {
     bridgeLabel: string;
@@ -263,6 +263,16 @@ export function getAthleteRoundEffortCopy(
             subtitle:
                 "Un solo valor para toda la secuencia (MAIN y escalones). Opcional — ayuda a tu entrenador.",
             ariaLabel: "Esfuerzo percibido del dropset completo",
+        };
+    }
+
+    if (variant === "block") {
+        return {
+            bridgeLabel: "Cierre de bloque",
+            title: "Esfuerzo del bloque",
+            subtitle:
+                "Un solo valor para todo el bloque. Opcional — ayuda a tu entrenador.",
+            ariaLabel: "Esfuerzo percibido del bloque completo",
         };
     }
 
@@ -336,20 +346,77 @@ export const ATHLETE_RUN_AMRAP_ROUNDS_LABEL = cn(
     "text-[10px] font-bold uppercase tracking-wider text-primary"
 );
 
+export const ATHLETE_RUN_AMRAP_HINT = ATHLETE_RUN_FIELD_HINT;
+
+export const ATHLETE_RUN_AMRAP_TARGET_HINT = "text-xs text-muted-foreground/85";
+
+export const ATHLETE_RUN_AMRAP_SUMMARY = cn(
+    "text-sm font-medium tabular-nums text-primary/90"
+);
+
+export const ATHLETE_RUN_AMRAP_PARTIAL_TOGGLE = cn(
+    "flex w-full items-center justify-between gap-2 rounded-lg border border-border/60",
+    "bg-background/35 px-3 py-2.5 text-left text-sm font-medium text-foreground",
+    "transition-colors hover:border-primary/30 hover:bg-primary/5"
+);
+
+export const ATHLETE_RUN_AMRAP_PARTIAL_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4 pt-5"
+);
+
+export const ATHLETE_RUN_AMRAP_PARTIAL_ROW_LABEL = "text-sm font-medium text-foreground";
+
+export const ATHLETE_RUN_AMRAP_PARTIAL_ROW_META = "text-xs text-muted-foreground/85";
+
+export const ATHLETE_RUN_EMOM_CHOICE_ROW = "grid grid-cols-1 gap-2 sm:grid-cols-2";
+
+export const ATHLETE_RUN_EMOM_CHOICE_BTN = (selected: boolean) =>
+    cn(
+        "min-h-touch-athlete rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors",
+        selected
+            ? "border-primary/50 bg-primary/15 text-primary"
+            : "border-border/60 bg-background/35 text-foreground hover:border-primary/30 hover:bg-primary/5"
+    );
+
 export function getAthleteBlockTimerHint(
     groupKind: string,
-    isCountup: boolean
+    isCountup: boolean,
+    isReady = false
 ): string {
+    if (isReady) {
+        if (isCountup) {
+            return "Pulsa iniciar cuando estés listo — el cronómetro arrancará en cero.";
+        }
+        if (groupKind === "emom") {
+            return "Pulsa iniciar cuando estés listo — tendrás el intervalo completo.";
+        }
+        return "Pulsa iniciar cuando estés listo — el time cap empezará a bajar.";
+    }
     if (isCountup) return "Cronómetro activo — completa la ronda lo antes posible.";
     if (groupKind === "emom") return "Completa la ventana antes de que llegue a cero.";
     return "Máximo de rondas posibles antes de que llegue a cero.";
 }
 
-export function getAthleteBlockTimerLabel(groupKind: string, isCountup: boolean): string {
+export function getAthleteBlockTimerLabel(
+    groupKind: string,
+    isCountup: boolean,
+    isReady = false
+): string {
+    if (isReady) return "Listo para empezar";
     if (isCountup) return "Tiempo de ronda";
     if (groupKind === "emom") return "Intervalo";
     return "Time cap";
 }
+
+export function getAthleteBlockStartLabel(groupKind: string): string {
+    if (groupKind === "amrap") return "Iniciar AMRAP";
+    if (groupKind === "emom") return "Iniciar intervalo";
+    if (groupKind === "for_time") return "Empezar ronda";
+    return "Iniciar bloque";
+}
+
+export const ATHLETE_RUN_BLOCK_TIMER_TIME_READY = "text-muted-foreground";
 
 export const ATHLETE_RUN_DOING_ENTER = ATHLETE_RUN_GROUP_HERO_ENTER;
 

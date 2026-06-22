@@ -18,8 +18,10 @@ import {
     AthleteMultiSlotLogger,
     type SlotLogValues,
 } from "./AthleteMultiSlotLogger";
-import { AthleteAmrapRoundsLogger } from "./AthleteAmrapRoundsLogger";
+import { AthleteAmrapResultLogger } from "./AthleteAmrapResultLogger";
+import { AthleteEmomCompletionReview } from "./AthleteEmomCompletionReview";
 import { AthleteRunBlockTimer } from "./AthleteRunBlockTimer";
+import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import { AthleteRunSessionReadyCard } from "./AthleteRunSessionReadyCard";
 import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
 import { AthleteRunLoggingSummary } from "./AthleteRunLoggingSummary";
@@ -37,7 +39,18 @@ export interface TimedBlockStepViewProps {
     onRoundRpeChange: (value: number | null) => void;
     amrapRounds: number;
     onAmrapRoundsChange: (value: number) => void;
+    amrapPartialReps: Record<string, number>;
+    onAmrapPartialRepsChange: (stepKey: string, value: number) => void;
+    amrapPartialOpen: boolean;
+    onAmrapPartialOpenChange: (open: boolean) => void;
+    emomAsPlanned: boolean | null;
+    onEmomAsPlannedChange: (value: boolean) => void;
+    emomOverrides: Record<string, Record<string, number>>;
+    onEmomOverrideChange: (intervalKey: string, stepKey: string, value: number) => void;
+    emomMinuteLabel: string | null;
+    emomTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
     blockTimer: UseAthleteBlockTimerResult;
+    blockWorkIsReady?: boolean;
     restPhase: AthleteRunRestPhase;
     showLogger?: boolean;
     onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
@@ -59,7 +72,18 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     onRoundRpeChange,
     amrapRounds,
     onAmrapRoundsChange,
+    amrapPartialReps,
+    onAmrapPartialRepsChange,
+    amrapPartialOpen,
+    onAmrapPartialOpenChange,
+    emomAsPlanned,
+    onEmomAsPlannedChange,
+    emomOverrides,
+    onEmomOverrideChange,
+    emomMinuteLabel,
+    emomTechniqueSlots,
     blockTimer,
+    blockWorkIsReady = false,
     restPhase,
     showLogger = true,
     onViewTechnique,
@@ -69,9 +93,11 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
     const isAmrap = groupContext.groupKind === "amrap";
+    const isEmom = groupContext.groupKind === "emom";
     const badgeLabel = groupContext.groupBadgeLabel ?? groupContext.sectionLabel;
     const roundLabel =
-        groupContext.roundLabel ??
+        (isEmom && isDoingPhase && emomMinuteLabel) ||
+        groupContext.roundLabel ||
         (runStep.roundIndex != null && runStep.roundTotal != null
             ? `Ronda ${runStep.roundIndex} de ${runStep.roundTotal}`
             : "Bloque");
@@ -80,16 +106,17 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
 
     const slotMeta = useMemo<GroupContextSlotMeta[]>(
         () =>
-            runStep.slots?.map((slot) => ({
+            emomTechniqueSlots.map((slot) => ({
                 exerciseId: slot.exerciseId,
                 videoUrl: null,
                 instruction: null,
-            })) ?? [],
-        [runStep.slots]
+            })),
+        [emomTechniqueSlots]
     );
 
     const injuryAlerts = useMemo(() => {
-        if (!runStep.slots?.length || !injuryConflicts?.size) return [];
+        const emomSlots = runStep.emomIntervals?.flatMap((interval) => interval.slots) ?? runStep.slots ?? [];
+        if (!emomSlots.length || !injuryConflicts?.size) return [];
         const seen = new Set<string>();
         const rows: Array<{
             key: string;
@@ -98,7 +125,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
             onConsultTrainer: () => void;
         }> = [];
 
-        for (const slot of runStep.slots) {
+        for (const slot of emomSlots) {
             const conflict = injuryConflicts.get(slot.exerciseId);
             if (!conflict) continue;
             const dedupeKey = `${conflict.alert.severity ?? ""}|${conflict.alert.message ?? ""}`;
@@ -113,7 +140,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
         }
 
         return rows;
-    }, [injuryConflicts, runStep.slots]);
+    }, [injuryConflicts, runStep.emomIntervals, runStep.slots]);
 
     if (sessionReadyToFinish && isDoingPhase) {
         return <AthleteRunSessionReadyCard />;
@@ -137,6 +164,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                         totalSeconds={blockTimer.totalSeconds}
                         isCountup={blockTimer.isCountup}
                         isExpired={blockTimer.isExpired}
+                        isReady={blockWorkIsReady}
                     />
 
                     <AthleteRunGroupContextCard
@@ -162,29 +190,56 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                 <AthleteRunLoggingSummary label={loggingSummaryLabel} />
             ) : null}
 
-            {showLogger && runStep.slots?.length ? (
+            {showLogger ? (
                 <div className={`space-y-2 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
                     {isLoggingRest ? (
                         <p className={ATHLETE_RUN_LOGGER_SECTION_LABEL}>
-                            {isAmrap ? "Registro AMRAP" : "Registro de ronda"}
+                            {isAmrap ? "Registro AMRAP" : isEmom ? "Cierre EMOM" : "Registro de ronda"}
                         </p>
                     ) : null}
 
-                    {isAmrap ? (
-                        <AthleteAmrapRoundsLogger
-                            rounds={amrapRounds}
-                            targetRounds={runStep.roundTotal}
-                            onRoundsChange={onAmrapRoundsChange}
+                    {isAmrap && runStep.slots?.length ? (
+                        <>
+                            <AthleteAmrapResultLogger
+                                fullRounds={amrapRounds}
+                                targetRounds={runStep.roundTotal}
+                                onFullRoundsChange={onAmrapRoundsChange}
+                                slots={runStep.slots}
+                                partialReps={amrapPartialReps}
+                                partialOpen={amrapPartialOpen}
+                                onPartialOpenChange={onAmrapPartialOpenChange}
+                                onPartialRepsChange={onAmrapPartialRepsChange}
+                            />
+                            <AthleteRoundEffortSection
+                                variant="block"
+                                value={roundRpe}
+                                onChange={onRoundRpeChange}
+                            />
+                        </>
+                    ) : null}
+
+                    {isEmom && runStep.emomIntervals?.length ? (
+                        <AthleteEmomCompletionReview
+                            intervals={runStep.emomIntervals}
+                            intervalSeconds={runStep.intervalSeconds}
+                            asPlanned={emomAsPlanned}
+                            onAsPlannedChange={onEmomAsPlannedChange}
+                            overrides={emomOverrides}
+                            onOverrideChange={onEmomOverrideChange}
+                            roundRpe={roundRpe}
+                            onRoundRpeChange={onRoundRpeChange}
                         />
                     ) : null}
 
-                    <AthleteMultiSlotLogger
-                        slots={runStep.slots}
-                        slotLogs={slotLogs}
-                        onSlotChange={onSlotChange}
-                        roundRpe={roundRpe}
-                        onRoundRpeChange={onRoundRpeChange}
-                    />
+                    {!isAmrap && !isEmom && runStep.slots?.length ? (
+                        <AthleteMultiSlotLogger
+                            slots={runStep.slots}
+                            slotLogs={slotLogs}
+                            onSlotChange={onSlotChange}
+                            roundRpe={roundRpe}
+                            onRoundRpeChange={onRoundRpeChange}
+                        />
+                    ) : null}
                 </div>
             ) : null}
         </div>

@@ -14,7 +14,7 @@ import type {
     SessionStructureView,
 } from "../../sessionProgramming/sessionBlockView";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
-import { shouldRestAfterCompletingStep } from "./athleteRunGroupContext";
+import { buildTimedBlockExplanation, shouldRestAfterCompletingStep } from "./athleteRunGroupContext";
 import { parseAthleteReps } from "./athleteSessionUtils";
 
 export type AthleteRunStepKind =
@@ -40,6 +40,16 @@ export interface AthleteRunRoundSlot {
     defaultReps: number;
     defaultRpe: number | null;
     loggedSets: number;
+}
+
+/** Un intervalo dentro de un bloque EMOM continuo (V05). */
+export interface AthleteEmomInterval {
+    intervalKey: string;
+    minuteIndex: number;
+    minuteTotal: number;
+    roundIndex: number;
+    roundTotal: number;
+    slots: AthleteRunRoundSlot[];
 }
 
 export interface AthleteRunStep {
@@ -75,15 +85,14 @@ export interface AthleteRunStep {
     timedMode?: "countdown_block" | "countdown_interval" | "countup";
     minuteIndex?: number;
     minuteTotal?: number;
+    /** EMOM — todos los intervalos del bloque en un solo paso UI */
+    emomIntervals?: AthleteEmomInterval[];
 }
 
 const GROUP_INSTRUCTION: Partial<Record<SessionGroupKind, string>> = {
     superset: "Alterna ejercicios sin descanso. Descansa al terminar la ronda.",
     giant_set: "Completa todos los ejercicios en orden. Descansa al terminar la ronda.",
     dropset: "Sin descanso entre drops. Descansa al terminar la secuencia.",
-    amrap: "Máximo de rondas posibles en el tiempo indicado.",
-    emom: "Completa el patrón cada minuto.",
-    for_time: "Completa la secuencia en el menor tiempo posible.",
     single_set: "",
 };
 
@@ -256,7 +265,12 @@ function buildTimedBlockStep(
         exerciseName: first?.exerciseName ?? "",
         setLabel: first?.setLabel ?? "",
         setIndex: firstSet?.index ?? roundIndex,
-        instruction: GROUP_INSTRUCTION[group.kind] ?? "",
+        instruction: buildTimedBlockExplanation({
+            groupKind: group.kind,
+            timeCapMinutes: group.timeCapMinutes,
+            intervalSeconds: group.intervalSeconds,
+            slotCount: roundSlots.length,
+        }),
         plannedLabel: first?.plannedLabel ?? "",
         restAfterSeconds: group.restBetweenSeconds,
         inputMode: first?.inputMode ?? "weight_reps",
@@ -507,7 +521,7 @@ function expandEmomGroup(
     const rounds = Math.max(1, group.rounds ?? 1);
     const windows = [...new Set(group.slots.map((slot) => slot.slotLabel))];
     const minuteTotal = windows.length * rounds;
-    const steps: AthleteRunStep[] = [];
+    const emomIntervals: AthleteEmomInterval[] = [];
 
     let minuteIndex = 1;
     for (let r = 1; r <= rounds; r += 1) {
@@ -532,24 +546,39 @@ function expandEmomGroup(
                 );
             }
             if (intervalSlots.length === 0) continue;
-            steps.push(
-                buildTimedBlockStep(
-                    blockId,
-                    blockName,
-                    group,
-                    r,
-                    rounds,
-                    intervalSlots,
-                    "countdown_interval",
-                    minuteIndex,
-                    minuteTotal
-                )
-            );
+            emomIntervals.push({
+                intervalKey: `${group.groupId}-emom-m${minuteIndex}`,
+                minuteIndex,
+                minuteTotal,
+                roundIndex: r,
+                roundTotal: rounds,
+                slots: intervalSlots,
+            });
             minuteIndex += 1;
         }
     }
 
-    return steps;
+    if (emomIntervals.length === 0) return [];
+
+    const firstInterval = emomIntervals[0];
+    return [
+        {
+            ...buildTimedBlockStep(
+                blockId,
+                blockName,
+                group,
+                1,
+                rounds,
+                firstInterval.slots,
+                "countdown_interval",
+                1,
+                minuteTotal
+            ),
+            stepKey: `${group.groupId}-timed-emom-block`,
+            slots: firstInterval.slots,
+            emomIntervals,
+        },
+    ];
 }
 
 function expandGroup(

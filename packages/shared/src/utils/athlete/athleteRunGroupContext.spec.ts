@@ -6,6 +6,7 @@ import { describe, expect, it } from "vitest";
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
 import {
     buildAthleteRunGroupContext,
+    buildTimedBlockExplanation,
     shouldRestAfterCompletingStep,
 } from "./athleteRunGroupContext";
 
@@ -62,6 +63,41 @@ describe("shouldRestAfterCompletingStep", () => {
             restSeconds: null,
         });
         expect(shouldRestAfterCompletingStep(a2, a1r2)).toBe(true);
+    });
+});
+
+describe("buildTimedBlockExplanation", () => {
+    it("amrap — repeticiones en time cap", () => {
+        expect(
+            buildTimedBlockExplanation({
+                groupKind: "amrap",
+                timeCapMinutes: 6,
+                slotCount: 2,
+            })
+        ).toBe("Repite la secuencia de ejercicios tantas veces como puedas en 6 min.");
+    });
+
+    it("emom — lenguaje atleta sin jerga de ventana", () => {
+        expect(
+            buildTimedBlockExplanation({
+                groupKind: "emom",
+                intervalSeconds: 60,
+                slotCount: 2,
+            })
+        ).toBe(
+            "Tienes 60 segundos para hacer estos ejercicios. Si terminas antes, espera al siguiente intervalo."
+        );
+    });
+
+    it("for_time — cronómetro como resultado", () => {
+        expect(
+            buildTimedBlockExplanation({
+                groupKind: "for_time",
+                slotCount: 2,
+            })
+        ).toBe(
+            "Haz los ejercicios en orden, lo más rápido que puedas sin perder técnica. El cronómetro mide tu tiempo."
+        );
     });
 });
 

@@ -446,6 +446,9 @@ describe("buildAthleteRunSteps timed blocks", () => {
         expect(steps[0]?.timedMode).toBe("countdown_block");
         expect(steps[0]?.timeCapMinutes).toBe(15);
         expect(steps[0]?.slots?.map((slot) => slot.exerciseName)).toEqual(["Burpee", "Row", "Air squat"]);
+        expect(steps[0]?.instruction).toContain("15 min");
+        const ctx = buildAthleteRunGroupContextFromStep(steps[0]!);
+        expect(ctx?.explanation).toContain("15 min");
     });
 
     it("for_time genera un timed_block por ronda en modo countup", () => {
@@ -466,7 +469,7 @@ describe("buildAthleteRunSteps timed blocks", () => {
         expect(steps[0]?.slots?.map((slot) => slot.slotLabel)).toEqual(["1", "2"]);
     });
 
-    it("emom genera un timed_block por intervalo (ventanas por ronda)", () => {
+    it("emom genera un unico timed_block con intervalos embebidos", () => {
         const lines = [
             timedLine(520, 101, 1, SET_TYPE.EMOM, { supersetGroupId: 1 }),
             timedLine(521, 102, 2, SET_TYPE.EMOM, { supersetGroupId: 1 }),
@@ -485,13 +488,21 @@ describe("buildAthleteRunSteps timed blocks", () => {
         );
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps).toHaveLength(4);
-        expect(steps.every((step) => step.kind === "timed_block")).toBe(true);
-        expect(steps.every((step) => step.timedMode === "countdown_interval")).toBe(true);
-        expect(steps.map((step) => step.minuteIndex)).toEqual([1, 2, 3, 4]);
-        expect(steps.map((step) => step.minuteTotal)).toEqual([4, 4, 4, 4]);
-        expect(steps[0]?.slots?.map((slot) => slot.slotLabel)).toEqual(["V1", "V1"]);
-        expect(steps[1]?.slots?.map((slot) => slot.slotLabel)).toEqual(["V2", "V2"]);
+        expect(steps).toHaveLength(1);
+        expect(steps[0]?.kind).toBe("timed_block");
+        expect(steps[0]?.timedMode).toBe("countdown_interval");
+        expect(steps[0]?.emomIntervals).toHaveLength(4);
+        expect(steps[0]?.emomIntervals?.map((item) => item.minuteIndex)).toEqual([
+            1, 2, 3, 4,
+        ]);
+        expect(steps[0]?.emomIntervals?.[0]?.slots.map((slot) => slot.slotLabel)).toEqual([
+            "V1",
+            "V1",
+        ]);
+        expect(steps[0]?.emomIntervals?.[1]?.slots.map((slot) => slot.slotLabel)).toEqual([
+            "V2",
+            "V2",
+        ]);
     });
 });
 

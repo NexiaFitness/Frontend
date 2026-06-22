@@ -3,6 +3,8 @@
  */
 
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
+import { formatEmomMinuteLabel } from "./emomResult";
+import type { AthleteEmomInterval, AthleteRunStep } from "./buildAthleteRunSteps";
 
 export type AthleteRunGroupSlotStatus = "done" | "current" | "upcoming";
 
@@ -43,6 +45,48 @@ const GROUP_SECTION_LABEL: Record<string, string> = {
     emom: "EMOM",
     for_time: "For Time",
 };
+
+export interface TimedBlockExplanationParams {
+    groupKind: string;
+    timeCapMinutes?: number | null;
+    intervalSeconds?: number | null;
+    slotCount?: number;
+}
+
+/** Copy procedimental timed (run + step.instruction) — lenguaje atleta, no entrenador. */
+export function buildTimedBlockExplanation({
+    groupKind,
+    timeCapMinutes,
+    intervalSeconds,
+    slotCount = 0,
+}: TimedBlockExplanationParams): string {
+    const exerciseScope =
+        slotCount > 1
+            ? "la secuencia de ejercicios"
+            : slotCount === 1
+              ? "el ejercicio"
+              : "la secuencia";
+
+    if (groupKind === "amrap") {
+        if (timeCapMinutes != null) {
+            return `Repite ${exerciseScope} tantas veces como puedas en ${timeCapMinutes} min.`;
+        }
+        return `Repite ${exerciseScope} tantas veces como puedas en el tiempo indicado.`;
+    }
+
+    if (groupKind === "emom") {
+        if (intervalSeconds != null) {
+            return `Tienes ${intervalSeconds} segundos para hacer estos ejercicios. Si terminas antes, espera al siguiente intervalo.`;
+        }
+        return "Haz estos ejercicios antes de que acabe el cronómetro. Si terminas antes, espera al siguiente intervalo.";
+    }
+
+    if (groupKind === "for_time") {
+        return `Haz los ejercicios en orden, lo más rápido que puedas sin perder técnica. El cronómetro mide tu tiempo.`;
+    }
+
+    return "";
+}
 
 const COUNT_WORDS: Record<number, string> = {
     2: "dos",
@@ -217,7 +261,7 @@ export function buildAthleteRunGroupContext(
 export function buildAthleteRunGroupContextFromStep(
     step: import("./buildAthleteRunSteps").AthleteRunStep
 ): AthleteRunGroupContextView | null {
-    if ((step.kind !== "group_round" && step.kind !== "timed_block") || !step.slots?.length) {
+    if ((step.kind !== "group_round" && step.kind !== "timed_block") || (!step.slots?.length && !step.emomIntervals?.length)) {
         return null;
     }
 
@@ -237,26 +281,19 @@ export function buildAthleteRunGroupContextFromStep(
     const sectionLabel =
         GROUP_SECTION_LABEL[step.groupKind] ?? step.badgeLabel ?? "Grupo de ejercicios";
 
-    let explanation = buildGroupExplanation(
-        step.groupKind,
-        step.slots.length,
-        step.instruction ?? ""
-    );
-    if (step.kind === "timed_block") {
-        if (step.groupKind === "amrap") {
-            explanation =
-                step.timeCapMinutes != null
-                    ? `Completa el circuito durante ${step.timeCapMinutes} minutos sin perder técnica.`
-                    : "Completa el circuito durante el tiempo objetivo sin perder técnica.";
-        } else if (step.groupKind === "emom") {
-            explanation =
-                step.intervalSeconds != null
-                    ? `Tienes ${step.intervalSeconds} segundos para completar esta ventana antes del siguiente intervalo.`
-                    : "Completa esta ventana antes de que inicie el siguiente intervalo.";
-        } else if (step.groupKind === "for_time") {
-            explanation = "Completa la secuencia de la ronda lo antes posible manteniendo calidad de ejecución.";
-        }
-    }
+    const explanation =
+        step.kind === "timed_block"
+            ? buildTimedBlockExplanation({
+                  groupKind: step.groupKind,
+                  timeCapMinutes: step.timeCapMinutes,
+                  intervalSeconds: step.intervalSeconds,
+                  slotCount: step.slots.length,
+              })
+            : buildGroupExplanation(
+                  step.groupKind,
+                  step.slots.length,
+                  step.instruction ?? ""
+              );
 
     return {
         groupKind: step.groupKind,
@@ -268,6 +305,40 @@ export function buildAthleteRunGroupContextFromStep(
             slotLabel: slot.slotLabel,
             exerciseName: slot.exerciseName,
             status: "upcoming" as const,
+            prescription: slot.plannedLabel,
+        })),
+        nextExerciseName: null,
+        transitionHint: null,
+    };
+}
+
+/** Contexto EMOM para el intervalo activo dentro de un bloque continuo. */
+export function buildAthleteRunGroupContextFromEmomInterval(
+    step: AthleteRunStep,
+    interval: AthleteEmomInterval
+): AthleteRunGroupContextView {
+    const sectionLabel =
+        GROUP_SECTION_LABEL.emom ?? step.badgeLabel ?? "EMOM";
+
+    return {
+        groupKind: "emom",
+        sectionLabel,
+        groupBadgeLabel: step.badgeLabel ?? null,
+        explanation: buildTimedBlockExplanation({
+            groupKind: "emom",
+            timeCapMinutes: step.timeCapMinutes,
+            intervalSeconds: step.intervalSeconds,
+            slotCount: interval.slots.length,
+        }),
+        roundLabel: formatEmomMinuteLabel(
+            step.intervalSeconds,
+            interval.minuteIndex,
+            interval.minuteTotal
+        ),
+        slots: interval.slots.map((slot) => ({
+            slotLabel: slot.slotLabel,
+            exerciseName: slot.exerciseName,
+            status: "current" as const,
             prescription: slot.plannedLabel,
         })),
         nextExerciseName: null,

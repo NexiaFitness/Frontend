@@ -145,6 +145,7 @@ export function useAthleteRunRestFlow({
         stickyPrimaryDisabled: showLogger ? !isConfirmValid : false,
         stickyPrimaryLoading: confirmLoading,
         skipRest,
+        startRest,
     };
 }
 

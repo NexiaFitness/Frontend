@@ -65,7 +65,18 @@ export const AthleteSessionRunPage: React.FC = () => {
         setRoundRpe,
         amrapRounds,
         setAmrapRounds,
+        amrapPartialReps,
+        updateAmrapPartialReps,
+        amrapPartialOpen,
+        setAmrapPartialOpen,
+        emomAsPlanned,
+        setEmomAsPlanned,
+        emomOverrides,
+        updateEmomOverride,
+        emomMinuteLabel,
+        emomTechniqueSlots,
         blockTimer,
+        blockWorkIsReady,
         saving,
         completing,
         restFlow,
@@ -94,7 +105,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 ? isAmrap
                     ? "AMRAP registrado"
                     : isEmom
-                      ? "Intervalo registrado"
+                      ? "EMOM registrado"
                       : isForTime
                         ? "Ronda FOR TIME registrada"
                         : "Bloque registrado"
@@ -107,7 +118,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 ? isAmrap
                     ? "AMRAP guardado localmente"
                     : isEmom
-                      ? "Intervalo guardado localmente"
+                      ? "EMOM guardado localmente"
                       : isForTime
                         ? "Ronda guardada localmente"
                         : "Bloque guardado localmente"
@@ -120,7 +131,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                 ? isAmrap
                     ? "AMRAP en cola — se sincronizará pronto"
                     : isEmom
-                      ? "Intervalo en cola — se sincronizará pronto"
+                      ? "EMOM en cola — se sincronizará pronto"
                       : isForTime
                         ? "Ronda en cola — se sincronizará pronto"
                         : "Bloque en cola — se sincronizará pronto"
@@ -310,7 +321,18 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onRoundRpeChange={setRoundRpe}
                         amrapRounds={amrapRounds}
                         onAmrapRoundsChange={setAmrapRounds}
+                        amrapPartialReps={amrapPartialReps}
+                        onAmrapPartialRepsChange={updateAmrapPartialReps}
+                        amrapPartialOpen={amrapPartialOpen}
+                        onAmrapPartialOpenChange={setAmrapPartialOpen}
+                        emomAsPlanned={emomAsPlanned}
+                        onEmomAsPlannedChange={setEmomAsPlanned}
+                        emomOverrides={emomOverrides}
+                        onEmomOverrideChange={updateEmomOverride}
+                        emomMinuteLabel={emomMinuteLabel}
+                        emomTechniqueSlots={emomTechniqueSlots}
                         blockTimer={blockTimer}
+                        blockWorkIsReady={blockWorkIsReady}
                         restPhase={restFlow.phase}
                         showLogger={restFlow.showLogger}
                         onViewTechnique={setTechniqueTarget}
