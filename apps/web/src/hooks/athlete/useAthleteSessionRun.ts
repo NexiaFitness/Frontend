@@ -27,6 +27,7 @@ import {
 import {
     buildAthleteRunGroupContext,
     buildAthleteRunGroupContextFromEmomInterval,
+    buildAthleteRunGroupContextFromForTimeRound,
     buildAthleteRunGroupContextFromStep,
     type AthleteRunGroupContextView,
 } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
@@ -37,15 +38,24 @@ import {
     computeAmrapPartialTotal,
 } from "@nexia/shared/utils/athlete/amrapResult";
 import {
+    buildEmomFailureEntryDefaults,
     buildEmomSavePayloads,
-    buildInitialEmomOverrides,
+    getEmomTemplateSlots,
+    isEmomCompletionValid,
+    resizeEmomFailureEntries,
+    type EmomFailureEntry,
 } from "@nexia/shared/utils/athlete/emomResult";
+import {
+    buildForTimeSavePayloads,
+    isForTimeCompletionValid,
+} from "@nexia/shared/utils/athlete/forTimeResult";
 import type { SlotLogValues } from "@/components/athlete/execution/AthleteMultiSlotLogger";
 import { useAthleteExercisePr } from "@/hooks/athlete/useAthleteExercisePr";
 import { useAthleteRunRestFlow } from "@/hooks/athlete/useAthleteRunRestFlow";
 import { useAthleteBlockTimer } from "@/hooks/athlete/useAthleteBlockTimer";
 import { useAthleteBlockWorkPhase } from "@/hooks/athlete/useAthleteBlockWorkPhase";
 import { useAthleteEmomFlow } from "@/hooks/athlete/useAthleteEmomFlow";
+import { useAthleteForTimeFlow } from "@/hooks/athlete/useAthleteForTimeFlow";
 import { getAthleteBlockStartLabel } from "@/components/athlete/execution/athleteRunPresentation";
 
 export interface AthletePrCelebration {
@@ -163,9 +173,8 @@ export function useAthleteSessionRun({
     const [amrapPartialReps, setAmrapPartialReps] = useState<Record<string, number>>({});
     const [amrapPartialOpen, setAmrapPartialOpen] = useState(false);
     const [emomAsPlanned, setEmomAsPlanned] = useState<boolean | null>(null);
-    const [emomOverrides, setEmomOverrides] = useState<Record<string, Record<string, number>>>(
-        {}
-    );
+    const [emomFailedCount, setEmomFailedCount] = useState(0);
+    const [emomFailureEntries, setEmomFailureEntries] = useState<EmomFailureEntry[]>([]);
     const [saving, setSaving] = useState(false);
     const [completing, setCompleting] = useState(false);
     const [prCelebration, setPrCelebration] = useState<AthletePrCelebration | null>(null);
@@ -185,7 +194,8 @@ export function useAthleteSessionRun({
         setAmrapPartialReps({});
         setAmrapPartialOpen(false);
         setEmomAsPlanned(null);
-        setEmomOverrides({});
+        setEmomFailedCount(0);
+        setEmomFailureEntries([]);
     }, [sessionId]);
 
     const currentRunStep: AthleteRunStep | undefined = runSteps[step];
@@ -261,29 +271,15 @@ export function useAthleteSessionRun({
             setAmrapPartialReps((prev) => (Object.keys(prev).length === 0 ? prev : {}));
             setAmrapPartialOpen((prev) => (prev === false ? prev : false));
             setEmomAsPlanned((prev) => (prev === null ? prev : null));
-            setEmomOverrides((prev) => (Object.keys(prev).length === 0 ? prev : {}));
+            setEmomFailedCount((prev) => (prev === 0 ? prev : 0));
+            setEmomFailureEntries((prev) => (prev.length === 0 ? prev : []));
             return;
         }
 
         if (runStep.groupKind === "emom" && runStep.emomIntervals?.length) {
-            const initialEmomOverrides = buildInitialEmomOverrides(runStep.emomIntervals);
             setEmomAsPlanned((prev) => (prev === null ? prev : null));
-            setEmomOverrides((prev) => {
-                const keys = Object.keys(initialEmomOverrides);
-                if (
-                    keys.length === Object.keys(prev).length &&
-                    keys.every((intervalKey) => {
-                        const previous = prev[intervalKey] ?? {};
-                        const next = initialEmomOverrides[intervalKey] ?? {};
-                        return Object.keys(next).every(
-                            (slotKey) => (previous[slotKey] ?? 0) === (next[slotKey] ?? 0)
-                        );
-                    })
-                ) {
-                    return prev;
-                }
-                return initialEmomOverrides;
-            });
+            setEmomFailedCount((prev) => (prev === 0 ? prev : 0));
+            setEmomFailureEntries((prev) => (prev.length === 0 ? prev : []));
         }
 
         if (!runStep.slots?.length) return;
@@ -356,6 +352,10 @@ export function useAthleteSessionRun({
     }, [currentStepKey, isBatchStep]);
 
     const blockTimerRef = useRef(0);
+    const forTimeDataRef = useRef<{ cumulativeSplits: number[]; totalSeconds: number }>({
+        cumulativeSplits: [],
+        totalSeconds: 0,
+    });
 
     const updateSlotLog = useCallback((slotKey: string, patch: Partial<SlotLogValues>) => {
         setSlotLogs((prev) => {
@@ -379,17 +379,51 @@ export function useAthleteSessionRun({
         [currentRunStep?.slots]
     );
 
-    const updateEmomOverride = useCallback(
-        (intervalKey: string, stepKey: string, value: number) => {
-            setEmomOverrides((prev) => ({
-                ...prev,
-                [intervalKey]: {
-                    ...(prev[intervalKey] ?? {}),
-                    [stepKey]: value,
-                },
-            }));
+    const emomTemplateSlots = useMemo(
+        () =>
+            currentRunStep?.emomIntervals?.length
+                ? getEmomTemplateSlots(currentRunStep.emomIntervals)
+                : [],
+        [currentRunStep?.emomIntervals]
+    );
+
+    const updateEmomFailureEntry = useCallback(
+        (entryIndex: number, stepKey: string, value: number) => {
+            setEmomFailureEntries((prev) => {
+                const next = [...prev];
+                const entry = { ...(next[entryIndex] ?? {}) };
+                entry[stepKey] = value;
+                next[entryIndex] = entry;
+                return next;
+            });
         },
         []
+    );
+
+    const handleEmomAsPlannedChange = useCallback(
+        (value: boolean) => {
+            setEmomAsPlanned(value);
+            if (value) {
+                setEmomFailedCount(0);
+                setEmomFailureEntries([]);
+                return;
+            }
+            setEmomFailedCount(1);
+            setEmomFailureEntries([buildEmomFailureEntryDefaults(emomTemplateSlots)]);
+        },
+        [emomTemplateSlots]
+    );
+
+    const handleEmomFailedCountChange = useCallback(
+        (value: number) => {
+            const total = currentRunStep?.emomIntervals?.length ?? 1;
+            const nextCount = Math.max(1, Math.min(total, value));
+            setEmomFailedCount(nextCount);
+            setEmomFailureEntries((prev) =>
+                resizeEmomFailureEntries(prev, nextCount, emomTemplateSlots)
+            );
+        },
+        [currentRunStep?.emomIntervals?.length, emomTemplateSlots]
     );
 
     const getNextActualSets = useCallback((blockExerciseId: number, loggedSets = 0) => {
@@ -462,11 +496,11 @@ export function useAthleteSessionRun({
 
         if (isAmrap && !currentRunStep.slots?.length) return;
         if (isEmom && !currentRunStep.emomIntervals?.length) return;
-        if (!isAmrap && !isEmom && !currentRunStep.slots?.length) return;
+        if (isForTime && !currentRunStep.forTimeRounds?.length) return;
+        if (!isAmrap && !isEmom && !isForTime && !currentRunStep.slots?.length) return;
 
         setSaving(true);
         let lastResult: "synced" | "queued" | "offline" = "synced";
-        const elapsedSeconds = blockTimerRef.current;
 
         try {
             if (isAmrap && currentRunStep.slots) {
@@ -504,7 +538,9 @@ export function useAthleteSessionRun({
                 const payloads = buildEmomSavePayloads({
                     intervals: currentRunStep.emomIntervals,
                     asPlanned: emomAsPlanned,
-                    overrides: emomOverrides,
+                    failedCount: emomFailedCount,
+                    failureEntries: emomFailureEntries,
+                    templateSlots: emomTemplateSlots,
                     roundRpe,
                 });
 
@@ -520,8 +556,34 @@ export function useAthleteSessionRun({
                         actual_sets: nextSets,
                     });
                 }
+            } else         if (isForTime && currentRunStep.forTimeRounds) {
+                const { cumulativeSplits, totalSeconds } = forTimeDataRef.current;
+                if (
+                    !isForTimeCompletionValid(
+                        cumulativeSplits,
+                        currentRunStep.forTimeRounds.length
+                    )
+                ) {
+                    return;
+                }
+                const payloads = buildForTimeSavePayloads({
+                    rounds: currentRunStep.forTimeRounds,
+                    cumulativeSplits,
+                    totalSeconds,
+                    roundRpe,
+                    getNextActualSets,
+                });
+
+                for (const payload of payloads) {
+                    loggedSetsRef.current.set(
+                        payload.blockExerciseId,
+                        payload.data.actual_sets
+                    );
+
+                    lastResult = await logSet(payload.blockExerciseId, payload.data);
+                }
             } else if (currentRunStep.slots) {
-                for (const [index, slot] of currentRunStep.slots.entries()) {
+                for (const slot of currentRunStep.slots) {
                     if (completedStepKeysRef.current.has(slot.stepKey)) continue;
 
                     const log = slotLogs[slot.stepKey] ?? {
@@ -537,7 +599,6 @@ export function useAthleteSessionRun({
                         actual_reps: String(log.reps),
                         actual_sets: nextSets,
                         actual_effort_value: roundRpe ?? undefined,
-                        ...(isForTime && index === 0 ? { actual_duration: elapsedSeconds } : {}),
                     });
 
                     completedStepKeysRef.current.add(slot.stepKey);
@@ -562,7 +623,9 @@ export function useAthleteSessionRun({
         amrapRounds,
         currentRunStep,
         emomAsPlanned,
-        emomOverrides,
+        emomFailedCount,
+        emomFailureEntries,
+        emomTemplateSlots,
         getNextActualSets,
         isGroupRound,
         isTimedBlock,
@@ -592,11 +655,9 @@ export function useAthleteSessionRun({
     const isForTimeBlock = currentRunStep?.groupKind === "for_time";
 
     const confirmLabel = isTimedBlock
-        ? isAmrapBlock
+        ? isAmrapBlock || isEmomBlock || isForTimeBlock
             ? "Bloque completado"
-            : isEmomBlock
-              ? "Bloque completado"
-              : "Ronda completada"
+            : "Ronda completada"
         : isGroupRound
           ? isDropsetRound
               ? "Dropset completado"
@@ -615,7 +676,20 @@ export function useAthleteSessionRun({
             }
 
             if (isEmomBlock && currentRunStep.emomIntervals?.length) {
-                return emomAsPlanned !== null;
+                return isEmomCompletionValid({
+                    asPlanned: emomAsPlanned,
+                    failedCount: emomFailedCount,
+                    failureEntries: emomFailureEntries,
+                    intervals: currentRunStep.emomIntervals,
+                    templateSlots: emomTemplateSlots,
+                });
+            }
+
+            if (isForTimeBlock && currentRunStep.forTimeRounds?.length) {
+                return isForTimeCompletionValid(
+                    forTimeDataRef.current.cumulativeSplits,
+                    currentRunStep.forTimeRounds.length
+                );
             }
 
             if (!currentRunStep.slots?.length) return false;
@@ -635,8 +709,12 @@ export function useAthleteSessionRun({
         amrapRounds,
         currentRunStep,
         emomAsPlanned,
+        emomFailedCount,
+        emomFailureEntries,
+        emomTemplateSlots,
         isAmrapBlock,
         isEmomBlock,
+        isForTimeBlock,
         isBatchStep,
         slotLogs,
         reps,
@@ -664,7 +742,7 @@ export function useAthleteSessionRun({
               : isEmomBlock
                 ? getAthleteBlockStartLabel("emom")
                 : isForTimeBlock
-                  ? "Registrar ronda"
+                  ? getAthleteBlockStartLabel("for_time")
                   : "Empezar descanso",
     });
 
@@ -683,6 +761,20 @@ export function useAthleteSessionRun({
             showStepActions
     );
 
+    const forTimeFlow = useAthleteForTimeFlow(
+        currentStepKey,
+        currentRunStep?.forTimeRounds ?? [],
+        isForTimeBlock &&
+            blockWork.isRunning &&
+            restFlow.phase === "doing" &&
+            showStepActions
+    );
+
+    forTimeDataRef.current = {
+        cumulativeSplits: [...forTimeFlow.cumulativeSplits],
+        totalSeconds: forTimeFlow.elapsedSeconds,
+    };
+
     const emomActiveGroupContext = useMemo(() => {
         if (!isEmomBlock || !currentRunStep || !emomFlow.currentInterval) return null;
         return buildAthleteRunGroupContextFromEmomInterval(
@@ -691,15 +783,29 @@ export function useAthleteSessionRun({
         );
     }, [currentRunStep, emomFlow.currentInterval, isEmomBlock]);
 
+    const forTimeActiveGroupContext = useMemo(() => {
+        if (!isForTimeBlock || !currentRunStep || !forTimeFlow.currentRound) return null;
+        return buildAthleteRunGroupContextFromForTimeRound(
+            currentRunStep,
+            forTimeFlow.currentRound
+        );
+    }, [currentRunStep, forTimeFlow.currentRound, isForTimeBlock]);
+
     const displayGroupContext =
         isEmomBlock && emomActiveGroupContext && blockWork.isRunning && restFlow.phase === "doing"
             ? emomActiveGroupContext
-            : groupContext;
+            : isForTimeBlock &&
+                forTimeActiveGroupContext &&
+                blockWork.isRunning &&
+                restFlow.phase === "doing"
+              ? forTimeActiveGroupContext
+              : groupContext;
 
     const blockTimer = useAthleteBlockTimer(
         currentRunStep,
         isTimedBlock &&
             !isEmomBlock &&
+            !isForTimeBlock &&
             blockWork.isRunning &&
             restFlow.phase === "doing" &&
             showStepActions
@@ -707,6 +813,19 @@ export function useAthleteSessionRun({
     blockTimerRef.current = blockTimer.elapsedSeconds;
 
     const displayBlockTimer = useMemo(() => {
+        if (
+            isForTimeBlock &&
+            blockWork.isRunning &&
+            restFlow.phase === "doing"
+        ) {
+            return {
+                displaySeconds: forTimeFlow.elapsedSeconds,
+                elapsedSeconds: forTimeFlow.elapsedSeconds,
+                totalSeconds: null,
+                isExpired: false,
+                isCountup: true,
+            };
+        }
         if (!isEmomBlock || !blockWork.isRunning || restFlow.phase !== "doing") {
             return blockTimer;
         }
@@ -717,7 +836,16 @@ export function useAthleteSessionRun({
             isExpired: false,
             isCountup: false,
         };
-    }, [blockTimer, blockWork.isRunning, emomFlow.displaySeconds, emomFlow.totalSeconds, isEmomBlock, restFlow.phase]);
+    }, [
+        blockTimer,
+        blockWork.isRunning,
+        emomFlow.displaySeconds,
+        emomFlow.totalSeconds,
+        forTimeFlow.elapsedSeconds,
+        isEmomBlock,
+        isForTimeBlock,
+        restFlow.phase,
+    ]);
 
     const timedGroupKind = currentRunStep?.groupKind ?? "";
 
@@ -743,13 +871,41 @@ export function useAthleteSessionRun({
                 stickyPrimaryLoading: false,
             };
         }
+        if (isForTimeBlock && blockWork.isRunning && !forTimeFlow.allRoundsComplete) {
+            const isLastForTimeRound =
+                forTimeFlow.roundTotal > 0 &&
+                forTimeFlow.roundIndex >= forTimeFlow.roundTotal - 1;
+            return {
+                ...restFlow,
+                stickyPrimaryLabel: isLastForTimeRound
+                    ? "Registrar tiempo final"
+                    : `Ronda ${forTimeFlow.roundIndex + 1} completada`,
+                stickyPrimaryAction: forTimeFlow.completeRound,
+                stickyPrimaryDisabled: false,
+                stickyPrimaryLoading: false,
+            };
+        }
+        if (isForTimeBlock && blockWork.isRunning && forTimeFlow.allRoundsComplete) {
+            return {
+                ...restFlow,
+                stickyPrimaryLabel: undefined,
+                stickyPrimaryAction: undefined,
+                stickyPrimaryDisabled: true,
+                stickyPrimaryLoading: false,
+            };
+        }
         return restFlow;
     }, [
         blockWork.isReady,
         blockWork.isRunning,
         blockWork.start,
         emomFlow.allIntervalsComplete,
+        forTimeFlow.allRoundsComplete,
+        forTimeFlow.completeRound,
+        forTimeFlow.roundIndex,
+        forTimeFlow.roundTotal,
         isEmomBlock,
+        isForTimeBlock,
         isTimedBlock,
         restFlow,
         showStepActions,
@@ -760,7 +916,7 @@ export function useAthleteSessionRun({
     startRestRef.current = restFlow.startRest;
 
     useEffect(() => {
-        if (isEmomBlock) return;
+        if (isEmomBlock || isForTimeBlock) return;
         if (!isTimedBlock || !blockWork.isRunning) return;
         if (restFlow.phase !== "doing") return;
         if (blockTimer.isCountup || !blockTimer.isExpired) return;
@@ -770,7 +926,20 @@ export function useAthleteSessionRun({
         blockTimer.isExpired,
         blockWork.isRunning,
         isEmomBlock,
+        isForTimeBlock,
         isTimedBlock,
+        restFlow.phase,
+    ]);
+
+    useEffect(() => {
+        if (!isForTimeBlock || !forTimeFlow.allRoundsComplete) return;
+        if (!blockWork.isRunning) return;
+        if (restFlow.phase !== "doing") return;
+        startRestRef.current();
+    }, [
+        blockWork.isRunning,
+        forTimeFlow.allRoundsComplete,
+        isForTimeBlock,
         restFlow.phase,
     ]);
 
@@ -785,6 +954,13 @@ export function useAthleteSessionRun({
         isEmomBlock,
         restFlow.phase,
     ]);
+
+    const forTimeTechniqueSlots: AthleteRunRoundSlot[] = useMemo(() => {
+        if (forTimeFlow.currentRound?.slots.length) {
+            return forTimeFlow.currentRound.slots;
+        }
+        return currentRunStep?.forTimeRounds?.[0]?.slots ?? currentRunStep?.slots ?? [];
+    }, [currentRunStep?.forTimeRounds, currentRunStep?.slots, forTimeFlow.currentRound]);
 
     const emomTechniqueSlots: AthleteRunRoundSlot[] = useMemo(() => {
         if (emomFlow.currentInterval?.slots.length) {
@@ -837,11 +1013,21 @@ export function useAthleteSessionRun({
         amrapPartialOpen,
         setAmrapPartialOpen,
         emomAsPlanned,
-        setEmomAsPlanned,
-        emomOverrides,
-        updateEmomOverride,
-        emomMinuteLabel: emomFlow.minuteLabel,
+        setEmomAsPlanned: handleEmomAsPlannedChange,
+        emomFailedCount,
+        setEmomFailedCount: handleEmomFailedCountChange,
+        emomFailureEntries,
+        updateEmomFailureEntry,
+        emomTemplateSlots,
+        emomIntervalLabel: emomFlow.intervalLabel,
         emomTechniqueSlots,
+        forTimeRoundLabel: forTimeFlow.roundLabel,
+        forTimeRoundIndex: forTimeFlow.roundIndex,
+        forTimeRoundTotal: forTimeFlow.roundTotal,
+        forTimeSplitViews: forTimeFlow.splitViews,
+        forTimeRoundAdvanceCue: forTimeFlow.roundAdvanceCue,
+        forTimeCumulativeSplits: forTimeFlow.cumulativeSplits,
+        forTimeTechniqueSlots,
         blockTimer: displayBlockTimer,
         blockWorkIsReady: blockWork.isReady,
         weight,

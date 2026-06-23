@@ -369,6 +369,85 @@ export const ATHLETE_RUN_AMRAP_PARTIAL_ROW_LABEL = "text-sm font-medium text-for
 
 export const ATHLETE_RUN_AMRAP_PARTIAL_ROW_META = "text-xs text-muted-foreground/85";
 
+/** FOR TIME — splits acumulados visibles durante el bloque. */
+export const ATHLETE_RUN_FOR_TIME_SPLITS_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4 pt-5"
+);
+
+export const ATHLETE_RUN_FOR_TIME_SPLITS_LABEL = cn(
+    "text-[10px] font-bold uppercase tracking-[0.12em] text-success"
+);
+
+export const ATHLETE_RUN_FOR_TIME_SPLITS_ROW = cn(
+    "flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/40 px-3 py-2"
+);
+
+export const ATHLETE_RUN_FOR_TIME_SPLITS_ROUND = "text-sm font-semibold text-foreground";
+
+export const ATHLETE_RUN_FOR_TIME_SPLITS_CUMULATIVE = "text-sm font-medium tabular-nums text-foreground";
+
+export const ATHLETE_RUN_FOR_TIME_SPLITS_SEGMENT = "text-xs font-medium tabular-nums text-success";
+
+export const ATHLETE_RUN_FOR_TIME_TOTAL_VALUE = cn(
+    "text-center text-4xl font-bold tabular-nums tracking-tight text-foreground"
+);
+
+/** FOR TIME — rail de rondas + confirmación al cerrar split. */
+export const ATHLETE_RUN_FOR_TIME_LIVE_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4 pt-5",
+    ATHLETE_RUN_GROUP_HERO_ENTER
+);
+
+export const ATHLETE_RUN_FOR_TIME_RAIL = "flex items-stretch gap-2";
+
+export const ATHLETE_RUN_FOR_TIME_RAIL_STEP = (state: "done" | "current" | "upcoming") =>
+    cn(
+        "flex min-w-0 flex-1 flex-col items-center rounded-xl border px-2 py-2.5 text-center transition-all",
+        state === "done" &&
+            "border-success/45 bg-success/10 shadow-[0_0_18px_-8px] shadow-success/40",
+        state === "current" &&
+            "border-primary/50 bg-primary/10 shadow-[0_0_22px_-6px] shadow-primary/45",
+        state === "upcoming" && "border-border/50 bg-background/25 opacity-70"
+    );
+
+export const ATHLETE_RUN_FOR_TIME_RAIL_STEP_LABEL = cn(
+    "text-[10px] font-bold uppercase tracking-[0.12em]",
+    "text-muted-foreground"
+);
+
+export const ATHLETE_RUN_FOR_TIME_RAIL_STEP_VALUE = cn(
+    "mt-1 text-sm font-bold tabular-nums text-foreground"
+);
+
+export const ATHLETE_RUN_FOR_TIME_RAIL_STEP_META = cn(
+    "mt-0.5 text-[11px] font-medium tabular-nums text-success"
+);
+
+export const ATHLETE_RUN_FOR_TIME_RAIL_STEP_CURRENT = cn(
+    "mt-1 text-[11px] font-semibold text-primary"
+);
+
+export const ATHLETE_RUN_FOR_TIME_ADVANCE_CUE = cn(
+    "rounded-xl border border-success/35 bg-success/10 px-3 py-3",
+    "shadow-[0_0_24px_-10px] shadow-success/35",
+    ATHLETE_RUN_GROUP_HERO_ENTER
+);
+
+export const ATHLETE_RUN_FOR_TIME_ADVANCE_CUE_TITLE = cn(
+    "text-sm font-semibold text-success"
+);
+
+export const ATHLETE_RUN_FOR_TIME_ADVANCE_CUE_HINT = cn(
+    "mt-1 text-xs leading-snug text-muted-foreground/95"
+);
+
+export const ATHLETE_RUN_FOR_TIME_NEXT_ACTION = cn(
+    "rounded-lg border border-primary/30 bg-primary/[0.08] px-3 py-2.5",
+    "text-xs font-medium leading-snug text-primary/95"
+);
+
 export const ATHLETE_RUN_EMOM_CHOICE_ROW = "grid grid-cols-1 gap-2 sm:grid-cols-2";
 
 export const ATHLETE_RUN_EMOM_CHOICE_BTN = (selected: boolean) =>
@@ -382,7 +461,9 @@ export const ATHLETE_RUN_EMOM_CHOICE_BTN = (selected: boolean) =>
 export function getAthleteBlockTimerHint(
     groupKind: string,
     isCountup: boolean,
-    isReady = false
+    isReady = false,
+    forTimeRoundIndex?: number,
+    forTimeRoundTotal?: number
 ): string {
     if (isReady) {
         if (isCountup) {
@@ -393,7 +474,19 @@ export function getAthleteBlockTimerHint(
         }
         return "Pulsa iniciar cuando estés listo — el time cap empezará a bajar.";
     }
-    if (isCountup) return "Cronómetro activo — completa la ronda lo antes posible.";
+    if (isCountup) {
+        if (groupKind === "for_time") {
+            if (
+                forTimeRoundTotal != null &&
+                forTimeRoundIndex != null &&
+                forTimeRoundIndex >= forTimeRoundTotal - 1
+            ) {
+                return "Última ronda — pulsa «Ronda completada» al terminar para cerrar el bloque.";
+            }
+            return "Cronómetro activo — pulsa «Ronda completada» al terminar cada ronda.";
+        }
+        return "Cronómetro activo — completa la ronda lo antes posible.";
+    }
     if (groupKind === "emom") return "Completa la ventana antes de que llegue a cero.";
     return "Máximo de rondas posibles antes de que llegue a cero.";
 }
@@ -404,7 +497,7 @@ export function getAthleteBlockTimerLabel(
     isReady = false
 ): string {
     if (isReady) return "Listo para empezar";
-    if (isCountup) return "Tiempo de ronda";
+    if (isCountup) return groupKind === "for_time" ? "Tiempo total" : "Tiempo de ronda";
     if (groupKind === "emom") return "Intervalo";
     return "Time cap";
 }
@@ -412,7 +505,7 @@ export function getAthleteBlockTimerLabel(
 export function getAthleteBlockStartLabel(groupKind: string): string {
     if (groupKind === "amrap") return "Iniciar AMRAP";
     if (groupKind === "emom") return "Iniciar intervalo";
-    if (groupKind === "for_time") return "Empezar ronda";
+    if (groupKind === "for_time") return "Iniciar FOR TIME";
     return "Iniciar bloque";
 }
 

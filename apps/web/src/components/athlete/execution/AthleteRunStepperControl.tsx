@@ -19,6 +19,7 @@ export interface AthleteRunStepperControlProps {
     onDecrease: () => void;
     onIncrease: () => void;
     decreaseDisabled?: boolean;
+    increaseDisabled?: boolean;
     className?: string;
 }
 
@@ -29,6 +30,7 @@ export const AthleteRunStepperControl: React.FC<AthleteRunStepperControlProps> =
     onDecrease,
     onIncrease,
     decreaseDisabled = false,
+    increaseDisabled = false,
     className,
 }) => {
     return (
@@ -54,6 +56,7 @@ export const AthleteRunStepperControl: React.FC<AthleteRunStepperControlProps> =
                     type="button"
                     className={ATHLETE_RUN_STEPPER_BTN}
                     onClick={onIncrease}
+                    disabled={increaseDisabled}
                     aria-label={`Aumentar ${label.toLowerCase()}`}
                 >
                     <Plus className="size-5" aria-hidden />

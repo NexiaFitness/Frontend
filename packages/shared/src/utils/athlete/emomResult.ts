@@ -4,25 +4,81 @@
 
 import type { AthleteEmomInterval, AthleteRunRoundSlot } from "./buildAthleteRunSteps";
 
-export function formatEmomMinuteLabel(
+/** Reps por ejercicio en un fallo (plantilla del intervalo de referencia). */
+export type EmomFailureEntry = Record<string, number>;
+
+/** Etiqueta atleta: intervalo + duración (sin asumir 60 s). */
+export function formatEmomIntervalLabel(
     intervalSeconds: number | null | undefined,
-    minuteIndex: number,
-    minuteTotal: number
+    intervalIndex: number,
+    intervalTotal: number
 ): string {
-    const unit = intervalSeconds === 60 ? "Minuto" : "Intervalo";
-    const plural = minuteTotal === 1 ? unit : `${unit}s`;
-    return `${plural} ${minuteIndex} de ${minuteTotal}`;
+    const unit = intervalTotal === 1 ? "Intervalo" : "Intervalos";
+    const duration =
+        intervalSeconds != null && intervalSeconds > 0 ? ` · ${intervalSeconds} s` : "";
+    return `${unit} ${intervalIndex} de ${intervalTotal}${duration}`;
 }
 
-export function buildInitialEmomOverrides(
+export function getEmomTemplateSlots(
     intervals: readonly AthleteEmomInterval[]
-): Record<string, Record<string, number>> {
-    const overrides: Record<string, Record<string, number>> = {};
-    for (const interval of intervals) {
-        overrides[interval.intervalKey] = Object.fromEntries(
-            interval.slots.map((slot) => [slot.stepKey, slot.defaultReps])
-        );
+): AthleteRunRoundSlot[] {
+    return intervals[0]?.slots ?? [];
+}
+
+export function buildEmomFailureEntryDefaults(
+    templateSlots: readonly AthleteRunRoundSlot[]
+): EmomFailureEntry {
+    return Object.fromEntries(templateSlots.map((slot) => [slot.stepKey, 0]));
+}
+
+export function resizeEmomFailureEntries(
+    previous: readonly EmomFailureEntry[],
+    nextCount: number,
+    templateSlots: readonly AthleteRunRoundSlot[]
+): EmomFailureEntry[] {
+    const clamped = Math.max(0, nextCount);
+    if (previous.length === clamped) return [...previous];
+    if (previous.length < clamped) {
+        const empty = buildEmomFailureEntryDefaults(templateSlots);
+        return [
+            ...previous,
+            ...Array.from({ length: clamped - previous.length }, () => ({ ...empty })),
+        ];
     }
+    return previous.slice(0, clamped);
+}
+
+/**
+ * Mapea N fallos a los últimos N intervalos del bloque.
+ * El entrenador usa el score agregado (cuántos), no el minuto concreto.
+ */
+export function buildEmomOverridesFromFailures(input: {
+    intervals: readonly AthleteEmomInterval[];
+    failedCount: number;
+    failureEntries: readonly EmomFailureEntry[];
+    templateSlots: readonly AthleteRunRoundSlot[];
+}): Record<string, Record<string, number>> {
+    const overrides: Record<string, Record<string, number>> = {};
+    const total = input.intervals.length;
+    const successCount = Math.max(0, total - input.failedCount);
+
+    for (let failureIndex = 0; failureIndex < input.failedCount; failureIndex += 1) {
+        const interval = input.intervals[successCount + failureIndex];
+        if (!interval) continue;
+
+        const entry = input.failureEntries[failureIndex] ?? {};
+        overrides[interval.intervalKey] = {};
+
+        interval.slots.forEach((slot, slotIndex) => {
+            const templateSlot = input.templateSlots[slotIndex];
+            const reps = templateSlot ? entry[templateSlot.stepKey] : undefined;
+            overrides[interval.intervalKey][slot.stepKey] = Math.max(
+                0,
+                Math.min(slot.defaultReps, reps ?? 0)
+            );
+        });
+    }
+
     return overrides;
 }
 
@@ -38,27 +94,47 @@ export function resolveEmomSlotReps(
     return Math.max(0, Math.min(slot.defaultReps, value));
 }
 
-/** Notación compacta para entrenador (p. ej. «4/4» o «3/4»). */
+/** Notación compacta para entrenador (p. ej. «4/4» o «2/4»). */
 export function formatEmomCompletionNotation(
     intervals: readonly AthleteEmomInterval[],
     asPlanned: boolean,
-    overrides: Record<string, Record<string, number>>
+    failedCount?: number
 ): string {
     if (asPlanned) return `${intervals.length}/${intervals.length}`;
-    let met = 0;
-    for (const interval of intervals) {
-        const allMet = interval.slots.every(
-            (slot) => resolveEmomSlotReps(slot, false, overrides, interval.intervalKey) >= slot.defaultReps
-        );
-        if (allMet) met += 1;
+    if (failedCount != null && failedCount >= 0) {
+        return `${Math.max(0, intervals.length - failedCount)}/${intervals.length}`;
     }
-    return `${met}/${intervals.length}`;
+    return `0/${intervals.length}`;
+}
+
+export function isEmomCompletionValid(input: {
+    asPlanned: boolean | null;
+    failedCount: number;
+    failureEntries: readonly EmomFailureEntry[];
+    intervals: readonly AthleteEmomInterval[];
+    templateSlots: readonly AthleteRunRoundSlot[];
+}): boolean {
+    if (input.asPlanned === null) return false;
+    if (input.asPlanned) return true;
+
+    const total = input.intervals.length;
+    if (total === 0 || input.templateSlots.length === 0) return false;
+    if (input.failedCount < 1 || input.failedCount > total) return false;
+    if (input.failureEntries.length !== input.failedCount) return false;
+
+    return input.failureEntries.every((entry) =>
+        input.templateSlots.every(
+            (slot) => entry[slot.stepKey] != null && entry[slot.stepKey] >= 0
+        )
+    );
 }
 
 export function buildEmomSavePayloads(input: {
     intervals: readonly AthleteEmomInterval[];
     asPlanned: boolean;
-    overrides: Record<string, Record<string, number>>;
+    failedCount: number;
+    failureEntries: readonly EmomFailureEntry[];
+    templateSlots: readonly AthleteRunRoundSlot[];
     roundRpe: number | null;
 }): Array<{
     blockExerciseId: number;
@@ -71,6 +147,21 @@ export function buildEmomSavePayloads(input: {
         notes?: string;
     };
 }> {
+    const overrides = input.asPlanned
+        ? {}
+        : buildEmomOverridesFromFailures({
+              intervals: input.intervals,
+              failedCount: input.failedCount,
+              failureEntries: input.failureEntries,
+              templateSlots: input.templateSlots,
+          });
+
+    const scoreNote = formatEmomCompletionNotation(
+        input.intervals,
+        input.asPlanned,
+        input.asPlanned ? undefined : input.failedCount
+    );
+
     const payloads: Array<{
         blockExerciseId: number;
         intervalKey: string;
@@ -83,11 +174,6 @@ export function buildEmomSavePayloads(input: {
         };
     }> = [];
 
-    const scoreNote = formatEmomCompletionNotation(
-        input.intervals,
-        input.asPlanned,
-        input.overrides
-    );
     let wroteNote = false;
 
     for (const interval of input.intervals) {
@@ -95,7 +181,7 @@ export function buildEmomSavePayloads(input: {
             const reps = resolveEmomSlotReps(
                 slot,
                 input.asPlanned,
-                input.overrides,
+                overrides,
                 interval.intervalKey
             );
 

@@ -1,11 +1,13 @@
 /**
- * AthleteEmomCompletionReview.tsx — Cierre EMOM: confirmación + ajustes opcionales (V05).
+ * AthleteEmomCompletionReview.tsx — Cierre EMOM: cuántos fallaron + parámetros (V05).
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import type { AthleteEmomInterval } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
-import { formatEmomMinuteLabel } from "@nexia/shared/utils/athlete/emomResult";
+import type { AthleteRunRoundSlot } from "@nexia/shared/utils/athlete/buildAthleteRunSteps";
+import type { EmomFailureEntry } from "@nexia/shared/utils/athlete/emomResult";
+import { formatEmomCompletionNotation } from "@nexia/shared/utils/athlete/emomResult";
 import { AthleteRunStepperControl } from "./AthleteRunStepperControl";
 import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import {
@@ -15,6 +17,7 @@ import {
     ATHLETE_RUN_AMRAP_PARTIAL_ROW_META,
     ATHLETE_RUN_AMRAP_ROUNDS_CARD,
     ATHLETE_RUN_AMRAP_ROUNDS_LABEL,
+    ATHLETE_RUN_AMRAP_SUMMARY,
     ATHLETE_RUN_EMOM_CHOICE_BTN,
     ATHLETE_RUN_EMOM_CHOICE_ROW,
     ATHLETE_RUN_LOGGER_REVEAL,
@@ -22,25 +25,45 @@ import {
 
 export interface AthleteEmomCompletionReviewProps {
     intervals: AthleteEmomInterval[];
+    templateSlots: AthleteRunRoundSlot[];
     intervalSeconds: number | null;
     asPlanned: boolean | null;
     onAsPlannedChange: (value: boolean) => void;
-    overrides: Record<string, Record<string, number>>;
-    onOverrideChange: (intervalKey: string, stepKey: string, value: number) => void;
+    failedCount: number;
+    onFailedCountChange: (value: number) => void;
+    failureEntries: readonly EmomFailureEntry[];
+    onFailureEntryChange: (entryIndex: number, stepKey: string, value: number) => void;
     roundRpe: number | null;
     onRoundRpeChange: (value: number | null) => void;
 }
 
 export const AthleteEmomCompletionReview: React.FC<AthleteEmomCompletionReviewProps> = ({
     intervals,
+    templateSlots,
     intervalSeconds,
     asPlanned,
     onAsPlannedChange,
-    overrides,
-    onOverrideChange,
+    failedCount,
+    onFailedCountChange,
+    failureEntries,
+    onFailureEntryChange,
     roundRpe,
     onRoundRpeChange,
 }) => {
+    const intervalTotal = intervals.length;
+
+    const completionSummary = useMemo(() => {
+        if (asPlanned === null) return null;
+        if (asPlanned) {
+            return `${intervalTotal}/${intervalTotal} intervalos`;
+        }
+        const failedLabel =
+            intervalSeconds != null && intervalSeconds > 0
+                ? ` · ${intervalSeconds} s por intervalo`
+                : "";
+        return `${formatEmomCompletionNotation(intervals, false, failedCount)} intervalos${failedLabel}`;
+    }, [asPlanned, failedCount, intervalSeconds, intervalTotal, intervals]);
+
     return (
         <div className={`space-y-3 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
             <div className={ATHLETE_RUN_AMRAP_ROUNDS_CARD}>
@@ -48,7 +71,7 @@ export const AthleteEmomCompletionReview: React.FC<AthleteEmomCompletionReviewPr
                 <div className="relative z-[1] space-y-3">
                     <p className={ATHLETE_RUN_AMRAP_ROUNDS_LABEL}>Cierre EMOM</p>
                     <p className={ATHLETE_RUN_AMRAP_HINT}>
-                        ¿Completaste todos los minutos como estaba previsto?
+                        ¿Completaste todos los intervalos como estaba previsto?
                     </p>
                     <div className={ATHLETE_RUN_EMOM_CHOICE_ROW}>
                         <button
@@ -63,32 +86,46 @@ export const AthleteEmomCompletionReview: React.FC<AthleteEmomCompletionReviewPr
                             className={ATHLETE_RUN_EMOM_CHOICE_BTN(asPlanned === false)}
                             onClick={() => onAsPlannedChange(false)}
                         >
-                            No, hubo minutos fallidos
+                            No, hubo intervalos fallidos
                         </button>
                     </div>
+                    {completionSummary ? (
+                        <p className={ATHLETE_RUN_AMRAP_SUMMARY}>{completionSummary}</p>
+                    ) : null}
                 </div>
             </div>
 
             {asPlanned === false ? (
                 <div className={`space-y-3 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
-                    <p className={ATHLETE_RUN_AMRAP_HINT}>
-                        Ajusta solo los minutos en los que no llegaste a la prescripción.
-                    </p>
-                    {intervals.map((interval) => (
-                        <div key={interval.intervalKey} className={ATHLETE_RUN_AMRAP_PARTIAL_CARD}>
+                    <div className={ATHLETE_RUN_AMRAP_PARTIAL_CARD}>
+                        <NexiaGlassAccentRim />
+                        <div className="relative z-[1] space-y-3">
+                            <p className={ATHLETE_RUN_AMRAP_PARTIAL_ROW_LABEL}>
+                                ¿Cuántos intervalos fallaste?
+                            </p>
+                            <AthleteRunStepperControl
+                                label="Intervalos fallidos"
+                                value={failedCount}
+                                onDecrease={() => onFailedCountChange(failedCount - 1)}
+                                onIncrease={() => onFailedCountChange(failedCount + 1)}
+                                decreaseDisabled={failedCount <= 1}
+                                increaseDisabled={failedCount >= intervalTotal}
+                            />
+                        </div>
+                    </div>
+
+                    {failureEntries.map((entry, entryIndex) => (
+                        <div key={`emom-failed-${entryIndex}`} className={ATHLETE_RUN_AMRAP_PARTIAL_CARD}>
                             <NexiaGlassAccentRim />
                             <div className="relative z-[1] space-y-4">
                                 <p className={ATHLETE_RUN_AMRAP_PARTIAL_ROW_LABEL}>
-                                    {formatEmomMinuteLabel(
-                                        intervalSeconds,
-                                        interval.minuteIndex,
-                                        interval.minuteTotal
-                                    )}
+                                    Fallo {entryIndex + 1} de {failedCount}
                                 </p>
-                                {interval.slots.map((slot) => {
-                                    const value =
-                                        overrides[interval.intervalKey]?.[slot.stepKey] ??
-                                        slot.defaultReps;
+                                <p className={ATHLETE_RUN_AMRAP_HINT}>
+                                    Indica las reps que hiciste en este fallo.
+                                </p>
+                                {templateSlots.map((slot) => {
+                                    const value = entry[slot.stepKey] ?? 0;
 
                                     return (
                                         <div key={slot.stepKey} className="space-y-2">
@@ -104,15 +141,15 @@ export const AthleteEmomCompletionReview: React.FC<AthleteEmomCompletionReviewPr
                                                 label="Reps realizadas"
                                                 value={value}
                                                 onDecrease={() =>
-                                                    onOverrideChange(
-                                                        interval.intervalKey,
+                                                    onFailureEntryChange(
+                                                        entryIndex,
                                                         slot.stepKey,
                                                         Math.max(0, value - 1)
                                                     )
                                                 }
                                                 onIncrease={() =>
-                                                    onOverrideChange(
-                                                        interval.intervalKey,
+                                                    onFailureEntryChange(
+                                                        entryIndex,
                                                         slot.stepKey,
                                                         Math.min(slot.defaultReps, value + 1)
                                                     )

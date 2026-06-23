@@ -89,7 +89,7 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
 
     const singleSetContext = useMemo(
         () => buildAthleteRunSingleSetContext(exercise),
-        [exercise.stepKey]
+        [exercise]
     );
 
     const displayContext = groupContext ?? singleSetContext;

@@ -3,8 +3,9 @@
  */
 
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
-import { formatEmomMinuteLabel } from "./emomResult";
-import type { AthleteEmomInterval, AthleteRunStep } from "./buildAthleteRunSteps";
+import { formatEmomIntervalLabel } from "./emomResult";
+import { formatForTimeRoundLabel } from "./forTimeResult";
+import type { AthleteEmomInterval, AthleteForTimeRound, AthleteRunStep } from "./buildAthleteRunSteps";
 
 export type AthleteRunGroupSlotStatus = "done" | "current" | "upcoming";
 
@@ -265,6 +266,11 @@ export function buildAthleteRunGroupContextFromStep(
         return null;
     }
 
+    const contextSlots =
+        step.slots ?? step.emomIntervals?.[0]?.slots ?? [];
+    const slotCount = contextSlots.length;
+    if (slotCount === 0) return null;
+
     let roundLabel: string | null = null;
     if (step.kind === "timed_block" && step.groupKind === "amrap") {
         roundLabel =
@@ -272,7 +278,11 @@ export function buildAthleteRunGroupContextFromStep(
     } else if (step.kind === "timed_block" && step.groupKind === "emom") {
         roundLabel =
             step.minuteIndex != null && step.minuteTotal != null
-                ? `Intervalo ${step.minuteIndex} de ${step.minuteTotal}`
+                ? formatEmomIntervalLabel(
+                      step.intervalSeconds,
+                      step.minuteIndex,
+                      step.minuteTotal
+                  )
                 : null;
     } else if (step.roundIndex != null && step.roundTotal != null) {
         roundLabel = `Ronda ${step.roundIndex} de ${step.roundTotal}`;
@@ -287,11 +297,11 @@ export function buildAthleteRunGroupContextFromStep(
                   groupKind: step.groupKind,
                   timeCapMinutes: step.timeCapMinutes,
                   intervalSeconds: step.intervalSeconds,
-                  slotCount: step.slots.length,
+                  slotCount,
               })
             : buildGroupExplanation(
                   step.groupKind,
-                  step.slots.length,
+                  slotCount,
                   step.instruction ?? ""
               );
 
@@ -301,7 +311,7 @@ export function buildAthleteRunGroupContextFromStep(
         groupBadgeLabel: step.badgeLabel ?? null,
         explanation,
         roundLabel,
-        slots: step.slots.map((slot) => ({
+        slots: contextSlots.map((slot) => ({
             slotLabel: slot.slotLabel,
             exerciseName: slot.exerciseName,
             status: "upcoming" as const,
@@ -330,7 +340,7 @@ export function buildAthleteRunGroupContextFromEmomInterval(
             intervalSeconds: step.intervalSeconds,
             slotCount: interval.slots.length,
         }),
-        roundLabel: formatEmomMinuteLabel(
+        roundLabel: formatEmomIntervalLabel(
             step.intervalSeconds,
             interval.minuteIndex,
             interval.minuteTotal
@@ -343,5 +353,37 @@ export function buildAthleteRunGroupContextFromEmomInterval(
         })),
         nextExerciseName: null,
         transitionHint: null,
+    };
+}
+
+/** Contexto FOR TIME para la ronda activa dentro de un bloque continuo. */
+export function buildAthleteRunGroupContextFromForTimeRound(
+    step: AthleteRunStep,
+    round: AthleteForTimeRound
+): AthleteRunGroupContextView {
+    const sectionLabel =
+        GROUP_SECTION_LABEL.for_time ?? step.badgeLabel ?? "For Time";
+
+    return {
+        groupKind: "for_time",
+        sectionLabel,
+        groupBadgeLabel: step.badgeLabel ?? null,
+        explanation: buildTimedBlockExplanation({
+            groupKind: "for_time",
+            slotCount: round.slots.length,
+        }),
+        roundLabel: formatForTimeRoundLabel(round.roundIndex, round.roundTotal),
+        slots: round.slots.map((slot, index) => ({
+            slotLabel: slot.slotLabel,
+            exerciseName: slot.exerciseName,
+            status: index === 0 ? ("current" as const) : ("upcoming" as const),
+            prescription: slot.plannedLabel,
+        })),
+        nextExerciseName:
+            round.slots.length > 1 ? (round.slots[1]?.exerciseName ?? null) : null,
+        transitionHint:
+            round.slots.length > 1
+                ? `Siguiente sin descanso: ${round.slots[1]?.exerciseName ?? ""}`
+                : null,
     };
 }

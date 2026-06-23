@@ -71,10 +71,20 @@ export const AthleteSessionRunPage: React.FC = () => {
         setAmrapPartialOpen,
         emomAsPlanned,
         setEmomAsPlanned,
-        emomOverrides,
-        updateEmomOverride,
-        emomMinuteLabel,
+        emomFailedCount,
+        setEmomFailedCount,
+        emomFailureEntries,
+        updateEmomFailureEntry,
+        emomTemplateSlots,
+        emomIntervalLabel,
         emomTechniqueSlots,
+        forTimeRoundLabel,
+        forTimeRoundIndex,
+        forTimeRoundTotal,
+        forTimeSplitViews,
+        forTimeRoundAdvanceCue,
+        forTimeCumulativeSplits,
+        forTimeTechniqueSlots,
         blockTimer,
         blockWorkIsReady,
         saving,
@@ -107,7 +117,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                     : isEmom
                       ? "EMOM registrado"
                       : isForTime
-                        ? "Ronda FOR TIME registrada"
+                        ? "FOR TIME registrado"
                         : "Bloque registrado"
                 : isGroupRound
                   ? isDropset
@@ -120,7 +130,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                     : isEmom
                       ? "EMOM guardado localmente"
                       : isForTime
-                        ? "Ronda guardada localmente"
+                        ? "FOR TIME guardado localmente"
                         : "Bloque guardado localmente"
                 : isGroupRound
                   ? isDropset
@@ -133,7 +143,7 @@ export const AthleteSessionRunPage: React.FC = () => {
                     : isEmom
                       ? "EMOM en cola — se sincronizará pronto"
                       : isForTime
-                        ? "Ronda en cola — se sincronizará pronto"
+                        ? "FOR TIME en cola — se sincronizará pronto"
                         : "Bloque en cola — se sincronizará pronto"
                 : isGroupRound
                   ? isDropset
@@ -327,10 +337,20 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onAmrapPartialOpenChange={setAmrapPartialOpen}
                         emomAsPlanned={emomAsPlanned}
                         onEmomAsPlannedChange={setEmomAsPlanned}
-                        emomOverrides={emomOverrides}
-                        onEmomOverrideChange={updateEmomOverride}
-                        emomMinuteLabel={emomMinuteLabel}
+                        emomFailedCount={emomFailedCount}
+                        onEmomFailedCountChange={setEmomFailedCount}
+                        emomFailureEntries={emomFailureEntries}
+                        onEmomFailureEntryChange={updateEmomFailureEntry}
+                        emomTemplateSlots={emomTemplateSlots}
+                        emomIntervalLabel={emomIntervalLabel}
                         emomTechniqueSlots={emomTechniqueSlots}
+                        forTimeRoundLabel={forTimeRoundLabel}
+                        forTimeRoundIndex={forTimeRoundIndex}
+                        forTimeRoundTotal={forTimeRoundTotal}
+                        forTimeSplitViews={forTimeSplitViews}
+                        forTimeRoundAdvanceCue={forTimeRoundAdvanceCue}
+                        forTimeCumulativeSplits={forTimeCumulativeSplits}
+                        forTimeTechniqueSlots={forTimeTechniqueSlots}
                         blockTimer={blockTimer}
                         blockWorkIsReady={blockWorkIsReady}
                         restPhase={restFlow.phase}

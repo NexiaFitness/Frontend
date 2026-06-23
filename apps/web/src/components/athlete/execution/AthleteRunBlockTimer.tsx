@@ -30,6 +30,8 @@ export interface AthleteRunBlockTimerProps {
     isCountup: boolean;
     isExpired: boolean;
     isReady?: boolean;
+    forTimeRoundIndex?: number;
+    forTimeRoundTotal?: number;
 }
 
 export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
@@ -39,6 +41,8 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
     isCountup,
     isExpired,
     isReady = false,
+    forTimeRoundIndex,
+    forTimeRoundTotal,
 }) => {
     const urgent =
         !isReady && !isCountup && displaySeconds > 0 && displaySeconds <= 10;
@@ -130,7 +134,13 @@ export const AthleteRunBlockTimer: React.FC<AthleteRunBlockTimerProps> = ({
                 </div>
 
                 <p className={ATHLETE_RUN_BLOCK_TIMER_HINT}>
-                    {getAthleteBlockTimerHint(groupKind, isCountup, isReady)}
+                    {getAthleteBlockTimerHint(
+                        groupKind,
+                        isCountup,
+                        isReady,
+                        forTimeRoundIndex,
+                        forTimeRoundTotal
+                    )}
                 </p>
             </div>
         </div>

@@ -20,6 +20,10 @@ import {
 } from "./AthleteMultiSlotLogger";
 import { AthleteAmrapResultLogger } from "./AthleteAmrapResultLogger";
 import { AthleteEmomCompletionReview } from "./AthleteEmomCompletionReview";
+import { AthleteForTimeCompletionReview } from "./AthleteForTimeCompletionReview";
+import { AthleteForTimeLiveProgress } from "./AthleteForTimeLiveProgress";
+import type { ForTimeRoundAdvanceCue } from "@/hooks/athlete/useAthleteForTimeFlow";
+import type { ForTimeSplitView } from "@nexia/shared/utils/athlete/forTimeResult";
 import { AthleteRunBlockTimer } from "./AthleteRunBlockTimer";
 import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import { AthleteRunSessionReadyCard } from "./AthleteRunSessionReadyCard";
@@ -45,10 +49,20 @@ export interface TimedBlockStepViewProps {
     onAmrapPartialOpenChange: (open: boolean) => void;
     emomAsPlanned: boolean | null;
     onEmomAsPlannedChange: (value: boolean) => void;
-    emomOverrides: Record<string, Record<string, number>>;
-    onEmomOverrideChange: (intervalKey: string, stepKey: string, value: number) => void;
-    emomMinuteLabel: string | null;
+    emomFailedCount: number;
+    onEmomFailedCountChange: (value: number) => void;
+    emomFailureEntries: readonly import("@nexia/shared/utils/athlete/emomResult").EmomFailureEntry[];
+    onEmomFailureEntryChange: (entryIndex: number, stepKey: string, value: number) => void;
+    emomTemplateSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
+    emomIntervalLabel: string | null;
     emomTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
+    forTimeRoundLabel: string | null;
+    forTimeRoundIndex: number;
+    forTimeRoundTotal: number;
+    forTimeSplitViews: readonly ForTimeSplitView[];
+    forTimeRoundAdvanceCue: ForTimeRoundAdvanceCue | null;
+    forTimeCumulativeSplits: readonly number[];
+    forTimeTechniqueSlots: import("@nexia/shared/utils/athlete/buildAthleteRunSteps").AthleteRunRoundSlot[];
     blockTimer: UseAthleteBlockTimerResult;
     blockWorkIsReady?: boolean;
     restPhase: AthleteRunRestPhase;
@@ -78,10 +92,20 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     onAmrapPartialOpenChange,
     emomAsPlanned,
     onEmomAsPlannedChange,
-    emomOverrides,
-    onEmomOverrideChange,
-    emomMinuteLabel,
+    emomFailedCount,
+    onEmomFailedCountChange,
+    emomFailureEntries,
+    onEmomFailureEntryChange,
+    emomTemplateSlots,
+    emomIntervalLabel,
     emomTechniqueSlots,
+    forTimeRoundLabel,
+    forTimeRoundIndex,
+    forTimeRoundTotal,
+    forTimeSplitViews,
+    forTimeRoundAdvanceCue,
+    forTimeCumulativeSplits,
+    forTimeTechniqueSlots,
     blockTimer,
     blockWorkIsReady = false,
     restPhase,
@@ -94,9 +118,11 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     const isLoggingRest = restPhase === "logging_rest";
     const isAmrap = groupContext.groupKind === "amrap";
     const isEmom = groupContext.groupKind === "emom";
+    const isForTime = groupContext.groupKind === "for_time";
     const badgeLabel = groupContext.groupBadgeLabel ?? groupContext.sectionLabel;
     const roundLabel =
-        (isEmom && isDoingPhase && emomMinuteLabel) ||
+        (isEmom && isDoingPhase && emomIntervalLabel) ||
+        (isForTime && isDoingPhase && forTimeRoundLabel) ||
         groupContext.roundLabel ||
         (runStep.roundIndex != null && runStep.roundTotal != null
             ? `Ronda ${runStep.roundIndex} de ${runStep.roundTotal}`
@@ -104,19 +130,27 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
 
     const loggingSummaryLabel = `${badgeLabel} · ${roundLabel}`;
 
-    const slotMeta = useMemo<GroupContextSlotMeta[]>(
-        () =>
-            emomTechniqueSlots.map((slot) => ({
-                exerciseId: slot.exerciseId,
-                videoUrl: null,
-                instruction: null,
-            })),
-        [emomTechniqueSlots]
-    );
+    const slotMeta = useMemo<GroupContextSlotMeta[]>(() => {
+        const techniqueSlots = isEmom
+            ? emomTechniqueSlots
+            : isForTime
+              ? forTimeTechniqueSlots
+              : runStep.slots ?? [];
+
+        return techniqueSlots.map((slot) => ({
+            exerciseId: slot.exerciseId,
+            videoUrl: null,
+            instruction: null,
+        }));
+    }, [emomTechniqueSlots, forTimeTechniqueSlots, isEmom, isForTime, runStep.slots]);
 
     const injuryAlerts = useMemo(() => {
-        const emomSlots = runStep.emomIntervals?.flatMap((interval) => interval.slots) ?? runStep.slots ?? [];
-        if (!emomSlots.length || !injuryConflicts?.size) return [];
+        const timedSlots =
+            runStep.emomIntervals?.flatMap((interval) => interval.slots) ??
+            runStep.forTimeRounds?.flatMap((round) => round.slots) ??
+            runStep.slots ??
+            [];
+        if (!timedSlots.length || !injuryConflicts?.size) return [];
         const seen = new Set<string>();
         const rows: Array<{
             key: string;
@@ -125,7 +159,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
             onConsultTrainer: () => void;
         }> = [];
 
-        for (const slot of emomSlots) {
+        for (const slot of timedSlots) {
             const conflict = injuryConflicts.get(slot.exerciseId);
             if (!conflict) continue;
             const dedupeKey = `${conflict.alert.severity ?? ""}|${conflict.alert.message ?? ""}`;
@@ -140,7 +174,7 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
         }
 
         return rows;
-    }, [injuryConflicts, runStep.emomIntervals, runStep.slots]);
+    }, [injuryConflicts, runStep.emomIntervals, runStep.forTimeRounds, runStep.slots]);
 
     if (sessionReadyToFinish && isDoingPhase) {
         return <AthleteRunSessionReadyCard />;
@@ -158,6 +192,16 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                 <div className="space-y-4">
                     <AthleteRunGroupHero badgeLabel={badgeLabel} roundLabel={roundLabel} />
 
+                    {isForTime ? (
+                        <AthleteForTimeLiveProgress
+                            roundIndex={forTimeRoundIndex}
+                            roundTotal={forTimeRoundTotal}
+                            splitViews={forTimeSplitViews}
+                            roundAdvanceCue={forTimeRoundAdvanceCue}
+                            blockWorkIsReady={blockWorkIsReady}
+                        />
+                    ) : null}
+
                     <AthleteRunBlockTimer
                         groupKind={groupContext.groupKind}
                         displaySeconds={blockTimer.displaySeconds}
@@ -165,6 +209,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                         isCountup={blockTimer.isCountup}
                         isExpired={blockTimer.isExpired}
                         isReady={blockWorkIsReady}
+                        forTimeRoundIndex={isForTime ? forTimeRoundIndex : undefined}
+                        forTimeRoundTotal={isForTime ? forTimeRoundTotal : undefined}
                     />
 
                     <AthleteRunGroupContextCard
@@ -194,7 +240,13 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                 <div className={`space-y-2 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
                     {isLoggingRest ? (
                         <p className={ATHLETE_RUN_LOGGER_SECTION_LABEL}>
-                            {isAmrap ? "Registro AMRAP" : isEmom ? "Cierre EMOM" : "Registro de ronda"}
+                            {isAmrap
+                                ? "Registro AMRAP"
+                                : isEmom
+                                  ? "Cierre EMOM"
+                                  : isForTime
+                                    ? "Cierre FOR TIME"
+                                    : "Registro de ronda"}
                         </p>
                     ) : null}
 
@@ -221,17 +273,32 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                     {isEmom && runStep.emomIntervals?.length ? (
                         <AthleteEmomCompletionReview
                             intervals={runStep.emomIntervals}
+                            templateSlots={emomTemplateSlots}
                             intervalSeconds={runStep.intervalSeconds}
                             asPlanned={emomAsPlanned}
                             onAsPlannedChange={onEmomAsPlannedChange}
-                            overrides={emomOverrides}
-                            onOverrideChange={onEmomOverrideChange}
+                            failedCount={emomFailedCount}
+                            onFailedCountChange={onEmomFailedCountChange}
+                            failureEntries={emomFailureEntries}
+                            onFailureEntryChange={onEmomFailureEntryChange}
                             roundRpe={roundRpe}
                             onRoundRpeChange={onRoundRpeChange}
                         />
                     ) : null}
 
-                    {!isAmrap && !isEmom && runStep.slots?.length ? (
+                    {isForTime && runStep.forTimeRounds?.length ? (
+                        <AthleteForTimeCompletionReview
+                            totalSeconds={
+                                forTimeCumulativeSplits[forTimeCumulativeSplits.length - 1] ??
+                                blockTimer.displaySeconds
+                            }
+                            cumulativeSplits={forTimeCumulativeSplits}
+                            roundRpe={roundRpe}
+                            onRoundRpeChange={onRoundRpeChange}
+                        />
+                    ) : null}
+
+                    {!isAmrap && !isEmom && !isForTime && runStep.slots?.length ? (
                         <AthleteMultiSlotLogger
                             slots={runStep.slots}
                             slotLogs={slotLogs}

@@ -470,13 +470,13 @@ function buildEmomGroups(
     sortedKeys.forEach((windowKey, idx) => {
         const windowLabel = `V${idx + 1}`;
         const windowLines = byWindow.get(windowKey)!;
-        windowLines.forEach((line) => {
+        windowLines.forEach((line, lineIdx) => {
             slots.push({
                 slotLabel: windowLabel,
                 exerciseId: line.exercise_id,
                 exerciseName: exerciseNameOf(nameMap, line.exercise_id),
                 notes: line.notes ?? null,
-                sets: [setView(line, windowLabel, idx + 1)],
+                sets: [setView(line, `${windowLabel}-${lineIdx + 1}`, line.order_in_block || lineIdx + 1)],
             });
         });
     });

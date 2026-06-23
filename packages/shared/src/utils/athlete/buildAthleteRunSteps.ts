@@ -52,6 +52,14 @@ export interface AthleteEmomInterval {
     slots: AthleteRunRoundSlot[];
 }
 
+/** Una ronda dentro de un bloque FOR TIME continuo (V05). */
+export interface AthleteForTimeRound {
+    roundKey: string;
+    roundIndex: number;
+    roundTotal: number;
+    slots: AthleteRunRoundSlot[];
+}
+
 export interface AthleteRunStep {
     stepKey: string;
     kind: AthleteRunStepKind;
@@ -87,6 +95,8 @@ export interface AthleteRunStep {
     minuteTotal?: number;
     /** EMOM — todos los intervalos del bloque en un solo paso UI */
     emomIntervals?: AthleteEmomInterval[];
+    /** FOR TIME — todas las rondas del bloque en un solo paso UI */
+    forTimeRounds?: AthleteForTimeRound[];
 }
 
 const GROUP_INSTRUCTION: Partial<Record<SessionGroupKind, string>> = {
@@ -475,12 +485,12 @@ function expandForTimeGroup(
     group: SessionExerciseGroupView
 ): AthleteRunStep[] {
     const rounds = effectiveRounds(group);
-    const steps: AthleteRunStep[] = [];
+    const forTimeRounds: AthleteForTimeRound[] = [];
 
-    for (let r = 0; r < rounds; r += 1) {
+    for (let r = 1; r <= rounds; r += 1) {
         const roundSlots: AthleteRunRoundSlot[] = [];
         for (const slot of group.slots) {
-            const set = slot.sets[r];
+            const set = slot.sets[r - 1];
             if (!set) continue;
             roundSlots.push(
                 buildRoundSlot({
@@ -489,7 +499,7 @@ function expandForTimeGroup(
                     group,
                     slot,
                     set,
-                    roundIndex: r + 1,
+                    roundIndex: r,
                     roundTotal: rounds,
                     kind: "timed_block",
                     restAfterSeconds: null,
@@ -497,20 +507,33 @@ function expandForTimeGroup(
             );
         }
         if (roundSlots.length === 0) continue;
-        steps.push(
-            buildTimedBlockStep(
+        forTimeRounds.push({
+            roundKey: `${group.groupId}-for-time-r${r}`,
+            roundIndex: r,
+            roundTotal: rounds,
+            slots: roundSlots,
+        });
+    }
+
+    if (forTimeRounds.length === 0) return [];
+
+    const firstRound = forTimeRounds[0];
+    return [
+        {
+            ...buildTimedBlockStep(
                 blockId,
                 blockName,
                 group,
-                r + 1,
+                1,
                 rounds,
-                roundSlots,
+                firstRound.slots,
                 "countup"
-            )
-        );
-    }
-
-    return steps;
+            ),
+            stepKey: `${group.groupId}-timed-for-time-block`,
+            slots: firstRound.slots,
+            forTimeRounds,
+        },
+    ];
 }
 
 function expandEmomGroup(

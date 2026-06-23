@@ -451,7 +451,7 @@ describe("buildAthleteRunSteps timed blocks", () => {
         expect(ctx?.explanation).toContain("15 min");
     });
 
-    it("for_time genera un timed_block por ronda en modo countup", () => {
+    it("for_time genera un unico timed_block con rondas embebidas", () => {
         const lines = [
             timedLine(510, 20, 1, SET_TYPE.FOR_TIME, { plannedSets: 2 }),
             timedLine(511, 30, 2, SET_TYPE.FOR_TIME, { plannedSets: 2 }),
@@ -462,11 +462,15 @@ describe("buildAthleteRunSteps timed blocks", () => {
         });
         const steps = buildAthleteRunSteps(view);
 
-        expect(steps).toHaveLength(2);
-        expect(steps.map((step) => step.kind)).toEqual(["timed_block", "timed_block"]);
-        expect(steps.map((step) => step.timedMode)).toEqual(["countup", "countup"]);
-        expect(steps.map((step) => step.roundIndex)).toEqual([1, 2]);
-        expect(steps[0]?.slots?.map((slot) => slot.slotLabel)).toEqual(["1", "2"]);
+        expect(steps).toHaveLength(1);
+        expect(steps[0]?.kind).toBe("timed_block");
+        expect(steps[0]?.timedMode).toBe("countup");
+        expect(steps[0]?.forTimeRounds).toHaveLength(2);
+        expect(steps[0]?.forTimeRounds?.map((item) => item.roundIndex)).toEqual([1, 2]);
+        expect(steps[0]?.forTimeRounds?.[0]?.slots.map((slot) => slot.slotLabel)).toEqual([
+            "1",
+            "2",
+        ]);
     });
 
     it("emom genera un unico timed_block con intervalos embebidos", () => {
@@ -503,6 +507,8 @@ describe("buildAthleteRunSteps timed blocks", () => {
             "V2",
             "V2",
         ]);
+        const intervalOneKeys = steps[0]?.emomIntervals?.[0]?.slots.map((slot) => slot.stepKey) ?? [];
+        expect(new Set(intervalOneKeys).size).toBe(intervalOneKeys.length);
     });
 });
 
