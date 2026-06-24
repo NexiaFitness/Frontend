@@ -166,7 +166,10 @@ const SessionReviewPage = lazy(() =>
 const StandaloneSessionDetail = lazy(() =>
   import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
 );
-const CreateTestResult = lazy(() =>
+const CreateTestEvaluation = lazy(() =>
+  import("./pages/testing").then((m) => ({ default: m.CreateTestEvaluation }))
+);
+const LegacyCreateTestRedirect = lazy(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
 );
 
@@ -556,12 +559,20 @@ function App() {
             }
           />
 
-          {/* Testing */}
+          {/* Evaluaciones físicas */}
+          <Route
+            path="testing/register-evaluation"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateTestEvaluation />
+              </RoleProtectedRoute>
+            }
+          />
           <Route
             path="testing/create-test"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <CreateTestResult />
+                <LegacyCreateTestRedirect />
               </RoleProtectedRoute>
             }
           />

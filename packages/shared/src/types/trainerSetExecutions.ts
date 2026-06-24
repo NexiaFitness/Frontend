@@ -2,6 +2,17 @@
  * Trainer granular set execution read models (F8).
  */
 
+import type {
+    ExercisePerformanceRecord,
+    PerformanceSource,
+} from "./exercisePerformance";
+
+export type { ExercisePerformanceRecord, PerformanceSource } from "./exercisePerformance";
+export type {
+    ExercisePerformanceRecordCreate,
+    PerformanceMetric,
+} from "./exercisePerformance";
+
 export interface ClientSetExecutionRow {
     id: number;
     training_session_id: number;
@@ -108,25 +119,9 @@ export interface GetClientTimedBlockResultsArg {
     limit?: number;
 }
 
-export interface FormalRmTestRow {
-    test_id: number;
-    test_name: string;
-    result_id: number;
-    test_date: string;
-    value: number;
-    unit: string;
-    notes: string | null;
-}
-
 export interface E1rmTrendWeek {
     week_start: string;
     peak_estimated_1rm_kg: number;
-}
-
-export interface SessionE1rmPeak {
-    training_session_id: number;
-    session_date: string;
-    estimated_1rm_kg: number;
 }
 
 export interface ClientExerciseLoadProfile {
@@ -135,17 +130,18 @@ export interface ClientExerciseLoadProfile {
     exercise_name: string;
     weeks: number;
     e1rm_formula_note: string;
-    formal_test_linked: boolean;
-    linked_physical_test_id: number | null;
-    linked_physical_test_name: string | null;
-    formal_test_unlinked_note: string | null;
-    latest_formal_test: FormalRmTestRow | null;
-    formal_test_history: FormalRmTestRow[];
+    current_best_weight_kg: number | null;
+    current_best_weight_reps: number | null;
+    current_best_weight_at: string | null;
+    current_best_weight_source: PerformanceSource | null;
+    current_best_e1rm_kg: number | null;
+    current_best_e1rm_at: string | null;
+    current_best_e1rm_source: PerformanceSource | null;
+    pr_history: ExercisePerformanceRecord[];
     latest_estimated_1rm_kg: number | null;
     latest_estimated_session_id: number | null;
     latest_estimated_session_date: string | null;
     estimated_trend_weeks: E1rmTrendWeek[];
-    session_e1rm_peaks: SessionE1rmPeak[];
 }
 
 export interface GetClientExerciseLoadProfileArg {

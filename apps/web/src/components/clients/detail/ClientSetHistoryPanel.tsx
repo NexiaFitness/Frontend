@@ -8,6 +8,7 @@ import {
     useClientSetHistory,
     type SetHistoryDateRangeWeeks,
 } from "@nexia/shared/hooks/clients/useClientSetHistory";
+import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import type { ClientSetExecutionRow, ClientTimedBlockResultRow } from "@nexia/shared/types/trainerSetExecutions";
 import {
     formatSetExecutionLabel,
@@ -167,6 +168,21 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
             dateRangeWeeks,
         });
 
+    const needsCatalogFallback = exerciseOptions.length === 0;
+    const { data: catalogExercises } = useGetExercisesQuery(
+        { skip: 0, limit: 100 },
+        { skip: !needsCatalogFallback },
+    );
+
+    const filterExerciseOptions = useMemo(() => {
+        if (exerciseOptions.length > 0) {
+            return exerciseOptions;
+        }
+        return (catalogExercises?.exercises ?? [])
+            .map((exercise) => ({ id: exercise.id, name: exercise.nombre }))
+            .sort((a, b) => a.name.localeCompare(b.name, "es"));
+    }, [catalogExercises?.exercises, exerciseOptions]);
+
     const filterControls = useMemo(
         () => (
             <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
@@ -179,7 +195,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                         }
                         options={[
                             { value: "", label: "Todos los ejercicios" },
-                            ...exerciseOptions.map((opt) => ({
+                            ...filterExerciseOptions.map((opt) => ({
                                 value: String(opt.id),
                                 label: opt.name,
                             })),
@@ -208,7 +224,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                 </div>
             </div>
         ),
-        [exerciseId, exerciseOptions, dateRangeWeeks],
+        [exerciseId, filterExerciseOptions, dateRangeWeeks],
     );
 
     if (isLoading) {
@@ -264,7 +280,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                     clientId={clientId}
                     exerciseId={resolvedExerciseId}
                     exerciseName={
-                        exerciseOptions.find((o) => o.id === resolvedExerciseId)?.name
+                        filterExerciseOptions.find((o) => o.id === resolvedExerciseId)?.name
                     }
                     weeks={dateRangeWeeks}
                 />

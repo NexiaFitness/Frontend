@@ -73,6 +73,11 @@ import type {
     GetClientSetExecutionsArg,
     GetClientTimedBlockResultsArg,
 } from "../types/trainerSetExecutions";
+import type {
+    CreateExercisePerformanceRecordArg,
+    ExercisePerformanceRecord,
+    ListExercisePerformanceRecordsArg,
+} from "../types/exercisePerformance";
 import {
     buildCoherenceDevMockResponse,
     shouldServeCoherenceDevMock,
@@ -80,9 +85,12 @@ import {
 import type {
     PhysicalTestResultOut,
     PhysicalTestOut,
+    PhysicalTestCreate,
     ClientTestingSummary,
     CreateTestResultData,
     UpdateTestResultData,
+    TestingAiInsightsRequest,
+    TestingAiInsightsOut,
 } from "../types/testing";
 
 /** Límite máximo de page_size para GET /trainers/{id}/clients (backend: 1–50) */
@@ -785,6 +793,21 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * Spec 01 F2 — insight IA sobre evaluaciones físicas
+         * Endpoint: POST /api/v1/physical-tests/clients/{client_id}/ai-insights
+         */
+        createTestingAiInsights: builder.mutation<
+            TestingAiInsightsOut,
+            { clientId: number; body?: TestingAiInsightsRequest }
+        >({
+            query: ({ clientId, body }) => ({
+                url: `/physical-tests/clients/${clientId}/ai-insights`,
+                method: "POST",
+                body: body ?? {},
+            }),
+        }),
+
+        /**
          * Crear resultado de test físico
          * Endpoint: POST /api/v1/physical-tests/results
          */
@@ -799,6 +822,19 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id: "TESTS" },
                 { type: "Client", id: "TESTING_SUMMARY" },
             ],
+        }),
+
+        /**
+         * Crear definición de evaluación física (Spec 01 F0)
+         * Endpoint: POST /api/v1/physical-tests/
+         */
+        createPhysicalTest: builder.mutation<PhysicalTestOut, PhysicalTestCreate>({
+            query: (body) => ({
+                url: "/physical-tests/",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: [{ type: "PhysicalTest", id: "LIST" }],
         }),
 
         /**
@@ -1114,6 +1150,42 @@ export const clientsApi = baseApi.injectEndpoints({
             }),
             providesTags: (_result, _error, arg) => [
                 { type: "Client" as const, id: arg.clientId },
+                { type: "Client" as const, id: `exercise-load-${arg.clientId}-${arg.exerciseId}` },
+            ],
+        }),
+
+        getClientExercisePerformanceRecords: builder.query<
+            ExercisePerformanceRecord[],
+            ListExercisePerformanceRecordsArg
+        >({
+            query: ({ clientId, exerciseId, metric, skip = 0, limit = 20 }) => {
+                const params = new URLSearchParams();
+                params.set("skip", String(skip));
+                params.set("limit", String(limit));
+                if (metric) params.set("metric", metric);
+                return {
+                    url: `/clients/${clientId}/exercises/${exerciseId}/performance-records?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "Client" as const, id: `exercise-load-${arg.clientId}-${arg.exerciseId}` },
+            ],
+        }),
+
+        createClientExercisePerformanceRecord: builder.mutation<
+            ExercisePerformanceRecord,
+            CreateExercisePerformanceRecordArg
+        >({
+            query: ({ clientId, exerciseId, body }) => ({
+                url: `/clients/${clientId}/exercises/${exerciseId}/performance-records`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "Client" as const, id: `exercise-load-${arg.clientId}-${arg.exerciseId}` },
             ],
         }),
 
@@ -1166,7 +1238,9 @@ export const {
     useGetClientTestResultsQuery,
     useGetPhysicalTestsQuery,
     useGetClientTestingSummaryQuery,
+    useCreateTestingAiInsightsMutation,
     useCreateTestResultMutation,
+    useCreatePhysicalTestMutation,
     useUpdateTestResultMutation,
     useDeleteTestResultMutation,
     // Training Plan Analytics hooks
@@ -1183,4 +1257,6 @@ export const {
     useGetClientExecutedLoadSummaryQuery,
     useGetClientTimedBlockResultsQuery,
     useGetClientExerciseLoadProfileQuery,
+    useGetClientExercisePerformanceRecordsQuery,
+    useCreateClientExercisePerformanceRecordMutation,
 } = clientsApi;

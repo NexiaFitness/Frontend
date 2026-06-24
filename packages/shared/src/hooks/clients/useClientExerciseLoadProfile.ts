@@ -1,5 +1,5 @@
 /**
- * useClientExerciseLoadProfile — RM formal + e1RM estimado por ejercicio (CEO-01).
+ * useClientExerciseLoadProfile — PR + e1RM estimado por ejercicio (Spec 02 v2).
  */
 
 import { useGetClientExerciseLoadProfileQuery } from "../../api/clientsApi";
@@ -29,19 +29,24 @@ export function useClientExerciseLoadProfile({
             { skip },
         );
 
-    const isLinked = Boolean(data?.formal_test_linked);
-    const hasFormal = Boolean(data?.latest_formal_test);
+    const hasBestWeight = data?.current_best_weight_kg != null;
+    const hasBestE1rm = data?.current_best_e1rm_kg != null;
     const hasEstimated = data?.latest_estimated_1rm_kg != null;
-    const isEmpty = !isLoading && !hasFormal && !hasEstimated && !isLinked;
+    const isEmpty =
+        !isLoading && !hasBestWeight && !hasBestE1rm && !hasEstimated;
 
     return {
         profile: data,
         isLoading: isLoading || isFetching,
         error,
         refetch,
-        isLinked,
-        hasFormal,
+        hasBestWeight,
+        hasBestE1rm,
         hasEstimated,
         isEmpty,
+        /** @deprecated Spec 02 v2 — use hasBestWeight */
+        hasFormal: hasBestWeight,
+        /** @deprecated Spec 02 v2 — removed link model */
+        isLinked: false,
     };
 }

@@ -479,7 +479,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             <PageTitle
                 titleAs="h2"
                 title="Progreso del Cliente"
-                subtitle="Evolución corporal y rendimiento gym — tonnage, historial por ejercicio y RM"
+                subtitle="Evolución corporal y rendimiento gym — tonnage, historial por ejercicio y PR"
             />
 
             {/* Sub-tab chips */}

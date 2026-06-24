@@ -314,6 +314,7 @@ export * from "./hooks/clients/useClientProgress";
 export * from "./hooks/clients/useClientSetHistory";
 export * from "./hooks/clients/useClientExecutedLoadTrend";
 export * from "./hooks/clients/useClientExerciseLoadProfile";
+export * from "./hooks/clients/useCreateClientExercisePerformanceRecord";
 export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
@@ -321,7 +322,10 @@ export * from "./hooks/clients/useUpdateClientProgress";
 export * from "./hooks/clients/useCoherence";
 export * from "./hooks/athlete/useAthleteContext";
 export * from "./hooks/clients/useClientTests";
+export * from "./hooks/clients/useTestingAiInsights";
 export * from "./hooks/clients/useCreateTestResult";
+export * from "./hooks/clients/useCreatePhysicalTest";
+export * from "./hooks/clients/useCreateTestEvaluation";
 
 // Hooks - Exercises
 export * from "./hooks/exercises";
