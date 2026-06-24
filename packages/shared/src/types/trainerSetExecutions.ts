@@ -79,3 +79,73 @@ export interface SessionExecutionSummary {
     has_executions: boolean;
     exercises: SessionExecutionExercise[];
 }
+
+export interface ClientTimedBlockResultRow {
+    id: number;
+    training_session_id: number;
+    session_date: string | null;
+    session_name: string | null;
+    group_id: string | null;
+    timed_mode: string;
+    total_seconds: number | null;
+    rounds_completed: number | null;
+    emom_completed_count: number | null;
+    emom_failed_count: number | null;
+    partial_total: number | null;
+}
+
+export interface ClientTimedBlockResultsPage {
+    client_id: number;
+    total: number;
+    items: ClientTimedBlockResultRow[];
+}
+
+export interface GetClientTimedBlockResultsArg {
+    clientId: number;
+    fromDate?: string;
+    toDate?: string;
+    skip?: number;
+    limit?: number;
+}
+
+export interface FormalRmTestRow {
+    test_id: number;
+    test_name: string;
+    result_id: number;
+    test_date: string;
+    value: number;
+    unit: string;
+    notes: string | null;
+}
+
+export interface E1rmTrendWeek {
+    week_start: string;
+    peak_estimated_1rm_kg: number;
+}
+
+export interface SessionE1rmPeak {
+    training_session_id: number;
+    session_date: string;
+    estimated_1rm_kg: number;
+}
+
+export interface ClientExerciseLoadProfile {
+    client_id: number;
+    exercise_id: number;
+    exercise_name: string;
+    weeks: number;
+    e1rm_formula_note: string;
+    latest_formal_test: FormalRmTestRow | null;
+    formal_test_history: FormalRmTestRow[];
+    latest_estimated_1rm_kg: number | null;
+    latest_estimated_session_id: number | null;
+    latest_estimated_session_date: string | null;
+    estimated_trend_weeks: E1rmTrendWeek[];
+    session_e1rm_peaks: SessionE1rmPeak[];
+}
+
+export interface GetClientExerciseLoadProfileArg {
+    clientId: number;
+    exerciseId: number;
+    weeks?: number;
+}

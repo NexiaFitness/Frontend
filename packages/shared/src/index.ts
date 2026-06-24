@@ -312,6 +312,8 @@ export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/clients/useClientPreview";
 export * from "./hooks/clients/useClientProgress";
 export * from "./hooks/clients/useClientSetHistory";
+export * from "./hooks/clients/useClientExecutedLoadTrend";
+export * from "./hooks/clients/useClientExerciseLoadProfile";
 export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";

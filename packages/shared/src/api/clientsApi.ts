@@ -66,8 +66,12 @@ import type { ClientLoadInsights } from "../types/clientLoadInsights";
 import type {
     ClientExecutedLoadSummary,
     ClientSetExecutionsPage,
+    ClientTimedBlockResultsPage,
+    ClientExerciseLoadProfile,
     GetClientExecutedLoadSummaryArg,
+    GetClientExerciseLoadProfileArg,
     GetClientSetExecutionsArg,
+    GetClientTimedBlockResultsArg,
 } from "../types/trainerSetExecutions";
 import {
     buildCoherenceDevMockResponse,
@@ -1078,6 +1082,41 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        getClientTimedBlockResults: builder.query<
+            ClientTimedBlockResultsPage,
+            GetClientTimedBlockResultsArg
+        >({
+            query: ({ clientId, fromDate, toDate, skip = 0, limit = 100 }) => {
+                const params = new URLSearchParams();
+                if (fromDate) params.append("from_date", fromDate);
+                if (toDate) params.append("to_date", toDate);
+                params.append("skip", String(skip));
+                params.append("limit", String(limit));
+                const qs = params.toString();
+                return {
+                    url: `/clients/${clientId}/timed-block-results${qs ? `?${qs}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "TrainingSession" as const, id: "LIST" },
+            ],
+        }),
+
+        getClientExerciseLoadProfile: builder.query<
+            ClientExerciseLoadProfile,
+            GetClientExerciseLoadProfileArg
+        >({
+            query: ({ clientId, exerciseId, weeks = 12 }) => ({
+                url: `/clients/${clientId}/exercises/${exerciseId}/load-profile?weeks=${weeks}`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+            ],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -1142,4 +1181,6 @@ export const {
     useGetClientLoadInsightsQuery,
     useGetClientSetExecutionsQuery,
     useGetClientExecutedLoadSummaryQuery,
+    useGetClientTimedBlockResultsQuery,
+    useGetClientExerciseLoadProfileQuery,
 } = clientsApi;

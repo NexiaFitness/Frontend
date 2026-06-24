@@ -8,11 +8,17 @@ import {
     useClientSetHistory,
     type SetHistoryDateRangeWeeks,
 } from "@nexia/shared/hooks/clients/useClientSetHistory";
-import type { ClientSetExecutionRow } from "@nexia/shared/types/trainerSetExecutions";
+import type { ClientSetExecutionRow, ClientTimedBlockResultRow } from "@nexia/shared/types/trainerSetExecutions";
 import {
     formatSetExecutionLabel,
     formatSetExecutionLine,
 } from "@nexia/shared/utils/trainer/formatSetExecutionDisplay";
+import {
+    formatTimedBlockModeLabel,
+    formatTimedBlockResultTitle,
+    formatTimedBlockResultValue,
+} from "@nexia/shared/utils/trainer/formatTimedBlockResultDisplay";
+import { ClientExerciseLoadPanel } from "./ClientExerciseLoadPanel";
 import { FormCombobox } from "@/components/ui/forms";
 import { Alert, EmptyState, LoadingSpinner } from "@/components/ui/feedback";
 
@@ -51,15 +57,18 @@ function formatSetLine(row: ClientSetExecutionRow): string {
 function SessionAccordion({
     sessionKey,
     title,
+    timedBlocks,
     exercises,
     defaultOpen,
 }: {
     sessionKey: number;
     title: string;
+    timedBlocks: ClientTimedBlockResultRow[];
     exercises: ReturnType<typeof useClientSetHistory>["sessions"][number]["exercises"];
     defaultOpen?: boolean;
 }) {
     const [open, setOpen] = useState(defaultOpen ?? false);
+    const hasContent = timedBlocks.length > 0 || exercises.length > 0;
 
     return (
         <div className="rounded-lg border border-border bg-card">
@@ -76,8 +85,31 @@ function SessionAccordion({
                 )}
                 <span className="text-sm font-medium text-foreground">{title}</span>
             </button>
-            {open && (
+            {open && hasContent && (
                 <div className="space-y-4 border-t border-border px-4 py-3">
+                    {timedBlocks.length > 0 && (
+                        <div>
+                            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                Bloques a tiempo
+                            </p>
+                            <ul className="mt-2 space-y-1">
+                                {timedBlocks.map((block) => (
+                                    <li
+                                        key={block.id}
+                                        className="flex min-h-12 flex-wrap items-center justify-between gap-2 rounded-md bg-muted/20 px-3 py-2 text-sm"
+                                    >
+                                        <span className="font-medium text-foreground">
+                                            {formatTimedBlockResultTitle(block)}
+                                        </span>
+                                        <span className="text-muted-foreground">
+                                            {formatTimedBlockModeLabel(block.timed_mode)} ·{" "}
+                                            {formatTimedBlockResultValue(block)}
+                                        </span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                     {exercises.map((exercise) => (
                         <div key={`${sessionKey}-${exercise.exerciseId}`}>
                             <p className="text-sm font-semibold text-foreground">
@@ -217,11 +249,22 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                     )}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Series registradas por el atleta en el run — peso, reps y RPE por paso.
+                    Series de fuerza y bloques AMRAP/EMOM/For Time registrados en el run.
                 </p>
             </div>
 
             {filterControls}
+
+            {resolvedExerciseId != null && (
+                <ClientExerciseLoadPanel
+                    clientId={clientId}
+                    exerciseId={resolvedExerciseId}
+                    exerciseName={
+                        exerciseOptions.find((o) => o.id === resolvedExerciseId)?.name
+                    }
+                    weeks={dateRangeWeeks}
+                />
+            )}
 
             {isEmpty ? (
                 <EmptyState
@@ -238,6 +281,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                                 session.sessionName,
                                 session.sessionDate,
                             )}
+                            timedBlocks={session.timedBlocks}
                             exercises={session.exercises}
                             defaultOpen={index === 0}
                         />

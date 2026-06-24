@@ -1,7 +1,7 @@
 /**
  * ClientProgressTab.tsx — Tab Progress del cliente
  *
- * Sub-tabs: Resumen · Tendencia · Historial gym · Antropometría
+ * Sub-tabs: Cuerpo y fatiga · Tendencia · Historial gym · Antropometría
  * Rediseñado v7 — alineado con ClientDailyCoherenceTab (tokens, chart height 250,
  * tooltips temáticos, grids 2-col, legends HTML, bg-surface containers).
  *
@@ -17,6 +17,7 @@ import type { ClientProgress } from "@nexia/shared/types/progress";
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
+import { useClientExecutedLoadTrend } from "@nexia/shared/hooks/clients/useClientExecutedLoadTrend";
 import { useWeeklyMetricsV2, useMetricsAlertsV2, useMonthlyMetricsV2 } from "@nexia/shared/hooks/metrics";
 import { LoadingSpinner, Alert, EmptyState } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
@@ -24,6 +25,7 @@ import { Button, SegmentButton } from "@/components/ui/buttons";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
 import { ClientSetHistoryPanel } from "./ClientSetHistoryPanel";
+import { ClientExecutedLoadTrendChart } from "./ClientExecutedLoadTrendChart";
 import { ClipboardList, Pencil, Plus, X } from "lucide-react";
 import {
     LineChart,
@@ -414,10 +416,15 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
         return null;
     }, [metricsPeriod, weeklyMetrics, monthlyMetrics]);
 
-    const hasNoLoadData = useMemo(() => {
-        if (metricsPeriod === "weekly") return weeklyMetrics.items.length === 0;
-        return monthlyMetrics.items.length === 0;
-    }, [metricsPeriod, weeklyMetrics.items.length, monthlyMetrics.items.length]);
+    const executedLoadTrend = useClientExecutedLoadTrend({
+        clientId,
+        startDate: metricsDateRange.startDate,
+        endDate: metricsDateRange.endDate,
+        period: metricsPeriod,
+    });
+
+    const trendTabFullyEmpty =
+        executedLoadTrend.isEmpty && !cidChartConfig && !executedLoadTrend.isLoading;
 
     const hasBodyCompCharts = weightChartData.length > 0 || bmiChartData.length > 0;
     const hasFatigueData = fatigueChartData.some((d) => d.pre_fatigue != null || d.post_fatigue != null);
@@ -474,7 +481,7 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             {/* Sub-tab chips */}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tabs progreso">
                 {([
-                    { id: "overview" as ProgressSubTab, label: "Resumen" },
+                    { id: "overview" as ProgressSubTab, label: "Cuerpo y fatiga" },
                     { id: "trend" as ProgressSubTab, label: "Tendencia" },
                     { id: "gym" as ProgressSubTab, label: "Historial gym" },
                     { id: "anthropometry" as ProgressSubTab, label: "Antropometría" },
@@ -861,119 +868,120 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                 </>
             )}
 
-            {/* ═══════════ TREND TAB (CID) ═══════════ */}
+            {/* ═══════════ TREND TAB ═══════════ */}
             {activeTab === "trend" && (
                 <div className="space-y-6">
-                    <p className="text-sm text-muted-foreground">
-                        Carga interna de demanda (CID) — tendencia macro de volumen e intensidad.
-                    </p>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                        <p className="text-sm text-muted-foreground max-w-xl">
+                            Volumen ejecutado (tonnage real) y, si el plan lo permite, carga
+                            planificada (CID).
+                        </p>
+                        <MetricsPeriodSelector
+                            value={metricsPeriod}
+                            onChange={setMetricsPeriod}
+                        />
+                    </div>
 
-                    {!cidChartConfig && (
-                        <div className="flex justify-end">
-                            <MetricsPeriodSelector
-                                value={metricsPeriod}
-                                onChange={setMetricsPeriod}
-                            />
-                        </div>
-                    )}
+                    <ClientExecutedLoadTrendChart
+                        clientId={clientId}
+                        startDate={metricsDateRange.startDate}
+                        endDate={metricsDateRange.endDate}
+                        period={metricsPeriod}
+                    />
 
-                    {/* Sin gráfico: empty honesto (P-01 — evita pantalla negra) */}
-                    {!isLoading && !cidChartConfig && (
-                        <div
-                            className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
-                            style={{ minHeight: 200 }}
-                        >
-                            <div>
-                                {hasNoLoadData ? (
-                                    <>
-                                        <p>
-                                            No hay sesiones de entrenamiento con datos de volumen/intensidad en el
-                                            rango seleccionado.
-                                        </p>
-                                        <p className="mt-1 text-xs text-muted-foreground/70">
-                                            Las sesiones necesitan valores de volumen e intensidad para calcular CID.
-                                        </p>
-                                    </>
-                                ) : (
-                                    <>
-                                        <p>No hay datos CID calculables para el periodo seleccionado.</p>
-                                        <p className="mt-1 text-xs text-muted-foreground/70">
-                                            Prueba otro rango (Semanal / Mensual / Anual) o revisa la ejecución en
-                                            Historial gym.
-                                        </p>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* CID chart */}
                     {cidChartConfig && (
-                        <div className="rounded-lg bg-surface p-5">
-                            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                                <h3 className="text-sm font-semibold">{cidChartConfig.title}</h3>
-                                <MetricsPeriodSelector
-                                    value={metricsPeriod}
-                                    onChange={setMetricsPeriod}
-                                />
+                        <div className="space-y-4 border-t border-border/50 pt-6">
+                            <div>
+                                <h3 className="text-sm font-semibold text-foreground">
+                                    Carga planificada (CID)
+                                </h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Volumen e intensidad prescritos en el plan activo.
+                                </p>
                             </div>
-                            <div className="w-full min-w-0">
-                                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                                    <LineChart data={cidChartConfig.data} margin={CHART_MARGIN}>
-                                        <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
-                                        <XAxis
-                                            dataKey="label"
-                                            tick={CHART_TICK_STYLE}
-                                            axisLine={{ stroke: CHART_AXIS_STROKE }}
-                                            tickLine={{ stroke: CHART_AXIS_STROKE }}
-                                            interval={0}
-                                        />
-                                        <YAxis
-                                            width={40}
-                                            tick={CHART_TICK_STYLE}
-                                            axisLine={{ stroke: CHART_AXIS_STROKE }}
-                                            tickLine={{ stroke: CHART_AXIS_STROKE }}
-                                        />
-                                        <Tooltip
-                                            contentStyle={CHART_TOOLTIP_STYLE}
-                                            formatter={(value: number) => [value.toFixed(1), "CID"]}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="cid"
-                                            stroke="hsl(var(--primary))"
-                                            name="CID Total"
-                                            strokeWidth={2}
-                                            dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--primary))", fill: "hsl(var(--card))" }}
-                                            isAnimationActive={false}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="avg"
-                                            stroke="hsl(var(--success))"
-                                            name="CID Promedio"
-                                            strokeWidth={2}
-                                            dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--success))", fill: "hsl(var(--card))" }}
-                                            isAnimationActive={false}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1.5">
-                                        <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
-                                        CID Total
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" />
-                                        CID Promedio
-                                    </span>
+                            <div className="rounded-lg bg-surface p-5">
+                                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                    <h4 className="text-sm font-medium text-foreground">
+                                        {cidChartConfig.title}
+                                    </h4>
+                                </div>
+                                <div className="w-full min-w-0">
+                                    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                                        <LineChart data={cidChartConfig.data} margin={CHART_MARGIN}>
+                                            <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
+                                            <XAxis
+                                                dataKey="label"
+                                                tick={CHART_TICK_STYLE}
+                                                axisLine={{ stroke: CHART_AXIS_STROKE }}
+                                                tickLine={{ stroke: CHART_AXIS_STROKE }}
+                                                interval={0}
+                                            />
+                                            <YAxis
+                                                width={40}
+                                                tick={CHART_TICK_STYLE}
+                                                axisLine={{ stroke: CHART_AXIS_STROKE }}
+                                                tickLine={{ stroke: CHART_AXIS_STROKE }}
+                                            />
+                                            <Tooltip
+                                                contentStyle={CHART_TOOLTIP_STYLE}
+                                                formatter={(value: number) => [value.toFixed(1), "CID"]}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="cid"
+                                                stroke="hsl(var(--primary))"
+                                                name="CID Total"
+                                                strokeWidth={2}
+                                                dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--primary))", fill: "hsl(var(--card))" }}
+                                                isAnimationActive={false}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="avg"
+                                                stroke="hsl(var(--success))"
+                                                name="CID Promedio"
+                                                strokeWidth={2}
+                                                dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--success))", fill: "hsl(var(--card))" }}
+                                                isAnimationActive={false}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
+                                            CID Total
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" />
+                                            CID Promedio
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Alerts */}
-                    {!isLoading && metricsAlerts.hasAlerts && (
+                    {!cidChartConfig && !executedLoadTrend.isEmpty && (
+                        <p className="text-center text-xs text-muted-foreground/70">
+                            CID no disponible — el plan no tiene volumen/intensidad calculables en
+                            este periodo.
+                        </p>
+                    )}
+
+                    {trendTabFullyEmpty && !isLoading && (
+                        <div className="flex w-full min-w-0 items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/10 px-4 py-6 text-center text-sm text-muted-foreground">
+                            <div>
+                                <p>Sin datos de tendencia en el periodo seleccionado.</p>
+                                <p className="mt-1 text-xs text-muted-foreground/70">
+                                    El tonnage aparece cuando el atleta registra series; CID requiere
+                                    plan con volumen/intensidad.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Alerts — solo si hay CID */}
+                    {!isLoading && cidChartConfig && metricsAlerts.hasAlerts && (
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold text-foreground">Alertas de Carga</h3>
                             {metricsAlerts.activeAlerts.map((alert, i) => {
@@ -1019,8 +1027,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         </div>
                     )}
 
-                    {/* Summary metrics */}
-                    {cidSummary && (
+                    {/* Summary metrics — solo con CID */}
+                    {cidChartConfig && cidSummary && (
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <MetricCard title="CID Total" value={cidSummary.total} color="blue" />
                             <MetricCard title="CID Promedio" value={cidSummary.avg} color="green" />
