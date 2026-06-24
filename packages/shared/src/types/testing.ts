@@ -157,6 +157,8 @@ export interface ClientTestingSummary {
     upcoming_tests: UpcomingTest[]; // Tests due for repetition
     profile_analysis: string; // Auto-generated analysis text
     bilateral_comparison: BilateralComparisonPoint[] | null; // For mobility tests: joint ROM left vs right
+    has_any_test_results: boolean;
+    latest_result_at: string | null;
 }
 
 // ========================================
@@ -277,9 +279,12 @@ export type TestingAiInsightsSource = "llm" | "cache" | "deterministic";
 
 export interface TestingAiInsightsOut {
     client_id: number;
-    insights_text: string;
-    source: TestingAiInsightsSource;
-    generated_at: string;
+    has_insight: boolean;
+    is_stale: boolean;
+    latest_result_at: string | null;
+    insights_text: string | null;
+    source: TestingAiInsightsSource | null;
+    generated_at: string | null;
     model: string | null;
 }
 

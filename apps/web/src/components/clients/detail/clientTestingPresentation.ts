@@ -44,7 +44,14 @@ export const TESTING_AI_INSIGHT_CTA = "Generar insight";
 
 export const TESTING_AI_INSIGHT_REGENERATE = "Regenerar insight";
 
-export const TESTING_AI_INSIGHT_LOADING = "Generando insight…";
+export const TESTING_AI_INSIGHT_STALE_PROMPT =
+    "Hay evaluaciones nuevas desde el último insight.";
+
+export const TESTING_AI_INSIGHT_UPDATE = "Actualizar insight";
+
+export const TESTING_AI_INSIGHT_LOADING = "Preparando insight…";
+
+export const TESTING_AI_INSIGHT_GENERATING = "Actualizando insight…";
 
 export const TESTING_AI_INSIGHT_ERROR = "No se pudo generar el insight.";
 

@@ -793,8 +793,23 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
-         * Spec 01 F2 — insight IA sobre evaluaciones físicas
-         * Endpoint: POST /api/v1/physical-tests/clients/{client_id}/ai-insights
+         * Spec 01 F2 — insight IA (lectura, sin generar)
+         * GET /api/v1/physical-tests/clients/{client_id}/ai-insights
+         */
+        getTestingAiInsights: builder.query<TestingAiInsightsOut, number>({
+            query: (clientId) => ({
+                url: `/physical-tests/clients/${clientId}/ai-insights`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, clientId) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: `${clientId}-TESTING_AI_INSIGHT` },
+            ],
+        }),
+
+        /**
+         * Spec 01 F2 — generar o regenerar insight IA
+         * POST /api/v1/physical-tests/clients/{client_id}/ai-insights
          */
         createTestingAiInsights: builder.mutation<
             TestingAiInsightsOut,
@@ -805,6 +820,10 @@ export const clientsApi = baseApi.injectEndpoints({
                 method: "POST",
                 body: body ?? {},
             }),
+            invalidatesTags: (_result, _error, { clientId }) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: `${clientId}-TESTING_AI_INSIGHT` },
+            ],
         }),
 
         /**
@@ -821,6 +840,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id: client_id },
                 { type: "Client", id: "TESTS" },
                 { type: "Client", id: "TESTING_SUMMARY" },
+                { type: "Client", id: `${client_id}-TESTING_AI_INSIGHT` },
             ],
         }),
 
@@ -1239,6 +1259,7 @@ export const {
     useGetPhysicalTestsQuery,
     useGetClientTestingSummaryQuery,
     useCreateTestingAiInsightsMutation,
+    useGetTestingAiInsightsQuery,
     useCreateTestResultMutation,
     useCreatePhysicalTestMutation,
     useUpdateTestResultMutation,

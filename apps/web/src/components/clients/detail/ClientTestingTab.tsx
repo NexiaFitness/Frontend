@@ -4,9 +4,10 @@
 
 import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Activity, AlertCircle, Plus, Sparkles } from "lucide-react";
-import { TEST_CATEGORIES, TestCategory, useTestingAiInsights } from "@nexia/shared";
+import { Activity, AlertCircle, Plus } from "lucide-react";
+import { TEST_CATEGORIES, TestCategory } from "@nexia/shared";
 import { useClientTests } from "@nexia/shared/hooks/clients/useClientTests";
+import { useTestingAiInsights } from "@nexia/shared/hooks/clients/useTestingAiInsights";
 import type {
     BilateralComparisonPoint,
     TestResultWithProgress,
@@ -24,11 +25,12 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 import {
     TESTING_ASYMMETRY_THRESHOLD_PCT,
-    TESTING_AI_INSIGHT_CTA,
     TESTING_AI_INSIGHT_ERROR,
+    TESTING_AI_INSIGHT_GENERATING,
     TESTING_AI_INSIGHT_LOADING,
-    TESTING_AI_INSIGHT_REGENERATE,
+    TESTING_AI_INSIGHT_STALE_PROMPT,
     TESTING_AI_INSIGHT_TITLE,
+    TESTING_AI_INSIGHT_UPDATE,
     TESTING_AI_SOURCE_LABEL,
     TESTING_BILATERAL_ASYMMETRY_BADGE,
     TESTING_BILATERAL_TITLE,
@@ -53,48 +55,89 @@ interface TestWithName extends TestResultWithProgress {
     test_name: string;
 }
 
-function TestingAiInsightBlock({ clientId }: { clientId: number }) {
-    const { insight, isLoading, error, generateInsight } =
-        useTestingAiInsights(clientId);
+function TestingAiInsightBlock({
+    clientId,
+    hasAnyResults,
+}: {
+    clientId: number;
+    hasAnyResults: boolean;
+}) {
+    const { insight, isLoading, isGenerating, error, regenerateInsight } =
+        useTestingAiInsights(clientId, { enabled: hasAnyResults });
 
-    return (
-        <div className="mb-4 space-y-3">
-            <div className="flex flex-wrap items-center gap-2">
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={isLoading}
-                    onClick={() => generateInsight(Boolean(insight))}
-                >
-                    <Sparkles className="size-4" aria-hidden />
-                    {isLoading
-                        ? TESTING_AI_INSIGHT_LOADING
-                        : insight
-                          ? TESTING_AI_INSIGHT_REGENERATE
-                          : TESTING_AI_INSIGHT_CTA}
-                </Button>
+    if (!hasAnyResults) {
+        return null;
+    }
+
+    if (isLoading || (isGenerating && !insight?.has_insight)) {
+        return (
+            <div
+                className="flex min-h-[4.5rem] items-center gap-2 rounded-lg border border-border/60 bg-muted/20 px-4 py-3 text-sm text-muted-foreground"
+                aria-live="polite"
+            >
+                <LoadingSpinner size="sm" />
+                {isGenerating
+                    ? TESTING_AI_INSIGHT_GENERATING
+                    : TESTING_AI_INSIGHT_LOADING}
             </div>
+        );
+    }
+
+    if (!insight?.has_insight || !insight.insights_text) {
+        if (error) {
+            return (
+                <Alert variant="error" className="mb-4">
+                    <p className="text-sm">{error || TESTING_AI_INSIGHT_ERROR}</p>
+                </Alert>
+            );
+        }
+        return null;
+    }
+
+    const showSourceBadge =
+        insight.source != null && insight.source !== "cache" && !insight.is_stale;
+
+        return (
+            <div className="mb-4 space-y-3">
+            {insight.is_stale && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/15 px-3 py-2.5">
+                    <p className="text-xs text-muted-foreground">
+                        {TESTING_AI_INSIGHT_STALE_PROMPT}
+                    </p>
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-auto shrink-0 px-2 py-1 text-xs text-primary"
+                        disabled={isGenerating}
+                        onClick={() => void regenerateInsight()}
+                    >
+                        {isGenerating
+                            ? TESTING_AI_INSIGHT_GENERATING
+                            : TESTING_AI_INSIGHT_UPDATE}
+                    </Button>
+                </div>
+            )}
             {error && (
                 <Alert variant="error">
                     <p className="text-sm">{error || TESTING_AI_INSIGHT_ERROR}</p>
                 </Alert>
             )}
-            {insight && (
-                <div className="rounded-lg border border-border bg-muted/30 p-4">
-                    <div className="mb-2 flex flex-wrap items-center gap-2">
-                        <h4 className="text-sm font-semibold text-foreground">
-                            {TESTING_AI_INSIGHT_TITLE}
-                        </h4>
+            <div className="rounded-lg border border-border bg-muted/30 p-4">
+                <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <h4 className="text-sm font-semibold text-foreground">
+                        {TESTING_AI_INSIGHT_TITLE}
+                    </h4>
+                    {showSourceBadge && insight.source && (
                         <Badge variant="secondary" className="text-xs">
                             {TESTING_AI_SOURCE_LABEL[insight.source]}
                         </Badge>
-                    </div>
-                    <p className="text-sm text-foreground whitespace-pre-wrap">
-                        {insight.insights_text}
-                    </p>
+                    )}
                 </div>
-            )}
+                <p className="whitespace-pre-wrap text-sm text-foreground">
+                    {insight.insights_text}
+                </p>
+            </div>
         </div>
     );
 }
@@ -373,6 +416,13 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                 }
             />
 
+            {summary.has_any_test_results && (
+                <TestingAiInsightBlock
+                    clientId={clientId}
+                    hasAnyResults={summary.has_any_test_results}
+                />
+            )}
+
             <div
                 role="tablist"
                 aria-label="Categorías de evaluación"
@@ -498,7 +548,6 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                             </p>
                         </div>
                     )}
-                    <TestingAiInsightBlock clientId={clientId} />
                     <RadarChart data={summary.physical_quality_profile} />
                 </section>
             )}
