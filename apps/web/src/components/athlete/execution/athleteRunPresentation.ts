@@ -1,6 +1,6 @@
 /**
  * athleteRunPresentation.ts — Tokens V05 run (glass, badges, contexto).
- * @see docs/audits/portal-atleta/spec/F3b_V05_ATHLETE_RUN_TIPOS_SERIE.md
+ * @see docs/audits/portal-atleta/especificaciones-atleta/run-y-diseno/RUN_TIPOS_DE_SERIE.md
  */
 
 import { cn } from "@/lib/utils";
@@ -12,14 +12,18 @@ export const ATHLETE_RUN_LOGGER_CARD = cn(NEXIA_GLASS_CARD, "relative space-y-5 
 
 export const ATHLETE_RUN_LOGGER_SECTION_LABEL = ATHLETE_SECTION_LABEL;
 
+/** Skeleton referencia run (F6-UX-01). */
+export const ATHLETE_RUN_REFERENCE_SKELETON_LABEL = cn(
+    "h-3 w-20 rounded-md bg-surface-2/80 motion-safe:animate-pulse motion-reduce:animate-none"
+);
+
+export const ATHLETE_RUN_REFERENCE_SKELETON_BAR = cn(
+    "h-4 w-36 max-w-full rounded-md bg-surface-2/80 motion-safe:animate-pulse motion-reduce:animate-none"
+);
+
 /** Título de card de grupo (superset, circuito…) — un escalón sobre section label. */
 export const ATHLETE_RUN_GROUP_SECTION_LABEL = cn(
     "text-xs font-bold uppercase tracking-[0.12em] text-primary"
-);
-
-export const ATHLETE_RUN_HINT_CARD = cn(
-    NEXIA_GLASS_CARD,
-    "relative space-y-3 p-4 pt-5"
 );
 
 export const ATHLETE_RUN_VIDEO_PLACEHOLDER = cn(
@@ -73,14 +77,44 @@ export const ATHLETE_RUN_STEPPER_BTN = cn(
     "disabled:pointer-events-none disabled:opacity-40"
 );
 
-export const ATHLETE_RUN_HINT_VALUE = "text-sm font-semibold tabular-nums text-foreground";
-
-export const ATHLETE_RUN_HINT_APPLY_BTN = cn(
-    "inline-flex h-9 items-center justify-center rounded-lg px-3.5",
-    "border border-primary/40 bg-primary/15 text-xs font-semibold text-primary",
-    "transition-colors hover:bg-primary/25",
-    "motion-safe:active:scale-[0.98] motion-reduce:active:scale-100"
+/** Glass card genérica en fase doing (contexto grupo, etc.). */
+export const ATHLETE_RUN_HINT_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4 pt-5"
 );
+
+export const ATHLETE_RUN_REFERENCE_CARD = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-4 p-4 pt-5"
+);
+
+export const ATHLETE_RUN_REFERENCE_SECTION_LABEL = cn(
+    "text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground/80"
+);
+
+export const ATHLETE_RUN_REFERENCE_VALUE = "text-sm font-semibold tabular-nums text-foreground";
+
+export const ATHLETE_RUN_REFERENCE_META = "text-xs text-muted-foreground/85";
+
+export const ATHLETE_RUN_REFERENCE_EMPTY = "text-sm text-muted-foreground/90";
+
+export const ATHLETE_RUN_PB_VALUE = cn(
+    "text-sm font-semibold tabular-nums text-warning"
+);
+
+export const ATHLETE_RUN_SUGGESTION_VALUE = cn(
+    "text-sm font-semibold tabular-nums text-primary"
+);
+
+export const ATHLETE_RUN_LOGGER_CHIP = cn(
+    "inline-flex min-h-9 items-center justify-center rounded-lg border px-3 py-2",
+    "border-border/60 bg-background/35 text-xs font-medium text-foreground",
+    "transition-colors hover:border-primary/35 hover:bg-primary/8 hover:text-primary",
+    "motion-safe:active:scale-[0.98] motion-reduce:active:scale-100",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+);
+
+export const ATHLETE_RUN_LOGGER_CHIPS_ROW = "flex flex-wrap gap-2";
 
 export const ATHLETE_RUN_REST_CHIP = cn(
     "mx-auto flex w-fit items-center gap-2",
@@ -340,6 +374,14 @@ export const ATHLETE_RUN_BLOCK_TIMER_RING = "relative mx-auto size-36";
 export const ATHLETE_RUN_AMRAP_ROUNDS_CARD = cn(
     NEXIA_GLASS_CARD,
     "relative space-y-3 p-4 pt-5"
+);
+
+export const ATHLETE_RUN_AMRAP_ROUNDS_CARD_ERROR = cn(
+    "border-destructive/80 bg-destructive/5"
+);
+
+export const ATHLETE_RUN_AMRAP_VALIDATION_MESSAGE = cn(
+    "text-xs font-medium text-destructive"
 );
 
 export const ATHLETE_RUN_AMRAP_ROUNDS_LABEL = cn(
@@ -708,16 +750,24 @@ export function formatRunPrescriptionLine(exercise: AthleteFlatExercise): string
     return parts.join(" · ");
 }
 
-/** Línea legible para hint «Última vez». */
-export function formatRunLastPerformanceLine(
-    weightKg: number,
+/** Línea legible para referencia / mejor marca (F6-UX-04). */
+export function formatRunReferenceLine(
+    weightKg: number | null,
     reps: number | null,
     rpe: number | null
 ): string {
-    const parts = [`${weightKg} kg`];
-    if (reps != null) parts.push(`${reps} repeticiones`);
-    if (rpe != null) parts.push(`RPE ${rpe}`);
-    return parts.join(" · ");
+    const parts: string[] = [];
+    if (weightKg != null) parts.push(`${weightKg} kg`);
+    if (reps != null) parts.push(`× ${reps}`);
+    if (rpe != null) parts.push(`@ RPE ${rpe}`);
+    return parts.join(" ") || "—";
+}
+
+export function formatRunPersonalBestLine(
+    weightKg: number | null,
+    reps: number | null
+): string {
+    return formatRunReferenceLine(weightKg, reps, null);
 }
 
 export function resolveRunGroupBadge(exercise: AthleteFlatExercise): string | null {

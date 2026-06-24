@@ -31,6 +31,7 @@ import type {
     SessionRecommendationsResponse,
     SessionRecommendationsParams,
 } from '../types/sessionRecommendations';
+import type { SessionExecutionSummary } from '../types/trainerSetExecutions';
 
 /** Arg del listado por plan: número (primera página, limit 1000) o objeto con paginación. */
 export type GetTrainingSessionsQueryArg =
@@ -140,6 +141,17 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 }
                 return tags;
             },
+        }),
+
+        /**
+         * GET /training-sessions/{session_id}/execution-summary
+         * Per-set execution summary for trainer session detail (F5).
+         */
+        getSessionExecutionSummary: builder.query<SessionExecutionSummary, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/execution-summary`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: sessionId },
+            ],
         }),
 
         /**
@@ -451,6 +463,7 @@ export const {
     useLazyGetTrainingSessionsQuery,
     useGetTrainingSessionsByClientQuery,
     useGetTrainingSessionQuery,
+    useGetSessionExecutionSummaryQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,

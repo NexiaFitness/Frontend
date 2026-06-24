@@ -1,8 +1,12 @@
 /**
- * useOfflineSessionLog.ts — Write-through IDB + flush on reconnect (F1-FE-OFFLINE).
+ * useOfflineSessionLog.ts — Write-through IDB + flush on reconnect (F1 + F5).
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type {
+    AthleteRunExecutionCreate,
+    AthleteRunTimedResultCreate,
+} from "../../types/athleteRunReference";
 import type { SessionBlockExerciseUpdate } from "../../types/sessionProgramming";
 import { countPendingForSession } from "../../offline/athleteSessionDb";
 import {
@@ -10,14 +14,19 @@ import {
     flushPendingSessionSync,
     loadSessionSnapshot,
     persistSessionSnapshot,
+    pruneSupersededExecutions,
     pruneSupersededLogs,
+    pruneSupersededTimedResults,
+    queueExecutionLog,
     queueExerciseLog,
     queueSessionComplete,
+    queueTimedResultLog,
 } from "../../offline/athleteSessionSync";
 import type {
     AthleteFlatExercise,
     AthleteSessionSnapshot,
     AthleteSessionSyncAdapter,
+    LocalSetExecution,
 } from "../../offline/athleteSessionTypes";
 import { AthleteSyncConflictError } from "../../offline/athleteSessionTypes";
 import { useOnlineStatus } from "./useOnlineStatus";
@@ -28,8 +37,12 @@ export interface UseOfflineSessionLogOptions {
     sessionName: string;
     flatExercises: AthleteFlatExercise[];
     adapter: AthleteSessionSyncAdapter;
-    /** Llamado tras sync exitoso al reconectar. */
-    onSynced?: (result: { syncedLogs: number; syncedCompletes: number }) => void;
+    onSynced?: (result: {
+        syncedLogs: number;
+        syncedExecutions: number;
+        syncedTimedResults: number;
+        syncedCompletes: number;
+    }) => void;
     onConflict?: () => void;
 }
 
@@ -37,10 +50,17 @@ export interface UseOfflineSessionLogResult {
     isOnline: boolean;
     pendingCount: number;
     cachedSnapshot: AthleteSessionSnapshot | null;
+    localExecutions: LocalSetExecution[];
     isUsingCache: boolean;
     logSet: (
         blockExerciseId: number,
         payload: SessionBlockExerciseUpdate
+    ) => Promise<"synced" | "queued" | "offline">;
+    logExecution: (
+        payload: AthleteRunExecutionCreate
+    ) => Promise<"synced" | "queued" | "offline">;
+    logTimedResult: (
+        payload: AthleteRunTimedResultCreate
     ) => Promise<"synced" | "queued" | "offline">;
     finishSession: () => Promise<"synced" | "queued" | "offline">;
     refreshPendingCount: () => Promise<void>;
@@ -70,19 +90,23 @@ export function useOfflineSessionLog(
         setPendingCount(count);
     }, [sessionId]);
 
-    // Cargar snapshot local al montar (offline fallback)
+    const reloadSnapshot = useCallback(async () => {
+        const snap = await loadSessionSnapshot(sessionId);
+        setCachedSnapshot(snap);
+        return snap;
+    }, [sessionId]);
+
     useEffect(() => {
         let cancelled = false;
-        loadSessionSnapshot(sessionId).then((snap) => {
-            if (!cancelled) setCachedSnapshot(snap);
+        reloadSnapshot().then((snap) => {
+            if (!cancelled && snap) setCachedSnapshot(snap);
         });
         refreshPendingCount();
         return () => {
             cancelled = true;
         };
-    }, [sessionId, refreshPendingCount]);
+    }, [reloadSnapshot, refreshPendingCount]);
 
-    // Persistir snapshot cuando hay datos online
     useEffect(() => {
         if (!clientId || flatExercises.length === 0) return;
         persistSessionSnapshot({
@@ -90,32 +114,35 @@ export function useOfflineSessionLog(
             clientId,
             sessionName,
             flatExercises,
-        }).then(() =>
-            loadSessionSnapshot(sessionId).then((snap) => setCachedSnapshot(snap))
-        );
-    }, [sessionId, clientId, sessionName, flatExercises]);
+        }).then(() => reloadSnapshot());
+    }, [sessionId, clientId, sessionName, flatExercises, reloadSnapshot]);
 
     const flush = useCallback(async () => {
         if (!isOnline || flushingRef.current) return;
         flushingRef.current = true;
         try {
+            await pruneSupersededExecutions(sessionId);
+            await pruneSupersededTimedResults(sessionId);
             await pruneSupersededLogs(sessionId);
             const result = await flushPendingSessionSync(sessionId, adapter);
             await refreshPendingCount();
+            await reloadSnapshot();
             if (result.conflict) {
                 onConflict?.();
                 return;
             }
-            if (result.syncedLogs > 0 || result.syncedCompletes > 0) {
-                onSynced?.({
-                    syncedLogs: result.syncedLogs,
-                    syncedCompletes: result.syncedCompletes,
-                });
+            if (
+                result.syncedLogs > 0 ||
+                result.syncedExecutions > 0 ||
+                result.syncedTimedResults > 0 ||
+                result.syncedCompletes > 0
+            ) {
+                onSynced?.(result);
             }
         } finally {
             flushingRef.current = false;
         }
-    }, [adapter, isOnline, onConflict, onSynced, refreshPendingCount, sessionId]);
+    }, [adapter, isOnline, onConflict, onSynced, refreshPendingCount, reloadSnapshot, sessionId]);
 
     useEffect(() => {
         if (isOnline) {
@@ -131,6 +158,7 @@ export function useOfflineSessionLog(
             if (!isOnline) {
                 await queue();
                 await refreshPendingCount();
+                await reloadSnapshot();
                 return "offline";
             }
             try {
@@ -143,10 +171,11 @@ export function useOfflineSessionLog(
                 }
                 await queue();
                 await refreshPendingCount();
+                await reloadSnapshot();
                 return "queued";
             }
         },
-        [isOnline, onConflict, refreshPendingCount]
+        [isOnline, onConflict, refreshPendingCount, reloadSnapshot]
     );
 
     const logSet = useCallback(
@@ -155,6 +184,38 @@ export function useOfflineSessionLog(
                 () => adapter.updateExercise(blockExerciseId, payload),
                 async () => {
                     await queueExerciseLog({ sessionId, blockExerciseId, payload });
+                }
+            );
+        },
+        [adapter, sessionId, trySyncOrQueue]
+    );
+
+    const logExecution = useCallback(
+        async (payload: AthleteRunExecutionCreate) => {
+            return trySyncOrQueue(
+                () => adapter.postExecution(payload),
+                async () => {
+                    await queueExecutionLog({
+                        sessionId,
+                        stepKey: payload.step_key,
+                        payload,
+                    });
+                }
+            );
+        },
+        [adapter, sessionId, trySyncOrQueue]
+    );
+
+    const logTimedResult = useCallback(
+        async (payload: AthleteRunTimedResultCreate) => {
+            return trySyncOrQueue(
+                () => adapter.postTimedResult(payload),
+                async () => {
+                    await queueTimedResultLog({
+                        sessionId,
+                        stepKey: payload.step_key,
+                        payload,
+                    });
                 }
             );
         },
@@ -171,6 +232,7 @@ export function useOfflineSessionLog(
         try {
             await finishOnlineSession(sessionId, adapter);
             await refreshPendingCount();
+            await reloadSnapshot();
             return "synced";
         } catch (error) {
             if (error instanceof AthleteSyncConflictError) {
@@ -181,17 +243,22 @@ export function useOfflineSessionLog(
             await refreshPendingCount();
             return "queued";
         }
-    }, [adapter, isOnline, onConflict, refreshPendingCount, sessionId]);
+    }, [adapter, isOnline, onConflict, refreshPendingCount, reloadSnapshot, sessionId]);
 
     const isUsingCache =
         !isOnline && flatExercises.length === 0 && cachedSnapshot != null;
+
+    const localExecutions = cachedSnapshot?.localExecutions ?? [];
 
     return {
         isOnline,
         pendingCount,
         cachedSnapshot,
+        localExecutions,
         isUsingCache,
         logSet,
+        logExecution,
+        logTimedResult,
         finishSession,
         refreshPendingCount,
     };

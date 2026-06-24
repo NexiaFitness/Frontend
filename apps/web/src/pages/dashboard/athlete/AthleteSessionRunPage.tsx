@@ -22,8 +22,6 @@ import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
 import { useAthleteInjuries } from "@/hooks/athlete/useAthleteInjuries";
 import { useAthleteSessionInjuryAlerts } from "@/hooks/athlete/useAthleteSessionInjuryAlerts";
 import { useAthleteSessionRun } from "@/hooks/athlete/useAthleteSessionRun";
-import { formatAthleteLastPerformanceDate } from "@/utils/athlete/formatAthleteLastPerformanceDate";
-import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
 import {
@@ -69,6 +67,8 @@ export const AthleteSessionRunPage: React.FC = () => {
         updateAmrapPartialReps,
         amrapPartialOpen,
         setAmrapPartialOpen,
+        amrapValidationVisible,
+        resetAmrapValidation,
         emomAsPlanned,
         setEmomAsPlanned,
         emomFailedCount,
@@ -97,10 +97,14 @@ export const AthleteSessionRunPage: React.FC = () => {
         showStepActions,
         isCurrentStepSaved,
         prCelebration,
-        lastPerformance,
-        applyLastPerformance,
-        suggestedLoad,
-        applySuggestedLoad,
+        runReference,
+        isRunReferenceLoading,
+        timedRunReference,
+        isTimedRunReferenceLoading,
+        slotReferences,
+        isSlotReferencesLoading,
+        applyReferenceValues,
+        applySuggestionValues,
     } = useAthleteSessionRun({
         sessionId,
         onSetSaved: (result, { isGroupRound, isTimedBlock, groupKind }) => {
@@ -209,11 +213,6 @@ export const AthleteSessionRunPage: React.FC = () => {
     const handleConsultTrainer = () => {
         setInjurySheetOpen(true);
     };
-
-    const lastPerformanceDateLabel =
-        hasAthleteLastPerformance(lastPerformance) && lastPerformance.performed_at
-            ? formatAthleteLastPerformanceDate(lastPerformance.performed_at)
-            : null;
 
     const desktopInjuryConflict =
         !isGroupRound && !isTimedBlock && current
@@ -335,6 +334,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onAmrapPartialRepsChange={updateAmrapPartialReps}
                         amrapPartialOpen={amrapPartialOpen}
                         onAmrapPartialOpenChange={setAmrapPartialOpen}
+                        amrapValidationVisible={amrapValidationVisible}
+                        onAmrapValidationReset={resetAmrapValidation}
                         emomAsPlanned={emomAsPlanned}
                         onEmomAsPlannedChange={setEmomAsPlanned}
                         emomFailedCount={emomFailedCount}
@@ -358,6 +359,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onViewTechnique={setTechniqueTarget}
                         injuryConflicts={mobileInjuryConflicts}
                         sessionReadyToFinish={showFinishSession}
+                        runReference={timedRunReference}
+                        isRunReferenceLoading={isTimedRunReferenceLoading}
                     />
                 ) : isGroupRound && groupContext ? (
                     <GroupRoundStepView
@@ -374,6 +377,8 @@ export const AthleteSessionRunPage: React.FC = () => {
                         onViewTechnique={setTechniqueTarget}
                         injuryConflicts={mobileInjuryConflicts}
                         sessionReadyToFinish={showFinishSession}
+                        slotReferences={slotReferences}
+                        isSlotReferencesLoading={isSlotReferencesLoading}
                     />
                 ) : current ? (
                     <ExerciseStepView
@@ -395,11 +400,10 @@ export const AthleteSessionRunPage: React.FC = () => {
                                   }
                                 : undefined
                         }
-                        lastPerformance={lastPerformance}
-                        lastPerformanceDateLabel={lastPerformanceDateLabel}
-                        onApplyLastPerformance={applyLastPerformance}
-                        suggestedLoad={suggestedLoad}
-                        onApplySuggestedLoad={applySuggestedLoad}
+                        runReference={runReference}
+                        isRunReferenceLoading={isRunReferenceLoading}
+                        onApplyReference={applyReferenceValues}
+                        onApplySuggestion={applySuggestionValues}
                         groupContext={groupContext}
                         showLogger={restFlow.showLogger}
                         onViewTechnique={setTechniqueTarget}

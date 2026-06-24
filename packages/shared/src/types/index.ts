@@ -96,10 +96,10 @@ export * from "./trainingRecommendations";
 export * from "./sessionRecommendations";
 export * from "./weeklyStructure";
 export * from "./sessionValidation";
-
-
-
-
+export * from "./athleteRunSuggestion";
+export * from "./athleteRunReference";
+export * from "./clientLoadInsights";
+export * from "./trainerSetExecutions";
 
 
 

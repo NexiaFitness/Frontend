@@ -14,8 +14,8 @@ export interface UseAthleteRunRestFlowOptions {
     confirmLabel: string;
     /** Estable entre pasos — reinicia fase al cambiar */
     stepKey: string | null;
-    /** Guardar serie(s) — async */
-    onConfirm: () => Promise<void>;
+    /** Guardar serie(s) — async. Devuelve true para avanzar, false para abortar. */
+    onConfirm: () => Promise<boolean>;
     /** Tras overlay o si no hay descanso restante */
     onRestComplete: () => void;
     /** Deshabilitar confirm si faltan datos */
@@ -89,13 +89,15 @@ export function useAthleteRunRestFlow({
     const confirmAndRest = useCallback(async () => {
         if (!isConfirmValid || confirmLoading) return;
         setConfirmLoading(true);
+        let shouldAdvance = false;
         try {
-            await onConfirm();
+            shouldAdvance = await onConfirm();
         } catch {
             return;
         } finally {
             setConfirmLoading(false);
         }
+        if (!shouldAdvance) return;
         restFlowHaptic(20);
         if (hasRestTimer && remainingSeconds > 0) {
             setPhase("rest_overlay");

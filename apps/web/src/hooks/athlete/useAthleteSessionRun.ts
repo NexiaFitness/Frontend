@@ -10,9 +10,31 @@ import {
     useUpdateSessionExerciseMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
 import { useUpdateSessionBlockExerciseMutation } from "@nexia/shared/api/sessionProgrammingApi";
-import { useGetAthleteLastPerformanceQuery, useGetAthleteSuggestedLoadQuery } from "@nexia/shared/api/athleteApi";
-import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
-import { shouldShowSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoad";
+import {
+    useGetAthleteRunReferenceQuery,
+    usePostAthleteRunExecutionMutation,
+    usePostAthleteRunTimedResultMutation,
+} from "@nexia/shared/api/athleteApi";
+import { shouldShowRunSuggestion } from "@nexia/shared/types/athleteRunSuggestion";
+import { hasAthleteRunReferencePoint } from "@nexia/shared/types/athleteRunReference";
+import type {
+    AthleteRunExecutionCreate,
+    AthleteRunTimedResultCreate,
+} from "@nexia/shared/types/athleteRunReference";
+import {
+    buildAthleteRunExecutionPayload,
+    buildAthleteRunExecutionPayloadFromSlot,
+    buildAthleteRunReferenceQuery,
+    resolveRunLoggerDefaults,
+} from "@nexia/shared/utils/athlete/runReferenceUtils";
+import {
+    buildAmrapTimedResultPayload,
+    buildAthleteRunTimedReferenceQuery,
+    buildEmomTimedResultPayload,
+    buildForTimeTimedResultPayload,
+} from "@nexia/shared/utils/athlete/timedBlockRunUtils";
+import { resolveLocalRunReference } from "@nexia/shared/utils/athlete/localRunReferenceUtils";
+import { useAthleteRunSlotReferences } from "@/hooks/athlete/useAthleteRunSlotReferences";
 import { useAthleteContext } from "@nexia/shared/hooks/athlete/useAthleteContext";
 import { useOfflineSessionLog } from "@nexia/shared/hooks/offline";
 import { useSessionStructureView } from "@nexia/shared/hooks/sessionProgramming";
@@ -98,6 +120,8 @@ export function useAthleteSessionRun({
     const [updateBlockExercise] = useUpdateSessionBlockExerciseMutation();
     const [updateSessionExercise] = useUpdateSessionExerciseMutation();
     const [updateSession] = useUpdateTrainingSessionMutation();
+    const [postRunExecution] = usePostAthleteRunExecutionMutation();
+    const [postTimedResult] = usePostAthleteRunTimedResultMutation();
 
     const runSteps = useMemo(() => buildAthleteRunSteps(view), [view]);
     const flatExercisesFromApi = useMemo(() => flattenAthleteExercises(view), [view]);
@@ -126,16 +150,25 @@ export function useAthleteSessionRun({
             completeSession: async (sid: number) => {
                 await updateSession({ id: sid, body: { status: "completed" } }).unwrap();
             },
+            postExecution: async (payload: AthleteRunExecutionCreate) => {
+                await postRunExecution(payload).unwrap();
+            },
+            postTimedResult: async (payload: AthleteRunTimedResultCreate) => {
+                await postTimedResult(payload).unwrap();
+            },
         }),
-        [structureSource, updateBlockExercise, updateSessionExercise, updateSession, clientId]
+        [structureSource, updateBlockExercise, updateSessionExercise, updateSession, clientId, postRunExecution, postTimedResult]
     );
 
     const {
         isOnline,
         pendingCount,
         cachedSnapshot,
+        localExecutions,
         isUsingCache,
         logSet,
+        logExecution,
+        logTimedResult,
         finishSession,
     } = useOfflineSessionLog({
         sessionId,
@@ -172,6 +205,7 @@ export function useAthleteSessionRun({
     const [amrapRounds, setAmrapRounds] = useState(0);
     const [amrapPartialReps, setAmrapPartialReps] = useState<Record<string, number>>({});
     const [amrapPartialOpen, setAmrapPartialOpen] = useState(false);
+    const [amrapValidationVisible, setAmrapValidationVisible] = useState(false);
     const [emomAsPlanned, setEmomAsPlanned] = useState<boolean | null>(null);
     const [emomFailedCount, setEmomFailedCount] = useState(0);
     const [emomFailureEntries, setEmomFailureEntries] = useState<EmomFailureEntry[]>([]);
@@ -193,6 +227,7 @@ export function useAthleteSessionRun({
         setAmrapRounds(0);
         setAmrapPartialReps({});
         setAmrapPartialOpen(false);
+        setAmrapValidationVisible(false);
         setEmomAsPlanned(null);
         setEmomFailedCount(0);
         setEmomFailureEntries([]);
@@ -224,37 +259,95 @@ export function useAthleteSessionRun({
 
     const { evaluatePr } = useAthleteExercisePr(clientId, singleExerciseId);
 
-    const { data: lastPerformance } = useGetAthleteLastPerformanceQuery(
-        singleExerciseId ?? 0,
-        { skip: !singleExerciseId }
+    const runReferenceQueryArg = useMemo(() => {
+        if (!current || !sessionId) return null;
+        return buildAthleteRunReferenceQuery(sessionId, current);
+    }, [current, sessionId]);
+
+    const { data: runReference, isLoading: isRunReferenceQueryLoading } =
+        useGetAthleteRunReferenceQuery(
+        runReferenceQueryArg ?? {
+            training_session_id: 0,
+            step_key: "",
+            exercise_id: 0,
+        },
+        { skip: !runReferenceQueryArg || isBatchStep || !isOnline }
     );
 
-    const { data: suggestedLoad } = useGetAthleteSuggestedLoadQuery(
-        singleExerciseId ?? 0,
-        { skip: !singleExerciseId }
+    const localReferencePoint = useMemo(() => {
+        if (!current || isOnline) return null;
+        return resolveLocalRunReference({
+            exerciseId: current.exerciseId,
+            setIndex: current.setIndex,
+            roundIndex: current.roundIndex,
+            slotLabel: current.slotLabel,
+            groupKind: current.groupKind,
+            localExecutions,
+        });
+    }, [current, isOnline, localExecutions]);
+
+    const effectiveRunReference = useMemo(() => {
+        if (runReference) {
+            if (runReference.reference || !localReferencePoint) return runReference;
+            return { ...runReference, reference: localReferencePoint };
+        }
+        if (!current || !localReferencePoint) return undefined;
+        return {
+            exercise_id: current.exerciseId,
+            step_key: current.stepKey,
+            reference: localReferencePoint,
+            personal_best: null,
+            suggestion: null,
+        };
+    }, [runReference, localReferencePoint, current]);
+
+    const { slotReferences, isLoading: isSlotReferencesLoading } = useAthleteRunSlotReferences(
+        sessionId,
+        currentRunStep,
+        isGroupRound && isOnline
     );
 
-    const applyLastPerformance = useCallback(() => {
-        if (!hasAthleteLastPerformance(lastPerformance)) return;
-        setWeight(lastPerformance.weight_kg);
-        if (lastPerformance.reps != null) {
-            setReps(lastPerformance.reps);
-        }
-        if (lastPerformance.rpe != null) {
-            setRpe(lastPerformance.rpe);
-        }
-    }, [lastPerformance]);
+    const timedReferenceQueryArg = useMemo(() => {
+        if (!isTimedBlock || !sessionId || !currentRunStep?.groupId) return null;
+        return buildAthleteRunTimedReferenceQuery(sessionId, currentRunStep);
+    }, [currentRunStep, isTimedBlock, sessionId]);
 
-    const applySuggestedLoad = useCallback(() => {
-        if (!shouldShowSuggestedLoad(suggestedLoad)) return;
-        setWeight(suggestedLoad.suggested_weight_kg);
-        if (suggestedLoad.basis?.reps != null) {
-            setReps(suggestedLoad.basis.reps);
-        }
-        if (suggestedLoad.basis?.rpe != null) {
-            setRpe(suggestedLoad.basis.rpe);
-        }
-    }, [suggestedLoad]);
+    const { data: timedRunReference, isLoading: isTimedRunReferenceQueryLoading } =
+        useGetAthleteRunReferenceQuery(
+        timedReferenceQueryArg ?? {
+            training_session_id: 0,
+            step_key: "",
+            exercise_id: 0,
+        },
+        { skip: !timedReferenceQueryArg || !isOnline }
+    );
+
+    const isRunReferenceLoading =
+        isOnline && !isBatchStep && Boolean(runReferenceQueryArg) && isRunReferenceQueryLoading;
+    const isTimedRunReferenceLoading =
+        isOnline && Boolean(timedReferenceQueryArg) && isTimedRunReferenceQueryLoading;
+
+    const applyReferenceValues = useCallback(() => {
+        const ref = effectiveRunReference?.reference;
+        if (!hasAthleteRunReferencePoint(ref)) return;
+        setWeight(ref.weight_kg);
+        if (ref.reps != null) setReps(ref.reps);
+        if (ref.rpe != null) setRpe(ref.rpe);
+    }, [effectiveRunReference?.reference]);
+
+    const applySuggestionValues = useCallback(() => {
+        const suggestion = effectiveRunReference?.suggestion ?? runReference?.suggestion;
+        if (!shouldShowRunSuggestion(suggestion)) return;
+        setWeight(suggestion.suggested_value);
+        const ref = effectiveRunReference?.reference ?? runReference?.reference;
+        if (ref?.reps != null) setReps(ref.reps);
+        if (ref?.rpe != null) setRpe(ref.rpe);
+    }, [
+        effectiveRunReference?.reference,
+        effectiveRunReference?.suggestion,
+        runReference?.reference,
+        runReference?.suggestion,
+    ]);
 
     useEffect(() => {
         setPrCelebration(null);
@@ -333,6 +426,7 @@ export function useAthleteSessionRun({
             return initialPartial;
         });
         setAmrapPartialOpen((prev) => (prev === false ? prev : false));
+        setAmrapValidationVisible((prev) => (prev === false ? prev : false));
     }, [currentStepKey]);
 
     useEffect(() => {
@@ -437,15 +531,38 @@ export function useAthleteSessionRun({
 
         setSaving(true);
         try {
-            const nextSets = getNextActualSets(current.blockExerciseId, current.loggedSets ?? 0);
-            loggedSetsRef.current.set(current.blockExerciseId, nextSets);
+            let result: "synced" | "queued" | "offline";
 
-            const result = await logSet(current.blockExerciseId, {
-                actual_weight: weight,
-                actual_reps: String(reps),
-                actual_sets: nextSets,
-                actual_effort_value: rpe ?? undefined,
-            });
+            if (isOnline) {
+                await postRunExecution(
+                    buildAthleteRunExecutionPayload(sessionId, current, {
+                        weight,
+                        reps,
+                        rpe,
+                    })
+                ).unwrap();
+                loggedSetsRef.current.set(
+                    current.blockExerciseId,
+                    (loggedSetsRef.current.get(current.blockExerciseId) ??
+                        current.loggedSets ??
+                        0) + 1
+                );
+                result = "synced";
+            } else {
+                result = await logExecution(
+                    buildAthleteRunExecutionPayload(sessionId, current, {
+                        weight,
+                        reps,
+                        rpe,
+                    })
+                );
+                loggedSetsRef.current.set(
+                    current.blockExerciseId,
+                    (loggedSetsRef.current.get(current.blockExerciseId) ??
+                        current.loggedSets ??
+                        0) + 1
+                );
+            }
 
             completedStepKeysRef.current.add(current.stepKey);
             setSavedStepKeys(new Set(completedStepKeysRef.current));
@@ -472,14 +589,16 @@ export function useAthleteSessionRun({
         }
     }, [
         current,
-        getNextActualSets,
-        logSet,
+        isOnline,
+        logExecution,
         onError,
         onSetSaved,
         currentRunStep,
         evaluatePr,
+        postRunExecution,
         reps,
         rpe,
+        sessionId,
         weight,
     ]);
 
@@ -518,6 +637,28 @@ export function useAthleteSessionRun({
                     getNextActualSets,
                 });
 
+                if (isOnline) {
+                    await postTimedResult(
+                        buildAmrapTimedResultPayload({
+                            sessionId,
+                            runStep: currentRunStep,
+                            fullRounds: amrapRounds,
+                            slots: currentRunStep.slots,
+                            partialReps: amrapPartialReps,
+                        })
+                    ).unwrap();
+                } else {
+                    lastResult = await logTimedResult(
+                        buildAmrapTimedResultPayload({
+                            sessionId,
+                            runStep: currentRunStep,
+                            fullRounds: amrapRounds,
+                            slots: currentRunStep.slots,
+                            partialReps: amrapPartialReps,
+                        })
+                    );
+                }
+
                 for (const payload of payloads) {
                     const slot = currentRunStep.slots.find(
                         (item) => item.blockExerciseId === payload.blockExerciseId
@@ -529,7 +670,23 @@ export function useAthleteSessionRun({
                         payload.data.actual_sets
                     );
 
-                    lastResult = await logSet(payload.blockExerciseId, payload.data);
+                    const executionPayload = buildAthleteRunExecutionPayloadFromSlot(
+                        sessionId,
+                        currentRunStep,
+                        slot,
+                        {
+                            weight: payload.data.actual_weight,
+                            reps: Number.parseInt(payload.data.actual_reps, 10) || 0,
+                            rpe: roundRpe,
+                        }
+                    );
+
+                    if (isOnline) {
+                        await postRunExecution(executionPayload).unwrap();
+                        lastResult = "synced";
+                    } else {
+                        lastResult = await logExecution(executionPayload);
+                    }
                     completedStepKeysRef.current.add(slot.stepKey);
                 }
             } else if (isEmom && currentRunStep.emomIntervals) {
@@ -544,19 +701,68 @@ export function useAthleteSessionRun({
                     roundRpe,
                 });
 
+                if (isOnline) {
+                    await postTimedResult(
+                        buildEmomTimedResultPayload({
+                            sessionId,
+                            runStep: currentRunStep,
+                            intervals: currentRunStep.emomIntervals,
+                            asPlanned: emomAsPlanned,
+                            failedCount: emomFailedCount,
+                        })
+                    ).unwrap();
+                } else {
+                    lastResult = await logTimedResult(
+                        buildEmomTimedResultPayload({
+                            sessionId,
+                            runStep: currentRunStep,
+                            intervals: currentRunStep.emomIntervals,
+                            asPlanned: emomAsPlanned,
+                            failedCount: emomFailedCount,
+                        })
+                    );
+                }
+
                 for (const payload of payloads) {
+                    const interval = currentRunStep.emomIntervals.find(
+                        (item) => item.intervalKey === payload.intervalKey
+                    );
+                    const slot =
+                        interval?.slots.find(
+                            (item) => item.blockExerciseId === payload.blockExerciseId
+                        ) ?? null;
+
                     const nextSets = getNextActualSets(
                         payload.blockExerciseId,
                         payload.loggedSets
                     );
                     loggedSetsRef.current.set(payload.blockExerciseId, nextSets);
 
-                    lastResult = await logSet(payload.blockExerciseId, {
-                        ...payload.data,
-                        actual_sets: nextSets,
-                    });
+                    if (slot) {
+                        const executionPayload = buildAthleteRunExecutionPayloadFromSlot(
+                            sessionId,
+                            currentRunStep,
+                            slot,
+                            {
+                                weight: payload.data.actual_weight,
+                                reps: Number.parseInt(payload.data.actual_reps, 10) || 0,
+                                rpe: payload.data.actual_effort_value ?? roundRpe,
+                            }
+                        );
+                        if (isOnline) {
+                            await postRunExecution(executionPayload).unwrap();
+                            lastResult = "synced";
+                        } else {
+                            lastResult = await logExecution(executionPayload);
+                        }
+                    } else if (!isOnline) {
+                        lastResult = await logSet(payload.blockExerciseId, {
+                            ...payload.data,
+                            actual_sets: nextSets,
+                        });
+                    }
                 }
-            } else         if (isForTime && currentRunStep.forTimeRounds) {
+            } else if (isForTime && currentRunStep.forTimeRounds) {
                 const { cumulativeSplits, totalSeconds } = forTimeDataRef.current;
                 if (
                     !isForTimeCompletionValid(
@@ -574,13 +780,66 @@ export function useAthleteSessionRun({
                     getNextActualSets,
                 });
 
+                if (isOnline) {
+                    await postTimedResult(
+                        buildForTimeTimedResultPayload({
+                            sessionId,
+                            runStep: currentRunStep,
+                            totalSeconds,
+                            cumulativeSplits,
+                        })
+                    ).unwrap();
+                } else {
+                    lastResult = await logTimedResult(
+                        buildForTimeTimedResultPayload({
+                            sessionId,
+                            runStep: currentRunStep,
+                            totalSeconds,
+                            cumulativeSplits,
+                        })
+                    );
+                }
+
                 for (const payload of payloads) {
+                    const round = currentRunStep.forTimeRounds.find(
+                        (item) => item.roundKey === payload.roundKey
+                    );
+                    const slot =
+                        round?.slots.find(
+                            (item) => item.blockExerciseId === payload.blockExerciseId
+                        ) ?? null;
+                    const splitSeconds =
+                        round != null ? cumulativeSplits[round.roundIndex - 1] : undefined;
+
                     loggedSetsRef.current.set(
                         payload.blockExerciseId,
                         payload.data.actual_sets
                     );
 
-                    lastResult = await logSet(payload.blockExerciseId, payload.data);
+                    if (slot) {
+                        const executionPayload = {
+                            ...buildAthleteRunExecutionPayloadFromSlot(
+                                sessionId,
+                                currentRunStep,
+                                slot,
+                                {
+                                    weight: payload.data.actual_weight,
+                                    reps: Number.parseInt(payload.data.actual_reps, 10) || 0,
+                                    rpe: payload.data.actual_effort_value ?? roundRpe,
+                                }
+                            ),
+                            split_seconds: splitSeconds,
+                            input_mode: "duration" as const,
+                        };
+                        if (isOnline) {
+                            await postRunExecution(executionPayload).unwrap();
+                            lastResult = "synced";
+                        } else {
+                            lastResult = await logExecution(executionPayload);
+                        }
+                    } else if (!isOnline) {
+                        lastResult = await logSet(payload.blockExerciseId, payload.data);
+                    }
                 }
             } else if (currentRunStep.slots) {
                 for (const slot of currentRunStep.slots) {
@@ -594,12 +853,23 @@ export function useAthleteSessionRun({
                     const nextSets = getNextActualSets(slot.blockExerciseId, slot.loggedSets);
                     loggedSetsRef.current.set(slot.blockExerciseId, nextSets);
 
-                    lastResult = await logSet(slot.blockExerciseId, {
-                        actual_weight: log.weight,
-                        actual_reps: String(log.reps),
-                        actual_sets: nextSets,
-                        actual_effort_value: roundRpe ?? undefined,
-                    });
+                    const executionPayload = buildAthleteRunExecutionPayloadFromSlot(
+                        sessionId,
+                        currentRunStep,
+                        slot,
+                        {
+                            weight: log.weight,
+                            reps: log.reps,
+                            rpe: roundRpe,
+                        }
+                    );
+
+                    if (isOnline) {
+                        await postRunExecution(executionPayload).unwrap();
+                        lastResult = "synced";
+                    } else {
+                        lastResult = await logExecution(executionPayload);
+                    }
 
                     completedStepKeysRef.current.add(slot.stepKey);
                 }
@@ -628,15 +898,19 @@ export function useAthleteSessionRun({
         emomTemplateSlots,
         getNextActualSets,
         isGroupRound,
+        isOnline,
         isTimedBlock,
+        logExecution,
         logSet,
+        logTimedResult,
         onError,
         onSetSaved,
+        postRunExecution,
+        postTimedResult,
         roundRpe,
+        sessionId,
         slotLogs,
     ]);
-
-    const onConfirm = isBatchStep ? handleSaveBatch : handleSaveSet;
 
     const advanceAfterRest = useCallback(() => {
         if (step < runSteps.length - 1) {
@@ -654,6 +928,13 @@ export function useAthleteSessionRun({
     const isEmomBlock = currentRunStep?.groupKind === "emom";
     const isForTimeBlock = currentRunStep?.groupKind === "for_time";
 
+    const amrapPartialTotal = useMemo(() => {
+        if (!isAmrapBlock || !currentRunStep?.slots?.length) return 0;
+        return computeAmrapPartialTotal(
+            currentRunStep.slots.map((slot) => amrapPartialReps[slot.stepKey] ?? 0)
+        );
+    }, [amrapPartialReps, currentRunStep?.slots, isAmrapBlock]);
+
     const confirmLabel = isTimedBlock
         ? isAmrapBlock || isEmomBlock || isForTimeBlock
             ? "Bloque completado"
@@ -667,12 +948,7 @@ export function useAthleteSessionRun({
     const isConfirmValid = useMemo(() => {
         if (isBatchStep && currentRunStep) {
             if (isAmrapBlock && currentRunStep.slots?.length) {
-                const partialTotal = computeAmrapPartialTotal(
-                    currentRunStep.slots.map(
-                        (slot) => amrapPartialReps[slot.stepKey] ?? 0
-                    )
-                );
-                return amrapRounds > 0 || partialTotal > 0;
+                return amrapRounds > 0 || amrapPartialTotal > 0;
             }
 
             if (isEmomBlock && currentRunStep.emomIntervals?.length) {
@@ -705,7 +981,7 @@ export function useAthleteSessionRun({
         }
         return reps > 0 && weight >= 0;
     }, [
-        amrapPartialReps,
+        amrapPartialTotal,
         amrapRounds,
         currentRunStep,
         emomAsPlanned,
@@ -727,13 +1003,36 @@ export function useAthleteSessionRun({
         : false;
     const showStepActions = Boolean(currentRunStep) && !isCurrentStepSaved;
 
+    const onConfirm = useCallback(async (): Promise<boolean> => {
+        if (isAmrapBlock) {
+            if (amrapRounds === 0 && amrapPartialTotal === 0) {
+                setAmrapValidationVisible(true);
+                return false;
+            }
+            setAmrapValidationVisible(false);
+        }
+        if (isBatchStep) {
+            await handleSaveBatch();
+        } else {
+            await handleSaveSet();
+        }
+        return true;
+    }, [
+        amrapPartialTotal,
+        amrapRounds,
+        handleSaveBatch,
+        handleSaveSet,
+        isAmrapBlock,
+        isBatchStep,
+    ]);
+
     const restFlow = useAthleteRunRestFlow({
         restAfterSeconds,
         confirmLabel,
         stepKey: currentStepKey,
         onConfirm,
         onRestComplete: advanceAfterRest,
-        isConfirmValid,
+        isConfirmValid: isAmrapBlock ? true : isConfirmValid,
         requireStartBeforeLog: isDropsetRound || isTimedBlock,
         startRestLabel: isDropsetRound
             ? "Registrar dropset"
@@ -745,6 +1044,107 @@ export function useAthleteSessionRun({
                   ? getAthleteBlockStartLabel("for_time")
                   : "Empezar descanso",
     });
+
+    const loggerDefaultsStepRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        loggerDefaultsStepRef.current = null;
+    }, [currentStepKey]);
+
+    useEffect(() => {
+        if (restFlow.phase !== "logging_rest" || !current || isBatchStep) return;
+        const defaultsKey = `${current.stepKey}:${effectiveRunReference?.reference?.weight_kg ?? "pending"}`;
+        if (loggerDefaultsStepRef.current === defaultsKey) return;
+
+        const defaults = resolveRunLoggerDefaults({
+            setIndex: current.setIndex,
+            prescribedReps: current.defaultReps,
+            prescribedRpe: current.defaultRpe,
+            plannedWeight: current.plannedWeight,
+            defaultWeight: current.defaultWeight,
+            reference: effectiveRunReference?.reference,
+        });
+
+        setWeight(defaults.weight);
+        setReps(defaults.reps);
+        setRpe(defaults.rpe);
+        loggerDefaultsStepRef.current = defaultsKey;
+    }, [restFlow.phase, current, isBatchStep, effectiveRunReference?.reference]);
+
+    useEffect(() => {
+        if (
+            restFlow.phase !== "logging_rest" ||
+            !isGroupRound ||
+            !currentRunStep?.slots?.length
+        ) {
+            return;
+        }
+
+        const refFingerprint = currentRunStep.slots
+            .map((slot) => {
+                const apiRef = slotReferences[slot.stepKey]?.reference;
+                const localRef = resolveLocalRunReference({
+                    exerciseId: slot.exerciseId,
+                    roundIndex: currentRunStep.roundIndex,
+                    slotLabel: slot.slotLabel,
+                    groupKind: currentRunStep.groupKind,
+                    localExecutions,
+                });
+                const weight = apiRef?.weight_kg ?? localRef?.weight_kg ?? "pending";
+                return `${slot.stepKey}:${weight}`;
+            })
+            .join("|");
+        const defaultsKey = `${currentRunStep.stepKey}:${refFingerprint}`;
+        if (loggerDefaultsStepRef.current === defaultsKey) return;
+
+        setSlotLogs((prev) => {
+            const next = { ...prev };
+            for (const slot of currentRunStep.slots!) {
+                const reference =
+                    slotReferences[slot.stepKey]?.reference ??
+                    resolveLocalRunReference({
+                        exerciseId: slot.exerciseId,
+                        roundIndex: currentRunStep.roundIndex,
+                        slotLabel: slot.slotLabel,
+                        groupKind: currentRunStep.groupKind,
+                        localExecutions,
+                    });
+                const defaults = resolveRunLoggerDefaults({
+                    setIndex: currentRunStep.roundIndex,
+                    prescribedReps: slot.defaultReps,
+                    prescribedRpe: slot.defaultRpe,
+                    plannedWeight: null,
+                    defaultWeight: slot.defaultWeight,
+                    reference,
+                });
+                next[slot.stepKey] = {
+                    weight: defaults.weight,
+                    reps: defaults.reps,
+                };
+            }
+            return next;
+        });
+
+        const prescribedRpe =
+            currentRunStep.slots.find((slot) => slot.defaultRpe != null)?.defaultRpe ??
+            null;
+        const refRpe = currentRunStep.slots
+            .map((slot) => slotReferences[slot.stepKey]?.reference?.rpe)
+            .find((value) => value != null);
+        if (currentRunStep.roundIndex > 1 && refRpe != null) {
+            setRoundRpe(refRpe);
+        } else if (prescribedRpe != null) {
+            setRoundRpe(prescribedRpe);
+        }
+
+        loggerDefaultsStepRef.current = defaultsKey;
+    }, [
+        restFlow.phase,
+        isGroupRound,
+        currentRunStep,
+        slotReferences,
+        localExecutions,
+    ]);
 
     const blockWork = useAthleteBlockWorkPhase(
         currentStepKey,
@@ -1012,6 +1412,8 @@ export function useAthleteSessionRun({
         updateAmrapPartialReps,
         amrapPartialOpen,
         setAmrapPartialOpen,
+        amrapValidationVisible,
+        resetAmrapValidation: () => setAmrapValidationVisible(false),
         emomAsPlanned,
         setEmomAsPlanned: handleEmomAsPlannedChange,
         emomFailedCount,
@@ -1045,9 +1447,13 @@ export function useAthleteSessionRun({
         showStepActions,
         isCurrentStepSaved,
         prCelebration,
-        lastPerformance,
-        applyLastPerformance,
-        suggestedLoad,
-        applySuggestedLoad,
+        runReference: effectiveRunReference,
+        isRunReferenceLoading,
+        timedRunReference,
+        isTimedRunReferenceLoading,
+        slotReferences,
+        isSlotReferencesLoading,
+        applyReferenceValues,
+        applySuggestionValues,
     };
 }

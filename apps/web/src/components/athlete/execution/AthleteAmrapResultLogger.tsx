@@ -12,6 +12,7 @@ import {
     type AmrapPartialSlot,
 } from "@nexia/shared/utils/athlete/amrapResult";
 import { AthleteRunStepperControl } from "./AthleteRunStepperControl";
+import { cn } from "@/lib/utils";
 import {
     ATHLETE_RUN_AMRAP_HINT,
     ATHLETE_RUN_AMRAP_PARTIAL_CARD,
@@ -19,9 +20,11 @@ import {
     ATHLETE_RUN_AMRAP_PARTIAL_ROW_META,
     ATHLETE_RUN_AMRAP_PARTIAL_TOGGLE,
     ATHLETE_RUN_AMRAP_ROUNDS_CARD,
+    ATHLETE_RUN_AMRAP_ROUNDS_CARD_ERROR,
     ATHLETE_RUN_AMRAP_ROUNDS_LABEL,
     ATHLETE_RUN_AMRAP_SUMMARY,
     ATHLETE_RUN_AMRAP_TARGET_HINT,
+    ATHLETE_RUN_AMRAP_VALIDATION_MESSAGE,
     ATHLETE_RUN_LOGGER_REVEAL,
 } from "./athleteRunPresentation";
 
@@ -34,6 +37,10 @@ export interface AthleteAmrapResultLoggerProps {
     partialOpen: boolean;
     onPartialOpenChange: (open: boolean) => void;
     onPartialRepsChange: (stepKey: string, value: number) => void;
+    /** Muestra el estado de error de validación cuando el usuario intenta guardar sin datos. */
+    showValidationError?: boolean;
+    /** Se llama cuando el usuario modifica cualquier valor para ocultar el error. */
+    onValidationReset?: () => void;
 }
 
 export const AthleteAmrapResultLogger: React.FC<AthleteAmrapResultLoggerProps> = ({
@@ -45,6 +52,8 @@ export const AthleteAmrapResultLogger: React.FC<AthleteAmrapResultLoggerProps> =
     partialOpen,
     onPartialOpenChange,
     onPartialRepsChange,
+    showValidationError = false,
+    onValidationReset,
 }) => {
     const partialSlots = useMemo<AmrapPartialSlot[]>(
         () =>
@@ -65,10 +74,27 @@ export const AthleteAmrapResultLogger: React.FC<AthleteAmrapResultLoggerProps> =
 
     const summary = formatAmrapResultSummary(fullRounds, partialTotal);
     const showSummary = fullRounds > 0 || partialTotal > 0;
+    const isValid = fullRounds > 0 || partialTotal > 0;
+    const showError = showValidationError && !isValid;
+
+    const handleFullRoundsChange = (value: number) => {
+        onValidationReset?.();
+        onFullRoundsChange(value);
+    };
+
+    const handlePartialRepsChange = (stepKey: string, value: number) => {
+        onValidationReset?.();
+        onPartialRepsChange(stepKey, value);
+    };
 
     return (
         <div className={`space-y-3 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
-            <div className={ATHLETE_RUN_AMRAP_ROUNDS_CARD}>
+            <div
+                className={cn(
+                    ATHLETE_RUN_AMRAP_ROUNDS_CARD,
+                    showError && ATHLETE_RUN_AMRAP_ROUNDS_CARD_ERROR
+                )}
+            >
                 <NexiaGlassAccentRim />
                 <div className="relative z-[1] space-y-3">
                     <div className="space-y-0.5">
@@ -83,13 +109,20 @@ export const AthleteAmrapResultLogger: React.FC<AthleteAmrapResultLoggerProps> =
                     <AthleteRunStepperControl
                         label="Rondas completas"
                         value={fullRounds}
-                        onDecrease={() => onFullRoundsChange(Math.max(0, fullRounds - 1))}
-                        onIncrease={() => onFullRoundsChange(fullRounds + 1)}
+                        onDecrease={() => handleFullRoundsChange(Math.max(0, fullRounds - 1))}
+                        onIncrease={() => handleFullRoundsChange(fullRounds + 1)}
                         decreaseDisabled={fullRounds <= 0}
                     />
-                    <p className={ATHLETE_RUN_AMRAP_HINT}>
-                        Cuenta solo las veces que terminaste todos los ejercicios de la secuencia.
-                    </p>
+                    {showError ? (
+                        <p className={ATHLETE_RUN_AMRAP_VALIDATION_MESSAGE} role="alert">
+                            Completa las rondas o reps parciales para guardar.
+                        </p>
+                    ) : (
+                        <p className={ATHLETE_RUN_AMRAP_HINT}>
+                            Cuenta solo las veces que terminaste todos los ejercicios de la
+                            secuencia.
+                        </p>
+                    )}
 
                     {showSummary ? (
                         <p className={ATHLETE_RUN_AMRAP_SUMMARY} aria-live="polite">
@@ -139,13 +172,13 @@ export const AthleteAmrapResultLogger: React.FC<AthleteAmrapResultLoggerProps> =
                                         label="Reps en ronda incompleta"
                                         value={value}
                                         onDecrease={() =>
-                                            onPartialRepsChange(
+                                            handlePartialRepsChange(
                                                 slot.stepKey,
                                                 Math.max(0, value - 1)
                                             )
                                         }
                                         onIncrease={() =>
-                                            onPartialRepsChange(
+                                            handlePartialRepsChange(
                                                 slot.stepKey,
                                                 Math.min(maxReps, value + 1)
                                             )

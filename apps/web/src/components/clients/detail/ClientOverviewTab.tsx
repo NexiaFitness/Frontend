@@ -553,7 +553,11 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                 title="Última Sesión"
                                 date={formatDate(lastCompletedSession.session_date)}
                                 detail={lastCompletedSession.session_type || lastCompletedSession.session_name || "Sesión"}
-                                onClick={() => navigate(`/dashboard/clients/${clientId}?tab=sessions`)}
+                                onClick={() =>
+                                    navigate(
+                                        `/dashboard/session-programming/sessions/${lastCompletedSession.id}`,
+                                    )
+                                }
                             />
                         )}
                         {lastTest && (

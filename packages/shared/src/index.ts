@@ -311,6 +311,7 @@ export * from "./hooks/clients/useClientForm";
 export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/clients/useClientPreview";
 export * from "./hooks/clients/useClientProgress";
+export * from "./hooks/clients/useClientSetHistory";
 export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
@@ -387,6 +388,20 @@ export {
     isoLocalDateToTrainingDayValue,
     parseHabitualTrainingDaySet,
 } from "./utils/clientTrainingDays";
+
+export {
+    computeRunSuggestion,
+    resolvePrescribedRpe,
+    mapRpeDelta,
+    exposureToConfidence,
+    roundToLoadStep,
+} from "./utils/athlete/computeRunSuggestion";
+export {
+    shouldShowRunSuggestion,
+    type AthleteRunSuggestion,
+    type AthleteRunSuggestionContext,
+    type AthleteRunSuggestionReference,
+} from "./types/athleteRunSuggestion";
 
 // Components
 export * from "./components/SmartNavigation";

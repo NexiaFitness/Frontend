@@ -5,11 +5,8 @@
 import React, { useMemo } from "react";
 import type { AthleteFlatExercise } from "@nexia/shared/offline";
 import type { InjuryAlert } from "@nexia/shared/types/injuryAlert";
-import type { AthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
-import type { AthleteSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoad";
+import type { AthleteRunReference } from "@nexia/shared/types/athleteRunReference";
 import type { AthleteRunGroupContextView } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
-import { hasAthleteLastPerformance } from "@nexia/shared/types/athleteLastPerformance";
-import { shouldShowSuggestedLoad } from "@nexia/shared/types/athleteSuggestedLoad";
 import type { AthleteRunRestPhase } from "@/hooks/athlete/useAthleteRunRestFlow";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
@@ -18,8 +15,8 @@ import {
     type GroupContextSlotMeta,
 } from "./AthleteRunGroupContextCard";
 import { AthleteSetLogger } from "./AthleteSetLogger";
-import { AthleteLastPerformanceHint } from "./AthleteLastPerformanceHint";
-import { AthleteSuggestedLoadHint } from "./AthleteSuggestedLoadHint";
+import { AthleteRunReferenceCard } from "./AthleteRunReferenceCard";
+import { AthleteRunLoggerChips } from "./AthleteRunLoggerChips";
 import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
 import { AthleteRunLoggingSummary } from "./AthleteRunLoggingSummary";
 import { AthleteRunGroupHero } from "./AthleteRunGroupHero";
@@ -30,7 +27,6 @@ import {
     buildSingleSetLoggingSummary,
 } from "./athleteRunSingleSetContext";
 import {
-    ATHLETE_RUN_HINT_CARD,
     ATHLETE_RUN_LOGGER_CARD,
     ATHLETE_RUN_LOGGER_REVEAL,
     ATHLETE_RUN_LOGGER_SECTION_LABEL,
@@ -51,11 +47,10 @@ export interface ExerciseStepViewProps {
         alert: InjuryAlert;
         onConsultTrainer: () => void;
     };
-    lastPerformance?: AthleteLastPerformance;
-    lastPerformanceDateLabel?: string | null;
-    onApplyLastPerformance?: () => void;
-    suggestedLoad?: AthleteSuggestedLoad;
-    onApplySuggestedLoad?: () => void;
+    runReference?: AthleteRunReference;
+    isRunReferenceLoading?: boolean;
+    onApplyReference?: () => void;
+    onApplySuggestion?: () => void;
     groupContext?: AthleteRunGroupContextView | null;
     showLogger?: boolean;
     onViewTechnique?: (target: AthleteExerciseTechniqueTarget) => void;
@@ -74,11 +69,10 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
     onRpeChange,
     restPhase,
     injuryConflict,
-    lastPerformance,
-    lastPerformanceDateLabel,
-    onApplyLastPerformance,
-    suggestedLoad,
-    onApplySuggestedLoad,
+    runReference,
+    isRunReferenceLoading = false,
+    onApplyReference,
+    onApplySuggestion,
     groupContext,
     showLogger = true,
     onViewTechnique,
@@ -126,40 +120,25 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
                 <div className="space-y-4">
                     <AthleteRunGroupHero badgeLabel={badgeLabel} roundLabel={roundLabel} />
 
-                        <AthleteRunGroupContextCard
-                            context={displayContext}
-                            slotMeta={slotMeta}
-                            onViewTechnique={onViewTechnique}
+                    <AthleteRunGroupContextCard
+                        context={displayContext}
+                        slotMeta={slotMeta}
+                        onViewTechnique={onViewTechnique}
+                    />
+
+                    {injuryConflict && (
+                        <AthleteExerciseInjuryAlert
+                            exerciseName={exercise.name}
+                            alert={injuryConflict.alert}
+                            onConsultTrainer={injuryConflict.onConsultTrainer}
+                            compact
                         />
+                    )}
 
-                        {injuryConflict && (
-                            <AthleteExerciseInjuryAlert
-                                exerciseName={exercise.name}
-                                alert={injuryConflict.alert}
-                                onConsultTrainer={injuryConflict.onConsultTrainer}
-                                compact
-                            />
-                        )}
-
-                        {hasAthleteLastPerformance(lastPerformance) && onApplyLastPerformance && (
-                            <AthleteLastPerformanceHint
-                                weightKg={lastPerformance.weight_kg}
-                                reps={lastPerformance.reps}
-                                rpe={lastPerformance.rpe}
-                                performedAtLabel={lastPerformanceDateLabel ?? ""}
-                                onApply={onApplyLastPerformance}
-                                className={ATHLETE_RUN_HINT_CARD}
-                            />
-                        )}
-
-                        {shouldShowSuggestedLoad(suggestedLoad) && onApplySuggestedLoad && (
-                            <AthleteSuggestedLoadHint
-                                suggestedWeightKg={suggestedLoad.suggested_weight_kg}
-                                explanation={suggestedLoad.explanation}
-                                onApply={onApplySuggestedLoad}
-                                className={ATHLETE_RUN_HINT_CARD}
-                            />
-                        )}
+                    <AthleteRunReferenceCard
+                        data={runReference}
+                        isLoading={isRunReferenceLoading}
+                    />
                 </div>
             ) : null}
 
@@ -168,6 +147,16 @@ export const ExerciseStepView: React.FC<ExerciseStepViewProps> = ({
             {showLogger ? (
                 <div className={`space-y-2 ${ATHLETE_RUN_LOGGER_REVEAL}`}>
                     <p className={ATHLETE_RUN_LOGGER_SECTION_LABEL}>Registro de serie</p>
+                    {isLoggingRest && onApplyReference && onApplySuggestion ? (
+                        <AthleteRunLoggerChips
+                            setIndex={exercise.setIndex}
+                            reference={runReference?.reference}
+                            suggestion={runReference?.suggestion}
+                            onApplyReference={onApplyReference}
+                            onApplyPreviousSet={onApplyReference}
+                            onApplySuggestion={onApplySuggestion}
+                        />
+                    ) : null}
                     <div className={ATHLETE_RUN_LOGGER_CARD}>
                         <NexiaGlassAccentRim />
                         <div className="relative z-[1]">

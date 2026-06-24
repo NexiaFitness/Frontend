@@ -63,6 +63,12 @@ import type {
     WeeklyMusclePlannedLoadOut,
 } from "../types/sessionLoad";
 import type { ClientLoadInsights } from "../types/clientLoadInsights";
+import type {
+    ClientExecutedLoadSummary,
+    ClientSetExecutionsPage,
+    GetClientExecutedLoadSummaryArg,
+    GetClientSetExecutionsArg,
+} from "../types/trainerSetExecutions";
 import {
     buildCoherenceDevMockResponse,
     shouldServeCoherenceDevMock,
@@ -1023,6 +1029,55 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        getClientSetExecutions: builder.query<
+            ClientSetExecutionsPage,
+            GetClientSetExecutionsArg
+        >({
+            query: ({
+                clientId,
+                exerciseId,
+                trainingSessionId,
+                fromDate,
+                toDate,
+                skip = 0,
+                limit = 50,
+            }) => {
+                const params = new URLSearchParams();
+                if (exerciseId != null) {
+                    params.append("exercise_id", String(exerciseId));
+                }
+                if (trainingSessionId != null) {
+                    params.append("training_session_id", String(trainingSessionId));
+                }
+                if (fromDate) params.append("from_date", fromDate);
+                if (toDate) params.append("to_date", toDate);
+                params.append("skip", String(skip));
+                params.append("limit", String(limit));
+                const qs = params.toString();
+                return {
+                    url: `/clients/${clientId}/set-executions${qs ? `?${qs}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "TrainingSession" as const, id: "LIST" },
+            ],
+        }),
+
+        getClientExecutedLoadSummary: builder.query<
+            ClientExecutedLoadSummary,
+            GetClientExecutedLoadSummaryArg
+        >({
+            query: ({ clientId, fromDate, toDate }) => ({
+                url: `/clients/${clientId}/session-load/executed-summary?from_date=${fromDate}&to_date=${toDate}`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+            ],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -1085,4 +1140,6 @@ export const {
     useGetRecentActivityQuery,
     useGetWeeklySessionLoadByMuscleQuery,
     useGetClientLoadInsightsQuery,
+    useGetClientSetExecutionsQuery,
+    useGetClientExecutedLoadSummaryQuery,
 } = clientsApi;

@@ -14,3 +14,5 @@ export { DropsetGroup } from "./groups/DropsetGroup";
 export { AmrapGroup } from "./groups/AmrapGroup";
 export { EmomGroup } from "./groups/EmomGroup";
 export { ForTimeGroup } from "./groups/ForTimeGroup";
+export { SessionExecutionSummary } from "./SessionExecutionSummary";
+export type { SessionExecutionSummaryProps } from "./SessionExecutionSummary";

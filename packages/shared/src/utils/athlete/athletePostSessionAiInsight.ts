@@ -1,6 +1,6 @@
 /**
  * athletePostSessionAiInsight.ts — Elegibilidad IA post-sesión (F3d-FE-01).
- * Sin DOM. Contrato: docs/audits/portal-atleta/spec/F3d_FE01_POST_SESSION_AI_INSIGHT.md
+ * Sin DOM. Contrato: docs/audits/portal-atleta/especificaciones-atleta/inteligencia/F3d_FE01_POST_SESSION_AI_INSIGHT.md
  */
 
 import type { AthleteWeeklySummary } from "../../types/athleteWeeklySummary";

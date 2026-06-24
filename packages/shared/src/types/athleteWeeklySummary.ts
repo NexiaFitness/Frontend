@@ -1,6 +1,6 @@
 /**
  * Athlete weekly summary types (F3b-BE-03 / F3b-FE-03).
- * Contract: docs/audits/portal-atleta/spec/F3b_BE03_ATHLETE_WEEKLY_SUMMARY.md
+ * Contract: docs/audits/portal-atleta/especificaciones-atleta/run-y-diseno/F3b_BE03_ATHLETE_WEEKLY_SUMMARY.md
  * Endpoint: GET /api/v1/athlete/weekly-summary
  */
 

@@ -7,6 +7,7 @@ import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRun
 import type { AthleteRunGroupContextView } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
 import type { InjuryAlert } from "@nexia/shared/types/injuryAlert";
 import type { AthleteRunRestPhase } from "@/hooks/athlete/useAthleteRunRestFlow";
+import type { AthleteRunReference } from "@nexia/shared/types/athleteRunReference";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteRunGroupHero } from "./AthleteRunGroupHero";
 import {
@@ -20,6 +21,7 @@ import {
 import { AthleteDropsetFunnelCard } from "./AthleteDropsetFunnelCard";
 import { AthleteDropsetBatchLogger } from "./AthleteDropsetBatchLogger";
 import { AthleteRunSessionReadyCard } from "./AthleteRunSessionReadyCard";
+import { AthleteRunSlotReferenceCards } from "./AthleteRunSlotReferenceCards";
 import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
 import { AthleteRunLoggingSummary } from "./AthleteRunLoggingSummary";
 import type { AthleteExerciseTechniqueTarget } from "./athleteExerciseTechniqueUtils";
@@ -42,6 +44,8 @@ export interface GroupRoundStepViewProps {
         { alert: InjuryAlert; onConsultTrainer: () => void }
     >;
     sessionReadyToFinish?: boolean;
+    slotReferences?: Record<string, AthleteRunReference | undefined>;
+    isSlotReferencesLoading?: boolean;
 }
 
 export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
@@ -58,6 +62,8 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
     onViewTechnique,
     injuryConflicts,
     sessionReadyToFinish = false,
+    slotReferences = {},
+    isSlotReferencesLoading = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -159,6 +165,14 @@ export const GroupRoundStepView: React.FC<GroupRoundStepViewProps> = ({
                                 compact
                             />
                         ))}
+
+                        {runStep.slots?.length ? (
+                            <AthleteRunSlotReferenceCards
+                                slots={runStep.slots}
+                                referencesBySlotKey={slotReferences}
+                                isLoading={isSlotReferencesLoading}
+                            />
+                        ) : null}
                 </div>
             ) : null}
 

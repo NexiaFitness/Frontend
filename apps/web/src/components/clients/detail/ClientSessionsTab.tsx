@@ -121,13 +121,21 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
                 return;
             }
+            const existingOnDay = planSessions.find((s) => s.session_date === dateStr);
+            if (existingOnDay?.id) {
+                navigate(
+                    `/dashboard/session-programming/sessions/${existingOnDay.id}`,
+                    { state: returnToStateFromView(location) },
+                );
+                return;
+            }
             const qs = new URLSearchParams({ clientId: String(clientId), date: dateStr, planId: String(activePlanForClient.id) });
             navigate(
                 `/dashboard/session-programming/create-session?${qs.toString()}`,
                 { replace: false }
             );
         },
-        [activePlanForClient, clientId, navigate, showWarning]
+        [activePlanForClient, clientId, navigate, showWarning, planSessions, location]
     );
     const [listFilter, setListFilter] = useState<ListFilter>("all");
     const [listPage, setListPage] = useState(1);

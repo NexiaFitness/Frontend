@@ -1,7 +1,7 @@
 /**
  * ClientProgressTab.tsx — Tab Progress del cliente
  *
- * Sub-tabs: Resumen · Carga · Historial
+ * Sub-tabs: Resumen · Tendencia · Historial gym · Antropometría
  * Rediseñado v7 — alineado con ClientDailyCoherenceTab (tokens, chart height 250,
  * tooltips temáticos, grids 2-col, legends HTML, bg-surface containers).
  *
@@ -11,6 +11,7 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useSubTabNavigation } from "@/hooks/useSubTabNavigation";
 import type { ClientProgress } from "@nexia/shared/types/progress";
 import type { Client } from "@nexia/shared/types/client";
@@ -22,6 +23,7 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { Button, SegmentButton } from "@/components/ui/buttons";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
+import { ClientSetHistoryPanel } from "./ClientSetHistoryPanel";
 import { ClipboardList, Pencil, Plus, X } from "lucide-react";
 import {
     LineChart,
@@ -58,7 +60,7 @@ const CHART_TOOLTIP_STYLE: React.CSSProperties = {
 // TYPES
 // ========================================
 
-type ProgressSubTab = "overview" | "load" | "history";
+type ProgressSubTab = "overview" | "trend" | "gym" | "anthropometry";
 type MetricsPeriod = "weekly" | "monthly" | "annual";
 
 const METRICS_PERIOD_OPTIONS: { id: MetricsPeriod; label: string }[] = [
@@ -183,12 +185,32 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
     const [metricsPeriod, setMetricsPeriod] = useState<MetricsPeriod>("weekly");
     const formRef = useRef<HTMLDivElement>(null);
+    const [searchParams] = useSearchParams();
+
+    const historyExerciseId = useMemo(() => {
+        const raw = searchParams.get("historyExercise");
+        if (!raw) return null;
+        const parsed = parseInt(raw, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }, [searchParams]);
 
     const { activeSubTab: activeTab, setActiveSubTab: setActiveTab } =
         useSubTabNavigation<ProgressSubTab>({
-            validSubTabs: ["overview", "load", "history"] as const,
+            validSubTabs: ["overview", "trend", "gym", "anthropometry"] as const,
             defaultSubTab: "overview",
         });
+
+    // Legacy URL aliases (F8 → F5 UX reorg)
+    useEffect(() => {
+        const raw = searchParams.get("subtab");
+        const aliases: Record<string, ProgressSubTab> = {
+            load: "trend",
+            history: "anthropometry",
+        };
+        if (raw && aliases[raw]) {
+            setActiveTab(aliases[raw]);
+        }
+    }, [searchParams, setActiveTab]);
 
     // ── Data hooks ─────────────────────────────────────
     const {
@@ -446,15 +468,16 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             <PageTitle
                 titleAs="h2"
                 title="Progreso del Cliente"
-                subtitle="Evolución de métricas corporales, fatiga, energía y carga de trabajo"
+                subtitle="Evolución corporal, tendencia de carga (CID) e historial por ejercicio"
             />
 
             {/* Sub-tab chips */}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tabs progreso">
                 {([
                     { id: "overview" as ProgressSubTab, label: "Resumen" },
-                    { id: "load" as ProgressSubTab, label: "Carga" },
-                    { id: "history" as ProgressSubTab, label: "Historial" },
+                    { id: "trend" as ProgressSubTab, label: "Tendencia" },
+                    { id: "gym" as ProgressSubTab, label: "Historial gym" },
+                    { id: "anthropometry" as ProgressSubTab, label: "Antropometría" },
                 ] as const).map((tab) => (
                     <button
                         key={tab.id}
@@ -472,8 +495,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                 ))}
             </div>
 
-            {/* 404 empty state */}
-            {isNotFoundError && (
+            {/* 404 empty state — solo tabs que dependen de progress history */}
+            {isNotFoundError && (activeTab === "overview" || activeTab === "anthropometry") && (
                 <div className="flex min-h-[200px] w-full items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 text-center text-sm text-muted-foreground">
                     Aún no hay datos de progreso para este cliente.
                 </div>
@@ -838,9 +861,13 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                 </>
             )}
 
-            {/* ═══════════ LOAD TAB ═══════════ */}
-            {activeTab === "load" && (
+            {/* ═══════════ TREND TAB (CID) ═══════════ */}
+            {activeTab === "trend" && (
                 <div className="space-y-6">
+                    <p className="text-sm text-muted-foreground">
+                        Carga interna de demanda (CID) — tendencia macro de volumen e intensidad.
+                    </p>
+
                     {!cidChartConfig && (
                         <div className="flex justify-end">
                             <MetricsPeriodSelector
@@ -850,17 +877,32 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         </div>
                     )}
 
-                    {/* No data */}
-                    {!isLoading && hasNoLoadData && (
+                    {/* Sin gráfico: empty honesto (P-01 — evita pantalla negra) */}
+                    {!isLoading && !cidChartConfig && (
                         <div
                             className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
                             style={{ minHeight: 200 }}
                         >
                             <div>
-                                <p>No hay sesiones de entrenamiento con datos de volumen/intensidad en el rango seleccionado.</p>
-                                <p className="mt-1 text-xs text-muted-foreground/70">
-                                    Las sesiones necesitan tener valores de volumen e intensidad para calcular métricas.
-                                </p>
+                                {hasNoLoadData ? (
+                                    <>
+                                        <p>
+                                            No hay sesiones de entrenamiento con datos de volumen/intensidad en el
+                                            rango seleccionado.
+                                        </p>
+                                        <p className="mt-1 text-xs text-muted-foreground/70">
+                                            Las sesiones necesitan valores de volumen e intensidad para calcular CID.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <p>No hay datos CID calculables para el periodo seleccionado.</p>
+                                        <p className="mt-1 text-xs text-muted-foreground/70">
+                                            Prueba otro rango (Semanal / Mensual / Anual) o revisa la ejecución en
+                                            Historial gym.
+                                        </p>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}
@@ -992,8 +1034,16 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                 </div>
             )}
 
-            {/* ═══════════ HISTORY TAB ═══════════ */}
-            {activeTab === "history" && !isNotFoundError && (
+            {/* ═══════════ GYM HISTORY TAB ═══════════ */}
+            {activeTab === "gym" && (
+                <ClientSetHistoryPanel
+                    clientId={clientId}
+                    initialExerciseId={historyExerciseId}
+                />
+            )}
+
+            {/* ═══════════ ANTHROPOMETRY TAB ═══════════ */}
+            {activeTab === "anthropometry" && !isNotFoundError && (
                 <div className="space-y-5">
                     {progressHistory && progressHistory.length > 0 && (
                         <div className="flex justify-end">

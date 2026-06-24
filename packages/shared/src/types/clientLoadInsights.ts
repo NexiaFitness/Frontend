@@ -2,9 +2,16 @@
  * Client load insights for trainer portal (F3c-TR-01, F3d-BE-05).
  */
 
-export type ClientLoadSignalType = "plateau" | "rpe_too_easy" | "rpe_too_hard";
+export type ClientLoadSignalType =
+    | "plateau"
+    | "rpe_too_easy"
+    | "rpe_too_hard"
+    | "intra_session_fatigue"
+    | "e1rm_progression";
 
 export type ClientLoadSignalSeverity = "info" | "warning";
+
+export type ClientLoadDataSource = "set_executions" | "legacy" | "mixed";
 
 export interface ClientLoadSignal {
     signal_type: ClientLoadSignalType;
@@ -34,4 +41,6 @@ export interface ClientLoadInsights {
     has_sufficient_data: boolean;
     signals: ClientLoadSignal[];
     recent_loads: ClientRecentExerciseLoad[];
+    data_source?: ClientLoadDataSource;
+    executions_count_30d?: number;
 }

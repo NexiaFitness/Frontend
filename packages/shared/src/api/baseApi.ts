@@ -349,5 +349,6 @@ export const baseApi = createApi({
         "AthleteWeeklySummary",
         "AthleteLastPerformance",
         "AthleteSuggestedLoad",
+        "AthleteRunReference",
     ],
 });

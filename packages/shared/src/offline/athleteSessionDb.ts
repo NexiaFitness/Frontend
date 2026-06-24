@@ -4,15 +4,19 @@
 
 import type {
     AthleteSessionSnapshot,
+    PendingExecutionLog,
     PendingExerciseLog,
     PendingSessionComplete,
+    PendingTimedResultLog,
 } from "./athleteSessionTypes";
 
 const DB_NAME = "nexia-athlete-offline";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 const STORE_SNAPSHOTS = "sessionSnapshots";
 const STORE_PENDING_LOGS = "pendingLogs";
+const STORE_PENDING_EXECUTIONS = "pendingExecutions";
+const STORE_PENDING_TIMED = "pendingTimedResults";
 const STORE_PENDING_COMPLETES = "pendingCompletes";
 
 export function isIndexedDbAvailable(): boolean {
@@ -36,6 +40,18 @@ function openDb(): Promise<IDBDatabase> {
             if (!db.objectStoreNames.contains(STORE_PENDING_LOGS)) {
                 const store = db.createObjectStore(STORE_PENDING_LOGS, { keyPath: "id" });
                 store.createIndex("sessionId", "sessionId", { unique: false });
+            }
+            if (!db.objectStoreNames.contains(STORE_PENDING_EXECUTIONS)) {
+                const store = db.createObjectStore(STORE_PENDING_EXECUTIONS, {
+                    keyPath: "id",
+                });
+                store.createIndex("sessionId", "sessionId", { unique: false });
+                store.createIndex("sessionStep", ["sessionId", "stepKey"], { unique: false });
+            }
+            if (!db.objectStoreNames.contains(STORE_PENDING_TIMED)) {
+                const store = db.createObjectStore(STORE_PENDING_TIMED, { keyPath: "id" });
+                store.createIndex("sessionId", "sessionId", { unique: false });
+                store.createIndex("sessionStep", ["sessionId", "stepKey"], { unique: false });
             }
             if (!db.objectStoreNames.contains(STORE_PENDING_COMPLETES)) {
                 db.createObjectStore(STORE_PENDING_COMPLETES, { keyPath: "sessionId" });
@@ -94,6 +110,62 @@ export async function removePendingLog(id: string): Promise<void> {
     db.close();
 }
 
+export async function addPendingExecution(log: PendingExecutionLog): Promise<void> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_EXECUTIONS, "readwrite");
+    await requestToPromise(tx.objectStore(STORE_PENDING_EXECUTIONS).put(log));
+    db.close();
+}
+
+export async function getPendingExecutions(
+    sessionId?: number
+): Promise<PendingExecutionLog[]> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_EXECUTIONS, "readonly");
+    const store = tx.objectStore(STORE_PENDING_EXECUTIONS);
+    const result =
+        sessionId != null
+            ? await requestToPromise(store.index("sessionId").getAll(sessionId))
+            : await requestToPromise(store.getAll());
+    db.close();
+    return (result as PendingExecutionLog[]) ?? [];
+}
+
+export async function removePendingExecution(id: string): Promise<void> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_EXECUTIONS, "readwrite");
+    await requestToPromise(tx.objectStore(STORE_PENDING_EXECUTIONS).delete(id));
+    db.close();
+}
+
+export async function addPendingTimedResult(log: PendingTimedResultLog): Promise<void> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_TIMED, "readwrite");
+    await requestToPromise(tx.objectStore(STORE_PENDING_TIMED).put(log));
+    db.close();
+}
+
+export async function getPendingTimedResults(
+    sessionId?: number
+): Promise<PendingTimedResultLog[]> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_TIMED, "readonly");
+    const store = tx.objectStore(STORE_PENDING_TIMED);
+    const result =
+        sessionId != null
+            ? await requestToPromise(store.index("sessionId").getAll(sessionId))
+            : await requestToPromise(store.getAll());
+    db.close();
+    return (result as PendingTimedResultLog[]) ?? [];
+}
+
+export async function removePendingTimedResult(id: string): Promise<void> {
+    const db = await openDb();
+    const tx = db.transaction(STORE_PENDING_TIMED, "readwrite");
+    await requestToPromise(tx.objectStore(STORE_PENDING_TIMED).delete(id));
+    db.close();
+}
+
 export async function addPendingComplete(entry: PendingSessionComplete): Promise<void> {
     const db = await openDb();
     const tx = db.transaction(STORE_PENDING_COMPLETES, "readwrite");
@@ -119,27 +191,39 @@ export async function removePendingComplete(sessionId: number): Promise<void> {
 export async function clearSessionOfflineData(sessionId: number): Promise<void> {
     const db = await openDb();
     const tx = db.transaction(
-        [STORE_SNAPSHOTS, STORE_PENDING_LOGS, STORE_PENDING_COMPLETES],
+        [
+            STORE_SNAPSHOTS,
+            STORE_PENDING_LOGS,
+            STORE_PENDING_EXECUTIONS,
+            STORE_PENDING_TIMED,
+            STORE_PENDING_COMPLETES,
+        ],
         "readwrite"
     );
     tx.objectStore(STORE_SNAPSHOTS).delete(sessionId);
     tx.objectStore(STORE_PENDING_COMPLETES).delete(sessionId);
 
-    const logStore = tx.objectStore(STORE_PENDING_LOGS);
-    const index = logStore.index("sessionId");
-    await new Promise<void>((resolve, reject) => {
-        const req = index.openCursor(IDBKeyRange.only(sessionId));
-        req.onsuccess = () => {
-            const cursor = req.result;
-            if (cursor) {
-                cursor.delete();
-                cursor.continue();
-            } else {
-                resolve();
-            }
-        };
-        req.onerror = () => reject(req.error ?? new Error("IDB cursor failed"));
-    });
+    for (const storeName of [
+        STORE_PENDING_LOGS,
+        STORE_PENDING_EXECUTIONS,
+        STORE_PENDING_TIMED,
+    ]) {
+        const logStore = tx.objectStore(storeName);
+        const index = logStore.index("sessionId");
+        await new Promise<void>((resolve, reject) => {
+            const req = index.openCursor(IDBKeyRange.only(sessionId));
+            req.onsuccess = () => {
+                const cursor = req.result;
+                if (cursor) {
+                    cursor.delete();
+                    cursor.continue();
+                } else {
+                    resolve();
+                }
+            };
+            req.onerror = () => reject(req.error ?? new Error("IDB cursor failed"));
+        });
+    }
 
     await new Promise<void>((resolve, reject) => {
         tx.oncomplete = () => resolve();
@@ -150,7 +234,9 @@ export async function clearSessionOfflineData(sessionId: number): Promise<void> 
 
 export async function countPendingForSession(sessionId: number): Promise<number> {
     const logs = await getPendingLogs(sessionId);
+    const executions = await getPendingExecutions(sessionId);
+    const timed = await getPendingTimedResults(sessionId);
     const completes = await getPendingCompletes();
     const hasComplete = completes.some((c) => c.sessionId === sessionId);
-    return logs.length + (hasComplete ? 1 : 0);
+    return logs.length + executions.length + timed.length + (hasComplete ? 1 : 0);
 }

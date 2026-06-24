@@ -7,6 +7,7 @@ import type { AthleteRunStep } from "@nexia/shared/utils/athlete/buildAthleteRun
 import type { AthleteRunGroupContextView } from "@nexia/shared/utils/athlete/athleteRunGroupContext";
 import type { InjuryAlert } from "@nexia/shared/types/injuryAlert";
 import type { AthleteRunRestPhase } from "@/hooks/athlete/useAthleteRunRestFlow";
+import type { AthleteRunReference } from "@nexia/shared/types/athleteRunReference";
 import type { UseAthleteBlockTimerResult } from "@/hooks/athlete/useAthleteBlockTimer";
 import { AthleteExerciseInjuryAlert } from "@/components/athlete/AthleteExerciseInjuryAlert";
 import { AthleteRunGroupHero } from "./AthleteRunGroupHero";
@@ -27,6 +28,7 @@ import type { ForTimeSplitView } from "@nexia/shared/utils/athlete/forTimeResult
 import { AthleteRunBlockTimer } from "./AthleteRunBlockTimer";
 import { AthleteRoundEffortSection } from "./AthleteRoundEffortSection";
 import { AthleteRunSessionReadyCard } from "./AthleteRunSessionReadyCard";
+import { AthleteRunTimedReferenceCard } from "./AthleteRunTimedReferenceCard";
 import { AthleteRunProgressHeader } from "./AthleteRunProgressHeader";
 import { AthleteRunLoggingSummary } from "./AthleteRunLoggingSummary";
 import type { AthleteExerciseTechniqueTarget } from "./athleteExerciseTechniqueUtils";
@@ -47,6 +49,10 @@ export interface TimedBlockStepViewProps {
     onAmrapPartialRepsChange: (stepKey: string, value: number) => void;
     amrapPartialOpen: boolean;
     onAmrapPartialOpenChange: (open: boolean) => void;
+    /** Indica si se debe mostrar el error de validación AMRAP tras intentar guardar. */
+    amrapValidationVisible?: boolean;
+    /** Oculta el error de validación AMRAP cuando el usuario empieza a corregir. */
+    onAmrapValidationReset?: () => void;
     emomAsPlanned: boolean | null;
     onEmomAsPlannedChange: (value: boolean) => void;
     emomFailedCount: number;
@@ -73,6 +79,8 @@ export interface TimedBlockStepViewProps {
         { alert: InjuryAlert; onConsultTrainer: () => void }
     >;
     sessionReadyToFinish?: boolean;
+    runReference?: AthleteRunReference;
+    isRunReferenceLoading?: boolean;
 }
 
 export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
@@ -90,6 +98,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     onAmrapPartialRepsChange,
     amrapPartialOpen,
     onAmrapPartialOpenChange,
+    amrapValidationVisible,
+    onAmrapValidationReset,
     emomAsPlanned,
     onEmomAsPlannedChange,
     emomFailedCount,
@@ -113,6 +123,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
     onViewTechnique,
     injuryConflicts,
     sessionReadyToFinish = false,
+    runReference,
+    isRunReferenceLoading = false,
 }) => {
     const isDoingPhase = restPhase === "doing";
     const isLoggingRest = restPhase === "logging_rest";
@@ -229,6 +241,12 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                             compact
                         />
                     ))}
+
+                    <AthleteRunTimedReferenceCard
+                        groupKind={groupContext.groupKind}
+                        data={runReference}
+                        isLoading={isRunReferenceLoading}
+                    />
                 </div>
             ) : null}
 
@@ -261,6 +279,8 @@ export const TimedBlockStepView: React.FC<TimedBlockStepViewProps> = ({
                                 partialOpen={amrapPartialOpen}
                                 onPartialOpenChange={onAmrapPartialOpenChange}
                                 onPartialRepsChange={onAmrapPartialRepsChange}
+                                showValidationError={amrapValidationVisible}
+                                onValidationReset={onAmrapValidationReset}
                             />
                             <AthleteRoundEffortSection
                                 variant="block"

@@ -40,6 +40,7 @@ import {
     SessionBlockDetail,
     SessionContextStrip,
     SessionAlertsPanel,
+    SessionExecutionSummary,
 } from "@/components/sessionProgramming/detail";
 import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
@@ -224,6 +225,9 @@ export const SessionDetail: React.FC = () => {
     const typeVariant: BadgeVariant = TYPE_BADGE_VARIANT[sessionTypeKey] ?? "subtle-secondary";
     const clientName = client ? `${client.nombre} ${client.apellidos}` : "Cliente";
 
+    const showExecutionSummary =
+        session.status === "completed" || session.status === "in_progress";
+
     const embeddedCoherence = session.coherence ?? null;
     const legacyInjuryNote = client?.lesiones_relevantes?.trim() || null;
 
@@ -302,12 +306,22 @@ export const SessionDetail: React.FC = () => {
                 legacyInjuryNote={legacyInjuryNote}
             />
 
+            {showExecutionSummary && session.client_id ? (
+                <SessionExecutionSummary
+                    sessionId={session.id}
+                    clientId={session.client_id}
+                    enabled={showExecutionSummary}
+                />
+            ) : null}
+
             <div>
                 <div className="flex items-center gap-2 mb-4">
                     <div className="rounded-lg bg-surface-2 p-2 text-primary">
                         <Dumbbell className="h-4 w-4" aria-hidden />
                     </div>
-                    <h2 className="text-lg font-semibold">Ejercicios</h2>
+                    <h2 className="text-lg font-semibold">
+                        {showExecutionSummary ? "Prescripción" : "Ejercicios"}
+                    </h2>
                     <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
                         {sessionStructure.totalExercises}
                     </span>
