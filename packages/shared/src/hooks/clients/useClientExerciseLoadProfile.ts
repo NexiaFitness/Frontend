@@ -29,15 +29,17 @@ export function useClientExerciseLoadProfile({
             { skip },
         );
 
+    const isLinked = Boolean(data?.formal_test_linked);
     const hasFormal = Boolean(data?.latest_formal_test);
     const hasEstimated = data?.latest_estimated_1rm_kg != null;
-    const isEmpty = !isLoading && !hasFormal && !hasEstimated;
+    const isEmpty = !isLoading && !hasFormal && !hasEstimated && !isLinked;
 
     return {
         profile: data,
         isLoading: isLoading || isFetching,
         error,
         refetch,
+        isLinked,
         hasFormal,
         hasEstimated,
         isEmpty,

@@ -49,6 +49,16 @@ export interface AthleteRunReferenceQuery {
     input_mode?: string;
 }
 
+/** SIG-06 — snapshot opcional de lo que el atleta vio al confirmar la serie. */
+export interface AthleteRunExecutionSuggestionSnapshot {
+    suggestion_shown: boolean;
+    suggested_weight_kg: number | null;
+    reference_weight_kg: number | null;
+    suggestion_action: "increase" | "maintain" | "decrease" | null;
+    load_step_kg: number | null;
+    confidence?: "low" | "medium" | "high" | null;
+}
+
 export interface AthleteRunExecutionCreate {
     training_session_id: number;
     step_key: string;
@@ -71,6 +81,7 @@ export interface AthleteRunExecutionCreate {
     failure_reason?: string | null;
     split_seconds?: number | null;
     source?: string;
+    suggestion_snapshot?: AthleteRunExecutionSuggestionSnapshot | null;
 }
 
 export interface AthleteRunExecutionOut {

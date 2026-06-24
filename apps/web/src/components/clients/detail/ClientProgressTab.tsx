@@ -1,7 +1,7 @@
 /**
  * ClientProgressTab.tsx — Tab Progress del cliente
  *
- * Sub-tabs: Cuerpo y fatiga · Tendencia · Historial gym · Antropometría
+ * Sub-tabs: Cuerpo · Rendimiento gym (consolidación 4→2, F5 UX)
  * Rediseñado v7 — alineado con ClientDailyCoherenceTab (tokens, chart height 250,
  * tooltips temáticos, grids 2-col, legends HTML, bg-surface containers).
  *
@@ -62,7 +62,7 @@ const CHART_TOOLTIP_STYLE: React.CSSProperties = {
 // TYPES
 // ========================================
 
-type ProgressSubTab = "overview" | "trend" | "gym" | "anthropometry";
+type ProgressSubTab = "body" | "performance";
 type MetricsPeriod = "weekly" | "monthly" | "annual";
 
 const METRICS_PERIOD_OPTIONS: { id: MetricsPeriod; label: string }[] = [
@@ -198,16 +198,20 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
 
     const { activeSubTab: activeTab, setActiveSubTab: setActiveTab } =
         useSubTabNavigation<ProgressSubTab>({
-            validSubTabs: ["overview", "trend", "gym", "anthropometry"] as const,
-            defaultSubTab: "overview",
+            validSubTabs: ["body", "performance"] as const,
+            defaultSubTab: "body",
         });
 
-    // Legacy URL aliases (F8 → F5 UX reorg)
+    // Legacy URL aliases (4 sub-vistas → 2)
     useEffect(() => {
         const raw = searchParams.get("subtab");
         const aliases: Record<string, ProgressSubTab> = {
-            load: "trend",
-            history: "anthropometry",
+            overview: "body",
+            anthropometry: "body",
+            history: "body",
+            trend: "performance",
+            gym: "performance",
+            load: "performance",
         };
         if (raw && aliases[raw]) {
             setActiveTab(aliases[raw]);
@@ -475,16 +479,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             <PageTitle
                 titleAs="h2"
                 title="Progreso del Cliente"
-                subtitle="Evolución corporal, tendencia de carga (CID) e historial por ejercicio"
+                subtitle="Evolución corporal y rendimiento gym — tonnage, historial por ejercicio y RM"
             />
 
             {/* Sub-tab chips */}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tabs progreso">
                 {([
-                    { id: "overview" as ProgressSubTab, label: "Cuerpo y fatiga" },
-                    { id: "trend" as ProgressSubTab, label: "Tendencia" },
-                    { id: "gym" as ProgressSubTab, label: "Historial gym" },
-                    { id: "anthropometry" as ProgressSubTab, label: "Antropometría" },
+                    { id: "body" as ProgressSubTab, label: "Cuerpo" },
+                    { id: "performance" as ProgressSubTab, label: "Rendimiento gym" },
                 ] as const).map((tab) => (
                     <button
                         key={tab.id}
@@ -503,14 +505,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             </div>
 
             {/* 404 empty state — solo tabs que dependen de progress history */}
-            {isNotFoundError && (activeTab === "overview" || activeTab === "anthropometry") && (
+            {isNotFoundError && activeTab === "body" && (
                 <div className="flex min-h-[200px] w-full items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 text-center text-sm text-muted-foreground">
                     Aún no hay datos de progreso para este cliente.
                 </div>
             )}
 
             {/* ═══════════ OVERVIEW TAB ═══════════ */}
-            {activeTab === "overview" && (
+            {activeTab === "body" && (
                 <>
                     {/* Metric cards */}
                     {!isNotFoundError && (
@@ -865,11 +867,125 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             No hay datos de progreso disponibles para este cliente.
                         </div>
                     )}
+
+                    {/* Antropometría — registros manuales */}
+                    {!isNotFoundError && (
+                        <div className="space-y-5 border-t border-border/50 pt-8">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                        Registros antropométricos
+                                    </h3>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Peso, IMC y notas registrados manualmente.
+                                    </p>
+                                </div>
+                                {progressHistory && progressHistory.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowProgressForm((v) => !v)}
+                                        className="shrink-0"
+                                    >
+                                        {showProgressForm ? (
+                                            <X className="size-4" aria-hidden />
+                                        ) : (
+                                            <Plus className="size-4" aria-hidden />
+                                        )}
+                                        {showProgressForm ? "Cancelar" : "Nuevo registro"}
+                                    </Button>
+                                )}
+                            </div>
+
+                            {showProgressForm && (
+                                <div
+                                    ref={formRef}
+                                    className="rounded-lg border border-border bg-card p-5"
+                                >
+                                    <p className="mb-4 text-sm font-semibold text-foreground">
+                                        Nuevo registro de progreso
+                                    </p>
+                                    <ProgressForm clientId={clientId} />
+                                </div>
+                            )}
+
+                            {progressHistory && progressHistory.length > 0 ? (
+                                <div className="space-y-2">
+                                    {progressHistory.map((record: ClientProgress) => (
+                                        <div
+                                            key={record.id}
+                                            className="flex items-center gap-4 rounded-lg bg-surface p-4"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-foreground">
+                                                    {new Date(record.fecha_registro).toLocaleDateString("es-ES", {
+                                                        day: "numeric",
+                                                        month: "long",
+                                                        year: "numeric",
+                                                    })}
+                                                </p>
+                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                                                    <span>
+                                                        Peso:{" "}
+                                                        <strong className="text-foreground">
+                                                            {record.peso ? `${record.peso} kg` : "—"}
+                                                        </strong>
+                                                    </span>
+                                                    <span>
+                                                        IMC:{" "}
+                                                        <strong className="text-foreground">
+                                                            {record.imc ? record.imc.toFixed(1) : "—"}
+                                                        </strong>
+                                                    </span>
+                                                </div>
+                                                {record.notas && (
+                                                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/70">
+                                                        {record.notas}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => handleEditClick(record)}
+                                                className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                                title="Editar registro"
+                                                aria-label="Editar registro"
+                                            >
+                                                <Pencil className="h-4 w-4" aria-hidden />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div
+                                    className="rounded-lg border border-dashed border-border/50 bg-muted/10"
+                                    data-testid="progress-history-empty"
+                                >
+                                    <EmptyState
+                                        icon={<ClipboardList />}
+                                        title="Sin registros de progreso"
+                                        description="Registra peso, IMC y notas para seguir la evolución corporal del cliente."
+                                        action={
+                                            !showProgressForm ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setShowProgressForm(true)}
+                                                >
+                                                    <Plus className="size-4" aria-hidden />
+                                                    Añadir primer registro
+                                                </Button>
+                                            ) : undefined
+                                        }
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </>
             )}
 
-            {/* ═══════════ TREND TAB ═══════════ */}
-            {activeTab === "trend" && (
+            {/* ═══════════ PERFORMANCE TAB (tendencia + historial gym) ═══════════ */}
+            {activeTab === "performance" && (
                 <div className="space-y-6">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                         <p className="text-sm text-muted-foreground max-w-xl">
@@ -1039,120 +1155,13 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             />
                         </div>
                     )}
-                </div>
-            )}
 
-            {/* ═══════════ GYM HISTORY TAB ═══════════ */}
-            {activeTab === "gym" && (
-                <ClientSetHistoryPanel
-                    clientId={clientId}
-                    initialExerciseId={historyExerciseId}
-                />
-            )}
-
-            {/* ═══════════ ANTHROPOMETRY TAB ═══════════ */}
-            {activeTab === "anthropometry" && !isNotFoundError && (
-                <div className="space-y-5">
-                    {progressHistory && progressHistory.length > 0 && (
-                        <div className="flex justify-end">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowProgressForm((v) => !v)}
-                                className="shrink-0"
-                            >
-                                {showProgressForm ? (
-                                    <X className="size-4" aria-hidden />
-                                ) : (
-                                    <Plus className="size-4" aria-hidden />
-                                )}
-                                {showProgressForm ? "Cancelar" : "Nuevo registro"}
-                            </Button>
-                        </div>
-                    )}
-
-                    {showProgressForm && (
-                        <div
-                            ref={formRef}
-                            className="rounded-lg border border-border bg-card p-5"
-                        >
-                            <p className="mb-4 text-sm font-semibold text-foreground">
-                                Nuevo registro de progreso
-                            </p>
-                            <ProgressForm clientId={clientId} />
-                        </div>
-                    )}
-
-                    {progressHistory && progressHistory.length > 0 ? (
-                        <div className="space-y-2">
-                            {progressHistory.map((record: ClientProgress) => (
-                                <div
-                                    key={record.id}
-                                    className="flex items-center gap-4 rounded-lg bg-surface p-4"
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-foreground">
-                                            {new Date(record.fecha_registro).toLocaleDateString("es-ES", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric",
-                                            })}
-                                        </p>
-                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                                            <span>
-                                                Peso:{" "}
-                                                <strong className="text-foreground">
-                                                    {record.peso ? `${record.peso} kg` : "—"}
-                                                </strong>
-                                            </span>
-                                            <span>
-                                                IMC:{" "}
-                                                <strong className="text-foreground">
-                                                    {record.imc ? record.imc.toFixed(1) : "—"}
-                                                </strong>
-                                            </span>
-                                        </div>
-                                        {record.notas && (
-                                            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/70">
-                                                {record.notas}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => handleEditClick(record)}
-                                        className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                        title="Editar registro"
-                                        aria-label="Editar registro"
-                                    >
-                                        <Pencil className="h-4 w-4" aria-hidden />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div
-                            className="rounded-lg border border-dashed border-border/50 bg-muted/10"
-                            data-testid="progress-history-empty"
-                        >
-                            <EmptyState
-                                icon={<ClipboardList />}
-                                title="Sin registros de progreso"
-                                description="Registra peso, IMC y notas para seguir la evolución corporal del cliente."
-                                action={
-                                    !showProgressForm ? (
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => setShowProgressForm(true)}
-                                        >
-                                            <Plus className="size-4" aria-hidden />
-                                            Añadir primer registro
-                                        </Button>
-                                    ) : undefined
-                                }
-                            />
-                        </div>
-                    )}
+                    <div className="border-t border-border/50 pt-8">
+                        <ClientSetHistoryPanel
+                            clientId={clientId}
+                            initialExerciseId={historyExerciseId}
+                        />
+                    </div>
                 </div>
             )}
 

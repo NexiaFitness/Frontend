@@ -104,7 +104,7 @@ export const SessionExecutionSummary: React.FC<SessionExecutionSummaryProps> = (
                             ))}
                         </ul>
                         <Link
-                            to={`/dashboard/clients/${clientId}?tab=progress&subtab=gym&historyExercise=${exercise.exercise_id}`}
+                            to={`/dashboard/clients/${clientId}?tab=progress&subtab=performance&historyExercise=${exercise.exercise_id}`}
                             className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                         >
                             Ver historial de este ejercicio

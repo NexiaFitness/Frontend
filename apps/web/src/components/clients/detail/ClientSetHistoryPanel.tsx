@@ -19,6 +19,10 @@ import {
     formatTimedBlockResultValue,
 } from "@nexia/shared/utils/trainer/formatTimedBlockResultDisplay";
 import { ClientExerciseLoadPanel } from "./ClientExerciseLoadPanel";
+import {
+    SET_HISTORY_EMPTY_DESCRIPTION,
+    SET_HISTORY_SUBTITLE,
+} from "./clientSetHistoryPresentation";
 import { FormCombobox } from "@/components/ui/forms";
 import { Alert, EmptyState, LoadingSpinner } from "@/components/ui/feedback";
 
@@ -249,7 +253,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
                     )}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Series de fuerza y bloques AMRAP/EMOM/For Time registrados en el run.
+                    {SET_HISTORY_SUBTITLE}
                 </p>
             </div>
 
@@ -269,7 +273,7 @@ export const ClientSetHistoryPanel: React.FC<ClientSetHistoryPanelProps> = ({
             {isEmpty ? (
                 <EmptyState
                     title="Sin registros por serie aún"
-                    description="Cuando el atleta complete series en el run, aparecerán aquí agrupadas por sesión."
+                    description={SET_HISTORY_EMPTY_DESCRIPTION}
                 />
             ) : (
                 <div className="space-y-2">

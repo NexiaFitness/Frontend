@@ -9,6 +9,7 @@ import {
     dedupePendingTimedResults,
     finishOnlineSession,
     flushPendingSessionSync,
+    prepareOfflineExecutionPayload,
 } from "./athleteSessionSync";
 import type { PendingExecutionLog, PendingExerciseLog, PendingTimedResultLog } from "./athleteSessionTypes";
 
@@ -109,6 +110,37 @@ const noopAdapter = {
     postExecution: vi.fn(),
     postTimedResult: vi.fn(),
 };
+
+describe("prepareOfflineExecutionPayload", () => {
+    it("sets offline_sync source and keeps suggestion_snapshot", () => {
+        const prepared = prepareOfflineExecutionPayload({
+            training_session_id: 1,
+            step_key: "SBE:1:S1",
+            exercise_id: 42,
+            weight_kg: 40,
+            suggestion_snapshot: {
+                suggestion_shown: true,
+                suggested_weight_kg: 42.5,
+                reference_weight_kg: 40,
+                suggestion_action: "increase",
+                load_step_kg: 2.5,
+                confidence: "high",
+            },
+        });
+        expect(prepared.source).toBe("offline_sync");
+        expect(prepared.suggestion_snapshot?.suggested_weight_kg).toBe(42.5);
+    });
+
+    it("does not override explicit source", () => {
+        const prepared = prepareOfflineExecutionPayload({
+            training_session_id: 1,
+            step_key: "SBE:1:S1",
+            exercise_id: 42,
+            source: "run_live",
+        });
+        expect(prepared.source).toBe("run_live");
+    });
+});
 
 describe("finishOnlineSession", () => {
     it("calls completeSession when there is no queued complete (test env: no IDB)", async () => {

@@ -96,7 +96,7 @@ export const ClientExecutedLoadTrendChart: React.FC<
                         </h3>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">
-                        Suma de peso × reps registradas en el run del atleta.
+                        Suma de peso × reps registradas por el atleta en sesión.
                     </p>
                 </div>
                 {summary && summary.sessionsCount > 0 && (
@@ -121,7 +121,7 @@ export const ClientExecutedLoadTrendChart: React.FC<
                 <div className="flex min-h-[250px] w-full items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/10 px-4 text-center">
                     <p className="text-sm text-muted-foreground">
                         Sin tonnage ejecutado en este periodo. Aparecerá cuando el atleta
-                        registre series con peso en el run.
+                        registre series con peso en sesión.
                     </p>
                 </div>
             ) : (

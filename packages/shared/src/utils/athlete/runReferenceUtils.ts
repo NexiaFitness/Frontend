@@ -5,13 +5,59 @@
 import type { AthleteFlatExercise } from "../../offline/athleteSessionTypes";
 import type {
     AthleteRunExecutionCreate,
+    AthleteRunExecutionSuggestionSnapshot,
     AthleteRunReferencePoint,
     AthleteRunReferenceQuery,
 } from "../../types/athleteRunReference";
+import type { AthleteRunSuggestion } from "../../types/athleteRunSuggestion";
+import { shouldShowRunSuggestion } from "../../types/athleteRunSuggestion";
 import type {
     AthleteRunRoundSlot,
     AthleteRunStep,
 } from "./buildAthleteRunSteps";
+
+const DEFAULT_LOAD_STEP_KG = 2.5;
+
+const SNAPSHOT_ACTIONS = new Set(["increase", "maintain", "decrease"] as const);
+const SNAPSHOT_CONFIDENCE = new Set(["low", "medium", "high"] as const);
+
+export function buildSuggestionSnapshotFromRunSuggestion(
+    suggestion: AthleteRunSuggestion | null | undefined,
+    options?: { loadStepKg?: number }
+): AthleteRunExecutionSuggestionSnapshot | undefined {
+    if (!shouldShowRunSuggestion(suggestion)) return undefined;
+    if (suggestion.metric !== "weight_kg") return undefined;
+
+    const action = SNAPSHOT_ACTIONS.has(
+        suggestion.action as "increase" | "maintain" | "decrease"
+    )
+        ? (suggestion.action as "increase" | "maintain" | "decrease")
+        : null;
+
+    const confidence = SNAPSHOT_CONFIDENCE.has(
+        suggestion.confidence as "low" | "medium" | "high"
+    )
+        ? (suggestion.confidence as "low" | "medium" | "high")
+        : null;
+
+    return {
+        suggestion_shown: true,
+        suggested_weight_kg: suggestion.suggested_value,
+        reference_weight_kg: suggestion.reference_value,
+        suggestion_action: action,
+        load_step_kg: options?.loadStepKg ?? DEFAULT_LOAD_STEP_KG,
+        confidence,
+    };
+}
+
+export function attachSuggestionSnapshotToExecutionPayload(
+    payload: AthleteRunExecutionCreate,
+    suggestion: AthleteRunSuggestion | null | undefined
+): AthleteRunExecutionCreate {
+    const snapshot = buildSuggestionSnapshotFromRunSuggestion(suggestion);
+    if (!snapshot) return payload;
+    return { ...payload, suggestion_snapshot: snapshot };
+}
 
 export interface RunLoggerDefaultsInput {
     setIndex: number;
@@ -71,12 +117,14 @@ export function buildAthleteRunExecutionPayloadFromSlot(
     sessionId: number,
     runStep: AthleteRunStep,
     slot: AthleteRunRoundSlot,
-    values: { weight: number; reps: number; rpe: number | null }
+    values: { weight: number; reps: number; rpe: number | null },
+    suggestion?: AthleteRunSuggestion | null
 ): AthleteRunExecutionCreate {
     return buildAthleteRunExecutionPayload(
         sessionId,
         buildSlotFlatExercise(runStep, slot),
-        values
+        values,
+        suggestion
     );
 }
 
@@ -102,9 +150,10 @@ export function buildAthleteRunReferenceQuery(
 export function buildAthleteRunExecutionPayload(
     sessionId: number,
     exercise: AthleteFlatExercise,
-    values: { weight: number; reps: number; rpe: number | null }
+    values: { weight: number; reps: number; rpe: number | null },
+    suggestion?: AthleteRunSuggestion | null
 ): AthleteRunExecutionCreate {
-    return {
+    const payload: AthleteRunExecutionCreate = {
         training_session_id: sessionId,
         step_key: exercise.stepKey,
         exercise_id: exercise.exerciseId,
@@ -120,6 +169,7 @@ export function buildAthleteRunExecutionPayload(
         rpe: values.rpe ?? undefined,
         source: "run_live",
     };
+    return attachSuggestionSnapshotToExecutionPayload(payload, suggestion);
 }
 
 /** Defaults al entrar en logging_rest (SPEC §10). */

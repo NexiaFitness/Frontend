@@ -7,7 +7,8 @@ export type ClientLoadSignalType =
     | "rpe_too_easy"
     | "rpe_too_hard"
     | "intra_session_fatigue"
-    | "e1rm_progression";
+    | "e1rm_progression"
+    | "suggestion_ignored";
 
 export type ClientLoadSignalSeverity = "info" | "warning";
 

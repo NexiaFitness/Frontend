@@ -169,6 +169,13 @@ export async function queueExerciseLog(input: {
     return entry;
 }
 
+/** Normaliza payload execution para cola offline (SIG-06: conserva suggestion_snapshot). */
+export function prepareOfflineExecutionPayload(
+    payload: AthleteRunExecutionCreate
+): AthleteRunExecutionCreate {
+    return { ...payload, source: payload.source ?? "offline_sync" };
+}
+
 export async function queueExecutionLog(input: {
     sessionId: number;
     stepKey: string;
@@ -179,7 +186,7 @@ export async function queueExecutionLog(input: {
         id: createLogId(),
         sessionId: input.sessionId,
         stepKey: input.stepKey,
-        payload: { ...input.payload, source: input.payload.source ?? "offline_sync" },
+        payload: prepareOfflineExecutionPayload(input.payload),
         ts,
         retryCount: 0,
     };

@@ -20,7 +20,7 @@ export interface ClientLoadInsightsCardProps {
     clientId: number;
 }
 
-const MAX_SIGNALS = 2;
+const MAX_SIGNALS = 5;
 
 function formatPerformedDate(iso: string): string {
     return new Date(iso).toLocaleDateString("es-ES", {
@@ -157,7 +157,7 @@ export const ClientLoadInsightsCard: React.FC<ClientLoadInsightsCardProps> = ({ 
                     </ul>
                     {extraSignals > 0 && (
                         <Link
-                            to={`/dashboard/clients/${clientId}?tab=progress&subtab=gym`}
+                            to={`/dashboard/clients/${clientId}?tab=progress&subtab=performance`}
                             className="text-xs font-medium text-primary hover:underline"
                         >
                             +{extraSignals} señales más — ver historial gym
@@ -191,7 +191,7 @@ export const ClientLoadInsightsCard: React.FC<ClientLoadInsightsCardProps> = ({ 
                     </ul>
                     {data.data_source !== "legacy" && (
                         <Link
-                            to={`/dashboard/clients/${clientId}?tab=progress&subtab=gym`}
+                            to={`/dashboard/clients/${clientId}?tab=progress&subtab=performance`}
                             className="text-xs font-medium text-primary hover:underline"
                         >
                             Ver historial por ejercicio

@@ -17,6 +17,17 @@ import {
 import { useClientExerciseLoadProfile } from "@nexia/shared/hooks/clients/useClientExerciseLoadProfile";
 import { Badge } from "@/components/ui/Badge";
 import { Alert, LoadingSpinner } from "@/components/ui/feedback";
+import {
+    EXERCISE_LOAD_EMPTY,
+    EXERCISE_LOAD_ESTIMATED_BADGE,
+    EXERCISE_LOAD_NO_ESTIMATE,
+    EXERCISE_LOAD_PANEL_SUBTITLE,
+    formalRmBadgeLabel,
+    formalRmBadgeVariant,
+    formalRmCardClassName,
+    formalRmIconClassName,
+    resolveFormalRmCardState,
+} from "./clientExerciseLoadPresentation";
 
 const CHART_AXIS_STROKE = "hsl(var(--border))";
 const CHART_TICK_STYLE = { fill: "hsl(var(--muted-foreground))", fontSize: 10 };
@@ -59,8 +70,10 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
     exerciseName,
     weeks = 12,
 }) => {
-    const { profile, isLoading, error, hasFormal, hasEstimated, isEmpty } =
+    const { profile, isLoading, error, hasFormal, hasEstimated, isLinked, isEmpty } =
         useClientExerciseLoadProfile({ clientId, exerciseId, weeks });
+
+    const formalCardState = resolveFormalRmCardState(hasFormal, isLinked);
 
     const trendData = useMemo(
         () =>
@@ -95,9 +108,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
         return (
             <div className="rounded-lg border border-dashed border-border/50 bg-muted/10 px-4 py-6 text-center text-sm text-muted-foreground">
                 <p className="font-medium text-foreground">{title}</p>
-                <p className="mt-1">
-                    Sin test formal ni series con peso para estimar 1RM en este periodo.
-                </p>
+                <p className="mt-1">{EXERCISE_LOAD_EMPTY}</p>
             </div>
         );
     }
@@ -110,22 +121,27 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
             <div>
                 <h4 className="text-sm font-semibold text-foreground">{title}</h4>
                 <p className="mt-1 text-xs text-muted-foreground">
-                    Test registrado manualmente vs estimación calculada del run — fuentes distintas.
+                    {EXERCISE_LOAD_PANEL_SUBTITLE}
                 </p>
             </div>
 
             <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                {/* Test formal — sólido, color primario */}
-                <div className="rounded-lg border border-primary/35 bg-primary/5 p-4 space-y-3">
+                <div className={formalRmCardClassName(formalCardState)}>
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
-                            <ClipboardCheck className="size-4 text-primary" aria-hidden />
+                            <ClipboardCheck
+                                className={formalRmIconClassName(formalCardState)}
+                                aria-hidden
+                            />
                             <span className="text-sm font-semibold text-foreground">
-                                Test formal
+                                RM de test
                             </span>
                         </div>
-                        <Badge variant="default" className="shrink-0 text-[10px] uppercase tracking-wide">
-                            Registrado
+                        <Badge
+                            variant={formalRmBadgeVariant(formalCardState)}
+                            className="shrink-0 text-[10px] uppercase tracking-wide"
+                        >
+                            {formalRmBadgeLabel(formalCardState)}
                         </Badge>
                     </div>
                     {hasFormal && profile?.latest_formal_test ? (
@@ -149,14 +165,30 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                 Ver en Tests físicos
                             </Link>
                         </>
+                    ) : isLinked && profile ? (
+                        <div className="space-y-2">
+                            <p className="text-sm text-muted-foreground">
+                                Vinculado a{" "}
+                                <span className="font-medium text-foreground">
+                                    {profile.linked_physical_test_name}
+                                </span>
+                                . Sin resultados registrados para este cliente.
+                            </p>
+                            <Link
+                                to={`/dashboard/clients/${clientId}?tab=testing`}
+                                className="inline-flex text-xs font-medium text-primary hover:underline"
+                            >
+                                Registrar test en Tests físicos
+                            </Link>
+                        </div>
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            Sin test de fuerza vinculado a este ejercicio.
+                            {profile?.formal_test_unlinked_note ??
+                                "Sin test de fuerza vinculado a este ejercicio."}
                         </p>
                     )}
                 </div>
 
-                {/* e1RM estimado — dashed, superficie neutra */}
                 <div className="rounded-lg border border-dashed border-border bg-surface p-4 space-y-3">
                     <div className="flex items-start justify-between gap-2">
                         <div className="flex items-center gap-2">
@@ -166,7 +198,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                             </span>
                         </div>
                         <Badge variant="outline" className="shrink-0 text-[10px] uppercase tracking-wide">
-                            Epley · Run
+                            {EXERCISE_LOAD_ESTIMATED_BADGE}
                         </Badge>
                     </div>
                     {hasEstimated && profile ? (
@@ -199,7 +231,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                         </>
                     ) : (
                         <p className="text-sm text-muted-foreground">
-                            Sin series con peso en el run para estimar 1RM.
+                            {EXERCISE_LOAD_NO_ESTIMATE}
                         </p>
                     )}
                 </div>
@@ -210,7 +242,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                     <div className="flex items-center gap-2">
                         <TrendingUp className="size-4 text-primary" aria-hidden />
                         <h5 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                            Tendencia e1RM estimado (semanal)
+                            Tendencia 1RM estimado (semanal)
                         </h5>
                     </div>
                     <div className="w-full min-w-0 min-h-[180px]">
@@ -232,7 +264,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                 />
                                 <Tooltip
                                     contentStyle={CHART_TOOLTIP_STYLE}
-                                    formatter={(value: number) => [`${value} kg`, "e1RM pico"]}
+                                    formatter={(value: number) => [`${value} kg`, "1RM pico"]}
                                 />
                                 <Line
                                     type="monotone"

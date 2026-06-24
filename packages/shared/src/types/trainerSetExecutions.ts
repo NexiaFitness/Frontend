@@ -135,6 +135,10 @@ export interface ClientExerciseLoadProfile {
     exercise_name: string;
     weeks: number;
     e1rm_formula_note: string;
+    formal_test_linked: boolean;
+    linked_physical_test_id: number | null;
+    linked_physical_test_name: string | null;
+    formal_test_unlinked_note: string | null;
     latest_formal_test: FormalRmTestRow | null;
     formal_test_history: FormalRmTestRow[];
     latest_estimated_1rm_kg: number | null;

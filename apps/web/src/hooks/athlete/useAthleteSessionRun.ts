@@ -349,6 +349,9 @@ export function useAthleteSessionRun({
         runReference?.suggestion,
     ]);
 
+    const currentRunSuggestion =
+        effectiveRunReference?.suggestion ?? runReference?.suggestion ?? null;
+
     useEffect(() => {
         setPrCelebration(null);
     }, [currentStepKey]);
@@ -539,7 +542,7 @@ export function useAthleteSessionRun({
                         weight,
                         reps,
                         rpe,
-                    })
+                    }, currentRunSuggestion)
                 ).unwrap();
                 loggedSetsRef.current.set(
                     current.blockExerciseId,
@@ -554,7 +557,7 @@ export function useAthleteSessionRun({
                         weight,
                         reps,
                         rpe,
-                    })
+                    }, currentRunSuggestion)
                 );
                 loggedSetsRef.current.set(
                     current.blockExerciseId,
@@ -589,6 +592,7 @@ export function useAthleteSessionRun({
         }
     }, [
         current,
+        currentRunSuggestion,
         isOnline,
         logExecution,
         onError,
@@ -678,7 +682,8 @@ export function useAthleteSessionRun({
                             weight: payload.data.actual_weight,
                             reps: Number.parseInt(payload.data.actual_reps, 10) || 0,
                             rpe: roundRpe,
-                        }
+                        },
+                        slotReferences[slot.stepKey]?.suggestion
                     );
 
                     if (isOnline) {
@@ -747,7 +752,8 @@ export function useAthleteSessionRun({
                                 weight: payload.data.actual_weight,
                                 reps: Number.parseInt(payload.data.actual_reps, 10) || 0,
                                 rpe: payload.data.actual_effort_value ?? roundRpe,
-                            }
+                            },
+                            slotReferences[slot.stepKey]?.suggestion
                         );
                         if (isOnline) {
                             await postRunExecution(executionPayload).unwrap();
@@ -826,7 +832,8 @@ export function useAthleteSessionRun({
                                     weight: payload.data.actual_weight,
                                     reps: Number.parseInt(payload.data.actual_reps, 10) || 0,
                                     rpe: payload.data.actual_effort_value ?? roundRpe,
-                                }
+                                },
+                                slotReferences[slot.stepKey]?.suggestion
                             ),
                             split_seconds: splitSeconds,
                             input_mode: "duration" as const,
@@ -861,7 +868,8 @@ export function useAthleteSessionRun({
                             weight: log.weight,
                             reps: log.reps,
                             rpe: roundRpe,
-                        }
+                        },
+                        slotReferences[slot.stepKey]?.suggestion
                     );
 
                     if (isOnline) {
@@ -910,6 +918,7 @@ export function useAthleteSessionRun({
         roundRpe,
         sessionId,
         slotLogs,
+        slotReferences,
     ]);
 
     const advanceAfterRest = useCallback(() => {
