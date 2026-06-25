@@ -20,8 +20,10 @@ import {
     useGetRecentActivityQuery,
     useGetCurrentTrainerProfileQuery,
     useCompleteProfileModal,
+    usePendingInvitationsForList,
 } from "@nexia/shared";
 import type { ClientStatus } from "@nexia/shared/types/client";
+import type { Invitation } from "@nexia/shared/types/invitation";
 import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
@@ -32,6 +34,12 @@ import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indic
 import { PaginationBar } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
 import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
+import {
+    InvitationRowActions,
+    getInvitationBadgeClass,
+    getInvitationBadgeLabel,
+    getInvitationDisplayName,
+} from "@/components/clients/invitations";
 
 const PAGE_SIZE = 9;
 
@@ -189,6 +197,16 @@ export const ClientList: React.FC = () => {
         skip: !isTrainerOrAdmin,
     });
 
+    const showInvitations = statusFilter === "all";
+    const {
+        items: invitationItems,
+        isLoading: invitationsLoading,
+        isError: invitationsError,
+    } = usePendingInvitationsForList({
+        skip: !isTrainerOrAdmin || !showInvitations,
+        search: searchDebounced.trim() || null,
+    });
+
     const { data: activityData } = useGetRecentActivityQuery(
         { limit: 10, trainer_id: trainerId ?? undefined },
         { skip: !isTrainerOrAdmin }
@@ -210,10 +228,77 @@ export const ClientList: React.FC = () => {
             setShowCompleteProfileModal(true);
             return;
         }
-        navigate("/dashboard/clients/onboarding");
+        navigate("/dashboard/clients/invite");
     }, [shouldBlock, navigate]);
 
-    const isEmpty = !isLoading && !isError && items.length === 0;
+    const listLoading = isLoading || (showInvitations && invitationsLoading);
+    const listError = isError || (showInvitations && invitationsError);
+    const isEmpty =
+        !listLoading &&
+        !listError &&
+        items.length === 0 &&
+        (!showInvitations || invitationItems.length === 0);
+    const rosterTotal = total + (showInvitations ? invitationItems.length : 0);
+
+    const renderInvitationGridCard = (invitation: Invitation) => {
+        const displayName = getInvitationDisplayName(invitation.nombre, invitation.email);
+        return (
+            <article
+                key={`invitation-${invitation.id}`}
+                className="rounded-lg border border-dashed border-border bg-surface p-4 text-left shadow-md sm:p-5"
+            >
+                <div className="mb-3 flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground sm:text-base">
+                            {displayName}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{invitation.email}</p>
+                    </div>
+                </div>
+                <span
+                    className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs",
+                        getInvitationBadgeClass(invitation.status),
+                    )}
+                >
+                    {getInvitationBadgeLabel(invitation.status)}
+                </span>
+                <InvitationRowActions invitation={invitation} layout="grid" />
+            </article>
+        );
+    };
+
+    const renderInvitationListRow = (invitation: Invitation) => {
+        const displayName = getInvitationDisplayName(invitation.nombre, invitation.email);
+        return (
+            <tr
+                key={`invitation-${invitation.id}`}
+                className="border-b border-border bg-background/60"
+            >
+                <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <div className="min-w-0">
+                        <p className="truncate font-medium text-foreground">{displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{invitation.email}</p>
+                    </div>
+                </td>
+                <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <span
+                        className={cn(
+                            "rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs",
+                            getInvitationBadgeClass(invitation.status),
+                        )}
+                    >
+                        {getInvitationBadgeLabel(invitation.status)}
+                    </span>
+                </td>
+                <td className="px-3 py-2.5 text-muted-foreground sm:px-4 sm:py-3">—</td>
+                <td className="px-3 py-2.5 text-muted-foreground sm:px-4 sm:py-3">—</td>
+                <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <InvitationRowActions invitation={invitation} layout="list" />
+                </td>
+            </tr>
+        );
+    };
 
     return (
         <>
@@ -222,7 +307,7 @@ export const ClientList: React.FC = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-xl font-bold text-foreground sm:text-2xl">Clientes</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{total} total</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{rosterTotal} total</p>
                     </div>
                     <Button
                         variant="primary"
@@ -303,14 +388,14 @@ export const ClientList: React.FC = () => {
                 </div>
 
                 {/* Loading */}
-                {isLoading && (
+                {listLoading && (
                     <div className="flex justify-center py-16">
                         <LoadingSpinner size="lg" />
                     </div>
                 )}
 
                 {/* Error */}
-                {isError && (
+                {listError && (
                     <Alert variant="error">
                         Error al cargar clientes:{" "}
                         {error && typeof error === "object" && "data" in error && error.data && typeof error.data === "object" && "detail" in error.data
@@ -320,7 +405,7 @@ export const ClientList: React.FC = () => {
                 )}
 
                 {/* Empty state §6 */}
-                {!isLoading && !isError && isEmpty && (
+                {!listLoading && !listError && isEmpty && (
                     <div className="flex flex-col items-center justify-center rounded-lg bg-surface px-4 py-12 sm:py-16">
                         <UserPlus className="mb-4 h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" aria-hidden />
                         <p className="mb-1 text-center font-medium text-foreground sm:text-left">Aún no tienes clientes registrados.</p>
@@ -333,12 +418,15 @@ export const ClientList: React.FC = () => {
                 )}
 
                 {/* Contenido + sidebar §7 — col on mobile, row lg+ */}
-                {!isLoading && !isError && !isEmpty && (
+                {!listLoading && !listError && !isEmpty && (
                     <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
                         <div className="min-w-0 flex-1">
                             {viewMode === "grid" ? (
                                 /* Vista Grid §8 — 1 col xs, 2 sm, 3 xl */
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                                    {showInvitations
+                                        ? invitationItems.map(renderInvitationGridCard)
+                                        : null}
                                     {items.map((client) => (
                                         <article
                                             key={client.id}
@@ -427,6 +515,9 @@ export const ClientList: React.FC = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {showInvitations
+                                                ? invitationItems.map(renderInvitationListRow)
+                                                : null}
                                             {items.map((client) => (
                                                 <tr
                                                     key={client.id}

@@ -2,11 +2,7 @@
  * RegisterForm Test Suite - Professional Coverage
  *
  * Tests usando handlers MSW centralizados + específicos para casos avanzados.
- * Arquitectura validada siguiendo pattern LoginForm exitoso (19/19 tests).
- *
- * @author Frontend Team
- * @since v1.0.1
- * @updated v4.3.2 - Fixed role selection behavior (starts empty, requires explicit selection)
+ * Registro público solo entrenador (atletas vía invitación).
  */
 
 import { screen, waitFor } from "@testing-library/react";
@@ -27,8 +23,6 @@ import {
   clearAuthMocks
 } from "@/test-utils/mocks";
 
-// No mocks inline - usar MSW para interceptar llamadas reales
-
 describe("RegisterForm", () => {
   beforeEach(() => {
     clearRouterMocks();
@@ -37,9 +31,9 @@ describe("RegisterForm", () => {
   });
 
   describe("Rendering & Basic UI", () => {
-    it("renders all form elements correctly", () => {
+    it("renders trainer registration form elements", () => {
       render(<RegisterForm />);
-      
+
       expect(screen.getByRole("heading", { name: /únete a nexia/i }))
         .toBeInTheDocument();
       expect(screen.getByLabelText(/correo electrónico/i))
@@ -48,26 +42,21 @@ describe("RegisterForm", () => {
         .toBeInTheDocument();
       expect(screen.getByLabelText(/apellidos/i))
         .toBeInTheDocument();
-      expect(screen.getByLabelText(/tipo de cuenta/i))
-        .toBeInTheDocument();
+      expect(screen.queryByLabelText(/tipo de cuenta/i))
+        .not.toBeInTheDocument();
       expect(screen.getByLabelText(/^contraseña/i))
         .toBeInTheDocument();
       expect(screen.getByLabelText(/confirmar contraseña/i))
         .toBeInTheDocument();
       expect(screen.getByRole("button", { name: /crear cuenta/i }))
         .toBeInTheDocument();
-    });
-
-    it("has no default role selected (starts empty)", () => {
-      render(<RegisterForm />);
-      
-      const roleSelect = screen.getByLabelText(/tipo de cuenta/i);
-      expect(roleSelect).toHaveValue("");
+      expect(screen.getByText(/eres atleta\? tu entrenador te enviará una invitación/i))
+        .toBeInTheDocument();
     });
   });
 
   describe("Form Validation", () => {
-    it("shows all required field errors for empty form including role", async () => {
+    it("shows all required field errors for empty form", async () => {
       const user = userEvent.setup();
       render(<RegisterForm />);
 
@@ -83,10 +72,6 @@ describe("RegisterForm", () => {
         .toBeInTheDocument();
       expect(await screen.findByText("Confirma tu contraseña"))
         .toBeInTheDocument();
-      // Should also show role selection error (look for error message, not placeholder)
-      expect(await screen.findByText((content, element) => {
-        return content === "Selecciona tu tipo de cuenta" && element?.tagName === 'P';
-      })).toBeInTheDocument();
     });
 
     it("shows email format validation error", async () => {
@@ -96,7 +81,6 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "invalid-email");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
@@ -112,7 +96,6 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "different123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
@@ -128,50 +111,12 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
       expect(await screen.findByText(/contraseña debe tener al menos/i))
         .toBeInTheDocument();
-    });
-
-    it("shows role selection error when no role selected", async () => {
-      const user = userEvent.setup();
-      render(<RegisterForm />);
-
-      // Fill all fields except role
-      await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
-      await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
-      await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
-      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
-
-      expect(await screen.findByText((content, element) => {
-        return content === "Selecciona tu tipo de cuenta" && element?.tagName === 'P';
-      })).toBeInTheDocument();
-    });
-  });
-
-  describe("Role Selection", () => {
-    it("allows selecting trainer role", async () => {
-      const user = userEvent.setup();
-      render(<RegisterForm />);
-
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
-      
-      expect(screen.getByLabelText(/tipo de cuenta/i)).toHaveValue("trainer");
-    });
-
-    it("allows selecting athlete role", async () => {
-      const user = userEvent.setup();
-      render(<RegisterForm />);
-
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "athlete");
-      
-      expect(screen.getByLabelText(/tipo de cuenta/i)).toHaveValue("athlete");
     });
   });
 
@@ -181,17 +126,16 @@ describe("RegisterForm", () => {
       render(<RegisterForm />);
 
       await user.click(screen.getByRole("button", { name: /inicia sesión/i }));
-      
+
       expect(mockNavigate).toHaveBeenCalledWith("/auth/login");
     });
   });
 
   describe("API Integration - Basic Cases", () => {
-    const fillValidForm = async (user: ReturnType<typeof userEvent.setup>, role = "trainer") => {
+    const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), role);
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
     };
@@ -200,34 +144,17 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "existing@test.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
     };
 
-    it("successful registration redirects to trainer dashboard", async () => {
+    it("successful registration redirects to dashboard", async () => {
       const user = userEvent.setup();
       render(<RegisterForm />);
 
-      await fillValidForm(user, "trainer");
+      await fillValidForm(user);
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // MSW intercepta la llamada real y devuelve respuesta exitosa
-      // El componente navega a /dashboard y DashboardRouter maneja la redirección según rol
-      await waitFor(() => {
-        expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
-      });
-    });
-
-    it("registers athlete successfully", async () => {
-      const user = userEvent.setup();
-      render(<RegisterForm />);
-
-      await fillValidForm(user, "athlete");
-      await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
-
-      // MSW intercepta la llamada real y devuelve respuesta exitosa
-      // El componente navega a /dashboard y DashboardRouter maneja la redirección según rol
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
       });
@@ -235,13 +162,11 @@ describe("RegisterForm", () => {
 
     it("displays error when email already exists", async () => {
       const user = userEvent.setup();
-      // MSW ya tiene handler para email duplicado
       render(<RegisterForm />);
 
       await fillExistingEmailForm(user);
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // Verificar que se muestra el error específico del handler
       expect(await screen.findByText(/email already registered/i))
         .toBeInTheDocument();
 
@@ -257,7 +182,6 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "weakpass");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "weakpass");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
@@ -272,7 +196,6 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
     };
@@ -285,12 +208,10 @@ describe("RegisterForm", () => {
 
       await fillValidForm(user);
 
-      // First attempt - should show error
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       expect(await screen.findByText(/service temporarily unavailable/i))
         .toBeInTheDocument();
 
-      // Second attempt - should succeed
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
@@ -305,12 +226,10 @@ describe("RegisterForm", () => {
 
       await fillValidForm(user);
 
-      // First attempt - should show rate limit error
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       expect(await screen.findByText(/too many registration attempts/i))
         .toBeInTheDocument();
 
-      // Second attempt - should succeed
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });
@@ -326,7 +245,6 @@ describe("RegisterForm", () => {
       await fillValidForm(user);
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // Verificar que NO se navega (el error puede mostrarse de diferentes formas)
       await waitFor(() => {
         expect(mockNavigate).not.toHaveBeenCalled();
       }, { timeout: 5000 });
@@ -341,7 +259,6 @@ describe("RegisterForm", () => {
       await fillValidForm(user);
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // Verificar que NO se navega (el error puede mostrarse de diferentes formas)
       await waitFor(() => {
         expect(mockNavigate).not.toHaveBeenCalled();
       }, { timeout: 5000 });
@@ -356,13 +273,11 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
 
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      // Verificar que se muestra estado de loading (simplificado)
       expect(screen.getByRole("button", { name: /creando cuenta/i }))
         .toBeInTheDocument();
     });
@@ -373,12 +288,10 @@ describe("RegisterForm", () => {
       const user = userEvent.setup();
       render(<RegisterForm />);
 
-      // Trigger validation error first
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       expect(await screen.findByText("El correo es obligatorio"))
         .toBeInTheDocument();
 
-      // Start typing - error should clear
       await user.type(screen.getByLabelText(/correo electrónico/i), "test");
       expect(screen.queryByText("El correo es obligatorio"))
         .not.toBeInTheDocument();
@@ -390,20 +303,16 @@ describe("RegisterForm", () => {
       const user = userEvent.setup();
       render(<RegisterForm />);
 
-      // Fill form with valid data
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.selectOptions(screen.getByLabelText(/tipo de cuenta/i), "trainer");
       await user.type(screen.getByLabelText(/^contraseña/i), "password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
 
-      // First attempt - should show 503 error
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       expect(await screen.findByText(/service temporarily unavailable/i))
         .toBeInTheDocument();
 
-      // Second attempt - should succeed
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       await waitFor(() => {
         expect(mockNavigate).toHaveBeenCalledWith("/dashboard", { replace: true });

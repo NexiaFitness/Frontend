@@ -63,6 +63,7 @@ import type {
     WeeklyMusclePlannedLoadOut,
 } from "../types/sessionLoad";
 import type { ClientLoadInsights } from "../types/clientLoadInsights";
+import type { AthleteOnboardingCompletePayload } from "../types/athleteOnboarding";
 import type {
     ClientExecutedLoadSummary,
     ClientSetExecutionsPage,
@@ -197,6 +198,15 @@ export const clientsApi = baseApi.injectEndpoints({
                 method: "GET",
             }),
             providesTags: [{ type: "Client", id: "CURRENT_ATHLETE" }],
+        }),
+
+        completeAthleteOnboarding: builder.mutation<Client, AthleteOnboardingCompletePayload>({
+            query: (body) => ({
+                url: "/clients/profile/onboarding",
+                method: "PUT",
+                body,
+            }),
+            invalidatesTags: [{ type: "Client", id: "CURRENT_ATHLETE" }],
         }),
 
         /**
@@ -1220,6 +1230,7 @@ export const {
     useGetTrainerClientsQuery,
     useGetClientsQuery,
     useGetCurrentClientProfileQuery,
+    useCompleteAthleteOnboardingMutation,
     useGetClientQuery,
     useCreateClientMutation,
     usePreviewClientCalculationsMutation,

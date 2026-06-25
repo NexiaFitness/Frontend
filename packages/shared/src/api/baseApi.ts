@@ -350,5 +350,6 @@ export const baseApi = createApi({
         "AthleteLastPerformance",
         "AthleteSuggestedLoad",
         "AthleteRunReference",
+        "Invitation",
     ],
 });

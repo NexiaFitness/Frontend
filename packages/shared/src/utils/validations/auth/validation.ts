@@ -210,3 +210,43 @@ export const validateChangePasswordForm = (formData: {
         errors,
     };
 };
+
+export const validateInvitationAcceptForm = (formData: {
+    password: string;
+    confirmPassword: string;
+    nombre: string;
+    apellidos: string;
+    tosAccepted: boolean;
+    confirmTrainerSwitch: boolean;
+    requiresPassword: boolean;
+    requiresTrainerSwitch: boolean;
+}): ValidationResult => {
+    const errors: Record<string, string> = {};
+
+    const nombreError = validateName(formData.nombre);
+    if (nombreError) errors.nombre = nombreError;
+
+    if (formData.requiresPassword) {
+        const passwordError = validatePassword(formData.password);
+        if (passwordError) errors.password = passwordError;
+
+        const confirmPasswordError = validateConfirmPassword(
+            formData.password,
+            formData.confirmPassword,
+        );
+        if (confirmPasswordError) errors.confirmPassword = confirmPasswordError;
+    }
+
+    if (!formData.tosAccepted) {
+        errors.tosAccepted = "Debes aceptar los términos y condiciones";
+    }
+
+    if (formData.requiresTrainerSwitch && !formData.confirmTrainerSwitch) {
+        errors.confirmTrainerSwitch = "Debes confirmar el cambio de entrenador";
+    }
+
+    return {
+        isValid: Object.keys(errors).length === 0,
+        errors,
+    };
+};

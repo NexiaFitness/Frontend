@@ -17,8 +17,8 @@
 
 import { test, expect } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients, getAddClientFromListButton } from "../fixtures/navigation";
-import { createMinimalClientData } from "../fixtures/test-data";
+import { navigateToClients } from "../fixtures/navigation";
+import { createClientAndOpenDetail } from "../fixtures/create-client-api";
 
 test.describe("Journey — Create session (client → modal plan → create session)", () => {
   test("login → client onboarding → modal crear plan → tab Sesiones → create session → stay in client", async ({
@@ -27,29 +27,7 @@ test.describe("Journey — Create session (client → modal plan → create sess
     await loginAsTrainer(page);
     await navigateToClients(page);
 
-    // 1) Crear cliente (onboarding mínimo)
-    await getAddClientFromListButton(page).click();
-    await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/, {
-      timeout: 10_000,
-    });
-
-    await expect(
-      page.getByRole("heading", { name: /agregar nuevo cliente/i })
-    ).toBeVisible({ timeout: 15_000 });
-
-    const clientData = createMinimalClientData();
-    await page.getByPlaceholder(/ej: juan/i).fill(clientData.nombre);
-    await page.getByPlaceholder(/ej: pérez/i).fill(clientData.apellidos);
-    await page.getByPlaceholder(/ejemplo@correo/i).fill(clientData.mail);
-    await page.getByRole("button", { name: /siguiente/i }).click();
-    await expect(
-      page.getByRole("button", { name: /crear perfil/i })
-    ).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: /crear perfil/i }).click();
-
-    await expect(page).toHaveURL(/\/dashboard\/clients\/\d+/, {
-      timeout: 20_000,
-    });
+    const { data: clientData } = await createClientAndOpenDetail(page);
     const clientUrlMatch = page.url().match(/\/dashboard\/clients\/(\d+)/);
     const clientId = clientUrlMatch?.[1];
     expect(clientId).toBeTruthy();

@@ -27,6 +27,8 @@ import Register from "./pages/auth/Register";
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+const InvitationAcceptPage = lazy(() => import("./pages/invitation/InvitationAcceptPage"));
+const AthleteOnboardingPage = lazy(() => import("./pages/onboarding/AthleteOnboardingPage"));
 
 // Bloque 2: Dashboards por rol (lazy)
 const TrainerDashboard = lazy(() =>
@@ -87,8 +89,8 @@ const PwaPreviewPage = lazy(() => import("./pages/dev/PwaPreviewPage"));
 const CompleteProfile = lazy(() =>
   import("./pages/dashboard/trainer/CompleteProfile").then((m) => ({ default: m.CompleteProfile }))
 );
-const ClientOnboarding = lazy(() =>
-  import("./pages/clients/ClientOnboarding").then((m) => ({ default: m.ClientOnboarding }))
+const ClientInvitePage = lazy(() =>
+  import("./pages/clients/ClientInvitePage").then((m) => ({ default: m.ClientInvitePage }))
 );
 const ClientList = lazy(() =>
   import("./pages/clients/ClientList").then((m) => ({ default: m.ClientList }))
@@ -191,6 +193,7 @@ import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AthleteOnboardingGate } from "./components/auth/AthleteOnboardingGate";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Tipado de store
@@ -249,14 +252,30 @@ function App() {
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/invitation" element={<InvitationAcceptPage />} />
         </Route>
+
+        <Route
+          path="/onboarding/athlete"
+          element={
+            <ProtectedRoute>
+              <AthleteOnboardingGate>
+                <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                  <AthleteOnboardingPage />
+                </RoleProtectedRoute>
+              </AthleteOnboardingGate>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Dashboard: todas las rutas anidadas bajo DashboardShell (Fase 2b) */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardShell />
+              <AthleteOnboardingGate>
+                <DashboardShell />
+              </AthleteOnboardingGate>
             </ProtectedRoute>
           }
         >
@@ -373,12 +392,16 @@ function App() {
             }
           />
           <Route
-            path="clients/onboarding"
+            path="clients/invite"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-                <ClientOnboarding />
+                <ClientInvitePage />
               </RoleProtectedRoute>
             }
+          />
+          <Route
+            path="clients/onboarding"
+            element={<Navigate to="/dashboard/clients/invite" replace />}
           />
           <Route
             path="clients"
