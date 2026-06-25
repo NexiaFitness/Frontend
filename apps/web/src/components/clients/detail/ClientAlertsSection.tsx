@@ -22,7 +22,6 @@
 import React, { useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFatigueAlerts } from "@nexia/shared/hooks/clients/useFatigueAlerts";
-import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
@@ -30,12 +29,19 @@ import { FatigueAlertCard } from "../fatigue/FatigueAlertCard";
 import { CreateFatigueAlertModal } from "../fatigue/CreateFatigueAlertModal";
 import { getFatigueAlertContextualAction } from "@nexia/shared";
 import type { FatigueAlert } from "@nexia/shared/types/training";
+import { OVERVIEW_ACTION_CARD } from "./clientOverviewPresentation";
+import { TYPOGRAPHY } from "@/utils/typography";
+import { cn } from "@/lib/utils";
 
 type AlertsTab = "active" | "history";
 
 interface ClientAlertsSectionProps {
     clientId: number;
     sectionRef?: React.RefObject<HTMLDivElement>;
+    /** Overview: misma altura/card que plan */
+    embedded?: boolean;
+    hideCreateButton?: boolean;
+    hideContextualLinks?: boolean;
 }
 
 /**
@@ -44,7 +50,13 @@ interface ClientAlertsSectionProps {
  * Muestra alertas que requieren acción inmediata del trainer.
  * Estas alertas son las mismas que aparecen en el dashboard.
  */
-export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ clientId, sectionRef }) => {
+export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({
+    clientId,
+    sectionRef,
+    embedded = false,
+    hideCreateButton = false,
+    hideContextualLinks = false,
+}) => {
     const navigate = useNavigate();
     const [markingAsReadId, setMarkingAsReadId] = useState<number | null>(null);
     const [resolvingId, setResolvingId] = useState<number | null>(null);
@@ -142,15 +154,9 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
         [resolveAlert, refetch, showSuccess, showError]
     );
 
-    // Loading state
+    // UX-OVERVIEW QA-O5: sin alertas → bloque ausente (no reservar hueco ni empty state)
     if (isLoading || isLoadingTrainer) {
-        return (
-            <div className="bg-card border border-border rounded-lg shadow p-6">
-                <div className="flex justify-center items-center py-8">
-                    <LoadingSpinner size="md" />
-                </div>
-            </div>
-        );
+        return null;
     }
 
     // Error state
@@ -173,6 +179,10 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                 </Alert>
             </div>
         );
+    }
+
+    if (allAlerts.length === 0) {
+        return null;
     }
 
     /**
@@ -203,21 +213,22 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
                                 isResolving={resolvingId === alert.id}
                                 readOnly={false}
                             />
-                            {(() => {
-                                const action = getFatigueAlertContextualAction(alert.alert_type);
-                                const path = action.tab
-                                    ? `/dashboard/clients/${clientId}?tab=${action.tab}`
-                                    : `/dashboard/clients/${clientId}`;
-                                return (
-                                    <button
-                                        type="button"
-                                        onClick={() => navigate(path)}
-                                        className="mt-1 text-sm font-medium text-primary hover:text-primary/80"
-                                    >
-                                        {action.label} →
-                                    </button>
-                                );
-                            })()}
+                            {!hideContextualLinks &&
+                                (() => {
+                                    const action = getFatigueAlertContextualAction(alert.alert_type);
+                                    const path = action.tab
+                                        ? `/dashboard/clients/${clientId}?tab=${action.tab}`
+                                        : `/dashboard/clients/${clientId}`;
+                                    return (
+                                        <button
+                                            type="button"
+                                            onClick={() => navigate(path)}
+                                            className="mt-1 text-sm font-medium text-primary hover:text-primary/80"
+                                        >
+                                            {action.label} →
+                                        </button>
+                                    );
+                                })()}
                         </div>
                     ))}
                 </div>
@@ -248,23 +259,31 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({ client
     };
 
     return (
-        <div 
+        <div
             ref={sectionRef}
-            className="bg-card border border-border rounded-lg shadow p-6" 
+            className={cn(
+                embedded
+                    ? cn(OVERVIEW_ACTION_CARD, "h-full border-warning/30")
+                    : "rounded-lg border border-border bg-card p-6 shadow",
+            )}
             id="client-alerts-section"
         >
-            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h3 className={`text-lg font-semibold text-foreground mb-2`}>
+                    <h3 className={`${TYPOGRAPHY.dashboardViewHeading} text-foreground`}>
                         Alertas
                     </h3>
-                    <p className="text-sm text-muted-foreground">
-                        Alertas persistentes que requieren tu atención. Al resolverlas, desaparecerán del dashboard.
-                    </p>
+                    {!embedded && (
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            Alertas persistentes que requieren tu atención.
+                        </p>
+                    )}
                 </div>
-                <Button variant="secondary" size="sm" onClick={() => setShowCreateModal(true)}>
-                    Crear alerta
-                </Button>
+                {!hideCreateButton && (
+                    <Button variant="secondary" size="sm" onClick={() => setShowCreateModal(true)}>
+                        Crear alerta
+                    </Button>
+                )}
             </div>
 
             {/* Tabs: Activas / Historial */}

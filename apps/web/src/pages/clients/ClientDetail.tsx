@@ -21,6 +21,7 @@
 import React, { Suspense, lazy, useState, useCallback } from "react";
 import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import { useTabNavigation } from "@/hooks/useTabNavigation";
+import { useClientQuickNote } from "@/hooks/clients/useClientQuickNote";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -128,6 +129,8 @@ export const ClientDetail: React.FC = () => {
         includePlans: true,
         includeSessions: true,
     });
+
+    const { saveQuickNote, isSavingQuickNote } = useClientQuickNote(client, clientId);
 
     // Fase 4.1: plan activo para CTA "Planificar" (si hay plan → tab Planificación; si no → modal crear plan)
     const { data: activePlan } = useGetActivePlanByClientQuery(clientId, {
@@ -323,6 +326,8 @@ export const ClientDetail: React.FC = () => {
                 hasActivePlan={hasActivePlan}
                 onPlanificar={handlePlanificar}
                 onOpenUseTemplate={handleOpenUseTemplate}
+                onSaveQuickNote={saveQuickNote}
+                isSavingQuickNote={isSavingQuickNote}
             />
 
             {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}

@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/buttons";
 import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
+import { ClientProfileSidePanel } from "./ClientProfileSidePanel";
 
 interface ClientHeaderProps {
     client: Client;
@@ -51,6 +52,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     const navigate = useNavigate();
     const [quickNoteOpen, setQuickNoteOpen] = useState(false);
     const [quickNoteDraft, setQuickNoteDraft] = useState("");
+    const [profileOpen, setProfileOpen] = useState(false);
     const clientId = clientIdProp ?? client.id;
 
     // Calcular edad desde birthdate si no está disponible directamente
@@ -140,12 +142,19 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             {/* Fila 1: Avatar | (Nombre + botones en la misma línea) | Subtítulo debajo */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
                 <div className="flex-shrink-0">
-                    <ClientAvatar
-                        clientId={client.id}
-                        nombre={client.nombre}
-                        apellidos={client.apellidos}
-                        size="lg"
-                    />
+                    <button
+                        type="button"
+                        onClick={() => setProfileOpen(true)}
+                        className="rounded-full ring-2 ring-transparent transition-all hover:ring-primary/50 focus-visible:outline-none focus-visible:ring-primary"
+                        aria-label="Ver perfil completo del cliente"
+                    >
+                        <ClientAvatar
+                            clientId={client.id}
+                            nombre={client.nombre}
+                            apellidos={client.apellidos}
+                            size="lg"
+                        />
+                    </button>
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                     {/* Nombre a la izquierda, botones a la derecha */}
@@ -339,6 +348,13 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     )}
                 </div>
             </div>
+
+            <ClientProfileSidePanel
+                client={client}
+                isOpen={profileOpen}
+                onClose={() => setProfileOpen(false)}
+                onEditProfile={onEditProfile}
+            />
         </div>
     );
 };
