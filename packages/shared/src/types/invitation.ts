@@ -5,6 +5,7 @@ export interface InvitationWarning {
     message: string;
     requires_acknowledgement: boolean;
     current_trainer_name?: string | null;
+    invitation_id?: number | null;
 }
 
 export interface InvitationPrecheckResponse {
@@ -41,6 +42,8 @@ export interface InvitationListResponse {
 export interface InvitationValidateResponse {
     valid: boolean;
     email?: string | null;
+    nombre?: string | null;
+    apellidos?: string | null;
     trainer_name?: string | null;
     expires_at?: string | null;
     requires_trainer_switch?: boolean;

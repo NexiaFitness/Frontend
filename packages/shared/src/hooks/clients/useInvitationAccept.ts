@@ -2,7 +2,7 @@
  * useInvitationAccept — validación de token y aceptación de invitación (Fase 4 FE).
  */
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useSelector } from "react-redux";
 import {
     useAcceptInvitationMutation,
@@ -97,6 +97,19 @@ export function useInvitationAccept(
         initialState: INITIAL_FORM,
         validate: validateFn,
     });
+
+    const prefilledTokenRef = useRef<string | null>(null);
+
+    useEffect(() => {
+        if (!validation?.valid || !token) return;
+        if (prefilledTokenRef.current === token) return;
+        prefilledTokenRef.current = token;
+        setFormData((prev) => ({
+            ...prev,
+            nombre: prev.nombre || validation.nombre?.trim() || "",
+            apellidos: prev.apellidos || validation.apellidos?.trim() || "",
+        }));
+    }, [setFormData, token, validation]);
 
     const needsLogin = Boolean(
         validation?.valid && validation.user_exists && !isAuthenticated,

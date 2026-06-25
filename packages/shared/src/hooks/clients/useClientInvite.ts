@@ -5,6 +5,7 @@
 import { useCallback, useState } from "react";
 import {
     useLazyPrecheckInvitationEmailQuery,
+    useResendInvitationMutation,
     useSendInvitationMutation,
 } from "../../api/invitationsApi";
 import type { Invitation, InvitationWarning } from "../../types/invitation";
@@ -26,6 +27,8 @@ export interface UseClientInviteResult {
     confirmTransferAndSend: () => Promise<Invitation | null>;
     dismissTransferModal: () => void;
     submitInvite: () => Promise<Invitation | null>;
+    resendBlockedInvitation: () => Promise<Invitation | null>;
+    blockedInvitationId: number | null;
     lastInvitation: Invitation | null;
     resetSuccess: () => void;
 }
@@ -57,13 +60,16 @@ export function useClientInvite(): UseClientInviteResult {
     const [pendingWarnings, setPendingWarnings] = useState<InvitationWarning[]>([]);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [lastInvitation, setLastInvitation] = useState<Invitation | null>(null);
+    const [blockedInvitationId, setBlockedInvitationId] = useState<number | null>(null);
 
     const [precheckInvitation] = useLazyPrecheckInvitationEmailQuery();
     const [sendInvitation, { isLoading: isSending }] = useSendInvitationMutation();
+    const [resendInvitation, { isLoading: isResending }] = useResendInvitationMutation();
 
     const setField = useCallback((field: keyof ClientInviteFormValues, value: string) => {
         setValues((prev) => ({ ...prev, [field]: value }));
         setErrorMessage(null);
+        setBlockedInvitationId(null);
     }, []);
 
     const clearError = useCallback(() => setErrorMessage(null), []);
@@ -73,6 +79,7 @@ export function useClientInvite(): UseClientInviteResult {
         setValues(INITIAL_VALUES);
         setPendingWarnings([]);
         setShowTransferModal(false);
+        setBlockedInvitationId(null);
     }, []);
 
     const sendWithPayload = useCallback(
@@ -99,6 +106,7 @@ export function useClientInvite(): UseClientInviteResult {
     const submitInvite = useCallback(async (): Promise<Invitation | null> => {
         setErrorMessage(null);
         setLastInvitation(null);
+        setBlockedInvitationId(null);
 
         const nombre = values.nombre.trim();
         const email = values.email.trim();
@@ -114,7 +122,14 @@ export function useClientInvite(): UseClientInviteResult {
         try {
             const precheck = await precheckInvitation(email).unwrap();
             if (!precheck.can_invite) {
-                const blocked = precheck.warnings[0]?.message
+                const pendingWarning = precheck.warnings.find(
+                    (w) => w.code === "pending_invitation",
+                );
+                if (pendingWarning?.invitation_id) {
+                    setBlockedInvitationId(pendingWarning.invitation_id);
+                }
+                const blocked =
+                    precheck.warnings[0]?.message
                     ?? "No puedes invitar a este correo en este momento.";
                 setErrorMessage(blocked);
                 return null;
@@ -146,10 +161,26 @@ export function useClientInvite(): UseClientInviteResult {
         setPendingWarnings([]);
     }, []);
 
+    const resendBlockedInvitation = useCallback(async (): Promise<Invitation | null> => {
+        if (!blockedInvitationId) {
+            return null;
+        }
+        setErrorMessage(null);
+        try {
+            const result = await resendInvitation(blockedInvitationId).unwrap();
+            setLastInvitation(result);
+            setBlockedInvitationId(null);
+            return result;
+        } catch (error) {
+            setErrorMessage(getFetchErrorDetail(error));
+            return null;
+        }
+    }, [blockedInvitationId, resendInvitation]);
+
     return {
         values,
         setField,
-        isSubmitting: isSending,
+        isSubmitting: isSending || isResending,
         errorMessage,
         clearError,
         pendingWarnings,
@@ -157,6 +188,8 @@ export function useClientInvite(): UseClientInviteResult {
         confirmTransferAndSend,
         dismissTransferModal,
         submitInvite,
+        resendBlockedInvitation,
+        blockedInvitationId,
         lastInvitation,
         resetSuccess,
     };
