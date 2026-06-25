@@ -5,6 +5,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { ATHLETE_SETTINGS_CARD } from "./athleteSettingsPresentation";
+import { NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
 import { AthleteSectionHeading } from "@/components/athlete/AthleteSectionHeading";
 
 export interface AthleteSettingsSectionProps {
@@ -23,7 +24,7 @@ export const AthleteSettingsSection: React.FC<AthleteSettingsSectionProps> = ({
     return (
         <section className={cn("space-y-3", className)} aria-label={title}>
             <AthleteSectionHeading title={title} as="h2" description={description} />
-            <div className={ATHLETE_SETTINGS_CARD}>{children}</div>
+            <div className={cn(ATHLETE_SETTINGS_CARD, NEXIA_GLASS_CARD_DESKTOP)}>{children}</div>
         </section>
     );
 };

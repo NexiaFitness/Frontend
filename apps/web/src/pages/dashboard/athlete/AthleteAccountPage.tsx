@@ -16,11 +16,12 @@ import { AthleteChangePasswordSheetForm } from "@/components/athlete/account/Ath
 import { AthleteSheetSubmitButton } from "@/components/athlete/account/AthleteSheetSubmitButton";
 import { DeleteAccountModal } from "@/components/account/modals/DeleteAccountModal";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
+import { BaseModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { useAthleteAccount } from "@/hooks/athlete/useAthleteAccount";
 import { useChangePasswordForm } from "@/hooks/account/useChangePasswordForm";
 import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
-import { ChangePasswordForm } from "@/components/account/ChangePasswordForm";
+import { cn } from "@/lib/utils";
 
 export const AthleteAccountPage: React.FC = () => {
     const isDesktop = useIsAthleteDesktopLayout();
@@ -54,7 +55,7 @@ export const AthleteAccountPage: React.FC = () => {
 
     return (
         <>
-            <div className={`space-y-6 ${ATHLETE_PAGE}`}>
+            <div className={cn("mx-auto max-w-2xl space-y-6 lg:max-w-3xl lg:space-y-8", ATHLETE_PAGE)}>
                 <AthleteAccountProfileHero
                     firstName={firstName}
                     fullName={fullName}
@@ -63,38 +64,42 @@ export const AthleteAccountPage: React.FC = () => {
                     memberSince={memberSince}
                 />
 
-                <AthleteNotificationPrefsCard />
+                <div className="space-y-6 lg:grid lg:grid-cols-2 lg:items-start lg:gap-6 lg:space-y-0">
+                    <AthleteNotificationPrefsCard />
 
-                <AthleteSettingsSection title="Ajustes">
-                    <AthleteSettingsRow
-                        icon={UserRound}
-                        label="Editar perfil"
-                        hint="Nombre, apellidos y correo"
-                        onClick={openEditSheet}
-                    />
-                    <AthleteSettingsRow
-                        icon={KeyRound}
-                        label="Cambiar contraseña"
-                        hint="Actualiza tu acceso de forma segura"
-                        onClick={openPasswordSheet}
-                        isLast
-                    />
-                </AthleteSettingsSection>
+                    <div className="space-y-6">
+                        <AthleteSettingsSection title="Ajustes">
+                            <AthleteSettingsRow
+                                icon={UserRound}
+                                label="Editar perfil"
+                                hint="Nombre, apellidos y correo"
+                                onClick={openEditSheet}
+                            />
+                            <AthleteSettingsRow
+                                icon={KeyRound}
+                                label="Cambiar contraseña"
+                                hint="Actualiza tu acceso de forma segura"
+                                onClick={openPasswordSheet}
+                                isLast
+                            />
+                        </AthleteSettingsSection>
 
-                <AthleteSettingsSection title="Sesión">
-                    <AthleteSettingsRow
-                        icon={LogOut}
-                        label="Cerrar sesión"
-                        hint="Salir de este dispositivo"
-                        onClick={() => void handleLogout()}
-                        showChevron={false}
-                        variant="destructive"
-                        isLast
-                    />
-                </AthleteSettingsSection>
+                        <AthleteSettingsSection title="Sesión">
+                            <AthleteSettingsRow
+                                icon={LogOut}
+                                label="Cerrar sesión"
+                                hint="Salir de este dispositivo"
+                                onClick={() => void handleLogout()}
+                                showChevron={false}
+                                variant="destructive"
+                                isLast
+                            />
+                        </AthleteSettingsSection>
+                    </div>
+                </div>
 
                 {user?.role !== "admin" && (
-                    <div className="pt-2 text-center">
+                    <div className="pt-2 text-center lg:col-span-2">
                         <button
                             type="button"
                             onClick={openDeleteModal}
@@ -108,37 +113,59 @@ export const AthleteAccountPage: React.FC = () => {
 
             {isDesktop ? (
                 <>
-                    {editSheetOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-6">
-                                <h2 className="mb-4 text-lg font-semibold text-foreground">
-                                    Editar perfil
-                                </h2>
-                                <AthleteProfileEditForm profile={profileForm} />
-                                <Button
-                                    variant="ghost"
-                                    className="mt-4 w-full"
-                                    onClick={closeEditSheet}
-                                >
-                                    Cerrar
-                                </Button>
+                    <BaseModal
+                        isOpen={editSheetOpen}
+                        onClose={closeEditSheet}
+                        title="Editar perfil"
+                        description="Nombre, apellidos y correo"
+                        maxWidth="md"
+                    >
+                        <AthleteProfileEditForm profile={profileForm} />
+                        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row">
+                            <Button
+                                variant="ghost"
+                                className="w-full sm:flex-1"
+                                onClick={closeEditSheet}
+                            >
+                                Cancelar
+                            </Button>
+                            <div className="w-full sm:flex-1">
+                                <AthleteSheetSubmitButton
+                                    form="athlete-profile-edit-form"
+                                    label="Guardar cambios"
+                                    loadingLabel="Guardando..."
+                                    isLoading={profileForm.isLoading}
+                                />
                             </div>
                         </div>
-                    )}
-                    {passwordSheetOpen && (
-                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-                            <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-xl border border-border bg-card p-6">
-                                <ChangePasswordForm />
-                                <Button
-                                    variant="ghost"
-                                    className="mt-4 w-full"
-                                    onClick={closePasswordSheet}
-                                >
-                                    Cerrar
-                                </Button>
+                    </BaseModal>
+
+                    <BaseModal
+                        isOpen={passwordSheetOpen}
+                        onClose={closePasswordSheet}
+                        title="Cambiar contraseña"
+                        description="Mantén tu acceso seguro"
+                        maxWidth="md"
+                    >
+                        <AthleteChangePasswordSheetForm form={changePasswordForm} />
+                        <div className="mt-5 flex flex-col-reverse gap-3 sm:flex-row">
+                            <Button
+                                variant="ghost"
+                                className="w-full sm:flex-1"
+                                onClick={closePasswordSheet}
+                            >
+                                Cancelar
+                            </Button>
+                            <div className="w-full sm:flex-1">
+                                <AthleteSheetSubmitButton
+                                    form="athlete-change-password-form"
+                                    label="Actualizar contraseña"
+                                    loadingLabel="Actualizando..."
+                                    isLoading={changePasswordForm.isLoading}
+                                />
                             </div>
                         </div>
-                    )}
+                    </BaseModal>
                 </>
             ) : (
                 <>
