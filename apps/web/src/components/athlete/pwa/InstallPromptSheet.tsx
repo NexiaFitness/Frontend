@@ -180,10 +180,12 @@ export const InstallPromptSheet: React.FC<InstallPromptSheetProps> = ({
                     {showAndroid && (
                         <div className="mt-5 w-full space-y-4">
                             <img
-                                src="/icons/icon-192x192.png"
+                                src="/icons/icon-512x512.png"
+                                srcSet="/icons/icon-512x512.png 2x"
                                 alt=""
-                                width={64}
-                                height={64}
+                                width={72}
+                                height={72}
+                                decoding="sync"
                                 className={INSTALL_PROMPT_ANDROID_ICON}
                             />
                             <div className="flex flex-col gap-2">

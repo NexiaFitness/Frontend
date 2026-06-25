@@ -61,7 +61,8 @@ export const INSTALL_PROMPT_IOS_BOUNCE_ARROW = cn(
 );
 
 export const INSTALL_PROMPT_ANDROID_ICON = cn(
-    "mx-auto size-16 rounded-2xl border border-primary/25 shadow-lg shadow-primary/20"
+    "mx-auto size-[4.5rem] shrink-0 rounded-2xl border border-primary/25",
+    "object-cover shadow-lg shadow-primary/20"
 );
 
 export const INSTALL_PROMPT_CHIP_BASE = cn(
