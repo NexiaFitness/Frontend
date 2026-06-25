@@ -1,138 +1,109 @@
 /**
- * Dashboard específico para administradores.
- * Renderiza AdminSideMenu + contenido específico utilizando DashboardLayout.
- * 
- * RESPONSIVE BEHAVIOR:
- * - Desktop: AdminSideMenu visible + DashboardLayout offset
- * - Mobile/Tablet: navbar (AppNavbar) + AdminSideMenu hidden
- *
- * @author Frontend Team
- * @since v4.1.0 - Unified responsive behavior with navbar unificada (AppNavbar)
+ * AdminDashboard.tsx — Inicio admin premium (experimento F3b / DESIGN_MOBILE §6.7).
  */
 
 import React from "react";
 import { useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/buttons";
+import { Settings, User, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { AdminDashboardActivityPanel } from "@/components/admin/dashboard/AdminDashboardActivityPanel";
+import { AdminDashboardHeader } from "@/components/admin/dashboard/AdminDashboardHeader";
+import { AdminDashboardKpiCard } from "@/components/admin/dashboard/AdminDashboardKpiCard";
+import {
+    ADMIN_DASHBOARD_GLOW,
+    ADMIN_DASHBOARD_ACTIONS_COL,
+    ADMIN_DASHBOARD_ACTIVITY_COL,
+    ADMIN_DASHBOARD_KPI_GRID,
+    ADMIN_DASHBOARD_LOWER_COL,
+    ADMIN_DASHBOARD_LOWER_GRID,
+    ADMIN_DASHBOARD_PAGE,
+    ADMIN_DASHBOARD_SECTION_LABEL,
+    ADMIN_DASHBOARD_STACK,
+} from "@/components/admin/dashboard/adminDashboardPresentation";
+import { AthleteSettingsRow } from "@/components/athlete/account/AthleteSettingsRow";
+import { AthleteSettingsSection } from "@/components/athlete/account/AthleteSettingsSection";
+import {
+    getAthleteDisplayFirstName,
+} from "@nexia/shared/utils/athlete/athleteProfileDisplay";
 import type { RootState } from "@nexia/shared/store";
+
+const KPIS = [
+    { value: "156", label: "Usuarios totales", hint: "Activos en la plataforma" },
+    { value: "23", label: "Entrenadores activos", hint: "Cuentas profesionales" },
+    { value: "98.2%", label: "Uptime del sistema", hint: "Últimos 30 días" },
+] as const;
+
+const ACTIVITY_METRICS = [
+    { value: "12", label: "Usuarios nuevos hoy" },
+    { value: "89", label: "Sesiones activas" },
+    { value: "245", label: "Logins diarios" },
+] as const;
 
 export const AdminDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useSelector((state: RootState) => state.auth);
+    const firstName = getAthleteDisplayFirstName(user?.nombre ?? "Admin");
 
     return (
-        <>
-            {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
-                        Bienvenido {user?.nombre}, Panel de Administración
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Gestiona usuarios, entrenadores y el sistema desde tu panel de control
-                    </p>
-                </div>
+        <div className={ADMIN_DASHBOARD_PAGE}>
+            <div className={ADMIN_DASHBOARD_GLOW} aria-hidden />
 
-                {/* Cards RESPONSIVE */}
-                <div className="px-4 lg:px-8 mb-12 lg:mb-20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">156</h3>
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground mb-1">
-                                Total Users
-                            </p>
-                            <p className="text-muted-foreground text-sm lg:text-base">Active in platform</p>
-                        </div>
+            <div className={ADMIN_DASHBOARD_STACK}>
+                <AdminDashboardHeader
+                    firstName={firstName}
+                    subtitle="Gestiona usuarios, entrenadores y el sistema desde tu panel de control"
+                />
 
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">23</h3>
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground mb-1">
-                                Active Trainers
-                            </p>
-                            <p className="text-muted-foreground text-sm lg:text-base">Professional accounts</p>
-                        </div>
-
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8 md:col-span-2 lg:col-span-1">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">98.2%</h3>
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground mb-1">
-                                System Uptime
-                            </p>
-                            <p className="text-muted-foreground text-sm lg:text-base">Last 30 days</p>
-                        </div>
+                <section className="space-y-3" aria-label="Resumen">
+                    <p className={ADMIN_DASHBOARD_SECTION_LABEL}>Resumen</p>
+                    <div className={ADMIN_DASHBOARD_KPI_GRID}>
+                        {KPIS.map((kpi) => (
+                            <AdminDashboardKpiCard
+                                key={kpi.label}
+                                value={kpi.value}
+                                label={kpi.label}
+                                hint={kpi.hint}
+                            />
+                        ))}
                     </div>
-                </div>
+                </section>
 
-                {/* Botones responsive */}
-                <div className="px-4 lg:px-8 mb-12 lg:mb-16">
-                    <div className="flex flex-col md:flex-row gap-4 lg:gap-6 justify-center max-w-2xl mx-auto">
-                        <Button
-                            variant="primary"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={() => navigate("/dashboard/users")}
-                        >
-                            Manage Users
-                        </Button>
-                        <Button
-                            variant="secondary"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
+                <div className={ADMIN_DASHBOARD_LOWER_GRID}>
+                    <div className={cn(ADMIN_DASHBOARD_ACTIONS_COL, ADMIN_DASHBOARD_LOWER_COL)}>
+                        <AthleteSettingsSection title="Acciones rápidas" stretch>
+                            <AthleteSettingsRow
+                                icon={Users}
+                                label="Gestionar usuarios"
+                                hint="Altas, roles y acceso a la plataforma"
+                                onClick={() => navigate("/dashboard/users")}
+                            />
+                            <AthleteSettingsRow
+                                icon={Settings}
+                                label="Configuración del sistema"
+                                hint="Parámetros globales y monitorización"
+                                onClick={() => navigate("/dashboard/system")}
+                            />
+                            <AthleteSettingsRow
+                                icon={User}
+                                label="Mi cuenta"
+                                hint="Perfil, contraseña y sesión"
+                                onClick={() => navigate("/dashboard/account")}
+                                isLast
+                            />
+                        </AthleteSettingsSection>
+                    </div>
+
+                    <div className={cn(ADMIN_DASHBOARD_ACTIVITY_COL, ADMIN_DASHBOARD_LOWER_COL)}>
+                        <AdminDashboardActivityPanel
+                            title="Actividad del sistema"
+                            description="Monitoriza uso de la plataforma y métricas de rendimiento"
+                            metrics={[...ACTIVITY_METRICS]}
                             onClick={() => navigate("/dashboard/system")}
-                        >
-                            System Settings
-                        </Button>
+                        />
                     </div>
                 </div>
-
-                {/* System Activity responsive */}
-                <div className="px-4 lg:px-8 pb-20 lg:pb-24">
-                    <div className="max-w-4xl mx-auto">
-                        <div 
-                            className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-surface-2 transition-all group"
-                            onClick={() => navigate("/dashboard/system")}
-                        >
-                            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                                <div>
-                                    <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
-                                        System Activity
-                                    </h3>
-                                    <p className="text-muted-foreground text-sm lg:text-base">
-                                        Monitor platform usage and performance metrics
-                                    </p>
-                                </div>
-                                <div className="text-primary group-hover:text-primary/80 self-end md:self-center">
-                                    <svg
-                                        className="w-6 h-6 lg:w-8 lg:h-8"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5l7 7-7 7"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-                                <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">12</div>
-                                    <div className="text-xs lg:text-sm text-muted-foreground">New Users Today</div>
-                                </div>
-                                <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">89</div>
-                                    <div className="text-xs lg:text-sm text-muted-foreground">Active Sessions</div>
-                                </div>
-                                <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">245</div>
-                                    <div className="text-xs lg:text-sm text-muted-foreground">Daily Logins</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-        </>
+            </div>
+        </div>
     );
 };

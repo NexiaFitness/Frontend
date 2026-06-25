@@ -1,5 +1,5 @@
 /**
- * Account.tsx — Mi cuenta: plataforma (trainer/admin) o atleta mobile premium.
+ * Account.tsx — Mi cuenta: atleta V13, admin premium (experimento), trainer legacy.
  */
 
 import React from "react";
@@ -7,6 +7,7 @@ import { useSelector } from "react-redux";
 import { PageTitle } from "@/components/dashboard/shared";
 import { ProfileForm } from "@/components/account/ProfileForm";
 import { AthleteAccountPage } from "@/pages/dashboard/athlete/AthleteAccountPage";
+import { PlatformPremiumAccountPage } from "@/pages/account/PlatformPremiumAccountPage";
 import { USER_ROLES } from "@nexia/shared/utils/roles";
 import { selectUser } from "@nexia/shared";
 
@@ -15,6 +16,10 @@ export const Account: React.FC = () => {
 
     if (user?.role === USER_ROLES.ATHLETE) {
         return <AthleteAccountPage />;
+    }
+
+    if (user?.role === USER_ROLES.ADMIN) {
+        return <PlatformPremiumAccountPage />;
     }
 
     return (

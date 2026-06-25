@@ -13,6 +13,8 @@ export interface AthleteSettingsSectionProps {
     description?: string;
     children: React.ReactNode;
     className?: string;
+    /** Rellena altura en columnas grid (dashboard admin). */
+    stretch?: boolean;
 }
 
 export const AthleteSettingsSection: React.FC<AthleteSettingsSectionProps> = ({
@@ -20,11 +22,36 @@ export const AthleteSettingsSection: React.FC<AthleteSettingsSectionProps> = ({
     description,
     children,
     className,
+    stretch = false,
 }) => {
     return (
-        <section className={cn("space-y-3", className)} aria-label={title}>
-            <AthleteSectionHeading title={title} as="h2" description={description} />
-            <div className={cn(ATHLETE_SETTINGS_CARD, NEXIA_GLASS_CARD_DESKTOP)}>{children}</div>
+        <section
+            className={cn(
+                "flex flex-col space-y-3",
+                stretch && "min-h-0 flex-1",
+                className
+            )}
+            aria-label={title}
+        >
+            <AthleteSectionHeading
+                title={title}
+                as="h2"
+                description={description}
+                className="shrink-0"
+            />
+            <div
+                className={cn(
+                    ATHLETE_SETTINGS_CARD,
+                    NEXIA_GLASS_CARD_DESKTOP,
+                    stretch && "flex min-h-0 flex-1 flex-col"
+                )}
+            >
+                {stretch ? (
+                    <div className="flex flex-1 flex-col justify-between">{children}</div>
+                ) : (
+                    children
+                )}
+            </div>
         </section>
     );
 };

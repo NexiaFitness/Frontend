@@ -11,7 +11,10 @@ export interface AthleteAccountProfileHeroProps {
     fullName: string;
     email: string;
     initials: string;
-    memberSince: string | null;
+    /** Línea meta bajo el email (p. ej. «Atleta desde…» o «Administrador NEXIA»). */
+    metaLine?: string | null;
+    /** @deprecated Usar metaLine — compat atleta */
+    memberSince?: string | null;
 }
 
 export const AthleteAccountProfileHero: React.FC<AthleteAccountProfileHeroProps> = ({
@@ -19,8 +22,12 @@ export const AthleteAccountProfileHero: React.FC<AthleteAccountProfileHeroProps>
     fullName,
     email,
     initials,
+    metaLine,
     memberSince,
 }) => {
+    const resolvedMeta =
+        metaLine ??
+        (memberSince ? `Atleta desde ${memberSince}` : null);
     return (
         <header className="relative space-y-4">
             <div
@@ -50,9 +57,9 @@ export const AthleteAccountProfileHero: React.FC<AthleteAccountProfileHeroProps>
                         </span>
                     </h1>
                     <p className="truncate text-sm text-muted-foreground lg:text-base">{email}</p>
-                    {memberSince && (
+                    {resolvedMeta && (
                         <p className="text-caption text-muted-foreground/80 lg:text-sm">
-                            Atleta desde {memberSince}
+                            {resolvedMeta}
                         </p>
                     )}
                     <p className="sr-only">{fullName}</p>
