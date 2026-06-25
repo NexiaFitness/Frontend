@@ -71,3 +71,6 @@ export const CLIENT_INVITE_SUBMIT = ATHLETE_PRIMARY_CTA;
 export const CLIENT_INVITE_SECTION_LABEL = ATHLETE_SECTION_LABEL;
 
 export const CLIENT_INVITE_TIP_BLOCK = ATHLETE_TRAINER_QUOTE_BLOCK;
+
+/** Solo `pnpm dev`: enlace mágico en UI para QA/E2E. Nunca en build Vercel. */
+export const SHOW_INVITATION_DEV_LINK = import.meta.env.DEV;

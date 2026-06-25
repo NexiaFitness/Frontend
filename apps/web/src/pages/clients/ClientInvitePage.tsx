@@ -28,6 +28,7 @@ import {
     CLIENT_INVITE_SUCCESS_CARD,
     CLIENT_INVITE_TIP_BLOCK,
     CLIENT_INVITE_TIPS_CARD,
+    SHOW_INVITATION_DEV_LINK,
     TrainerTransferAckModal,
 } from "@/components/clients/invitations";
 
@@ -53,14 +54,14 @@ export const ClientInvitePage: React.FC = () => {
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
         const result = await submitInvite();
-        if (result?.magic_link) {
+        if (SHOW_INVITATION_DEV_LINK && result?.magic_link) {
             setShowDevLink(true);
         }
     };
 
     const handleTransferConfirm = async () => {
         const result = await confirmTransferAndSend();
-        if (result?.magic_link) {
+        if (SHOW_INVITATION_DEV_LINK && result?.magic_link) {
             setShowDevLink(true);
         }
     };
@@ -107,7 +108,7 @@ export const ClientInvitePage: React.FC = () => {
                                 Aparecerá en tu lista como «Pendiente de aceptar» hasta que el atleta acepte.
                             </p>
                         </div>
-                        {showDevLink && lastInvitation.magic_link ? (
+                        {SHOW_INVITATION_DEV_LINK && showDevLink && lastInvitation.magic_link ? (
                             <p className="break-all rounded-lg border border-border/60 bg-surface-2/40 p-3 text-xs text-muted-foreground">
                                 Enlace dev: {lastInvitation.magic_link}
                             </p>
@@ -243,7 +244,7 @@ export const ClientInvitePage: React.FC = () => {
                                         disabled={isSubmitting}
                                         onClick={async () => {
                                             const result = await resendBlockedInvitation();
-                                            if (result?.magic_link) {
+                                            if (SHOW_INVITATION_DEV_LINK && result?.magic_link) {
                                                 setShowDevLink(true);
                                             }
                                         }}

@@ -11,6 +11,7 @@ import {
 import type { Invitation } from "@nexia/shared/types/invitation";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
+import { SHOW_INVITATION_DEV_LINK } from "./clientInvitePresentation";
 
 interface InvitationRowActionsProps {
     invitation: Invitation;
@@ -34,7 +35,7 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
         setDevLink(null);
         try {
             const result = await resendInvitation(invitation.id).unwrap();
-            if (result.magic_link) {
+            if (SHOW_INVITATION_DEV_LINK && result.magic_link) {
                 setDevLink(result.magic_link);
             }
         } catch {
@@ -90,7 +91,7 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
                     {actionError}
                 </Alert>
             ) : null}
-            {devLink ? (
+            {SHOW_INVITATION_DEV_LINK && devLink ? (
                 <p className="break-all text-xs text-muted-foreground">
                     Enlace dev: {devLink}
                 </p>
