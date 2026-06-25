@@ -2,7 +2,7 @@
  * ClientInvitePage — invitar atleta (glass atleta §6.7, mobile-first + desktop lg+).
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, Info, Mail, UserPlus } from "lucide-react";
 import { useClientInvite } from "@nexia/shared";
@@ -28,13 +28,11 @@ import {
     CLIENT_INVITE_SUCCESS_CARD,
     CLIENT_INVITE_TIP_BLOCK,
     CLIENT_INVITE_TIPS_CARD,
-    SHOW_INVITATION_DEV_LINK,
     TrainerTransferAckModal,
 } from "@/components/clients/invitations";
 
 export const ClientInvitePage: React.FC = () => {
     const navigate = useNavigate();
-    const [showDevLink, setShowDevLink] = useState(false);
     const {
         values,
         setField,
@@ -53,22 +51,15 @@ export const ClientInvitePage: React.FC = () => {
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
-        const result = await submitInvite();
-        if (SHOW_INVITATION_DEV_LINK && result?.magic_link) {
-            setShowDevLink(true);
-        }
+        await submitInvite();
     };
 
     const handleTransferConfirm = async () => {
-        const result = await confirmTransferAndSend();
-        if (SHOW_INVITATION_DEV_LINK && result?.magic_link) {
-            setShowDevLink(true);
-        }
+        await confirmTransferAndSend();
     };
 
     const handleBackToList = () => {
         resetSuccess();
-        setShowDevLink(false);
         navigate("/dashboard/clients");
     };
 
@@ -108,11 +99,6 @@ export const ClientInvitePage: React.FC = () => {
                                 Aparecerá en tu lista como «Pendiente de aceptar» hasta que el atleta acepte.
                             </p>
                         </div>
-                        {SHOW_INVITATION_DEV_LINK && showDevLink && lastInvitation.magic_link ? (
-                            <p className="break-all rounded-lg border border-border/60 bg-surface-2/40 p-3 text-xs text-muted-foreground">
-                                Enlace dev: {lastInvitation.magic_link}
-                            </p>
-                        ) : null}
                         <div className={`${CLIENT_INVITE_ACTIONS} pt-2`}>
                             <Button
                                 variant="primary"
@@ -125,7 +111,6 @@ export const ClientInvitePage: React.FC = () => {
                                 variant="outline"
                                 onClick={() => {
                                     resetSuccess();
-                                    setShowDevLink(false);
                                 }}
                                 className="min-h-touch lg:min-h-0"
                             >
@@ -242,11 +227,8 @@ export const ClientInvitePage: React.FC = () => {
                                         type="button"
                                         variant="outline"
                                         disabled={isSubmitting}
-                                        onClick={async () => {
-                                            const result = await resendBlockedInvitation();
-                                            if (SHOW_INVITATION_DEV_LINK && result?.magic_link) {
-                                                setShowDevLink(true);
-                                            }
+                                        onClick={() => {
+                                            void resendBlockedInvitation();
                                         }}
                                         className="min-h-touch w-full lg:min-h-0 lg:w-auto"
                                     >

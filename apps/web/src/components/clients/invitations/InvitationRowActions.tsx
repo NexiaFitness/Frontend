@@ -11,7 +11,6 @@ import {
 import type { Invitation } from "@nexia/shared/types/invitation";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
-import { SHOW_INVITATION_DEV_LINK } from "./clientInvitePresentation";
 
 interface InvitationRowActionsProps {
     invitation: Invitation;
@@ -25,19 +24,14 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
     const [resendInvitation, { isLoading: isResending }] = useResendInvitationMutation();
     const [cancelInvitation, { isLoading: isCancelling }] = useCancelInvitationMutation();
     const [actionError, setActionError] = useState<string | null>(null);
-    const [devLink, setDevLink] = useState<string | null>(null);
 
     const isBusy = isResending || isCancelling;
 
     const handleResend = async (event: React.MouseEvent) => {
         event.stopPropagation();
         setActionError(null);
-        setDevLink(null);
         try {
-            const result = await resendInvitation(invitation.id).unwrap();
-            if (SHOW_INVITATION_DEV_LINK && result.magic_link) {
-                setDevLink(result.magic_link);
-            }
+            await resendInvitation(invitation.id).unwrap();
         } catch {
             setActionError("No se pudo reenviar la invitación.");
         }
@@ -46,7 +40,6 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
     const handleCancel = async (event: React.MouseEvent) => {
         event.stopPropagation();
         setActionError(null);
-        setDevLink(null);
         try {
             await cancelInvitation(invitation.id).unwrap();
         } catch {
@@ -90,11 +83,6 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
                 <Alert variant="error" className="text-xs">
                     {actionError}
                 </Alert>
-            ) : null}
-            {SHOW_INVITATION_DEV_LINK && devLink ? (
-                <p className="break-all text-xs text-muted-foreground">
-                    Enlace dev: {devLink}
-                </p>
             ) : null}
         </div>
     );

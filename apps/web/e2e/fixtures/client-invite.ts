@@ -44,18 +44,57 @@ export async function inviteClientViaUi(
   });
 }
 
-/** Tras inviteClientViaUi, extrae token del enlace dev (solo non-production). */
-export async function getDevMagicLinkFromInviteSuccess(
+/** Token tras invite UI: reenvío vía API local (magic_link no se muestra en UI). */
+export async function getInvitationTokenAfterUiInvite(
   page: Page,
+  email: string,
 ): Promise<string> {
-  const devBlock = page.getByText(/enlace dev:/i);
-  await expect(devBlock).toBeVisible({ timeout: 10_000 });
-  const text = (await devBlock.textContent()) ?? "";
-  const match = text.match(/token=([^\s]+)/);
-  if (!match?.[1]) {
-    throw new Error(`No se encontró token en enlace dev: ${text}`);
-  }
-  return decodeURIComponent(match[1]);
+  return page.evaluate(
+    async ({ targetEmail, tokenKey, apiBase }) => {
+      const token = localStorage.getItem(tokenKey);
+      if (!token) {
+        throw new Error("getInvitationTokenAfterUiInvite: no auth token");
+      }
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      };
+      const listResponse = await fetch(
+        `${apiBase}/invitations?status=pending&page_size=50`,
+        { headers },
+      );
+      const listBody = await listResponse.json();
+      if (!listResponse.ok) {
+        throw new Error(
+          `list invitations failed (${listResponse.status}): ${JSON.stringify(listBody)}`,
+        );
+      }
+      const invitation = (listBody.items as Array<{ id: number; email: string }>).find(
+        (item) => item.email === targetEmail,
+      );
+      if (!invitation) {
+        throw new Error(`No pending invitation for ${targetEmail}`);
+      }
+      const resendResponse = await fetch(`${apiBase}/invitations/${invitation.id}/resend`, {
+        method: "POST",
+        headers,
+      });
+      const resendBody = await resendResponse.json();
+      if (!resendResponse.ok) {
+        throw new Error(
+          `resend invitation failed (${resendResponse.status}): ${JSON.stringify(resendBody)}`,
+        );
+      }
+      const magicLink = resendBody.magic_link as string | undefined;
+      if (!magicLink) {
+        throw new Error(
+          "getInvitationTokenAfterUiInvite: API local debe devolver magic_link (ENVIRONMENT no desplegado)",
+        );
+      }
+      return magicLink.split("token=")[-1];
+    },
+    { targetEmail: email, tokenKey: TOKEN_KEY, apiBase: API_BASE },
+  );
 }
 
 export async function inviteClientViaUiAndGetToken(
@@ -63,7 +102,7 @@ export async function inviteClientViaUiAndGetToken(
   data: Pick<CreateClientApiData, "nombre" | "mail"> & { apellidos?: string },
 ): Promise<{ token: string; email: string; nombre: string }> {
   await inviteClientViaUi(page, data);
-  const token = await getDevMagicLinkFromInviteSuccess(page);
+  const token = await getInvitationTokenAfterUiInvite(page, data.mail);
   return { token, email: data.mail, nombre: data.nombre };
 }
 
