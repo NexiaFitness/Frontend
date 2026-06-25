@@ -25,6 +25,10 @@ export const ATHLETE_PAGE_X = "px-4 lg:px-8";
 /** Solo bottom nav (h-16) + safe area. */
 export const ATHLETE_PAGE_BOTTOM_NAV = "pb-24 lg:pb-8";
 
+/** Bottom nav + chip PWA install (h-11) + aire. */
+export const ATHLETE_PAGE_BOTTOM_NAV_WITH_PWA_CHIP =
+    "pb-[calc(4rem+2.75rem+1rem+env(safe-area-inset-bottom))] lg:pb-8";
+
 /** Contenedor de página sin CTA sticky. */
 export const ATHLETE_PAGE = `${ATHLETE_PAGE_X} pt-4 ${ATHLETE_PAGE_BOTTOM_NAV}`;
 

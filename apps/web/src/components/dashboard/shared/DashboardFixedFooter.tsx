@@ -17,7 +17,7 @@ export const DashboardFixedFooter: React.FC<DashboardFixedFooterProps> = ({
 }) => (
   <div
     className={cn(
-      "fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4",
+      "fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4 pb-[env(safe-area-inset-bottom)]",
       className
     )}
     style={{ left: "var(--sidebar-width, 0)" }}

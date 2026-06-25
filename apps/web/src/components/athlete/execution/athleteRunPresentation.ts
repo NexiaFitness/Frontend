@@ -557,7 +557,7 @@ export const ATHLETE_RUN_DOING_ENTER = ATHLETE_RUN_GROUP_HERO_ENTER;
 
 /** Puente pre-resumen — paridad layout RestTimerOverlay (§5b.1 / Fase E). */
 export const ATHLETE_RUN_SESSION_READY_STAGE = cn(
-    "fixed inset-x-0 top-0 z-40 flex flex-col items-center justify-center px-4",
+    "fixed inset-x-0 top-0 z-40 flex flex-col items-center justify-center px-4 pt-[env(safe-area-inset-top)]",
     "bottom-[calc(4rem+5.5rem+env(safe-area-inset-bottom))]",
     "bg-background/35 backdrop-blur-sm pointer-events-none",
     "lg:static lg:z-auto lg:flex-1 lg:min-h-[min(56vh,32rem)] lg:bg-transparent lg:backdrop-blur-none"

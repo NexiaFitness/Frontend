@@ -81,6 +81,7 @@ const AthleteExerciseProgressPage = lazy(() =>
     default: m.AthleteExerciseProgressPage,
   }))
 );
+const PwaPreviewPage = lazy(() => import("./pages/dev/PwaPreviewPage"));
 
 // Bloque 3: Módulos trainer (lazy)
 const CompleteProfile = lazy(() =>
@@ -580,6 +581,10 @@ function App() {
           {/* Account - todos los roles */}
           <Route path="account" element={<Account />} />
         </Route>
+
+        {import.meta.env.DEV ? (
+          <Route path="/dev/pwa-preview" element={<PwaPreviewPage />} />
+        ) : null}
 
         <Route path="*" element={<NotFound />} />
       </Routes>

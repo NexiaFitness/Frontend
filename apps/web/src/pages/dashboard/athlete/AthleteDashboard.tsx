@@ -28,7 +28,9 @@ import type { SessionHeroCtaAction } from "@nexia/shared/utils/athlete/athleteDa
 import type { InsightDeepLink } from "@nexia/shared/utils/athlete/athleteInsightDeepLinks";
 import type { WeekDayStripItem } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
-import { ATHLETE_STICKY_FOOTER_CONTENT_PB } from "@/components/athlete/layout/athleteLayoutClasses";
+import { InstallPromptChip, InstallPromptSheet } from "@/components/athlete/pwa";
+import { ATHLETE_STICKY_FOOTER_CONTENT_PB, ATHLETE_PAGE_BOTTOM_NAV_WITH_PWA_CHIP } from "@/components/athlete/layout/athleteLayoutClasses";
+import { useAthleteInstallPrompt } from "@/hooks/athlete/useAthleteInstallPrompt";
 import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
 import { cn } from "@/lib/utils";
 
@@ -37,6 +39,16 @@ export const AthleteDashboard: React.FC = () => {
     const isDesktop = useIsAthleteDesktopLayout();
     const [feedbackSheetOpen, setFeedbackSheetOpen] = useState(false);
     const [daySheetDay, setDaySheetDay] = useState<WeekDayStripItem | null>(null);
+    const isBlockingOverlayOpen = feedbackSheetOpen || daySheetDay != null;
+    const {
+        isActive: isPwaFunnelActive,
+        isSheetOpen: isPwaSheetOpen,
+        closeSheet: closePwaSheet,
+        openSheet: openPwaSheet,
+        platform: pwaPlatform,
+        promptInstall,
+        showChip: showPwaChip,
+    } = useAthleteInstallPrompt({ isBlockingOverlayOpen });
     const {
         userName,
         clientId,
@@ -161,13 +173,23 @@ export const AthleteDashboard: React.FC = () => {
             todaySession.status !== "completed"
     );
 
+    const showPwaChipOnMobile = showPwaChip && !isDesktop;
+
+    const contentBottomPadding = showStickyCta
+        ? showPwaChipOnMobile
+            ? "pb-[calc(4rem+5.5rem+2.75rem+2rem+env(safe-area-inset-bottom))] lg:pb-8"
+            : ATHLETE_STICKY_FOOTER_CONTENT_PB
+        : showPwaChipOnMobile
+          ? ATHLETE_PAGE_BOTTOM_NAV_WITH_PWA_CHIP
+          : "pb-24 lg:pb-8";
+
     return (
         <>
             <PullToRefresh onRefresh={handleRefresh}>
                 <div
                     className={cn(
                         "space-y-6 px-4 pt-4 lg:px-8",
-                        showStickyCta ? ATHLETE_STICKY_FOOTER_CONTENT_PB : "pb-24 lg:pb-8"
+                        contentBottomPadding
                     )}
                 >
                     <AthleteDashboardHeader
@@ -260,6 +282,28 @@ export const AthleteDashboard: React.FC = () => {
                     navigate(`/dashboard/sessions/${sessionId}`)
                 }
             />
+
+            {isPwaFunnelActive && (
+                <>
+                    {showPwaChipOnMobile && (
+                        <InstallPromptChip
+                            variant="dashboard"
+                            onClick={openPwaSheet}
+                            className={
+                                showStickyCta
+                                    ? "bottom-[calc(4rem+5.5rem+0.25rem)]"
+                                    : undefined
+                            }
+                        />
+                    )}
+                    <InstallPromptSheet
+                        isOpen={isPwaSheetOpen}
+                        onClose={closePwaSheet}
+                        platform={pwaPlatform}
+                        onInstall={promptInstall}
+                    />
+                </>
+            )}
         </>
     );
 };

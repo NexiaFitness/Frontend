@@ -443,4 +443,7 @@ export * from "./hooks/metrics";
 // Offline — cola ejecución atleta (F1)
 export * from "./offline";
 
+// PWA — detección instalación atleta
+export * from "./pwa";
+
 // Mocks (temporal - mientras backend implementa endpoints)

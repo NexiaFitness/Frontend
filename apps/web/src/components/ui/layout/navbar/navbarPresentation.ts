@@ -7,6 +7,7 @@ import { NEXIA_DIVIDER_GLOW } from "@/components/ui/surface/nexiaDividerPresenta
 
 const NAVBAR_SHELL_BASE = cn(
     "relative sticky top-0 z-50",
+    "pt-[env(safe-area-inset-top)]",
     "backdrop-blur-xl supports-[backdrop-filter]:backdrop-blur-md",
     "shadow-[0_10px_36px_-18px] shadow-black/50",
     "ring-1 ring-inset ring-primary/10"

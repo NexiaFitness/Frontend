@@ -927,7 +927,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
             {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
             <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
+                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4 pb-[env(safe-area-inset-bottom)]"
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
                 <div className="flex items-center justify-between gap-3">

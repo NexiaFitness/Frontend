@@ -22,7 +22,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["icons/icon.svg", "favicon.svg"],
+      includeAssets: ["icons/*.png", "icons/icon.svg", "favicon.svg"],
       manifest: {
         name: "NEXIA Fitness",
         short_name: "NEXIA",
@@ -34,15 +34,27 @@ export default defineConfig({
         background_color: "#0a1628",
         icons: [
           {
-            src: "icons/icon.svg",
-            sizes: "512x512",
-            type: "image/svg+xml",
+            src: "icons/icon-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
             purpose: "any",
           },
           {
-            src: "icons/icon.svg",
+            src: "icons/icon-512x512.png",
             sizes: "512x512",
-            type: "image/svg+xml",
+            type: "image/png",
+            purpose: "any",
+          },
+          {
+            src: "icons/icon-maskable-192x192.png",
+            sizes: "192x192",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          {
+            src: "icons/icon-maskable-512x512.png",
+            sizes: "512x512",
+            type: "image/png",
             purpose: "maskable",
           },
         ],

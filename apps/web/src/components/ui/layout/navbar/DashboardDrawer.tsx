@@ -67,7 +67,7 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
             />
             <div
                 className={cn(
-                    "fixed right-0 z-50 flex h-[calc(100vh-theme(space.navbar-dashboard-mobile))] w-full flex-col",
+                    "fixed right-0 z-50 flex h-[calc(100vh-theme(space.navbar-dashboard-mobile))] w-full flex-col pt-[env(safe-area-inset-top)]",
                     "transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
                     "lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]",
                     "top-navbar-dashboard-mobile lg:top-navbar-dashboard-desktop",
