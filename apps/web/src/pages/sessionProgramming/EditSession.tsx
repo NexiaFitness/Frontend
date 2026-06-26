@@ -78,7 +78,7 @@ import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
-import { PageTitle } from "@/components/dashboard/shared";
+import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS, PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
@@ -904,7 +904,7 @@ export const EditSession: React.FC = () => {
             </div>
 
             <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4 pb-[env(safe-area-inset-bottom)]"
+                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
                 <div className="flex items-center justify-between gap-3">

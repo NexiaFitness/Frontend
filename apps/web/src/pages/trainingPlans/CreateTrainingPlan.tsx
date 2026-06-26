@@ -20,6 +20,7 @@ import { useToast } from "@/components/ui/feedback";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
+import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS } from "@/components/dashboard/shared";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import {
     useCreateTrainingPlanMutation,
@@ -586,7 +587,7 @@ export const CreateTrainingPlan: React.FC = () => {
 
             {/* Footer fijo con botones de acción */}
             <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4 pb-[env(safe-area-inset-bottom)]"
+                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
                 <div className="flex items-center justify-end gap-3">
