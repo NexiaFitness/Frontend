@@ -6,6 +6,11 @@ import type {
     WorkloadTrackingOut,
 } from "../types/training";
 
+const INBOX_INVALIDATION_TAGS = [
+    { type: "InboxNotification" as const, id: "LIST" },
+    { type: "InboxNotification" as const, id: "COUNT" },
+];
+
 export const fatigueApi = baseApi.injectEndpoints({
     endpoints: (builder) => ({
         getUnreadFatigueAlerts: builder.query<FatigueAlert[], void>({
@@ -33,7 +38,7 @@ export const fatigueApi = baseApi.injectEndpoints({
                     "Content-Type": "application/json",
                 },
             }),
-            invalidatesTags: ["FatigueAlert"],
+            invalidatesTags: ["FatigueAlert", ...INBOX_INVALIDATION_TAGS],
         }),
 
         markFatigueAlertAsRead: builder.mutation<void, number>({
@@ -65,6 +70,7 @@ export const fatigueApi = baseApi.injectEndpoints({
             invalidatesTags: (result, error, { alertId }) => [
                 { type: "FatigueAlert", id: alertId },
                 "FatigueAlert",
+                ...INBOX_INVALIDATION_TAGS,
             ],
         }),
 

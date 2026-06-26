@@ -275,6 +275,8 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 { type: 'TrainingSession', id: sessionId },
                 { type: 'Client', id: body.client_id },
                 { type: 'Client', id: 'FEEDBACK' },
+                { type: 'InboxNotification', id: 'LIST' },
+                { type: 'InboxNotification', id: 'COUNT' },
             ],
         }),
 
@@ -291,6 +293,8 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 { type: 'Client', id: clientId },
                 { type: 'Client', id: 'FEEDBACK' },
                 { type: 'Client', id: 'RECENT_ACTIVITY' },
+                { type: 'InboxNotification', id: 'LIST' },
+                { type: 'InboxNotification', id: 'COUNT' },
             ],
         }),
 
