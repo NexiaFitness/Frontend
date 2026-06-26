@@ -141,8 +141,12 @@ export const ClientProfileDetails: React.FC<ClientProfileDetailsProps> = ({ clie
                     />
                     <InfoTile label="Días de entreno" value={formatTrainingDays(client.training_days)} />
                     <InfoTile
-                        label="Frecuencia semanal"
-                        value={display(client.exact_training_frequency ?? client.frecuencia_semanal)}
+                        label="Sesiones por semana"
+                        value={
+                            client.training_days && client.training_days.length > 0
+                                ? String(client.training_days.length)
+                                : display(client.exact_training_frequency ?? client.frecuencia_semanal)
+                        }
                     />
                 </div>
             </Section>

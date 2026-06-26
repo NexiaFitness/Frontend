@@ -24,7 +24,7 @@ import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
-import { getMutationErrorMessage } from "@nexia/shared";
+import { getMutationErrorMessage, resolveClientTrainingFrequency } from "@nexia/shared";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
   isDateInRange,
@@ -271,7 +271,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const planGoalResolved =
     activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
 
-  const trainingFrequency = clientProfile?.exact_training_frequency ?? 3;
+  const trainingFrequency = resolveClientTrainingFrequency(clientProfile);
   const volumeNominal = usePeriodizationVolumeRecommendations(
     clientId,
     planGoalResolved,

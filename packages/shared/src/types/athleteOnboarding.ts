@@ -1,8 +1,9 @@
 import type {
     Experience,
     Gender,
+    SessionDuration,
+    TrainingDayValue,
     TrainingGoal,
-    WeeklyFrequency,
 } from "./client";
 
 /** Payload for PUT /clients/profile/onboarding (mirrors backend AthleteOnboardingComplete). */
@@ -14,7 +15,8 @@ export interface AthleteOnboardingCompletePayload {
     objetivo_entrenamiento: TrainingGoal;
     experiencia: Experience;
     telefono?: string | null;
-    frecuencia_semanal?: WeeklyFrequency | null;
+    training_days: TrainingDayValue[];
+    session_duration: SessionDuration;
     lesiones_relevantes?: string | null;
     descripcion_objetivos?: string | null;
     id_passport?: string | null;

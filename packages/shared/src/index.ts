@@ -400,6 +400,7 @@ export {
 export {
     isoLocalDateToTrainingDayValue,
     parseHabitualTrainingDaySet,
+    resolveClientTrainingFrequency,
 } from "./utils/clientTrainingDays";
 
 export {

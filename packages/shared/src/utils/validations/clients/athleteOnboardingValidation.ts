@@ -1,5 +1,8 @@
 import type { AthleteOnboardingCompletePayload } from "../../../types/athleteOnboarding";
-import type { ClientFormData, ClientFormErrors } from "../../../types/client";
+import type { ClientFormData, ClientFormErrors, SessionDuration, TrainingDayValue } from "../../../types/client";
+import { SESSION_DURATION_ENUM } from "../../../types/client";
+
+const VALID_SESSION_DURATIONS = Object.values(SESSION_DURATION_ENUM) as SessionDuration[];
 
 export function validateAthleteOnboardingStep(
     step: number,
@@ -32,6 +35,14 @@ export function validateAthleteOnboardingStep(
         if (!formData.experiencia) {
             errors.experiencia = "Selecciona tu nivel de experiencia";
         }
+        if (!formData.session_duration) {
+            errors.session_duration = "Selecciona la duración de sesiones";
+        } else if (!VALID_SESSION_DURATIONS.includes(formData.session_duration as SessionDuration)) {
+            errors.session_duration = "Selecciona una duración válida";
+        }
+        if (!formData.training_days || formData.training_days.length === 0) {
+            errors.training_days = "Selecciona al menos un día de entrenamiento";
+        }
     }
 
     if (step === 3) {
@@ -58,7 +69,8 @@ export function toAthleteOnboardingPayload(
         objetivo_entrenamiento: formData.objetivo_entrenamiento!,
         experiencia: formData.experiencia!,
         telefono: formData.telefono?.trim() || null,
-        frecuencia_semanal: formData.frecuencia_semanal ?? null,
+        training_days: (formData.training_days ?? []) as TrainingDayValue[],
+        session_duration: formData.session_duration as SessionDuration,
         lesiones_relevantes: formData.lesiones_relevantes?.trim() || null,
         descripcion_objetivos: formData.descripcion_objetivos?.trim() || null,
         id_passport: formData.id_passport?.trim() || null,

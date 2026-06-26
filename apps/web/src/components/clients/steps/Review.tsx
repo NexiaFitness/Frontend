@@ -62,12 +62,6 @@ const GENDER_LABELS: Record<string, string> = {
     femenino: "Femenino",
 };
 
-const FREQUENCY_LABELS: Record<string, string> = {
-    Baja: "1-2 sesiones/semana",
-    Media: "3-5 sesiones/semana",
-    Alta: "6-7 sesiones/semana",
-};
-
 const DURATION_LABELS: Record<string, string> = {
     short_lt_1h: "Menos de 1 h",
     medium_1h_to_1h30: "1 h – 1 h 30 min",
@@ -227,22 +221,17 @@ export const Review: React.FC<ExtendedReviewProps> = ({
                                 value={EXPERIENCE_LABELS[formData.experiencia ?? ""] ?? display(formData.experiencia)}
                             />
                             <DataField
-                                label="Frecuencia de entrenamiento"
-                                value={FREQUENCY_LABELS[formData.frecuencia_semanal ?? ""] ?? display(formData.frecuencia_semanal)}
-                            />
-                            <DataField
                                 label="Duración de sesión"
                                 value={DURATION_LABELS[formData.session_duration ?? ""] ?? display(formData.session_duration)}
                             />
                             <DataField
-                                label="Sesiones/semana (exacto)"
+                                label="Días de entrenamiento"
                                 value={
-                                    formData.exact_training_frequency != null
-                                        ? `${formData.exact_training_frequency} día${formData.exact_training_frequency === 1 ? "" : "s"}/semana`
+                                    formData.training_days && formData.training_days.length > 0
+                                        ? `${formData.training_days.length} día${formData.training_days.length === 1 ? "" : "s"}/semana · ${trainingDaysStr}`
                                         : "—"
                                 }
                             />
-                            <DataField label="Días concretos" value={trainingDaysStr} />
                         </div>
                     </FormSection>
 
