@@ -27,3 +27,11 @@ export function formatInvitationExpiry(expiresAt?: string | null): string | null
         year: "numeric",
     });
 }
+
+/** Cuenta creada en un accept fallido: invitación sigue pending y user_exists=true. */
+export function getInvitationResumeLoginMessage(email: string): string {
+    return (
+        `Ya hay una cuenta con ${email}, pero la invitación no se completó. ` +
+        "Inicia sesión con la contraseña que elegiste y vuelve a pulsar «Aceptar invitación»."
+    );
+}

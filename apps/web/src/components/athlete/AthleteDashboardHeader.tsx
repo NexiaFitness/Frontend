@@ -9,6 +9,11 @@ import {
     ATHLETE_DASHBOARD_BELL_BUTTON,
 } from "@/components/athlete/dashboard/athleteDashboardPresentation";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import {
+    NEXIA_PORTAL_GREETING_H1,
+    NEXIA_PORTAL_GREETING_NAME,
+    NEXIA_PORTAL_GREETING_SUBTITLE,
+} from "@/components/athlete/account/athleteSettingsPresentation";
 
 export interface AthleteDashboardHeaderProps {
     userName: string;
@@ -35,13 +40,11 @@ export const AthleteDashboardHeader: React.FC<AthleteDashboardHeaderProps> = ({
         <header className="space-y-4">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 space-y-1.5">
-                    <h1 className="text-[1.75rem] font-semibold leading-[1.15] tracking-tight text-foreground sm:text-3xl">
+                    <h1 className={NEXIA_PORTAL_GREETING_H1}>
                         Hola,{" "}
-                        <span className="bg-gradient-to-r from-primary via-primary to-success bg-clip-text text-transparent">
-                            {firstName}
-                        </span>
+                        <span className={NEXIA_PORTAL_GREETING_NAME}>{firstName}</span>
                     </h1>
-                    <p className="text-sm font-medium text-muted-foreground">{subtitle}</p>
+                    <p className={NEXIA_PORTAL_GREETING_SUBTITLE}>{subtitle}</p>
                 </div>
                 <button
                     type="button"

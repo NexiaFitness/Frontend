@@ -20,6 +20,7 @@ import type { User } from "@nexia/shared/types/auth";
 import {
     formatInvitationExpiry,
     getInvitationInvalidMessage,
+    getInvitationResumeLoginMessage,
 } from "./invitationAcceptPresentation";
 
 interface InvitationAcceptFormProps {
@@ -159,9 +160,7 @@ export const InvitationAcceptForm: React.FC<InvitationAcceptFormProps> = ({ toke
             {needsLogin ? (
                 <div className="space-y-4 rounded-lg border border-border bg-surface p-4">
                     <p className="text-sm text-foreground">
-                        Ya existe una cuenta con{" "}
-                        <span className="font-medium">{validation.email}</span>. Inicia sesión para
-                        aceptar la invitación.
+                        {getInvitationResumeLoginMessage(validation.email ?? "")}
                     </p>
                     <Button type="button" variant="primary" onClick={requestLogin} className="w-full">
                         Iniciar sesión

@@ -21,6 +21,34 @@ export const ATHLETE_PRIMARY_CTA = cn(
 export const ATHLETE_SECTION_LABEL =
     "text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/75";
 
+/**
+ * Tipografía portal premium — paridad obligatoria atleta / admin / trainer.
+ * Ningún rol puede escalar h1/subtítulos por encima del atleta (F3b §3.11).
+ */
+export const NEXIA_PORTAL_GREETING_H1 = cn(
+    "text-[1.75rem] font-semibold leading-[1.15] tracking-tight text-foreground sm:text-3xl"
+);
+
+export const NEXIA_PORTAL_GREETING_NAME =
+    "bg-gradient-to-r from-primary via-primary to-success bg-clip-text text-transparent";
+
+export const NEXIA_PORTAL_GREETING_SUBTITLE = "text-sm font-medium text-muted-foreground";
+
+/** Eyebrow sobre saludo (p. ej. «Tu cuenta», «Panel de administración»). */
+export const NEXIA_PORTAL_PAGE_EYEBROW =
+    "text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground";
+
+/** Saludo hero cuenta V13 — más compacto que dashboard inicio. */
+export const NEXIA_PORTAL_ACCOUNT_GREETING_H1 = cn(
+    "truncate text-xl font-bold leading-tight text-foreground lg:text-2xl"
+);
+
+/** Título dentro de card glass (acciones, actividad, paneles). */
+export const NEXIA_PORTAL_CARD_TITLE = "text-base font-semibold text-foreground";
+
+/** Descripción bajo título de card. */
+export const NEXIA_PORTAL_CARD_DESCRIPTION = "text-sm text-muted-foreground";
+
 export const ATHLETE_DIVIDER = NEXIA_DIVIDER_SUBTLE;
 
 /** Enlace «Volver» — cyan visible en reposo (§6.7). */

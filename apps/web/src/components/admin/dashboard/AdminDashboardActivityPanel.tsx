@@ -8,8 +8,10 @@ import { cn } from "@/lib/utils";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     ADMIN_DASHBOARD_ACTIVITY_CARD,
+    ADMIN_DASHBOARD_ACTIVITY_DESCRIPTION,
     ADMIN_DASHBOARD_ACTIVITY_METRIC,
     ADMIN_DASHBOARD_ACTIVITY_METRICS_GRID,
+    ADMIN_DASHBOARD_ACTIVITY_TITLE,
     ADMIN_DASHBOARD_SECTION_LABEL,
 } from "./adminDashboardPresentation";
 
@@ -43,15 +45,11 @@ export const AdminDashboardActivityPanel: React.FC<AdminDashboardActivityPanelPr
                 <div className="relative flex flex-1 flex-col justify-between gap-6 pt-1 text-left lg:gap-8">
                     <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 space-y-1.5">
-                            <h2 className="text-lg font-semibold text-foreground lg:text-xl">
-                                {title}
-                            </h2>
-                            <p className="text-sm text-muted-foreground lg:text-base">
-                                {description}
-                            </p>
+                            <h2 className={ADMIN_DASHBOARD_ACTIVITY_TITLE}>{title}</h2>
+                            <p className={ADMIN_DASHBOARD_ACTIVITY_DESCRIPTION}>{description}</p>
                         </div>
                         <ChevronRight
-                            className="size-5 shrink-0 text-muted-foreground/70 lg:size-6"
+                            className="size-5 shrink-0 text-muted-foreground/70"
                             aria-hidden
                         />
                     </div>

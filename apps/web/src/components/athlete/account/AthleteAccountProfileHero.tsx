@@ -5,6 +5,11 @@
 import React from "react";
 import { cn } from "@/lib/utils";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import {
+    NEXIA_PORTAL_ACCOUNT_GREETING_H1,
+    NEXIA_PORTAL_GREETING_NAME,
+    NEXIA_PORTAL_PAGE_EYEBROW,
+} from "@/components/athlete/account/athleteSettingsPresentation";
 
 export interface AthleteAccountProfileHeroProps {
     firstName: string;
@@ -47,14 +52,10 @@ export const AthleteAccountProfileHero: React.FC<AthleteAccountProfileHeroProps>
                     <span className="text-xl font-bold text-primary lg:text-2xl">{initials}</span>
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Tu cuenta
-                    </p>
-                    <h1 className="truncate text-xl font-bold leading-tight text-foreground lg:text-2xl">
+                    <p className={NEXIA_PORTAL_PAGE_EYEBROW}>Tu cuenta</p>
+                    <h1 className={NEXIA_PORTAL_ACCOUNT_GREETING_H1}>
                         Hola,{" "}
-                        <span className="bg-gradient-to-r from-primary to-success bg-clip-text text-transparent">
-                            {firstName}
-                        </span>
+                        <span className={NEXIA_PORTAL_GREETING_NAME}>{firstName}</span>
                     </h1>
                     <p className="truncate text-sm text-muted-foreground lg:text-base">{email}</p>
                     {resolvedMeta && (

@@ -1,12 +1,18 @@
 /**
- * AdminDashboardHeader.tsx — Hero compacto admin (paridad atleta V01).
+ * AdminDashboardHeader.tsx — Hero compacto admin (paridad atleta V01 / F3b §3.11).
  */
 
 import React from "react";
 import { Shield } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
-import { ATHLETE_PAGE_HEADER_ICON } from "@/components/athlete/account/athleteSettingsPresentation";
+import {
+    ATHLETE_PAGE_HEADER_ICON,
+    NEXIA_PORTAL_GREETING_H1,
+    NEXIA_PORTAL_GREETING_NAME,
+    NEXIA_PORTAL_GREETING_SUBTITLE,
+    NEXIA_PORTAL_PAGE_EYEBROW,
+} from "@/components/athlete/account/athleteSettingsPresentation";
 
 export interface AdminDashboardHeaderProps {
     firstName: string;
@@ -18,27 +24,17 @@ export const AdminDashboardHeader: React.FC<AdminDashboardHeaderProps> = ({
     subtitle,
 }) => {
     return (
-        <header className="relative space-y-4 lg:space-y-5">
-            <div className="flex items-start gap-4 lg:items-center lg:gap-6">
-                <div
-                    className={cn(ATHLETE_PAGE_HEADER_ICON, "size-12 shrink-0 lg:size-16")}
-                    aria-hidden
-                >
-                    <Shield className="size-5 lg:size-7" />
+        <header className="space-y-4">
+            <div className="flex items-start gap-4">
+                <div className={cn(ATHLETE_PAGE_HEADER_ICON, "shrink-0")} aria-hidden>
+                    <Shield className="size-5" />
                 </div>
-                <div className="min-w-0 flex-1 space-y-1 lg:space-y-1.5">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                        Panel de administración
-                    </p>
-                    <h1 className="text-xl font-bold leading-tight text-foreground lg:text-3xl xl:text-4xl">
-                        Hola,{" "}
-                        <span className="bg-gradient-to-r from-primary to-success bg-clip-text text-transparent">
-                            {firstName}
-                        </span>
+                <div className="min-w-0 flex-1 space-y-1.5">
+                    <p className={NEXIA_PORTAL_PAGE_EYEBROW}>Panel de administración</p>
+                    <h1 className={NEXIA_PORTAL_GREETING_H1}>
+                        Hola, <span className={NEXIA_PORTAL_GREETING_NAME}>{firstName}</span>
                     </h1>
-                    <p className="max-w-3xl text-sm text-muted-foreground lg:text-base xl:text-lg">
-                        {subtitle}
-                    </p>
+                    <p className={NEXIA_PORTAL_GREETING_SUBTITLE}>{subtitle}</p>
                 </div>
             </div>
             <NexiaPremiumDivider className="w-full" />

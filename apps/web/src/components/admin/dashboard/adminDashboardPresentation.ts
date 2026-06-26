@@ -8,8 +8,14 @@ import {
     ATHLETE_PRIMARY_CTA,
     ATHLETE_SECTION_LABEL,
     ATHLETE_SETTINGS_CARD,
+    NEXIA_PORTAL_CARD_DESCRIPTION,
+    NEXIA_PORTAL_CARD_TITLE,
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
+import {
+    ATHLETE_DASHBOARD_KPI_HINT,
+    ATHLETE_DASHBOARD_KPI_VALUE,
+} from "@/components/athlete/dashboard/athleteDashboardPresentation";
 
 /** Contenedor página — móvil estrecho; desktop usa todo el main del shell. */
 export const ADMIN_DASHBOARD_PAGE = cn(
@@ -48,30 +54,28 @@ export const ADMIN_DASHBOARD_GLOW =
 export const ADMIN_DASHBOARD_KPI_CARD = cn(
     ATHLETE_SETTINGS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
-    "relative flex h-full min-h-[8.5rem] flex-col justify-end overflow-hidden p-5 lg:min-h-[9.5rem] lg:p-6 xl:p-7"
+    "relative flex h-full min-h-[8.5rem] flex-col justify-end overflow-hidden p-5 lg:p-6"
 );
 
-export const ADMIN_DASHBOARD_KPI_VALUE = cn(
-    "text-3xl font-bold tabular-nums tracking-tight text-primary",
-    "lg:text-4xl xl:text-[2.75rem] xl:leading-none"
-);
+export const ADMIN_DASHBOARD_KPI_VALUE = ATHLETE_DASHBOARD_KPI_VALUE;
 
 export const ADMIN_DASHBOARD_KPI_LABEL = "mt-1 text-sm font-semibold text-foreground";
 
-export const ADMIN_DASHBOARD_KPI_HINT = "mt-0.5 text-caption text-muted-foreground";
+export const ADMIN_DASHBOARD_KPI_HINT = ATHLETE_DASHBOARD_KPI_HINT;
 
 export const ADMIN_DASHBOARD_ACTIVITY_CARD = cn(
     ATHLETE_SETTINGS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
-    "relative flex h-full min-h-full w-full cursor-pointer flex-col overflow-hidden p-5 transition-colors lg:p-6 xl:p-7",
+    "relative flex h-full min-h-full w-full cursor-pointer flex-col overflow-hidden p-5 transition-colors lg:p-6",
     "hover:bg-surface-2/50 active:bg-surface-2/70",
     "motion-safe:active:scale-[0.995] motion-reduce:active:scale-100"
 );
 
-export const ADMIN_DASHBOARD_ACTIVITY_METRIC = cn(
-    "text-2xl font-bold tabular-nums text-foreground",
-    "lg:text-3xl xl:text-4xl"
-);
+export const ADMIN_DASHBOARD_ACTIVITY_TITLE = NEXIA_PORTAL_CARD_TITLE;
+
+export const ADMIN_DASHBOARD_ACTIVITY_DESCRIPTION = NEXIA_PORTAL_CARD_DESCRIPTION;
+
+export const ADMIN_DASHBOARD_ACTIVITY_METRIC = ATHLETE_DASHBOARD_KPI_VALUE;
 
 export const ADMIN_DASHBOARD_ACTIVITY_METRICS_GRID = cn(
     "grid grid-cols-3 gap-3",
