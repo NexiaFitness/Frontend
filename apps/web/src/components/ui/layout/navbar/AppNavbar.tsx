@@ -23,7 +23,9 @@ import { NavbarUserBlock } from "./NavbarUserBlock";
 import { NavbarMobileTrigger } from "./NavbarMobileTrigger";
 import { NexiaSideMenu } from "./NexiaSideMenu";
 import { DashboardDrawer } from "./DashboardDrawer";
+import { TrainerGlobalInboxBell } from "@/components/dashboard/trainer/TrainerGlobalInboxBell";
 import type { RootState } from "@nexia/shared/store";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
 
 export interface AppNavbarProps {
     /** Variante obligatoria; decidida por el layout que monta AppNavbar. */
@@ -45,11 +47,15 @@ export const AppNavbar: React.FC<AppNavbarProps> = ({
     const toggleMobileMenu = () => setIsMobileMenuOpen((prev) => !prev);
 
     if (variant === "dashboard") {
+        const showGlobalInbox =
+            user?.role === USER_ROLES.TRAINER || user?.role === USER_ROLES.ADMIN;
+
         return (
             <>
                 <NavbarShell variant="dashboard">
                     <NavbarLogo size="large" onNavigate={closeMobileMenu} />
                     <div className="flex items-center gap-4">
+                        {showGlobalInbox && <TrainerGlobalInboxBell />}
                         <NavbarUserBlock user={user} />
                         <div className="md:hidden">
                             <NavbarMobileTrigger

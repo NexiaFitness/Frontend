@@ -358,5 +358,6 @@ export const baseApi = createApi({
         "AthleteSuggestedLoad",
         "AthleteRunReference",
         "Invitation",
+        "InboxNotification",
     ],
 });

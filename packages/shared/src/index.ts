@@ -152,6 +152,7 @@ export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
+export * from "./types/notification";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
 export * from "./training/trainingPlanLifecycle";
@@ -416,6 +417,17 @@ export {
     type AthleteRunSuggestionContext,
     type AthleteRunSuggestionReference,
 } from "./types/athleteRunSuggestion";
+
+export {
+    buildClientInboxItemsFromNotifications,
+    buildInboxDeepLink,
+    computeInboxBadge,
+    countPendingTrainerResponses,
+    feedbackNeedsUrgentAttention,
+    formatInboxBadgeCount,
+    getInboxItemBorderClass,
+    notificationToInboxItem,
+} from "./utils/trainer/trainerInboxUtils";
 
 // Components
 export * from "./components/SmartNavigation";

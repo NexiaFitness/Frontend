@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { ClientProfileSidePanel } from "./ClientProfileSidePanel";
+import { ClientInboxBell } from "./ClientInboxBell";
 
 interface ClientHeaderProps {
     client: Client;
@@ -163,6 +164,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                             {client.nombre} {client.apellidos}
                         </h1>
                         <div className="ml-auto flex flex-shrink-0 flex-row flex-wrap items-center gap-2">
+                        <ClientInboxBell clientId={clientId} />
                         {onPlanificar && (
                             <Button
                                 variant="primary"

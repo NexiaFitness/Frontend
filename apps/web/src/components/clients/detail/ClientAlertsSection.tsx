@@ -28,7 +28,7 @@ import { Button } from "@/components/ui/buttons";
 import { FatigueAlertCard } from "../fatigue/FatigueAlertCard";
 import { CreateFatigueAlertModal } from "../fatigue/CreateFatigueAlertModal";
 import { getFatigueAlertContextualAction } from "@nexia/shared";
-import type { FatigueAlert } from "@nexia/shared/types/training";
+import type { FatigueAlert, FatigueAlertSeverity, FatigueAlertType } from "@nexia/shared/types/training";
 import { OVERVIEW_ACTION_CARD } from "./clientOverviewPresentation";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { cn } from "@/lib/utils";
@@ -80,8 +80,8 @@ export const ClientAlertsSection: React.FC<ClientAlertsSectionProps> = ({
 
     const handleCreateAlert = useCallback(
         async (data: {
-            alert_type: "overtraining" | "recovery_needed" | "session_adjustment";
-            severity: "low" | "medium" | "high" | "critical";
+            alert_type: FatigueAlertType;
+            severity: FatigueAlertSeverity;
             title: string;
             message: string;
             recommendations?: string;

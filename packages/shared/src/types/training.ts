@@ -372,7 +372,12 @@ export interface FatigueAnalysis {
 // FATIGUE ALERTS
 // ========================================
 
-export type FatigueAlertType = "overtraining" | "recovery_needed" | "session_adjustment";
+export type FatigueAlertType =
+    | "overtraining"
+    | "recovery_needed"
+    | "session_adjustment"
+    | "attendance"
+    | "plan_deviation";
 export type FatigueAlertSeverity = "low" | "medium" | "high" | "critical";
 
 export interface FatigueAlert {

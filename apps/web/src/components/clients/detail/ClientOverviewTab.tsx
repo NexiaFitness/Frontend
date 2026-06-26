@@ -59,17 +59,16 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const alertsSectionRef = useRef<HTMLDivElement>(null);
+    const commsSectionRef = useRef<HTMLDivElement>(null);
     const isValidClientId = clientId > 0;
 
-    useEffect(() => {
-        if (searchParams.get("focus") !== "alerts") return;
-
+    const scrollToSection = (ref: React.RefObject<HTMLDivElement | null>) => {
         let attempts = 0;
         let timerId: ReturnType<typeof setTimeout>;
 
-        const scrollToAlerts = () => {
-            if (alertsSectionRef.current) {
-                alertsSectionRef.current.scrollIntoView({
+        const tryScroll = () => {
+            if (ref.current) {
+                ref.current.scrollIntoView({
                     behavior: "smooth",
                     block: "start",
                 });
@@ -77,12 +76,19 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
             }
             if (attempts < 20) {
                 attempts += 1;
-                timerId = setTimeout(scrollToAlerts, 100);
+                timerId = setTimeout(tryScroll, 100);
             }
         };
 
-        timerId = setTimeout(scrollToAlerts, 100);
+        timerId = setTimeout(tryScroll, 100);
         return () => clearTimeout(timerId);
+    };
+
+    useEffect(() => {
+        const focus = searchParams.get("focus");
+        if (focus === "alerts") return scrollToSection(alertsSectionRef);
+        if (focus === "comms") return scrollToSection(commsSectionRef);
+        return undefined;
     }, [searchParams]);
 
     const { data: coherenceData, isLoading: isLoadingCoherence } = useCoherence(
@@ -241,7 +247,9 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 onViewPlan={onViewPlan}
             />
 
-            <ClientAthleteFeedbackCard clientId={clientId} />
+            <div ref={commsSectionRef} data-testid="client-comms-section">
+                <ClientAthleteFeedbackCard clientId={clientId} />
+            </div>
 
             <section data-testid="client-overview-kpi-section">
                 <h3 className={`${TYPOGRAPHY.dashboardViewHeading} mb-4 text-foreground`}>

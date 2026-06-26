@@ -20,6 +20,7 @@ export * from "./clients/useCreateClientProgress";
 export * from "./clients/useUpdateClient";
 export * from "./clients/useUpdateClientProgress";
 export * from "./clients/useCoherence";
+export * from "./clients/useClientInbox";
 
 export * from "./exercises";
 export * from "./training";

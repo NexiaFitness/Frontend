@@ -24,7 +24,6 @@ import {
     Dumbbell,
     User,
     BarChart3,
-    Bell,
     Play,
     MessageSquare,
 } from "lucide-react";
@@ -52,7 +51,6 @@ const TRAINER_NAV: RoleNavigation = {
         { label: "Sesiones", path: "/dashboard/sessions", icon: Play },
         { label: "Ejercicios", path: "/dashboard/exercises", icon: Dumbbell },
         { label: "Analítica", path: "/dashboard/reports/generate", icon: BarChart3 },
-        { label: "Alertas", path: "/dashboard", icon: Bell },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };
