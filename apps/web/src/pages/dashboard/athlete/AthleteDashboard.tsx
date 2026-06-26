@@ -203,13 +203,15 @@ export const AthleteDashboard: React.FC = () => {
                         <AthletePeriodizationStrip strip={periodizationStrip} />
                     )}
 
-                    <SessionTodayCard
-                        session={todaySession}
-                        hero={sessionHero}
-                        planProgressPercent={planProgressPercent}
-                        onCta={handleHeroCta}
-                        hideStartCtaOnMobile={showStickyCta}
-                    />
+                    {hasActivePlan && (
+                        <SessionTodayCard
+                            session={todaySession}
+                            hero={sessionHero}
+                            planProgressPercent={planProgressPercent}
+                            onCta={handleHeroCta}
+                            hideStartCtaOnMobile={showStickyCta}
+                        />
+                    )}
 
                     {hasActivePlan && (
                         <WeekStrip
