@@ -6,6 +6,7 @@ import React from "react";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import type { useChangePasswordForm } from "@/hooks/account/useChangePasswordForm";
+import { PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared";
 
 type ChangePasswordFormState = ReturnType<typeof useChangePasswordForm>;
 
@@ -55,7 +56,7 @@ export const AthleteChangePasswordSheetForm: React.FC<
                 value={formData.newPassword}
                 onChange={onFieldChange("newPassword")}
                 error={errors.newPassword}
-                placeholder="Mínimo 6 caracteres"
+                placeholder={PASSWORD_REQUIREMENTS_HINT}
                 isRequired
                 disabled={isLoading}
             />

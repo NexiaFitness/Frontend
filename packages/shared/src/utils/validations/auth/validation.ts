@@ -13,7 +13,11 @@
 
 // Constantes de validación
 export const EMAIL_REGEX = /\S+@\S+\.\S+/;
-export const PASSWORD_MIN_LENGTH = 6;
+export const PASSWORD_MIN_LENGTH = 8;
+
+/** Texto de ayuda reutilizable en formularios de contraseña nueva. */
+export const PASSWORD_REQUIREMENTS_HINT =
+    "Mínimo 8 caracteres, con mayúscula, minúscula y número";
 
 // Tipos para resultados de validación
 export interface ValidationResult {
@@ -32,12 +36,28 @@ export const validateEmail = (email: string): string | undefined => {
     return undefined;
 };
 
-export const validatePassword = (password: string): string | undefined => {
+export const validatePasswordRequired = (password: string): string | undefined => {
     if (!password) {
         return "La contraseña es obligatoria";
     }
+    return undefined;
+};
+
+export const validatePassword = (password: string): string | undefined => {
+    const requiredError = validatePasswordRequired(password);
+    if (requiredError) return requiredError;
+
     if (password.length < PASSWORD_MIN_LENGTH) {
         return `La contraseña debe tener al menos ${PASSWORD_MIN_LENGTH} caracteres`;
+    }
+    if (!/[A-Z]/.test(password)) {
+        return "La contraseña debe incluir al menos una mayúscula";
+    }
+    if (!/[a-z]/.test(password)) {
+        return "La contraseña debe incluir al menos una minúscula";
+    }
+    if (!/\d/.test(password)) {
+        return "La contraseña debe incluir al menos un número";
     }
     return undefined;
 };
@@ -93,7 +113,7 @@ export const validateLoginForm = (formData: {
     const emailError = validateEmail(formData.email);
     if (emailError) errors.email = emailError;
 
-    const passwordError = validatePassword(formData.password);
+    const passwordError = validatePasswordRequired(formData.password);
     if (passwordError) errors.password = passwordError;
 
     return {

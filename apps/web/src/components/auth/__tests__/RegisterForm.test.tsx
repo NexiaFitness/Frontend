@@ -81,8 +81,8 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "invalid-email");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "Password123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
       expect(await screen.findByText("Introduce un correo válido", {}, { timeout: 10000 }))
@@ -96,7 +96,7 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
       await user.type(screen.getByLabelText(/confirmar contraseña/i), "different123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
@@ -136,16 +136,16 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "Password123");
     };
 
     const fillExistingEmailForm = async (user: ReturnType<typeof userEvent.setup>) => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "existing@test.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "Password123");
     };
 
     it("successful registration redirects to dashboard", async () => {
@@ -182,12 +182,15 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "weakpass");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "weakpass");
+      await user.type(screen.getByLabelText(/^contraseña/i), "ValidPass123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "ValidPass123");
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
-      expect(await screen.findByText(/password must be at least 8 characters/i))
-        .toBeInTheDocument();
+      expect(
+        await screen.findByText(
+          /password must be at least 8 characters and contain uppercase, lowercase, and numbers/i,
+        ),
+      ).toBeInTheDocument();
     });
   });
 
@@ -196,8 +199,8 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "Password123");
     };
 
     it("handles server error with successful retry", async () => {
@@ -273,8 +276,8 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "Password123");
 
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
 
@@ -306,8 +309,8 @@ describe("RegisterForm", () => {
       await user.type(screen.getByLabelText(/correo electrónico/i), "test@example.com");
       await user.type(screen.getByLabelText(/^nombre/i), "Nelson");
       await user.type(screen.getByLabelText(/apellidos/i), "Valero");
-      await user.type(screen.getByLabelText(/^contraseña/i), "password123");
-      await user.type(screen.getByLabelText(/confirmar contraseña/i), "password123");
+      await user.type(screen.getByLabelText(/^contraseña/i), "Password123");
+      await user.type(screen.getByLabelText(/confirmar contraseña/i), "Password123");
 
       await user.click(screen.getByRole("button", { name: /crear cuenta/i }));
       expect(await screen.findByText(/service temporarily unavailable/i))

@@ -33,7 +33,7 @@ import {
 import { useRegisterMutation, loginSuccess, loginFailure } from "@nexia/shared";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
 import { USER_ROLES } from "@nexia/shared/config/constants";
-import { validateRegisterForm } from "@nexia/shared/utils/validations";
+import { validateRegisterForm, PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared/utils/validations";
 import type { AppDispatch } from "@nexia/shared/store";
 import type { RegisterCredentials } from "@nexia/shared/types/auth";
 
@@ -231,7 +231,7 @@ export const RegisterForm: React.FC = () => {
                     value={formData.password}
                     onChange={handleInputChange("password")}
                     error={errors.password}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={PASSWORD_REQUIREMENTS_HINT}
                     isRequired
                     disabled={isLoading}
                     className={AUTH_INPUT_MOBILE}

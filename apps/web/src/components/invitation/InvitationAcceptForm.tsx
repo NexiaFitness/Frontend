@@ -14,7 +14,7 @@ import {
     AUTH_LINK_MUTED,
     AUTH_SUBMIT_MOBILE,
 } from "@/components/auth/authFormPresentation";
-import { useInvitationAccept, loginSuccess } from "@nexia/shared";
+import { useInvitationAccept, loginSuccess, PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared";
 import type { AppDispatch } from "@nexia/shared/store";
 import type { User } from "@nexia/shared/types/auth";
 import {
@@ -224,7 +224,7 @@ export const InvitationAcceptForm: React.FC<InvitationAcceptFormProps> = ({ toke
                                 value={formData.password}
                                 onChange={handleInputChange("password")}
                                 error={errors.password}
-                                placeholder="Crea una contraseña segura"
+                                placeholder={PASSWORD_REQUIREMENTS_HINT}
                                 isRequired
                                 disabled={isAccepting}
                                 className={AUTH_INPUT_MOBILE}

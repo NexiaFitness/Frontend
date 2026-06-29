@@ -28,7 +28,7 @@ import {
 } from "@/components/auth/authFormPresentation";
 import { useResetPasswordMutation } from "@nexia/shared/api/authApi";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
-import { validateResetPasswordForm } from "@nexia/shared/utils/validations";
+import { validateResetPasswordForm, PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared/utils/validations";
 import type { ResetPasswordData } from "@nexia/shared/types/auth";
 
 interface ResetPasswordFormData {
@@ -160,7 +160,7 @@ export const ResetPasswordForm: React.FC = () => {
                     value={formData.newPassword}
                     onChange={handleInputChange("newPassword")}
                     error={errors.newPassword}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={PASSWORD_REQUIREMENTS_HINT}
                     isRequired
                     disabled={isLoading}
                     className={AUTH_INPUT_MOBILE}

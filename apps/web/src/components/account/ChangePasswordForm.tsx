@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
 import { useChangePasswordForm } from "@/hooks/account/useChangePasswordForm";
+import { PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared";
 
 export const ChangePasswordForm: React.FC = () => {
     const {
@@ -56,7 +57,7 @@ export const ChangePasswordForm: React.FC = () => {
                         value={formData.newPassword}
                         onChange={onFieldChange("newPassword")}
                         error={errors.newPassword}
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder={PASSWORD_REQUIREMENTS_HINT}
                         isRequired
                         disabled={isLoading}
                     />
