@@ -17,6 +17,11 @@ import {
     useUseSessionTemplateMutation,
     useApplyTemplateToSessionMutation,
 } from "../../api/sessionProgrammingApi";
+import { buildDefaultSessionName } from "../../utils/sessionProgramming/buildDefaultSessionName";
+import {
+    validateSessionDateWithinPlan,
+    type TrainingPlanDateRange,
+} from "../../utils/sessionProgramming/sessionPlanDateBounds";
 import type { TrainingSessionCreate } from "../../types/sessionProgramming";
 
 interface UseCreateSessionFromTemplateParams {
@@ -25,8 +30,14 @@ interface UseCreateSessionFromTemplateParams {
     trainerId: number;
 }
 
+interface CreateSessionFromTemplateInput {
+    sessionDate: string;
+    trainingPlanId: number;
+    planDateRange?: TrainingPlanDateRange | null;
+}
+
 interface UseCreateSessionFromTemplateResult {
-    createSession: (data: { sessionDate: string; trainingPlanId: number }) => Promise<void>;
+    createSession: (data: CreateSessionFromTemplateInput) => Promise<void>;
     isCreating: boolean;
     isError: boolean;
     error: unknown;
@@ -48,9 +59,17 @@ export const useCreateSessionFromTemplate = ({
     );
 
     const createSession = useCallback(
-        async (data: { sessionDate: string; trainingPlanId: number }) => {
+        async (data: CreateSessionFromTemplateInput) => {
             if (!template) {
                 throw new Error("Template no encontrado");
+            }
+
+            const dateError = validateSessionDateWithinPlan(
+                data.sessionDate,
+                data.planDateRange ?? null
+            );
+            if (dateError) {
+                throw new Error(dateError);
             }
 
             const sessionData: TrainingSessionCreate = {
@@ -58,13 +77,18 @@ export const useCreateSessionFromTemplate = ({
                 client_id: clientId,
                 trainer_id: trainerId,
                 session_date: data.sessionDate,
-                session_name: template.name,
+                session_name: buildDefaultSessionName({
+                    sessionDate: data.sessionDate,
+                    templateName: template.name,
+                }),
                 session_type: template.session_type,
                 planned_duration: template.estimated_duration ?? undefined,
                 planned_intensity: undefined,
                 planned_volume: undefined,
                 status: "planned",
-                notes: `Creada desde template: ${template.name}`,
+                notes: template.description?.trim()
+                    ? template.description.trim()
+                    : `Creada desde template: ${template.name}`,
             };
 
             const created = await createMutation(sessionData).unwrap();

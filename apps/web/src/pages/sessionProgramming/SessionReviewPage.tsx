@@ -9,7 +9,7 @@
  * @updated v6.6.0 — Layout review grid (DESIGN.md / PeriodBlockCard)
  */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import {
     ChevronRight,
@@ -27,7 +27,11 @@ import {
     useGetTrainingSessionQuery,
     useGetSessionCoherenceQuery,
     useDeleteTrainingSessionMutation,
+    useGetTrainingSessionsQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
+import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
+import { suggestNextSessionDateAfter } from "@nexia/shared";
 import { useValidateSessionMutation } from "@nexia/shared/api/sessionValidationApi";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import {
@@ -77,11 +81,17 @@ function formatMetric(v: number | null): string {
     return String(v);
 }
 
-function getNextWeekDate(sessionDate: string | null): string {
-    if (!sessionDate) return new Date().toISOString().split("T")[0];
-    const d = new Date(sessionDate);
-    d.setDate(d.getDate() + 7);
-    return d.toISOString().split("T")[0];
+function addOneLocalDay(dateISO: string): string | null {
+    const parts = dateISO.split("-").map(Number);
+    if (parts.length !== 3 || parts.some((n) => Number.isNaN(n))) return null;
+    const [y, m, d] = parts;
+    const dt = new Date(y, m - 1, d);
+    if (Number.isNaN(dt.getTime())) return null;
+    dt.setDate(dt.getDate() + 1);
+    const ny = dt.getFullYear();
+    const nm = String(dt.getMonth() + 1).padStart(2, "0");
+    const nd = String(dt.getDate()).padStart(2, "0");
+    return `${ny}-${nm}-${nd}`;
 }
 
 const COHERENCE_NOTE_PREFIXES = ["[Avisos de coherencia:", "[Coherence Warnings:"] as const;
@@ -357,6 +367,40 @@ export const SessionReviewPage: React.FC = () => {
         skip: !sessionId || isNaN(sessionId),
     });
 
+    const planId = session?.training_plan_id ?? null;
+    const { data: periodBlocks } = useGetPeriodBlocksQuery(planId!, {
+        skip: !planId,
+    });
+
+    const resolvedBlockId = useMemo(() => {
+        if (!session) return null;
+        if (session.period_block_id) return session.period_block_id;
+        if (!session.session_date || !periodBlocks) return null;
+        const block = periodBlocks.find(
+            (b) => session.session_date! >= b.start_date && session.session_date! <= b.end_date
+        );
+        return block?.id ?? null;
+    }, [session, periodBlocks]);
+
+    const activeBlock = useMemo(() => {
+        if (!periodBlocks || !resolvedBlockId) return null;
+        return periodBlocks.find((b) => b.id === resolvedBlockId) ?? null;
+    }, [periodBlocks, resolvedBlockId]);
+
+    const { data: planSessions } = useGetTrainingSessionsQuery(planId!, {
+        skip: !planId,
+    });
+
+    const { data: weeklyStructure } = useGetWeeklyStructureQuery(
+        { planId: planId!, blockId: resolvedBlockId! },
+        { skip: !planId || !resolvedBlockId }
+    );
+
+    const blockSessions = useMemo(() => {
+        if (!planSessions || !resolvedBlockId) return [];
+        return planSessions.filter((s) => s.period_block_id === resolvedBlockId);
+    }, [planSessions, resolvedBlockId]);
+
     const [validateSession, { isLoading: isValidating, data: validationData, error: validationError }] =
         useValidateSessionMutation();
 
@@ -383,14 +427,40 @@ export const SessionReviewPage: React.FC = () => {
     }, [navigate, sessionId, location]);
 
     const handleSchedule = useCallback(() => {
-        const nextDate = getNextWeekDate(session?.session_date ?? null);
+        if (!session) return;
+
         const params = new URLSearchParams();
-        if (session?.client_id) {
+        if (session.client_id) {
             params.set("clientId", String(session.client_id));
         }
+        if (session.training_plan_id) {
+            params.set("planId", String(session.training_plan_id));
+        }
+
+        let nextDate: string | null = null;
+
+        if (session.session_date && activeBlock) {
+            nextDate = suggestNextSessionDateAfter(
+                session.session_date,
+                activeBlock.start_date,
+                activeBlock.end_date,
+                weeklyStructure?.weeks ?? [],
+                blockSessions
+            );
+        } else if (session.session_date) {
+            nextDate = addOneLocalDay(session.session_date);
+        }
+
+        if (!nextDate) {
+            showError(
+                "No quedan días de entreno en este bloque para programar la siguiente sesión."
+            );
+            return;
+        }
+
         params.set("date", nextDate);
-        navigate(`/dashboard/scheduling/new?${params.toString()}`);
-    }, [session, navigate]);
+        navigate(`/dashboard/session-programming/create-session?${params.toString()}`);
+    }, [session, activeBlock, weeklyStructure, blockSessions, navigate, showError]);
 
     const replicateFlow = useReplicateSessionFlow(
         session

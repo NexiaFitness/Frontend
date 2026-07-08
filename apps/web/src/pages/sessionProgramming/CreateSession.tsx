@@ -44,7 +44,7 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName } from "@nexia/shared";
+import { exerciseDisplayName, useDefaultSessionName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
 import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
@@ -59,6 +59,7 @@ import { buildExercisePayloadFromLine } from "./buildExercisePayload";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { getRowVolumeSetsPerExercise } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
+import { SaveAsTemplateModal } from "@/components/sessionProgramming/SaveAsTemplateModal";
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
@@ -281,6 +282,28 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
     const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
 
+    const nameTouchedRef = useRef(false);
+    const defaultSessionName = useDefaultSessionName({
+        clientId: effectiveClientId,
+        trainerId,
+        sessionDate: formData.sessionDate,
+        isStandalone: useStandaloneSession,
+        enabled: !!effectiveClientId && effectiveClientId > 0,
+    });
+
+    useEffect(() => {
+        nameTouchedRef.current = false;
+    }, [effectiveClientId]);
+
+    useEffect(() => {
+        if (nameTouchedRef.current) return;
+        setFormData((prev) =>
+            prev.sessionName === defaultSessionName
+                ? prev
+                : { ...prev, sessionName: defaultSessionName },
+        );
+    }, [defaultSessionName]);
+
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
     /** Fase 4+7: Constructor por bloques */
@@ -340,18 +363,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         setTargetExerciseSlotId(null);
     };
 
-    /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */
-    const handleSaveAsTemplate = async () => {
-        const payload = buildTemplatePayloadFromConstructorRows({
+    const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+
+    /** Guardar como plantilla — modal con nombre obligatorio (B15) */
+    const handleSaveAsTemplate = async (payload: { templateName: string; description: string }) => {
+        const templatePayload = buildTemplatePayloadFromConstructorRows({
             constructorRows,
-            sessionName: formData.sessionName,
+            sessionName: payload.templateName,
             sessionType: formData.sessionType,
             plannedDuration: formData.plannedDuration,
-            notes: formData.notes,
+            notes: payload.description || formData.notes,
         });
         try {
-            await createSessionTemplate(payload).unwrap();
+            await createSessionTemplate(templatePayload).unwrap();
             showSuccess("Plantilla guardada correctamente", 2000);
+            setShowSaveTemplateModal(false);
             setTimeout(() => navigate(-1), 1500);
         } catch {
             showError("Error al guardar la plantilla. Inténtalo de nuevo.");
@@ -360,9 +386,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     const validateForm = useCallback((): { valid: boolean; errors: CreateSessionFormErrors } => {
         const errors: CreateSessionFormErrors = {};
-        if (!formData.sessionName.trim()) {
-            errors.sessionName = "El nombre de la sesión es obligatorio";
-        }
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
         }
@@ -373,7 +396,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             errors.trainingPlanId = "Debes seleccionar un plan de entrenamiento para esta sesión";
         }
         return { valid: Object.keys(errors).length === 0, errors };
-    }, [formData.sessionName, formData.sessionDate, formData.sessionType, useStandaloneSession, selectedPlanId]);
+    }, [formData.sessionDate, formData.sessionType, useStandaloneSession, selectedPlanId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -406,6 +429,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             return !isNaN(parsed) ? parsed : null;
         };
 
+        const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
+
         try {
             if (useStandaloneSession) {
                 // P2: Crear StandaloneSession (sesión libre) — ejercicios aplanados del Constructor
@@ -413,7 +438,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     trainer_id: trainerId,
                     client_id: effectiveClientId,
                     session_date: formData.sessionDate,
-                    session_name: formData.sessionName.trim(),
+                    session_name: resolvedSessionName,
                     session_type: formData.sessionType,
                     planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
                     actual_duration: null,
@@ -478,7 +503,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     training_plan_id: selectedPlanId!,
                     client_id: effectiveClientId,
                     trainer_id: trainerId,
-                    session_name: formData.sessionName.trim(),
+                    session_name: resolvedSessionName,
                     session_date: formData.sessionDate,
                     session_type: formData.sessionType,
                     planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
@@ -646,16 +671,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Nombre de la Sesión *
+                                        Nombre de la sesión
                                     </label>
                                     <Input
                                         type="text"
                                         value={formData.sessionName}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, sessionName: e.target.value }))}
-                                        required
+                                        onChange={(e) => {
+                                            nameTouchedRef.current = true;
+                                            setFormData((prev) => ({ ...prev, sessionName: e.target.value }));
+                                        }}
                                         placeholder="Ej: Fuerza — Tren superior A"
                                         className="bg-surface"
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Se genera automáticamente; puedes cambiarlo
+                                    </p>
                                     {formErrors.sessionName && <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>}
                                 </div>
                                 {resolvedClientId && (
@@ -935,9 +965,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={handleSaveAsTemplate}
+                        onClick={() => setShowSaveTemplateModal(true)}
                         disabled={isSavingTemplate}
-                        isLoading={isSavingTemplate}
                     >
                         Guardar como Plantilla
                     </Button>
@@ -997,6 +1026,12 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 </div>
             </div>
 
+            <SaveAsTemplateModal
+                isOpen={showSaveTemplateModal}
+                onClose={() => setShowSaveTemplateModal(false)}
+                onConfirm={handleSaveAsTemplate}
+                isLoading={isSavingTemplate}
+            />
         </>
     );
 };

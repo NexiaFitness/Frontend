@@ -8,6 +8,7 @@
 export * from "./useCreateSessionFromTemplate";
 export * from "./useCreateSession";
 export * from "./useCreateTemplate";
+export * from "./useDefaultSessionName";
 export * from "./useSessionExercisesDisplay";
 export * from "./useSessionStructureView";
 export * from "./useWeeklyClientVolumePanel";

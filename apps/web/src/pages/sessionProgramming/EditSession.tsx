@@ -11,7 +11,7 @@
  * @since v6.0.0
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
@@ -35,7 +35,7 @@ import {
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName } from "@nexia/shared";
+import { exerciseDisplayName, normalizeSessionName, useDefaultSessionName } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
@@ -203,6 +203,36 @@ export const EditSession: React.FC = () => {
     const editPlannedVolumeInt = sliderDisplay1to10(formData.plannedVolume, 5);
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+    const nameTouchedRef = useRef(false);
+    const sessionUsesAutoNameRef = useRef(false);
+
+    const isStandaloneSession = !session?.training_plan_id;
+
+    const defaultSessionName = useDefaultSessionName({
+        clientId: session?.client_id,
+        trainerId,
+        sessionDate: formData.sessionDate,
+        isStandalone: isStandaloneSession,
+        enabled: !!session?.client_id && trainerId > 0,
+    });
+
+    useEffect(() => {
+        if (!session || !originalSessionDate || formData.sessionDate !== originalSessionDate) return;
+        if (nameTouchedRef.current) return;
+        sessionUsesAutoNameRef.current =
+            normalizeSessionName(session.session_name || "") ===
+            normalizeSessionName(defaultSessionName);
+    }, [session, originalSessionDate, defaultSessionName, formData.sessionDate]);
+
+    useEffect(() => {
+        if (!sessionUsesAutoNameRef.current || nameTouchedRef.current) return;
+        setFormData((prev) =>
+            prev.sessionName === defaultSessionName
+                ? prev
+                : { ...prev, sessionName: defaultSessionName },
+        );
+    }, [defaultSessionName]);
 
 
     /** Fase 8: Constructor por bloques */
@@ -469,6 +499,8 @@ export const EditSession: React.FC = () => {
                 : new Date().toISOString().split("T")[0];
             setOriginalSessionDate(sessionDateYmd);
             setVolumeIntensityTouched(false);
+            nameTouchedRef.current = false;
+            sessionUsesAutoNameRef.current = false;
             setFormData({
                 sessionName: session.session_name || "",
                 sessionDate: sessionDateYmd,
@@ -502,9 +534,6 @@ export const EditSession: React.FC = () => {
         setFormErrors({});
 
         const errors: Record<string, string> = {};
-        if (!formData.sessionName.trim()) {
-            errors.sessionName = "El nombre de la sesión es obligatorio";
-        }
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
         }
@@ -524,8 +553,9 @@ export const EditSession: React.FC = () => {
 
         setIsSaving(true);
         try {
+            const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
             const sessionData: TrainingSessionUpdate = {
-                session_name: formData.sessionName.trim(),
+                session_name: resolvedSessionName,
                 session_date: formData.sessionDate,
                 session_type: formData.sessionType,
                 planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
@@ -658,18 +688,22 @@ export const EditSession: React.FC = () => {
                             >
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Nombre de la Sesión *
+                                        Nombre de la sesión
                                     </label>
                                     <Input
                                         type="text"
                                         value={formData.sessionName}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, sessionName: e.target.value })
-                                        }
-                                        required
+                                        onChange={(e) => {
+                                            nameTouchedRef.current = true;
+                                            sessionUsesAutoNameRef.current = false;
+                                            setFormData({ ...formData, sessionName: e.target.value });
+                                        }}
                                         placeholder="Ej: Fuerza — Tren superior A"
                                         className="bg-surface"
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Se genera automáticamente; puedes cambiarlo
+                                    </p>
                                     {formErrors.sessionName && (
                                         <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>
                                     )}
