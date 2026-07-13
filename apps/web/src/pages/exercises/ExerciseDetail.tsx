@@ -15,7 +15,7 @@ import {
     getLevelBadgeColor,
     getMuscleGradient,
     localViewToExercise,
-    equipmentParts,
+    muscleFacetLabel,
 } from "@/utils/exercises";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 
@@ -64,22 +64,39 @@ export const ExerciseDetail: React.FC = () => {
     };
 
     const primaryMuscle = useMemo(() => {
-        if (!exercise?.musculatura_principal) return "";
-        return exercise.musculatura_principal.split(",")[0].trim();
-    }, [exercise?.musculatura_principal]);
+        if (!exercise) return "";
+        return muscleFacetLabel(exercise);
+    }, [exercise]);
 
     const secondaryMuscles = useMemo(() => {
-        if (!exercise?.musculatura_secundaria) return [];
+        if (!exercise) return [];
+        const fromCatalog = (exercise.muscles || [])
+            .filter((m) => {
+                const role = (m.role || "").toLowerCase().replace(/\s+/g, "_");
+                return role && role !== "prime_mover" && role !== "primary";
+            })
+            .map((m) => (m.name_es || m.name || m.name_en || "").trim())
+            .filter(Boolean);
+        if (fromCatalog.length > 0) return fromCatalog;
+        if (!exercise.musculatura_secundaria) return [];
         return exercise.musculatura_secundaria
             .split(",")
             .map((m) => m.trim())
             .filter((m) => m.length > 0);
-    }, [exercise?.musculatura_secundaria]);
+    }, [exercise]);
 
-    const equipmentList = useMemo(
-        () => equipmentParts(exercise?.equipo),
-        [exercise?.equipo]
-    );
+    const equipmentLabels = useMemo(() => {
+        if (!exercise) return [];
+        const fromCatalog = (exercise.equipment || [])
+            .map((item) => (item.name_es?.trim() || item.name_en || "").trim())
+            .filter(Boolean);
+        if (fromCatalog.length > 0) return fromCatalog;
+        const legacy = (exercise.equipo || "").trim();
+        if (legacy && legacy.toLowerCase() !== "none") {
+            return [getEquipmentLabel(legacy)];
+        }
+        return [];
+    }, [exercise]);
 
     if (!routeId) {
         return (
@@ -219,26 +236,20 @@ export const ExerciseDetail: React.FC = () => {
                         </div>
                     )}
 
-                    {exercise.equipo && (
+                    {equipmentLabels.length > 0 && (
                         <div className="mb-6">
                             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                                 Equipamiento
                             </p>
                             <div className="flex flex-wrap gap-2">
-                                {equipmentList.length > 0 ? (
-                                    equipmentList.map((eq) => (
-                                        <span
-                                            key={eq}
-                                            className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary"
-                                        >
-                                            {getEquipmentLabel(eq)}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary">
-                                        {getEquipmentLabel(exercise.equipo)}
+                                {equipmentLabels.map((eq) => (
+                                    <span
+                                        key={eq}
+                                        className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary"
+                                    >
+                                        {eq}
                                     </span>
-                                )}
+                                ))}
                             </div>
                         </div>
                     )}

@@ -277,8 +277,9 @@ const baseQueryWithReauth: BaseQueryFn<
 
             const refreshToken = getTokenSafely(AUTH_CONFIG.REFRESH_KEY);
             if (!refreshToken) {
+                api.dispatch({ type: "auth/sessionExpired" });
                 restoreConsole();
-                return { data: undefined };
+                return result;
             }
 
             try {
@@ -286,8 +287,9 @@ const baseQueryWithReauth: BaseQueryFn<
                 const refreshed = await refreshPromise;
 
                 if (!refreshed) {
+                    api.dispatch({ type: "auth/sessionExpired" });
                     restoreConsole();
-                    return { data: undefined };
+                    return result;
                 }
 
                 const retryResult = await baseQuery(args, api, extraOptions);
