@@ -2,16 +2,22 @@
  * ClientListCard — Ítem de lista "Mis clientes" (Dashboard)
  *
  * Especificación: Card de cliente — lista Mis clientes (DASHBOARD_LAYOUT_SPEC).
- * Estructura: Avatar | Nombre + barra adherencia + % | Iconos tendencia + satisfacción (derecha).
- * Tendencia: flecha arriba (verde), abajo (rojo), estable (muted). Satisfacción: Smile/Meh/Frown.
+ * D4: barra = adherencia al plan; cara = satisfacción post-sesión (ClientRating).
+ * Sin valoración → cara neutra sin color; HintTooltip en hover/foco.
  *
  * @author Frontend Team
  * @since v5.x
  */
 
 import React from "react";
-import type { ClientListItem, ClientProgressTrend } from "@nexia/shared/types/client";
+import type { ClientListItem } from "@nexia/shared/types/client";
+import {
+    getClientAdherenceTooltip,
+    getClientSatisfactionDisplay,
+    getClientSatisfactionTrendDisplay,
+} from "@nexia/shared";
 import { ClientAvatar } from "@/components/ui/avatar";
+import { HintTooltip } from "@/components/ui/feedback";
 import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
 
 export interface ClientListCardProps {
@@ -20,35 +26,21 @@ export interface ClientListCardProps {
     hasRecentActivity?: boolean;
 }
 
-/** Satisfacción 1–10: fatigue 1 (perfecto) → 10, fatigue 10 (exhausted) → 1. */
-function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
-    const raw = fatigueLevelNumeric != null ? 10 - fatigueLevelNumeric : 5;
-    return Math.max(1, Math.min(10, raw));
-}
-
 export const ClientListCard: React.FC<ClientListCardProps> = ({
     client,
     onClick,
     hasRecentActivity = false,
 }) => {
     const adherence = Math.min(100, Math.max(0, client.adherence_percentage ?? 0));
-    const trend: ClientProgressTrend =
-        client.satisfaction_trend ??
-        client.progress_trend ??
-        (client.adherence_percentage != null
-            ? client.adherence_percentage >= 75
-                ? "up"
-                : client.adherence_percentage < 50
-                  ? "down"
-                  : "stable"
-            : "stable");
-    const satisfaction = satisfactionFromFatigue(client.fatigue_level_numeric);
+    const adherenceTooltip = getClientAdherenceTooltip(client.adherence_percentage);
+    const satisfaction = getClientSatisfactionDisplay(client);
+    const satisfactionTrend = getClientSatisfactionTrendDisplay(client);
     const fullName = [client.nombre, client.apellidos].filter(Boolean).join(" ") || "—";
 
     return (
         <button
             type="button"
-            className="flex w-full cursor-pointer items-center gap-3 rounded-lg bg-surface p-3 text-left transition-colors hover:bg-surface-2"
+            className="relative flex w-full cursor-pointer items-center gap-3 overflow-visible rounded-lg bg-surface p-3 text-left transition-colors hover:bg-surface-2"
             onClick={onClick}
             aria-label={`Ir al detalle de ${fullName}`}
         >
@@ -72,16 +64,27 @@ export const ClientListCard: React.FC<ClientListCardProps> = ({
             {/* 2. Nombre + adherencia (barra + %) */}
             <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-foreground">{fullName}</p>
-                <div className="mt-1 flex items-center gap-2">
-                    <AdherenceBar value={adherence} />
-                    <span className="text-label text-muted-foreground">{adherence}%</span>
-                </div>
+                <HintTooltip label={adherenceTooltip} className="mt-1" align="start">
+                    <span className="flex items-center gap-2">
+                        <AdherenceBar value={adherence} />
+                        <span className="text-label text-muted-foreground">{adherence}%</span>
+                    </span>
+                </HintTooltip>
             </div>
 
-            {/* 3. Iconos tendencia + satisfacción (derecha) */}
+            {/* 3. Tendencia satisfacción + icono satisfacción (derecha) */}
             <div className="flex shrink-0 items-center gap-2">
-                <TrendIcon trend={trend} />
-                <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfaction} />
+                {satisfactionTrend.trend != null && satisfactionTrend.tooltip != null && (
+                    <HintTooltip label={satisfactionTrend.tooltip} side="top" align="end">
+                        <TrendIcon trend={satisfactionTrend.trend} />
+                    </HintTooltip>
+                )}
+                <HintTooltip label={satisfaction.tooltip} side="top" align="end">
+                    <SatisfactionIcon
+                        level={satisfaction.level ?? undefined}
+                        unrated={satisfaction.unrated}
+                    />
+                </HintTooltip>
             </div>
         </button>
     );

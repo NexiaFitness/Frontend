@@ -27,6 +27,12 @@ interface ExerciseFiltersProps {
 // Opciones hardcodeadas para nivel (no hay endpoint en Exercise Catalog)
 const levelOptions = ["beginner", "intermediate", "advanced"];
 
+const loadTypeOptions = [
+    { value: "bodyweight", label: "Peso corporal" },
+    { value: "external", label: "Carga externa" },
+    { value: "mixed", label: "Mixta" },
+];
+
 export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onChange }) => {
     // Cargar solo grupos musculares de nivel 2 (no body regions de nivel 1)
     const { data: rawMuscleGroups = [], isLoading: isLoadingMuscleGroups } = useGetMuscleGroupsQuery({
@@ -87,6 +93,11 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
         }
     };
 
+    const handleLoadTypeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        const value = e.target.value || undefined;
+        onChange({ tipo_carga: value });
+    };
+
     // Handler para reset
     const handleReset = () => {
         onChange({
@@ -94,6 +105,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
             equipment_ids: undefined,
             movement_pattern_ids: undefined,
             nivel: undefined,
+            tipo_carga: undefined,
             search: undefined,
         });
     };
@@ -104,6 +116,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
         filters.equipment_ids?.length ||
         filters.movement_pattern_ids?.length ||
         filters.nivel ||
+        filters.tipo_carga ||
         filters.search
     );
 
@@ -201,6 +214,29 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
                         {levelOptions.map((level) => (
                             <option key={level} value={level}>
                                 {getLevelLabel(level)}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {/* Tipo de carga */}
+                <div>
+                    <label
+                        htmlFor="exercise-filter-load-type"
+                        className="block text-xs font-medium text-muted-foreground mb-2"
+                    >
+                        Tipo de carga
+                    </label>
+                    <select
+                        id="exercise-filter-load-type"
+                        value={filters.tipo_carga || ""}
+                        onChange={handleLoadTypeChange}
+                        className="w-full px-3 py-2 text-sm rounded-lg border border-input bg-background text-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
+                    >
+                        <option value="">Todos</option>
+                        {loadTypeOptions.map((opt) => (
+                            <option key={opt.value} value={opt.value}>
+                                {opt.label}
                             </option>
                         ))}
                     </select>

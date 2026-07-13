@@ -3,8 +3,9 @@
  */
 
 import React, { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Activity, AlertTriangle, Info } from "lucide-react";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import {
@@ -57,6 +58,7 @@ function SignalIcon({ signal }: { signal: ClientLoadSignal }) {
 }
 
 export const ClientLoadInsightsCard: React.FC<ClientLoadInsightsCardProps> = ({ clientId }) => {
+    const location = useLocation();
     const { data, isLoading, isError } = useGetClientLoadInsightsQuery(clientId, {
         skip: !clientId,
     });
@@ -125,6 +127,7 @@ export const ClientLoadInsightsCard: React.FC<ClientLoadInsightsCardProps> = ({ 
             {lastCompletedSession && (
                 <Link
                     to={`/dashboard/session-programming/sessions/${lastCompletedSession.id}`}
+                    state={returnToStateFromView(location)}
                     className="flex items-center justify-between rounded-md border border-primary/30 bg-primary/5 px-3 py-2.5 text-sm transition-colors hover:bg-primary/10"
                 >
                     <span className="font-medium text-foreground">

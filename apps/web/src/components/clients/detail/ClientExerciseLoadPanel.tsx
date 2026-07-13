@@ -4,7 +4,8 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import {
     FlaskConical,
     History,
@@ -165,6 +166,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
     exerciseName,
     weeks = 12,
 }) => {
+    const location = useLocation();
     const [manualModalOpen, setManualModalOpen] = useState(false);
     const [showAllHistory, setShowAllHistory] = useState(false);
 
@@ -320,6 +322,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                         {weightSourceLink && (
                                             <Link
                                                 to={weightSourceLink.to}
+                                                state={returnToStateFromView(location)}
                                                 className="inline-flex text-xs font-medium text-primary hover:underline"
                                             >
                                                 {weightSourceLink.label}
@@ -382,6 +385,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                         {e1rmSourceLink && (
                                             <Link
                                                 to={e1rmSourceLink.to}
+                                                state={returnToStateFromView(location)}
                                                 className="inline-flex text-xs font-medium text-primary hover:underline"
                                             >
                                                 {e1rmSourceLink.label}
@@ -440,6 +444,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                         {profile.latest_estimated_session_id && (
                                             <Link
                                                 to={`/dashboard/session-programming/sessions/${profile.latest_estimated_session_id}`}
+                                                state={returnToStateFromView(location)}
                                                 className="inline-flex text-xs font-medium text-primary hover:underline"
                                             >
                                                 {PR_SESSION_LINK}
@@ -538,6 +543,7 @@ export const ClientExerciseLoadPanel: React.FC<ClientExerciseLoadPanelProps> = (
                                                 {link && (
                                                     <Link
                                                         to={link.to}
+                                                        state={returnToStateFromView(location)}
                                                         className="shrink-0 text-xs font-medium text-primary hover:underline"
                                                     >
                                                         {link.label}

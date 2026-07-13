@@ -363,6 +363,7 @@ export * from "./utils/validations";
 export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
+export * from "./utils/clientListMetricsPresentation";
 export {
     getClientAvatarColor,
     getClientInitials,

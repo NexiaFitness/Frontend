@@ -6,10 +6,10 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { MessageSquare, ChevronDown, ChevronUp } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import {
     useGetClientFeedbackQuery,
@@ -46,13 +46,22 @@ function FeedbackRow({
 
     return (
         <div className="rounded-lg border border-border bg-surface/30 p-4 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm font-semibold text-foreground">{sessionName}</span>
-                <span className="text-caption text-muted-foreground">
-                    {formatFeedbackDate(item.feedback_date)}
-                </span>
-                {highFatigue && <Badge variant="subtle-warning">Fatiga alta</Badge>}
-                {hasPain && <Badge variant="subtle-destructive">Molestias</Badge>}
+            <div className="flex items-start justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">{sessionName}</span>
+                    <span className="text-caption text-muted-foreground">
+                        {formatFeedbackDate(item.feedback_date)}
+                    </span>
+                    {highFatigue && <Badge variant="subtle-warning">Fatiga alta</Badge>}
+                    {hasPain && <Badge variant="subtle-destructive">Molestias</Badge>}
+                </div>
+                <button
+                    type="button"
+                    onClick={() => onViewSession(item.training_session_id)}
+                    className="shrink-0 text-sm font-medium text-primary transition-colors hover:text-primary/70"
+                >
+                    Ver sesión →
+                </button>
             </div>
             <div className="flex flex-wrap gap-3 text-sm">
                 {item.perceived_effort != null && (
@@ -86,13 +95,6 @@ function FeedbackRow({
                 clientId={clientId}
                 existingResponse={item.trainer_response}
             />
-            <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => onViewSession(item.training_session_id)}
-            >
-                Ver sesión
-            </Button>
         </div>
     );
 }
@@ -101,6 +103,7 @@ export const ClientAthleteFeedbackCard: React.FC<ClientAthleteFeedbackCardProps>
     clientId,
 }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [expanded, setExpanded] = useState(false);
 
     const { data: feedbackList = [], isLoading } = useGetClientFeedbackQuery(
@@ -178,7 +181,7 @@ export const ClientAthleteFeedbackCard: React.FC<ClientAthleteFeedbackCardProps>
                         sessionNames.get(latest.training_session_id) ?? `Sesión #${latest.training_session_id}`
                     }
                     onViewSession={(id) =>
-                        navigate(`/dashboard/session-programming/sessions/${id}`)
+                        navigate(`/dashboard/session-programming/sessions/${id}`, { state: returnToStateFromView(location) })
                     }
                 />
             )}
@@ -214,7 +217,7 @@ export const ClientAthleteFeedbackCard: React.FC<ClientAthleteFeedbackCardProps>
                                         `Sesión #${item.training_session_id}`
                                     }
                                     onViewSession={(id) =>
-                                        navigate(`/dashboard/session-programming/sessions/${id}`)
+                                        navigate(`/dashboard/session-programming/sessions/${id}`, { state: returnToStateFromView(location) })
                                     }
                                 />
                             ))}

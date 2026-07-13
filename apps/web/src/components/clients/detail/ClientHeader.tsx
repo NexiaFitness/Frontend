@@ -10,10 +10,12 @@
  * @updated v6.0.0 - Integración de Breadcrumbs para navegación profesional.
  * @updated 2026-04 - Preferencias: solo días de entreno (training_days); sin duplicar frecuencia enum ni exact_training_frequency.
  * @updated 2026-04 - Observaciones siempre visibles; texto en foreground; añadir nota inline + PUT (desde página con onSaveQuickNote).
+ * @updated 2026-07 - CTA "Editar Perfil" pasa a variante ghost-primary (icono + texto en azul primary, sin fondo ni borde); evita repetir el mismo estilo de botón en la fila de acciones.
  */
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
@@ -198,10 +200,11 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         </Button>
                         {onEditProfile && (
                             <Button
-                                variant="outline"
+                                variant="ghost-primary"
                                 size="sm"
                                 onClick={onEditProfile}
                             >
+                                <Pencil aria-hidden="true" />
                                 Editar Perfil
                             </Button>
                         )}

@@ -30,6 +30,7 @@ import {
     getClientTestResultsEmptyHandler,
 } from "@/test-utils/mocks/handlers/clients/tests";
 import { getClientFeedbackHandler } from "@/test-utils/mocks/handlers/clients/feedback";
+import { getActivePlanByClientWithPlanHandler } from "@/test-utils/mocks/handlers/planning";
 import {
     mockNavigate,
     clearRouterMocks,
@@ -134,11 +135,74 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByText(/indicadores clave/i)).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
         });
 
         expect(screen.getByTestId("client-overview-top-section")).toBeInTheDocument();
         expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+    });
+
+    it("renders KPI section before action section in DOM order", async () => {
+        render(<ClientOverviewTab client={mockClient} clientId={1} />);
+
+        await waitFor(() => {
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+        });
+
+        const kpiSection = screen.getByTestId("client-overview-kpi-section");
+        const topSection = screen.getByTestId("client-overview-top-section");
+        expect(
+            kpiSection.compareDocumentPosition(topSection) & Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+    });
+
+    it("does not show visible page subtitle", async () => {
+        render(<ClientOverviewTab client={mockClient} clientId={1} />);
+
+        await waitFor(() => {
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+        });
+
+        expect(
+            screen.queryByText(/relación, acción y contexto del atleta/i),
+        ).not.toBeInTheDocument();
+    });
+
+    it("shows aligned badge on plan card when recommendations are complete", async () => {
+        server.use(
+            getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+            http.get("*/training-plans/recommendations/:clientId", () =>
+                HttpResponse.json(
+                    {
+                        client_id: 1,
+                        status: "complete",
+                        message: "Ficha completa",
+                        missing_fields: [],
+                        recommendations: {
+                            plan_type: "strength",
+                            sessions_per_week: 3,
+                        },
+                        based_on: {
+                            experience: "intermediate",
+                            training_frequency: 3,
+                            session_duration: 60,
+                            objective: "strength",
+                        },
+                    },
+                    { status: 200 },
+                ),
+            ),
+        );
+
+        render(<ClientOverviewTab client={mockClient} clientId={1} />);
+
+        await waitFor(() => {
+            expect(screen.getByText(/alineado con objetivo/i)).toBeInTheDocument();
+        });
+
+        expect(
+            screen.queryByText(/plan alineado con el objetivo del cliente/i),
+        ).not.toBeInTheDocument();
     });
 
     it("shows metric cards with adherence and weight", async () => {
@@ -208,7 +272,7 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByText(/indicadores clave/i)).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
         });
 
         expect(screen.queryByText(/estado del cliente/i)).not.toBeInTheDocument();
@@ -263,10 +327,13 @@ describe("ClientOverviewTab", () => {
 
         const link = await screen.findByRole("button", { name: /última sesión/i });
         await user.click(link);
-        expect(mockNavigate).toHaveBeenCalledWith("/dashboard/session-programming/sessions/99");
+        expect(mockNavigate).toHaveBeenCalledWith(
+            "/dashboard/session-programming/sessions/99",
+            { state: { from: "/" } },
+        );
     });
 
-    it("shows no programada in metric card when no upcoming sessions", async () => {
+    it("shows sin programar in metric card when no upcoming sessions", async () => {
         server.use(
             getClientTrainingSessionsEmptyHandler,
             getClientTestResultsEmptyHandler,
@@ -276,7 +343,7 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByText(/no programada/i)).toBeInTheDocument();
+            expect(screen.getByText(/sin programar/i)).toBeInTheDocument();
         });
     });
 

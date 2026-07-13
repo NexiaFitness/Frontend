@@ -24,6 +24,7 @@ import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady
 import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -576,7 +577,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 }
 
                 navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`, {
-                    state: { returnTo: "/dashboard/sessions", clientId: effectiveClientId },
+                    state: returnToStateFromView(location),
                 });
             }
         } catch (err) {

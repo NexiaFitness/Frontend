@@ -414,11 +414,13 @@ export const SessionReviewPage: React.FC = () => {
         if (backTarget) {
             navigate(backTarget);
         } else if (sessionId > 0) {
-            navigate(`/dashboard/session-programming/sessions/${sessionId}`);
+            navigate(`/dashboard/session-programming/sessions/${sessionId}`, {
+                state: returnToStateFromView(location),
+            });
         } else {
             navigate(-1);
         }
-    }, [backTarget, navigate, sessionId]);
+    }, [backTarget, navigate, sessionId, location]);
 
     const handleViewSession = useCallback(() => {
         navigate(`/dashboard/session-programming/sessions/${sessionId}`, {

@@ -37,6 +37,12 @@ const NIVEL_OPTIONS = [
     { value: "advanced", label: "Avanzado" },
 ];
 
+const TIPO_CARGA_OPTIONS = [
+    { value: "bodyweight", label: "Peso corporal" },
+    { value: "external", label: "Carga externa" },
+    { value: "mixed", label: "Mixta" },
+];
+
 const defaultForm: Partial<ExerciseCreate> = {
     exercise_id: "",
     nombre: "",
@@ -46,7 +52,7 @@ const defaultForm: Partial<ExerciseCreate> = {
     nivel: "intermediate",
     equipo: "bodyweight",
     patron_movimiento: "compound",
-    tipo_carga: "ext",
+    tipo_carga: "external",
     musculatura_principal: "",
     musculatura_secundaria: "",
     descripcion: "",
@@ -86,7 +92,10 @@ export const ExerciseForm: React.FC = () => {
                 nivel: exercise.nivel,
                 equipo: exercise.equipo,
                 patron_movimiento: exercise.patron_movimiento,
-                tipo_carga: exercise.tipo_carga,
+                tipo_carga:
+                    exercise.tipo_carga === "ext" || exercise.tipo_carga === "free_weight"
+                        ? "external"
+                        : exercise.tipo_carga,
                 musculatura_principal: exercise.musculatura_principal,
                 musculatura_secundaria: exercise.musculatura_secundaria ?? "",
                 descripcion: exercise.descripcion ?? "",
@@ -284,10 +293,12 @@ export const ExerciseForm: React.FC = () => {
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">Tipo carga</label>
-                                <Input
-                                    value={formData.tipo_carga ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, tipo_carga: e.target.value })}
-                                    placeholder="ext, con..."
+                                <FormSelect
+                                    value={formData.tipo_carga ?? "external"}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, tipo_carga: e.target.value })
+                                    }
+                                    options={TIPO_CARGA_OPTIONS}
                                 />
                             </div>
                         </div>

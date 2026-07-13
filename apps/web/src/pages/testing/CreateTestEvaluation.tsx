@@ -1,359 +1,479 @@
 /**
- * CreateTestEvaluation — Registrar evaluación física (Spec 01 F1).
+ * CreateTestEvaluation.tsx — Flujo alta evaluación física (Spec 01 §5.3)
+ *
+ * Ruta: /dashboard/testing/register-evaluation
+ * Query: clientId, category, testId (opcional)
  */
 
-import React, { useEffect, useMemo } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/buttons";
-import { PageTitle } from "@/components/dashboard/shared";
-import { LoadingSpinner, useToast } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import {
     TEST_CATEGORIES,
-    type TestCategory,
     useCreateTestEvaluation,
+    type PhysicalTestOut,
+    type TestCategory,
 } from "@nexia/shared";
-import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
+import { useGetClientQuery, useGetPhysicalTestsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
-import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
-import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
+import type { RootState } from "@nexia/shared/store";
+import { Button } from "@/components/ui/buttons";
+import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
+import {
+    Checkbox,
+    DatePickerButton,
+    FormSelect,
+    Input,
+    Textarea,
+} from "@/components/ui/forms";
+import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
+import {
+    CREATE_EVAL_CANCEL,
+    CREATE_EVAL_CLIENT_LABEL,
+    CREATE_EVAL_CONDITIONS_LABEL,
+    CREATE_EVAL_CREATE_TEST_SUBMIT,
+    CREATE_EVAL_CREATE_TEST_TOGGLE,
+    CREATE_EVAL_CUSTOM_DESCRIPTION,
+    CREATE_EVAL_CUSTOM_FREQUENCY,
+    CREATE_EVAL_CUSTOM_NAME,
+    CREATE_EVAL_CUSTOM_UNIT,
+    CREATE_EVAL_DATE_LABEL,
+    CREATE_EVAL_BASELINE_LABEL,
+    CREATE_EVAL_ERROR,
+    CREATE_EVAL_INVALID_VALUE,
+    CREATE_EVAL_MISSING_CLIENT,
+    CREATE_EVAL_MISSING_TRAINER,
+    CREATE_EVAL_NOTES_LABEL,
+    CREATE_EVAL_PAGE_SUBTITLE,
+    CREATE_EVAL_PAGE_TITLE,
+    CREATE_EVAL_SELECT_TEST,
+    CREATE_EVAL_STRENGTH_PR_HINT,
+    CREATE_EVAL_SUBMIT,
+    CREATE_EVAL_SUCCESS,
+    CREATE_EVAL_SURFACE_LABEL,
+    CREATE_EVAL_TEST_LABEL,
+    CREATE_EVAL_TEST_PLACEHOLDER,
+    CREATE_EVAL_VALUE_LABEL,
+    TEST_CATEGORY_OPTIONS,
+    isStrengthRmUnit,
+} from "./createTestEvaluationPresentation";
 
-const CATEGORY_OPTIONS = (
-    Object.keys(TEST_CATEGORIES) as TestCategory[]
-).map((value) => ({
-    value,
-    label: TEST_CATEGORIES[value].label,
-}));
-
-const STRENGTH_PR_HINT =
-    "Este resultado puede actualizar el PR del ejercicio vinculado en Rendimiento gym.";
+const VALID_CATEGORIES = new Set<string>([
+    "strength",
+    "power",
+    "speed",
+    "aerobic",
+    "anaerobic",
+    "mobility",
+]);
 
 function parseCategory(value: string | null): TestCategory {
-    const allowed = Object.keys(TEST_CATEGORIES) as TestCategory[];
-    if (value && allowed.includes(value as TestCategory)) {
+    if (value && VALID_CATEGORIES.has(value)) {
         return value as TestCategory;
     }
     return "mobility";
 }
 
+function todayIsoDate(): string {
+    return new Date().toISOString().slice(0, 10);
+}
+
 export const CreateTestEvaluation: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const { showSuccess, showError } = useToast();
+    const { user } = useSelector((state: RootState) => state.auth);
 
-    const clientIdFromQuery = searchParams.get("clientId");
-    const clientId = clientIdFromQuery ? Number(clientIdFromQuery) : 0;
-    const category = parseCategory(searchParams.get("category"));
-    const preselectTestId = searchParams.get("testId")
-        ? Number(searchParams.get("testId"))
-        : null;
+    const clientIdParam = searchParams.get("clientId");
+    const clientId = clientIdParam ? Number.parseInt(clientIdParam, 10) : NaN;
+    const categoryParam = parseCategory(searchParams.get("category"));
+    const testIdParam = searchParams.get("testId");
+    const preselectedTestId = testIdParam ? Number.parseInt(testIdParam, 10) : null;
 
-    const fallbackPath = clientId
-        ? `/dashboard/clients/${clientId}?tab=testing`
-        : "/dashboard";
-    const { goBack } = useReturnToOrigin({ fallbackPath });
-
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
-    const trainerId = trainerProfile?.id || 0;
+    const returnPath = useMemo(() => {
+        const state = location.state as { from?: string } | null;
+        if (state?.from) return state.from;
+        if (Number.isFinite(clientId)) {
+            return `/dashboard/clients/${clientId}?tab=testing`;
+        }
+        return "/dashboard";
+    }, [clientId, location.state]);
 
     const { data: client, isLoading: isLoadingClient } = useGetClientQuery(clientId, {
-        skip: !clientId,
+        skip: !Number.isFinite(clientId),
     });
 
-    const {
-        formData,
-        definitionForm,
-        showDefinitionForm,
-        setShowDefinitionForm,
-        formErrors,
-        definitionErrors,
-        availableTests,
-        selectedTest,
-        isLoadingTests,
-        isCreatingDefinition,
-        isSubmitting,
-        updateField,
-        updateDefinitionField,
-        submitDefinition,
-        submitResult,
-        showsStrengthPrHint,
-    } = useCreateTestEvaluation({
-        clientId,
-        trainerId,
-        category,
-        preselectTestId,
-    });
+    const { data: trainerProfile, isLoading: isLoadingTrainer } =
+        useGetCurrentTrainerProfileQuery(undefined, {
+            skip: !user || user.role !== "trainer",
+        });
+    const trainerId = trainerProfile?.id ?? 0;
 
-    useScrollDashboardWhenReady(!isLoadingClient && !isLoadingTests && !!clientId);
+    const [filterCategory, setFilterCategory] = useState<TestCategory>(categoryParam);
+    const { data: tests = [], isLoading: isLoadingTests, refetch: refetchTests } =
+        useGetPhysicalTestsQuery({ category: filterCategory });
+
+    const { registerEvaluation, createCustomTest, isSubmitting } =
+        useCreateTestEvaluation();
+
+    const [selectedTestId, setSelectedTestId] = useState<number | "">("");
+    const [value, setValue] = useState("");
+    const [unit, setUnit] = useState("");
+    const [testDate, setTestDate] = useState(todayIsoDate());
+    const [isBaseline, setIsBaseline] = useState(false);
+    const [surface, setSurface] = useState("");
+    const [conditions, setConditions] = useState("");
+    const [notes, setNotes] = useState("");
+    const [formError, setFormError] = useState<string | null>(null);
+
+    const [showCustomForm, setShowCustomForm] = useState(false);
+    const [customName, setCustomName] = useState("");
+    const [customUnit, setCustomUnit] = useState("");
+    const [customFrequency, setCustomFrequency] = useState("");
+    const [customDescription, setCustomDescription] = useState("");
+    const [isCreatingCustom, setIsCreatingCustom] = useState(false);
 
     useEffect(() => {
-        if (!clientId) navigate("/dashboard");
-    }, [clientId, navigate]);
+        setFilterCategory(categoryParam);
+    }, [categoryParam]);
+
+    useEffect(() => {
+        if (preselectedTestId != null && Number.isFinite(preselectedTestId)) {
+            setSelectedTestId(preselectedTestId);
+        }
+    }, [preselectedTestId]);
+
+    const selectedTest: PhysicalTestOut | undefined = useMemo(() => {
+        if (selectedTestId === "") return undefined;
+        return tests.find((test) => test.id === selectedTestId);
+    }, [selectedTestId, tests]);
+
+    useEffect(() => {
+        if (selectedTest?.unit) {
+            setUnit(selectedTest.unit);
+        }
+    }, [selectedTest?.id, selectedTest?.unit]);
 
     const testOptions = useMemo(
-        () => [
-            { value: "", label: "Selecciona una evaluación" },
-            ...availableTests.map((test) => ({
+        () =>
+            tests.map((test) => ({
                 value: String(test.id),
-                label: `${test.name} (${TEST_CATEGORIES[test.category]?.label ?? test.category}) · ${test.unit}`,
+                label: test.is_standard ? test.name : `${test.name} (custom)`,
             })),
-        ],
-        [availableTests],
+        [tests],
     );
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const showStrengthPrHint =
+        selectedTest != null &&
+        isStrengthRmUnit(selectedTest.category as TestCategory, unit) &&
+        (selectedTest.primary_exercise_id != null ||
+            selectedTest.linked_exercise_id != null);
+
+    const handleCreateCustomTest = async () => {
+        setFormError(null);
+        const name = customName.trim();
+        const customUnitValue = customUnit.trim();
+        if (!name || !customUnitValue) {
+            setFormError("Nombre y unidad son obligatorios para crear una evaluación.");
+            return;
+        }
+
+        const frequency = customFrequency.trim()
+            ? Number.parseInt(customFrequency, 10)
+            : null;
+        if (customFrequency.trim() && (!Number.isFinite(frequency) || frequency! <= 0)) {
+            setFormError("La frecuencia debe ser un número entero positivo.");
+            return;
+        }
+
+        setIsCreatingCustom(true);
         try {
-            const ok = await submitResult();
-            if (!ok) return;
-            showSuccess("Evaluación registrada correctamente.", 2000);
-            setTimeout(() => goBack({ replace: true }), 1200);
-        } catch (err) {
-            console.error("Error registrando evaluación:", err);
-            showError("No se pudo registrar la evaluación.");
+            const created = await createCustomTest({
+                name,
+                category: filterCategory,
+                unit: customUnitValue,
+                description: customDescription.trim() || null,
+                default_frequency_weeks: frequency,
+            });
+            await refetchTests();
+            setSelectedTestId(created.id);
+            setUnit(created.unit);
+            setShowCustomForm(false);
+            setCustomName("");
+            setCustomUnit("");
+            setCustomFrequency("");
+            setCustomDescription("");
+        } catch {
+            showError(CREATE_EVAL_ERROR);
+        } finally {
+            setIsCreatingCustom(false);
         }
     };
 
-    const handleCreateDefinition = async () => {
+    const handleSubmit = async (event: React.FormEvent) => {
+        event.preventDefault();
+        setFormError(null);
+
+        if (!Number.isFinite(clientId)) {
+            setFormError(CREATE_EVAL_MISSING_CLIENT);
+            return;
+        }
+        if (!trainerId) {
+            setFormError(CREATE_EVAL_MISSING_TRAINER);
+            return;
+        }
+        if (selectedTestId === "") {
+            setFormError(CREATE_EVAL_SELECT_TEST);
+            return;
+        }
+
+        const numericValue = Number.parseFloat(value.replace(",", "."));
+        if (!Number.isFinite(numericValue)) {
+            setFormError(CREATE_EVAL_INVALID_VALUE);
+            return;
+        }
+
+        const resolvedUnit = unit.trim() || selectedTest?.unit || "";
+        if (!resolvedUnit) {
+            setFormError("Indica la unidad del resultado.");
+            return;
+        }
+
         try {
-            await submitDefinition();
-            showSuccess("Evaluación creada y seleccionada.", 1500);
-        } catch (err) {
-            console.error("Error creando evaluación:", err);
-            showError("No se pudo crear la evaluación.");
+            await registerEvaluation({
+                client_id: clientId,
+                trainer_id: trainerId,
+                test_id: selectedTestId,
+                test_date: testDate,
+                value: numericValue,
+                unit: resolvedUnit,
+                is_baseline: isBaseline,
+                notes: notes.trim() || null,
+                surface: surface.trim() || null,
+                conditions: conditions.trim() || null,
+            });
+            showSuccess(CREATE_EVAL_SUCCESS);
+            navigate(returnPath);
+        } catch {
+            showError(CREATE_EVAL_ERROR);
         }
     };
 
-    if (isLoadingClient || isLoadingTests) {
+    if (!Number.isFinite(clientId)) {
         return (
-            <div className="flex min-h-[400px] items-center justify-center">
-                <LoadingSpinner size="lg" />
+            <div className="mx-auto max-w-2xl space-y-4 p-6">
+                <Alert variant="error">{CREATE_EVAL_MISSING_CLIENT}</Alert>
+                <Button variant="outline" onClick={() => navigate("/dashboard")}>
+                    Volver al panel
+                </Button>
             </div>
         );
     }
 
+    const isPageLoading = isLoadingClient || isLoadingTrainer || isLoadingTests;
+
     return (
-        <>
-            <div className="mb-6 px-4 lg:px-8">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <PageTitle
-                        title="Registrar evaluación"
-                        subtitle="Selecciona o crea una evaluación y registra el resultado."
-                    />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => goBack()}
-                        className="shrink-0"
-                    >
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                        Volver
-                    </Button>
-                </div>
+        <div className="mx-auto max-w-2xl pb-28">
+            <div className="mb-6 flex items-center gap-3">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => navigate(returnPath)}
+                    aria-label="Volver"
+                >
+                    <ArrowLeft className="size-4" aria-hidden />
+                </Button>
+                <PageTitle
+                    title={CREATE_EVAL_PAGE_TITLE}
+                    subtitle={CREATE_EVAL_PAGE_SUBTITLE}
+                />
             </div>
 
-            <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <Input
-                            label="Cliente"
-                            type="text"
-                            value={
-                                client
-                                    ? `${client.nombre ?? ""} ${client.apellidos ?? ""}`.trim()
-                                    : "Cargando..."
-                            }
-                            disabled
-                            className="bg-muted"
-                        />
+            {isPageLoading ? (
+                <div className="flex min-h-[240px] items-center justify-center">
+                    <LoadingSpinner size="lg" />
+                </div>
+            ) : (
+                <form onSubmit={handleSubmit} className="space-y-6">
+                    {formError && <Alert variant="error">{formError}</Alert>}
 
-                        <div className="space-y-2">
-                            <FormSelect
-                                label="Evaluación"
-                                value={formData.test_id}
-                                onChange={(e) => updateField("test_id", e.target.value)}
-                                options={testOptions}
-                                isRequired
-                                error={formErrors.test_id}
-                            />
-                            <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="h-auto px-0 text-primary"
-                                onClick={() => setShowDefinitionForm((v) => !v)}
-                            >
-                                {showDefinitionForm
-                                    ? "Ocultar formulario"
-                                    : "Crear nueva evaluación"}
-                            </Button>
-                        </div>
+                    <Input
+                        label={CREATE_EVAL_CLIENT_LABEL}
+                        value={
+                            client
+                                ? `${client.nombre} ${client.apellidos ?? ""}`.trim()
+                                : `Cliente #${clientId}`
+                        }
+                        readOnly
+                        disabled
+                    />
 
-                        {showDefinitionForm && (
-                            <div className="rounded-lg border border-border bg-surface/50 p-4 space-y-4">
-                                <p className="text-sm font-medium text-foreground">
-                                    Nueva evaluación
-                                </p>
-                                <Input
-                                    label="Nombre"
-                                    value={definitionForm.name}
-                                    onChange={(e) =>
-                                        updateDefinitionField("name", e.target.value)
-                                    }
-                                    error={definitionErrors.name}
-                                    isRequired
-                                />
-                                <FormSelect
-                                    label="Categoría"
-                                    value={definitionForm.category}
-                                    onChange={(e) =>
-                                        updateDefinitionField(
-                                            "category",
-                                            e.target.value as TestCategory,
-                                        )
-                                    }
-                                    options={CATEGORY_OPTIONS}
-                                />
-                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <Input
-                                        label="Unidad"
-                                        value={definitionForm.unit}
-                                        onChange={(e) =>
-                                            updateDefinitionField("unit", e.target.value)
-                                        }
-                                        placeholder="kg, cm, s, m…"
-                                        error={definitionErrors.unit}
-                                        isRequired
-                                    />
-                                    <Input
-                                        label="Frecuencia (semanas)"
-                                        type="number"
-                                        min="1"
-                                        value={definitionForm.default_frequency_weeks}
-                                        onChange={(e) =>
-                                            updateDefinitionField(
-                                                "default_frequency_weeks",
-                                                e.target.value,
-                                            )
-                                        }
-                                        error={definitionErrors.default_frequency_weeks}
-                                    />
-                                </div>
-                                <Input
-                                    label="Descripción (opcional)"
-                                    value={definitionForm.description}
-                                    onChange={(e) =>
-                                        updateDefinitionField("description", e.target.value)
-                                    }
-                                />
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isCreatingDefinition}
-                                    onClick={() => void handleCreateDefinition()}
-                                >
-                                    {isCreatingDefinition
-                                        ? "Creando…"
-                                        : "Guardar evaluación"}
-                                </Button>
-                            </div>
-                        )}
+                    <FormSelect
+                        label="Categoría"
+                        value={filterCategory}
+                        options={TEST_CATEGORY_OPTIONS.map((option) => ({
+                            value: option.value,
+                            label: option.label,
+                        }))}
+                        onChange={(event) => {
+                            const next = event.target.value as TestCategory;
+                            setFilterCategory(next);
+                            setSelectedTestId("");
+                        }}
+                    />
 
-                        {showsStrengthPrHint && (
-                            <p className="rounded-md border border-primary/30 bg-primary/5 px-3 py-2 text-sm text-foreground">
-                                {STRENGTH_PR_HINT}
-                            </p>
-                        )}
+                    <FormSelect
+                        label={CREATE_EVAL_TEST_LABEL}
+                        value={selectedTestId === "" ? "" : String(selectedTestId)}
+                        placeholder={CREATE_EVAL_TEST_PLACEHOLDER}
+                        options={testOptions}
+                        onChange={(event) => {
+                            const next = event.target.value;
+                            setSelectedTestId(next ? Number.parseInt(next, 10) : "");
+                        }}
+                        helperText={
+                            tests.length === 0
+                                ? "No hay evaluaciones en esta categoría. Crea una nueva abajo."
+                                : undefined
+                        }
+                    />
 
-                        <Input
-                            label="Fecha"
-                            type="date"
-                            value={formData.test_date}
-                            onChange={(e) => updateField("test_date", e.target.value)}
-                            error={formErrors.test_date}
-                            isRequired
-                            max={new Date().toISOString().split("T")[0]}
-                        />
+                    <div>
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-auto px-0 text-primary"
+                            onClick={() => setShowCustomForm((prev) => !prev)}
+                        >
+                            {CREATE_EVAL_CREATE_TEST_TOGGLE}
+                        </Button>
+                    </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {showCustomForm && (
+                        <section className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
                             <Input
-                                label="Valor"
+                                label={CREATE_EVAL_CUSTOM_NAME}
+                                value={customName}
+                                onChange={(event) => setCustomName(event.target.value)}
+                                isRequired
+                            />
+                            <Input
+                                label={CREATE_EVAL_CUSTOM_UNIT}
+                                value={customUnit}
+                                onChange={(event) => setCustomUnit(event.target.value)}
+                                placeholder="kg, s, cm, ml/kg/min…"
+                                isRequired
+                            />
+                            <Input
+                                label={CREATE_EVAL_CUSTOM_FREQUENCY}
                                 type="number"
-                                step="0.01"
-                                value={formData.value}
-                                onChange={(e) => updateField("value", e.target.value)}
-                                error={formErrors.value}
-                                isRequired
+                                min={1}
+                                value={customFrequency}
+                                onChange={(event) => setCustomFrequency(event.target.value)}
                             />
-                            <Input
-                                label="Unidad"
-                                value={formData.unit}
-                                onChange={(e) => updateField("unit", e.target.value)}
-                                error={formErrors.unit}
-                                isRequired
-                                disabled={!!selectedTest}
+                            <Textarea
+                                label={CREATE_EVAL_CUSTOM_DESCRIPTION}
+                                value={customDescription}
+                                onChange={(event) => setCustomDescription(event.target.value)}
+                                rows={2}
                             />
-                        </div>
-
-                        <Checkbox
-                            id="is_baseline"
-                            checked={formData.is_baseline}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                updateField("is_baseline", e.target.checked)
-                            }
-                            label="Marcar como línea base (baseline)"
-                        />
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input
-                                label="Superficie (opcional)"
-                                value={formData.surface}
-                                onChange={(e) => updateField("surface", e.target.value)}
-                            />
-                            <Input
-                                label="Condiciones (opcional)"
-                                value={formData.conditions}
-                                onChange={(e) => updateField("conditions", e.target.value)}
-                            />
-                        </div>
-
-                        <Textarea
-                            label="Notas (opcional)"
-                            value={formData.notes}
-                            onChange={(e) => updateField("notes", e.target.value)}
-                            rows={3}
-                        />
-
-                        {formErrors.trainer && (
-                            <p className="text-sm text-destructive">{formErrors.trainer}</p>
-                        )}
-
-                        <div className="flex flex-col sm:flex-row gap-3 pt-2">
                             <Button
                                 type="button"
                                 variant="outline"
-                                size="lg"
-                                onClick={() => goBack()}
-                                className="w-full sm:w-auto"
+                                size="sm"
+                                disabled={isCreatingCustom}
+                                onClick={() => void handleCreateCustomTest()}
                             >
-                                Cancelar
+                                {isCreatingCustom
+                                    ? "Creando…"
+                                    : CREATE_EVAL_CREATE_TEST_SUBMIT}
+                            </Button>
+                        </section>
+                    )}
+
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Input
+                            label={CREATE_EVAL_VALUE_LABEL}
+                            type="text"
+                            inputMode="decimal"
+                            value={value}
+                            onChange={(event) => setValue(event.target.value)}
+                            isRequired
+                        />
+                        <Input
+                            label="Unidad"
+                            value={unit}
+                            onChange={(event) => setUnit(event.target.value)}
+                            placeholder={selectedTest?.unit ?? ""}
+                            isRequired
+                        />
+                    </div>
+
+                    <DatePickerButton
+                        label={CREATE_EVAL_DATE_LABEL}
+                        value={testDate}
+                        onChange={setTestDate}
+                    />
+
+                    <Checkbox
+                        label={CREATE_EVAL_BASELINE_LABEL}
+                        checked={isBaseline}
+                        onChange={(event) => setIsBaseline(event.target.checked)}
+                    />
+
+                    <Input
+                        label={CREATE_EVAL_SURFACE_LABEL}
+                        value={surface}
+                        onChange={(event) => setSurface(event.target.value)}
+                    />
+
+                    <Input
+                        label={CREATE_EVAL_CONDITIONS_LABEL}
+                        value={conditions}
+                        onChange={(event) => setConditions(event.target.value)}
+                    />
+
+                    <Textarea
+                        label={CREATE_EVAL_NOTES_LABEL}
+                        value={notes}
+                        onChange={(event) => setNotes(event.target.value)}
+                        rows={3}
+                    />
+
+                    {showStrengthPrHint && (
+                        <Alert variant="info">{CREATE_EVAL_STRENGTH_PR_HINT}</Alert>
+                    )}
+
+                    {selectedTest && (
+                        <p className="text-xs text-muted-foreground">
+                            Categoría: {TEST_CATEGORIES[selectedTest.category as TestCategory]?.label ?? selectedTest.category}
+                        </p>
+                    )}
+
+                    <DashboardFixedFooter>
+                        <div className="flex w-full max-w-2xl justify-end gap-3">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => navigate(returnPath)}
+                            >
+                                {CREATE_EVAL_CANCEL}
                             </Button>
                             <Button
                                 type="submit"
                                 variant="primary"
-                                size="lg"
                                 disabled={isSubmitting || !trainerId}
-                                isLoading={isSubmitting}
-                                className="w-full sm:w-auto sm:ml-auto"
                             >
-                                {isSubmitting ? "Guardando…" : "Registrar resultado"}
+                                {isSubmitting ? "Guardando…" : CREATE_EVAL_SUBMIT}
                             </Button>
                         </div>
-                    </form>
-                </div>
-            </div>
-        </>
+                    </DashboardFixedFooter>
+                </form>
+            )}
+        </div>
     );
 };

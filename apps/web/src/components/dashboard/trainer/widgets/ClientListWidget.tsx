@@ -72,9 +72,12 @@ export const ClientListWidget: React.FC = () => {
     }
 
     return (
-        <div>
-            <h2 className="mb-4 text-lg font-semibold text-foreground">Mis clientes</h2>
-            <div className="space-y-2">
+        <div className="overflow-visible">
+            <h2 className="mb-1 text-lg font-semibold text-foreground">Mis clientes</h2>
+            <p className="mb-4 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">
+                Barra = adherencia al plan · Cara = satisfacción post-sesión
+            </p>
+            <div className="space-y-2 overflow-visible">
                 {items.length === 0 ? (
                     <p className="rounded-lg bg-surface p-4 text-center text-sm text-muted-foreground">
                         No tienes clientes aún

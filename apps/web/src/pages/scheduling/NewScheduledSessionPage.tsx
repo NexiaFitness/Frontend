@@ -43,7 +43,7 @@ export const NewScheduledSessionPage: React.FC = () => {
 
 
     const { user } = useSelector((state: RootState) => state.auth);
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+    const { data: trainerProfile, isLoading: isLoadingProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
     });
     const trainerId = trainerProfile?.id ?? 0;
@@ -229,7 +229,7 @@ export const NewScheduledSessionPage: React.FC = () => {
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <div className="bg-card border border-border rounded-lg p-6 lg:p-8">
-                        {isLoadingClients ? (
+                        {isLoadingProfile || isLoadingClients ? (
                             <p className="text-muted-foreground">Cargando clientes...</p>
                         ) : (
                             <form id="new-scheduled-session-form" onSubmit={handleSubmit} className="space-y-5">

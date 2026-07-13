@@ -1,8 +1,11 @@
 /**
- * AthleteSessionFeedbackPage.tsx — V07 feedback post-sesión (F1).
- * Esfuerzo + fatiga visibles; resto colapsado. Contrato: 10_DECISIONES_PRODUCTO_F1.md
+ * AthleteSessionFeedbackPage.tsx — V07 feedback post-sesion (F1) + valoracion de sesion (D3).
+ * Contexto: checkout del atleta tras completar una sesion. Recoge sensaciones fisiologicas
+ * (esfuerzo, fatiga, sueno, motivacion, dolor/notas) y, como primer paso, una valoracion
+ * de satisfaccion 1-5 que alimenta ClientRating en el dashboard del entrenador.
+ * Contratos: 10_DECISIONES_PRODUCTO_F1.md, DESIGN_MOBILE_FIRST_ATLETA.md, agent.md §5/§11.
  * @author Frontend Team
- * @since v6.1.0
+ * @since v6.2.0
  */
 
 import React, { useLayoutEffect, useRef, useState } from "react";
@@ -33,6 +36,7 @@ import {
     useGetPostSessionReportQuery,
     useGetTrainingSessionQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
+import { useCreateClientRatingMutation } from "@nexia/shared/api/clientsApi";
 import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
 import {
     ATHLETE_PAGE,
@@ -40,6 +44,17 @@ import {
 } from "@/components/athlete/layout/athleteLayoutClasses";
 import { cn } from "@/lib/utils";
 import { scrollDashboardMainToElementAfterPaint } from "@/lib/dashboardScroll";
+
+// ---------------------------------------------------------------------------
+// Satisfaccion 1-5: etiquetas descriptivas por valor seleccionado.
+// ---------------------------------------------------------------------------
+const SATISFACTION_LABELS: Record<number, string> = {
+    1: "Muy mala",
+    2: "Mala",
+    3: "Regular",
+    4: "Buena",
+    5: "Excelente",
+};
 
 export const AthleteSessionFeedbackPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -63,13 +78,18 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
     const isLoading = isLoadingSession || isLoadingReport;
 
     const [createFeedback, { isLoading: isSubmitting }] = useCreateSessionFeedbackMutation();
+    const [createRating] = useCreateClientRatingMutation();
 
+    // Sensaciones fisiologicas
     const [effort, setEffort] = useState(7);
     const [fatigue, setFatigue] = useState(5);
     const [sleep, setSleep] = useState(7);
     const [motivation, setMotivation] = useState(7);
     const [pain, setPain] = useState("");
     const [notes, setNotes] = useState("");
+
+    // Valoracion de sesion 1-5 (opcional — null = no valorada)
+    const [satisfactionRating, setSatisfactionRating] = useState<number | null>(null);
 
     useLayoutEffect(() => {
         if (!focusPain || isLoading) return;
@@ -96,6 +116,25 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                     notes: notes.trim() || null,
                 },
             }).unwrap();
+
+            // Enviar valoracion de sesion si el atleta la selecciono.
+            // Un 409 (ya existe rating para esta sesion) se ignora — no es un error de usuario.
+            if (satisfactionRating !== null) {
+                try {
+                    await createRating({
+                        clientId,
+                        data: {
+                            client_id: clientId,
+                            rating: satisfactionRating,
+                            session_id: sessionId,
+                            rating_type: "session",
+                        },
+                    }).unwrap();
+                } catch {
+                    // Rating duplicado u otro error — no bloquea el flujo.
+                }
+            }
+
             showToast("success", "Feedback enviado a tu entrenador");
             navigate(summaryPath);
         } catch {
@@ -196,6 +235,70 @@ export const AthleteSessionFeedbackPage: React.FC = () => {
                     ATHLETE_STICKY_FOOTER_SPACER.withSecondaryLink
                 )}
             >
+                {/* Seccion de valoracion de sesion (D3) */}
+                <section className={cn(NEXIA_GLASS_CARD, "relative p-4 pt-5")}>
+                    <NexiaGlassAccentRim />
+                    <div className="relative space-y-3">
+                        <div className="flex items-baseline justify-between gap-2">
+                            <p className={ATHLETE_SECTION_LABEL}>
+                                ¿Qué tal ha ido la sesión?
+                            </p>
+                            <span className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground/55">
+                                opcional
+                            </span>
+                        </div>
+
+                        {/* Picker 1-5 con touch target >= 48 px (gym spec) */}
+                        <div
+                            role="radiogroup"
+                            aria-label="Valoración de la sesión del 1 al 5"
+                            className="flex gap-1.5"
+                        >
+                            {([1, 2, 3, 4, 5] as const).map((v) => {
+                                const isSelected = satisfactionRating === v;
+                                return (
+                                    <button
+                                        key={v}
+                                        type="button"
+                                        role="radio"
+                                        aria-checked={isSelected}
+                                        aria-label={`${v} — ${SATISFACTION_LABELS[v]}`}
+                                        onClick={() =>
+                                            setSatisfactionRating(isSelected ? null : v)
+                                        }
+                                        className={cn(
+                                            "relative flex h-12 min-w-0 flex-1 items-center justify-center rounded-lg",
+                                            "text-sm font-semibold tabular-nums transition-all duration-150",
+                                            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                                            "motion-safe:active:scale-[0.92] motion-reduce:active:scale-100",
+                                            isSelected
+                                                ? "border border-primary/40 bg-primary/20 text-primary shadow-[0_0_16px_-4px_hsl(var(--primary)/0.5)]"
+                                                : "bg-surface-2 text-muted-foreground hover:text-foreground"
+                                        )}
+                                    >
+                                        {v}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div className="flex justify-between text-[10px] font-medium uppercase tracking-wide text-muted-foreground/55">
+                            <span>Mala</span>
+                            <span>Excelente</span>
+                        </div>
+
+                        {/* Etiqueta descriptiva animada al seleccionar */}
+                        <div className="h-4">
+                            {satisfactionRating !== null && (
+                                <p className="text-center text-xs font-medium text-primary/80">
+                                    {SATISFACTION_LABELS[satisfactionRating]}
+                                </p>
+                            )}
+                        </div>
+                    </div>
+                </section>
+
+                {/* Sensaciones principales */}
                 <section className={cn(NEXIA_GLASS_CARD, "relative space-y-6 p-4 pt-5")}>
                     <NexiaGlassAccentRim />
 

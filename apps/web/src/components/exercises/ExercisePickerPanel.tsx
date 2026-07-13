@@ -79,6 +79,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const { data, isLoading } = useGetExercisesQuery({
         skip: 0,
         limit: 500,
+        ...(clientId != null ? { client_id: clientId } : {}),
     });
 
     const [checkBatch, { isLoading: isLoadingBatch }] = useCheckExerciseSafetyBatchMutation();

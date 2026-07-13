@@ -21,6 +21,7 @@ import {
     useGetCurrentTrainerProfileQuery,
     useCompleteProfileModal,
     usePendingInvitationsForList,
+    getClientSatisfactionDisplay,
 } from "@nexia/shared";
 import type { ClientStatus } from "@nexia/shared/types/client";
 import type { Invitation } from "@nexia/shared/types/invitation";
@@ -28,7 +29,7 @@ import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert, HintTooltip } from "@/components/ui/feedback";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
 import { PaginationBar } from "@/components/ui/pagination";
@@ -42,12 +43,6 @@ import {
 } from "@/components/clients/invitations";
 
 const PAGE_SIZE = 9;
-
-/** Satisfacción 1–10: fatigue 1 (perfecto) → 10, fatigue 10 (exhausted) → 1. Usado como fallback cuando no hay satisfaction_level. */
-function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
-    const raw = fatigueLevelNumeric != null ? 10 - fatigueLevelNumeric : 5;
-    return Math.max(1, Math.min(10, raw));
-}
 
 function getFatigueColor(fatigue: string | null): string {
     if (!fatigue) return "bg-muted text-muted-foreground";
@@ -449,7 +444,18 @@ export const ClientList: React.FC = () => {
                                                         {client.nombre} {client.apellidos}
                                                     </p>
                                                 </div>
-                                                <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfactionFromFatigue(client.fatigue_level_numeric)} className="h-4 w-4 shrink-0" />
+                                                {(() => {
+                                                    const satisfaction = getClientSatisfactionDisplay(client);
+                                                    return (
+                                                        <HintTooltip label={satisfaction.tooltip}>
+                                                            <SatisfactionIcon
+                                                                level={satisfaction.level ?? undefined}
+                                                                unrated={satisfaction.unrated}
+                                                                className="h-4 w-4 shrink-0"
+                                                            />
+                                                        </HintTooltip>
+                                                    );
+                                                })()}
                                             </div>
                                             <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
                                                 <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
@@ -544,7 +550,18 @@ export const ClientList: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                                                        <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfactionFromFatigue(client.fatigue_level_numeric)} className="h-4 w-4" />
+                                                        {(() => {
+                                                            const satisfaction = getClientSatisfactionDisplay(client);
+                                                            return (
+                                                                <HintTooltip label={satisfaction.tooltip}>
+                                                                    <SatisfactionIcon
+                                                                        level={satisfaction.level ?? undefined}
+                                                                        unrated={satisfaction.unrated}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                </HintTooltip>
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                                                         <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>

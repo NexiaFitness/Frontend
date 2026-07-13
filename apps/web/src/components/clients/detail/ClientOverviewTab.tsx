@@ -6,13 +6,14 @@
  */
 
 import React, { useMemo, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import type { Client } from "@nexia/shared/types/client";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { PhysicalTestResultOut } from "@nexia/shared/types/testing";
 import type { ClientProgress } from "@nexia/shared/types/progress";
-import type { MetricCardColor } from "@nexia/shared/types/coherence";
-import { MetricCard } from "@/components/ui/cards";
+import { KPICard } from "@/components/dashboard/trainer/widgets";
+import { Smile, ClipboardCheck, CalendarDays, Scale, Zap } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useCoherence } from "@nexia/shared/hooks/clients/useCoherence";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
@@ -20,6 +21,7 @@ import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
 import {
     useGetClientTrainingSessionsQuery,
     useGetClientTestResultsQuery,
+    useGetClientRatingsQuery,
 } from "@nexia/shared/api/clientsApi";
 import {
     useGetActivePlanByClientQuery,
@@ -57,6 +59,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     onViewPlan,
 }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [searchParams] = useSearchParams();
     const alertsSectionRef = useRef<HTMLDivElement>(null);
     const commsSectionRef = useRef<HTMLDivElement>(null);
@@ -112,6 +115,11 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
         avgPostFatigue,
         isLoading: isLoadingFatigue,
     } = useClientFatigue(isValidClientId ? clientId : 0);
+
+    const { data: clientRatings = [], isLoading: isLoadingRatings } = useGetClientRatingsQuery(
+        { clientId: isValidClientId ? clientId : 0 },
+        { skip: !isValidClientId },
+    );
 
     const { data: sessions = [], isLoading: isLoadingSessions } =
         useGetClientTrainingSessionsQuery(
@@ -190,12 +198,11 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
         )[0];
     }, [isValidClientId, progressHistory]);
 
-    const adherenceColor = useMemo((): MetricCardColor => {
-        const adherence = coherenceData?.adherence_percentage ?? 0;
-        if (adherence >= 80) return "green";
-        if (adherence >= 60) return "orange";
-        return "red";
-    }, [coherenceData?.adherence_percentage]);
+    const satisfactionDisplay = useMemo(() => {
+        if (!clientRatings.length) return "--";
+        const avg = clientRatings.reduce((sum, r) => sum + r.rating, 0) / clientRatings.length;
+        return `${avg.toFixed(1)}/5`;
+    }, [clientRatings]);
 
     const isLoading =
         isLoadingCoherence ||
@@ -227,21 +234,86 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     }
 
     return (
-        <div className="space-y-8">
-            <div>
-                <h2 className={`${TYPOGRAPHY.pageTitle} text-foreground`}>
-                    {OVERVIEW_ZONE_TITLES.pageTitle}
-                </h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                    {OVERVIEW_ZONE_TITLES.pageSubtitle}
-                </p>
-            </div>
+        <section className="space-y-6">
+            <h2 className="sr-only">{OVERVIEW_ZONE_TITLES.pageTitle}</h2>
+
+            <section
+                data-testid="client-overview-kpi-section"
+                aria-label={OVERVIEW_ZONE_TITLES.kpiSection}
+            >
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+                    <KPICard
+                        value={satisfactionDisplay}
+                        trend=""
+                        label="Satisfacción"
+                        description={`${clientRatings.length} valoración${clientRatings.length !== 1 ? "es" : ""}`}
+                        icon={Smile}
+                        color="success"
+                        isLoading={isLoadingRatings}
+                    />
+                    <KPICard
+                        value={`${coherenceData?.adherence_percentage?.toFixed(0) ?? 0}%`}
+                        trend=""
+                        label="Adherencia al plan"
+                        description={`${coherenceData?.sessions_completed ?? 0}/${coherenceData?.sessions_total ?? 0} sesiones`}
+                        icon={ClipboardCheck}
+                        color="success"
+                        isLoading={isLoadingCoherence}
+                    />
+                    <KPICard
+                        value={
+                            upcomingSession?.session_date
+                                ? formatDate(upcomingSession.session_date)
+                                : "—"
+                        }
+                        trend=""
+                        label="Próxima sesión"
+                        description={
+                            upcomingSession
+                                ? (upcomingSession.session_type || upcomingSession.session_name || "Sesión programada")
+                                : "sin programar"
+                        }
+                        icon={CalendarDays}
+                        color="primary"
+                        isLoading={isLoadingSessions}
+                    />
+                    <KPICard
+                        value={latestWeight ? `${latestWeight} kg` : "—"}
+                        trend={
+                            weightChange != null
+                                ? `${weightChange >= 0 ? "+" : ""}${weightChange.toFixed(1)} kg`
+                                : ""
+                        }
+                        label="Último peso"
+                        description={trend ? `tendencia ${trend}` : "sin registros recientes"}
+                        icon={Scale}
+                        color="info"
+                        isLoading={isLoadingProgress}
+                    />
+                    <KPICard
+                        value={
+                            avgPostFatigue != null
+                                ? `${avgPostFatigue.toFixed(1)}/10`
+                                : avgPreFatigue != null
+                                  ? `${avgPreFatigue.toFixed(1)}/10`
+                                  : "—"
+                        }
+                        trend=""
+                        label="Fatiga media"
+                        description="post-sesión · últimos 7 días"
+                        icon={Zap}
+                        color="warning"
+                        isLoading={isLoadingFatigue}
+                    />
+                </div>
+            </section>
 
             <ClientOverviewTopSection
                 clientId={clientId}
                 plan={planCompact}
                 isLoadingPlans={isLoadingPlans}
                 alertsSectionRef={alertsSectionRef}
+                planAlignedWithObjective={recommendationsMode === "compact_ok"}
                 onOpenCreatePlan={onOpenCreatePlan}
                 onOpenUseTemplate={onOpenUseTemplate}
                 onViewPlan={onViewPlan}
@@ -251,66 +323,10 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 <ClientAthleteFeedbackCard clientId={clientId} />
             </div>
 
-            <section data-testid="client-overview-kpi-section">
-                <h3 className={`${TYPOGRAPHY.dashboardViewHeading} mb-4 text-foreground`}>
-                    {OVERVIEW_ZONE_TITLES.kpiSection}
-                </h3>
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-                    <MetricCard
-                        title="Adherencia"
-                        value={`${coherenceData?.adherence_percentage.toFixed(0) ?? 0}%`}
-                        subtitle={`${coherenceData?.sessions_completed ?? 0}/${coherenceData?.sessions_total ?? 0} sesiones`}
-                        color={adherenceColor}
-                    />
-                    <MetricCard
-                        title="Último Peso"
-                        value={latestWeight ? `${latestWeight} kg` : "N/A"}
-                        subtitle={
-                            weightChange != null
-                                ? `${weightChange >= 0 ? "+" : ""}${weightChange.toFixed(1)} kg ${trend ? `(${trend})` : ""}`
-                                : "Sin cambios"
-                        }
-                        color="blue"
-                    />
-                    <MetricCard
-                        title="Fatiga Promedio"
-                        value={
-                            avgPreFatigue && avgPostFatigue
-                                ? `Pre: ${avgPreFatigue.toFixed(1)} | Post: ${avgPostFatigue.toFixed(1)}`
-                                : avgPreFatigue
-                                  ? `Pre: ${avgPreFatigue.toFixed(1)}`
-                                  : "N/A"
-                        }
-                        subtitle="Últimos 7 días"
-                        color="orange"
-                    />
-                    <MetricCard
-                        title="Próxima Sesión"
-                        value={
-                            upcomingSession?.session_date
-                                ? formatDate(upcomingSession.session_date)
-                                : "No programada"
-                        }
-                        subtitle={
-                            upcomingSession?.session_type ||
-                            upcomingSession?.session_name ||
-                            ""
-                        }
-                        color="blue"
-                    />
-                </div>
-            </section>
-
             {recommendationsMode === "incomplete" && (
                 <div className="rounded-lg border border-warning/30 bg-warning/10 p-5">
                     <RecommendationsCards clientId={clientId} />
                 </div>
-            )}
-
-            {recommendationsMode === "compact_ok" && (
-                <p className="text-sm text-muted-foreground">
-                    {OVERVIEW_ZONE_TITLES.recommendationsOk}
-                </p>
             )}
 
             <ClientLoadInsightsCard clientId={clientId} />
@@ -333,6 +349,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                                 onClick={() =>
                                     navigate(
                                         `/dashboard/session-programming/sessions/${lastCompletedSession.id}`,
+                                        { state: returnToStateFromView(location) },
                                     )
                                 }
                             />
@@ -364,7 +381,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                     </div>
                 </section>
             )}
-        </div>
+        </section>
     );
 };
 

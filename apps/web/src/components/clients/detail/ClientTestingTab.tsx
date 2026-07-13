@@ -398,7 +398,7 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                     subtitle={TESTING_TAB_SUBTITLE}
                 />
                 <Button
-                    variant="outline"
+                    variant="ghost-primary"
                     size="sm"
                     onClick={() => goToRegisterEvaluation()}
                     className="shrink-0"
@@ -469,16 +469,6 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                         icon={<Activity />}
                         title={TESTING_EMPTY_TITLE(activeCategoryInfo.label)}
                         description={TESTING_EMPTY_DESCRIPTION}
-                        action={
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={() => goToRegisterEvaluation(activeCategory)}
-                            >
-                                <Plus className="size-4" aria-hidden />
-                                {TESTING_CTA_REGISTER}
-                            </Button>
-                        }
                     />
                 </div>
             ) : (

@@ -7,13 +7,13 @@ import type { OverviewStatChipTone } from "@/hooks/clients/clientOverviewPulse.t
 
 export const OVERVIEW_ZONE_TITLES = {
     pageTitle: "Resumen",
-    pageSubtitle: "Relación, acción y contexto del atleta",
     activity: "Actividad reciente",
     kpiSection: "Indicadores clave",
     planActive: "Plan activo",
     planEmpty: "Sin plan activo",
     planEmptyDetail: "Asigna un plan para estructurar el programa del atleta.",
-    recommendationsOk: "Plan alineado con el objetivo del cliente",
+    /** Badge en card Plan activo cuando recomendaciones = compact_ok */
+    planAlignedBadge: "Alineado con objetivo",
 } as const;
 
 export const OVERVIEW_ACTIVITY_LABELS = {

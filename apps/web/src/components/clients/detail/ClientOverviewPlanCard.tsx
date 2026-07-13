@@ -22,6 +22,7 @@ export interface ClientOverviewPlanCardProps {
     plan: OverviewPlanCompact;
     isLoading?: boolean;
     embedded?: boolean;
+    planAlignedWithObjective?: boolean;
     onOpenCreatePlan?: () => void;
     onOpenUseTemplate?: () => void;
     onViewPlan?: (planId: number) => void;
@@ -32,6 +33,7 @@ export const ClientOverviewPlanCard: React.FC<ClientOverviewPlanCardProps> = ({
     plan,
     isLoading = false,
     embedded = false,
+    planAlignedWithObjective = false,
     onOpenCreatePlan,
     onOpenUseTemplate,
     onViewPlan,
@@ -115,6 +117,11 @@ export const ClientOverviewPlanCard: React.FC<ClientOverviewPlanCardProps> = ({
                                 {OVERVIEW_ZONE_TITLES.planActive}
                             </p>
                             <Badge variant="subtle-success">Activo</Badge>
+                            {planAlignedWithObjective && (
+                                <Badge variant="subtle-secondary">
+                                    {OVERVIEW_ZONE_TITLES.planAlignedBadge}
+                                </Badge>
+                            )}
                             {plan.kind === "multiple" && plan.planCount != null && (
                                 <Badge variant="subtle-secondary">{plan.planCount} planes</Badge>
                             )}
