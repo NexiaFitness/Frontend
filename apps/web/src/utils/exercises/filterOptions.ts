@@ -40,8 +40,10 @@ function isLegacyPlaceholder(value: string, placeholders: Set<string>): boolean 
     return placeholders.has(value.trim().toLowerCase());
 }
 
+export type MuscleFacetInput = Pick<Exercise, "muscles" | "musculatura_principal">;
+
 /** Texto de músculo para badge / filtro / búsqueda (prioriza catálogo). */
-export function muscleFacetLabel(ex: Exercise): string {
+export function muscleFacetLabel(ex: MuscleFacetInput): string {
     const muscles = ex.muscles;
     if (Array.isArray(muscles) && muscles.length > 0) {
         const prime = muscles.filter((m) => isPrimeMoverRole(m.role));
@@ -80,8 +82,10 @@ export function equipmentDisplayLine(ex: Exercise): string {
         .join(", ");
 }
 
+export type PatternLabelsInput = Pick<Exercise, "movement_patterns" | "patron_movimiento">;
+
 /** Etiquetas de patrón desde catálogo + columna legacy. */
-export function exercisePatternLabels(ex: Exercise): string[] {
+export function exercisePatternLabels(ex: PatternLabelsInput): string[] {
     const mps = ex.movement_patterns || [];
     const out: string[] = [];
     for (const mp of mps) {

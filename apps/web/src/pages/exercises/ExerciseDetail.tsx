@@ -23,6 +23,7 @@ import {
     normalizeLevel,
     getLevelTextClass,
 } from "@/utils/exercises";
+import { tipoCargaLabel } from "@/utils/exercises/exerciseDetailLabels";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 
 import { Button } from "@/components/ui/buttons";
@@ -32,6 +33,7 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { ExerciseMediaEmptyState } from "@/components/exercises/ExerciseMediaEmptyState";
 import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlternativesSection";
+import { ExerciseDetailCatalogSections } from "@/components/exercises/ExerciseDetailCatalogSections";
 import {
     EXERCISE_DETAIL_ALERT_SPACING,
     EXERCISE_DETAIL_BACK_BUTTON,
@@ -151,6 +153,7 @@ export const ExerciseDetail: React.FC = () => {
     const levelNorm = normalizeLevel(exercise?.nivel || "");
     const levelClass = getLevelTextClass(levelNorm);
     const tipoLabel = tipoLabelFromBackend(exercise?.tipo || "");
+    const tipoCarga = tipoCargaLabel(exercise?.tipo_carga);
     const equipLine = exercise ? equipmentDisplayLine(exercise) : "";
     const hasVideo = Boolean(localPayload?.videoUrl);
 
@@ -256,7 +259,7 @@ export const ExerciseDetail: React.FC = () => {
                     <div className={EXERCISE_DETAIL_VIDEO_HERO}>
                         <p className={EXERCISE_DETAIL_SPEC_LABEL}>{EXERCISE_DETAIL_SECTION_LABELS.video}</p>
                         <a
-                            href={localPayload!.videoUrl}
+                            href={localPayload?.videoUrl ?? undefined}
                             target="_blank"
                             rel="noopener noreferrer"
                             className={EXERCISE_DETAIL_VIDEO_LINK_CENTERED}
@@ -282,6 +285,11 @@ export const ExerciseDetail: React.FC = () => {
                         {tipoLabel && (
                             <Badge variant="outline" className={EXERCISE_DETAIL_BADGE_NEUTRAL}>
                                 {tipoLabel}
+                            </Badge>
+                        )}
+                        {tipoCarga && (
+                            <Badge variant="outline" className={EXERCISE_DETAIL_BADGE_MUTED}>
+                                {tipoCarga}
                             </Badge>
                         )}
                         {exercise.nivel && (
@@ -381,6 +389,8 @@ export const ExerciseDetail: React.FC = () => {
                             <p className={EXERCISE_DETAIL_BODY_MUTED}>{exercise.notas}</p>
                         </div>
                     )}
+
+                    <ExerciseDetailCatalogSections exercise={exercise} />
 
                     {!isLocalRoute && exerciseIdForApi ? (
                         <ExerciseAlternativesSection exerciseId={exerciseIdForApi} />

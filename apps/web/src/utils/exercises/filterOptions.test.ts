@@ -2,8 +2,8 @@
  * muscleFacetLabel — prioriza catálogo muscles[] sobre musculatura_principal legacy.
  */
 import { describe, expect, it } from "vitest";
-import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exercisePatternLabels, muscleFacetLabel } from "./filterOptions";
+import type { MuscleFacetInput, PatternLabelsInput } from "./filterOptions";
 
 describe("muscleFacetLabel", () => {
     it("uses catalog muscles when musculatura_principal is legacy placeholder", () => {
@@ -18,7 +18,7 @@ describe("muscleFacetLabel", () => {
                     role: "prime_mover",
                 },
             ],
-        } as Exercise;
+        } as MuscleFacetInput;
 
         expect(muscleFacetLabel(exercise)).toBe("bíceps braquial");
     });
@@ -27,7 +27,7 @@ describe("muscleFacetLabel", () => {
         const exercise = {
             musculatura_principal: "pectoral mayor",
             muscles: [],
-        } as Exercise;
+        } as MuscleFacetInput;
 
         expect(muscleFacetLabel(exercise)).toBe("pectoral mayor");
     });
@@ -45,7 +45,7 @@ describe("exercisePatternLabels", () => {
                     role: "primary",
                 },
             ],
-        } as Exercise;
+        } as PatternLabelsInput;
 
         expect(exercisePatternLabels(exercise)).toEqual(["Accesorio / monoarticular"]);
     });

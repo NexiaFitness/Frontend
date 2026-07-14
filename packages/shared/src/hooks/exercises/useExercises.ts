@@ -58,6 +58,7 @@ export interface ExerciseMuscleRef {
     name_en: string;
     name_es?: string | null;
     role: string;
+    priority?: number;
 }
 
 export interface ExerciseEquipmentRef {
@@ -73,6 +74,24 @@ export interface ExerciseMovementPatternRef {
     role?: string | null;
 }
 
+export interface ExerciseTagRef {
+    id: number;
+    name_en: string;
+    name_es?: string | null;
+    category?: string | null;
+}
+
+export interface ExerciseJointActionRef {
+    id: number;
+    joint_id: number;
+    action_id?: number | null;
+    role?: string | null;
+    joint_name_en?: string | null;
+    joint_name_es?: string | null;
+    action_name_en?: string | null;
+    action_name_es?: string | null;
+}
+
 export interface Exercise {
     id: number;
     exercise_id: string; // String único del ejercicio
@@ -86,6 +105,10 @@ export interface Exercise {
     equipo: string;
     patron_movimiento: string;
     tipo_carga: string;
+    laterality?: string | null;
+    mechanical_load_level?: number | null;
+    axial_load?: string | null;
+    stimulus_type?: string | null;
     musculatura_principal: string; // Comma-separated string
     musculatura_secundaria: string | null; // Comma-separated string
     descripcion: string | null;
@@ -100,6 +123,8 @@ export interface Exercise {
     muscles?: ExerciseMuscleRef[] | null;
     equipment?: ExerciseEquipmentRef[] | null;
     movement_patterns?: ExerciseMovementPatternRef[] | null;
+    tags?: ExerciseTagRef[] | null;
+    joint_action_details?: ExerciseJointActionRef[] | null;
 }
 
 /**

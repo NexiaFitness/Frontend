@@ -6,10 +6,9 @@
  */
 
 import { cn } from "@/lib/utils";
-import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
+import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
 
 export {
-    PLATFORM_PAGE_SHELL as EXERCISE_DETAIL_PAGE,
     PLATFORM_PAGE_HEADER as EXERCISE_DETAIL_HEADER,
     PLATFORM_PAGE_TITLE_WRAP as EXERCISE_DETAIL_TITLE_WRAP,
     PLATFORM_BACK_BUTTON as EXERCISE_DETAIL_BACK_BUTTON,
@@ -26,13 +25,11 @@ export {
     PLATFORM_BADGE_ROW as EXERCISE_DETAIL_BADGE_ROW,
     PLATFORM_CHIP as EXERCISE_DETAIL_CHIP,
     PLATFORM_EQUIP_CHIP as EXERCISE_DETAIL_EQUIP_CHIP,
-    PLATFORM_SPEC_GRID as EXERCISE_DETAIL_SPEC_GRID,
     PLATFORM_CARD_BODY as EXERCISE_DETAIL_BODY,
     PLATFORM_ALT_DIVIDER as EXERCISE_DETAIL_ALT_DIVIDER,
     PLATFORM_ALT_ITEM as EXERCISE_DETAIL_ALT_ITEM,
     PLATFORM_LINK_PRIMARY as EXERCISE_DETAIL_VIDEO_LINK,
     PLATFORM_VIDEO_HERO as EXERCISE_DETAIL_VIDEO_HERO,
-    PLATFORM_GRID_SPAN_FULL as EXERCISE_DETAIL_GRID_SPAN_FULL,
     PLATFORM_CHIP_ROW as EXERCISE_DETAIL_CHIP_ROW,
     PLATFORM_LINK_CENTERED as EXERCISE_DETAIL_VIDEO_LINK_CENTERED,
     PLATFORM_ICON_SM as EXERCISE_DETAIL_ICON_SM,
@@ -61,9 +58,53 @@ export const EXERCISE_DETAIL_SECTION_LABELS = {
     alternatives: "Alternativas",
     manualAlternatives: "Definidas manualmente",
     suggestedAlternatives: "Sugerencias automáticas",
+    loadType: "Tipo de carga",
+    laterality: "Lateralidad",
+    jointActions: "Acciones articulares",
+    tags: "Etiquetas",
+    mechanicalLoad: "Carga mecánica",
+    axialLoad: "Carga axial",
+    stimulusType: "Tipo de estímulo",
+    catalogBiomechanics: "Biomecánica del catálogo",
+    catalogPlanning: "Planificación y motor",
 } as const;
 
-export const EXERCISE_DETAIL_SHELL = cn(NEXIA_GLASS_CARD, "relative pt-5");
+/** Página: ancho completo del main dashboard (sin max-w centrado en desktop). */
+export const EXERCISE_DETAIL_PAGE = cn(
+    "w-full max-w-none pb-10 lg:pb-12"
+);
+
+export const EXERCISE_DETAIL_SHELL = cn(
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative w-full pt-5"
+);
+
+/** Grid metadata: 1 col móvil → 2 tablet → 3 desktop (usa canvas completo). */
+export const EXERCISE_DETAIL_SPEC_GRID = cn(
+    "grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3"
+);
+
+export const EXERCISE_DETAIL_SECTION_BLOCK = "space-y-6";
+
+export const EXERCISE_DETAIL_SECTION_HEADING = cn(
+    "text-xs font-semibold uppercase tracking-wide text-muted-foreground",
+    "border-b border-border/60 pb-2"
+);
+
+export const EXERCISE_DETAIL_EMPTY_VALUE = "text-sm text-muted-foreground italic";
+
+export const EXERCISE_DETAIL_TAG_CHIP = cn(
+    "inline-flex items-center rounded-full border border-border/80 bg-muted/60",
+    "px-2.5 py-0.5 text-xs font-medium text-foreground"
+);
+
+export const EXERCISE_DETAIL_JOINT_CHIP = cn(
+    "inline-flex items-center rounded-full bg-surface-2/80 px-2.5 py-1",
+    "text-xs font-medium text-foreground"
+);
+
+export const EXERCISE_DETAIL_GRID_SPAN_FULL = "sm:col-span-2 lg:col-span-3";
 
 export const EXERCISE_DETAIL_MEDIA_FRAME = cn(
     "relative w-full overflow-hidden",

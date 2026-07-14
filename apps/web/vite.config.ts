@@ -63,6 +63,7 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         importScripts: ["/push-handler.js"],
         navigateFallback: "/index.html",
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
         runtimeCaching: [
           {
             urlPattern: /^https?:\/\/.*\/api\/v1\/.*/i,
