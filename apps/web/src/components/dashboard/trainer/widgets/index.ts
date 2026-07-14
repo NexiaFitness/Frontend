@@ -5,5 +5,6 @@ export * from "./PriorityAlertsWidget";
 export * from "./TodaySessionsWidget";
 export * from "./ClientListWidget";
 export * from "./BillingWidget";
+export * from "./RecentActivityWidget";
 
 

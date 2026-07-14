@@ -23,7 +23,11 @@ import {
     useGetSafeAlternativesQuery,
 } from "@nexia/shared/hooks/exercises";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import type { ExerciseSafetyResponse, ExerciseSafetyBatchResponse } from "@nexia/shared/types/engineSafety";
+import type {
+    AlternativesEmptyReason,
+    ExerciseSafetyResponse,
+    ExerciseSafetyBatchResponse,
+} from "@nexia/shared/types/engineSafety";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -55,6 +59,7 @@ export interface ExercisePickerPanelProps {
     onSelect: (exercise: Exercise) => void;
     clientId?: number | null;
     activeInjuries?: InjuryWithDetails[];
+    mode?: 'sidebar' | 'inline';
 }
 
 export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
@@ -63,6 +68,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     onSelect,
     clientId,
     activeInjuries = [],
+    mode = 'sidebar',
 }) => {
     const [search, setSearch] = useState("");
     const [view, setView] = useState<"list" | "alternatives">("list");
@@ -73,13 +79,19 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
     const { data, isLoading } = useGetExercisesQuery({
         skip: 0,
         limit: 500,
+        ...(clientId != null ? { client_id: clientId } : {}),
     });
 
     const [checkBatch, { isLoading: isLoadingBatch }] = useCheckExerciseSafetyBatchMutation();
 
     const exercises = useMemo(() => data?.exercises ?? [], [data]);
 
-    // Batch safety-check al montar o cuando cambia clientId / exercises
+    const activeInjuriesKey = useMemo(
+        () => activeInjuries.map((i) => i.id).sort((a, b) => a - b).join(","),
+        [activeInjuries]
+    );
+
+    // Batch safety-check al montar o cuando cambia clientId / exercises / lesiones activas
     useEffect(() => {
         if (!clientId || exercises.length === 0) {
             setSafetyResults(new Map());
@@ -99,7 +111,7 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                 // Fallback: no safety data => all exercises appear safe
                 setSafetyResults(new Map());
             });
-    }, [clientId, exercises, checkBatch]);
+    }, [clientId, exercises, checkBatch, activeInjuriesKey]);
 
     const filteredAndGrouped = useMemo(() => {
         const term = foldForSearch(search.trim());
@@ -140,8 +152,10 @@ export const ExercisePickerPanel: React.FC<ExercisePickerPanelProps> = ({
                 "rounded-lg border border-border border-l-2 border-l-primary bg-card text-card-foreground shadow-sm overflow-hidden",
                 "flex w-[300px] shrink-0 flex-col self-start",
                 "max-h-[600px] lg:max-h-[600px]",
-                "fixed right-0 top-0 bottom-0 z-50 shadow-xl",
-                "lg:relative lg:right-auto lg:top-auto lg:bottom-auto lg:z-auto lg:shadow-sm"
+                mode === 'sidebar' && [
+                    "fixed right-0 top-0 bottom-0 z-50 shadow-xl",
+                    "lg:relative lg:right-auto lg:top-auto lg:bottom-auto lg:z-auto lg:shadow-sm",
+                ]
             )}
         >
             {/* Cabecera */}
@@ -376,6 +390,53 @@ const ListView: React.FC<ListViewProps> = ({
 // Sub-component: Alternatives view
 // ---------------------------------------------------------------------------
 
+function getAlternativesEmptyCopy(reason: AlternativesEmptyReason): {
+    title: string;
+    subtitle?: string;
+} {
+    switch (reason) {
+        case "injury_filter":
+            return {
+                title:
+                    "Con la lesión activa de este cliente, no hay otro ejercicio seguro que trabaje los mismos músculos de forma compatible.",
+                subtitle:
+                    "Revisa su perfil de lesiones o elige otro ejercicio para esta serie.",
+            };
+        case "score_threshold":
+            return {
+                title:
+                    "No encontramos sustitutos automáticos con buen encaje para este ejercicio.",
+                subtitle:
+                    "Prueba otro ejercicio del mismo grupo muscular o el que sueles usar como alternativa.",
+            };
+        case "no_pool":
+            return {
+                title:
+                    "En la biblioteca no hay otro ejercicio con los mismos músculos principales.",
+                subtitle:
+                    "Elige otro ejercicio para la sesión o avisa si falta alguno en la biblioteca.",
+            };
+        case "joint_catalog":
+            return {
+                title:
+                    "No podemos proponer sustitutos automáticos porque faltan datos técnicos del movimiento en la biblioteca.",
+                subtitle:
+                    "Elige otro ejercicio manualmente o contacta con soporte si crees que debería haber alternativas.",
+            };
+        case "manual_empty":
+            return {
+                title:
+                    "Las alternativas que tenías guardadas para este ejercicio no son compatibles con la lesión actual del cliente.",
+                subtitle: "Elige otro ejercicio o actualiza sus alternativas habituales.",
+            };
+        default:
+            return {
+                title: "No hay alternativas seguras sugeridas para este ejercicio.",
+                subtitle: "Prueba otro ejercicio o revisa el perfil del cliente.",
+            };
+    }
+}
+
 interface AlternativesViewProps {
     exerciseId: number | null;
     clientId?: number | null;
@@ -449,11 +510,21 @@ const AlternativesView: React.FC<AlternativesViewProps> = ({
 
             {/* Alternatives list */}
             {data.alternatives.length === 0 ? (
-                <div className="rounded-md border border-border bg-card p-4 text-center">
-                    <p className="text-sm text-muted-foreground">
-                        No hay alternativas seguras sugeridas para este ejercicio con las lesiones
-                        activas. Revisa el catálogo o añade sustituciones manuales en el backend.
-                    </p>
+                <div className="rounded-md border border-border bg-card p-4 text-center space-y-1">
+                    {(() => {
+                        const copy = getAlternativesEmptyCopy(
+                            data.empty_reason ??
+                                (data.no_alternatives_found ? "score_threshold" : "none")
+                        );
+                        return (
+                            <>
+                                <p className="text-sm text-muted-foreground">{copy.title}</p>
+                                {copy.subtitle ? (
+                                    <p className="text-xs text-muted-foreground">{copy.subtitle}</p>
+                                ) : null}
+                            </>
+                        );
+                    })()}
                 </div>
             ) : (
                 <div className="space-y-2">

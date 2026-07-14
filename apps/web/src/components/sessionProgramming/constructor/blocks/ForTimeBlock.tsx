@@ -3,17 +3,21 @@
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
+ * @updated v6.2.0 — Navegación de rondas per-ejercicio con setData independiente
  */
 
 import React from "react";
 import { Plus } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
+import { ConstructorRoundNavigator } from "../primitives/ConstructorRoundNavigator";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
-    addForTimeExerciseSlot,
-    MIN_FOR_TIME_SLOTS,
     normalizeForTimeRow,
+    updateForTimeExerciseSetData,
+    addForTimeExerciseSlot,
+    removeForTimeExerciseSlot,
+    MIN_FOR_TIME_SLOTS,
 } from "../utils/forTimeRow";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
@@ -21,6 +25,10 @@ import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
 import {
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
     CONSTRUCTOR_FIELD_LABEL_CLASS,
@@ -36,6 +44,22 @@ const COLUMN_HEADER_GRID_CLASS =
 
 function slotLabel(index: number): string {
     return String(index + 1);
+}
+
+function getExerciseSetView(
+    exercise: ConstructorExercise,
+    setIndex: number
+): ConstructorExercise {
+    const entry = exercise.setData?.[setIndex];
+    if (!entry) return exercise;
+    return {
+        ...exercise,
+        plannedReps: entry.plannedReps,
+        plannedWeight: entry.plannedWeight,
+        plannedDuration: entry.plannedDuration,
+        effortCharacter: entry.effortCharacter,
+        effortValue: entry.effortValue,
+    };
 }
 
 export interface ForTimeBlockProps {
@@ -64,9 +88,59 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
     onRemove,
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
+    const [activeSetIndex, setActiveSetIndex] = React.useState(0);
     const normalized = normalizeForTimeRow(row);
     const exerciseCount = normalized.exercises.length;
+    const totalRounds = normalized.rounds ?? 3;
     const canRemoveLast = exerciseCount > MIN_FOR_TIME_SLOTS;
+
+    const handleExerciseChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                normalized.exercises,
+                index,
+                updates
+            );
+            onUpdate(normalized.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(normalized.id, normalized.exercises[index].id, updates);
+        }
+    };
+
+    const handleSetDataChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        const exercise = normalized.exercises[index];
+        const setData = exercise.setData;
+        if (!setData || setData.length === 0) {
+            // Legacy path: no setData, update exercise directly
+            handleExerciseChange(index, updates);
+            return;
+        }
+        const entryId = setData[activeSetIndex]?.id;
+        if (!entryId) return;
+
+        const mapped: Partial<import("../../constructorTypes").ConstructorSetData> = {};
+        if ("plannedReps" in updates) mapped.plannedReps = updates.plannedReps ?? null;
+        if ("plannedWeight" in updates) mapped.plannedWeight = updates.plannedWeight ?? null;
+        if ("plannedDuration" in updates) mapped.plannedDuration = updates.plannedDuration ?? null;
+        if ("effortCharacter" in updates) mapped.effortCharacter = updates.effortCharacter ?? null;
+        if ("effortValue" in updates) mapped.effortValue = updates.effortValue ?? null;
+
+        let nextExercise = exercise;
+        if ("repsTipo" in updates && updates.repsTipo) {
+            nextExercise = { ...nextExercise, repsTipo: updates.repsTipo };
+        }
+
+        nextExercise = updateForTimeExerciseSetData(nextExercise, entryId, mapped);
+        const nextExercises = [...normalized.exercises];
+        nextExercises[index] = nextExercise;
+        onUpdate(normalized.id, { exercises: nextExercises });
+    };
 
     const handleAddSlot = () => {
         const next = addForTimeExerciseSlot(normalized);
@@ -75,13 +149,17 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
 
     const handleRemoveLastSlot = () => {
         if (!canRemoveLast) return;
-        onUpdate(normalized.id, {
-            exercises: normalized.exercises.slice(0, -1),
-        });
+        const lastId = normalized.exercises[normalized.exercises.length - 1]?.id;
+        if (!lastId) return;
+        const next = removeForTimeExerciseSlot(normalized, lastId);
+        onUpdate(normalized.id, { exercises: next.exercises });
     };
 
+    const canGoBack = activeSetIndex > 0;
+    const canGoForward = activeSetIndex < totalRounds - 1;
+
     return (
-        <div className={CONSTRUCTOR_FOR_TIME_CARD_CLASS}>
+        <div className={CONSTRUCTOR_FOR_TIME_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}
@@ -126,7 +204,9 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
                     </div>
 
                     <div className="space-y-2 px-4 pb-3 pt-1">
-                            {normalized.exercises.map((ex, index) => (
+                        {normalized.exercises.map((ex, index) => {
+                            const setView = getExerciseSetView(ex, activeSetIndex);
+                            return (
                                 <GroupedExerciseRow
                                     key={ex.id}
                                     slotLabel={slotLabel(index)}
@@ -147,45 +227,57 @@ export const ForTimeBlock: React.FC<ForTimeBlockProps> = ({
                                             }
                                         />
                                         <RepsTiempoField
-                                            exercise={ex}
+                                            exercise={setView}
                                             rowRepsTipo={normalized.repsTipo}
                                             onExerciseChange={(updates) =>
-                                                onUpdateExercise(normalized.id, ex.id, updates)
+                                                handleSetDataChange(index, updates)
                                             }
                                         />
                                         <CaracterField
-                                            exercise={ex}
+                                            exercise={setView}
                                             onExerciseChange={(updates) =>
-                                                onUpdateExercise(normalized.id, ex.id, updates)
+                                                handleSetDataChange(index, updates)
                                             }
                                         />
                                     </div>
                                 </GroupedExerciseRow>
-                            ))}
+                            );
+                        })}
 
-                            <div className="grid grid-cols-[40px_1fr] gap-3 pt-1">
-                                <span />
-                                <div className="flex flex-wrap items-center gap-2">
+                        <div className="grid grid-cols-[40px_1fr] gap-3 pt-1">
+                            <span />
+                            <div className="flex flex-wrap items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={handleAddSlot}
+                                    className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-emerald-500/40 px-3 text-[11px] font-medium text-emerald-700 transition-colors hover:border-emerald-500/60 hover:bg-emerald-500/[0.06] dark:text-emerald-400"
+                                >
+                                    <Plus className="h-3.5 w-3.5 shrink-0" />
+                                    Añadir ejercicio ({exerciseCount})
+                                </button>
+                                {canRemoveLast ? (
                                     <button
                                         type="button"
-                                        onClick={handleAddSlot}
-                                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-dashed border-emerald-500/40 px-3 text-[11px] font-medium text-emerald-700 transition-colors hover:border-emerald-500/60 hover:bg-emerald-500/[0.06] dark:text-emerald-400"
+                                        onClick={handleRemoveLastSlot}
+                                        className="text-[11px] text-muted-foreground transition-colors hover:text-destructive"
                                     >
-                                        <Plus className="h-3.5 w-3.5 shrink-0" />
-                                        Añadir ejercicio ({exerciseCount})
+                                        Quitar último
                                     </button>
-                                    {canRemoveLast ? (
-                                        <button
-                                            type="button"
-                                            onClick={handleRemoveLastSlot}
-                                            className="text-[11px] text-muted-foreground transition-colors hover:text-destructive"
-                                        >
-                                            Quitar último
-                                        </button>
-                                    ) : null}
-                                </div>
+                                ) : null}
                             </div>
+                        </div>
                     </div>
+
+                    <ConstructorRoundNavigator
+                        activeIndex={activeSetIndex}
+                        total={totalRounds}
+                        canGoBack={canGoBack}
+                        canGoForward={canGoForward}
+                        onPrevious={() => setActiveSetIndex((i) => Math.max(0, i - 1))}
+                        onNext={() =>
+                            setActiveSetIndex((i) => Math.min(totalRounds - 1, i + 1))
+                        }
+                    />
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
                         Completa los ejercicios en orden, {normalized.rounds ?? 3} ronda

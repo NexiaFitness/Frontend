@@ -42,7 +42,7 @@ describe("ResetPasswordForm", () => {
 
             expect(screen.getByRole("heading", { name: /nueva contraseña/i }))
                 .toBeInTheDocument();
-            expect(screen.getByPlaceholderText("Mínimo 6 caracteres"))
+            expect(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"))
                 .toBeInTheDocument();
             expect(screen.getByPlaceholderText("Repite tu nueva contraseña"))
                 .toBeInTheDocument();
@@ -64,14 +64,14 @@ describe("ResetPasswordForm", () => {
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
 
-            const newPasswordField = screen.getByPlaceholderText("Mínimo 6 caracteres");
+            const newPasswordField = screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número");
             const confirmPasswordField = screen.getByPlaceholderText("Repite tu nueva contraseña");
 
-            await user.type(newPasswordField, "newpass123");
-            await user.type(confirmPasswordField, "newpass123");
+            await user.type(newPasswordField, "Newpass123");
+            await user.type(confirmPasswordField, "Newpass123");
 
-            expect(newPasswordField).toHaveValue("newpass123");
-            expect(confirmPasswordField).toHaveValue("newpass123");
+            expect(newPasswordField).toHaveValue("Newpass123");
+            expect(confirmPasswordField).toHaveValue("Newpass123");
         });
     });
 
@@ -92,10 +92,10 @@ describe("ResetPasswordForm", () => {
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
 
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
-            expect(await screen.findByText(/la contraseña debe tener al menos 6 caracteres/i))
+            expect(await screen.findByText(/la contraseña debe tener al menos 8 caracteres/i))
                 .toBeInTheDocument();
         });
 
@@ -103,7 +103,7 @@ describe("ResetPasswordForm", () => {
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
 
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "password123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Password123");
             await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "different123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
@@ -135,8 +135,8 @@ describe("ResetPasswordForm", () => {
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
 
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             await waitFor(() => {
@@ -150,8 +150,8 @@ describe("ResetPasswordForm", () => {
 
     describe("API Integration - Basic Cases", () => {
         const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
         };
 
         it("successful request shows success view", async () => {
@@ -200,8 +200,8 @@ describe("ResetPasswordForm", () => {
 
     describe("API Integration - Advanced Error Recovery", () => {
         const fillValidForm = async (user: ReturnType<typeof userEvent.setup>) => {
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
         };
 
         it("handles server error with successful retry", async () => {
@@ -266,8 +266,8 @@ describe("ResetPasswordForm", () => {
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
 
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             // Verificar estado de loading de forma atómica: botón e inputs deshabilitados simultáneamente.
@@ -277,7 +277,7 @@ describe("ResetPasswordForm", () => {
                         name: /cambiar contraseña|actualizando contraseña/i,
                     });
                     expect(submitButton).toBeDisabled();
-                    expect(screen.getByPlaceholderText("Mínimo 6 caracteres")).toBeDisabled();
+                    expect(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número")).toBeDisabled();
                     expect(screen.getByPlaceholderText("Repite tu nueva contraseña")).toBeDisabled();
                 },
                 { timeout: 1500 }
@@ -296,8 +296,8 @@ describe("ResetPasswordForm", () => {
             const user = userEvent.setup();
             render(<ResetPasswordForm />);
 
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             await waitFor(
@@ -321,7 +321,7 @@ describe("ResetPasswordForm", () => {
                 .toBeInTheDocument();
 
             // Start typing - error should clear
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "test");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "test");
             expect(screen.queryByText(/la contraseña es obligatoria/i))
                 .not.toBeInTheDocument();
         });
@@ -333,8 +333,8 @@ describe("ResetPasswordForm", () => {
             render(<ResetPasswordForm />);
 
             // First attempt - should show server error
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             expect(await screen.findByText(/invalid or expired reset token/i))
@@ -354,8 +354,8 @@ describe("ResetPasswordForm", () => {
 
     describe("Success View", () => {
         const triggerSuccessView = async (user: ReturnType<typeof userEvent.setup>) => {
-            await user.type(screen.getByPlaceholderText("Mínimo 6 caracteres"), "newpass123");
-            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "newpass123");
+            await user.type(screen.getByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"), "Newpass123");
+            await user.type(screen.getByPlaceholderText("Repite tu nueva contraseña"), "Newpass123");
             await user.click(screen.getByRole("button", { name: /cambiar contraseña/i }));
 
             await waitFor(() => {
@@ -385,7 +385,7 @@ describe("ResetPasswordForm", () => {
 
             await triggerSuccessView(user);
 
-            expect(screen.queryByPlaceholderText("Mínimo 6 caracteres"))
+            expect(screen.queryByPlaceholderText("Mínimo 8 caracteres, con mayúscula, minúscula y número"))
                 .not.toBeInTheDocument();
             expect(screen.queryByPlaceholderText("Repite tu nueva contraseña"))
                 .not.toBeInTheDocument();

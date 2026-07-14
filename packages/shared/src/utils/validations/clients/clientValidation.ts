@@ -104,14 +104,6 @@ export const validateClientForm = (
     // id_passport: sin validación específica (string libre, opcional)
     // No se valida, solo se acepta el valor tal cual
 
-    // exact_training_frequency (opcional; si se envía debe ser 1-7)
-    if (data.exact_training_frequency !== undefined && data.exact_training_frequency !== null) {
-        const n = Number(data.exact_training_frequency);
-        if (!Number.isInteger(n) || n < 1 || n > 7) {
-            errors.exact_training_frequency = "Debe ser un número entre 1 y 7";
-        }
-    }
-
     /**
      * ========================================
      * VALIDACIONES ANTROPOMÉTRICAS (v2.5.0)
@@ -286,12 +278,16 @@ export const validateClientForm = (
                 if (!data.experiencia) {
                     stepErrors.experiencia = "Selecciona el nivel de experiencia";
                 }
-                // Validar session_duration contra valores permitidos
-                if (data.session_duration) {
-                    const validDurations = ['short_lt_1h', 'medium_1h_to_1h30', 'long_gt_1h30'];
+                if (!data.session_duration) {
+                    stepErrors.session_duration = "Selecciona la duración de sesiones";
+                } else {
+                    const validDurations = ["short_lt_1h", "medium_1h_to_1h30", "long_gt_1h30"];
                     if (!validDurations.includes(data.session_duration)) {
                         stepErrors.session_duration = "Selecciona una duración válida";
                     }
+                }
+                if (!data.training_days || data.training_days.length === 0) {
+                    stepErrors.training_days = "Selecciona al menos un día de entrenamiento";
                 }
                 break;
 

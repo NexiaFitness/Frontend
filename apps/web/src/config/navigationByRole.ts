@@ -24,8 +24,8 @@ import {
     Dumbbell,
     User,
     BarChart3,
-    Bell,
     Play,
+    MessageSquare,
 } from "lucide-react";
 
 export interface NavigationItem {
@@ -51,7 +51,6 @@ const TRAINER_NAV: RoleNavigation = {
         { label: "Sesiones", path: "/dashboard/sessions", icon: Play },
         { label: "Ejercicios", path: "/dashboard/exercises", icon: Dumbbell },
         { label: "Analítica", path: "/dashboard/reports/generate", icon: BarChart3 },
-        { label: "Alertas", path: "/dashboard", icon: Bell },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };
@@ -69,7 +68,10 @@ const ATHLETE_NAV: RoleNavigation = {
     headerTitle: "Mi Entrenamiento",
     footerSubtitle: "Athlete",
     menuItems: [
-        { label: "Dashboard", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Inicio", path: "/dashboard", icon: LayoutDashboard },
+        { label: "Mis sesiones", path: "/dashboard/sessions", icon: Calendar },
+        { label: "Feedback", path: "/dashboard/feedback", icon: MessageSquare },
+        { label: "Mi plan", path: "/dashboard/my-plan", icon: ClipboardList },
         { label: "Mi cuenta", path: "/dashboard/account", icon: User },
     ],
 };

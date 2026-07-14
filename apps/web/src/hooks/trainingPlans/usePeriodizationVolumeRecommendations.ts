@@ -1,16 +1,13 @@
 /**
- * usePeriodizationVolumeRecommendations.ts — Referencia nominal de volumen (series/músculo/semana) para periodización.
- *
- * Consume GET /training-plans/recommendations y la función pura computeTargetWeeklySets (shared).
- * Contexto: SPEC_TRADUCCION_VOLUMEN_SLIDER_A_SERIES_SEMANALES.md Fase 3.
- *
- * @author Frontend Team
- * @since v1.0.0
+ * Referencia de volumen para periodización: capacidad cliente + objetivo por slider.
  */
 
 import { useMemo, useCallback } from "react";
 import { useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
-import { computeTargetWeeklySets } from "@nexia/shared";
+import {
+    buildVolumeIntensityContext,
+    type VolumeIntensityContext,
+} from "@nexia/shared";
 import type { TrainingPlanRecommendationsResponse } from "@nexia/shared/types/trainingRecommendations";
 
 export type PeriodizationVolumeNominalPhase =
@@ -34,25 +31,17 @@ function maxSetsFromCompleteResponse(data: TrainingPlanRecommendationsResponse):
     return rounded;
 }
 
-function labelForVolume(maxSets: number, volumeLevel: number): string | null {
-    const n = computeTargetWeeklySets(maxSets, volumeLevel);
-    if (n == null) {
-        return null;
-    }
-    return `Objetivo nominal: ~${n} series por grupo muscular / semana`;
-}
-
 export interface UsePeriodizationVolumeRecommendationsResult {
     phase: PeriodizationVolumeNominalPhase;
-    /** Etiqueta para el nivel de volumen indicado; null si no debe mostrarse número nominal. */
     labelForVolumeLevel: (volumeLevel: number) => string | null;
-    /** Mensaje corto para estados degradados (incompleto / error), no es cifra nominal. */
     auxiliaryHint: string | null;
+    buildContext: (volumeLevel: number, intensityLevel: number) => VolumeIntensityContext;
 }
 
 export function usePeriodizationVolumeRecommendations(
     clientId: number | undefined,
-    planGoal: string | undefined | null
+    planGoal: string | undefined | null,
+    trainingFrequency: number = 3
 ): UsePeriodizationVolumeRecommendationsResult {
     const goalParam = planGoal?.trim() || undefined;
 
@@ -85,14 +74,17 @@ export function usePeriodizationVolumeRecommendations(
         return "incomplete";
     }, [clientId, isLoading, isError, data, maxSets]);
 
+    const buildContext = useCallback(
+        (volumeLevel: number, intensityLevel: number) =>
+            buildVolumeIntensityContext(data, volumeLevel, intensityLevel, trainingFrequency),
+        [data, trainingFrequency]
+    );
+
     const labelForVolumeLevel = useCallback(
         (volumeLevel: number): string | null => {
-            if (phase !== "complete" || maxSets == null) {
-                return null;
-            }
-            return labelForVolume(maxSets, volumeLevel);
+            return buildContext(volumeLevel, 5).result.weekly_target_label;
         },
-        [phase, maxSets]
+        [buildContext]
     );
 
     const auxiliaryHint = useMemo((): string | null => {
@@ -106,7 +98,7 @@ export function usePeriodizationVolumeRecommendations(
             return "No se pudo cargar la referencia de volumen. Reintenta más tarde.";
         }
         if (phase === "incomplete" && data?.status === "incomplete") {
-            return "Completa la ficha del cliente para ver el objetivo nominal en series.";
+            return "Completa la ficha del cliente (experiencia, frecuencia y duración de sesión) para calcular el objetivo en series.";
         }
         if (phase === "incomplete") {
             return "Referencia de volumen no disponible.";
@@ -114,5 +106,5 @@ export function usePeriodizationVolumeRecommendations(
         return null;
     }, [clientId, phase, data]);
 
-    return { phase, labelForVolumeLevel, auxiliaryHint };
+    return { phase, labelForVolumeLevel, auxiliaryHint, buildContext };
 }

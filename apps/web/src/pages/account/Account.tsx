@@ -1,24 +1,27 @@
 /**
- * Account.tsx — Página "Mi cuenta" dentro del dashboard.
- *
- * Contexto:
- * - Usa DashboardLayout, Navbar y SideMenu responsive igual que otros dashboards.
- * - Encabezado principal con tipografía igual a dashboards (dashboardHero).
- * - Contenido central: ProfileForm (secciones de perfil, seguridad, peligro).
- *
- * RESPONSIVE BEHAVIOR:
- * - Desktop: SideMenu visible según rol + DashboardLayout offset
- * - Mobile/Tablet: navbar (AppNavbar) visible + SideMenu oculto
- *
- * @since v4.3.8 - Unificado encabezado con dashboards usando dashboardHero
- * @updated v4.3.9 - Ajustado ancho a max-w-6xl para grid de 2 columnas
+ * Account.tsx — Mi cuenta: atleta V13, admin premium (experimento), trainer legacy.
  */
 
 import React from "react";
+import { useSelector } from "react-redux";
 import { PageTitle } from "@/components/dashboard/shared";
 import { ProfileForm } from "@/components/account/ProfileForm";
+import { AthleteAccountPage } from "@/pages/dashboard/athlete/AthleteAccountPage";
+import { PlatformPremiumAccountPage } from "@/pages/account/PlatformPremiumAccountPage";
+import { USER_ROLES } from "@nexia/shared/utils/roles";
+import { selectUser } from "@nexia/shared";
 
 export const Account: React.FC = () => {
+    const user = useSelector(selectUser);
+
+    if (user?.role === USER_ROLES.ATHLETE) {
+        return <AthleteAccountPage />;
+    }
+
+    if (user?.role === USER_ROLES.ADMIN) {
+        return <PlatformPremiumAccountPage />;
+    }
+
     return (
         <>
             <PageTitle
@@ -27,10 +30,9 @@ export const Account: React.FC = () => {
                 className="mb-6"
             />
 
-                {/* Contenido principal con ancho completo */}
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <ProfileForm />
-                </div>
+            <div className="space-y-6 px-4 pb-12 lg:px-8 lg:pb-20">
+                <ProfileForm />
+            </div>
         </>
     );
 };

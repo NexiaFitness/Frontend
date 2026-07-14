@@ -13,6 +13,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
+import { PageTitle } from "@/components/dashboard/shared";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import { useCreateTemplate } from "@nexia/shared";
@@ -85,17 +86,13 @@ export const CreateTemplate: React.FC = () => {
     return (
         <>
                 {/* Header */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+                <div className="mb-6 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                                Nuevo Template
-                            </h2>
-                            <p className="text-muted-foreground text-sm md:text-base">
-                                Crear un nuevo template de sesión de entrenamiento
-                            </p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                        <PageTitle
+                            title="Nuevo Template"
+                            subtitle="Crear un nuevo template de sesión de entrenamiento"
+                        />
+                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="shrink-0">
                             <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al Dashboard
                         </Button>

@@ -10,7 +10,9 @@
 
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { PageTitle } from "@/components/dashboard/shared";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea } from "@/components/ui/forms";
 import {
@@ -155,17 +157,19 @@ export const EditScheduledSessionPage: React.FC = () => {
 
     return (
         <>
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+                <div className="mb-6 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                                Editar sesión agendada
-                            </h2>
-                            <p className="text-muted-foreground text-sm md:text-base">
-                                Cliente ID: {session.client_id} (no editable)
-                            </p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/scheduling")}>
+                        <PageTitle
+                            title="Editar sesión agendada"
+                            subtitle={`Cliente ID: ${session.client_id} (no editable)`}
+                        />
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate("/dashboard/scheduling")}
+                            className="shrink-0"
+                        >
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al calendario
                         </Button>
                     </div>

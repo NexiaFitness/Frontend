@@ -6,6 +6,7 @@
  * @since v5.3.0
  */
 
+import { markDistinctStepsFromMaster } from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
@@ -15,6 +16,9 @@ import type {
 import { isFilledConstructorExercise } from "./supersetRow";
 import { normalizeDropsetRow } from "./dropsetRow";
 import { getEmomPersistLines } from "./emomRow";
+import { getSupersetPersistLines } from "./supersetRow";
+import { getGiantSetPersistLines } from "./giantSetRow";
+import { getForTimePersistLines } from "./forTimeRow";
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -93,15 +97,13 @@ export function normalizeSingleSetRow(row: ConstructorRow): ConstructorRow {
 
     const sets = Math.max(1, row.sets ?? 3);
     const restFallback = row.rest ?? 60;
-    let setData = row.setData?.length
+    const setData = row.setData?.length
         ? resizeSetData(row.setData, sets, restFallback)
         : resizeSetData(
               Array.from({ length: sets }, () => createDefaultSetData(restFallback)),
               sets,
               restFallback
           );
-
-    setData = propagateSetDataInheritance(setData);
 
     const exercises =
         row.exercises.length > 0
@@ -213,6 +215,18 @@ export function getConstructorPersistLines(row: ConstructorRow): PersistExercise
         }));
     }
 
+    if (row.setType === SET_TYPE.SUPERSET) {
+        return getSupersetPersistLines(row);
+    }
+
+    if (row.setType === SET_TYPE.GIANT_SET) {
+        return getGiantSetPersistLines(row);
+    }
+
+    if (row.setType === SET_TYPE.FOR_TIME) {
+        return getForTimePersistLines(row);
+    }
+
     if (row.setType === SET_TYPE.EMOM) {
         return getEmomPersistLines(row);
     }
@@ -303,9 +317,11 @@ export function hydrateSingleSetConstructorRow(
         });
     }
 
-    const setData = exs
-        .sort((a, b) => a.order_in_block - b.order_in_block)
-        .map((ex) => setDataFromApiLine(ex, false));
+    const setData = markDistinctStepsFromMaster(
+        exs
+            .sort((a, b) => a.order_in_block - b.order_in_block)
+            .map((ex) => setDataFromApiLine(ex, false))
+    );
 
     return normalizeSingleSetRow({
         ...base,

@@ -90,12 +90,14 @@ export const useClientSatisfaction = (): UseClientSatisfactionReturn => {
         refetchOnReconnect: isAuthenticated,
     });
 
-    // Transformar rating numérico a formato "X.X/5"
-    const formattedValue = data?.rating ? `${data.rating.toFixed(1)}/5` : "0.0/5";
+    const hasRealData = (data?.total_reviews ?? 0) > 0;
+    const formattedValue = hasRealData && data?.rating
+        ? `${data.rating.toFixed(1)}/5`
+        : "--";
 
     return {
         value: formattedValue,
-        trend: data?.trend ?? "",
+        trend: hasRealData ? (data?.trend ?? "") : "",
         label: "Client Satisfaction",
         description: "post-session feedback",
         isLoading,

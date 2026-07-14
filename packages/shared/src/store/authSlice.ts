@@ -185,6 +185,18 @@ export const authSlice: Slice<AuthState> = createSlice({
             state.isLoading = false;
             state.error = null;
         },
+
+        /** Access/refresh inválidos tras fallo de POST /auth/refresh — limpia sesión local. */
+        sessionExpired: (state: AuthState) => {
+            state.user = null;
+            state.token = null;
+            state.isAuthenticated = false;
+            state.isLoading = false;
+            state.error = null;
+            storage.removeItem(AUTH_CONFIG.TOKEN_KEY);
+            storage.removeItem(AUTH_CONFIG.REFRESH_KEY);
+            storage.removeItem(AUTH_CONFIG.USER_KEY);
+        },
     },
     extraReducers: (builder) => {
         builder
@@ -239,6 +251,7 @@ export const {
     clearError,
     setLoading,
     setCurrentUser,
+    sessionExpired,
 } = authSlice.actions;
 
 // Selectores tipados

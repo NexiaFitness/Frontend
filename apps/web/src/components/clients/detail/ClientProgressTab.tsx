@@ -1,7 +1,7 @@
 /**
  * ClientProgressTab.tsx — Tab Progress del cliente
  *
- * Sub-tabs: Resumen · Carga · Historial
+ * Sub-tabs: Cuerpo · Rendimiento gym (consolidación 4→2, F5 UX)
  * Rediseñado v7 — alineado con ClientDailyCoherenceTab (tokens, chart height 250,
  * tooltips temáticos, grids 2-col, legends HTML, bg-surface containers).
  *
@@ -11,19 +11,22 @@
  */
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useSubTabNavigation } from "@/hooks/useSubTabNavigation";
 import type { ClientProgress } from "@nexia/shared/types/progress";
 import type { Client } from "@nexia/shared/types/client";
 import { useClientProgress } from "@nexia/shared/hooks/clients/useClientProgress";
 import { useClientFatigue } from "@nexia/shared/hooks/clients/useClientFatigue";
+import { useClientExecutedLoadTrend } from "@nexia/shared/hooks/clients/useClientExecutedLoadTrend";
 import { useWeeklyMetricsV2, useMetricsAlertsV2, useMonthlyMetricsV2 } from "@nexia/shared/hooks/metrics";
-import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
-import { Alert } from "@/components/ui/feedback/Alert";
+import { LoadingSpinner, Alert, EmptyState } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
-import { Button } from "@/components/ui/buttons";
+import { Button, SegmentButton } from "@/components/ui/buttons";
 import { ProgressForm } from "./ProgressForm";
 import { EditProgressModal } from "../modals/EditProgressModal";
-import { Pencil, Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { ClientSetHistoryPanel } from "./ClientSetHistoryPanel";
+import { ClientExecutedLoadTrendChart } from "./ClientExecutedLoadTrendChart";
+import { ClipboardList, Pencil, Plus, X } from "lucide-react";
 import {
     LineChart,
     ComposedChart,
@@ -59,8 +62,38 @@ const CHART_TOOLTIP_STYLE: React.CSSProperties = {
 // TYPES
 // ========================================
 
-type ProgressSubTab = "overview" | "load" | "history";
+type ProgressSubTab = "body" | "performance";
 type MetricsPeriod = "weekly" | "monthly" | "annual";
+
+const METRICS_PERIOD_OPTIONS: { id: MetricsPeriod; label: string }[] = [
+    { id: "weekly", label: "Semanal" },
+    { id: "monthly", label: "Mensual" },
+    { id: "annual", label: "Anual" },
+];
+
+function MetricsPeriodSelector({
+    value,
+    onChange,
+}: {
+    value: MetricsPeriod;
+    onChange: (period: MetricsPeriod) => void;
+}) {
+    return (
+        <div className="flex items-center gap-1.5" role="group" aria-label="Periodo métricas">
+            {METRICS_PERIOD_OPTIONS.map((p) => (
+                <SegmentButton
+                    key={p.id}
+                    size="sm"
+                    selected={value === p.id}
+                    onClick={() => onChange(p.id)}
+                    className="w-[5.25rem]"
+                >
+                    {p.label}
+                </SegmentButton>
+            ))}
+        </div>
+    );
+}
 type MetricCardColor = "blue" | "green" | "orange" | "red";
 
 interface NormalizedWorkloadDataPoint {
@@ -154,12 +187,36 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
     const [selectedRecord, setSelectedRecord] = useState<ClientProgress | null>(null);
     const [metricsPeriod, setMetricsPeriod] = useState<MetricsPeriod>("weekly");
     const formRef = useRef<HTMLDivElement>(null);
+    const [searchParams] = useSearchParams();
+
+    const historyExerciseId = useMemo(() => {
+        const raw = searchParams.get("historyExercise");
+        if (!raw) return null;
+        const parsed = parseInt(raw, 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }, [searchParams]);
 
     const { activeSubTab: activeTab, setActiveSubTab: setActiveTab } =
         useSubTabNavigation<ProgressSubTab>({
-            validSubTabs: ["overview", "load", "history"] as const,
-            defaultSubTab: "overview",
+            validSubTabs: ["body", "performance"] as const,
+            defaultSubTab: "body",
         });
+
+    // Legacy URL aliases (4 sub-vistas → 2)
+    useEffect(() => {
+        const raw = searchParams.get("subtab");
+        const aliases: Record<string, ProgressSubTab> = {
+            overview: "body",
+            anthropometry: "body",
+            history: "body",
+            trend: "performance",
+            gym: "performance",
+            load: "performance",
+        };
+        if (raw && aliases[raw]) {
+            setActiveTab(aliases[raw]);
+        }
+    }, [searchParams, setActiveTab]);
 
     // ── Data hooks ─────────────────────────────────────
     const {
@@ -363,10 +420,15 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
         return null;
     }, [metricsPeriod, weeklyMetrics, monthlyMetrics]);
 
-    const hasNoLoadData = useMemo(() => {
-        if (metricsPeriod === "weekly") return weeklyMetrics.items.length === 0;
-        return monthlyMetrics.items.length === 0;
-    }, [metricsPeriod, weeklyMetrics.items.length, monthlyMetrics.items.length]);
+    const executedLoadTrend = useClientExecutedLoadTrend({
+        clientId,
+        startDate: metricsDateRange.startDate,
+        endDate: metricsDateRange.endDate,
+        period: metricsPeriod,
+    });
+
+    const trendTabFullyEmpty =
+        executedLoadTrend.isEmpty && !cidChartConfig && !executedLoadTrend.isLoading;
 
     const hasBodyCompCharts = weightChartData.length > 0 || bmiChartData.length > 0;
     const hasFatigueData = fatigueChartData.some((d) => d.pre_fatigue != null || d.post_fatigue != null);
@@ -417,15 +479,14 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
             <PageTitle
                 titleAs="h2"
                 title="Progreso del Cliente"
-                subtitle="Evolución de métricas corporales, fatiga, energía y carga de trabajo"
+                subtitle="Evolución corporal y rendimiento gym — tonnage, historial por ejercicio y PR"
             />
 
             {/* Sub-tab chips */}
             <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Tabs progreso">
                 {([
-                    { id: "overview" as ProgressSubTab, label: "Resumen" },
-                    { id: "load" as ProgressSubTab, label: "Carga" },
-                    { id: "history" as ProgressSubTab, label: "Historial" },
+                    { id: "body" as ProgressSubTab, label: "Cuerpo" },
+                    { id: "performance" as ProgressSubTab, label: "Rendimiento gym" },
                 ] as const).map((tab) => (
                     <button
                         key={tab.id}
@@ -443,15 +504,15 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                 ))}
             </div>
 
-            {/* 404 empty state */}
-            {isNotFoundError && (
+            {/* 404 empty state — solo tabs que dependen de progress history */}
+            {isNotFoundError && activeTab === "body" && (
                 <div className="flex min-h-[200px] w-full items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 text-center text-sm text-muted-foreground">
                     Aún no hay datos de progreso para este cliente.
                 </div>
             )}
 
             {/* ═══════════ OVERVIEW TAB ═══════════ */}
-            {activeTab === "overview" && (
+            {activeTab === "body" && (
                 <>
                     {/* Metric cards */}
                     {!isNotFoundError && (
@@ -806,111 +867,237 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             No hay datos de progreso disponibles para este cliente.
                         </div>
                     )}
+
+                    {/* Antropometría — registros manuales */}
+                    {!isNotFoundError && (
+                        <div className="space-y-5 border-t border-border/50 pt-8">
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="text-sm font-semibold text-foreground">
+                                        Registros antropométricos
+                                    </h3>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        Peso, IMC y notas registrados manualmente.
+                                    </p>
+                                </div>
+                                {progressHistory && progressHistory.length > 0 && (
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => setShowProgressForm((v) => !v)}
+                                        className="shrink-0"
+                                    >
+                                        {showProgressForm ? (
+                                            <X className="size-4" aria-hidden />
+                                        ) : (
+                                            <Plus className="size-4" aria-hidden />
+                                        )}
+                                        {showProgressForm ? "Cancelar" : "Nuevo registro"}
+                                    </Button>
+                                )}
+                            </div>
+
+                            {showProgressForm && (
+                                <div
+                                    ref={formRef}
+                                    className="rounded-lg border border-border bg-card p-5"
+                                >
+                                    <p className="mb-4 text-sm font-semibold text-foreground">
+                                        Nuevo registro de progreso
+                                    </p>
+                                    <ProgressForm clientId={clientId} />
+                                </div>
+                            )}
+
+                            {progressHistory && progressHistory.length > 0 ? (
+                                <div className="space-y-2">
+                                    {progressHistory.map((record: ClientProgress) => (
+                                        <div
+                                            key={record.id}
+                                            className="flex items-center gap-4 rounded-lg bg-surface p-4"
+                                        >
+                                            <div className="min-w-0 flex-1">
+                                                <p className="text-sm font-medium text-foreground">
+                                                    {new Date(record.fecha_registro).toLocaleDateString("es-ES", {
+                                                        day: "numeric",
+                                                        month: "long",
+                                                        year: "numeric",
+                                                    })}
+                                                </p>
+                                                <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
+                                                    <span>
+                                                        Peso:{" "}
+                                                        <strong className="text-foreground">
+                                                            {record.peso ? `${record.peso} kg` : "—"}
+                                                        </strong>
+                                                    </span>
+                                                    <span>
+                                                        IMC:{" "}
+                                                        <strong className="text-foreground">
+                                                            {record.imc ? record.imc.toFixed(1) : "—"}
+                                                        </strong>
+                                                    </span>
+                                                </div>
+                                                {record.notas && (
+                                                    <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/70">
+                                                        {record.notas}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <button
+                                                onClick={() => handleEditClick(record)}
+                                                className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                                                title="Editar registro"
+                                                aria-label="Editar registro"
+                                            >
+                                                <Pencil className="h-4 w-4" aria-hidden />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div
+                                    className="rounded-lg border border-dashed border-border/50 bg-muted/10"
+                                    data-testid="progress-history-empty"
+                                >
+                                    <EmptyState
+                                        icon={<ClipboardList />}
+                                        title="Sin registros de progreso"
+                                        description="Registra peso, IMC y notas para seguir la evolución corporal del cliente."
+                                        action={
+                                            !showProgressForm ? (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => setShowProgressForm(true)}
+                                                >
+                                                    <Plus className="size-4" aria-hidden />
+                                                    Añadir primer registro
+                                                </Button>
+                                            ) : undefined
+                                        }
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </>
             )}
 
-            {/* ═══════════ LOAD TAB ═══════════ */}
-            {activeTab === "load" && (
+            {/* ═══════════ PERFORMANCE TAB (tendencia + historial gym) ═══════════ */}
+            {activeTab === "performance" && (
                 <div className="space-y-6">
-                    {/* Period chips */}
-                    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Periodo métricas">
-                        {([
-                            { id: "weekly" as MetricsPeriod, label: "Semanal" },
-                            { id: "monthly" as MetricsPeriod, label: "Mensual" },
-                            { id: "annual" as MetricsPeriod, label: "Anual" },
-                        ] as const).map((p) => (
-                            <button
-                                key={p.id}
-                                type="button"
-                                onClick={() => setMetricsPeriod(p.id)}
-                                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-                                    metricsPeriod === p.id
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                                }`}
-                                aria-pressed={metricsPeriod === p.id}
-                            >
-                                {p.label}
-                            </button>
-                        ))}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                        <p className="text-sm text-muted-foreground max-w-xl">
+                            Volumen ejecutado (tonnage real) y, si el plan lo permite, carga
+                            planificada (CID).
+                        </p>
+                        <MetricsPeriodSelector
+                            value={metricsPeriod}
+                            onChange={setMetricsPeriod}
+                        />
                     </div>
 
-                    {/* No data */}
-                    {!isLoading && hasNoLoadData && (
-                        <div
-                            className="flex w-full min-w-0 items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 px-4 py-8 text-center text-sm text-muted-foreground"
-                            style={{ minHeight: 200 }}
-                        >
+                    <ClientExecutedLoadTrendChart
+                        clientId={clientId}
+                        startDate={metricsDateRange.startDate}
+                        endDate={metricsDateRange.endDate}
+                        period={metricsPeriod}
+                    />
+
+                    {cidChartConfig && (
+                        <div className="space-y-4 border-t border-border/50 pt-6">
                             <div>
-                                <p>No hay sesiones de entrenamiento con datos de volumen/intensidad en el rango seleccionado.</p>
-                                <p className="mt-1 text-xs text-muted-foreground/70">
-                                    Las sesiones necesitan tener valores de volumen e intensidad para calcular métricas.
+                                <h3 className="text-sm font-semibold text-foreground">
+                                    Carga planificada (CID)
+                                </h3>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    Volumen e intensidad prescritos en el plan activo.
                                 </p>
                             </div>
-                        </div>
-                    )}
-
-                    {/* CID chart */}
-                    {cidChartConfig && (
-                        <div className="rounded-lg bg-surface p-5">
-                            <h3 className="mb-4 text-sm font-semibold">{cidChartConfig.title}</h3>
-                            <div className="w-full min-w-0">
-                                <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
-                                    <LineChart data={cidChartConfig.data} margin={CHART_MARGIN}>
-                                        <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
-                                        <XAxis
-                                            dataKey="label"
-                                            tick={CHART_TICK_STYLE}
-                                            axisLine={{ stroke: CHART_AXIS_STROKE }}
-                                            tickLine={{ stroke: CHART_AXIS_STROKE }}
-                                            interval={0}
-                                        />
-                                        <YAxis
-                                            width={40}
-                                            tick={CHART_TICK_STYLE}
-                                            axisLine={{ stroke: CHART_AXIS_STROKE }}
-                                            tickLine={{ stroke: CHART_AXIS_STROKE }}
-                                        />
-                                        <Tooltip
-                                            contentStyle={CHART_TOOLTIP_STYLE}
-                                            formatter={(value: number) => [value.toFixed(1), "CID"]}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="cid"
-                                            stroke="hsl(var(--primary))"
-                                            name="CID Total"
-                                            strokeWidth={2}
-                                            dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--primary))", fill: "hsl(var(--card))" }}
-                                            isAnimationActive={false}
-                                        />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="avg"
-                                            stroke="hsl(var(--success))"
-                                            name="CID Promedio"
-                                            strokeWidth={2}
-                                            dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--success))", fill: "hsl(var(--card))" }}
-                                            isAnimationActive={false}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                                <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1.5">
-                                        <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
-                                        CID Total
-                                    </span>
-                                    <span className="flex items-center gap-1.5">
-                                        <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" />
-                                        CID Promedio
-                                    </span>
+                            <div className="rounded-lg bg-surface p-5">
+                                <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                                    <h4 className="text-sm font-medium text-foreground">
+                                        {cidChartConfig.title}
+                                    </h4>
+                                </div>
+                                <div className="w-full min-w-0">
+                                    <ResponsiveContainer width="100%" height={CHART_HEIGHT}>
+                                        <LineChart data={cidChartConfig.data} margin={CHART_MARGIN}>
+                                            <CartesianGrid stroke={CHART_GRID_STROKE} strokeDasharray="3 3" />
+                                            <XAxis
+                                                dataKey="label"
+                                                tick={CHART_TICK_STYLE}
+                                                axisLine={{ stroke: CHART_AXIS_STROKE }}
+                                                tickLine={{ stroke: CHART_AXIS_STROKE }}
+                                                interval={0}
+                                            />
+                                            <YAxis
+                                                width={40}
+                                                tick={CHART_TICK_STYLE}
+                                                axisLine={{ stroke: CHART_AXIS_STROKE }}
+                                                tickLine={{ stroke: CHART_AXIS_STROKE }}
+                                            />
+                                            <Tooltip
+                                                contentStyle={CHART_TOOLTIP_STYLE}
+                                                formatter={(value: number) => [value.toFixed(1), "CID"]}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="cid"
+                                                stroke="hsl(var(--primary))"
+                                                name="CID Total"
+                                                strokeWidth={2}
+                                                dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--primary))", fill: "hsl(var(--card))" }}
+                                                isAnimationActive={false}
+                                            />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="avg"
+                                                stroke="hsl(var(--success))"
+                                                name="CID Promedio"
+                                                strokeWidth={2}
+                                                dot={{ r: 4, strokeWidth: 2, stroke: "hsl(var(--success))", fill: "hsl(var(--card))" }}
+                                                isAnimationActive={false}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-xs text-muted-foreground">
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-primary" />
+                                            CID Total
+                                        </span>
+                                        <span className="flex items-center gap-1.5">
+                                            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success" />
+                                            CID Promedio
+                                        </span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     )}
 
-                    {/* Alerts */}
-                    {!isLoading && metricsAlerts.hasAlerts && (
+                    {!cidChartConfig && !executedLoadTrend.isEmpty && (
+                        <p className="text-center text-xs text-muted-foreground/70">
+                            CID no disponible — el plan no tiene volumen/intensidad calculables en
+                            este periodo.
+                        </p>
+                    )}
+
+                    {trendTabFullyEmpty && !isLoading && (
+                        <div className="flex w-full min-w-0 items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/10 px-4 py-6 text-center text-sm text-muted-foreground">
+                            <div>
+                                <p>Sin datos de tendencia en el periodo seleccionado.</p>
+                                <p className="mt-1 text-xs text-muted-foreground/70">
+                                    El tonnage aparece cuando el atleta registra series; CID requiere
+                                    plan con volumen/intensidad.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Alerts — solo si hay CID */}
+                    {!isLoading && cidChartConfig && metricsAlerts.hasAlerts && (
                         <div className="space-y-3">
                             <h3 className="text-sm font-semibold text-foreground">Alertas de Carga</h3>
                             {metricsAlerts.activeAlerts.map((alert, i) => {
@@ -956,8 +1143,8 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                         </div>
                     )}
 
-                    {/* Summary metrics */}
-                    {cidSummary && (
+                    {/* Summary metrics — solo con CID */}
+                    {cidChartConfig && cidSummary && (
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                             <MetricCard title="CID Total" value={cidSummary.total} color="blue" />
                             <MetricCard title="CID Promedio" value={cidSummary.avg} color="green" />
@@ -968,96 +1155,15 @@ const ClientProgressTabComponent: React.FC<ClientProgressTabProps> = ({
                             />
                         </div>
                     )}
+
+                    <div className="border-t border-border/50 pt-8">
+                        <ClientSetHistoryPanel
+                            clientId={clientId}
+                            initialExerciseId={historyExerciseId}
+                        />
+                    </div>
                 </div>
             )}
-
-            {/* ═══════════ HISTORY TAB ═══════════ */}
-            {activeTab === "history" && (
-                <>
-                    {!isNotFoundError && progressHistory && progressHistory.length > 0 ? (
-                        <div className="space-y-2">
-                            {progressHistory.map((record: ClientProgress) => (
-                                <div
-                                    key={record.id}
-                                    className="flex items-center gap-4 rounded-lg bg-surface p-4"
-                                >
-                                    <div className="min-w-0 flex-1">
-                                        <p className="text-sm font-medium text-foreground">
-                                            {new Date(record.fecha_registro).toLocaleDateString("es-ES", {
-                                                day: "numeric",
-                                                month: "long",
-                                                year: "numeric",
-                                            })}
-                                        </p>
-                                        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-muted-foreground">
-                                            <span>
-                                                Peso:{" "}
-                                                <strong className="text-foreground">
-                                                    {record.peso ? `${record.peso} kg` : "—"}
-                                                </strong>
-                                            </span>
-                                            <span>
-                                                IMC:{" "}
-                                                <strong className="text-foreground">
-                                                    {record.imc ? record.imc.toFixed(1) : "—"}
-                                                </strong>
-                                            </span>
-                                        </div>
-                                        {record.notas && (
-                                            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground/70">
-                                                {record.notas}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <button
-                                        onClick={() => handleEditClick(record)}
-                                        className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
-                                        title="Editar registro"
-                                        aria-label="Editar registro"
-                                    >
-                                        <Pencil className="h-4 w-4" aria-hidden />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        !isNotFoundError && (
-                            <div
-                                className="flex w-full items-center justify-center rounded-md border border-dashed border-border/50 bg-muted/10 text-center text-sm text-muted-foreground"
-                                style={{ minHeight: 200 }}
-                            >
-                                No hay registros de progreso aún.
-                            </div>
-                        )
-                    )}
-                </>
-            )}
-
-            {/* ═══════════ ADD PROGRESS FORM ═══════════ */}
-            <div ref={formRef}>
-                <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setShowProgressForm((v) => !v)}
-                    className="w-full justify-between"
-                >
-                    <span className="flex items-center gap-2">
-                        <Plus className="h-4 w-4" aria-hidden />
-                        Añadir nuevo registro de progreso
-                    </span>
-                    {showProgressForm ? (
-                        <ChevronUp className="h-4 w-4" aria-hidden />
-                    ) : (
-                        <ChevronDown className="h-4 w-4" aria-hidden />
-                    )}
-                </Button>
-                {showProgressForm && (
-                    <div className="mt-4">
-                        <ProgressForm clientId={clientId} />
-                    </div>
-                )}
-            </div>
 
             {/* Edit modal */}
             {selectedRecord && (

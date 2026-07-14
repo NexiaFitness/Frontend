@@ -11,6 +11,8 @@ import {
 } from "recharts";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
+import { SegmentButton } from "@/components/ui/buttons";
+import { FormCombobox } from "@/components/ui/forms";
 
 interface Props {
   blocks: PlanPeriodBlock[];
@@ -198,29 +200,40 @@ export const PeriodizationCharts: React.FC<Props> = ({ blocks, catalog }) => {
   return (
     <div className="rounded-lg bg-surface p-5 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h3 className="text-sm font-semibold">Progresión del plan</h3>
-        <div className="flex items-center gap-2">
-          <select
-            value={aggregation}
-            onChange={(e) => setAggregation(e.target.value as Aggregation)}
-            className="rounded-md bg-surface-2 border border-border px-2.5 py-1.5 text-xs text-foreground"
+        <h3 className="text-sm font-semibold">Progresión planificada</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <div
+            className="flex items-center gap-1.5"
+            role="group"
             aria-label="Tipo de agregación"
           >
-            <option value="week">Semana</option>
-            <option value="month">Mes</option>
-          </select>
-          <select
-            value={dateRange}
-            onChange={(e) => setDateRange(e.target.value)}
-            className="rounded-md bg-surface-2 border border-border px-2.5 py-1.5 text-xs text-foreground"
-            aria-label="Rango de fechas"
-          >
-            {dateOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
-            ))}
-          </select>
+            <SegmentButton
+              size="sm"
+              selected={aggregation === "week"}
+              onClick={() => setAggregation("week")}
+              className="w-[4.75rem]"
+            >
+              Semana
+            </SegmentButton>
+            <SegmentButton
+              size="sm"
+              selected={aggregation === "month"}
+              onClick={() => setAggregation("month")}
+              className="w-[4.75rem]"
+            >
+              Mes
+            </SegmentButton>
+          </div>
+          <div aria-label="Rango de fechas">
+            <FormCombobox
+              size="xs"
+              value={dateRange}
+              onChange={setDateRange}
+              options={dateOptions}
+              placeholder="Rango de fechas"
+              className="min-w-[11rem] w-[11rem]"
+            />
+          </div>
         </div>
       </div>
 

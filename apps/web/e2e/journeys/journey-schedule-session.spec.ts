@@ -18,8 +18,8 @@
 import { test, expect } from "@playwright/test";
 import type { Page } from "@playwright/test";
 import { loginAsTrainer } from "../fixtures/auth";
-import { navigateToClients, navigateToScheduling, getAddClientFromListButton } from "../fixtures/navigation";
-import { createMinimalClientData } from "../fixtures/test-data";
+import { navigateToClients, navigateToScheduling } from "../fixtures/navigation";
+import { createClientAndOpenDetail } from "../fixtures/create-client-api";
 
 const TOKEN_KEY = "nexia_token";
 const FIXED_START_TIME = "14:00";
@@ -93,34 +93,9 @@ test.describe("Journey — Schedule session (scheduling → create scheduled ses
     const tomorrowStr = formatLocalDate(tomorrow);
     await clearTrainerSessionsForDate(page, tomorrowStr);
 
-    // 1) Crear cliente (onboarding mínimo) para no depender de seed
+    // 1) Crear cliente activo vía API para no depender de seed
     await navigateToClients(page);
-    await getAddClientFromListButton(page).click();
-    await expect(page).toHaveURL(/\/dashboard\/clients\/onboarding/, {
-      timeout: 10_000,
-    });
-
-    await expect(
-      page.getByRole("heading", { name: /agregar nuevo cliente/i })
-    ).toBeVisible({ timeout: 15_000 });
-
-    const clientData = createMinimalClientData();
-    await page.getByPlaceholder(/ej: juan/i).fill(clientData.nombre);
-    await page.getByPlaceholder(/ej: pérez/i).fill(clientData.apellidos);
-    await page.getByPlaceholder(/ejemplo@correo/i).fill(clientData.mail);
-    await page.getByRole("button", { name: /siguiente/i }).click();
-    await expect(
-      page.getByRole("button", { name: /crear perfil/i })
-    ).toBeVisible({ timeout: 10_000 });
-    await page.getByRole("button", { name: /crear perfil/i }).click();
-
-    await expect(page).toHaveURL(/\/dashboard\/clients\/\d+/, {
-      timeout: 20_000,
-    });
-    const clientId = parseInt(
-      page.url().replace(/.*\/dashboard\/clients\/(\d+).*/, "$1"),
-      10
-    );
+    const { clientId, data: clientData } = await createClientAndOpenDetail(page);
     expect(clientId).toBeGreaterThan(0);
 
     // 2) Ir a Programación y abrir vista nueva (clic en día de mañana)

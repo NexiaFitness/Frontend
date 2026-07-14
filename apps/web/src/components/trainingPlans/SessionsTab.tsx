@@ -238,7 +238,7 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
 
             {/* Lista de sesiones */}
             {displayedSessions.length > 0 && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="flex w-full flex-col gap-4">
                     {displayedSessions.map((session) => (
                         <SessionCard
                             key={session.id}

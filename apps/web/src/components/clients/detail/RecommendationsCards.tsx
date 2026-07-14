@@ -119,7 +119,6 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
                     variant="info"
                     icon={<Zap className="h-3.5 w-3.5 text-info" aria-hidden />}
                     title="Selección de ejercicios"
-                    subtitle={`${recommendations.exercise_selection.total_exercises_per_session} ejercicios/sesión`}
                     content={
                         <ExerciseSelectionCardContent
                             rec={recommendations.exercise_selection}
@@ -162,7 +161,7 @@ interface RecommendationCardProps {
     variant: RecommendationCardVariant;
     icon: React.ReactNode;
     title: string;
-    subtitle: string;
+    subtitle?: string;
     content: React.ReactNode;
 }
 
@@ -185,9 +184,11 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({
                 {icon}
                 <span className={cn("text-xs font-semibold", tone.title)}>{title}</span>
             </div>
-            <span className={cn("text-sm font-bold tabular-nums leading-none", tone.subtitle)}>
-                {subtitle}
-            </span>
+            {subtitle && (
+                <span className={cn("text-sm font-bold tabular-nums leading-none", tone.subtitle)}>
+                    {subtitle}
+                </span>
+            )}
             <div className="space-y-1.5">{content}</div>
         </div>
     );

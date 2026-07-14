@@ -14,15 +14,23 @@
  * @since v6.3.0 — Fase 5 SPEC_ESTRUCTURA_SEMANAL_VALIDACION.md
  */
 
-import React from "react";
+import React, { useRef, useCallback } from "react";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Layers } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
-import { WeeklyStructureEditor } from "@/components/trainingPlans/periodization";
+import { PageTitle } from "@/components/dashboard/shared";
+import { GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
+import {
+    WeeklyStructureEditor,
+    type WeeklyStructureEditorHandle,
+} from "@/components/trainingPlans/periodization/WeeklyStructureEditor";
+import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
+import { cn } from "@/lib/utils";
 
 export const WeeklyStructurePage: React.FC = () => {
     const { planId: planIdParam, blockId: blockIdParam } = useParams<{
@@ -30,6 +38,7 @@ export const WeeklyStructurePage: React.FC = () => {
         blockId: string;
     }>();
     const navigate = useNavigate();
+    const editorRef = useRef<WeeklyStructureEditorHandle>(null);
 
     const planId = parseInt(planIdParam || "0", 10);
     const blockId = parseInt(blockIdParam || "0", 10);
@@ -47,9 +56,24 @@ export const WeeklyStructurePage: React.FC = () => {
 
     const block = blocks?.find((b) => b.id === blockId);
 
-    const handleBack = () => {
-        navigate(`/dashboard/training-plans/${planId}?tab=planning`);
-    };
+    useScrollDashboardWhenReady(
+        !isLoadingPlan && !isLoadingBlocks && !!plan && !!block,
+    );
+
+    const handleBack = useCallback(() => {
+        if (plan?.client_id) {
+            navigate(`/dashboard/clients/${plan.client_id}?tab=planning&plan=${planId}`);
+        } else {
+            navigate(`/dashboard/training-plans/${planId}`);
+        }
+    }, [navigate, plan?.client_id, planId]);
+
+    const handleVolver = useCallback(() => {
+        if (editorRef.current?.stepBack()) {
+            return;
+        }
+        handleBack();
+    }, [handleBack]);
 
     if (isLoadingPlan || isLoadingBlocks) {
         return (
@@ -61,7 +85,7 @@ export const WeeklyStructurePage: React.FC = () => {
 
     if (isErrorPlan || !plan) {
         return (
-            <div className="p-6">
+            <div>
                 <Alert variant="error">
                     <p className="font-medium">Plan no encontrado</p>
                     <p className="text-sm opacity-90">No se pudo cargar el plan de entrenamiento.</p>
@@ -72,7 +96,7 @@ export const WeeklyStructurePage: React.FC = () => {
 
     if (!block) {
         return (
-            <div className="p-6">
+            <div>
                 <Alert variant="error">
                     <p className="font-medium">Bloque no encontrado</p>
                     <p className="text-sm opacity-90">El bloque de periodización no existe en este plan.</p>
@@ -81,26 +105,37 @@ export const WeeklyStructurePage: React.FC = () => {
         );
     }
 
+    const blockSubtitle =
+        (block.goal && (GOAL_LABEL_ES[block.goal] ?? block.goal)) ||
+        block.name ||
+        plan.name;
+
     return (
-        <div className="space-y-6 p-4 sm:p-6">
-            {/* Header */}
-            <div className="flex items-start gap-3">
-                <Button variant="ghost" size="sm" onClick={handleBack} aria-label="Volver al plan">
-                    <ArrowLeft className="h-4 w-4" />
+        <div
+            className={cn(
+                "w-full min-w-0 space-y-6",
+                DASHBOARD_FIXED_FOOTER_PADDING_CLASS,
+            )}
+        >
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <PageTitle title="Planificación" subtitle={blockSubtitle} />
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleVolver}
+                    className="shrink-0 self-start sm:self-center"
+                >
+                    <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                    Volver
                 </Button>
-                <div>
-                    <h1 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                        <Layers className="h-5 w-5 text-primary" />
-                        Estructura semanal
-                    </h1>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {plan.name} — Bloque {block.start_date} / {block.end_date}
-                    </p>
-                </div>
             </div>
 
-            {/* Editor */}
-            <WeeklyStructureEditor planId={planId} blockId={blockId} block={block} />
+            <WeeklyStructureEditor
+                ref={editorRef}
+                planId={planId}
+                blockId={blockId}
+                block={block}
+            />
         </div>
     );
 };

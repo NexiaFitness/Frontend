@@ -29,6 +29,8 @@ export interface PhysicalTestOut {
     formula: string | null;
     notes: string | null;
     created_by_trainer_id: number | null;
+    linked_exercise_id?: number | null;
+    primary_exercise_id?: number | null;
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
@@ -155,6 +157,8 @@ export interface ClientTestingSummary {
     upcoming_tests: UpcomingTest[]; // Tests due for repetition
     profile_analysis: string; // Auto-generated analysis text
     bilateral_comparison: BilateralComparisonPoint[] | null; // For mobility tests: joint ROM left vs right
+    has_any_test_results: boolean;
+    latest_result_at: string | null;
 }
 
 // ========================================
@@ -209,6 +213,35 @@ export const TEST_CATEGORIES: Record<TestCategory, TestCategoryInfo> = {
 // ========================================
 
 /**
+ * Datos para crear definición de evaluación física (POST /physical-tests/)
+ */
+export interface PhysicalTestCreate {
+    name: string;
+    category: TestCategory;
+    unit: string;
+    description?: string | null;
+    is_standard?: boolean;
+    default_frequency_weeks?: number | null;
+    formula?: string | null;
+    notes?: string | null;
+    /** Spec 02 — vincula strength RM al ejercicio de gym (PR automático) */
+    exercise_id?: number | null;
+}
+
+/**
+ * Datos para actualizar definición de evaluación física
+ */
+export interface PhysicalTestUpdate {
+    name?: string;
+    category?: TestCategory;
+    description?: string | null;
+    unit?: string;
+    default_frequency_weeks?: number | null;
+    formula?: string | null;
+    notes?: string | null;
+}
+
+/**
  * Datos para crear un resultado de test
  */
 export interface CreateTestResultData {
@@ -235,6 +268,24 @@ export interface UpdateTestResultData {
     notes?: string | null;
     surface?: string | null;
     conditions?: string | null;
+}
+
+/** Spec 01 F2 — POST /physical-tests/clients/{id}/ai-insights */
+export interface TestingAiInsightsRequest {
+    force_refresh?: boolean;
+}
+
+export type TestingAiInsightsSource = "llm" | "cache" | "deterministic";
+
+export interface TestingAiInsightsOut {
+    client_id: number;
+    has_insight: boolean;
+    is_stale: boolean;
+    latest_result_at: string | null;
+    insights_text: string | null;
+    source: TestingAiInsightsSource | null;
+    generated_at: string | null;
+    model: string | null;
 }
 
 

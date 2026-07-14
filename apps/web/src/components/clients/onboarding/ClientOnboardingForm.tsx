@@ -230,7 +230,14 @@ export const ClientOnboardingForm: React.FC<ClientOnboardingFormProps> = ({
                                 <SummaryRow label="IMC" value={formData.peso && formData.altura ? (formData.peso / ((formData.altura / 100) ** 2)).toFixed(1) : undefined} />
                                 <SummaryRow label="Objetivo" value={formData.objetivo_entrenamiento || undefined} />
                                 <SummaryRow label="Experiencia" value={formData.experiencia || undefined} />
-                                <SummaryRow label="Sesiones/sem" value={formData.exact_training_frequency?.toString()} />
+                                <SummaryRow
+                                    label="Días de entreno"
+                                    value={
+                                        formData.training_days && formData.training_days.length > 0
+                                            ? `${formData.training_days.length}/sem`
+                                            : undefined
+                                    }
+                                />
                             </dl>
                         </div>
                     </div>

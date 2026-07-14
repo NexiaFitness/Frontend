@@ -21,9 +21,14 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import {
+    AUTH_INPUT_MOBILE,
+    AUTH_LINK,
+    AUTH_SUBMIT_MOBILE,
+} from "@/components/auth/authFormPresentation";
 import { useResetPasswordMutation } from "@nexia/shared/api/authApi";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
-import { validateResetPasswordForm } from "@nexia/shared/utils/validations";
+import { validateResetPasswordForm, PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared/utils/validations";
 import type { ResetPasswordData } from "@nexia/shared/types/auth";
 
 interface ResetPasswordFormData {
@@ -125,7 +130,7 @@ export const ResetPasswordForm: React.FC = () => {
                     variant="primary"
                     size="md"
                     onClick={handleBackToLogin}
-                    className="w-full"
+                    className={`w-full ${AUTH_SUBMIT_MOBILE}`}
                 >
                     Iniciar sesión
                 </Button>
@@ -155,9 +160,10 @@ export const ResetPasswordForm: React.FC = () => {
                     value={formData.newPassword}
                     onChange={handleInputChange("newPassword")}
                     error={errors.newPassword}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={PASSWORD_REQUIREMENTS_HINT}
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Input
@@ -170,6 +176,7 @@ export const ResetPasswordForm: React.FC = () => {
                     placeholder="Repite tu nueva contraseña"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Button
@@ -178,7 +185,7 @@ export const ResetPasswordForm: React.FC = () => {
                     size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="w-full"
+                    className={`w-full ${AUTH_SUBMIT_MOBILE}`}
                 >
                     {isLoading ? "Actualizando contraseña..." : "Cambiar contraseña"}
                 </Button>
@@ -187,7 +194,7 @@ export const ResetPasswordForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleRequestNewToken}
-                        className="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors disabled:opacity-50"
+                        className={`${AUTH_LINK} disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         Tu enlace ha caducado. Solicita uno nuevo
@@ -196,7 +203,7 @@ export const ResetPasswordForm: React.FC = () => {
                     <button
                         type="button"
                         onClick={handleBackToLogin}
-                        className="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors disabled:opacity-50"
+                        className={`${AUTH_LINK} disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         Volver al login

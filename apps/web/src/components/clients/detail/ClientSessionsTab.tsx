@@ -20,12 +20,12 @@
  */
 
 import React, { useState, useMemo, useCallback } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ChevronDown, Calendar } from "lucide-react";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetStandaloneSessionsByClientQuery } from "@nexia/shared/api/standaloneSessionsApi";
 import { useGetScheduledSessionsQuery } from "@nexia/shared/api/schedulingApi";
-import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
+import { isDateInRange, parseISODateLocal } from "@nexia/shared/utils/periodBlockOverlap";
 import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
@@ -90,9 +90,18 @@ function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
 export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const [searchParams] = useSearchParams();
     const { showWarning } = useToast();
-    const [currentMonth, setCurrentMonth] = useState(() => new Date());
-    const [periodCalMonth, setPeriodCalMonth] = useState(() => new Date());
+    const initialMonth = useMemo(() => {
+        const monthParam = searchParams.get("month");
+        if (monthParam) {
+            const parsed = parseISODateLocal(monthParam);
+            if (parsed) return parsed;
+        }
+        return new Date();
+    }, [searchParams]);
+    const [currentMonth, setCurrentMonth] = useState(() => initialMonth);
+    const [periodCalMonth, setPeriodCalMonth] = useState(() => initialMonth);
 
     const {
         activePlanForClient,
@@ -112,13 +121,21 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 showWarning("Solo puedes abrir el constructor en fechas dentro de la vigencia del plan activo.", 4000);
                 return;
             }
+            const existingOnDay = planSessions.find((s) => s.session_date === dateStr);
+            if (existingOnDay?.id) {
+                navigate(
+                    `/dashboard/session-programming/sessions/${existingOnDay.id}`,
+                    { state: returnToStateFromView(location) },
+                );
+                return;
+            }
             const qs = new URLSearchParams({ clientId: String(clientId), date: dateStr, planId: String(activePlanForClient.id) });
             navigate(
                 `/dashboard/session-programming/create-session?${qs.toString()}`,
                 { replace: false }
             );
         },
-        [activePlanForClient, clientId, navigate, showWarning]
+        [activePlanForClient, clientId, navigate, showWarning, planSessions, location]
     );
     const [listFilter, setListFilter] = useState<ListFilter>("all");
     const [listPage, setListPage] = useState(1);

@@ -11,5 +11,8 @@ export { EmailVerificationBanner } from "./EmailVerificationBanner";
 export { GreetingHeader } from "./GreetingHeader";
 export { PageTitle } from "./PageTitle";
 export type { PageTitleProps } from "./PageTitle";
-export { DashboardFixedFooter } from "./DashboardFixedFooter";
+export {
+  DashboardFixedFooter,
+  DASHBOARD_FIXED_FOOTER_SHELL_CLASS,
+} from "./DashboardFixedFooter";
 export type { DashboardFixedFooterProps } from "./DashboardFixedFooter";

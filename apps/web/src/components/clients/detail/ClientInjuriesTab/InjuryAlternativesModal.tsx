@@ -55,7 +55,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
         );
 
     const selectedExercise = exercises.find((e) => e.id === selectedExerciseId);
-    const injuryContext = [injury.joint_name, injury.movement_name].filter(Boolean).join(" · ");
+    const injuryContext = [injury.joint_name_es || injury.joint_name, injury.movement_name_es || injury.movement_name].filter(Boolean).join(" · ");
 
     const handleClose = () => {
         setSelectedExerciseId(null);

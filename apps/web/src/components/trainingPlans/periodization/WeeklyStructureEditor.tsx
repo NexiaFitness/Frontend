@@ -21,8 +21,8 @@
  * @since v6.3.0 — Fase 5 SPEC_ESTRUCTURA_SEMANAL_VALIDACION.md
  */
 
-import React, { useState, useCallback, useMemo } from "react";
-import { Plus, Trash2, Save, X, Layers, CalendarDays, Copy } from "lucide-react";
+import React, { useState, useCallback, useMemo, forwardRef, useImperativeHandle } from "react";
+import { Plus, Trash2, Save, Layers, CalendarRange, Copy } from "lucide-react";
 
 import {
     useGetWeeklyStructureQuery,
@@ -39,15 +39,21 @@ import type {
     WeeklyStructureDayPatternInput,
 } from "@nexia/shared/types/weeklyStructure";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
-import { getMutationErrorMessage, UI_BUCKET_LABELS, UI_BUCKET_ORDER, generateSyntheticWeeks, mergeWeeklyStructureWeeks } from "@nexia/shared";
+import {
+    formatCalendarWeekRange,
+    getMutationErrorMessage,
+    UI_BUCKET_LABELS,
+    UI_BUCKET_ORDER,
+    generateSyntheticWeeks,
+    mergeWeeklyStructureWeeks,
+} from "@nexia/shared";
 import { PatternBadge } from "./PatternBadge";
 
 import { Button } from "@/components/ui/buttons";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import { TabsBar } from "@/components/ui/tabs";
-import { FormSelect } from "@/components/ui/forms";
-import { Input } from "@/components/ui/forms";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -67,15 +73,6 @@ const DEFAULT_DAYS: WeeklyStructureDayInput[] = Array.from({ length: 7 }, (_, i)
     day_of_week: i + 1,
     patterns: [],
 }));
-
-const CORE_SUB_PATTERNS = [
-    "anti-extensión",
-    "anti-flexión",
-    "anti-rotación",
-    "anti-lateral-flexión",
-    "rotación",
-    "estabilidad",
-];
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -114,6 +111,13 @@ interface WeeklyStructureEditorProps {
         start_date: string;
         end_date: string;
     } | null;
+    /** true cuando create/edit o un modal local está abierto */
+    onBusyChange?: (busy: boolean) => void;
+}
+
+export interface WeeklyStructureEditorHandle {
+    /** true si se canceló edición o se cerró un overlay (quedarse en la página) */
+    stepBack: () => boolean;
 }
 
 type EditorMode = "view" | "create" | "edit";
@@ -127,12 +131,21 @@ interface DayEditorProps {
     patternsCatalog: MovementPattern[];
     patternsLoading?: boolean;
     patternsError?: boolean;
+    readOnly?: boolean;
     onChange: (updated: WeeklyStructureDayInput) => void;
 }
 
-const DayEditor: React.FC<DayEditorProps> = ({ day, patternsCatalog, patternsLoading, patternsError, onChange }) => {
+const DayEditor: React.FC<DayEditorProps> = ({
+    day,
+    patternsCatalog,
+    patternsLoading,
+    patternsError,
+    readOnly = false,
+    onChange,
+}) => {
     const togglePattern = useCallback(
         (patternId: number) => {
+            if (readOnly) return;
             const exists = day.patterns.some((p) => p.movement_pattern_id === patternId);
             let nextPatterns: WeeklyStructureDayPatternInput[];
             if (exists) {
@@ -142,21 +155,10 @@ const DayEditor: React.FC<DayEditorProps> = ({ day, patternsCatalog, patternsLoa
             }
             onChange({ ...day, patterns: nextPatterns });
         },
-        [day, onChange]
-    );
-
-    const updateSubPattern = useCallback(
-        (patternId: number, subPattern: string | null) => {
-            const nextPatterns = day.patterns.map((p) =>
-                p.movement_pattern_id === patternId ? { ...p, sub_pattern: subPattern } : p
-            );
-            onChange({ ...day, patterns: nextPatterns });
-        },
-        [day, onChange]
+        [day, onChange, readOnly]
     );
 
     const isSelected = (id: number) => day.patterns.some((p) => p.movement_pattern_id === id);
-    const selectedPattern = (id: number) => day.patterns.find((p) => p.movement_pattern_id === id);
 
     const groupedPatterns = useMemo(() => {
         const map = new Map<string, MovementPattern[]>();
@@ -182,74 +184,88 @@ const DayEditor: React.FC<DayEditorProps> = ({ day, patternsCatalog, patternsLoa
         return ordered;
     }, [patternsCatalog]);
 
-    // Buscar patrón CORE por ui_bucket (no por nombre hardcodeado)
-    const corePattern = useMemo(() => patternsCatalog.find((p) => p.ui_bucket === "CORE"), [patternsCatalog]);
+    const hasPatterns = day.patterns.length > 0;
 
     return (
-        <div className="rounded-lg border border-border/60 bg-surface p-3 space-y-3">
-            <div className="flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-muted-foreground" />
+        <div
+            className={cn(
+                "w-full min-w-0 flex flex-col rounded-lg border overflow-hidden",
+                hasPatterns
+                    ? "border-primary/30 border-l-[3px] border-l-primary bg-card shadow-[0_0_0_1px_hsl(var(--primary)/0.08),inset_3px_0_12px_-8px_hsl(var(--primary)/0.3)]"
+                    : "border-border/60 bg-surface-2/30",
+            )}
+        >
+            <div
+                className={cn(
+                    "flex items-center gap-2 border-b border-border/50 px-4 py-2.5",
+                    hasPatterns ? "bg-primary/[0.06]" : "bg-surface/40",
+                )}
+            >
+                <span
+                    className={cn(
+                        "h-2 w-2 shrink-0 rounded-full",
+                        hasPatterns
+                            ? "bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.55)]"
+                            : "bg-muted-foreground/40",
+                    )}
+                    aria-hidden
+                />
                 <span className="text-sm font-semibold text-foreground">
                     {DAY_LABELS[day.day_of_week]}
                 </span>
-                {day.patterns.length > 0 && (
-                    <span className="ml-auto text-xs text-muted-foreground">
-                        {day.patterns.length} patrón{day.patterns.length !== 1 ? "es" : ""}
+                {hasPatterns && (
+                    <span className="ml-auto inline-flex items-center rounded-md border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-bold tabular-nums text-primary">
+                        {day.patterns.length}{" "}
+                        {day.patterns.length === 1 ? "patrón" : "patrones"}
                     </span>
                 )}
             </div>
 
-            <div className="space-y-2">
+            <div className="flex flex-col gap-0 p-4 w-full min-w-0">
                 {patternsLoading && (
-                    <span className="text-xs text-muted-foreground animate-pulse">Cargando patrones...</span>
+                    <span className="text-xs text-muted-foreground animate-pulse">
+                        Cargando patrones...
+                    </span>
                 )}
                 {!patternsLoading && patternsError && (
-                    <span className="text-xs text-muted-foreground">Patrones no disponibles</span>
+                    <span className="text-xs text-muted-foreground">
+                        Patrones no disponibles
+                    </span>
                 )}
                 {!patternsLoading && !patternsError && patternsCatalog.length === 0 && (
-                    <span className="text-xs text-muted-foreground">No hay patrones en el catálogo</span>
+                    <span className="text-xs text-muted-foreground">
+                        No hay patrones en el catálogo
+                    </span>
                 )}
-                {!patternsLoading && groupedPatterns.map((group) => (
-                    <div key={group.bucket} className="space-y-1">
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            {group.label}
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                            {group.patterns.map((pattern) => (
-                                <PatternBadge
-                                    key={pattern.id}
-                                    name={pattern.name_es || pattern.name_en}
-                                    uiBucket={pattern.ui_bucket}
-                                    active={isSelected(pattern.id)}
-                                    onClick={() => togglePattern(pattern.id)}
-                                />
-                            ))}
+                {!patternsLoading &&
+                    groupedPatterns.map((group) => (
+                        <div
+                            key={group.bucket}
+                            className="flex flex-col gap-2 py-2.5 border-b border-border/40 last:border-0 sm:flex-row sm:items-start sm:gap-4 w-full min-w-0"
+                        >
+                            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:w-36 sm:pt-1">
+                                {group.label}
+                            </span>
+                            <div className="flex flex-wrap gap-1.5 flex-1 min-w-0">
+                                {group.patterns.map((pattern) => (
+                                    <PatternBadge
+                                        key={pattern.id}
+                                        name={pattern.name_es || pattern.name_en}
+                                        uiBucket={pattern.ui_bucket}
+                                        active={isSelected(pattern.id)}
+                                        as={readOnly ? "span" : "button"}
+                                        onClick={
+                                            readOnly
+                                                ? undefined
+                                                : () => togglePattern(pattern.id)
+                                        }
+                                        className="!py-0.5 !text-[10px]"
+                                    />
+                                ))}
+                            </div>
                         </div>
-                    </div>
-                ))}
+                    ))}
             </div>
-
-            {/* Sub-pattern selector for CORE — show only if CORE pattern is selected */}
-            {(() => {
-                if (!corePattern) return null;
-                const coreSelected = selectedPattern(corePattern.id);
-                if (!coreSelected) return null;
-                return (
-                    <div className="pt-1 border-t border-border/40">
-                        <FormSelect
-                            size="sm"
-                            label="Sub-patrón CORE"
-                            placeholder="Selecciona sub-patrón..."
-                            value={coreSelected.sub_pattern ?? ""}
-                            options={[
-                                { value: "", label: "— Ninguno —" },
-                                ...CORE_SUB_PATTERNS.map((sp) => ({ value: sp, label: sp })),
-                            ]}
-                            onChange={(e) => updateSubPattern(corePattern.id, e.target.value || null)}
-                        />
-                    </div>
-                );
-            })()}
         </div>
     );
 };
@@ -258,7 +274,10 @@ const DayEditor: React.FC<DayEditorProps> = ({ day, patternsCatalog, patternsLoa
 // Main component
 // ---------------------------------------------------------------------------
 
-export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ planId, blockId, block }) => {
+export const WeeklyStructureEditor = forwardRef<
+    WeeklyStructureEditorHandle,
+    WeeklyStructureEditorProps
+>(function WeeklyStructureEditor({ planId, blockId, block, onBusyChange }, ref) {
     const { showSuccess, showError } = useToast();
 
     const {
@@ -304,17 +323,20 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
         [realWeeks, syntheticWeeks]
     );
 
-    const tabItems = useMemo(() => {
-        const items = weeks.map((w) => ({
-            id: String(w.week_ordinal),
-            label: w.label ? `${w.label} (S${w.week_ordinal})` : `Semana ${w.week_ordinal}`,
-        }));
-        return items;
-    }, [weeks]);
-
     const activeWeek = useMemo(() => {
         if (!activeWeekOrdinal) return weeks[0] ?? null;
         return weeks.find((w) => String(w.week_ordinal) === activeWeekOrdinal) ?? weeks[0] ?? null;
+    }, [weeks, activeWeekOrdinal]);
+
+    React.useEffect(() => {
+        if (weeks.length === 0) return;
+        const current = activeWeekOrdinal || String(weeks[0].week_ordinal);
+        const exists = weeks.some((w) => String(w.week_ordinal) === current);
+        if (!exists) {
+            setActiveWeekOrdinal(String(weeks[0].week_ordinal));
+        } else if (!activeWeekOrdinal) {
+            setActiveWeekOrdinal(current);
+        }
     }, [weeks, activeWeekOrdinal]);
 
     const handleStartCreate = useCallback(() => {
@@ -341,6 +363,44 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
         setDraft(null);
         setEditingWeekId(null);
     }, []);
+
+    const isEditing = mode === "create" || mode === "edit";
+    const hasLocalOverlay = repeatModalOpen || !!deleteTarget;
+
+    React.useEffect(() => {
+        onBusyChange?.(isEditing || hasLocalOverlay);
+    }, [isEditing, hasLocalOverlay, onBusyChange]);
+
+    useImperativeHandle(
+        ref,
+        () => ({
+            stepBack: () => {
+                if (repeatModalOpen) {
+                    setRepeatModalOpen(false);
+                    setRepeatTargetWeek(null);
+                    setSelectedTargetOrdinals([]);
+                    setForceRepeat(false);
+                    setRepeatConflictMessage(null);
+                    return true;
+                }
+                if (deleteTarget) {
+                    setDeleteTarget(null);
+                    return true;
+                }
+                if (isEditing) {
+                    handleCancel();
+                    return true;
+                }
+                return false;
+            },
+        }),
+        [
+            repeatModalOpen,
+            deleteTarget,
+            isEditing,
+            handleCancel,
+        ],
+    );
 
     const handleSave = useCallback(async () => {
         if (!draft) return;
@@ -466,38 +526,142 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
     // Render
     // -----------------------------------------------------------------------
 
-    const isEditing = mode === "create" || mode === "edit";
     const displayWeek = isEditing && draft ? draft : activeWeek;
 
+    const activeOrdinal = displayWeek?.week_ordinal ?? 0;
+    const weekRangeLabel =
+        block?.start_date && activeOrdinal > 0
+            ? formatCalendarWeekRange(activeOrdinal, block.start_date)
+            : null;
+
+    const daysSource =
+        isEditing && draft
+            ? draft.days
+            : (displayWeek as WeeklyStructureWeek | null)?.days ?? [];
+
+    const visibleDays = isEditing
+        ? daysSource
+        : daysSource.filter((d) => d.patterns.length > 0);
+
+    const selectedTabId =
+        activeWeekOrdinal || (weeks[0] ? String(weeks[0].week_ordinal) : "");
+
+    const viewWeek =
+        !isEditing && displayWeek ? (displayWeek as WeeklyStructureWeek) : null;
+
     return (
-        <div className="space-y-4">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Layers className="h-5 w-5 text-primary" />
-                    <h3 className="text-base font-semibold text-foreground">Estructura semanal</h3>
+        <>
+        <div className="w-full min-w-0 rounded-lg bg-surface p-5 flex flex-col gap-4">
+            <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                    <Layers className="h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <p className="text-sm font-semibold text-foreground">Estructura semanal</p>
                 </div>
                 {!isEditing && (
-                    <Button variant="outline" size="sm" onClick={handleStartCreate} disabled={isMutating}>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleStartCreate}
+                        disabled={isMutating}
+                        className="shrink-0"
+                    >
                         <Plus className="h-4 w-4 mr-1" />
                         Añadir semana
                     </Button>
                 )}
             </div>
 
-            {/* Tabs */}
-            {weeks.length > 0 && !isEditing && (
-                <TabsBar
-                    items={tabItems}
-                    value={activeWeekOrdinal || (weeks[0] ? String(weeks[0].week_ordinal) : "")}
-                    onChange={setActiveWeekOrdinal}
-                    ariaLabel="Semanas del bloque"
-                />
+            {block?.start_date && block?.end_date && (
+                <section
+                    aria-label="Rango del bloque"
+                    className="shrink-0 rounded-lg border border-primary/45 bg-primary/[0.08] px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-2"
+                >
+                    <div className="flex items-center gap-1.5 min-w-0">
+                        <CalendarRange
+                            className="h-3.5 w-3.5 shrink-0 text-primary/70"
+                            aria-hidden
+                        />
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Bloque
+                        </span>
+                    </div>
+                    <p className="text-sm font-semibold text-foreground tabular-nums">
+                        {block.start_date} — {block.end_date}
+                    </p>
+                    {weekRangeLabel && (
+                        <span className="text-xs text-muted-foreground">
+                            Semana activa:{" "}
+                            <span className="text-primary font-medium">{weekRangeLabel}</span>
+                        </span>
+                    )}
+                </section>
             )}
 
-            {/* Empty state */}
+            {weeks.length > 0 && !isEditing && (
+                <div
+                    className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-2 w-full min-w-0"
+                    role="tablist"
+                    aria-label="Semanas del bloque"
+                >
+                    {weeks.map((w) => {
+                        const id = String(w.week_ordinal);
+                        const isActive = selectedTabId === id;
+                        const range =
+                            block?.start_date != null
+                                ? formatCalendarWeekRange(
+                                      w.week_ordinal,
+                                      block.start_date,
+                                  )
+                                : "";
+                        return (
+                            <button
+                                key={id}
+                                type="button"
+                                role="tab"
+                                aria-selected={isActive}
+                                onClick={() => setActiveWeekOrdinal(id)}
+                                className={cn(
+                                    "flex w-full min-w-0 flex-col gap-0.5 rounded-lg border px-3 py-2 text-left transition-all",
+                                    isActive
+                                        ? "border-primary/45 bg-primary/[0.12] shadow-[0_0_14px_-6px_hsl(var(--primary)/0.45)]"
+                                        : "border-border/60 bg-surface-2/30 hover:border-primary/30",
+                                )}
+                            >
+                                <div className="flex items-center gap-2">
+                                    <span
+                                        className={cn(
+                                            "inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-[10px] font-bold",
+                                            isActive
+                                                ? "border-primary/50 bg-primary/[0.12] text-primary"
+                                                : "border-primary/30 bg-primary/[0.06] text-primary/90",
+                                        )}
+                                    >
+                                        S{w.week_ordinal}
+                                    </span>
+                                    <span
+                                        className={cn(
+                                            "text-sm font-semibold truncate",
+                                            isActive
+                                                ? "text-foreground"
+                                                : "text-muted-foreground",
+                                        )}
+                                    >
+                                        {w.label ?? `Semana ${w.week_ordinal}`}
+                                    </span>
+                                </div>
+                                {range && (
+                                    <p className="text-[10px] text-muted-foreground pl-9 truncate">
+                                        {range}
+                                    </p>
+                                )}
+                            </button>
+                        );
+                    })}
+                </div>
+            )}
+
             {!isEditing && realWeeks.length === 0 && syntheticWeeks.length === 0 && (
-                <div className="rounded-lg border border-dashed border-border bg-muted/30 p-6 text-center">
+                <div className="rounded-lg border border-dashed border-primary/25 bg-primary/[0.04] p-6 text-center">
                     <p className="text-sm text-muted-foreground">
                         No hay semanas definidas en este bloque.
                     </p>
@@ -507,67 +671,37 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
                 </div>
             )}
 
-            {/* Week editor / viewer */}
             {displayWeek && (
-                <div className="space-y-4">
-                    {/* Week header */}
-                    <div className="flex items-center gap-3">
+                <div className="w-full min-w-0 flex flex-col gap-3">
+                    <div className="flex flex-wrap items-center gap-2 min-w-0">
                         {isEditing ? (
                             <>
-                                <Input
-                                    size="sm"
-                                    placeholder="Etiqueta de semana (opcional)"
-                                    value={draft?.label ?? ""}
-                                    onChange={(e) =>
-                                        setDraft((prev) => (prev ? { ...prev, label: e.target.value || null } : prev))
-                                    }
-                                    className="max-w-xs"
-                                />
-                                <span className="text-xs text-muted-foreground">
-                                    Ordinal: {draft?.week_ordinal}
+                                <span className="inline-flex items-center rounded-md border border-primary/35 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                    S{draft?.week_ordinal}
                                 </span>
+                                {weekRangeLabel && (
+                                    <span className="text-xs text-muted-foreground">
+                                        {weekRangeLabel}
+                                    </span>
+                                )}
                             </>
                         ) : (
-                            <>
+                            displayWeek.label ? (
                                 <span className="text-sm font-medium text-foreground">
-                                    {displayWeek.label || `Semana ${displayWeek.week_ordinal}`}
+                                    {displayWeek.label}
                                 </span>
-                                <div className="ml-auto flex items-center gap-2">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleOpenRepeatModal(displayWeek as WeeklyStructureWeek)}
-                                        disabled={isMutating}
-                                    >
-                                        <Copy className="h-3.5 w-3.5 mr-1" />
-                                        Repetir
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleStartEdit(displayWeek as WeeklyStructureWeek)}
-                                        disabled={isMutating}
-                                    >
-                                        Editar
-                                    </Button>
-                                    <Button
-                                        variant="outline-destructive"
-                                        size="sm"
-                                        onClick={() => setDeleteTarget(displayWeek as WeeklyStructureWeek)}
-                                        disabled={isMutating}
-                                    >
-                                        <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
-                                </div>
-                            </>
+                            ) : null
                         )}
                     </div>
 
-                    {/* Catalog error banner */}
                     {isErrorPatterns && (
                         <Alert variant="warning" className="text-sm">
-                            <p className="font-medium">No se pudieron cargar los patrones de movimiento</p>
-                            <p className="opacity-90">El catálogo no está disponible. Los días se muestran sin selector de patrones.</p>
+                            <p className="font-medium">
+                                No se pudieron cargar los patrones de movimiento
+                            </p>
+                            <p className="opacity-90">
+                                El catálogo no está disponible.
+                            </p>
                             <button
                                 type="button"
                                 onClick={() => refetchPatterns()}
@@ -578,40 +712,90 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
                         </Alert>
                     )}
 
-                    {/* Days grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-                        {(isEditing && draft ? draft.days : (displayWeek as WeeklyStructureWeek).days).map((day) => (
-                            <DayEditor
-                                key={day.day_of_week}
-                                day={day}
-                                patternsCatalog={patternsCatalog ?? []}
-                                patternsLoading={isLoadingPatterns}
-                                patternsError={isErrorPatterns}
-                                onChange={(updated) => updateDraftDay(day.day_of_week, updated)}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Edit actions */}
-                    {isEditing && (
-                        <div className="flex items-center justify-end gap-2 pt-2">
-                            <Button variant="ghost" size="sm" onClick={handleCancel} disabled={isMutating}>
-                                <X className="h-4 w-4 mr-1" />
-                                Cancelar
-                            </Button>
-                            <Button
-                                variant="primary"
-                                size="sm"
-                                onClick={handleSave}
-                                isLoading={isMutating}
-                                disabled={isMutating}
-                            >
-                                <Save className="h-4 w-4 mr-1" />
-                                Guardar semana
-                            </Button>
+                    {visibleDays.length === 0 && !isEditing ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center rounded-lg border border-dashed border-border/60">
+                            Esta semana no tiene días con patrones asignados. Pulsa Editar
+                            para configurarla.
+                        </p>
+                    ) : (
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full min-w-0">
+                            {visibleDays.map((day) => (
+                                <DayEditor
+                                    key={day.day_of_week}
+                                    day={day}
+                                    patternsCatalog={patternsCatalog ?? []}
+                                    patternsLoading={isLoadingPatterns}
+                                    patternsError={isErrorPatterns}
+                                    readOnly={!isEditing}
+                                    onChange={(updated) =>
+                                        updateDraftDay(day.day_of_week, updated)
+                                    }
+                                />
+                            ))}
                         </div>
                     )}
                 </div>
+            )}
+        </div>
+
+            {isEditing && (
+                <DashboardFixedFooter>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        <Button
+                            type="button"
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={handleCancel}
+                            disabled={isMutating}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            size="sm"
+                            onClick={handleSave}
+                            isLoading={isMutating}
+                            disabled={isMutating}
+                        >
+                            <Save className="mr-1 h-4 w-4" aria-hidden />
+                            Guardar semana
+                        </Button>
+                    </div>
+                </DashboardFixedFooter>
+            )}
+
+            {viewWeek && !isEditing && (
+                <DashboardFixedFooter>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                        <Button
+                            variant="outline-primary"
+                            size="sm"
+                            onClick={() => handleOpenRepeatModal(viewWeek)}
+                            disabled={isMutating || viewWeek.id == null}
+                        >
+                            <Copy className="mr-1 h-4 w-4" aria-hidden />
+                            Repetir
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStartEdit(viewWeek)}
+                            disabled={isMutating}
+                        >
+                            Editar
+                        </Button>
+                        <Button
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={() => setDeleteTarget(viewWeek)}
+                            disabled={isMutating || viewWeek.id == null}
+                        >
+                            <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                            Eliminar
+                        </Button>
+                    </div>
+                </DashboardFixedFooter>
             )}
 
             {/* Delete confirmation modal */}
@@ -745,6 +929,6 @@ export const WeeklyStructureEditor: React.FC<WeeklyStructureEditorProps> = ({ pl
                     </div>
                 </div>
             </BaseModal>
-        </div>
+        </>
     );
-};
+});

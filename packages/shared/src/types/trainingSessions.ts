@@ -96,6 +96,8 @@ export interface TrainingSession {
     is_active: boolean;
     /** Incluido en POST/PUT por backend (Fase 3); evita GET adicional. */
     coherence?: SessionCoherence | null;
+    /** % cumplimiento (series reales vs planificadas) cuando status=completed. F2-BE-05 */
+    completion_percentage?: number | null;
 }
 
 /**
@@ -338,5 +340,69 @@ export interface SessionExerciseCreate {
     planned_distance?: number | null;
     planned_rest?: number | null;
     notes?: string | null;
+}
+
+/** PUT /training-sessions/exercises/{id} — atleta actual_* o trainer prescripción */
+export interface SessionExerciseUpdate {
+    order_in_session?: number | null;
+    planned_sets?: number | null;
+    planned_reps?: number | null;
+    planned_weight?: number | null;
+    planned_duration?: number | null;
+    planned_distance?: number | null;
+    planned_rest?: number | null;
+    actual_sets?: number | null;
+    actual_reps?: string | null;
+    actual_weight?: number | null;
+    actual_duration?: number | null;
+    actual_distance?: number | null;
+    actual_rest?: number | null;
+    notes?: string | null;
+}
+
+/** F2: pre-session wellbeing check-in (1=Bajo, 2=Normal, 3=Alto) */
+export interface WellbeingCheckInCreate {
+    pre_fatigue_level: 1 | 2 | 3;
+}
+
+export interface WellbeingCheckIn {
+    id: number;
+    client_id: number;
+    session_id: number;
+    pre_fatigue_level: number;
+    risk_level: string | null;
+    recommendations: string | null;
+    analysis_date: string;
+    created_at: string;
+    updated_at: string;
+}
+
+/** F2: post-completion summary for athlete celebration screen */
+export interface PostSessionExerciseReport {
+    block_exercise_id: number;
+    exercise_id: number;
+    exercise_name: string;
+    planned_sets: number;
+    actual_sets: number;
+    completion_pct: number;
+}
+
+export interface PostSessionReport {
+    session_id: number;
+    session_name: string;
+    status: string;
+    session_date: string | null;
+    planned_duration: number | null;
+    actual_duration: number | null;
+    total_planned_sets: number;
+    total_actual_sets: number;
+    completion_percentage: number;
+    planned_volume: number | null;
+    actual_volume: number | null;
+    planned_intensity: number | null;
+    actual_intensity: number | null;
+    exercises: PostSessionExerciseReport[];
+    has_feedback: boolean;
+    highlights: string[];
 }
 

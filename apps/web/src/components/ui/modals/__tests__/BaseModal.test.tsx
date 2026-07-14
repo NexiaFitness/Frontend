@@ -135,4 +135,16 @@ describe("BaseModal", () => {
             });
         });
     });
+
+    describe("MaxWidth", () => {
+        it("aplica clase sm:max-w-3xl cuando maxWidth='3xl'", () => {
+            render(<BaseModal {...defaultProps} maxWidth="3xl" />);
+            expect(screen.getByRole("dialog").className).toContain("sm:max-w-3xl");
+        });
+
+        it("aplica clase sm:max-w-4xl cuando maxWidth='4xl'", () => {
+            render(<BaseModal {...defaultProps} maxWidth="4xl" />);
+            expect(screen.getByRole("dialog").className).toContain("sm:max-w-4xl");
+        });
+    });
 });

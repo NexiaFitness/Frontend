@@ -50,3 +50,22 @@ export function parseHabitualTrainingDaySet(
     }
     return s;
 }
+
+/** Sesiones/semana: len(training_days) > exact_training_frequency > default. */
+export function resolveClientTrainingFrequency(
+    client:
+        | { training_days?: readonly string[] | null; exact_training_frequency?: number | null }
+        | null
+        | undefined,
+    defaultFrequency = 3,
+): number {
+    const days = client?.training_days;
+    if (days && days.length > 0) {
+        return Math.max(1, Math.min(7, days.length));
+    }
+    const exact = client?.exact_training_frequency;
+    if (exact != null && Number.isFinite(exact)) {
+        return Math.max(1, Math.min(7, Math.round(exact)));
+    }
+    return defaultFrequency;
+}

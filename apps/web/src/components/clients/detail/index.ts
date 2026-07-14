@@ -8,6 +8,7 @@
 export { ClientHeader } from "./ClientHeader";
 export { ClientOverviewTab } from "./ClientOverviewTab";
 export { ClientProgressTab } from "./ClientProgressTab";
+export { ClientSetHistoryPanel } from "./ClientSetHistoryPanel";
 export { ClientSessionsTab } from "./ClientSessionsTab";
 export { ClientNutritionTab } from "./ClientNutritionTab";
 export { ClientSettingsTab } from "./ClientSettingsTab";

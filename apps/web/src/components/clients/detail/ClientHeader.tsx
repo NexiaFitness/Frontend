@@ -10,16 +10,20 @@
  * @updated v6.0.0 - Integración de Breadcrumbs para navegación profesional.
  * @updated 2026-04 - Preferencias: solo días de entreno (training_days); sin duplicar frecuencia enum ni exact_training_frequency.
  * @updated 2026-04 - Observaciones siempre visibles; texto en foreground; añadir nota inline + PUT (desde página con onSaveQuickNote).
+ * @updated 2026-07 - CTA "Editar Perfil" pasa a variante ghost-primary (icono + texto en azul primary, sin fondo ni borde); evita repetir el mismo estilo de botón en la fila de acciones.
  */
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
+import { ClientProfileSidePanel } from "./ClientProfileSidePanel";
+import { ClientInboxBell } from "./ClientInboxBell";
 
 interface ClientHeaderProps {
     client: Client;
@@ -51,6 +55,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     const navigate = useNavigate();
     const [quickNoteOpen, setQuickNoteOpen] = useState(false);
     const [quickNoteDraft, setQuickNoteDraft] = useState("");
+    const [profileOpen, setProfileOpen] = useState(false);
     const clientId = clientIdProp ?? client.id;
 
     // Calcular edad desde birthdate si no está disponible directamente
@@ -140,12 +145,19 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             {/* Fila 1: Avatar | (Nombre + botones en la misma línea) | Subtítulo debajo */}
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
                 <div className="flex-shrink-0">
-                    <ClientAvatar
-                        clientId={client.id}
-                        nombre={client.nombre}
-                        apellidos={client.apellidos}
-                        size="lg"
-                    />
+                    <button
+                        type="button"
+                        onClick={() => setProfileOpen(true)}
+                        className="rounded-full ring-2 ring-transparent transition-all hover:ring-primary/50 focus-visible:outline-none focus-visible:ring-primary"
+                        aria-label="Ver perfil completo del cliente"
+                    >
+                        <ClientAvatar
+                            clientId={client.id}
+                            nombre={client.nombre}
+                            apellidos={client.apellidos}
+                            size="lg"
+                        />
+                    </button>
                 </div>
                 <div className="min-w-0 flex-1 space-y-1">
                     {/* Nombre a la izquierda, botones a la derecha */}
@@ -154,6 +166,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                             {client.nombre} {client.apellidos}
                         </h1>
                         <div className="ml-auto flex flex-shrink-0 flex-row flex-wrap items-center gap-2">
+                        <ClientInboxBell clientId={clientId} />
                         {onPlanificar && (
                             <Button
                                 variant="primary"
@@ -187,10 +200,11 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                         </Button>
                         {onEditProfile && (
                             <Button
-                                variant="outline"
+                                variant="ghost-primary"
                                 size="sm"
                                 onClick={onEditProfile}
                             >
+                                <Pencil aria-hidden="true" />
                                 Editar Perfil
                             </Button>
                         )}
@@ -339,6 +353,13 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     )}
                 </div>
             </div>
+
+            <ClientProfileSidePanel
+                client={client}
+                isOpen={profileOpen}
+                onClose={() => setProfileOpen(false)}
+                onEditProfile={onEditProfile}
+            />
         </div>
     );
 };

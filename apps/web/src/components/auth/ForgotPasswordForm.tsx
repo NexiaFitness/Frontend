@@ -20,6 +20,12 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import {
+    AUTH_INPUT_MOBILE,
+    AUTH_LINK,
+    AUTH_LINK_MUTED,
+    AUTH_SUBMIT_MOBILE,
+} from "@/components/auth/authFormPresentation";
 import { useForgotPasswordMutation } from "@nexia/shared/api/authApi";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
 import { validateForgotPasswordForm } from "@nexia/shared/utils/validations";
@@ -89,7 +95,7 @@ export const ForgotPasswordForm: React.FC = () => {
                     variant="primary"
                     size="md"
                     onClick={handleBackToLogin}
-                    className="w-full"
+                    className={`w-full ${AUTH_SUBMIT_MOBILE}`}
                 >
                     Volver al login
                 </Button>
@@ -122,6 +128,7 @@ export const ForgotPasswordForm: React.FC = () => {
                     placeholder="Introduce tu correo electrónico"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Button
@@ -130,17 +137,17 @@ export const ForgotPasswordForm: React.FC = () => {
                     size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="w-full"
+                    className={`w-full ${AUTH_SUBMIT_MOBILE}`}
                 >
                     {isLoading ? "Enviando..." : "Enviar enlace de recuperación"}
                 </Button>
 
-                <div className="text-center text-sm text-muted-foreground">
+                <div className={`text-center ${AUTH_LINK_MUTED}`}>
                     ¿Recordaste tu contraseña?{" "}
                     <button
                         type="button"
                         onClick={handleBackToLogin}
-                        className="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors disabled:opacity-50"
+                        className={`${AUTH_LINK} disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         Volver al login

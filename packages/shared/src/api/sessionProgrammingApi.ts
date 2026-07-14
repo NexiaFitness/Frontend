@@ -339,6 +339,9 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { id }) => [
                 { type: "SessionBlock", id },
+                ...(result?.training_session_id
+                    ? [{ type: "SessionBlock" as const, id: `SESSION-${result.training_session_id}` }]
+                    : []),
             ],
         }),
 
@@ -429,6 +432,12 @@ export const sessionProgrammingApi = baseApi.injectEndpoints({
             }),
             invalidatesTags: (result, error, { id }) => [
                 { type: "SessionBlockExercise", id },
+                ...(result?.session_block_id
+                    ? [{ type: "SessionBlockExercise" as const, id: `BLOCK-${result.session_block_id}` }]
+                    : []),
+                ...(result?.exercise_id
+                    ? [{ type: "AthleteLastPerformance" as const, id: result.exercise_id }]
+                    : []),
             ],
         }),
 

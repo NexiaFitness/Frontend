@@ -14,6 +14,7 @@
 import React, { useState, useCallback, ReactNode } from "react";
 import { Toast, type ToastVariant } from "./Toast";
 import { ToastContext, type ToastContextType } from "./ToastContext";
+import { NEXIA_TOAST_STACK } from "./toastPresentation";
 
 export interface ToastItem {
     id: string;
@@ -80,8 +81,7 @@ export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
     return (
         <ToastContext.Provider value={value}>
             {children}
-            {/* Contenedor de toasts - posición fija esquina superior derecha */}
-            <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none">
+            <div className={NEXIA_TOAST_STACK}>
                 {toasts.map((toast) => (
                     <div key={toast.id} className="pointer-events-auto">
                         <Toast

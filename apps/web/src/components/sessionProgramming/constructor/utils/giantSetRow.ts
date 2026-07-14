@@ -1,18 +1,44 @@
 /**
- * giantSetRow.ts — Estado y normalización de filas giant_set (N slots A1…An).
+ * giantSetRow.ts — Estado, normalización, persistencia e hidratación de filas giant_set (N slots A1…An).
  * @spec docs/tipo-serie/02_comportamiento-y-render-por-tipo.md
  * @author Frontend Team
  * @since v5.3.0
+ * @updated v6.2.0 — setData por ejercicio para series independientes por slot
  */
 
+import { markDistinctStepsFromMaster, groupParallelConstructorApiLines, isParallelConstructorExpandedLines } from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
-import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
+import type {
+    ConstructorExercise,
+    ConstructorRow,
+    ConstructorSetData,
+} from "../../constructorTypes";
+import { isFilledConstructorExercise } from "./supersetRow";
+import { createDefaultSetData } from "./singleSetRow";
+import type { PersistExerciseLine, ApiExerciseLine } from "./singleSetRow";
 
 export const MIN_GIANT_SET_SLOTS = 2;
 export const DEFAULT_GIANT_SET_SLOTS = 3;
 
 function generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+const LOAD_FIELDS: (keyof ConstructorSetData)[] = [
+    "plannedReps",
+    "plannedWeight",
+    "plannedDuration",
+    "effortCharacter",
+    "effortValue",
+    "rest",
+];
+
+function copyLoadFields(source: ConstructorSetData): Partial<ConstructorSetData> {
+    const patch: Partial<ConstructorSetData> = {};
+    for (const key of LOAD_FIELDS) {
+        (patch as Record<string, unknown>)[key] = source[key];
+    }
+    return patch;
 }
 
 export function createGiantSetExerciseSlot(
@@ -36,38 +62,280 @@ export function createGiantSetExerciseSlot(
     };
 }
 
+/* ------------------------------------------------------------------ */
+/*  setData por ejercicio (giant_set expansion)                       */
+/* ------------------------------------------------------------------ */
+
+function exerciseLoadToSetData(ex: ConstructorExercise): ConstructorSetData {
+    return {
+        id: `set-${generateId()}`,
+        plannedReps: ex.plannedReps,
+        plannedWeight: ex.plannedWeight,
+        plannedDuration: ex.plannedDuration,
+        effortCharacter: ex.effortCharacter,
+        effortValue: ex.effortValue,
+        rest: null,
+        isManuallyEdited: false,
+    };
+}
+
+function resizeExerciseSetData(
+    existing: ConstructorSetData[] | undefined,
+    targetSets: number,
+    master: ConstructorSetData
+): ConstructorSetData[] {
+    const next: ConstructorSetData[] = existing ? [...existing] : [];
+    while (next.length < targetSets) {
+        next.push({
+            ...createDefaultSetData(),
+            ...copyLoadFields(master),
+            id: `set-${generateId()}`,
+            isManuallyEdited: false,
+        });
+    }
+    if (next.length > targetSets) {
+        return next.slice(0, targetSets);
+    }
+    return next;
+}
+
+export function updateGiantSetExerciseSetData(
+    exercise: ConstructorExercise,
+    setDataId: string,
+    updates: Partial<ConstructorSetData>
+): ConstructorExercise {
+    const setData = exercise.setData?.length ? [...exercise.setData] : [];
+    const index = setData.findIndex((s) => s.id === setDataId);
+    if (index < 0) return exercise;
+
+    const merged: ConstructorSetData = {
+        ...setData[index],
+        ...updates,
+        isManuallyEdited:
+            index > 0 ? updates.isManuallyEdited ?? true : setData[index].isManuallyEdited,
+    };
+    setData[index] = merged;
+
+    if (index === 0) {
+        for (let i = 1; i < setData.length; i++) {
+            if (!setData[i].isManuallyEdited) {
+                setData[i] = {
+                    ...setData[i],
+                    ...copyLoadFields(merged),
+                    isManuallyEdited: false,
+                };
+            }
+        }
+    }
+
+    return { ...exercise, setData };
+}
+
+export function propagateGiantSetSetDataInheritance(
+    exercise: ConstructorExercise
+): ConstructorExercise {
+    const setData = exercise.setData?.length ? [...exercise.setData] : [];
+    if (setData.length === 0) return exercise;
+
+    const master = setData[0];
+    for (let i = 1; i < setData.length; i++) {
+        if (!setData[i].isManuallyEdited) {
+            setData[i] = {
+                ...setData[i],
+                ...copyLoadFields(master),
+                isManuallyEdited: false,
+            };
+        }
+    }
+
+    return { ...exercise, setData };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Normalización                                                     */
+/* ------------------------------------------------------------------ */
+
 export function normalizeGiantSetRow(row: ConstructorRow): ConstructorRow {
     if (row.setType !== SET_TYPE.GIANT_SET) {
         return row;
     }
 
-    const exercises = [...row.exercises];
-    const targetLength =
-        exercises.length === 0
-            ? DEFAULT_GIANT_SET_SLOTS
-            : Math.max(MIN_GIANT_SET_SLOTS, exercises.length);
+    const sets = row.sets ?? 3;
+    const exercises: ConstructorExercise[] = [];
 
-    while (exercises.length < targetLength) {
-        exercises.push(createGiantSetExerciseSlot(exercises.length, row.id));
+    const targetLength =
+        row.exercises.length === 0
+            ? DEFAULT_GIANT_SET_SLOTS
+            : Math.max(MIN_GIANT_SET_SLOTS, row.exercises.length);
+
+    for (let i = 0; i < targetLength; i++) {
+        const existing = row.exercises[i];
+        if (existing) {
+            let setData: ConstructorSetData[];
+            if (existing.setData?.length) {
+                const master = existing.setData[0];
+                setData = resizeExerciseSetData(existing.setData, sets, master);
+            } else {
+                const master = exerciseLoadToSetData(existing);
+                setData = resizeExerciseSetData(undefined, sets, master);
+            }
+            exercises.push({ ...existing, setData });
+        } else {
+            exercises.push(createGiantSetExerciseSlot(i, row.id));
+        }
     }
 
     return {
         ...row,
         exercises,
-        sets: row.sets ?? 3,
+        sets,
         rest: row.rest ?? 90,
         repsTipo: row.repsTipo ?? "reps",
     };
 }
 
+/* ------------------------------------------------------------------ */
+/*  Persistencia (payload)                                            */
+/* ------------------------------------------------------------------ */
+
+export function getGiantSetPersistLines(row: ConstructorRow): PersistExerciseLine[] {
+    const normalized = normalizeGiantSetRow(row);
+    const lines: PersistExerciseLine[] = [];
+
+    for (const exercise of normalized.exercises) {
+        if (!isFilledConstructorExercise(exercise)) continue;
+
+        const setData = exercise.setData?.length ? exercise.setData : [];
+        if (setData.length === 0) {
+            // Legacy fallback: 1 line with planned_sets = row.sets
+            lines.push({
+                orderInBlock: lines.length + 1,
+                exercise,
+                serverExerciseId: exercise.serverExerciseId,
+            });
+            continue;
+        }
+
+        for (const entry of setData) {
+            lines.push({
+                orderInBlock: lines.length + 1,
+                exercise,
+                setDataEntry: entry,
+                serverExerciseId: entry.serverExerciseId,
+            });
+        }
+    }
+
+    return lines;
+}
+
+/* ------------------------------------------------------------------ */
+/*  Hidratación desde API                                             */
+/* ------------------------------------------------------------------ */
+
+function setDataFromApiLine(
+    ex: ApiExerciseLine,
+    isManuallyEdited: boolean
+): ConstructorSetData {
+    return {
+        id: `set-${ex.id}-${generateId()}`,
+        plannedReps: ex.planned_reps,
+        plannedWeight: ex.planned_weight,
+        plannedDuration: ex.planned_duration,
+        effortCharacter: ex.effort_character as ConstructorSetData["effortCharacter"],
+        effortValue: ex.effort_value,
+        rest: ex.planned_rest,
+        isManuallyEdited,
+        serverExerciseId: ex.id,
+    };
+}
+
+function buildParallelSlotFromApiLines(
+    slotLines: ApiExerciseLine[],
+    slotIndex: number,
+    rowId: string,
+    createEmptySlot: (index: number, rowId: string) => ConstructorExercise
+): ConstructorExercise {
+    if (slotLines.length === 0) {
+        return createEmptySlot(slotIndex, rowId);
+    }
+
+    const first = slotLines[0];
+    const exercise: ConstructorExercise = {
+        id: `ex-${first.id}-${slotIndex}`,
+        serverExerciseId: slotLines.length === 1 ? first.id : undefined,
+        exerciseId: first.exercise_id,
+        exerciseName: `Ejercicio #${first.exercise_id}`,
+        plannedReps: first.planned_reps,
+        plannedWeight: first.planned_weight,
+        plannedDuration: first.planned_duration,
+        effortCharacter: first.effort_character as ConstructorExercise["effortCharacter"],
+        effortValue: first.effort_value,
+        notes: first.notes,
+        repsTipo:
+            first.planned_duration != null && !first.planned_reps?.trim() ? "tiempo" : "reps",
+    };
+
+    let setData: ConstructorSetData[];
+    if (slotLines.length === 1 && (first.planned_sets ?? 1) > 1) {
+        const count = first.planned_sets ?? 3;
+        const template = setDataFromApiLine(first, false);
+        setData = Array.from({ length: count }, (_, idx) => ({
+            ...template,
+            id: `set-legacy-${idx}-${generateId()}`,
+            isManuallyEdited: false,
+            serverExerciseId: idx === 0 ? first.id : undefined,
+        }));
+    } else {
+        setData = markDistinctStepsFromMaster(
+            slotLines
+                .sort((a, b) => a.order_in_block - b.order_in_block)
+                .map((ex) => setDataFromApiLine(ex, false))
+        );
+    }
+
+    return { ...exercise, setData };
+}
+
+export function isExpandedGiantSetApiLines(exs: ApiExerciseLine[]): boolean {
+    return isParallelConstructorExpandedLines(exs, MIN_GIANT_SET_SLOTS);
+}
+
+export function hydrateGiantSetConstructorRow(
+    base: ConstructorRow,
+    exs: ApiExerciseLine[]
+): ConstructorRow {
+    const { rounds, slotLines } = groupParallelConstructorApiLines(
+        exs,
+        base.rounds,
+        MIN_GIANT_SET_SLOTS
+    );
+
+    const slots = slotLines.map((lines, index) =>
+        buildParallelSlotFromApiLines(lines, index, base.id, createGiantSetExerciseSlot)
+    );
+
+    return normalizeGiantSetRow({
+        ...base,
+        exercises: slots,
+        sets: rounds,
+    });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Slot management                                                   */
+/* ------------------------------------------------------------------ */
+
 export function addGiantSetExerciseSlot(row: ConstructorRow): ConstructorRow {
     const normalized = normalizeGiantSetRow(row);
+    const newSlot = createGiantSetExerciseSlot(normalized.exercises.length, normalized.id);
+    const sets = normalized.sets ?? 3;
+    const master = exerciseLoadToSetData(newSlot);
+    const setData = resizeExerciseSetData(undefined, sets, master);
+
     return {
         ...normalized,
-        exercises: [
-            ...normalized.exercises,
-            createGiantSetExerciseSlot(normalized.exercises.length, normalized.id),
-        ],
+        exercises: [...normalized.exercises, { ...newSlot, setData }],
     };
 }
 
@@ -84,6 +352,10 @@ export function removeGiantSetExerciseSlot(
         exercises: normalized.exercises.filter((ex) => ex.id !== exerciseSlotId),
     };
 }
+
+/* ------------------------------------------------------------------ */
+/*  Labels                                                            */
+/* ------------------------------------------------------------------ */
 
 export function giantSetGroupLabels(rows: ConstructorRow[]): Map<string, string> {
     const map = new Map<string, string>();

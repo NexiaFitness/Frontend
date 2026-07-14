@@ -11,8 +11,10 @@
  * @since v6.0.0
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
+import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
 import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
@@ -24,30 +26,26 @@ import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import {
     useGetTrainingSessionQuery,
-    useUpdateTrainingSessionMutation,
+    useUpdateTrainingSessionFullMutation,
 } from "@nexia/shared/api/trainingSessionsApi";
+import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
 import {
     useGetSessionBlocksQuery,
     useGetTrainingBlockTypesQuery,
-    useCreateSessionBlockMutation,
-    useUpdateSessionBlockMutation,
-    useDeleteSessionBlockMutation,
-    useCreateSessionBlockExerciseMutation,
-    useUpdateSessionBlockExerciseMutation,
-    useDeleteSessionBlockExerciseMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
 import { sessionProgrammingApi } from "@nexia/shared/api/sessionProgrammingApi";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName } from "@nexia/shared";
+import { exerciseDisplayName, normalizeSessionName, useDefaultSessionName } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
-import type { TrainingSessionUpdate } from "@nexia/shared/types/trainingSessions";
+import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
+import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
-import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
+
 import type {
     ConstructorRow,
     ConstructorExercise,
@@ -55,15 +53,14 @@ import type {
 } from "@/components/sessionProgramming/constructorTypes";
 import {
     buildExercisePayloadFromLine,
-    buildExerciseUpdatePayloadFromLine,
 } from "./buildExercisePayload";
 import {
     applyExercisePickerSelection,
     getConstructorPersistLines,
     hydrateSingleSetConstructorRow,
+    canHydrateDropsetApiLines,
     hydrateDropsetConstructorRow,
     isCollapsedSingleSetApiLines,
-    isCollapsedDropsetApiLines,
     normalizeSupersetRow,
     normalizeSingleSetRow,
     normalizeDropsetRow,
@@ -72,16 +69,21 @@ import {
     normalizeEmomRow,
     hydrateEmomConstructorRow,
     normalizeAmrapRow,
+    hydrateSupersetConstructorRow,
+    hydrateGiantSetConstructorRow,
+    hydrateForTimeConstructorRow,
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import type { SessionBlockExercise } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
-import { ArrowLeft, Flame, Gauge } from "lucide-react";
-import { PageTitle } from "@/components/dashboard/shared";
+import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS, PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
+import { getVolumeIntensityPrefillSourceLabel } from "@nexia/shared/training/sessionVolumeIntensityPrefill";
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import { SESSION_TYPES } from "./sessionFormConstants";
@@ -101,6 +103,7 @@ function sliderDisplay1to10(raw: string, fallback: number): number {
 
 export const EditSession: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
     const { showSuccess, showError } = useToast();
@@ -108,6 +111,8 @@ export const EditSession: React.FC = () => {
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
     });
+
+    const trainerId = trainerProfile?.id ?? 0;
 
     // Cargar sesión
     const { 
@@ -117,6 +122,8 @@ export const EditSession: React.FC = () => {
     } = useGetTrainingSessionQuery(sessionId, {
         skip: !sessionId || isNaN(sessionId),
     });
+
+    useScrollDashboardWhenReady(!isLoadingSession && !!session);
 
     // Cargar plan y cliente
     const { data: plan } = useGetTrainingPlanQuery(
@@ -136,8 +143,12 @@ export const EditSession: React.FC = () => {
         { skip: !session?.client_id }
     );
 
-    // Hook de mutación para actualizar sesión
-    const [updateTrainingSession, { isLoading: isUpdatingSession }] = useUpdateTrainingSessionMutation();
+    // Hook de mutación atómica para actualizar sesión completa
+    const [updateTrainingSessionFull, { isLoading: isUpdatingSessionFull }] =
+        useUpdateTrainingSessionFullMutation();
+
+    // Estado de guardado local (cubre todo el proceso, no solo la mutación)
+    const [isSaving, setIsSaving] = useState(false);
 
     // Estado del formulario
     const [formData, setFormData] = useState({
@@ -150,6 +161,40 @@ export const EditSession: React.FC = () => {
         notes: "",
     });
 
+    const [originalSessionDate, setOriginalSessionDate] = useState<string | null>(null);
+    const [volumeIntensityTouched, setVolumeIntensityTouched] = useState(false);
+
+    const volumeIntensityPrefill = useSessionVolumeIntensityPrefill({
+        clientId: session?.client_id,
+        sessionDate: formData.sessionDate,
+        trainerId,
+        enabled: !!session?.client_id && trainerId > 0,
+    });
+
+    const shouldApplyVolumeIntensityPrefill =
+        !volumeIntensityTouched &&
+        originalSessionDate != null &&
+        formData.sessionDate !== originalSessionDate;
+
+    useEffect(() => {
+        if (!shouldApplyVolumeIntensityPrefill || volumeIntensityPrefill.isLoading) return;
+        setFormData((prev) => ({
+            ...prev,
+            plannedVolume: String(volumeIntensityPrefill.volume),
+            plannedIntensity: String(volumeIntensityPrefill.intensity),
+        }));
+    }, [
+        shouldApplyVolumeIntensityPrefill,
+        volumeIntensityPrefill.isLoading,
+        volumeIntensityPrefill.volume,
+        volumeIntensityPrefill.intensity,
+    ]);
+
+    const editSliderValueNote =
+        !volumeIntensityTouched && shouldApplyVolumeIntensityPrefill
+            ? getVolumeIntensityPrefillSourceLabel(volumeIntensityPrefill.source)
+            : undefined;
+
     const editVolumeRecComplete =
         editRecommendationsData?.status === "complete"
             ? (editRecommendationsData as TrainingPlanRecommendationsComplete)
@@ -158,13 +203,58 @@ export const EditSession: React.FC = () => {
     const editPlannedVolumeInt = sliderDisplay1to10(formData.plannedVolume, 5);
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
+
+    const nameTouchedRef = useRef(false);
+    const sessionUsesAutoNameRef = useRef(false);
+
+    const isStandaloneSession = !session?.training_plan_id;
+
+    const defaultSessionName = useDefaultSessionName({
+        clientId: session?.client_id,
+        trainerId,
+        sessionDate: formData.sessionDate,
+        isStandalone: isStandaloneSession,
+        enabled: !!session?.client_id && trainerId > 0,
+    });
+
+    useEffect(() => {
+        if (!session || !originalSessionDate || formData.sessionDate !== originalSessionDate) return;
+        if (nameTouchedRef.current) return;
+        sessionUsesAutoNameRef.current =
+            normalizeSessionName(session.session_name || "") ===
+            normalizeSessionName(defaultSessionName);
+    }, [session, originalSessionDate, defaultSessionName, formData.sessionDate]);
+
+    useEffect(() => {
+        if (!sessionUsesAutoNameRef.current || nameTouchedRef.current) return;
+        setFormData((prev) =>
+            prev.sessionName === defaultSessionName
+                ? prev
+                : { ...prev, sessionName: defaultSessionName },
+        );
+    }, [defaultSessionName]);
+
 
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
     const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
+
+    const { captureBeforePickerChange } = usePreserveDashboardScrollOnConstructorPicker(
+        showExercisePickerModal,
+        targetRowIdForPicker
+    );
+
+    const handleAddExerciseRequest = useCallback(
+        (rowId: string, exerciseSlotId?: string) => {
+            captureBeforePickerChange(rowId);
+            setTargetRowIdForPicker(rowId);
+            setTargetExerciseSlotId(exerciseSlotId ?? null);
+            setShowExercisePickerModal(true);
+        },
+        [captureBeforePickerChange]
+    );
 
     const draftExercisesForVolumePanel = useMemo(
         () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
@@ -180,6 +270,7 @@ export const EditSession: React.FC = () => {
         excludeTrainingSessionId: sessionId > 0 ? sessionId : undefined,
         includeStandalone: true,
         draftExercises: draftExercisesForVolumePanel,
+        intent: "edit_session",
     });
 
     const dispatch = useDispatch<AppDispatch>();
@@ -191,12 +282,7 @@ export const EditSession: React.FC = () => {
             skip: !sessionId || isNaN(sessionId),
         },
     );
-    const [createSessionBlock] = useCreateSessionBlockMutation();
-    const [updateSessionBlock] = useUpdateSessionBlockMutation();
-    const [deleteSessionBlock] = useDeleteSessionBlockMutation();
-    const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
-    const [updateSessionBlockExercise] = useUpdateSessionBlockExerciseMutation();
-    const [deleteSessionBlockExercise] = useDeleteSessionBlockExerciseMutation();
+
 
     /** Al cambiar de sesión, vaciar constructor hasta que lleguen los bloques (evita mezclar sesiones). */
     useEffect(() => {
@@ -286,11 +372,20 @@ export const EditSession: React.FC = () => {
                     return hydrateSingleSetConstructorRow(base, exs);
                 }
 
-                if (
-                    setType === SET_TYPE.DROPSET &&
-                    isCollapsedDropsetApiLines(exs)
-                ) {
+                if (setType === SET_TYPE.DROPSET && canHydrateDropsetApiLines(exs)) {
                     return hydrateDropsetConstructorRow(base, exs);
+                }
+
+                if (setType === SET_TYPE.SUPERSET && exs.length > 0) {
+                    return hydrateSupersetConstructorRow(base, exs);
+                }
+
+                if (setType === SET_TYPE.GIANT_SET && exs.length > 0) {
+                    return hydrateGiantSetConstructorRow(base, exs);
+                }
+
+                if (setType === SET_TYPE.FOR_TIME && exs.length > 0) {
+                    return hydrateForTimeConstructorRow(base, exs);
                 }
 
                 if (setType === SET_TYPE.EMOM && exs.length > 0) {
@@ -315,46 +410,31 @@ export const EditSession: React.FC = () => {
                 };
             });
 
-            const nameMap: Record<number, string> = {};
-            if (exercisesData?.exercises) {
-                for (const ex of exercisesData.exercises) {
-                    nameMap[ex.id] = ex.nombre;
-                }
-            }
-
             setConstructorRows(
-                rows
-                    .map((row) => ({
-                        ...row,
-                        exercises: row.exercises.map((ex) => ({
-                            ...ex,
-                            exerciseName: nameMap[ex.exerciseId] ?? ex.exerciseName,
-                        })),
-                    }))
-                    .map((row) => {
-                        if (row.setType === SET_TYPE.SUPERSET) {
-                            return normalizeSupersetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.SINGLE_SET) {
-                            return normalizeSingleSetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.DROPSET) {
-                            return normalizeDropsetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.GIANT_SET) {
-                            return normalizeGiantSetRow(row);
-                        }
-                        if (row.setType === SET_TYPE.FOR_TIME) {
-                            return normalizeForTimeRow(row);
-                        }
-                        if (row.setType === SET_TYPE.EMOM) {
-                            return normalizeEmomRow(row);
-                        }
-                        if (row.setType === SET_TYPE.AMRAP) {
-                            return normalizeAmrapRow(row);
-                        }
-                        return row;
-                    })
+                rows.map((row) => {
+                    if (row.setType === SET_TYPE.SUPERSET) {
+                        return normalizeSupersetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.SINGLE_SET) {
+                        return normalizeSingleSetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.DROPSET) {
+                        return normalizeDropsetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.GIANT_SET) {
+                        return normalizeGiantSetRow(row);
+                    }
+                    if (row.setType === SET_TYPE.FOR_TIME) {
+                        return normalizeForTimeRow(row);
+                    }
+                    if (row.setType === SET_TYPE.EMOM) {
+                        return normalizeEmomRow(row);
+                    }
+                    if (row.setType === SET_TYPE.AMRAP) {
+                        return normalizeAmrapRow(row);
+                    }
+                    return row;
+                })
             );
         };
 
@@ -362,7 +442,36 @@ export const EditSession: React.FC = () => {
         return () => {
             cancelled = true;
         };
-    }, [sessionId, blocks, isLoadingSessionBlocks, dispatch, exercisesData]);
+    }, [sessionId, blocks, isLoadingSessionBlocks, dispatch]);
+
+    /** Nombres del catálogo sin re-hidratar el constructor (evita perder edición y scroll). */
+    useEffect(() => {
+        if (!exercisesData?.exercises?.length) return;
+
+        const nameMap: Record<number, string> = {};
+        for (const ex of exercisesData.exercises) {
+            nameMap[ex.id] = ex.nombre;
+        }
+
+        setConstructorRows((prev) => {
+            if (prev.length === 0) return prev;
+
+            let changed = false;
+            const next = prev.map((row) => ({
+                ...row,
+                exercises: row.exercises.map((exercise) => {
+                    const resolved = nameMap[exercise.exerciseId];
+                    if (!resolved || exercise.exerciseName === resolved) {
+                        return exercise;
+                    }
+                    changed = true;
+                    return { ...exercise, exerciseName: resolved };
+                }),
+            }));
+
+            return changed ? next : prev;
+        });
+    }, [exercisesData]);
 
     const handleSelectFromPicker = useCallback(
         (exercise: Exercise) => {
@@ -385,9 +494,16 @@ export const EditSession: React.FC = () => {
     // Prellenar formulario cuando se carga la sesión
     useEffect(() => {
         if (session) {
+            const sessionDateYmd = session.session_date
+                ? session.session_date.split("T")[0]
+                : new Date().toISOString().split("T")[0];
+            setOriginalSessionDate(sessionDateYmd);
+            setVolumeIntensityTouched(false);
+            nameTouchedRef.current = false;
+            sessionUsesAutoNameRef.current = false;
             setFormData({
                 sessionName: session.session_name || "",
-                sessionDate: session.session_date ? session.session_date.split("T")[0] : new Date().toISOString().split("T")[0],
+                sessionDate: sessionDateYmd,
                 sessionType: session.session_type || "training",
                 plannedDuration: session.planned_duration?.toString() || "",
                 plannedIntensity: clampIntSlider1to10(session.planned_intensity, 5),
@@ -418,9 +534,6 @@ export const EditSession: React.FC = () => {
         setFormErrors({});
 
         const errors: Record<string, string> = {};
-        if (!formData.sessionName.trim()) {
-            errors.sessionName = "El nombre de la sesión es obligatorio";
-        }
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
         }
@@ -438,9 +551,11 @@ export const EditSession: React.FC = () => {
             return;
         }
 
+        setIsSaving(true);
         try {
+            const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
             const sessionData: TrainingSessionUpdate = {
-                session_name: formData.sessionName.trim(),
+                session_name: resolvedSessionName,
                 session_date: formData.sessionDate,
                 session_type: formData.sessionType,
                 planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
@@ -453,20 +568,22 @@ export const EditSession: React.FC = () => {
                 notes: formData.notes.trim() || null,
             };
 
-            await updateTrainingSession({
-                id: sessionId,
-                body: sessionData,
-            }).unwrap();
+            const blocksPayload = constructorRows.map((row, i) => {
+                const persistLines = getConstructorPersistLines(row);
+                const exercises = persistLines.map((line) => {
+                    const base = buildExercisePayloadFromLine(row, line);
+                    return {
+                        ...(line.serverExerciseId ? { id: line.serverExerciseId } : {}),
+                        ...base,
+                    };
+                });
 
-            const serverBlockIds = new Set(blocks.map((b) => b.id));
-
-            for (let i = 0; i < constructorRows.length; i++) {
-                const row = constructorRows[i];
-                const blockPayload = {
+                return {
+                    ...(row.serverBlockId ? { id: row.serverBlockId } : {}),
                     block_type_id: row.blockTypeId,
                     order_in_session: i + 1,
                     set_type: row.setType,
-                    rounds: row.rounds,
+                    rounds: getBlockRoundsFromConstructorRow(row),
                     time_cap: row.timeCap,
                     interval_seconds: row.intervalSeconds,
                     objective_text:
@@ -475,76 +592,23 @@ export const EditSession: React.FC = () => {
                             : row.setType === "amrap"
                             ? "Objetivo: máximo rendimiento"
                             : null,
+                    exercises,
                 };
+            });
 
-                if (row.serverBlockId) {
-                    await updateSessionBlock({
-                        id: row.serverBlockId,
-                        data: blockPayload,
-                    }).unwrap();
-                    serverBlockIds.delete(row.serverBlockId);
-
-                    const exResult = (await (dispatch as AppDispatch)(
-                        sessionProgrammingApi.endpoints.getSessionBlockExercises.initiate(
-                            row.serverBlockId!
-                        )
-                    )) as { data?: SessionBlockExercise[] };
-                    const currentExs = exResult?.data ?? [];
-                    const serverExIds = new Set<number>(
-                        currentExs.map((e: { id: number }) => e.id)
-                    );
-
-                    const persistLines = getConstructorPersistLines(row);
-                    for (let j = 0; j < persistLines.length; j++) {
-                        const line = persistLines[j];
-                        if (line.serverExerciseId) {
-                            const updatePayload = buildExerciseUpdatePayloadFromLine(
-                                row,
-                                line
-                            );
-                            await updateSessionBlockExercise({
-                                id: line.serverExerciseId,
-                                data: updatePayload,
-                            }).unwrap();
-                            serverExIds.delete(line.serverExerciseId);
-                        } else {
-                            const createPayload = buildExercisePayloadFromLine(
-                                row,
-                                line
-                            );
-                            await createSessionBlockExercise({
-                                blockId: row.serverBlockId,
-                                data: createPayload,
-                            }).unwrap();
-                        }
-                    }
-                    for (const exId of serverExIds) {
-                        await deleteSessionBlockExercise(exId);
-                    }
-                } else {
-                    const created = await createSessionBlock({
-                        sessionId,
-                        data: blockPayload,
-                    }).unwrap();
-                    const persistLinesNew = getConstructorPersistLines(row);
-                    for (let j = 0; j < persistLinesNew.length; j++) {
-                        const line = persistLinesNew[j];
-                        const payload = buildExercisePayloadFromLine(row, line);
-                        await createSessionBlockExercise({
-                            blockId: created.id,
-                            data: payload,
-                        }).unwrap();
-                    }
-                }
-            }
-
-            for (const blockId of serverBlockIds) {
-                await deleteSessionBlock(blockId);
-            }
+            await updateTrainingSessionFull({
+                id: sessionId,
+                body: {
+                    session: sessionData,
+                    blocks: blocksPayload,
+                },
+            }).unwrap();
 
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
-            setValidationPanelOpen(true);
+            navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
+                state: returnToStateFromView(location),
+            });
         } catch (err) {
             console.error("Error actualizando sesión:", err);
             const errorMessage =
@@ -554,10 +618,20 @@ export const EditSession: React.FC = () => {
                       )
                     : "Error al actualizar la sesión";
             showError(errorMessage);
+        } finally {
+            setIsSaving(false);
         }
     };
 
     const trainerIdForDayPlan = trainerProfile?.id ?? session?.trainer_id ?? 0;
+    const canReviewAlignment = !!session?.period_block_id;
+
+    const handleReviewAlignment = useCallback(() => {
+        if (!sessionId || !canReviewAlignment) return;
+        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
+            state: returnToStateFromView(location),
+        });
+    }, [navigate, sessionId, canReviewAlignment, location]);
 
     if (isLoadingSession) {
         return (
@@ -614,18 +688,22 @@ export const EditSession: React.FC = () => {
                             >
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Nombre de la Sesión *
+                                        Nombre de la sesión
                                     </label>
                                     <Input
                                         type="text"
                                         value={formData.sessionName}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, sessionName: e.target.value })
-                                        }
-                                        required
+                                        onChange={(e) => {
+                                            nameTouchedRef.current = true;
+                                            sessionUsesAutoNameRef.current = false;
+                                            setFormData({ ...formData, sessionName: e.target.value });
+                                        }}
                                         placeholder="Ej: Fuerza — Tren superior A"
                                         className="bg-surface"
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Se genera automáticamente; puedes cambiarlo
+                                    </p>
                                     {formErrors.sessionName && (
                                         <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>
                                     )}
@@ -723,7 +801,11 @@ export const EditSession: React.FC = () => {
                                         min={1}
                                         max={10}
                                         color="primary"
-                                        onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
+                                        valueNote={editSliderValueNote}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData({ ...formData, plannedVolume: String(v) });
+                                        }}
                                     />
                                 </div>
                                 <div className="mt-3 md:mt-0">
@@ -734,9 +816,11 @@ export const EditSession: React.FC = () => {
                                         min={1}
                                         max={10}
                                         color="warning"
-                                        onChange={(v) =>
-                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))
-                                        }
+                                        valueNote={editSliderValueNote}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -757,7 +841,7 @@ export const EditSession: React.FC = () => {
                         {session.client_id && hasActiveInjuries && client ? (
                             <Alert variant="warning">
                                 Atención: {client.nombre} {client.apellidos} tiene lesiones activas (
-                                {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") ||
+                                {clientActiveInjuries.map((i) => i.joint_name_es || i.joint_name).filter(Boolean).join(", ") ||
                                     "ver ficha del cliente"}
                                 ). Los ejercicios contraindicados están marcados en la lista.
                             </Alert>
@@ -772,131 +856,129 @@ export const EditSession: React.FC = () => {
                                     isLoading={weeklyVolumePanel.isLoading}
                                     isError={weeklyVolumePanel.isError}
                                     hasClient={weeklyVolumePanel.hasClient}
+                                    intent={weeklyVolumePanel.intent}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                />
+                                <SessionMovementPatternsCard
+                                    clientId={session.client_id}
+                                    sessionDate={formData.sessionDate}
+                                    trainerId={trainerIdForDayPlan}
                                 />
                             </>
                         ) : null}
 
-                        <div className="flex gap-6">
-                            <div
-                                className={cn(
-                                    "min-w-0 flex-1 space-y-5",
-                                    showExercisePickerModal && "lg:max-w-[calc(100%-324px)]",
-                                )}
-                            >
-                                <div className="space-y-5">
-                                    <TrainingBlockSelector
-                                        selectedBlockTypeIds={[
-                                            ...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean)),
-                                        ]}
-                                        onSelect={(blockTypeId) => {
-                                            if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId))
-                                                return;
-                                            const newRow: ConstructorRow = {
-                                                id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                                                blockTypeId: blockTypeId,
-                                                setType: SET_TYPE.SINGLE_SET,
-                                                sets: 3,
-                                                rounds: null,
-                                                timeCap: null,
-                                                intervalSeconds: null,
-                                                exercises: [],
-                                                rest: 60,
-                                                repsTipo: "reps",
-                                            };
-                                            setConstructorRows((prev) => [...prev, newRow]);
-                                        }}
-                                    />
-                                    <SessionConstructor
-                                        rows={constructorRows}
-                                        blockTypes={blockTypes}
-                                        onRowsChange={setConstructorRows}
-                                        onAddExerciseRequest={(rowId, exerciseSlotId) => {
-                                            setTargetRowIdForPicker(rowId);
-                                            setTargetExerciseSlotId(exerciseSlotId ?? null);
-                                            setShowExercisePickerModal(true);
-                                        }}
-                                        titleAccessory={
-                                            constructorRows.length > 0 ? (
-                                                <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
-                                            ) : undefined
-                                        }
-                                    />
-                                </div>
-
-                                <div className="border-t border-border pt-6">
-                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Notas de la Sesión
-                                    </label>
-                                    <Textarea
-                                        value={formData.notes}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, notes: e.target.value })
-                                        }
-                                        rows={3}
-                                        placeholder="Instrucciones generales para la sesión..."
-                                    />
-                                </div>
+                            <div className="space-y-5">
+                                <TrainingBlockSelector
+                                    selectedBlockTypeIds={[
+                                        ...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean)),
+                                    ]}
+                                    onSelect={(blockTypeId) => {
+                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId))
+                                            return;
+                                        const newRow: ConstructorRow = {
+                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockTypeId: blockTypeId,
+                                            setType: SET_TYPE.SINGLE_SET,
+                                            sets: 3,
+                                            rounds: null,
+                                            timeCap: null,
+                                            intervalSeconds: null,
+                                            exercises: [],
+                                            rest: 60,
+                                            repsTipo: "reps",
+                                        };
+                                        setConstructorRows((prev) => [...prev, newRow]);
+                                    }}
+                                />
+                                <SessionConstructor
+                                    rows={constructorRows}
+                                    blockTypes={blockTypes}
+                                    onRowsChange={setConstructorRows}
+                                    onAddExerciseRequest={handleAddExerciseRequest}
+                                    titleAccessory={
+                                        constructorRows.length > 0 ? (
+                                            <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                        ) : undefined
+                                    }
+                                    activePickerRowId={targetRowIdForPicker}
+                                    exercisePickerPanel={
+                                        showExercisePickerModal ? (
+                                            <ExercisePickerPanel
+                                                mode="inline"
+                                                isOpen={true}
+                                                onClose={() => {
+                                                    setShowExercisePickerModal(false);
+                                                    setTargetRowIdForPicker(null);
+                                                }}
+                                                onSelect={handleSelectFromPicker}
+                                                clientId={session.client_id ?? undefined}
+                                                activeInjuries={clientActiveInjuries}
+                                            />
+                                        ) : null
+                                    }
+                                />
                             </div>
 
-                            {showExercisePickerModal ? (
-                                <ExercisePickerPanel
-                                    isOpen={true}
-                                    onClose={() => {
-                                        setShowExercisePickerModal(false);
-                                        setTargetRowIdForPicker(null);
-                                    }}
-                                    onSelect={handleSelectFromPicker}
-                                    clientId={session.client_id ?? undefined}
-                                    activeInjuries={clientActiveInjuries}
+                            <div className="border-t border-border pt-6">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                    Notas de la Sesión
+                                </label>
+                                <Textarea
+                                    value={formData.notes}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, notes: e.target.value })
+                                    }
+                                    rows={3}
+                                    placeholder="Instrucciones generales para la sesión..."
                                 />
-                            ) : null}
-                        </div>
+                            </div>
                     </div>
                 </form>
             </div>
 
             <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
+                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
-                <div className="flex items-center justify-end gap-3">
-                    <Button
-                        type="button"
-                        variant="outline-destructive"
-                        size="sm"
-                        onClick={() => navigate(-1)}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="submit"
-                        form="edit-session-form"
-                        variant="primary"
-                        size="sm"
-                        disabled={isUpdatingSession}
-                        isLoading={isUpdatingSession}
-                    >
-                        Actualizar Sesión
-                    </Button>
+                <div className="flex items-center justify-between gap-3">
+                    {canReviewAlignment ? (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleReviewAlignment}
+                            className="shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
+                        >
+                            Revisar alineación
+                            <ChevronRight className="ml-0.5 h-4 w-4" aria-hidden />
+                        </Button>
+                    ) : (
+                        <span className="shrink-0" aria-hidden />
+                    )}
+                    <div className="flex items-center justify-end gap-3">
+                        <Button
+                            type="button"
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={() => navigate(-1)}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="submit"
+                            form="edit-session-form"
+                            variant="primary"
+                            size="sm"
+                            disabled={isSaving || isUpdatingSessionFull}
+                            isLoading={isSaving || isUpdatingSessionFull}
+                        >
+                            Actualizar Sesión
+                        </Button>
+                    </div>
                 </div>
             </div>
 
-            <SessionValidationPanel
-                trainingSessionId={sessionId}
-                isOpen={validationPanelOpen}
-                onClose={() => setValidationPanelOpen(false)}
-                onEdit={() => setValidationPanelOpen(false)}
-                onContinue={() => {
-                    setValidationPanelOpen(false);
-                    if (session?.training_plan_id) {
-                        navigate(`/dashboard/training-plans/${session.training_plan_id}?tab=sessions`);
-                    } else {
-                        navigate("/dashboard");
-                    }
-                }}
-            />
         </>
     );
 };

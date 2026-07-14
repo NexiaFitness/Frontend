@@ -20,25 +20,29 @@ import {
     useGetRecentActivityQuery,
     useGetCurrentTrainerProfileQuery,
     useCompleteProfileModal,
+    usePendingInvitationsForList,
+    getClientSatisfactionDisplay,
 } from "@nexia/shared";
 import type { ClientStatus } from "@nexia/shared/types/client";
+import type { Invitation } from "@nexia/shared/types/invitation";
 import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
 import { Button } from "@/components/ui/buttons";
-import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { LoadingSpinner, Alert, HintTooltip } from "@/components/ui/feedback";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
 import { PaginationBar } from "@/components/ui/pagination";
 import { cn } from "@/lib/utils";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
+import {
+    InvitationRowActions,
+    getInvitationBadgeClass,
+    getInvitationBadgeLabel,
+    getInvitationDisplayName,
+} from "@/components/clients/invitations";
 
 const PAGE_SIZE = 9;
-
-/** Satisfacción 1–10: fatigue 1 (perfecto) → 10, fatigue 10 (exhausted) → 1. Usado como fallback cuando no hay satisfaction_level. */
-function satisfactionFromFatigue(fatigueLevelNumeric: number | null): number {
-    const raw = fatigueLevelNumeric != null ? 10 - fatigueLevelNumeric : 5;
-    return Math.max(1, Math.min(10, raw));
-}
 
 function getFatigueColor(fatigue: string | null): string {
     if (!fatigue) return "bg-muted text-muted-foreground";
@@ -188,6 +192,16 @@ export const ClientList: React.FC = () => {
         skip: !isTrainerOrAdmin,
     });
 
+    const showInvitations = statusFilter === "all";
+    const {
+        items: invitationItems,
+        isLoading: invitationsLoading,
+        isError: invitationsError,
+    } = usePendingInvitationsForList({
+        skip: !isTrainerOrAdmin || !showInvitations,
+        search: searchDebounced.trim() || null,
+    });
+
     const { data: activityData } = useGetRecentActivityQuery(
         { limit: 10, trainer_id: trainerId ?? undefined },
         { skip: !isTrainerOrAdmin }
@@ -196,7 +210,7 @@ export const ClientList: React.FC = () => {
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     }, []);
 
     const handleClientClick = useCallback(
@@ -209,10 +223,77 @@ export const ClientList: React.FC = () => {
             setShowCompleteProfileModal(true);
             return;
         }
-        navigate("/dashboard/clients/onboarding");
+        navigate("/dashboard/clients/invite");
     }, [shouldBlock, navigate]);
 
-    const isEmpty = !isLoading && !isError && items.length === 0;
+    const listLoading = isLoading || (showInvitations && invitationsLoading);
+    const listError = isError || (showInvitations && invitationsError);
+    const isEmpty =
+        !listLoading &&
+        !listError &&
+        items.length === 0 &&
+        (!showInvitations || invitationItems.length === 0);
+    const rosterTotal = total + (showInvitations ? invitationItems.length : 0);
+
+    const renderInvitationGridCard = (invitation: Invitation) => {
+        const displayName = getInvitationDisplayName(invitation.nombre, invitation.email);
+        return (
+            <article
+                key={`invitation-${invitation.id}`}
+                className="rounded-lg border border-dashed border-border bg-surface p-4 text-left shadow-md sm:p-5"
+            >
+                <div className="mb-3 flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-medium text-foreground sm:text-base">
+                            {displayName}
+                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{invitation.email}</p>
+                    </div>
+                </div>
+                <span
+                    className={cn(
+                        "inline-flex rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs",
+                        getInvitationBadgeClass(invitation.status),
+                    )}
+                >
+                    {getInvitationBadgeLabel(invitation.status)}
+                </span>
+                <InvitationRowActions invitation={invitation} layout="grid" />
+            </article>
+        );
+    };
+
+    const renderInvitationListRow = (invitation: Invitation) => {
+        const displayName = getInvitationDisplayName(invitation.nombre, invitation.email);
+        return (
+            <tr
+                key={`invitation-${invitation.id}`}
+                className="border-b border-border bg-background/60"
+            >
+                <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <div className="min-w-0">
+                        <p className="truncate font-medium text-foreground">{displayName}</p>
+                        <p className="truncate text-xs text-muted-foreground">{invitation.email}</p>
+                    </div>
+                </td>
+                <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <span
+                        className={cn(
+                            "rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs",
+                            getInvitationBadgeClass(invitation.status),
+                        )}
+                    >
+                        {getInvitationBadgeLabel(invitation.status)}
+                    </span>
+                </td>
+                <td className="px-3 py-2.5 text-muted-foreground sm:px-4 sm:py-3">—</td>
+                <td className="px-3 py-2.5 text-muted-foreground sm:px-4 sm:py-3">—</td>
+                <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                    <InvitationRowActions invitation={invitation} layout="list" />
+                </td>
+            </tr>
+        );
+    };
 
     return (
         <>
@@ -221,7 +302,7 @@ export const ClientList: React.FC = () => {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                         <h1 className="text-xl font-bold text-foreground sm:text-2xl">Clientes</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{total} total</p>
+                        <p className="mt-1 text-sm text-muted-foreground">{rosterTotal} total</p>
                     </div>
                     <Button
                         variant="primary"
@@ -234,77 +315,82 @@ export const ClientList: React.FC = () => {
                     </Button>
                 </div>
 
-                {/* Controles §5 — full width search on mobile; pills + toggle wrap */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                    <div className="relative w-full min-w-0 flex-1 sm:max-w-md">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-muted-foreground" aria-hidden />
+                {/* Controles §5 — nuevo patrón de filtros */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
+                        {(["all", "active", "paused"] as const).map((key) => (
+                            <button
+                                key={key}
+                                type="button"
+                                onClick={() => setStatusFilter(key)}
+                                aria-pressed={statusFilter === key}
+                                className={cn(
+                                    "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
+                                    statusFilter === key
+                                        ? "border-primary bg-primary/10 text-primary"
+                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
+                                )}
+                            >
+                                <span>{key === "all" ? "Todos" : key === "active" ? "Activos" : "Pausados"}</span>
+                                {key === "all" && total != null && (
+                                    <span className="tabular-nums font-normal text-primary/60">{total}</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                    <div className="flex shrink-0 rounded-md border border-border">
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("grid")}
+                            className={cn(
+                                "inline-flex h-9 w-9 items-center justify-center transition-colors",
+                                viewMode === "grid"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                            )}
+                            aria-label="Vista grid"
+                            aria-pressed={viewMode === "grid"}
+                        >
+                            <LayoutGrid className="h-4 w-4" aria-hidden />
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setViewMode("list")}
+                            className={cn(
+                                "inline-flex h-9 w-9 items-center justify-center transition-colors",
+                                viewMode === "list"
+                                    ? "bg-primary text-primary-foreground"
+                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
+                            )}
+                            aria-label="Vista lista"
+                            aria-pressed={viewMode === "list"}
+                        >
+                            <List className="h-4 w-4" aria-hidden />
+                        </button>
+                    </div>
+                    <div className="relative ml-auto h-9 w-full sm:w-56">
+                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
                         <input
-                            type="search"
+                            id="client-search"
+                            type="text"
                             placeholder="Buscar por nombre o email..."
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="min-h-touch w-full rounded-md border border-border bg-surface py-2.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] sm:min-h-0 sm:py-2"
+                            className="block h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
                             aria-label="Buscar cliente"
                         />
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <div className="flex flex-wrap gap-1.5">
-                            {(["all", "active", "paused"] as const).map((key) => (
-                                <button
-                                    key={key}
-                                    type="button"
-                                    onClick={() => setStatusFilter(key)}
-                                    className={cn(
-                                        "min-h-[40px] rounded-full px-3 py-2 text-sm font-medium transition-colors sm:min-h-0 sm:px-4 sm:py-1.5",
-                                        statusFilter === key
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    {key === "all" ? "Todos" : key === "active" ? "Activo" : "Pausado"}
-                                </button>
-                            ))}
-                        </div>
-                        <div className="flex shrink-0 rounded-md border border-border">
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("grid")}
-                                className={cn(
-                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
-                                    viewMode === "grid"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                                )}
-                                aria-label="Vista grid"
-                            >
-                                <LayoutGrid className="h-4 w-4" />
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => setViewMode("list")}
-                                className={cn(
-                                    "inline-flex min-h-touch-sm min-w-touch-sm items-center justify-center p-2 transition-colors sm:min-h-0 sm:min-w-0",
-                                    viewMode === "list"
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                                )}
-                                aria-label="Vista lista"
-                            >
-                                <List className="h-4 w-4" />
-                            </button>
-                        </div>
                     </div>
                 </div>
 
                 {/* Loading */}
-                {isLoading && (
+                {listLoading && (
                     <div className="flex justify-center py-16">
                         <LoadingSpinner size="lg" />
                     </div>
                 )}
 
                 {/* Error */}
-                {isError && (
+                {listError && (
                     <Alert variant="error">
                         Error al cargar clientes:{" "}
                         {error && typeof error === "object" && "data" in error && error.data && typeof error.data === "object" && "detail" in error.data
@@ -314,7 +400,7 @@ export const ClientList: React.FC = () => {
                 )}
 
                 {/* Empty state §6 */}
-                {!isLoading && !isError && isEmpty && (
+                {!listLoading && !listError && isEmpty && (
                     <div className="flex flex-col items-center justify-center rounded-lg bg-surface px-4 py-12 sm:py-16">
                         <UserPlus className="mb-4 h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" aria-hidden />
                         <p className="mb-1 text-center font-medium text-foreground sm:text-left">Aún no tienes clientes registrados.</p>
@@ -327,12 +413,15 @@ export const ClientList: React.FC = () => {
                 )}
 
                 {/* Contenido + sidebar §7 — col on mobile, row lg+ */}
-                {!isLoading && !isError && !isEmpty && (
+                {!listLoading && !listError && !isEmpty && (
                     <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
                         <div className="min-w-0 flex-1">
                             {viewMode === "grid" ? (
                                 /* Vista Grid §8 — 1 col xs, 2 sm, 3 xl */
                                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                                    {showInvitations
+                                        ? invitationItems.map(renderInvitationGridCard)
+                                        : null}
                                     {items.map((client) => (
                                         <article
                                             key={client.id}
@@ -355,7 +444,18 @@ export const ClientList: React.FC = () => {
                                                         {client.nombre} {client.apellidos}
                                                     </p>
                                                 </div>
-                                                <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfactionFromFatigue(client.fatigue_level_numeric)} className="h-4 w-4 shrink-0" />
+                                                {(() => {
+                                                    const satisfaction = getClientSatisfactionDisplay(client);
+                                                    return (
+                                                        <HintTooltip label={satisfaction.tooltip}>
+                                                            <SatisfactionIcon
+                                                                level={satisfaction.level ?? undefined}
+                                                                unrated={satisfaction.unrated}
+                                                                className="h-4 w-4 shrink-0"
+                                                            />
+                                                        </HintTooltip>
+                                                    );
+                                                })()}
                                             </div>
                                             <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
                                                 <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
@@ -421,6 +521,9 @@ export const ClientList: React.FC = () => {
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            {showInvitations
+                                                ? invitationItems.map(renderInvitationListRow)
+                                                : null}
                                             {items.map((client) => (
                                                 <tr
                                                     key={client.id}
@@ -447,7 +550,18 @@ export const ClientList: React.FC = () => {
                                                         </span>
                                                     </td>
                                                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                                                        <SatisfactionIcon level={client.satisfaction_level ?? undefined} value={satisfactionFromFatigue(client.fatigue_level_numeric)} className="h-4 w-4" />
+                                                        {(() => {
+                                                            const satisfaction = getClientSatisfactionDisplay(client);
+                                                            return (
+                                                                <HintTooltip label={satisfaction.tooltip}>
+                                                                    <SatisfactionIcon
+                                                                        level={satisfaction.level ?? undefined}
+                                                                        unrated={satisfaction.unrated}
+                                                                        className="h-4 w-4"
+                                                                    />
+                                                                </HintTooltip>
+                                                            );
+                                                        })()}
                                                     </td>
                                                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                                                         <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>

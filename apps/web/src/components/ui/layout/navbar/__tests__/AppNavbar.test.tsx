@@ -10,6 +10,7 @@
  * @updated Consolidación: variante explícita obligatoria
  */
 
+import userEvent from "@testing-library/user-event";
 import { render, screen } from "@/test-utils/render";
 import { AppNavbar } from "../AppNavbar";
 import type { RootState } from "@nexia/shared/store";
@@ -33,6 +34,10 @@ const dashboardAuthState: Partial<RootState> = {
     },
 };
 
+async function openDashboardMobileMenu() {
+    await userEvent.click(screen.getByRole("button", { name: /abrir menú/i }));
+}
+
 describe("AppNavbar", () => {
     it("renders public variant when variant=public", () => {
         render(<AppNavbar variant="public" />);
@@ -47,7 +52,7 @@ describe("AppNavbar", () => {
         expect(logoLink).toHaveAttribute("href", "/");
     });
 
-    it("renders dashboard variant when variant=dashboard", () => {
+    it("renders dashboard variant when variant=dashboard", async () => {
         render(
             <AppNavbar
                 variant="dashboard"
@@ -56,12 +61,15 @@ describe("AppNavbar", () => {
             />,
             { initialState: dashboardAuthState }
         );
-        expect(screen.getByRole("dialog", { name: /menú de navegación/i })).toBeInTheDocument();
+        await openDashboardMobileMenu();
+        expect(
+            screen.getByRole("dialog", { name: /menú de navegación/i })
+        ).toBeInTheDocument();
         expect(screen.getByText(/Trainer/)).toBeInTheDocument();
         expect(screen.getByText(/Clientes/)).toBeInTheDocument();
     });
 
-    it("renders dashboard drawer when variant=dashboard", () => {
+    it("renders dashboard drawer when variant=dashboard", async () => {
         render(
             <AppNavbar
                 variant="dashboard"
@@ -70,8 +78,10 @@ describe("AppNavbar", () => {
             />,
             { initialState: dashboardAuthState }
         );
+        await openDashboardMobileMenu();
         const dialog = screen.getByRole("dialog", { name: /menú de navegación/i });
         expect(dialog).toBeInTheDocument();
+        expect(dialog).toHaveAttribute("aria-hidden", "false");
     });
 
     it("mobile trigger has accessible label in public variant", () => {

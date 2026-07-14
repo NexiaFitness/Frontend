@@ -1,10 +1,10 @@
 /**
  * Página principal de NEXIA - Landing page
  * Primera impresión para usuarios no autenticados
- * 
+ *
  * Nota: La navbar (AppNavbar) se incluye desde PublicLayout,
  * por lo que no se debe duplicar aquí.
- * 
+ *
  * @author Frontend Team
  * @since v1.0.0
  * @updated v2.3.0 - ScientificSection agregada con evidencia real
@@ -17,29 +17,50 @@ import { FeaturesSection } from "../components/home/FeaturesSection";
 import { AISection } from "../components/home/AISection";
 import { FAQSection } from "../components/home/FAQSection";
 import { ContactSection } from "../components/home/ContactSection";
+import { InstallPromptChip, InstallPromptSheet } from "@/components/athlete/pwa";
+import { useLandingInstallPrompt } from "@/hooks/athlete/useLandingInstallPrompt";
+import { cn } from "@/lib/utils";
 
 const Home: React.FC = () => {
+    const {
+        isActive: isPwaFunnelActive,
+        isSheetOpen: isPwaSheetOpen,
+        closeSheet: closePwaSheet,
+        openSheet: openPwaSheet,
+        platform: pwaPlatform,
+        promptInstall,
+        showChip: showPwaChip,
+    } = useLandingInstallPrompt();
+
     return (
-        <div className="min-h-screen">
+        <div
+            className={cn(
+                "min-h-screen",
+                showPwaChip && "pb-[calc(2.75rem+1rem+env(safe-area-inset-bottom))]"
+            )}
+        >
             <main>
-                {/* 1. Hero Section - Mesh gradient + split screen */}
                 <HeroSection />
-
-                {/* 2. Problem Section - Fondo blanco + contraste emocional */}
                 <ProblemSection />
-
-                {/* 3. Features Section - Mesh gradient + grid características */}
                 <FeaturesSection />
-
-                {/* 4. AI Section - Mesh gradient invertido + roadmap IA */}
                 <AISection />
-
-                {/* 5. FAQ Section - Fondo blanco + accordion */}
                 <FAQSection />
-
-                {/* 6. Contact Section - Background image + formulario */}
                 <ContactSection />
             </main>
+
+            {isPwaFunnelActive && (
+                <>
+                    {showPwaChip && (
+                        <InstallPromptChip variant="landing" onClick={openPwaSheet} />
+                    )}
+                    <InstallPromptSheet
+                        isOpen={isPwaSheetOpen}
+                        onClose={closePwaSheet}
+                        platform={pwaPlatform}
+                        onInstall={promptInstall}
+                    />
+                </>
+            )}
         </div>
     );
 };

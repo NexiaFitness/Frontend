@@ -6,15 +6,21 @@
  *
  * Notas: Posicionado debajo de la navbar (top-navbar-mobile/desktop). Cierra al hacer clic
  * en overlay o en un enlace.
- *
- * @author Frontend Team
- * @since v1.0.0
- * @updated v4.4.2 - Unified layout: sin iconos, capitalización consistente con Dashboard
  */
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePublicNavigation } from "@nexia/shared";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import { SideMenuFooterBrand } from "./SideMenuFooterBrand";
+import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
+import {
+    SIDE_MENU_OVERLAY,
+    SIDE_MENU_PANEL,
+    SIDE_MENU_SECTION_LABEL,
+    sideMenuLinkClass,
+} from "./sideMenuPresentation";
 
 interface NexiaSideMenuProps {
     isOpen: boolean;
@@ -31,49 +37,47 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
 
     return (
         <>
-            {/* Overlay */}
             <div
-                className={`fixed inset-0 z-40 transition-opacity duration-300 bg-black/60 ${
-                    isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+                className={`fixed inset-0 z-40 transition-opacity duration-300 ${SIDE_MENU_OVERLAY} ${
+                    isOpen ? "opacity-100" : "pointer-events-none opacity-0"
                 }`}
                 onClick={onClose}
+                aria-hidden={!isOpen}
             />
 
-            {/* Side Menu */}
             <div
                 className={`
-                    fixed 
-                    top-navbar-mobile lg:top-navbar-desktop 
-                    right-0 
-                    w-full 
-                    h-[calc(100vh-theme(space.navbar-mobile))] 
-                    lg:h-[calc(100vh-theme(space.navbar-desktop))] 
-                    z-50 transform transition-transform duration-500 ease-in-out 
-                    bg-surface 
+                    fixed
+                    top-navbar-mobile lg:top-navbar-desktop
+                    right-0
+                    z-50
+                    h-[calc(100vh-theme(space.navbar-mobile))]
+                    w-full
+                    transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]
+                    lg:h-[calc(100vh-theme(space.navbar-desktop))]
+                    ${SIDE_MENU_PANEL}
                     ${isOpen ? "translate-x-0" : "translate-x-full"}
                 `}
+                role="dialog"
+                aria-modal="true"
+                aria-label="Menú de navegación"
+                aria-hidden={!isOpen}
             >
-                <div className="flex flex-col h-full">
-                    {/* Navigation */}
-                    <nav className="flex-1 overflow-y-auto pt-8 px-6">
+                <NexiaGlassAccentRim />
+                <div className="flex h-full flex-col">
+                    <nav className={`flex-1 overflow-y-auto px-6 pt-10 ${NEXIA_SCROLLBAR}`}>
                         <div>
-                            <h3 className="text-slate-300 text-sm font-semibold uppercase tracking-wider mb-4">
-                                Navegación
-                            </h3>
-                            <div className="w-full h-px bg-white/60 mb-6" />
+                            <h3 className={`mb-3 ${SIDE_MENU_SECTION_LABEL}`}>Navegación</h3>
+                            <NexiaPremiumDivider className="mb-6 w-full" />
                             <ul className="space-y-2">
                                 {visibleNavigationItems.map(({ path, label }) => (
                                     <li key={path}>
                                         <Link
                                             to={path}
                                             onClick={onClose}
-                                            className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                                                isActiveLink(path)
-                                                    ? "bg-slate-800 text-white font-semibold"
-                                                    : "text-slate-200 hover:text-white hover:bg-slate-800"
-                                            }`}
+                                            className={sideMenuLinkClass(isActiveLink(path))}
                                         >
-                                            <span className="text-lg">{label}</span>
+                                            <span>{label}</span>
                                         </Link>
                                     </li>
                                 ))}
@@ -81,16 +85,8 @@ export const NexiaSideMenu: React.FC<NexiaSideMenuProps> = ({ isOpen, onClose })
                         </div>
                     </nav>
 
-                    {/* Footer Branding */}
-                    <div className="p-6 border-t border-white/60">
-                        <div className="text-center">
-                            <h4 className="text-white font-semibold text-lg mb-2">
-                                Nexia Fitness
-                            </h4>
-                            <p className="text-slate-300 text-sm">
-                                Plataforma científica para profesionales del fitness
-                            </p>
-                        </div>
+                    <div className="border-t border-border/40 p-6 pt-5">
+                        <SideMenuFooterBrand />
                     </div>
                 </div>
             </div>

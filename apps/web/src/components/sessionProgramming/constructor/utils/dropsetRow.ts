@@ -7,6 +7,7 @@
  * @since v5.3.0
  */
 
+import { collapseDropsetLines, inferDropsetRounds, markDistinctStepsFromMaster } from "@nexia/shared";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
@@ -58,21 +59,6 @@ function copyLoadFields(source: ConstructorSetData): Partial<ConstructorSetData>
     return patch;
 }
 
-function propagateDropInheritance(setData: ConstructorSetData[]): ConstructorSetData[] {
-    if (setData.length === 0) return setData;
-    const master = setData[0];
-    return setData.map((entry, index) => {
-        if (index === 0 || entry.isManuallyEdited) {
-            return entry;
-        }
-        return {
-            ...entry,
-            ...copyLoadFields(master),
-            isManuallyEdited: false,
-        };
-    });
-}
-
 function createInitialSetData(length: number): ConstructorSetData[] {
     return Array.from({ length }, (_, i) => createDefaultDropStepData(i === 0));
 }
@@ -110,8 +96,6 @@ export function normalizeDropsetRow(row: ConstructorRow): ConstructorRow {
     if (setData.length > maxSteps) {
         setData = setData.slice(0, maxSteps);
     }
-
-    setData = propagateDropInheritance(setData);
 
     const exercises = row.exercises.length > 0 ? [row.exercises[0]] : [];
 
@@ -210,10 +194,13 @@ export function setDataToExerciseView(
 
 export function hydrateDropsetConstructorRow(
     base: ConstructorRow,
-    exs: ApiExerciseLine[]
+    exs: DropsetApiExerciseLine[]
 ): ConstructorRow {
-    const sorted = [...exs].sort((a, b) => a.order_in_block - b.order_in_block);
-    const first = sorted[0];
+    const steps = collapseDropsetLines(exs);
+    const first = steps[0];
+    if (!first) {
+        return normalizeDropsetRow(base);
+    }
     const exercise: ConstructorExercise = {
         id: `ex-drop-${first.id}-0`,
         exerciseId: first.exercise_id,
@@ -226,21 +213,23 @@ export function hydrateDropsetConstructorRow(
         notes: first.notes,
     };
 
-    const setData: ConstructorSetData[] = sorted.map((ex) => ({
-        id: `drop-${ex.id}-${generateId()}`,
-        plannedReps: ex.planned_reps,
-        plannedWeight: ex.planned_weight,
-        plannedDuration: ex.planned_duration,
-        effortCharacter: ex.effort_character as ConstructorSetData["effortCharacter"],
-        effortValue: ex.effort_value,
-        rest: null,
-        isManuallyEdited: false,
-        serverExerciseId: ex.id,
-    }));
+    const setData: ConstructorSetData[] = markDistinctStepsFromMaster(
+        steps.map((ex) => ({
+            id: `drop-${ex.id}-${generateId()}`,
+            plannedReps: ex.planned_reps,
+            plannedWeight: ex.planned_weight,
+            plannedDuration: ex.planned_duration,
+            effortCharacter: ex.effort_character as ConstructorSetData["effortCharacter"],
+            effortValue: ex.effort_value,
+            rest: null,
+            isManuallyEdited: false,
+            serverExerciseId: ex.id,
+        }))
+    );
 
     return normalizeDropsetRow({
         ...base,
-        sets: first.planned_sets ?? base.sets ?? DEFAULT_DROPSET_ROUNDS,
+        sets: inferDropsetRounds(exs, base.sets ?? base.rounds),
         rest: first.planned_rest ?? base.rest ?? 120,
         exercises: [exercise],
         setData,
@@ -251,9 +240,9 @@ export interface DropsetApiExerciseLine extends ApiExerciseLine {
     dropset_sequence?: number | null;
 }
 
-export function isCollapsedDropsetApiLines(exs: DropsetApiExerciseLine[]): boolean {
-    if (exs.length < 2) return false;
+/** Hidrata dropset si hay al menos una línea del mismo ejercicio (colapsada o expandida). */
+export function canHydrateDropsetApiLines(exs: DropsetApiExerciseLine[]): boolean {
+    if (exs.length === 0) return false;
     const firstId = exs[0].exercise_id;
-    if (!exs.every((e) => e.exercise_id === firstId)) return false;
-    return exs.every((e) => (e.planned_sets ?? 1) >= 1);
+    return exs.every((e) => e.exercise_id === firstId);
 }

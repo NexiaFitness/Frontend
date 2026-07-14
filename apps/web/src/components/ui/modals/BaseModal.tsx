@@ -16,6 +16,7 @@
  */
 
 import React, { useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -25,11 +26,13 @@ const maxWidthStyles: Record<ModalMaxWidth, string> = {
     lg: "sm:max-w-lg",
     xl: "sm:max-w-xl",
     "2xl": "sm:max-w-2xl",
+    "3xl": "sm:max-w-3xl",
+    "4xl": "sm:max-w-4xl",
 };
 
 export type ModalIconType = "warning" | "danger" | "info" | "success";
 
-export type ModalMaxWidth = "sm" | "md" | "lg" | "xl" | "2xl";
+export type ModalMaxWidth = "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "4xl";
 
 interface BaseModalProps {
     isOpen: boolean;
@@ -163,8 +166,17 @@ export const BaseModal: React.FC<BaseModalProps> = ({
 
     const icon = iconType ? iconConfig[iconType] : null;
 
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    // Portal: el modal se monta directamente en <body> para escapar de
+    // ancestros con `transform`, `filter`, `perspective` o `position: sticky`
+    // que romperian el position:fixed (anclandolo al contenedor en vez del
+    // viewport) y dejando ver el contenido detras del modal. Tambien evita que
+    // elementos hermanos con z-index local lo tapen.
+    const portalTarget =
+        typeof document !== "undefined" ? document.body : null;
+    if (!portalTarget) return null;
+
+    return createPortal(
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity"
                 onClick={handleBackdropClick}
@@ -174,7 +186,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
             <div
                 ref={modalRef}
                 className={cn(
-                    "relative rounded-lg border border-border bg-card text-card-foreground shadow-lg w-full max-w-[calc(100vw-2rem)] transform transition-all animate-in zoom-in-95 duration-200 focus:outline-none max-h-[90vh] overflow-y-auto",
+                    "relative rounded-lg border border-border bg-card text-card-foreground shadow-lg w-full max-w-[calc(100vw-2rem)] transform transition-all animate-in zoom-in-95 duration-200 focus:outline-none max-h-[90vh] overflow-y-auto scrollbar-primary",
                     maxWidthStyles[maxWidth],
                 )}
                 role="dialog"
@@ -224,6 +236,7 @@ export const BaseModal: React.FC<BaseModalProps> = ({
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        portalTarget,
     );
 };

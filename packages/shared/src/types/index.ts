@@ -59,6 +59,7 @@ export * from "./habits";
 
 // Injuries types
 export * from "./injuries";
+export * from "./injuryAlert";
 
 // Metrics types
 export * from "./metrics";
@@ -95,10 +96,10 @@ export * from "./trainingRecommendations";
 export * from "./sessionRecommendations";
 export * from "./weeklyStructure";
 export * from "./sessionValidation";
-
-
-
-
+export * from "./athleteRunSuggestion";
+export * from "./athleteRunReference";
+export * from "./clientLoadInsights";
+export * from "./trainerSetExecutions";
 
 
 

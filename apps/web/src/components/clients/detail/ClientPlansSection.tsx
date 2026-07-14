@@ -20,6 +20,10 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import type { TrainingPlan } from "@nexia/shared/types/training";
+import {
+    resolveTrainingPlanDisplayBadge,
+    trainingPlanLifecycleBadgeClass,
+} from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -44,13 +48,6 @@ const PLAN_GOAL_LABELS: Record<string, string> = {
     "General Fitness": "Fitness General",
     "Rehabilitation": "Rehabilitación",
     "Performance": "Rendimiento",
-};
-
-const STATUS_LABELS: Record<string, string> = {
-    active: "Activo",
-    completed: "Completado",
-    paused: "Pausado",
-    cancelled: "Cancelado",
 };
 
 function formatDateRange(start: string, end: string): string {
@@ -130,45 +127,51 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
 
             {hasPlans ? (
                 <div className="mt-4 space-y-3">
-                    {trainingPlans.map((plan) => (
-                        <button
-                            key={plan.id}
-                            type="button"
-                            onClick={() =>
-                                onViewPlan
-                                    ? onViewPlan(plan.id)
-                                    : navigate(`/dashboard/training-plans/${plan.id}?fromClient=${clientId}`)
-                            }
-                            className="block w-full rounded-lg border border-border bg-surface-2 p-4 text-left transition-colors hover:border-border hover:bg-muted/50"
-                            aria-label={`Ver plan ${plan.name}`}
-                        >
-                            <div className="flex items-start justify-between gap-3">
-                                <div className="min-w-0 flex-1">
-                                    <p className="truncate font-semibold text-foreground">{plan.name}</p>
-                                    <p className="mt-0.5 text-sm text-muted-foreground">
-                                        {formatDateRange(plan.start_date, plan.end_date)}
-                                    </p>
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        <span className="inline-flex rounded px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary">
-                                            {PLAN_GOAL_LABELS[plan.goal] ?? plan.goal}
-                                        </span>
-                                        <span
-                                            className={`inline-flex rounded px-2 py-0.5 text-xs font-medium ${
-                                                plan.status === "active"
-                                                    ? "bg-success/20 text-success"
-                                                    : plan.status === "completed"
-                                                      ? "bg-muted text-muted-foreground"
-                                                      : "bg-warning/20 text-warning"
-                                            }`}
-                                        >
-                                            {STATUS_LABELS[plan.status] ?? plan.status}
-                                        </span>
+                    {trainingPlans.map((plan) => {
+                        const statusBadge = resolveTrainingPlanDisplayBadge(plan);
+                        return (
+                            <button
+                                key={plan.id}
+                                type="button"
+                                onClick={() =>
+                                    onViewPlan
+                                        ? onViewPlan(plan.id)
+                                        : navigate(
+                                              `/dashboard/clients/${clientId}?tab=planning&plan=${plan.id}`,
+                                          )
+                                }
+                                className="block w-full rounded-lg border border-border bg-surface-2 p-4 text-left transition-colors hover:border-border hover:bg-muted/50"
+                                aria-label={`Ver plan ${plan.name}`}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate font-semibold text-foreground">
+                                            {plan.name}
+                                        </p>
+                                        <p className="mt-0.5 text-sm text-muted-foreground">
+                                            {formatDateRange(plan.start_date, plan.end_date)}
+                                        </p>
+                                        <div className="mt-2 flex flex-wrap gap-2">
+                                            <span className="inline-flex rounded px-2 py-0.5 text-xs font-medium bg-primary/20 text-primary">
+                                                {PLAN_GOAL_LABELS[plan.goal] ?? plan.goal}
+                                            </span>
+                                            <span
+                                                className={trainingPlanLifecycleBadgeClass(plan)}
+                                            >
+                                                {statusBadge.label}
+                                            </span>
+                                        </div>
                                     </div>
+                                    <span
+                                        className="shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    >
+                                        →
+                                    </span>
                                 </div>
-                                <span className="shrink-0 text-muted-foreground" aria-hidden>→</span>
-                            </div>
-                        </button>
-                    ))}
+                            </button>
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="mt-4 rounded-lg border-2 border-dashed border-border bg-muted/30 p-6 text-center">

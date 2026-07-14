@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useCallback } from "react";
+import type { FatigueAlertSeverity, FatigueAlertType } from "@nexia/shared/types/training";
 import { useFatigueAlerts } from "@nexia/shared/hooks/clients/useFatigueAlerts";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -46,8 +47,8 @@ export const FatigueAlertsSection: React.FC<FatigueAlertsSectionProps> = ({ clie
 
     const handleCreateAlert = useCallback(
         async (data: {
-            alert_type: "overtraining" | "recovery_needed" | "session_adjustment";
-            severity: "low" | "medium" | "high" | "critical";
+            alert_type: FatigueAlertType;
+            severity: FatigueAlertSeverity;
             title: string;
             message: string;
             recommendations?: string;

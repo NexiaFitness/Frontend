@@ -54,23 +54,38 @@ interface UseClientProgressResult {
  * @param clientId - ID del cliente
  * @param client - Datos del cliente (opcional) para incluir punto inicial en gráficos
  */
+function isProgressNotFound(error: unknown): boolean {
+    return Boolean(
+        error &&
+            typeof error === "object" &&
+            "status" in error &&
+            (error as { status: number }).status === 404
+    );
+}
+
 export const useClientProgress = (
-    clientId: number,
+    clientId: number | null | undefined,
     client?: Client | null
 ): UseClientProgressResult => {
+    const resolvedId = clientId ?? 0;
+    const skip = !clientId;
+
     const {
         data: progressHistory,
         isLoading: isLoadingHistory,
         error: historyError,
         refetch: refetchHistory,
-    } = useGetClientProgressHistoryQuery({ clientId, skip: 0, limit: 100 });
+    } = useGetClientProgressHistoryQuery(
+        { clientId: resolvedId, skip: 0, limit: 100 },
+        { skip }
+    );
 
     const {
         data: analytics,
         isLoading: isLoadingAnalytics,
         error: analyticsError,
         refetch: refetchAnalytics,
-    } = useGetProgressAnalyticsQuery(clientId);
+    } = useGetProgressAnalyticsQuery(resolvedId, { skip });
 
     // Transform data for weight chart
     const weightChartData = useMemo(() => {
@@ -167,7 +182,9 @@ export const useClientProgress = (
         bmiChange,
         trend,
         isLoading: isLoadingHistory || isLoadingAnalytics,
-        error: historyError || analyticsError,
+        error:
+            (historyError && !isProgressNotFound(historyError) ? historyError : null) ||
+            (analyticsError && !isProgressNotFound(analyticsError) ? analyticsError : null),
         refetch,
     };
 };

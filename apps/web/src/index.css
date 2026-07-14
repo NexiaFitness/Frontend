@@ -69,7 +69,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground scrollbar-nexia;
   }
 
   /* Prevent Chrome autofill from overriding dark background */
@@ -97,33 +97,81 @@
   }
 }
 
-/* Scrollbar ExercisePickerPanel: track transparente, thumb y botones azul primary */
+/* Scrollbar premium Nexia — cyan eléctrico, reutilizable (sheets, atleta móvil, modales). */
 @layer utilities {
+  .scrollbar-nexia {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--primary) / 0.72) transparent;
+  }
+
+  .scrollbar-nexia::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+
+  .scrollbar-nexia::-webkit-scrollbar-track {
+    background: transparent;
+    margin-block: 6px;
+  }
+
+  .scrollbar-nexia::-webkit-scrollbar-thumb {
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.95),
+      hsl(210 100% 56% / 0.8)
+    );
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.2);
+    box-shadow: 0 0 10px hsl(var(--primary) / 0.28);
+  }
+
+  .scrollbar-nexia::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--primary));
+    box-shadow: 0 0 12px hsl(var(--primary) / 0.45);
+  }
+
+  .scrollbar-nexia::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
+  }
+
+  .scrollbar-nexia::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+
+  /* Legacy plataforma entrenador — alinea thumb sin flechas nativas grises */
   .scrollbar-primary {
     scrollbar-width: thin;
-    scrollbar-color: hsl(var(--primary)) transparent;
+    scrollbar-color: hsl(var(--primary) / 0.72) transparent;
   }
+
   .scrollbar-primary::-webkit-scrollbar {
-    width: 8px;
+    width: 6px;
+    height: 6px;
   }
+
   .scrollbar-primary::-webkit-scrollbar-track {
     background: transparent;
   }
+
   .scrollbar-primary::-webkit-scrollbar-thumb {
-    background: hsl(var(--primary));
-    border-radius: 4px;
+    background: linear-gradient(
+      180deg,
+      hsl(var(--primary) / 0.9),
+      hsl(210 100% 56% / 0.75)
+    );
+    border-radius: 9999px;
+    border: 1px solid hsl(var(--primary) / 0.15);
   }
+
   .scrollbar-primary::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--primary) / 0.85);
-  }
-  .scrollbar-primary::-webkit-scrollbar-button {
     background: hsl(var(--primary));
-    height: 8px;
   }
-  .scrollbar-primary::-webkit-scrollbar-button:vertical:decrement {
-    background: hsl(var(--primary)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 14l5-5 5 5z'/%3E%3C/svg%3E") center/10px no-repeat;
-  }
-  .scrollbar-primary::-webkit-scrollbar-button:vertical:increment {
-    background: hsl(var(--primary)) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ffffff'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E") center/10px no-repeat;
+
+  .scrollbar-primary::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+    width: 0;
   }
 }

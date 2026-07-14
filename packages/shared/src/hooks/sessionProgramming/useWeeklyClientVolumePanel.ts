@@ -9,19 +9,38 @@ import { useValidateSessionLoadDraftMutation } from "../../api/sessionLoadApi";
 import { computeTargetWeeklySets } from "../../training/weeklyVolumeTarget";
 import {
     buildWeeklyVolumePanelRows,
+    mapSessionLoadDraftRowToPanelInput,
+    mapWeeklySavedRowToPanelInput,
+    type WeeklyClientVolumePanelIntent,
+    type WeeklyVolumePanelApiRowInput,
     type WeeklyVolumePanelRowModel,
 } from "../../training/weeklyVolumePanelModel";
 import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut } from "../../types/sessionLoad";
 import { formatWeekRangeLabelEs, mondayOfIsoWeekContaining, sundayOfWeekFromMondayYmd } from "../../utils/isoWeekRange";
 
+function serializeDraftExercises(draft: SessionLoadDraftExerciseIn[] | undefined): string {
+    return JSON.stringify(draft ?? []);
+}
+
+/**
+ * Debounce del borrador para POST validate-draft.
+ * Vacío → flush inmediato (sin esperar delay) para no mostrar datos obsoletos.
+ */
 function useDebouncedDraftKey(draft: SessionLoadDraftExerciseIn[] | undefined, delay: number): string {
-    const raw = JSON.stringify(draft ?? []);
-    const [debounced, setDebounced] = useState(raw);
+    const live = draft ?? [];
+    const rawKey = serializeDraftExercises(live);
+    const [debouncedKey, setDebouncedKey] = useState(rawKey);
+
     useEffect(() => {
-        const id = setTimeout(() => setDebounced(raw), delay);
+        if (live.length === 0) {
+            setDebouncedKey("[]");
+            return;
+        }
+        const id = setTimeout(() => setDebouncedKey(rawKey), delay);
         return () => clearTimeout(id);
-    }, [raw, delay]);
-    return debounced;
+    }, [rawKey, live.length, delay]);
+
+    return debouncedKey;
 }
 
 export interface UseWeeklyClientVolumePanelParams {
@@ -37,6 +56,11 @@ export interface UseWeeklyClientVolumePanelParams {
     /** Borrador constructor; si hay líneas (tras debounce) se usa POST validate-draft y el FE calcula estado. */
     draftExercises?: SessionLoadDraftExerciseIn[];
     draftDebounceMs?: number;
+    /**
+     * create_session: solo volumen del borrador actual; sin GET semanal cuando no hay ejercicios.
+     * edit_session: GET semanal sin borrador; con borrador, numerador de esta sesión.
+     */
+    intent?: WeeklyClientVolumePanelIntent;
 }
 
 export interface UseWeeklyClientVolumePanelResult {
@@ -48,19 +72,19 @@ export interface UseWeeklyClientVolumePanelResult {
     isFetching: boolean;
     isError: boolean;
     hasClient: boolean;
-    /** True cuando la fila del panel usa proyección borrador + guardado (Fase B). */
+    intent: WeeklyClientVolumePanelIntent;
+    /** True cuando el panel refleja el borrador del constructor (no acumulado semanal). */
     usesDraftProjection: boolean;
-    /** Fase 4 — Intelligent Training Engine: axial load score for the draft */
     axialScore: import("../../types/engineSafety").AxialScoreResponse | null;
-    /** Fase 4 — safety flags per exercise in the draft */
     safetyFlags: import("../../types/engineSafety").ExerciseSafetyResponse[];
-    /** Objetivo semanal numérico usado en el panel (slider × max_sets o weekly_target del validate-draft). */
     weeklyTarget: number | null;
 }
 
 export function useWeeklyClientVolumePanel(
     params: UseWeeklyClientVolumePanelParams
 ): UseWeeklyClientVolumePanelResult {
+    const intent = params.intent ?? "edit_session";
+
     const weekStart = useMemo(
         () => mondayOfIsoWeekContaining(params.sessionDateYmd),
         [params.sessionDateYmd]
@@ -80,10 +104,11 @@ export function useWeeklyClientVolumePanel(
     ]);
 
     const clientId = params.clientId ?? null;
-    const skip =
+    const skipWeeklyQuery =
         !clientId ||
         clientId <= 0 ||
-        !weekStart;
+        !weekStart ||
+        intent === "create_session";
 
     const q = useGetWeeklySessionLoadByMuscleQuery(
         {
@@ -93,8 +118,12 @@ export function useWeeklyClientVolumePanel(
             excludeStandaloneSessionId: params.excludeStandaloneSessionId ?? undefined,
             includeStandalone: params.includeStandalone,
         },
-        { skip }
+        { skip: skipWeeklyQuery }
     );
+
+    const liveDraft = params.draftExercises ?? [];
+    const hasLiveDraft = liveDraft.length > 0;
+    const liveDraftKey = serializeDraftExercises(liveDraft);
 
     const debounceMs = params.draftDebounceMs ?? 400;
     const debouncedDraftKey = useDebouncedDraftKey(params.draftExercises, debounceMs);
@@ -107,6 +136,9 @@ export function useWeeklyClientVolumePanel(
         }
     }, [debouncedDraftKey]);
 
+    const debouncePending = hasLiveDraft && debouncedDraftKey !== liveDraftKey;
+    const hasDebouncedDraft = debouncedDraft.length > 0;
+
     const [validateDraft, { isLoading: isValidatingDraft }] =
         useValidateSessionLoadDraftMutation();
     const [draftProjection, setDraftProjection] = useState<SessionLoadDraftValidateOut | null>(null);
@@ -114,12 +146,22 @@ export function useWeeklyClientVolumePanel(
     const reqId = useRef(0);
 
     useEffect(() => {
+        if (!hasLiveDraft) {
+            reqId.current += 1;
+            setDraftProjection(null);
+            setDraftError(false);
+        }
+    }, [hasLiveDraft]);
+
+    useEffect(() => {
         if (!clientId || !weekStart) {
+            reqId.current += 1;
             setDraftProjection(null);
             setDraftError(false);
             return;
         }
-        if (!debouncedDraft.length) {
+        if (!hasDebouncedDraft) {
+            reqId.current += 1;
             setDraftProjection(null);
             setDraftError(false);
             return;
@@ -153,55 +195,58 @@ export function useWeeklyClientVolumePanel(
         clientId,
         weekStart,
         debouncedDraftKey,
+        hasDebouncedDraft,
         validateDraft,
         params.plannedVolume1to10,
         params.excludeTrainingSessionId,
         params.excludeStandaloneSessionId,
         params.includeStandalone,
+        params.sessionDateYmd,
     ]);
 
-    const hasDebouncedDraft = debouncedDraft.length > 0;
-    const usesDraftProjection = hasDebouncedDraft && draftProjection != null;
+    const usesDraftProjection =
+        intent === "create_session" ? hasLiveDraft : hasLiveDraft && hasDebouncedDraft;
 
-    const apiRowsForPanel = useMemo(() => {
-        if (!hasDebouncedDraft) {
-            return q.data?.rows ?? [];
+    const apiRowsForPanel = useMemo((): WeeklyVolumePanelApiRowInput[] => {
+        if (intent === "create_session" && !hasLiveDraft) {
+            return [];
         }
-        if (draftProjection) {
-            return draftProjection.rows.map((r) => ({
-                muscle_group_id: r.muscle_group_id,
-                name_es: r.name_es,
-                planned_sets_sum: r.projected_total,
-                direct_sets:
-                    r.accumulated_direct != null ? r.accumulated_direct + (r.draft_direct ?? 0) : undefined,
-                indirect_sets:
-                    r.accumulated_indirect != null
-                        ? r.accumulated_indirect + (r.draft_indirect ?? 0)
-                        : undefined,
-                draft_sets: r.draft_sets,
-                daily_target: r.daily_target,
-                accumulated_saved_without_session: r.accumulated_saved_without_session,
-                pattern_session_days: r.pattern_session_days,
-            }));
+
+        if (hasLiveDraft) {
+            if (debouncePending || !draftProjection) {
+                return [];
+            }
+            return draftProjection.rows.map((r) => mapSessionLoadDraftRowToPanelInput(r));
         }
+
+        if (intent === "edit_session") {
+            return (q.data?.rows ?? []).map((r) => mapWeeklySavedRowToPanelInput(r));
+        }
+
         return [];
-    }, [hasDebouncedDraft, draftProjection, q.data?.rows]);
+    }, [
+        intent,
+        hasLiveDraft,
+        debouncePending,
+        draftProjection,
+        q.data?.rows,
+    ]);
 
     const effectiveTargetCenter = useMemo(() => {
-        if (draftProjection?.weekly_target) {
+        if (hasLiveDraft && draftProjection?.weekly_target) {
             return draftProjection.weekly_target;
         }
         return targetCenter;
-    }, [draftProjection?.weekly_target, targetCenter]);
+    }, [hasLiveDraft, draftProjection?.weekly_target, targetCenter]);
 
     const rows = useMemo(() => {
         return buildWeeklyVolumePanelRows(apiRowsForPanel, effectiveTargetCenter);
     }, [apiRowsForPanel, effectiveTargetCenter]);
 
     const weekEnd =
-        draftProjection?.week_end ??
-        q.data?.week_end ??
-        sundayOfWeekFromMondayYmd(weekStart ?? "") ??
+        (hasLiveDraft && draftProjection?.week_end) ||
+        q.data?.week_end ||
+        sundayOfWeekFromMondayYmd(weekStart ?? "") ||
         null;
 
     const weekLabel = useMemo(
@@ -210,8 +255,11 @@ export function useWeeklyClientVolumePanel(
     );
 
     const isLoading =
-        (!hasDebouncedDraft && q.isLoading) ||
-        (hasDebouncedDraft && !draftProjection && !draftError && isValidatingDraft);
+        (intent === "edit_session" && !hasLiveDraft && q.isLoading) ||
+        (hasLiveDraft &&
+            (debouncePending || (!draftProjection && !draftError && isValidatingDraft)));
+
+    const showDraftSafety = hasLiveDraft && draftProjection != null && !debouncePending;
 
     return {
         weekStart,
@@ -219,12 +267,13 @@ export function useWeeklyClientVolumePanel(
         weekLabel,
         rows,
         isLoading,
-        isFetching: q.isFetching || (hasDebouncedDraft && isValidatingDraft),
+        isFetching: q.isFetching || (hasLiveDraft && isValidatingDraft),
         isError: q.isError || draftError,
         hasClient: !!clientId && clientId > 0,
+        intent,
         usesDraftProjection,
-        axialScore: draftProjection?.axial_score ?? null,
-        safetyFlags: draftProjection?.safety_flags ?? [],
+        axialScore: showDraftSafety ? draftProjection?.axial_score ?? null : null,
+        safetyFlags: showDraftSafety ? draftProjection?.safety_flags ?? [] : [],
         weeklyTarget: effectiveTargetCenter,
     };
 }

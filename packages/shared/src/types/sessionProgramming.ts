@@ -288,6 +288,54 @@ export interface SessionBlockExerciseUpdate {
 }
 
 // ========================================
+// ATOMIC FULL UPDATE
+// ========================================
+
+import type { TrainingSessionUpdate } from './trainingSessions';
+
+/** Exercise line for atomic full update. id omitted = create. */
+export interface SessionBlockExerciseFullUpdate {
+    id?: number;
+    exercise_id: number;
+    order_in_block: number;
+    set_type?: SetType;
+    superset_group_id?: number | null;
+    dropset_sequence?: number | null;
+    planned_sets?: number | null;
+    planned_reps?: string | null;
+    planned_weight?: number | null;
+    planned_duration?: number | null;
+    planned_distance?: number | null;
+    planned_rest?: number | null;
+    effort_character?: EffortCharacter | null;
+    effort_value?: number | null;
+    notes?: string | null;
+}
+
+/** Block with exercises for atomic full update. id omitted = create. */
+export interface SessionBlockFullUpdate {
+    id?: number;
+    block_type_id: number;
+    order_in_session: number;
+    set_type?: SetType | null;
+    rounds?: number | null;
+    time_cap?: number | null;
+    interval_seconds?: number | null;
+    objective_text?: string | null;
+    planned_intensity?: number | null;
+    planned_volume?: number | null;
+    estimated_duration?: number | null;
+    notes?: string | null;
+    exercises: SessionBlockExerciseFullUpdate[];
+}
+
+/** Atomic payload: replaces the N-request save loop with a single call. */
+export interface TrainingSessionFullUpdate {
+    session: TrainingSessionUpdate;
+    blocks: SessionBlockFullUpdate[];
+}
+
+// ========================================
 // SESSION SUMMARY
 // ========================================
 

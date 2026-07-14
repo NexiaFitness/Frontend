@@ -15,14 +15,23 @@ import type {
     TrainingSessionUpdate,
     SessionExercise,
     SessionExerciseCreate,
+    SessionExerciseUpdate,
     SessionCoherence,
     TrainingSessionReplicateRequest,
     TrainingSessionReplicateResponse,
+    WellbeingCheckIn,
+    WellbeingCheckInCreate,
+    PostSessionReport,
 } from '../types/trainingSessions';
+import type { ClientFeedback, ClientFeedbackCreate } from '../types/training';
+import type {
+    TrainingSessionFullUpdate,
+} from '../types/sessionProgramming';
 import type {
     SessionRecommendationsResponse,
     SessionRecommendationsParams,
 } from '../types/sessionRecommendations';
+import type { SessionExecutionSummary } from '../types/trainerSetExecutions';
 
 /** Arg del listado por plan: número (primera página, limit 1000) o objeto con paginación. */
 export type GetTrainingSessionsQueryArg =
@@ -135,6 +144,17 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * GET /training-sessions/{session_id}/execution-summary
+         * Per-set execution summary for trainer session detail (F5).
+         */
+        getSessionExecutionSummary: builder.query<SessionExecutionSummary, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/execution-summary`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: sessionId },
+            ],
+        }),
+
+        /**
          * GET /training-sessions/{session_id}/coherence
          * Validación de coherencia con el día planificado (fallback si POST no incluye coherence).
          */
@@ -242,6 +262,70 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
             },
         }),
 
+        createSessionFeedback: builder.mutation<
+            ClientFeedback,
+            { sessionId: number; body: ClientFeedbackCreate }
+        >({
+            query: ({ sessionId, body }) => ({
+                url: `/training-sessions/${sessionId}/feedback`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (_result, _error, { sessionId, body }) => [
+                { type: 'TrainingSession', id: sessionId },
+                { type: 'Client', id: body.client_id },
+                { type: 'Client', id: 'FEEDBACK' },
+                { type: 'InboxNotification', id: 'LIST' },
+                { type: 'InboxNotification', id: 'COUNT' },
+            ],
+        }),
+
+        updateFeedbackTrainerResponse: builder.mutation<
+            ClientFeedback,
+            { feedbackId: number; clientId: number; trainer_response: string }
+        >({
+            query: ({ feedbackId, trainer_response }) => ({
+                url: `/training-sessions/feedback/${feedbackId}/trainer-response`,
+                method: 'PATCH',
+                body: { trainer_response },
+            }),
+            invalidatesTags: (_result, _error, { clientId }) => [
+                { type: 'Client', id: clientId },
+                { type: 'Client', id: 'FEEDBACK' },
+                { type: 'Client', id: 'RECENT_ACTIVITY' },
+                { type: 'InboxNotification', id: 'LIST' },
+                { type: 'InboxNotification', id: 'COUNT' },
+            ],
+        }),
+
+        submitWellbeingCheckIn: builder.mutation<
+            WellbeingCheckIn,
+            { sessionId: number; body: WellbeingCheckInCreate }
+        >({
+            query: ({ sessionId, body }) => ({
+                url: `/training-sessions/${sessionId}/wellbeing-check-in`,
+                method: 'POST',
+                body,
+            }),
+            invalidatesTags: (_result, _error, { sessionId }) => [
+                { type: 'TrainingSession', id: sessionId },
+            ],
+        }),
+
+        getWellbeingCheckIn: builder.query<WellbeingCheckIn, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/wellbeing-check-in`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: `WELLBEING_${sessionId}` },
+            ],
+        }),
+
+        getPostSessionReport: builder.query<PostSessionReport, number>({
+            query: (sessionId) => `/training-sessions/${sessionId}/post-session-report`,
+            providesTags: (_result, _error, sessionId) => [
+                { type: 'TrainingSession', id: `REPORT_${sessionId}` },
+            ],
+        }),
+
         /**
          * POST /training-sessions/{session_id}/replicate
          * Replicar una sesion a otras semanas del mismo bloque
@@ -266,6 +350,44 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                             tags.push({ type: 'PlanPeriodBlock', id: s.period_block_id });
                         }
                     });
+                }
+                return tags;
+            },
+        }),
+
+        /**
+         * PUT /training-sessions/{id}/full
+         * Atomic full update: session header + blocks + exercises in one call.
+         * Replaces the N-request loop (update session + update/create/delete blocks
+         * and exercises) with a single transactional call.
+         *
+         * @since v6.2.0
+         */
+        updateTrainingSessionFull: builder.mutation<
+            TrainingSession,
+            { id: number; body: TrainingSessionFullUpdate }
+        >({
+            query: ({ id, body }) => ({
+                url: `/training-sessions/${id}/full`,
+                method: 'PUT',
+                body,
+            }),
+            invalidatesTags: (result, _error, { id }) => {
+                const tags: Array<
+                    | { type: 'TrainingSession' | 'TrainingPlan' | 'SessionBlock'; id: string | number }
+                    | { type: 'SessionBlockExercise' }
+                > = [
+                    { type: 'TrainingSession', id },
+                    // Debe coincidir con getSessionBlocks providesTags (`SESSION-${sessionId}`).
+                    { type: 'SessionBlock', id: `SESSION-${id}` },
+                    // Invalida todas las queries getSessionBlockExercises (tag `BLOCK-${blockId}`).
+                    { type: 'SessionBlockExercise' },
+                ];
+                if (result?.training_plan_id) {
+                    tags.push(
+                        { type: 'TrainingSession', id: `PLAN_${result.training_plan_id}` },
+                        { type: 'TrainingPlan', id: result.training_plan_id }
+                    );
                 }
                 return tags;
             },
@@ -298,6 +420,43 @@ export const trainingSessionsApi = baseApi.injectEndpoints({
                 return tags;
             },
         }),
+
+        /**
+         * PUT /training-sessions/exercises/{id}
+         * Actualizar ejercicio legacy (session_exercises) — F3c legacy run adapter
+         */
+        updateSessionExercise: builder.mutation<
+            SessionExercise,
+            { id: number; data: SessionExerciseUpdate; clientId?: number }
+        >({
+            query: ({ id, data }) => ({
+                url: `/training-sessions/exercises/${id}`,
+                method: 'PUT',
+                body: data,
+            }),
+            invalidatesTags: (result, _error, { id, clientId }) => {
+                const tags: Array<{
+                    type: 'TrainingSession' | 'SessionExercise' | 'Client' | 'AthleteLastPerformance';
+                    id: string | number;
+                }> = [{ type: 'SessionExercise', id }];
+                if (result?.training_session_id) {
+                    tags.push({ type: 'TrainingSession', id: result.training_session_id });
+                }
+                if (clientId != null) {
+                    tags.push({ type: 'Client', id: `TRACKING-${clientId}` });
+                    if (result?.exercise_id) {
+                        tags.push({
+                            type: 'Client',
+                            id: `TRACKING-${clientId}-${result.exercise_id}`,
+                        });
+                    }
+                }
+                if (result?.exercise_id) {
+                    tags.push({ type: 'AthleteLastPerformance', id: result.exercise_id });
+                }
+                return tags;
+            },
+        }),
     }),
     overrideExisting: false,
 });
@@ -308,12 +467,21 @@ export const {
     useLazyGetTrainingSessionsQuery,
     useGetTrainingSessionsByClientQuery,
     useGetTrainingSessionQuery,
+    useGetSessionExecutionSummaryQuery,
     useGetSessionCoherenceQuery,
     useGetSessionExercisesQuery,
     useCreateTrainingSessionMutation,
     useUpdateTrainingSessionMutation,
+    useCreateSessionFeedbackMutation,
+    useUpdateFeedbackTrainerResponseMutation,
+    useSubmitWellbeingCheckInMutation,
+    useGetWellbeingCheckInQuery,
+    useLazyGetWellbeingCheckInQuery,
+    useGetPostSessionReportQuery,
+    useUpdateTrainingSessionFullMutation,
     useDeleteTrainingSessionMutation,
     useReplicateTrainingSessionMutation,
     useCreateSessionExerciseMutation,
+    useUpdateSessionExerciseMutation,
 } = trainingSessionsApi;
 

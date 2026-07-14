@@ -1,135 +1,311 @@
 /**
- * Dashboard específico para atletas/clientes.
- * Chrome (sidebar, navbar) provisto por DashboardShell en Fase 2a.
- *
+ * AthleteDashboard.tsx — Inicio atleta (V01).
+ * Contexto: portal atleta F0/F2, datos reales RTK Query.
+ * Contratos: agent.md, DESIGN_MOBILE §7.1, 09_UX V01
  * @author Frontend Team
- * @since v4.1.0
- * @updated v5.0.0 - Nexia Sparkle Flow Fase 2a: chrome centralizado en DashboardShell
+ * @since v6.1.0
  */
 
-import React from "react";
-import { useSelector } from "react-redux";
+import React, { useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { AthleteDashboardHeader } from "@/components/athlete/AthleteDashboardHeader";
+import { AthleteDaySessionsSheet } from "@/components/athlete/AthleteDaySessionsSheet";
+import { AthleteFeedbackPeekSheet } from "@/components/athlete/AthleteFeedbackPeekSheet";
+import { AthletePageLoading } from "@/components/athlete/AthletePageLoading";
+import { AthletePeriodizationStrip } from "@/components/athlete/AthletePeriodizationStrip";
+import { AthleteTrainerNoteCard } from "@/components/athlete/AthleteTrainerNoteCard";
+import { AthleteWeekInsight } from "@/components/athlete/AthleteWeekInsight";
+import { SessionTodayCard } from "@/components/athlete/SessionTodayCard";
+import { WeekStrip } from "@/components/athlete/WeekStrip";
+import { Alert } from "@/components/ui/feedback";
+import { AthleteEmptyState } from "@/components/athlete/empty/AthleteEmptyState";
+import { ATHLETE_PRIMARY_CTA } from "@/components/athlete/account/athleteSettingsPresentation";
 import { Button } from "@/components/ui/buttons";
-import type { RootState } from "@nexia/shared/store";
+import { useAthleteDashboard } from "@/hooks/athlete/useAthleteDashboard";
+import { useAthleteWeeklyInsight } from "@/hooks/athlete/useAthleteWeeklyInsight";
+import { useIsAthleteDesktopLayout } from "@/hooks/useMediaQuery";
+import type { SessionHeroCtaAction } from "@nexia/shared/utils/athlete/athleteDashboardHeroCopy";
+import type { InsightDeepLink } from "@nexia/shared/utils/athlete/athleteInsightDeepLinks";
+import type { WeekDayStripItem } from "@nexia/shared/utils/athlete/athleteSessionUtils";
+import { AthleteFixedFooter } from "@/components/athlete/layout/AthleteFixedFooter";
+import { InstallPromptChip, InstallPromptSheet } from "@/components/athlete/pwa";
+import { ATHLETE_STICKY_FOOTER_CONTENT_PB, ATHLETE_PAGE_BOTTOM_NAV_WITH_PWA_CHIP } from "@/components/athlete/layout/athleteLayoutClasses";
+import { useAthleteInstallPrompt } from "@/hooks/athlete/useAthleteInstallPrompt";
+import { PullToRefresh } from "@/components/ui/layout/PullToRefresh";
+import { cn } from "@/lib/utils";
 
 export const AthleteDashboard: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useSelector((state: RootState) => state.auth);
+    const isDesktop = useIsAthleteDesktopLayout();
+    const [feedbackSheetOpen, setFeedbackSheetOpen] = useState(false);
+    const [daySheetDay, setDaySheetDay] = useState<WeekDayStripItem | null>(null);
+    const isBlockingOverlayOpen = feedbackSheetOpen || daySheetDay != null;
+    const {
+        isActive: isPwaFunnelActive,
+        isSheetOpen: isPwaSheetOpen,
+        closeSheet: closePwaSheet,
+        openSheet: openPwaSheet,
+        platform: pwaPlatform,
+        promptInstall,
+        showChip: showPwaChip,
+    } = useAthleteInstallPrompt({ isBlockingOverlayOpen });
+    const {
+        userName,
+        clientId,
+        todaySession,
+        nextSession,
+        weekStrip,
+        planProgressPercent,
+        hasActivePlan,
+        dashboardMode,
+        periodizationStrip,
+        showFeedbackBadge,
+        trainerNote,
+        isLoading,
+        isError,
+        heroSubtitle,
+        sessionHero,
+        refreshFeedbackBadge,
+        refreshDashboard,
+        insightDeepLinkContext,
+    } = useAthleteDashboard();
+
+    const weeklyInsight = useAthleteWeeklyInsight(
+        hasActivePlan,
+        weekStrip,
+        nextSession,
+        dashboardMode,
+        clientId,
+        insightDeepLinkContext
+    );
+    const refetchWeeklyInsight = weeklyInsight.refetch;
+
+    const handleStart = (sessionId: number) => {
+        navigate(`/dashboard/sessions/${sessionId}`);
+    };
+
+    const handleHeroCta = useCallback(
+        (action: SessionHeroCtaAction, sessionId: number | null) => {
+            switch (action) {
+                case "start":
+                case "preview":
+                    if (sessionId != null) {
+                        navigate(`/dashboard/sessions/${sessionId}`);
+                    }
+                    break;
+                case "summary":
+                    if (sessionId != null) {
+                        navigate(`/dashboard/sessions/${sessionId}/summary`);
+                    }
+                    break;
+                case "progress":
+                    navigate("/dashboard/progress");
+                    break;
+                case "account":
+                    navigate("/dashboard/account");
+                    break;
+                case "sessions":
+                    navigate("/dashboard/sessions");
+                    break;
+            }
+        },
+        [navigate]
+    );
+
+    const handleBellClick = useCallback(() => {
+        setFeedbackSheetOpen(true);
+    }, []);
+
+    const handleDeepLink = useCallback(
+        (link: InsightDeepLink) => {
+            switch (link.action) {
+                case "progress":
+                    navigate("/dashboard/progress");
+                    break;
+                case "progress_exercise":
+                    if (link.exerciseId != null) {
+                        navigate(`/dashboard/progress/exercise/${link.exerciseId}`);
+                    }
+                    break;
+                case "feedback_history":
+                    setFeedbackSheetOpen(true);
+                    break;
+                case "submit_session_feedback":
+                    if (link.sessionId != null) {
+                        navigate(`/dashboard/sessions/${link.sessionId}/feedback`);
+                    }
+                    break;
+                case "view_session_feedback":
+                    navigate("/dashboard/feedback");
+                    break;
+            }
+        },
+        [navigate]
+    );
+
+    const handleTrainerMessageClick = useCallback(() => {
+        handleBellClick();
+    }, [handleBellClick]);
+
+    const handleRefresh = useCallback(async () => {
+        await refreshDashboard();
+        refetchWeeklyInsight();
+    }, [refreshDashboard, refetchWeeklyInsight]);
+
+    if (isLoading) {
+        return <AthletePageLoading variant="dashboard" />;
+    }
+
+    if (isError) {
+        return (
+            <div className="space-y-4 px-4 pb-24 pt-4 lg:pb-8 lg:px-8">
+                <Alert variant="error">
+                    <p className="font-medium">No pudimos cargar tu entrenamiento</p>
+                    <p className="mt-1 text-muted-foreground">Comprueba tu conexión e inténtalo de nuevo.</p>
+                </Alert>
+            </div>
+        );
+    }
+
+    const showStickyCta = Boolean(
+        todaySession &&
+            hasActivePlan &&
+            todaySession.status !== "completed"
+    );
+
+    const showPwaChipOnMobile = showPwaChip && !isDesktop;
+
+    const contentBottomPadding = showStickyCta
+        ? showPwaChipOnMobile
+            ? "pb-[calc(4rem+5.5rem+2.75rem+2rem+env(safe-area-inset-bottom))] lg:pb-8"
+            : ATHLETE_STICKY_FOOTER_CONTENT_PB
+        : showPwaChipOnMobile
+          ? ATHLETE_PAGE_BOTTOM_NAV_WITH_PWA_CHIP
+          : "pb-24 lg:pb-8";
 
     return (
         <>
-            {/* Header */}
-                <div className="mb-6 lg:mb-8 text-center px-4 lg:px-8">
-                    <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-2">
-                        Bienvenido {user?.nombre}, a tu Panel de Entrenamiento
-                    </h2>
-                    <p className="text-muted-foreground text-sm md:text-base">
-                        Sigue tu progreso y accede a tus planes de entrenamiento personalizados
-                    </p>
+            <PullToRefresh onRefresh={handleRefresh}>
+                <div
+                    className={cn(
+                        "space-y-6 px-4 pt-4 lg:px-8",
+                        contentBottomPadding
+                    )}
+                >
+                    <AthleteDashboardHeader
+                        userName={userName}
+                        subtitle={heroSubtitle}
+                        showFeedbackBadge={showFeedbackBadge}
+                        onBellClick={handleBellClick}
+                    />
+
+                    {periodizationStrip && (
+                        <AthletePeriodizationStrip strip={periodizationStrip} />
+                    )}
+
+                    {hasActivePlan && (
+                        <SessionTodayCard
+                            session={todaySession}
+                            hero={sessionHero}
+                            planProgressPercent={planProgressPercent}
+                            onCta={handleHeroCta}
+                            hideStartCtaOnMobile={showStickyCta}
+                        />
+                    )}
+
+                    {hasActivePlan && (
+                        <WeekStrip
+                            days={weekStrip}
+                            onDayClick={isDesktop ? undefined : setDaySheetDay}
+                        />
+                    )}
+
+                    <AthleteWeekInsight
+                        insight={weeklyInsight}
+                        onPersonalRecordClick={(exerciseId) =>
+                            navigate(`/dashboard/progress/exercise/${exerciseId}`)
+                        }
+                        onTrainerMessageClick={handleTrainerMessageClick}
+                        onProgressClick={() => navigate("/dashboard/progress")}
+                        onDeepLinkClick={handleDeepLink}
+                    />
+
+                    {trainerNote && (
+                        <AthleteTrainerNoteCard
+                            session={trainerNote.session}
+                            note={trainerNote.note}
+                        />
+                    )}
+
+                    {!hasActivePlan && (
+                        <AthleteEmptyState
+                            variant="plan"
+                            action={
+                                <Button
+                                    variant="primary"
+                                    className={ATHLETE_PRIMARY_CTA}
+                                    onClick={() => navigate("/dashboard/account")}
+                                >
+                                    Ver mi cuenta
+                                </Button>
+                            }
+                        />
+                    )}
                 </div>
+            </PullToRefresh>
 
-                {/* Cards RESPONSIVE */}
-                <div className="px-4 lg:px-8 mb-12 lg:mb-20">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 lg:gap-8">
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">12</h3>
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground mb-1">
-                                Sessions This Week
-                            </p>
-                            <p className="text-muted-foreground text-sm lg:text-base">Completed</p>
-                        </div>
-
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">85%</h3>
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground mb-1">
-                                Goal Progress
-                            </p>
-                            <p className="text-muted-foreground text-sm lg:text-base">Monthly target</p>
-                        </div>
-
-                        <div className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8 md:col-span-2 lg:col-span-1">
-                            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground mb-2">+5kg</h3>
-                            <p className="text-base md:text-lg lg:text-xl font-semibold text-foreground mb-1">
-                                Strength Gain
-                            </p>
-                            <p className="text-muted-foreground text-sm lg:text-base">Last month</p>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Botones responsive */}
-                <div className="px-4 lg:px-8 mb-12 lg:mb-16">
-                    <div className="flex flex-col md:flex-row gap-4 lg:gap-6 justify-center max-w-2xl mx-auto">
+            {showStickyCta && todaySession && (
+                <div className="lg:hidden">
+                    <AthleteFixedFooter size="single" scrollSpacer={false}>
                         <Button
                             variant="primary"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={() => navigate("/dashboard/my-plan")}
+                            className={ATHLETE_PRIMARY_CTA}
+                            onClick={() => handleStart(todaySession.id)}
                         >
-                            View My Plan
+                            Empezar sesión
                         </Button>
-                        <Button
-                            variant="secondary"
-                            size="lg"
-                            className="px-8 lg:px-10 py-3 lg:py-4 text-base lg:text-lg font-semibold w-full md:w-auto md:min-w-[220px]"
-                            onClick={() => navigate("/dashboard/sessions")}
-                        >
-                            Log Workout
-                        </Button>
-                    </div>
+                    </AthleteFixedFooter>
                 </div>
+            )}
 
-                {/* Upcoming Sessions responsive */}
-                <div className="px-4 lg:px-8 pb-20 lg:pb-24">
-                    <div className="max-w-4xl mx-auto">
-                        <div 
-                            className="bg-card border border-border rounded-2xl shadow-xl p-6 lg:p-8 cursor-pointer hover:bg-surface-2 transition-all group"
-                            onClick={() => navigate("/dashboard/sessions")}
-                        >
-                            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-                                <div>
-                                    <h3 className="text-xl lg:text-2xl font-bold text-foreground mb-2">
-                                        Upcoming Sessions
-                                    </h3>
-                                    <p className="text-muted-foreground text-sm lg:text-base">
-                                        Your scheduled training sessions and progress tracking
-                                    </p>
-                                </div>
-                                <div className="text-primary group-hover:text-primary/80 self-end md:self-center">
-                                    <svg
-                                        className="w-6 h-6 lg:w-8 lg:h-8"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M9 5l7 7-7 7"
-                                        />
-                                    </svg>
-                                </div>
-                            </div>
+            <AthleteFeedbackPeekSheet
+                isOpen={feedbackSheetOpen}
+                onClose={() => {
+                    setFeedbackSheetOpen(false);
+                    refreshFeedbackBadge();
+                }}
+            />
 
-                            <div className="mt-6 grid grid-cols-3 gap-4 text-center">
-                                <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">3</div>
-                                    <div className="text-xs lg:text-sm text-muted-foreground">Next 7 Days</div>
-                                </div>
-                                <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">18</div>
-                                    <div className="text-xs lg:text-sm text-muted-foreground">This Month</div>
-                                </div>
-                                <div>
-                                    <div className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground">92%</div>
-                                    <div className="text-xs lg:text-sm text-muted-foreground">Completion Rate</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <AthleteDaySessionsSheet
+                day={daySheetDay}
+                isOpen={daySheetDay != null}
+                onClose={() => setDaySheetDay(null)}
+                onSelectSession={(sessionId) =>
+                    navigate(`/dashboard/sessions/${sessionId}`)
+                }
+            />
+
+            {isPwaFunnelActive && (
+                <>
+                    {showPwaChipOnMobile && (
+                        <InstallPromptChip
+                            variant="dashboard"
+                            onClick={openPwaSheet}
+                            className={
+                                showStickyCta
+                                    ? "bottom-[calc(4rem+5.5rem+0.25rem)]"
+                                    : undefined
+                            }
+                        />
+                    )}
+                    <InstallPromptSheet
+                        isOpen={isPwaSheetOpen}
+                        onClose={closePwaSheet}
+                        platform={pwaPlatform}
+                        onInstall={promptInstall}
+                    />
+                </>
+            )}
         </>
     );
 };

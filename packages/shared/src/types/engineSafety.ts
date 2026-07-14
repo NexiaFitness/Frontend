@@ -83,6 +83,15 @@ export interface SessionSafetySummaryOut {
 
 import type { Exercise } from "../hooks/exercises";
 
+/** Why GET /exercises/{id}/safe-alternatives returned an empty list. */
+export type AlternativesEmptyReason =
+    | "none"
+    | "no_pool"
+    | "joint_catalog"
+    | "injury_filter"
+    | "score_threshold"
+    | "manual_empty";
+
 export interface SafeAlternativesResponse {
     original_exercise_id: number;
     client_id: number;
@@ -90,4 +99,8 @@ export interface SafeAlternativesResponse {
     alternatives: Exercise[];
     safety_results: ExerciseSafetyResponse[];
     match_scores: Record<number, number>;
+    /** True when the API found no safe alternative (threshold, injury filter, or empty catalog). */
+    no_alternatives_found: boolean;
+    /** Primary cause when alternatives is empty; "none" when alternatives exist. */
+    empty_reason: AlternativesEmptyReason;
 }

@@ -3,6 +3,7 @@
  *
  * Contexto:
  * - Usa RTK Query (authApi) para registro con autologin.
+ * - Registro público solo para entrenadores (Q2: atletas vía invitación).
  * - Redirección automática según rol tras registro exitoso.
  * - Compatible con React Web y React Native.
  * - Arquitectura limpia: navegación delegada al componente padre.
@@ -10,7 +11,7 @@
  * Flujo:
  * 1. Usuario completa formulario → useRegisterMutation()
  * 2. Backend devuelve tokens → autologin automático
- * 3. Redirección automática según rol (trainer/athlete/admin)
+ * 3. Redirección automática según rol (trainer/admin)
  *
  * @since v1.0.0
  * @updated v2.0.0 - Integración con useAuth y autologin
@@ -21,15 +22,20 @@ import React from "react";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
-import { Input, FormSelect } from "@/components/ui/forms";
+import { Input } from "@/components/ui/forms";
 import { ServerErrorBanner } from "@/components/ui/feedback";
+import {
+    AUTH_INPUT_MOBILE,
+    AUTH_LINK,
+    AUTH_LINK_MUTED,
+    AUTH_SUBMIT_MOBILE,
+} from "@/components/auth/authFormPresentation";
 import { useRegisterMutation, loginSuccess, loginFailure } from "@nexia/shared";
 import { useAuthForm } from "@nexia/shared/hooks/useAuthForm";
 import { USER_ROLES } from "@nexia/shared/config/constants";
-import { validateRegisterForm } from "@nexia/shared/utils/validations";
+import { validateRegisterForm, PASSWORD_REQUIREMENTS_HINT } from "@nexia/shared/utils/validations";
 import type { AppDispatch } from "@nexia/shared/store";
-import type { RegisterCredentials, UserRole } from "@nexia/shared/types/auth";
-import type { SelectOption } from "@/components/ui/forms";
+import type { RegisterCredentials } from "@nexia/shared/types/auth";
 
 interface RegisterFormData {
     email: string;
@@ -37,7 +43,6 @@ interface RegisterFormData {
     confirmPassword: string;
     nombre: string;
     apellidos: string;
-    role: UserRole | ""; // Puede empezar vacío hasta que el usuario seleccione
     [key: string]: unknown;
 }
 
@@ -47,20 +52,15 @@ const initialFormState: RegisterFormData = {
     confirmPassword: "",
     nombre: "",
     apellidos: "",
-    role: "",
 };
 
-// Opciones para el selector de roles - Solo registro público
-const roleOptions: SelectOption[] = [
-    { value: USER_ROLES.TRAINER, label: "Entrenador Personal" },
-    { value: USER_ROLES.ATHLETE, label: "Atleta" },
-];
+const validateTrainerRegisterForm = (formData: RegisterFormData) =>
+    validateRegisterForm({ ...formData, role: USER_ROLES.TRAINER });
 
 export const RegisterForm: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
 
-    // RTK Query mutation para registro
     const [register, { isLoading }] = useRegisterMutation();
 
     const {
@@ -73,7 +73,7 @@ export const RegisterForm: React.FC = () => {
         clearErrors,
     } = useAuthForm({
         initialState: initialFormState,
-        validate: validateRegisterForm,
+        validate: validateTrainerRegisterForm,
     });
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -83,99 +83,85 @@ export const RegisterForm: React.FC = () => {
         clearErrors();
 
         try {
-            // Validación explícita de role
-            if (!formData.role) {
-                handleServerError({
-                    status: 400,
-                    data: { detail: "Debes seleccionar un tipo de cuenta" }
-                });
-                return;
-            }
-
             const credentials: RegisterCredentials = {
                 email: formData.email,
                 password: formData.password,
                 nombre: formData.nombre,
                 apellidos: formData.apellidos,
-                role: formData.role as UserRole,
+                role: USER_ROLES.TRAINER,
             };
 
-            // RTK Query mutation
             const response = await register(credentials).unwrap();
 
-            // ✅ RECOMENDACIÓN 2: Validar que response tiene datos válidos
             if (!response?.user || !response?.access_token) {
-                console.error('[RegisterForm] Invalid response from server:', response);
+                console.error("[RegisterForm] Invalid response from server:", response);
                 handleServerError({
                     status: 500,
-                    data: { 
-                        detail: "Respuesta inválida del servidor. El usuario puede haberse creado correctamente. Por favor, intenta iniciar sesión." 
-                    }
+                    data: {
+                        detail:
+                            "Respuesta inválida del servidor. El usuario puede haberse creado correctamente. Por favor, intenta iniciar sesión.",
+                    },
                 });
                 return;
             }
 
-            // Auto-login: dispatch tokens to Redux
             dispatch(
                 loginSuccess({
                     user: response.user,
                     token: response.access_token,
                     refreshToken: response.refresh_token,
-                })
+                }),
             );
 
-            // CORRECCIÓN: Ir a /dashboard (no /dashboard/trainer)
-            // DashboardRouter maneja la redirección según rol
             navigate("/dashboard", { replace: true });
-
         } catch (error: unknown) {
-            // CORRECCIÓN: Manejo de error mejorado
-            const apiError = error as { status?: number; data?: { detail?: string }; message?: string };
-            console.error('[RegisterForm] Registration failed:', {
+            const apiError = error as {
+                status?: number;
+                data?: { detail?: string };
+                message?: string;
+            };
+            console.error("[RegisterForm] Registration failed:", {
                 error,
                 status: apiError?.status,
                 data: apiError?.data,
                 message: apiError?.message,
             });
-            
-                // ✅ RECOMENDACIÓN 4: Manejar caso de usuario ya existente
-                if (apiError?.status === 422) {
-                    const errorDetail = apiError?.data?.detail || '';
-                    const isDuplicateUser = 
-                        typeof errorDetail === 'string' && 
-                        (errorDetail.toLowerCase().includes('already exists') ||
-                         errorDetail.toLowerCase().includes('ya existe') ||
-                         errorDetail.toLowerCase().includes('duplicate') ||
-                         errorDetail.toLowerCase().includes('duplicado'));
-                    
-                    if (isDuplicateUser) {
-                        const errorMessage = "Este email ya está registrado. ¿Quieres iniciar sesión?";
-                        handleServerError({
-                            status: 422,
-                            data: { detail: errorMessage }
-                        });
-                        // Redirigir a login con email prellenado
-                        navigate("/auth/login", { 
-                            state: { email: formData.email },
-                            replace: true 
-                        });
-                        return;
-                    }
+
+            if (apiError?.status === 422) {
+                const errorDetail = apiError?.data?.detail || "";
+                const isDuplicateUser =
+                    typeof errorDetail === "string" &&
+                    (errorDetail.toLowerCase().includes("already exists") ||
+                        errorDetail.toLowerCase().includes("ya existe") ||
+                        errorDetail.toLowerCase().includes("duplicate") ||
+                        errorDetail.toLowerCase().includes("duplicado"));
+
+                if (isDuplicateUser) {
+                    const errorMessage =
+                        "Este email ya está registrado. ¿Quieres iniciar sesión?";
+                    handleServerError({
+                        status: 422,
+                        data: { detail: errorMessage },
+                    });
+                    navigate("/auth/login", {
+                        state: { email: formData.email },
+                        replace: true,
+                    });
+                    return;
                 }
-                
-                // Extraer mensaje de error de RTK Query
-                const errorMessage = apiError?.data?.detail || 
-                                   apiError?.message || 
-                                   "Error al crear la cuenta. Intenta de nuevo.";
-                
-                // Actualizar UI con error
-                handleServerError({
-                    status: apiError?.status || 500,
-                    data: { detail: errorMessage }
-                });
-                
-                // Dispatch failure a Redux
-                dispatch(loginFailure(errorMessage));
+            }
+
+            const errorMessage =
+                apiError?.data?.detail ||
+                apiError?.message ||
+                "Error al crear la cuenta. Intenta de nuevo.";
+
+            handleServerError({
+                status: apiError?.status || 500,
+                data: { detail: errorMessage },
+            });
+
+            dispatch(loginFailure(errorMessage));
         }
     };
 
@@ -190,7 +176,7 @@ export const RegisterForm: React.FC = () => {
                     Únete a NEXIA
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
-                    Crea tu cuenta para empezar a entrenar de forma profesional
+                    Crea tu cuenta de entrenador para gestionar a tus atletas
                 </p>
             </div>
 
@@ -207,6 +193,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Introduce tu correo electrónico"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -220,6 +207,7 @@ export const RegisterForm: React.FC = () => {
                         placeholder="Tu nombre"
                         isRequired
                         disabled={isLoading}
+                        className={AUTH_INPUT_MOBILE}
                     />
 
                     <Input
@@ -232,20 +220,9 @@ export const RegisterForm: React.FC = () => {
                         placeholder="Tus apellidos"
                         isRequired
                         disabled={isLoading}
+                        className={AUTH_INPUT_MOBILE}
                     />
                 </div>
-
-                <FormSelect
-                    label="Tipo de cuenta"
-                    size="sm"
-                    value={formData.role}
-                    onChange={handleInputChange("role")}
-                    options={roleOptions}
-                    error={errors.role}
-                    placeholder="Selecciona tu tipo de cuenta"
-                    isRequired
-                    disabled={isLoading}
-                />
 
                 <Input
                     type="password"
@@ -254,9 +231,10 @@ export const RegisterForm: React.FC = () => {
                     value={formData.password}
                     onChange={handleInputChange("password")}
                     error={errors.password}
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={PASSWORD_REQUIREMENTS_HINT}
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Input
@@ -269,6 +247,7 @@ export const RegisterForm: React.FC = () => {
                     placeholder="Repite tu contraseña"
                     isRequired
                     disabled={isLoading}
+                    className={AUTH_INPUT_MOBILE}
                 />
 
                 <Button
@@ -277,17 +256,22 @@ export const RegisterForm: React.FC = () => {
                     size="md"
                     isLoading={isLoading}
                     disabled={isLoading}
-                    className="w-full"
+                    className={`w-full ${AUTH_SUBMIT_MOBILE}`}
                 >
                     {isLoading ? "Creando cuenta..." : "Crear cuenta"}
                 </Button>
 
-                <div className="text-center text-sm text-muted-foreground">
+                <p className="text-center text-xs text-muted-foreground">
+                    ¿Eres atleta? Tu entrenador te enviará una invitación por correo
+                    electrónico.
+                </p>
+
+                <div className={`text-center ${AUTH_LINK_MUTED}`}>
                     ¿Ya tienes cuenta?{" "}
                     <button
                         type="button"
                         onClick={handleLogin}
-                        className="text-sm font-medium text-primary underline underline-offset-4 hover:text-primary/80 transition-colors disabled:opacity-50"
+                        className={`${AUTH_LINK} disabled:opacity-50`}
                         disabled={isLoading}
                     >
                         Inicia sesión

@@ -16,45 +16,17 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type { ConstructorRow, ConstructorExercise } from "@/components/sessionProgramming/constructorTypes";
 import { getConstructorPersistLines } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
+import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
+import { mapExerciseRepsToPayload } from "@/components/sessionProgramming/constructor/utils/exerciseRepsMode";
 
 function mapRepsTipoToPayload(
     row: ConstructorRow,
     ex: Pick<
         ConstructorExercise,
-        "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
+        "repsTipo" | "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
     >
-): {
-    planned_reps: string | null;
-    planned_duration: number | null;
-    effort_character: ConstructorExercise["effortCharacter"];
-    effort_value: number | null;
-} {
-    const repsTipo = row.repsTipo ?? "reps";
-
-    if (row.setType === "amrap") {
-        return {
-            planned_reps: "AMRAP",
-            planned_duration: null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
-
-    if (repsTipo === "tiempo") {
-        return {
-            planned_reps: null,
-            planned_duration: ex.plannedDuration ?? null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
-
-    return {
-        planned_reps: ex.plannedReps ?? null,
-        planned_duration: null,
-        effort_character: ex.effortCharacter,
-        effort_value: ex.effortValue,
-    };
+) {
+    return mapExerciseRepsToPayload(ex, row.repsTipo ?? "reps");
 }
 
 function buildTemplateExercisePayload(
@@ -124,7 +96,7 @@ export function buildTemplatePayloadFromConstructorRows(
                 block_type_id: row.blockTypeId,
                 order_in_template: rowIndex,
                 set_type: row.setType,
-                rounds: row.rounds,
+                rounds: getBlockRoundsFromConstructorRow(row),
                 time_cap: row.timeCap,
                 interval_seconds: row.intervalSeconds,
                 exercises,

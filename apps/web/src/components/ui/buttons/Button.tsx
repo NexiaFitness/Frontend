@@ -15,6 +15,7 @@
  * @author Frontend Team
  * @since v1.0.0
  * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn(), variantes default/destructive/ghost/link
+ * @updated 2026-07 - Añadida variante "ghost-primary" (texto azul primary, sin fondo ni borde en reposo) para CTAs terciarios que no deben leerse como acciones neutras (cancelar/cerrar).
  */
 
 import React, { forwardRef } from "react";
@@ -26,9 +27,11 @@ export type ButtonVariant =
     | "destructive"
     | "danger"
     | "outline"
+    | "outline-primary"
     | "outline-destructive"
     | "secondary"
     | "ghost"
+    | "ghost-primary"
     | "link";
 export type ButtonSize = "sm" | "md" | "lg" | "icon";
 
@@ -52,12 +55,16 @@ const variantStyles: Record<string, string> = {
         "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
     outline:
         "border border-primary text-primary bg-transparent hover:bg-primary/10",
+    "outline-primary":
+        "rounded-lg border border-primary/30 bg-primary/20 text-primary hover:bg-primary/30 hover:border-primary/50",
     "outline-destructive":
         "rounded-lg border border-destructive/30 bg-destructive/20 text-destructive hover:bg-destructive/30 hover:border-destructive/50",
     secondary:
         "border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
     ghost:
         "border border-transparent hover:bg-accent hover:text-accent-foreground",
+    "ghost-primary":
+        "border border-transparent bg-transparent text-primary hover:bg-primary/10",
     link:
         "border border-transparent text-primary underline-offset-4 hover:underline",
 };

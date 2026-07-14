@@ -5,14 +5,18 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { generateSyntheticWeeks, mergeWeeklyStructureWeeks } from "./weeklyStructure";
+import {
+    generateSyntheticWeeks,
+    getTrainingDatesInRange,
+    mergeWeeklyStructureWeeks,
+} from "./weeklyStructure";
 import type { WeeklyStructureWeek } from "../types/weeklyStructure";
 
 describe("generateSyntheticWeeks", () => {
-    it("bloque de 28 días → 4 semanas sintéticas con 7 días vacíos cada una", () => {
+    it("feb 2026 (calendario) → 5 semanas sintéticas con 7 días vacíos cada una", () => {
         const weeks = generateSyntheticWeeks("2026-02-01", "2026-02-28");
-        expect(weeks).toHaveLength(4);
-        expect(weeks.map((w) => w.week_ordinal)).toEqual([1, 2, 3, 4]);
+        expect(weeks).toHaveLength(5);
+        expect(weeks.map((w) => w.week_ordinal)).toEqual([1, 2, 3, 4, 5]);
         weeks.forEach((w) => {
             expect(w.label).toBeNull();
             expect(w.id).toBeUndefined();
@@ -91,5 +95,66 @@ describe("mergeWeeklyStructureWeeks", () => {
         const synth = [syntheticWeek(2), syntheticWeek(4)];
         const merged = mergeWeeklyStructureWeeks(real, synth);
         expect(merged.map((w) => w.week_ordinal)).toEqual([1, 2, 3, 4]);
+    });
+});
+
+/**
+ * T-4 del spec docs/specs/estructura-semanal/04_TESTS_CRITICOS.md:
+ * - cubre el fix del bug del contador `totalTrainable` en la summary card
+ *   (antes mostraba `trainingDays.length` en vez de dias reales del rango).
+ * - sin tests de styling ni snapshots.
+ */
+describe("getTrainingDatesInRange", () => {
+    it("cuenta dias entrenables en el rango completo (4 semanas, 3 dias/sem)", () => {
+        // Lunes 4-may a Domingo 31-may de 2026 = 4 semanas exactas.
+        const result = getTrainingDatesInRange(
+            "2026-05-04",
+            "2026-05-31",
+            ["Monday", "Wednesday", "Friday"],
+        );
+        expect(result).toHaveLength(12);
+    });
+
+    it("agrupa por semana calendario (lun–dom) anclada al startDate", () => {
+        const result = getTrainingDatesInRange(
+            "2026-05-04",
+            "2026-05-17",
+            ["Monday", "Friday"],
+        );
+        expect(result).toHaveLength(4);
+        const ordinals = result.map((d) => d.weekOrdinal);
+        expect(new Set(ordinals)).toEqual(new Set([1, 2]));
+    });
+
+    it("bloque 20–31 may + mar/jue/sáb: semana 1 jue/sáb, semana 2 mar/jue/sáb", () => {
+        const result = getTrainingDatesInRange(
+            "2026-05-20",
+            "2026-05-31",
+            ["Tuesday", "Thursday", "Saturday"],
+        );
+        expect(result).toHaveLength(5);
+        const week1 = result.filter((d) => d.weekOrdinal === 1);
+        const week2 = result.filter((d) => d.weekOrdinal === 2);
+        expect(week1.map((d) => d.dateISO)).toEqual(["2026-05-21", "2026-05-23"]);
+        expect(week2.map((d) => d.dateISO)).toEqual([
+            "2026-05-26",
+            "2026-05-28",
+            "2026-05-30",
+        ]);
+    });
+
+    it("devuelve [] cuando trainingDays es vacio o null", () => {
+        expect(getTrainingDatesInRange("2026-05-04", "2026-05-10", [])).toEqual([]);
+        expect(getTrainingDatesInRange("2026-05-04", "2026-05-10", null)).toEqual([]);
+    });
+
+    it("ignora dias-tipo desconocidos sin romper", () => {
+        const result = getTrainingDatesInRange(
+            "2026-05-04",
+            "2026-05-10",
+            ["Monday", "Funday" as unknown as string],
+        );
+        expect(result).toHaveLength(1);
+        expect(result[0].dayOfWeek).toBe(1);
     });
 });

@@ -26,6 +26,11 @@ import { useGetExercisesQuery } from "../exercises";
 import type { SessionBlock, SessionBlockExercise } from "../../types/sessionProgramming";
 import type { SessionExercise } from "../../types/trainingSessions";
 import type { AppDispatch } from "../../store";
+import {
+    isBlockStructureLoading,
+    isLegacyStructureLoading,
+    needsExerciseCatalog,
+} from "./sessionStructureLoading";
 
 /** Ejercicio unificado para visualización (bloques o legacy) */
 export interface SessionExerciseDisplay {
@@ -142,15 +147,16 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         skip: !sessionId || sessionId <= 0 || blocks.length > 0,
     });
 
-    const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery(
-        { skip: 0, limit: 100 },
-        { skip: blocks.length === 0 }
-    );
+    const needsCatalog = needsExerciseCatalog(blocks.length, legacyExercises);
 
-    const { data: exercisesData } = useGetExercisesQuery(
-        { skip: 0, limit: 500 },
-        { skip: blocks.length === 0 }
-    );
+    const { data: blockTypes = [], isLoading: isLoadingBlockTypes } =
+        useGetTrainingBlockTypesQuery(
+            { skip: 0, limit: 100 },
+            { skip: blocks.length === 0 }
+        );
+
+    const { data: exercisesData, isLoading: isLoadingExerciseCatalog } =
+        useGetExercisesQuery({ skip: 0, limit: 500 }, { skip: !needsCatalog });
 
     useEffect(() => {
         if (blocks.length === 0) return;
@@ -195,9 +201,13 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         }
 
         if (blocks.length > 0) {
-            const isLoading =
-                isLoadingBlocks ||
-                Object.keys(blockExercisesByBlock).length < blocks.length;
+            const isLoading = isBlockStructureLoading({
+                isLoadingBlocks,
+                blockCount: blocks.length,
+                blockExercisesByBlock,
+                isLoadingBlockTypes,
+                isLoadingExerciseCatalog,
+            });
             const flat: SessionExerciseDisplay[] = [];
             let order = 0;
             // blocks viene de RTK Query (array inmutable); no usar .sort() in-place
@@ -227,7 +237,11 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         return {
             exercises: legacyExercises.map(legacyExerciseToDisplay),
             source: "legacy" as SessionExercisesSource,
-            isLoading: isLoadingLegacy,
+            isLoading: isLegacyStructureLoading({
+                isLoadingLegacy,
+                legacyExercises,
+                isLoadingExerciseCatalog,
+            }),
             isError: isErrorLegacy,
         };
     }, [
@@ -238,6 +252,8 @@ export function useSessionExercisesDisplay(sessionId: number | null): UseSession
         nameMap,
         legacyExercises,
         isLoadingBlocks,
+        isLoadingBlockTypes,
+        isLoadingExerciseCatalog,
         isLoadingLegacy,
         isErrorLegacy,
     ]);

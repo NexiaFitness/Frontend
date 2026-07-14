@@ -96,6 +96,13 @@ const ENDPOINTS_401_SKIP_REFRESH = new Set<string>([
     "forgotPassword",
     "resetPassword",
     "logout",
+    "acceptInvitation",
+]);
+
+/** Mutaciones públicas: no enviar Bearer (evita sesión admin/trainer al aceptar invitación). */
+const ENDPOINTS_NO_AUTH = new Set<string>([
+    "login",
+    "acceptInvitation",
 ]);
 
 /**
@@ -166,8 +173,8 @@ const baseQuery = fetchBaseQuery({
     baseUrl: API_CONFIG.BASE_URL,
     fetchFn: typeof window !== 'undefined' ? fetchWith403Suppression : fetch,
     prepareHeaders: (headers, { endpoint, getState }) => {
-        // Solo añadir Authorization si NO es login (login no necesita token)
-        if (endpoint !== 'login') {
+        const endpointName = String(endpoint);
+        if (!ENDPOINTS_NO_AUTH.has(endpointName)) {
             const token = resolveAccessToken(getState);
             if (token) {
                 headers.set("Authorization", `Bearer ${token}`);
@@ -270,8 +277,9 @@ const baseQueryWithReauth: BaseQueryFn<
 
             const refreshToken = getTokenSafely(AUTH_CONFIG.REFRESH_KEY);
             if (!refreshToken) {
+                api.dispatch({ type: "auth/sessionExpired" });
                 restoreConsole();
-                return { data: undefined };
+                return result;
             }
 
             try {
@@ -279,8 +287,9 @@ const baseQueryWithReauth: BaseQueryFn<
                 const refreshed = await refreshPromise;
 
                 if (!refreshed) {
+                    api.dispatch({ type: "auth/sessionExpired" });
                     restoreConsole();
-                    return { data: undefined };
+                    return result;
                 }
 
                 const retryResult = await baseQuery(args, api, extraOptions);
@@ -346,5 +355,11 @@ export const baseApi = createApi({
         "WeeklyStructure",
         "DayException",
         "ExerciseSafety",
+        "AthleteWeeklySummary",
+        "AthleteLastPerformance",
+        "AthleteSuggestedLoad",
+        "AthleteRunReference",
+        "Invitation",
+        "InboxNotification",
     ],
 });

@@ -27,6 +27,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
+import { scrollDashboardMainToTopAfterPaint } from "@/lib/dashboardScroll";
 
 export interface UseTabNavigationOptions<T extends string> {
     /**
@@ -154,6 +155,10 @@ export function useTabNavigation<T extends string>(
     ]);
 
     const [activeTab, setActiveTabState] = useState<T>(getInitialTab);
+
+    useEffect(() => {
+        scrollDashboardMainToTopAfterPaint();
+    }, [activeTab]);
 
     // Sincronizar con cambios en URL (navegación del navegador)
     useEffect(() => {

@@ -36,11 +36,11 @@ export interface IntensityRecommendation {
     explanation: string;
 }
 
-/** Recomendación de selección de ejercicios (categorías y número por sesión) */
+/** Recomendación de selección de ejercicios (categorías de ejercicio) */
 export interface ExerciseSelectionRecommendation {
     categories: string[];
     categories_raw: string[];
-    total_exercises_per_session: number;
+    total_exercises_per_session?: number;
     explanation: string;
 }
 

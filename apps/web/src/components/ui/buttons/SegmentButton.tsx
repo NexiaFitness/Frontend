@@ -26,15 +26,19 @@ interface SegmentButtonProps {
     disabled?: boolean;
 }
 
+/** Misma caja en ambos estados: sin ring-offset ni cambio de padding al marcar. */
+const baseClass =
+  "inline-flex shrink-0 items-center justify-center rounded-lg border box-border font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset";
+
 const selectedClass =
-  "rounded-lg border border-primary/30 bg-primary/20 text-primary font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "border-primary/30 bg-primary/20 text-primary";
 
 const unselectedClass =
-  "rounded-lg border border-border bg-background text-foreground font-medium transition-colors hover:bg-muted focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background";
+  "border-border/60 bg-background text-muted-foreground/75 hover:border-border hover:bg-muted/40 hover:text-muted-foreground";
 
 const sizeClass: Record<SegmentButtonSize, string> = {
-  md: "flex-1 px-4 py-1.5 text-sm",
-  sm: "min-w-[2.5rem] px-3 py-1.5 text-sm",
+  md: "h-9 flex-1 px-4 text-sm",
+  sm: "h-8 min-w-[2.5rem] px-3 text-xs",
 };
 
 export const SegmentButton: React.FC<SegmentButtonProps> = ({
@@ -52,8 +56,9 @@ export const SegmentButton: React.FC<SegmentButtonProps> = ({
             onClick={onClick}
             disabled={disabled}
             className={cn(
-                selected ? selectedClass : unselectedClass,
+                baseClass,
                 sizeClass[size],
+                selected ? selectedClass : unselectedClass,
                 className
             )}
         >

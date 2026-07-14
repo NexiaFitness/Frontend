@@ -20,8 +20,12 @@ export interface ConstructorExercise {
     notes: string | null;
     /** Modo Reps/Tiempo por ejercicio (superset: A1/A2 independientes) */
     repsTipo?: RepsTipo;
+    /** Indica si el carácter de este ejercicio fue editado manualmente (bloques sin setData) */
+    isManuallyEdited?: boolean;
     /** ID en servidor (para EditSession diff) */
     serverExerciseId?: number;
+    /** Sub-filas de carga por serie a nivel de ejercicio (superset: cada ejercicio tiene N series) */
+    setData?: ConstructorSetData[];
 }
 
 /** Modo de la columna Reps/Tiempo: Reps o Tiempo (AMRAP es tipo de serie, no modo reps) */

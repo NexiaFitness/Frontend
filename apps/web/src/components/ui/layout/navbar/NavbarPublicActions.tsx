@@ -15,6 +15,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { usePublicNavigation } from "@nexia/shared/hooks/usePublicNavigation";
 import clsx from "clsx";
+import { NAVBAR_PUBLIC_LINK } from "./navbarPresentation";
 
 export interface NavbarPublicActionsProps {
     className?: string;
@@ -42,7 +43,7 @@ export const NavbarPublicActions: React.FC<NavbarPublicActionsProps> = ({
                 <Link
                     key={item.path}
                     to={item.path}
-                    className="text-white hover:text-blue-400 transition-colors duration-200 text-base lg:text-lg font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-transparent rounded"
+                    className={NAVBAR_PUBLIC_LINK}
                 >
                     {item.label}
                 </Link>

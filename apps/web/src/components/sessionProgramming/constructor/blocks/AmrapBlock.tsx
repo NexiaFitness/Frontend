@@ -12,15 +12,20 @@ import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import {
     addAmrapExerciseSlot,
+    ensureAmrapStructure,
     MIN_AMRAP_SLOTS,
-    normalizeAmrapRow,
 } from "../utils/amrapRow";
+import { amrapFooterHint } from "@nexia/shared";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
 import {
     CONSTRUCTOR_AMRAP_CARD_CLASS,
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
@@ -64,9 +69,26 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
     onRemove,
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
-    const normalized = normalizeAmrapRow(row);
+    const normalized = ensureAmrapStructure(row);
     const exerciseCount = normalized.exercises.length;
     const canRemoveLast = exerciseCount > MIN_AMRAP_SLOTS;
+
+    const handleExerciseChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                normalized.exercises,
+                index,
+                updates
+            );
+            onUpdate(normalized.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(normalized.id, normalized.exercises[index].id, updates);
+        }
+    };
+
     const durationMinutes =
         normalized.timeCap != null ? Math.floor(normalized.timeCap / 60) : "";
 
@@ -83,7 +105,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
     };
 
     return (
-        <div className={CONSTRUCTOR_AMRAP_CARD_CLASS}>
+        <div className={CONSTRUCTOR_AMRAP_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}
@@ -117,7 +139,8 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                             : null,
                                     })
                                 }
-                                className="w-12"
+                                className="w-14"
+                                aria-label="Duración total"
                             />
                             <span className="text-[10px] text-muted-foreground">min</span>
                         </div>
@@ -137,6 +160,7 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                     })
                                 }
                                 className="w-12"
+                                aria-label="Rondas objetivo"
                             />
                             <span className="text-[10px] italic text-muted-foreground">
                                 opcional
@@ -176,13 +200,13 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                         exercise={ex}
                                         rowRepsTipo={normalized.repsTipo}
                                         onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
+                                            handleExerciseChange(index, updates)
                                         }
                                     />
                                     <CaracterField
                                         exercise={ex}
                                         onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
+                                            handleExerciseChange(index, updates)
                                         }
                                     />
                                 </div>
@@ -214,8 +238,9 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                     </div>
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
-                        Completa los {exerciseCount} ejercicios en orden = 1 ronda. Máximo de
-                        rondas posibles.
+                        {amrapFooterHint(
+                            durationMinutes === "" ? null : Number(durationMinutes)
+                        )}
                     </p>
                 </>
             ) : null}

@@ -11,9 +11,11 @@ export default tseslint.config(
     // Ignorar archivos/carpetas generadas y E2E (fuera del tsconfig del app)
     ignores: [
       'dist/**/*',
+      'dev-dist/**/*',
       'build/**/*',
       'coverage/**/*',
       'e2e/**/*',
+      'public/push-handler.js',
       '*.config.js',
       '*.config.ts',
       'node_modules/**/*',

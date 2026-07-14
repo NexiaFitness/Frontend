@@ -3,7 +3,7 @@
  *
  * Grid: 170px 110px 70px 1fr 140px 160px 100px (sin papelera por fila).
  * Bloque: chip con nombre + X visible en group-hover. Click abre selector.
- * Eliminar bloque: solo en pie (Eliminar bloque).
+ * Eliminar serie: solo en pie del grupo (última card del bloque de entrenamiento).
  *
  * @spec IMPL_CREATE_EDIT_SESSION.md — Fase 4
  */
@@ -21,6 +21,10 @@ import {
 } from "@nexia/shared/utils/sessionProgramming";
 import type { TrainingBlockType, SetType } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE_LABELS, EFFORT_CHARACTER } from "@nexia/shared/types/sessionProgramming";
+import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "./constructor/utils/exerciseCaracterInheritance";
 
 const BLOCK_TYPE_TRANSLATIONS: Record<string, string> = {
     "Warm Up": "Calentamiento",
@@ -79,6 +83,22 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
     onRemoveExercise,
     onUpdateExercise,
 }) => {
+    const handleExerciseChange = (
+        exerciseId: string,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const index = row.exercises.findIndex((ex) => ex.id === exerciseId);
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                row.exercises,
+                index,
+                updates
+            );
+            onUpdate(row.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(row.id, exerciseId, updates);
+        }
+    };
 
     const showSetsInput =
         row.setType === "single_set" ||
@@ -211,7 +231,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     type="text"
                                     value={ex.plannedReps ?? ""}
                                     onChange={(e) =>
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             plannedReps: e.target.value || null,
                                         })
                                     }
@@ -231,7 +251,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     onChange={(e) => {
                                         const v = e.target.value.trim();
                                         if (!v) {
-                                            onUpdateExercise(row.id, ex.id, {
+                                            handleExerciseChange(ex.id, {
                                                 plannedDuration: null,
                                             });
                                             return;
@@ -240,12 +260,12 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                             const [m, s] = v.split(":").map(Number);
                                             const total =
                                                 !isNaN(m) && !isNaN(s) ? m * 60 + s : null;
-                                            onUpdateExercise(row.id, ex.id, {
+                                            handleExerciseChange(ex.id, {
                                                 plannedDuration: total,
                                             });
                                         } else {
                                             const parsed = parseInt(v, 10);
-                                            onUpdateExercise(row.id, ex.id, {
+                                            handleExerciseChange(ex.id, {
                                                 plannedDuration:
                                                     !isNaN(parsed) ? parsed : null,
                                             });
@@ -278,19 +298,19 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                 onChange={(v) => {
                                     const val = v as CaracterTipo;
                                     if (val === "rpe") {
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             effortCharacter: EFFORT_CHARACTER.RPE,
                                             effortValue: ex.effortValue,
                                             notes: null,
                                         });
                                     } else if (val === "rir") {
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             effortCharacter: EFFORT_CHARACTER.RIR,
                                             effortValue: ex.effortValue,
                                             notes: null,
                                         });
                                     } else {
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             effortCharacter: EFFORT_CHARACTER.PCT_RM,
                                             effortValue: ex.effortValue,
                                             notes: null,
@@ -309,7 +329,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     value={ex.effortValue ?? ""}
                                     onChange={(e) => {
                                         const val = e.target.value;
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             effortCharacter:
                                                 ex.effortCharacter ?? getEffortCharacterForCaracterTipo("rpe"),
                                             effortValue: val ? Number(val) : null,
@@ -326,7 +346,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     value={ex.effortValue ?? ""}
                                     onChange={(e) => {
                                         const val = e.target.value;
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             effortCharacter:
                                                 ex.effortCharacter ?? getEffortCharacterForCaracterTipo("rir"),
                                             effortValue: val ? Number(val) : null,
@@ -343,7 +363,7 @@ export const SessionConstructorRow: React.FC<SessionConstructorRowProps> = ({
                                     value={ex.effortValue ?? ""}
                                     onChange={(e) => {
                                         const val = e.target.value;
-                                        onUpdateExercise(row.id, ex.id, {
+                                        handleExerciseChange(ex.id, {
                                             effortCharacter:
                                                 ex.effortCharacter ?? getEffortCharacterForCaracterTipo("pct_rm"),
                                             effortValue: val ? Number(val) : null,

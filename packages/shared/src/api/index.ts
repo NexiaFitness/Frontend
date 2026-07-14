@@ -13,3 +13,5 @@ export * from "./periodBlocksApi";
 export * from "./weeklyStructureApi";
 export * from "./sessionValidationApi";
 export * from "./standaloneSessionsApi";
+export * from "./athleteApi";
+export * from "./invitationsApi";

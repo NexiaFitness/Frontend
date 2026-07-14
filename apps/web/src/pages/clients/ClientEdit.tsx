@@ -11,6 +11,7 @@
  */
 
 import React, { useState } from "react";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useParams, useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -31,6 +32,8 @@ export const ClientEdit: React.FC = () => {
     const { data: client, isLoading, error } = useGetClientQuery(clientId, {
         skip: !id || isNaN(clientId),
     });
+
+    useScrollDashboardWhenReady(!isLoading && !!client);
 
     // Validación de ID
     if (!id || isNaN(clientId)) {

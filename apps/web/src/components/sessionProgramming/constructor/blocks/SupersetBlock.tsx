@@ -3,20 +3,29 @@
  * @spec docs/tipo-serie/07_superset-lovable-spec.md
  * @author Frontend Team
  * @since v5.3.0
+ * @updated v6.1.0 — Navegación de series por ejercicio A1/A2 con setData independiente
  */
 
 import React from "react";
 import { Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
+import { ConstructorRoundNavigator } from "../primitives/ConstructorRoundNavigator";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
-import { normalizeSupersetRow } from "../utils/supersetRow";
+import {
+    normalizeSupersetRow,
+    updateSupersetExerciseSetData,
+} from "../utils/supersetRow";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
+import {
+    applyCaracterUpdateWithInheritance,
+    hasCaracterChange,
+} from "../utils/exerciseCaracterInheritance";
 import {
     CONSTRUCTOR_CARD_CLASS,
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
@@ -31,6 +40,22 @@ const EXERCISE_GRID_CLASS =
 
 const COLUMN_HEADER_GRID_CLASS =
     "sm:grid-cols-[40px_minmax(0,1fr)_102px_102px] [&>span:nth-child(3)]:justify-self-center [&>span:nth-child(4)]:justify-self-center";
+
+function getExerciseSetView(
+    exercise: ConstructorExercise,
+    setIndex: number
+): ConstructorExercise {
+    const entry = exercise.setData?.[setIndex];
+    if (!entry) return exercise;
+    return {
+        ...exercise,
+        plannedReps: entry.plannedReps,
+        plannedWeight: entry.plannedWeight,
+        plannedDuration: entry.plannedDuration,
+        effortCharacter: entry.effortCharacter,
+        effortValue: entry.effortValue,
+    };
+}
 
 export interface SupersetBlockProps {
     row: ConstructorRow;
@@ -58,10 +83,63 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
     onRemove,
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
+    const [activeSetIndex, setActiveSetIndex] = React.useState(0);
     const normalized = normalizeSupersetRow(row);
+    const totalSets = normalized.sets ?? 3;
+
+    const handleExerciseChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        if (hasCaracterChange(updates)) {
+            const nextExercises = applyCaracterUpdateWithInheritance(
+                normalized.exercises,
+                index,
+                updates
+            );
+            onUpdate(normalized.id, { exercises: nextExercises });
+        } else {
+            onUpdateExercise(normalized.id, normalized.exercises[index].id, updates);
+        }
+    };
+
+    const handleSetDataChange = (
+        index: number,
+        updates: Partial<ConstructorExercise>
+    ) => {
+        const exercise = normalized.exercises[index];
+        const setData = exercise.setData;
+        if (!setData || setData.length === 0) {
+            // Legacy path: no setData, update exercise directly
+            handleExerciseChange(index, updates);
+            return;
+        }
+        const entryId = setData[activeSetIndex]?.id;
+        if (!entryId) return;
+
+        const mapped: Partial<import("../../constructorTypes").ConstructorSetData> = {};
+        if ("plannedReps" in updates) mapped.plannedReps = updates.plannedReps ?? null;
+        if ("plannedWeight" in updates) mapped.plannedWeight = updates.plannedWeight ?? null;
+        if ("plannedDuration" in updates) mapped.plannedDuration = updates.plannedDuration ?? null;
+        if ("effortCharacter" in updates) mapped.effortCharacter = updates.effortCharacter ?? null;
+        if ("effortValue" in updates) mapped.effortValue = updates.effortValue ?? null;
+
+        let nextExercise = exercise;
+        if ("repsTipo" in updates && updates.repsTipo) {
+            nextExercise = { ...nextExercise, repsTipo: updates.repsTipo };
+        }
+
+        nextExercise = updateSupersetExerciseSetData(nextExercise, entryId, mapped);
+        const nextExercises = [...normalized.exercises];
+        nextExercises[index] = nextExercise;
+        onUpdate(normalized.id, { exercises: nextExercises });
+    };
+
+    const canGoBack = activeSetIndex > 0;
+    const canGoForward = activeSetIndex < totalSets - 1;
 
     return (
-        <div className={CONSTRUCTOR_CARD_CLASS}>
+        <div className={CONSTRUCTOR_CARD_CLASS} data-constructor-row-id={normalized.id}>
             <ConstructorCardHeader
                 blockTypeId={normalized.blockTypeId}
                 blockTypes={blockTypes}
@@ -116,44 +194,58 @@ export const SupersetBlock: React.FC<SupersetBlockProps> = ({
                         <span />
                         <span>Ejercicio</span>
                         <span className="text-center w-full">Reps / Tiempo</span>
-                        <span className="text-center w-full">Carácter</span>
+                        <span className="text-center w-full">Caracter</span>
                     </div>
 
                     <div className="space-y-2 px-4 pb-3 pt-1">
-                        {normalized.exercises.map((ex, index) => (
-                            <GroupedExerciseRow
-                                key={ex.id}
-                                slotLabel={SLOT_LABELS[index] ?? `A${index + 1}`}
-                                isLast={index === normalized.exercises.length - 1}
-                            >
-                                <div className={EXERCISE_GRID_CLASS}>
-                                    <ExercisePickerField
-                                        exerciseName={ex.exerciseName}
-                                        onPick={() => onAddExercise(normalized.id, ex.id)}
-                                        onClear={() =>
-                                            onUpdateExercise(normalized.id, ex.id, {
-                                                exerciseId: 0,
-                                                exerciseName: "",
-                                            })
-                                        }
-                                    />
-                                    <RepsTiempoField
-                                        exercise={ex}
-                                        rowRepsTipo={normalized.repsTipo}
-                                        onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
-                                        }
-                                    />
-                                    <CaracterField
-                                        exercise={ex}
-                                        onExerciseChange={(updates) =>
-                                            onUpdateExercise(normalized.id, ex.id, updates)
-                                        }
-                                    />
-                                </div>
-                            </GroupedExerciseRow>
-                        ))}
+                        {normalized.exercises.map((ex, index) => {
+                            const setView = getExerciseSetView(ex, activeSetIndex);
+                            return (
+                                <GroupedExerciseRow
+                                    key={ex.id}
+                                    slotLabel={SLOT_LABELS[index] ?? `A${index + 1}`}
+                                    isLast={index === normalized.exercises.length - 1}
+                                >
+                                    <div className={EXERCISE_GRID_CLASS}>
+                                        <ExercisePickerField
+                                            exerciseName={ex.exerciseName}
+                                            onPick={() => onAddExercise(normalized.id, ex.id)}
+                                            onClear={() =>
+                                                onUpdateExercise(normalized.id, ex.id, {
+                                                    exerciseId: 0,
+                                                    exerciseName: "",
+                                                })
+                                            }
+                                        />
+                                        <RepsTiempoField
+                                            exercise={setView}
+                                            rowRepsTipo={normalized.repsTipo}
+                                            onExerciseChange={(updates) =>
+                                                handleSetDataChange(index, updates)
+                                            }
+                                        />
+                                        <CaracterField
+                                            exercise={setView}
+                                            onExerciseChange={(updates) =>
+                                                handleSetDataChange(index, updates)
+                                            }
+                                        />
+                                    </div>
+                                </GroupedExerciseRow>
+                            );
+                        })}
                     </div>
+
+                    <ConstructorRoundNavigator
+                        activeIndex={activeSetIndex}
+                        total={totalSets}
+                        canGoBack={canGoBack}
+                        canGoForward={canGoForward}
+                        onPrevious={() => setActiveSetIndex((i) => Math.max(0, i - 1))}
+                        onNext={() =>
+                            setActiveSetIndex((i) => Math.min(totalSets - 1, i + 1))
+                        }
+                    />
 
                     <p className={CONSTRUCTOR_FOOTER_HINT_CLASS}>
                         El Superset siempre contiene 2 ejercicios. Para más, usa Giant Set.

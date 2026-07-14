@@ -15,6 +15,11 @@
 
 import React from "react";
 import clsx from "clsx";
+import {
+    NAVBAR_SHELL_BOTTOM_DIVIDER,
+    NAVBAR_SHELL_INNER,
+    navbarShellClass,
+} from "./navbarPresentation";
 
 export type NavbarShellVariant = "public" | "dashboard";
 
@@ -24,16 +29,6 @@ export interface NavbarShellProps {
     className?: string;
 }
 
-const heightClasses: Record<NavbarShellVariant, string> = {
-    public: "h-navbar-mobile lg:h-navbar-desktop",
-    dashboard: "h-navbar-dashboard-mobile lg:h-navbar-dashboard-desktop",
-};
-
-const backgroundClasses: Record<NavbarShellVariant, string> = {
-    public: "bg-surface",
-    dashboard: "bg-sidebar",
-};
-
 export const NavbarShell: React.FC<NavbarShellProps> = ({
     variant,
     children,
@@ -41,17 +36,11 @@ export const NavbarShell: React.FC<NavbarShellProps> = ({
 }) => {
     return (
         <nav
-            className={clsx(
-                "sticky top-0 z-50 border-b border-border",
-                backgroundClasses[variant],
-                heightClasses[variant],
-                className
-            )}
+            className={clsx(navbarShellClass(variant), className)}
             role="navigation"
         >
-            <div className="px-4 sm:px-6 lg:px-8 w-full h-full flex justify-between items-center py-0">
-                {children}
-            </div>
+            <div className={NAVBAR_SHELL_INNER}>{children}</div>
+            <div className={NAVBAR_SHELL_BOTTOM_DIVIDER} aria-hidden />
         </nav>
     );
 };

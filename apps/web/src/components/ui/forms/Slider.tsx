@@ -11,6 +11,7 @@
  * - Mostrar label con valor actual
  * - Soporte para modo read-only
  * - Colores personalizables
+ * - `valueNote`: fuente o referencia (p. ej. «Del bloque»), no sinónimo del valor mostrado
  *
  * Notas: style en input justificado — gradiente lineal del track según value/min/max (runtime).
  *
@@ -29,6 +30,8 @@ export interface SliderProps {
     step?: number;
     color?: "primary" | "warning";
     readOnly?: boolean;
+    /** Texto suave antes del valor (p. ej. «Del bloque», «Del perfil»). No es el valor numérico. */
+    valueNote?: string;
     onChange?: (value: number) => void;
 }
 
@@ -42,6 +45,7 @@ export const Slider: React.FC<SliderProps> = ({
     step = 1,
     color = "primary",
     readOnly = false,
+    valueNote,
     onChange,
 }) => {
     const selectedColor = color || "primary";
@@ -70,8 +74,15 @@ export const Slider: React.FC<SliderProps> = ({
                     {labelIcon}
                     <span>{label}</span>
                 </label>
-                <span className="text-sm font-medium text-foreground">
-                    {value}/{max}
+                <span className="flex items-baseline gap-1 tabular-nums">
+                    {valueNote ? (
+                        <span className="text-[10px] font-normal text-muted-foreground/55">
+                            {valueNote}
+                        </span>
+                    ) : null}
+                    <span className="text-sm font-medium text-foreground">
+                        {value}/{max}
+                    </span>
                 </span>
             </div>
             <input

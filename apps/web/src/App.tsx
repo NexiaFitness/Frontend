@@ -27,6 +27,8 @@ import Register from "./pages/auth/Register";
 const ForgotPassword = lazy(() => import("./pages/auth/ForgotPassword"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
+const InvitationAcceptPage = lazy(() => import("./pages/invitation/InvitationAcceptPage"));
+const AthleteOnboardingPage = lazy(() => import("./pages/onboarding/AthleteOnboardingPage"));
 
 // Bloque 2: Dashboards por rol (lazy)
 const TrainerDashboard = lazy(() =>
@@ -38,13 +40,57 @@ const AdminDashboard = lazy(() =>
 const AthleteDashboard = lazy(() =>
   import("./pages/dashboard/athlete/AthleteDashboard").then((m) => ({ default: m.AthleteDashboard }))
 );
+const AthletePlanPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthletePlanPage").then((m) => ({ default: m.AthletePlanPage }))
+);
+const SessionsRouteSwitcher = lazy(() =>
+  import("./pages/dashboard/athlete/SessionsRouteSwitcher").then((m) => ({
+    default: m.SessionsRouteSwitcher,
+  }))
+);
+const AthleteSessionPreviewPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionPreviewPage").then((m) => ({
+    default: m.AthleteSessionPreviewPage,
+  }))
+);
+const AthleteSessionRunPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionRunPage").then((m) => ({
+    default: m.AthleteSessionRunPage,
+  }))
+);
+const AthleteSessionFeedbackPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionFeedbackPage").then((m) => ({
+    default: m.AthleteSessionFeedbackPage,
+  }))
+);
+const AthleteFeedbackHistoryPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteFeedbackHistoryPage").then((m) => ({
+    default: m.AthleteFeedbackHistoryPage,
+  }))
+);
+const AthleteSessionSummaryPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteSessionSummaryPage").then((m) => ({
+    default: m.AthleteSessionSummaryPage,
+  }))
+);
+const AthleteProgressPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteProgressPage").then((m) => ({
+    default: m.AthleteProgressPage,
+  }))
+);
+const AthleteExerciseProgressPage = lazy(() =>
+  import("./pages/dashboard/athlete/AthleteExerciseProgressPage").then((m) => ({
+    default: m.AthleteExerciseProgressPage,
+  }))
+);
+const PwaPreviewPage = lazy(() => import("./pages/dev/PwaPreviewPage"));
 
 // Bloque 3: Módulos trainer (lazy)
 const CompleteProfile = lazy(() =>
   import("./pages/dashboard/trainer/CompleteProfile").then((m) => ({ default: m.CompleteProfile }))
 );
-const ClientOnboarding = lazy(() =>
-  import("./pages/clients/ClientOnboarding").then((m) => ({ default: m.ClientOnboarding }))
+const ClientInvitePage = lazy(() =>
+  import("./pages/clients/ClientInvitePage").then((m) => ({ default: m.ClientInvitePage }))
 );
 const ClientList = lazy(() =>
   import("./pages/clients/ClientList").then((m) => ({ default: m.ClientList }))
@@ -117,13 +163,16 @@ const CreateTemplate = lazy(() =>
 const SessionDetail = lazy(() =>
   import("./pages/sessionProgramming/SessionDetail").then((m) => ({ default: m.SessionDetail }))
 );
+const SessionReviewPage = lazy(() =>
+  import("./pages/sessionProgramming/SessionReviewPage").then((m) => ({ default: m.SessionReviewPage }))
+);
 const StandaloneSessionDetail = lazy(() =>
   import("./pages/standaloneSessions/StandaloneSessionDetail").then((m) => ({ default: m.StandaloneSessionDetail }))
 );
-const SessionsPage = lazy(() =>
-  import("./pages/sessions/SessionsPage").then((m) => ({ default: m.SessionsPage }))
+const CreateTestEvaluation = lazy(() =>
+  import("./pages/testing").then((m) => ({ default: m.CreateTestEvaluation }))
 );
-const CreateTestResult = lazy(() =>
+const LegacyCreateTestRedirect = lazy(() =>
   import("./pages/testing").then((m) => ({ default: m.CreateTestResult }))
 );
 
@@ -138,11 +187,13 @@ import { PublicLayout } from "./components/ui/layout/PublicLayout";
 import { DashboardShell } from "./components/dashboard/DashboardShell";
 
 // UI Components
-import { ToastProvider, LoadingSpinner } from "./components/ui/feedback";
+import { ToastProvider } from "./components/ui/feedback";
+import { AthleteMobileSuspenseFallback } from "./components/athlete/AthleteMobileSuspenseFallback";
 import { ErrorBoundary } from "./components/errors/ErrorBoundary";
 
 // Protección de rutas
 import { ProtectedRoute } from "./components/auth/ProtectedRoute";
+import { AthleteOnboardingGate } from "./components/auth/AthleteOnboardingGate";
 import { RoleProtectedRoute } from "./components/auth/RoleProtectedRoute";
 
 // Tipado de store
@@ -192,7 +243,7 @@ function App() {
   return (
     <ToastProvider>
       <ErrorBoundary>
-        <Suspense fallback={<LoadingSpinner size="lg" />}>
+        <Suspense fallback={<AthleteMobileSuspenseFallback />}>
           <Routes>
             <Route element={<PublicLayout />}>
           <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Home />} />
@@ -201,14 +252,30 @@ function App() {
           <Route path="/auth/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/invitation" element={<InvitationAcceptPage />} />
         </Route>
+
+        <Route
+          path="/onboarding/athlete"
+          element={
+            <ProtectedRoute>
+              <AthleteOnboardingGate>
+                <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                  <AthleteOnboardingPage />
+                </RoleProtectedRoute>
+              </AthleteOnboardingGate>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Dashboard: todas las rutas anidadas bajo DashboardShell (Fase 2b) */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <DashboardShell />
+              <AthleteOnboardingGate>
+                <DashboardShell />
+              </AthleteOnboardingGate>
             </ProtectedRoute>
           }
         >
@@ -325,12 +392,16 @@ function App() {
             }
           />
           <Route
-            path="clients/onboarding"
+            path="clients/invite"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-                <ClientOnboarding />
+                <ClientInvitePage />
               </RoleProtectedRoute>
             }
+          />
+          <Route
+            path="clients/onboarding"
+            element={<Navigate to="/dashboard/clients/invite" replace />}
           />
           <Route
             path="clients"
@@ -385,15 +456,74 @@ function App() {
             }
           />
 
-          {/* Sessions list (unified training + standalone) */}
+          {/* Athlete portal */}
           <Route
-            path="sessions"
+            path="my-plan"
             element={
-              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <SessionsPage />
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthletePlanPage />
               </RoleProtectedRoute>
             }
           />
+          <Route
+            path="feedback"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteFeedbackHistoryPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="progress/exercise/:exerciseId"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteExerciseProgressPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="progress"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteProgressPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id/summary"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionSummaryPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id/feedback"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionFeedbackPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id/run"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionRunPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="sessions/:id"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.ATHLETE]} redirectTo="/dashboard">
+                <AthleteSessionPreviewPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route path="sessions" element={<SessionsRouteSwitcher />} />
+
+          {/* Sessions list (trainer/admin via switcher; athlete uses AthleteSessionsPage) */}
 
           {/* Session Programming */}
           <Route
@@ -429,6 +559,14 @@ function App() {
             }
           />
           <Route
+            path="session-programming/sessions/:id/review"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <SessionReviewPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
             path="standalone-sessions/:id"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
@@ -445,12 +583,20 @@ function App() {
             }
           />
 
-          {/* Testing */}
+          {/* Evaluaciones físicas */}
+          <Route
+            path="testing/register-evaluation"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
+                <CreateTestEvaluation />
+              </RoleProtectedRoute>
+            }
+          />
           <Route
             path="testing/create-test"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER, USER_ROLES.ADMIN]} redirectTo="/dashboard">
-                <CreateTestResult />
+                <LegacyCreateTestRedirect />
               </RoleProtectedRoute>
             }
           />
@@ -458,6 +604,10 @@ function App() {
           {/* Account - todos los roles */}
           <Route path="account" element={<Account />} />
         </Route>
+
+        {import.meta.env.DEV ? (
+          <Route path="/dev/pwa-preview" element={<PwaPreviewPage />} />
+        ) : null}
 
         <Route path="*" element={<NotFound />} />
       </Routes>

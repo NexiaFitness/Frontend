@@ -29,6 +29,9 @@ export const createMinimalValidFormData = (overrides: Partial<ClientFormData> = 
     apellidos: "Pérez",
     mail: "juan@test.com",
     confirmEmail: "juan@test.com",
+    experiencia: "Media",
+    session_duration: "medium_1h_to_1h30",
+    training_days: ["Monday", "Wednesday", "Friday"],
     ...overrides,
 });
 
@@ -66,6 +69,7 @@ export const createCompleteValidFormData = (overrides: Partial<ClientFormData> =
     experiencia: "Media",
     frecuencia_semanal: "Alta",
     session_duration: "medium_1h_to_1h30",
+    training_days: ["Monday", "Wednesday", "Friday"],
     
     // Step 5: HealthInfo
     lesiones_relevantes: "Ninguna",
@@ -92,5 +96,8 @@ export const createMismatchedEmailFormData = (): ClientFormData => ({
     apellidos: "Pérez",
     mail: "juan@test.com",
     confirmEmail: "different@test.com",
+    experiencia: "Media",
+    session_duration: "medium_1h_to_1h30",
+    training_days: ["Monday", "Wednesday", "Friday"],
 });
 

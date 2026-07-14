@@ -1,12 +1,5 @@
 /**
  * ExerciseAlternativesSection.tsx — Sección de alternativas en ExerciseDetail
- *
- * Contexto:
- * - Consume GET /exercise-alternatives/exercise/{id} (manual) + auto-suggest (TICK-E05)
- * - Muestra alternativas definidas por el trainer y sugerencias automáticas
- *
- * @author Frontend Team
- * @since v6.2.6 - TICK-E05
  */
 
 import React from "react";
@@ -16,6 +9,21 @@ import {
     useGetAutoSuggestedAlternativesQuery,
 } from "@nexia/shared/api/exerciseAlternativesApi";
 import { getEquipmentLabel } from "@/utils/exercises";
+import {
+    EXERCISE_DETAIL_ALT_DIVIDER,
+    EXERCISE_DETAIL_ALT_EMPTY,
+    EXERCISE_DETAIL_ALT_ITEM,
+    EXERCISE_DETAIL_ALT_LIST,
+    EXERCISE_DETAIL_ALT_LOADING,
+    EXERCISE_DETAIL_ALT_META,
+    EXERCISE_DETAIL_ALT_REASON,
+    EXERCISE_DETAIL_ALT_SECTION_GAP,
+    EXERCISE_DETAIL_ALT_SUBHEADING,
+    EXERCISE_DETAIL_ALT_ITEM_TITLE,
+    EXERCISE_DETAIL_ALT_BLOCK,
+    EXERCISE_DETAIL_SECTION_LABELS,
+    EXERCISE_DETAIL_SPEC_LABEL,
+} from "./exerciseDetailPresentation";
 
 interface ExerciseAlternativesSectionProps {
     exerciseId: number;
@@ -44,11 +52,11 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
 
     if (isLoading) {
         return (
-            <div className="mb-6 pt-6 border-t border-slate-200">
-                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-3">
-                    Alternativas
+            <div className={EXERCISE_DETAIL_ALT_DIVIDER}>
+                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                    {EXERCISE_DETAIL_SECTION_LABELS.alternatives}
                 </p>
-                <div className="flex justify-center py-6">
+                <div className={EXERCISE_DETAIL_ALT_LOADING}>
                     <LoadingSpinner size="sm" />
                 </div>
             </div>
@@ -57,11 +65,11 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
 
     if (isEmpty) {
         return (
-            <div className="mb-6 pt-6 border-t border-slate-200">
-                <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-2">
-                    Alternativas
+            <div className={EXERCISE_DETAIL_ALT_DIVIDER}>
+                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                    {EXERCISE_DETAIL_SECTION_LABELS.alternatives}
                 </p>
-                <p className="text-sm text-slate-500">
+                <p className={EXERCISE_DETAIL_ALT_EMPTY}>
                     No hay alternativas definidas ni sugerencias disponibles.
                 </p>
             </div>
@@ -69,25 +77,25 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
     }
 
     return (
-        <div className="mb-6 pt-6 border-t border-slate-200">
-            <p className="text-xs text-slate-500 uppercase tracking-wide font-medium mb-3">
-                Alternativas
+        <div className={EXERCISE_DETAIL_ALT_DIVIDER}>
+            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                {EXERCISE_DETAIL_SECTION_LABELS.alternatives}
             </p>
 
             {hasManual && (
-                <div className="mb-4">
-                    <p className="text-sm font-semibold text-slate-700 mb-2">Definidas manualmente</p>
-                    <ul className="space-y-2">
+                <div className={EXERCISE_DETAIL_ALT_BLOCK}>
+                    <p className={EXERCISE_DETAIL_ALT_SUBHEADING}>
+                        {EXERCISE_DETAIL_SECTION_LABELS.manualAlternatives}
+                    </p>
+                    <ul className={EXERCISE_DETAIL_ALT_LIST}>
                         {manualAlternatives.map((alt) => (
-                            <li
-                                key={alt.id}
-                                className="p-3 rounded-lg bg-slate-50 border border-slate-200"
-                            >
-                                <p className="font-medium text-slate-800">
-                                    {alt.alternative_exercise_name ?? `Ejercicio #${alt.alternative_exercise_id}`}
+                            <li key={alt.id} className={EXERCISE_DETAIL_ALT_ITEM}>
+                                <p className={EXERCISE_DETAIL_ALT_ITEM_TITLE}>
+                                    {alt.alternative_exercise_name ??
+                                        `Ejercicio #${alt.alternative_exercise_id}`}
                                 </p>
                                 {alt.alternative_exercise_equipo && (
-                                    <p className="text-xs text-slate-500 mt-1">
+                                    <p className={EXERCISE_DETAIL_ALT_META}>
                                         {getEquipmentLabel(alt.alternative_exercise_equipo)}
                                     </p>
                                 )}
@@ -98,22 +106,21 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
             )}
 
             {hasSuggested && (
-                <div>
-                    <p className="text-sm font-semibold text-slate-700 mb-2">Sugerencias automáticas</p>
-                    <ul className="space-y-2">
+                <div className={hasManual ? EXERCISE_DETAIL_ALT_SECTION_GAP : EXERCISE_DETAIL_ALT_BLOCK}>
+                    <p className={EXERCISE_DETAIL_ALT_SUBHEADING}>
+                        {EXERCISE_DETAIL_SECTION_LABELS.suggestedAlternatives}
+                    </p>
+                    <ul className={EXERCISE_DETAIL_ALT_LIST}>
                         {suggestedAlternatives.map((alt) => (
-                            <li
-                                key={alt.id}
-                                className="p-3 rounded-lg bg-blue-50/50 border border-blue-100"
-                            >
-                                <p className="font-medium text-slate-800">{alt.nombre}</p>
-                                <p className="text-xs text-slate-500 mt-1">
+                            <li key={alt.id} className={EXERCISE_DETAIL_ALT_ITEM}>
+                                <p className={EXERCISE_DETAIL_ALT_ITEM_TITLE}>{alt.nombre}</p>
+                                <p className={EXERCISE_DETAIL_ALT_META}>
                                     {[alt.equipo && getEquipmentLabel(alt.equipo), alt.musculatura_principal]
                                         .filter(Boolean)
                                         .join(" · ")}
                                 </p>
                                 {alt.reason && (
-                                    <p className="text-xs text-blue-600 mt-1">{alt.reason}</p>
+                                    <p className={EXERCISE_DETAIL_ALT_REASON}>{alt.reason}</p>
                                 )}
                             </li>
                         ))}

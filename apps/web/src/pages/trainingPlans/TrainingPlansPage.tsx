@@ -23,6 +23,7 @@ import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { usePagination } from "@nexia/shared/hooks/common";
 import type { RootState } from "@nexia/shared/store";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import {
     TRAINING_PLAN_GOAL,
     TEMPLATE_LEVEL,
@@ -36,7 +37,7 @@ import { Alert } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/buttons";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
-import { Input, FormSelect, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, DatePickerButton } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
 import { PageTitle } from "@/components/dashboard/shared";
 
@@ -81,6 +82,154 @@ function templateCreatedInRange(
     if (dateFrom && created < dateFrom) return false;
     if (dateTo && created > dateTo) return false;
     return true;
+}
+
+const PLAN_STATUS_FILTER_OPTIONS = [
+    { value: "all", label: "Todas" },
+    { value: "active", label: "Activos" },
+    { value: "completed", label: "Completados" },
+    { value: "paused", label: "Pausados" },
+    { value: "cancelled", label: "Cancelados" },
+] as const;
+
+const TEMPLATE_LEVEL_FILTER_OPTIONS = [
+    { value: "all", label: "Todas" },
+    { value: TEMPLATE_LEVEL.BEGINNER, label: "Principiante" },
+    { value: TEMPLATE_LEVEL.INTERMEDIATE, label: "Intermedio" },
+    { value: TEMPLATE_LEVEL.ADVANCED, label: "Avanzado" },
+] as const;
+
+/** DESIGN.md §5.4 Filter Chips — rectangulares, h-9, rounded-md. */
+function listFilterChipClass(active: boolean): string {
+    return cn(
+        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
+        active
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border text-muted-foreground hover:border-input hover:text-foreground"
+    );
+}
+
+function listFilterCountClass(active: boolean): string {
+    return cn(
+        "tabular-nums font-normal",
+        active ? "text-primary/60" : "text-muted-foreground/50"
+    );
+}
+
+function applyPlanSecondaryFilters(
+    plans: TrainingPlan[],
+    goalFilter: string,
+    dateFrom: string,
+    dateTo: string,
+    searchQ: string,
+    clientNamesMap: Record<number, string>
+): TrainingPlan[] {
+    let list = plans;
+    if (goalFilter !== "all") {
+        list = list.filter((p) => (p.goal ?? "").trim() === goalFilter);
+    }
+    list = list.filter((p) => planOverlapsDateRange(p, dateFrom, dateTo));
+    const q = searchQ.trim().toLowerCase();
+    if (q) {
+        list = list.filter((plan) => {
+            const nameMatch = plan.name?.toLowerCase().includes(q);
+            const clientName = plan.client_id ? clientNamesMap[plan.client_id] : "";
+            const clientMatch = clientName?.toLowerCase().includes(q);
+            return nameMatch || clientMatch;
+        });
+    }
+    return list;
+}
+
+function applyTemplateSecondaryFilters(
+    templatesList: TrainingPlanTemplate[],
+    goalFilter: string,
+    dateFrom: string,
+    dateTo: string,
+    searchQ: string
+): TrainingPlanTemplate[] {
+    let list = templatesList;
+    if (goalFilter !== "all") {
+        list = list.filter((t) => (t.goal ?? "").trim() === goalFilter);
+    }
+    list = list.filter((t) => templateCreatedInRange(t, dateFrom, dateTo));
+    const q = searchQ.trim().toLowerCase();
+    if (q) {
+        list = list.filter((t) => {
+            const name = t.name?.toLowerCase().includes(q);
+            const desc = t.description?.toLowerCase().includes(q);
+            return name || desc;
+        });
+    }
+    return list;
+}
+
+function resolvePlansEmptyState(
+    statusFilter: string,
+    hasSecondaryFilters: boolean,
+    totalPlansAll: number
+): { title: string; description?: string; showCreateAction: boolean } {
+    const filterHint = hasSecondaryFilters
+        ? "Prueba a cambiar el objetivo, las fechas o la búsqueda."
+        : undefined;
+    if (statusFilter === "active") {
+        return { title: "Sin planes activos", description: filterHint, showCreateAction: false };
+    }
+    if (statusFilter === "completed") {
+        return { title: "Sin planes completados", description: filterHint, showCreateAction: false };
+    }
+    if (statusFilter === "paused") {
+        return { title: "Sin planes pausados", description: filterHint, showCreateAction: false };
+    }
+    if (statusFilter === "cancelled") {
+        return { title: "Sin planes cancelados", description: filterHint, showCreateAction: false };
+    }
+    if (totalPlansAll === 0 && !hasSecondaryFilters) {
+        return {
+            title: "Sin planificaciones",
+            description:
+                "Crea la primera planificación para asignar un programa de entrenamiento a un cliente.",
+            showCreateAction: true,
+        };
+    }
+    return {
+        title: "Ningún plan encontrado",
+        description: hasSecondaryFilters
+            ? "Prueba a cambiar el objetivo, las fechas o la búsqueda."
+            : undefined,
+        showCreateAction: false,
+    };
+}
+
+function resolveTemplatesEmptyState(
+    levelFilter: string,
+    hasSecondaryFilters: boolean,
+    totalTemplatesAll: number
+): { title: string; description?: string; showCreateAction: boolean } {
+    const levelLabel = TEMPLATE_LEVEL_FILTER_OPTIONS.find((o) => o.value === levelFilter)?.label;
+    if (levelFilter !== "all" && levelLabel) {
+        return {
+            title: `Sin plantillas ${levelLabel.toLowerCase()}`,
+            description: hasSecondaryFilters
+                ? "Prueba a cambiar el objetivo, las fechas o la búsqueda."
+                : undefined,
+            showCreateAction: false,
+        };
+    }
+    if (totalTemplatesAll === 0 && !hasSecondaryFilters) {
+        return {
+            title: "Sin plantillas",
+            description: "Crea la primera plantilla reutilizable para tus programas de entrenamiento.",
+            showCreateAction: true,
+        };
+    }
+    return {
+        title: "Ninguna plantilla encontrada",
+        description: hasSecondaryFilters
+            ? "Prueba a cambiar el objetivo, las fechas o la búsqueda."
+            : undefined,
+        showCreateAction: false,
+    };
 }
 
 export const TrainingPlansPage: React.FC = () => {
@@ -196,61 +345,106 @@ export const TrainingPlansPage: React.FC = () => {
         return plans.filter((plan) => plan.client_id != null);
     }, [plans]);
 
+    const plansForCounts = useMemo(
+        () =>
+            applyPlanSecondaryFilters(
+                assignedPlans,
+                planGoalFilter,
+                planDateFrom,
+                planDateTo,
+                searchPlansDebounced,
+                clientNamesMap
+            ),
+        [
+            assignedPlans,
+            planGoalFilter,
+            planDateFrom,
+            planDateTo,
+            searchPlansDebounced,
+            clientNamesMap,
+        ]
+    );
+
+    const planStatusCounts = useMemo(
+        () => ({
+            all: plansForCounts.length,
+            active: plansForCounts.filter((p) => p.status === "active").length,
+            completed: plansForCounts.filter((p) => p.status === "completed").length,
+            paused: plansForCounts.filter((p) => p.status === "paused").length,
+            cancelled: plansForCounts.filter((p) => p.status === "cancelled").length,
+        }),
+        [plansForCounts]
+    );
+
     const filteredAssignedPlans = useMemo(() => {
-        let list = assignedPlans;
-        if (planStatusFilter !== "all") {
-            list = list.filter((p) => p.status === planStatusFilter);
-        }
-        if (planGoalFilter !== "all") {
-            list = list.filter((p) => (p.goal ?? "").trim() === planGoalFilter);
-        }
-        list = list.filter((p) => planOverlapsDateRange(p, planDateFrom, planDateTo));
-        const q = searchPlansDebounced.trim().toLowerCase();
-        if (q) {
-            list = list.filter((plan) => {
-                const nameMatch = plan.name?.toLowerCase().includes(q);
-                const clientName = plan.client_id ? clientNamesMap[plan.client_id] : "";
-                const clientMatch = clientName?.toLowerCase().includes(q);
-                return nameMatch || clientMatch;
-            });
-        }
-        return list;
-    }, [
-        assignedPlans,
-        planStatusFilter,
-        planGoalFilter,
-        planDateFrom,
-        planDateTo,
-        searchPlansDebounced,
-        clientNamesMap,
-    ]);
+        if (planStatusFilter === "all") return plansForCounts;
+        return plansForCounts.filter((p) => p.status === planStatusFilter);
+    }, [plansForCounts, planStatusFilter]);
+
+    const templatesForCounts = useMemo(
+        () =>
+            applyTemplateSecondaryFilters(
+                templates,
+                templateGoalFilter,
+                templateDateFrom,
+                templateDateTo,
+                searchTemplatesDebounced
+            ),
+        [templates, templateGoalFilter, templateDateFrom, templateDateTo, searchTemplatesDebounced]
+    );
+
+    const templateLevelCounts = useMemo(
+        () => ({
+            all: templatesForCounts.length,
+            [TEMPLATE_LEVEL.BEGINNER]: templatesForCounts.filter(
+                (t) => t.level === TEMPLATE_LEVEL.BEGINNER
+            ).length,
+            [TEMPLATE_LEVEL.INTERMEDIATE]: templatesForCounts.filter(
+                (t) => t.level === TEMPLATE_LEVEL.INTERMEDIATE
+            ).length,
+            [TEMPLATE_LEVEL.ADVANCED]: templatesForCounts.filter(
+                (t) => t.level === TEMPLATE_LEVEL.ADVANCED
+            ).length,
+        }),
+        [templatesForCounts]
+    );
 
     const filteredTemplates = useMemo(() => {
-        let list = templates;
-        if (templateLevelFilter !== "all") {
-            list = list.filter((t) => t.level === templateLevelFilter);
-        }
-        if (templateGoalFilter !== "all") {
-            list = list.filter((t) => (t.goal ?? "").trim() === templateGoalFilter);
-        }
-        list = list.filter((t) => templateCreatedInRange(t, templateDateFrom, templateDateTo));
-        const q = searchTemplatesDebounced.trim().toLowerCase();
-        if (q) {
-            list = list.filter((t) => {
-                const name = t.name?.toLowerCase().includes(q);
-                const desc = t.description?.toLowerCase().includes(q);
-                return name || desc;
-            });
-        }
-        return list;
-    }, [
-        templates,
-        templateLevelFilter,
-        templateGoalFilter,
-        templateDateFrom,
-        templateDateTo,
-        searchTemplatesDebounced,
-    ]);
+        if (templateLevelFilter === "all") return templatesForCounts;
+        return templatesForCounts.filter((t) => t.level === templateLevelFilter);
+    }, [templatesForCounts, templateLevelFilter]);
+
+    const hasPlanSecondaryFilters =
+        planGoalFilter !== "all" ||
+        Boolean(planDateFrom) ||
+        Boolean(planDateTo) ||
+        Boolean(searchPlansDebounced.trim());
+
+    const plansEmptyState = useMemo(
+        () =>
+            resolvePlansEmptyState(
+                planStatusFilter,
+                hasPlanSecondaryFilters,
+                planStatusCounts.all
+            ),
+        [planStatusFilter, hasPlanSecondaryFilters, planStatusCounts.all]
+    );
+
+    const hasTemplateSecondaryFilters =
+        templateGoalFilter !== "all" ||
+        Boolean(templateDateFrom) ||
+        Boolean(templateDateTo) ||
+        Boolean(searchTemplatesDebounced.trim());
+
+    const templatesEmptyState = useMemo(
+        () =>
+            resolveTemplatesEmptyState(
+                templateLevelFilter,
+                hasTemplateSecondaryFilters,
+                templateLevelCounts.all
+            ),
+        [templateLevelFilter, hasTemplateSecondaryFilters, templateLevelCounts.all]
+    );
 
     const ACTIVE_PLANS_PER_PAGE = 6;
     const {
@@ -267,7 +461,7 @@ export const TrainingPlansPage: React.FC = () => {
 
     const handleAssignedPlansPageChange = (page: number): void => {
         setActivePlansPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     };
 
     const resetPlanningPage = useCallback(() => {
@@ -288,7 +482,7 @@ export const TrainingPlansPage: React.FC = () => {
 
     const handleTemplatesPageChange = (page: number): void => {
         setTemplatesPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     };
 
     const resetTemplatesPage = useCallback(() => {
@@ -334,8 +528,8 @@ export const TrainingPlansPage: React.FC = () => {
                     title={activeTab === "planning" ? "Planificación" : "Plantillas"}
                     subtitle={
                         activeTab === "planning"
-                            ? `${filteredAssignedPlans.length} planes activos`
-                            : `${filteredTemplates.length} plantillas disponibles`
+                            ? `${planStatusCounts.all} planes asignados`
+                            : `${templateLevelCounts.all} plantillas disponibles`
                     }
                 />
                 {activeTab === "planning" ? (
@@ -363,47 +557,48 @@ export const TrainingPlansPage: React.FC = () => {
 
             {activeTab === "planning" && (
                 <>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex flex-wrap gap-1.5">
-                            {[
-                                { value: "all", label: "Todas" },
-                                { value: "active", label: "Activos" },
-                                { value: "completed", label: "Completados" },
-                                { value: "paused", label: "Pausados" },
-                                { value: "cancelled", label: "Cancelados" },
-                            ].map(({ value, label }) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => {
-                                        setPlanStatusFilter(value);
-                                        resetPlanningPage();
-                                    }}
-                                    className={cn(
-                                        "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                                        planStatusFilter === value
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    {label}
-                                </button>
-                            ))}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div
+                            className="flex flex-wrap items-center gap-1.5"
+                            role="group"
+                            aria-label="Filtrar por estado del plan"
+                        >
+                            {PLAN_STATUS_FILTER_OPTIONS.map(({ value, label }) => {
+                                const active = planStatusFilter === value;
+                                return (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => {
+                                            setPlanStatusFilter(value);
+                                            resetPlanningPage();
+                                        }}
+                                        className={listFilterChipClass(active)}
+                                        aria-pressed={active}
+                                    >
+                                        <span>{label}</span>
+                                        <span className={listFilterCountClass(active)}>
+                                            {planStatusCounts[value]}
+                                        </span>
+                                    </button>
+                                );
+                            })}
                         </div>
-                        <div className="w-44 min-w-[176px]">
-                            <FormSelect
+                        <div className="h-9 w-44 min-w-[11rem]">
+                            <FormCombobox
                                 value={planGoalFilter}
-                                onChange={(e) => {
-                                    setPlanGoalFilter(e.target.value);
+                                onChange={(v) => {
+                                    setPlanGoalFilter(v);
                                     resetPlanningPage();
                                 }}
                                 options={PLAN_GOAL_SELECT_OPTIONS}
                                 placeholder="Todos"
                                 size="sm"
                                 className="w-full"
+                                ariaLabel="Filtrar por objetivo del plan"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex h-9 items-center gap-2">
                             <DatePickerButton
                                 label="Desde"
                                 value={planDateFrom}
@@ -424,9 +619,9 @@ export const TrainingPlansPage: React.FC = () => {
                                 aria-label="Hasta"
                             />
                         </div>
-                        <div className="relative ml-auto">
+                        <div className="relative ml-auto h-9 w-full sm:w-56">
                             <Search
-                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                 aria-hidden
                             />
                             <Input
@@ -438,7 +633,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     setSearchPlans(e.target.value);
                                     resetPlanningPage();
                                 }}
-                                className="w-56 pl-8"
+                                className="h-9 w-full pl-8"
                                 aria-label="Buscar plan o cliente"
                             />
                         </div>
@@ -454,6 +649,9 @@ export const TrainingPlansPage: React.FC = () => {
                         clientsMap={clientsMap}
                         onCreate={handleCreatePlan}
                         isLoading={isLoadingPlans}
+                        emptyTitle={plansEmptyState.title}
+                        emptyDescription={plansEmptyState.description}
+                        emptyShowCreateAction={plansEmptyState.showCreateAction}
                     />
                     {totalActivePlansPages > 1 && (
                         <PaginationBar
@@ -469,46 +667,50 @@ export const TrainingPlansPage: React.FC = () => {
 
             {activeTab === "templates" && (
                 <>
-                    <div className="flex flex-wrap items-center gap-3">
-                        <div className="flex flex-wrap gap-1.5">
-                            {[
-                                { value: "all", label: "Todas" },
-                                { value: TEMPLATE_LEVEL.BEGINNER, label: "Principiante" },
-                                { value: TEMPLATE_LEVEL.INTERMEDIATE, label: "Intermedio" },
-                                { value: TEMPLATE_LEVEL.ADVANCED, label: "Avanzado" },
-                            ].map(({ value, label }) => (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    onClick={() => {
-                                        setTemplateLevelFilter(value);
-                                        resetTemplatesPage();
-                                    }}
-                                    className={cn(
-                                        "rounded-full px-4 py-1.5 text-sm font-medium transition-colors",
-                                        templateLevelFilter === value
-                                            ? "bg-primary text-primary-foreground"
-                                            : "bg-surface-2 text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    {label}
-                                </button>
-                            ))}
+                    <div className="flex flex-wrap items-center gap-2">
+                        <div
+                            className="flex flex-wrap items-center gap-1.5"
+                            role="group"
+                            aria-label="Filtrar por nivel de plantilla"
+                        >
+                            {TEMPLATE_LEVEL_FILTER_OPTIONS.map(({ value, label }) => {
+                                const active = templateLevelFilter === value;
+                                const count =
+                                    value === "all"
+                                        ? templateLevelCounts.all
+                                        : templateLevelCounts[value as keyof typeof templateLevelCounts];
+                                return (
+                                    <button
+                                        key={value}
+                                        type="button"
+                                        onClick={() => {
+                                            setTemplateLevelFilter(value);
+                                            resetTemplatesPage();
+                                        }}
+                                        className={listFilterChipClass(active)}
+                                        aria-pressed={active}
+                                    >
+                                        <span>{label}</span>
+                                        <span className={listFilterCountClass(active)}>{count}</span>
+                                    </button>
+                                );
+                            })}
                         </div>
-                        <div className="w-44 min-w-[176px]">
-                            <FormSelect
+                        <div className="h-9 w-44 min-w-[11rem]">
+                            <FormCombobox
                                 value={templateGoalFilter}
-                                onChange={(e) => {
-                                    setTemplateGoalFilter(e.target.value);
+                                onChange={(v) => {
+                                    setTemplateGoalFilter(v);
                                     resetTemplatesPage();
                                 }}
                                 options={PLAN_GOAL_SELECT_OPTIONS}
                                 placeholder="Todos"
                                 size="sm"
                                 className="w-full"
+                                ariaLabel="Filtrar por objetivo de plantilla"
                             />
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex h-9 items-center gap-2">
                             <DatePickerButton
                                 label="Desde"
                                 value={templateDateFrom}
@@ -529,9 +731,9 @@ export const TrainingPlansPage: React.FC = () => {
                                 aria-label="Plantilla creada hasta"
                             />
                         </div>
-                        <div className="relative ml-auto">
+                        <div className="relative ml-auto h-9 w-full sm:w-56">
                             <Search
-                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
                                 aria-hidden
                             />
                             <Input
@@ -543,7 +745,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     setSearchTemplates(e.target.value);
                                     resetTemplatesPage();
                                 }}
-                                className="w-56 pl-8"
+                                className="h-9 w-full pl-8"
                                 aria-label="Buscar plantilla"
                             />
                         </div>
@@ -557,6 +759,9 @@ export const TrainingPlansPage: React.FC = () => {
                         type="template"
                         onCreate={handleCreateTemplate}
                         isLoading={isLoadingTemplates}
+                        emptyTitle={templatesEmptyState.title}
+                        emptyDescription={templatesEmptyState.description}
+                        emptyShowCreateAction={templatesEmptyState.showCreateAction}
                     />
                     {totalTemplates > ITEMS_PER_PAGE && (
                         <PaginationBar

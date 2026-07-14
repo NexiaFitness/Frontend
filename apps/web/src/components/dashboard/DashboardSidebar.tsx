@@ -122,7 +122,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         <aside
             data-testid="dashboard-nav-sidebar"
             className={cn(
-                "hidden lg:flex fixed left-0 top-navbar-dashboard-desktop h-[calc(100vh-theme(space.navbar-dashboard-desktop))] shrink-0 flex-col z-10 bg-surface border-r border-border overflow-hidden transition-all duration-200 ease-in-out",
+                "hidden lg:flex fixed left-0 top-navbar-dashboard-desktop h-[calc(100vh-theme(space.navbar-dashboard-desktop))] shrink-0 flex-col z-10 bg-surface border-r border-border overflow-hidden transition-all duration-200 ease-in-out pt-[env(safe-area-inset-top)]",
                 isCollapsed ? "w-sidebar-collapsed" : "w-sidebar-expanded"
             )}
             onMouseEnter={hasHover ? handleMouseEnter : undefined}

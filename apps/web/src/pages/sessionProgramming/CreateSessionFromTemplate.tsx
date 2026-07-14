@@ -10,13 +10,21 @@
  * @since v5.3.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
+import { PageTitle } from "@/components/dashboard/shared";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
-import { useCreateSessionFromTemplate } from "@nexia/shared";
+import {
+    useCreateSessionFromTemplate,
+    clampSessionDateToPlan,
+    pickDefaultTrainingPlanId,
+    resolveSessionDateBoundsForPlan,
+    suggestDefaultSessionDateForPlan,
+    validateSessionDateWithinPlan,
+} from "@nexia/shared";
 import { useGetClientQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlansQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -65,9 +73,58 @@ export const CreateSessionFromTemplate: React.FC = () => {
     );
 
     const [formData, setFormData] = useState({
-        sessionDate: new Date().toISOString().split("T")[0],
+        sessionDate: "",
         trainingPlanId: "",
     });
+
+    const selectedPlan = useMemo(() => {
+        const planId = Number(formData.trainingPlanId);
+        if (!planId || planId <= 0 || !trainingPlans?.length) {
+            return null;
+        }
+        return trainingPlans.find((plan) => plan.id === planId) ?? null;
+    }, [formData.trainingPlanId, trainingPlans]);
+
+    const sessionDateBounds = useMemo(
+        () => resolveSessionDateBoundsForPlan(selectedPlan),
+        [selectedPlan]
+    );
+
+    useEffect(() => {
+        setFormData({ sessionDate: "", trainingPlanId: "" });
+        setFormErrors({});
+    }, [clientId]);
+
+    useEffect(() => {
+        if (!trainingPlans?.length || formData.trainingPlanId) {
+            return;
+        }
+        const defaultPlanId = pickDefaultTrainingPlanId(trainingPlans);
+        if (!defaultPlanId) {
+            return;
+        }
+        const plan = trainingPlans.find((item) => item.id === defaultPlanId);
+        if (!plan) {
+            return;
+        }
+        setFormData((prev) => ({
+            ...prev,
+            trainingPlanId: String(defaultPlanId),
+            sessionDate: prev.sessionDate || suggestDefaultSessionDateForPlan(plan),
+        }));
+    }, [trainingPlans, formData.trainingPlanId]);
+
+    useEffect(() => {
+        if (!selectedPlan) {
+            return;
+        }
+        setFormData((prev) => ({
+            ...prev,
+            sessionDate: prev.sessionDate
+                ? clampSessionDateToPlan(prev.sessionDate, selectedPlan)
+                : suggestDefaultSessionDateForPlan(selectedPlan),
+        }));
+    }, [selectedPlan]);
 
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [success, setSuccess] = useState(false);
@@ -89,6 +146,14 @@ export const CreateSessionFromTemplate: React.FC = () => {
         }
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
+        } else {
+            const dateRangeError = validateSessionDateWithinPlan(
+                formData.sessionDate,
+                selectedPlan
+            );
+            if (dateRangeError) {
+                errors.sessionDate = dateRangeError;
+            }
         }
         const planId = Number(formData.trainingPlanId);
         if (!planId || planId <= 0) {
@@ -104,6 +169,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
             await createSession({
                 sessionDate: formData.sessionDate,
                 trainingPlanId: planId,
+                planDateRange: selectedPlan,
             });
             setSuccess(true);
             const sessionDateStr = formData.sessionDate; // YYYY-MM-DD
@@ -139,17 +205,13 @@ export const CreateSessionFromTemplate: React.FC = () => {
     return (
         <>
                 {/* Header */}
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
+                <div className="mb-6 px-4 lg:px-8">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-foreground mb-2">
-                                Usar Template
-                            </h2>
-                            <p className="text-muted-foreground text-sm md:text-base">
-                                Crear sesión desde template: <strong>{template.name}</strong>
-                            </p>
-                        </div>
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
+                        <PageTitle
+                            title="Usar Template"
+                            subtitle={`Crear sesión desde template: ${template.name}`}
+                        />
+                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="shrink-0">
                             <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al Dashboard
                         </Button>
@@ -238,26 +300,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                 )}
                             </div>
 
-                            {/* Fecha */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Fecha de la Sesión *
-                                </label>
-                                <Input
-                                    type="date"
-                                    value={formData.sessionDate}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, sessionDate: e.target.value })
-                                    }
-                                    required
-                                    min={new Date().toISOString().split("T")[0]}
-                                />
-                                {formErrors.sessionDate && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.sessionDate}</p>
-                                )}
-                            </div>
-
-                            {/* Plan de entrenamiento (Fase 6: requerido) */}
+                            {/* Plan de entrenamiento (Fase 6: requerido) — antes de fecha: define vigencia */}
                             <div>
                                 <label className="block text-sm font-semibold text-foreground mb-2">
                                     Plan de entrenamiento
@@ -265,7 +308,10 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                 <FormSelect
                                     value={formData.trainingPlanId}
                                     onChange={(e) =>
-                                        setFormData({ ...formData, trainingPlanId: e.target.value })
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            trainingPlanId: e.target.value,
+                                        }))
                                     }
                                     options={[
                                         { value: "", label: "Seleccione un plan" },
@@ -278,6 +324,39 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                 />
                                 {formErrors.trainingPlanId && (
                                     <p className="text-red-600 text-xs mt-1">{formErrors.trainingPlanId}</p>
+                                )}
+                            </div>
+
+                            {/* Fecha */}
+                            <div>
+                                <label className="block text-sm font-semibold text-foreground mb-2">
+                                    Fecha de la Sesión *
+                                </label>
+                                <Input
+                                    type="date"
+                                    value={formData.sessionDate}
+                                    onChange={(e) =>
+                                        setFormData((prev) => ({
+                                            ...prev,
+                                            sessionDate: e.target.value,
+                                        }))
+                                    }
+                                    required
+                                    disabled={!selectedPlan}
+                                    min={sessionDateBounds.min}
+                                    max={sessionDateBounds.max}
+                                />
+                                {!selectedPlan ? (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Seleccione un plan para elegir una fecha dentro de su vigencia.
+                                    </p>
+                                ) : sessionDateBounds.min && sessionDateBounds.max ? (
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Vigencia del plan: {sessionDateBounds.min} — {sessionDateBounds.max}
+                                    </p>
+                                ) : null}
+                                {formErrors.sessionDate && (
+                                    <p className="text-red-600 text-xs mt-1">{formErrors.sessionDate}</p>
                                 )}
                             </div>
 

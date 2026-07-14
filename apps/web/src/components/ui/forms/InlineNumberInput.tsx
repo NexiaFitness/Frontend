@@ -1,12 +1,16 @@
 /**
- * InlineNumberInput.tsx — Input number compacto con botones Up/Down
+ * InlineNumberInput.tsx — Input numérico compacto con botones Up/Down.
  * Contexto: usado en constructores; debe mantener en sync el padre (React) al pulsar
  * subir/bajar, incluido modo controlado donde el DOM y `HTMLInputElement.stepUp`
  * quedan desalineados con el prop `value`.
- * Notas: el incremento/decremento aplica con la misma regla básica que un input
- * `type=number` (min/max/step) sin depender de que el motor dispare onChange.
+ * Notas: renderiza un `<input type="text" inputMode="numeric">` en lugar de un
+ * input nativo `type="number"`, evitando que la validación nativa del navegador
+ * bloquee estados intermedios (p. ej. borrar el primer dígito de "10").
+ * La validación de `min`/`max`/`step` se aplica manualmente en los botones y en
+ * `onBlur`, nunca mientras el usuario escribe.
  * @author Frontend Team
  * @since v8.1.0
+ * @updated v8.2.0 — input no nativo con validación manual
  */
 
 import React, { forwardRef, useImperativeHandle, useRef } from "react";
@@ -15,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 export type InlineNumberSize = "xs" | "compact" | "sm" | "md" | "lg";
 
-interface InlineNumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
+interface InlineNumberInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size" | "type"> {
     size?: InlineNumberSize;
     className?: string;
 }
@@ -55,6 +59,40 @@ function parseNumberAttr(
         return { ok: false };
     }
     return { ok: true, n };
+}
+
+function sanitizeNumericInput(raw: string): string {
+    if (raw === "") {
+        return "";
+    }
+    const digitsOnly = raw.replace(/\D/g, "");
+    // Descartar ceros a la izquierda, excepto el propio "0".
+    const withoutLeadingZeros = digitsOnly.replace(/^0+(?=\d)/, "");
+    return withoutLeadingZeros;
+}
+
+function clampNumericValue(
+    raw: string,
+    min: string | number | undefined,
+    max: string | number | undefined
+): string {
+    if (raw === "") {
+        return "";
+    }
+    const parsed = parseNumberAttr(raw);
+    if (!parsed.ok) {
+        return "";
+    }
+    const minP = parseNumberAttr(min);
+    const maxP = parseNumberAttr(max);
+    let clamped = parsed.n;
+    if (minP.ok) {
+        clamped = Math.max(clamped, minP.n);
+    }
+    if (maxP.ok) {
+        clamped = Math.min(clamped, maxP.n);
+    }
+    return String(clamped);
 }
 
 /**
@@ -120,27 +158,29 @@ function applyNumberStep(
 }
 
 export const InlineNumberInput = forwardRef<HTMLInputElement, InlineNumberInputProps>(
-    ({ size = "sm", className, onChange, ...inputProps }, ref) => {
+    ({ size = "sm", className, onChange, onBlur, ...inputProps }, ref) => {
         const innerRef = useRef<HTMLInputElement>(null);
         useImperativeHandle(ref, () => innerRef.current as HTMLInputElement);
+
+        const { min, max, step, readOnly, disabled, value } = inputProps;
 
         const runStep = (dir: 1 | -1) => {
             if (!onChange) {
                 return;
             }
             const el = innerRef.current;
-            const v = inputProps.value;
+            const v = value;
             const valueForStep: string | number | null | undefined = Array.isArray(v)
                 ? undefined
                 : (v as string | number | null | undefined);
             const { next, changed } = applyNumberStep(
                 {
                     value: valueForStep,
-                    min: inputProps.min,
-                    max: inputProps.max,
-                    step: inputProps.step,
-                    readOnly: inputProps.readOnly,
-                    disabled: inputProps.disabled,
+                    min,
+                    max,
+                    step,
+                    readOnly,
+                    disabled,
                     elementValue: el?.value ?? "",
                 },
                 dir
@@ -154,6 +194,36 @@ export const InlineNumberInput = forwardRef<HTMLInputElement, InlineNumberInputP
             } as React.ChangeEvent<HTMLInputElement>);
         };
 
+        const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+            if (!onChange) {
+                return;
+            }
+            const raw = e.target.value;
+            const sanitized = sanitizeNumericInput(raw);
+            if (sanitized === raw) {
+                onChange(e);
+                return;
+            }
+            onChange({
+                ...e,
+                target: { ...e.target, value: sanitized } as EventTarget & HTMLInputElement,
+                currentTarget: e.currentTarget,
+            } as React.ChangeEvent<HTMLInputElement>);
+        };
+
+        const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+            const raw = e.target.value;
+            const clamped = clampNumericValue(raw, min, max);
+            if (clamped !== raw && onChange) {
+                onChange({
+                    ...e,
+                    target: { ...e.target, value: clamped } as EventTarget & HTMLInputElement,
+                    currentTarget: e.currentTarget,
+                } as React.ChangeEvent<HTMLInputElement>);
+            }
+            onBlur?.(e);
+        };
+
         return (
             <div className={cn("relative inline-flex", className)}>
                 <input
@@ -164,8 +234,11 @@ export const InlineNumberInput = forwardRef<HTMLInputElement, InlineNumberInputP
                         "nexia-no-native-spinners"
                     )}
                     {...inputProps}
-                    type="number"
-                    onChange={onChange}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    onChange={handleChange}
+                    onBlur={handleBlur}
                 />
                 <div
                     className={cn(
@@ -178,6 +251,7 @@ export const InlineNumberInput = forwardRef<HTMLInputElement, InlineNumberInputP
                         onClick={() => runStep(1)}
                         className="flex flex-1 items-center justify-center text-muted-foreground/70 transition-colors hover:bg-primary/10 hover:text-primary"
                         aria-label="Incrementar"
+                        disabled={disabled || readOnly}
                     >
                         <ChevronUp className={iconSizeStyles[size]} aria-hidden />
                     </button>
@@ -186,6 +260,7 @@ export const InlineNumberInput = forwardRef<HTMLInputElement, InlineNumberInputP
                         onClick={() => runStep(-1)}
                         className="flex flex-1 items-center justify-center border-t border-border/40 text-muted-foreground/70 transition-colors hover:bg-primary/10 hover:text-primary"
                         aria-label="Decrementar"
+                        disabled={disabled || readOnly}
                     >
                         <ChevronDown className={iconSizeStyles[size]} aria-hidden />
                     </button>

@@ -13,3 +13,5 @@ export { Alert } from './Alert';
 export { Toast, type ToastVariant, type ToastProps } from './Toast';
 export { ToastProvider } from './ToastProvider';
 export { useToast } from './useToast';
+export { HintTooltip } from './HintTooltip';
+export type { HintTooltipProps, HintTooltipAlign } from './HintTooltip';

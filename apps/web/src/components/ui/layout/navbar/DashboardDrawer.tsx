@@ -1,19 +1,22 @@
 /**
- * DashboardDrawer — Drawer lateral móvil para el área dashboard.
- *
- * Contexto: Menú de navegación por ítems (menuItems) y bloque inferior con
- * usuario y logout. Sin cabecera con logo; el logo está en la navbar.
- * Usado por AppNavbar en contexto dashboard.
- *
- * Notas: Posicionado debajo de la navbar (top-navbar-dashboard-mobile).
- *
- * @author Frontend Team
- * @since v1.0.0
+ * DashboardDrawer.tsx — Drawer lateral móvil dashboard (entrenador/admin/atleta desktop shell).
+ * Paridad visual con NexiaSideMenu: glass, rim cyan, divisores premium.
  */
 
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import { LogoutButton } from "@/components/ui/buttons";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import { NEXIA_DIVIDER_STRONG } from "@/components/ui/surface/nexiaDividerPresentation";
+import { NEXIA_SCROLLBAR } from "@/components/ui/layout/scrollPresentation";
+import { cn } from "@/lib/utils";
+import {
+    SIDE_MENU_OVERLAY,
+    SIDE_MENU_PANEL,
+    SIDE_MENU_SECTION_LABEL,
+    sideMenuLinkClass,
+} from "./sideMenuPresentation";
 
 export interface DashboardDrawerProps {
     isOpen: boolean;
@@ -53,63 +56,68 @@ export const DashboardDrawer: React.FC<DashboardDrawerProps> = ({
     return (
         <>
             <div
-                className={`fixed inset-0 z-40 bg-black/60 transition-opacity duration-300 ${
-                    isOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-                }`}
+                data-testid="dashboard-drawer-backdrop"
+                className={cn(
+                    "fixed inset-0 z-40 transition-opacity duration-300",
+                    SIDE_MENU_OVERLAY,
+                    isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+                )}
                 onClick={onClose}
-                aria-hidden="true"
+                aria-hidden={!isOpen}
             />
             <div
-                className={`
-                    fixed
-                    top-navbar-dashboard-mobile lg:top-navbar-dashboard-desktop
-                    right-0
-                    w-full
-                    h-[calc(100vh-theme(space.navbar-dashboard-mobile))]
-                    lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]
-                    z-50 transform transition-transform duration-500 ease-in-out
-                    bg-sidebar
-                    ${isOpen ? "translate-x-0" : "translate-x-full"}
-                `}
+                className={cn(
+                    "fixed right-0 z-50 flex h-[calc(100vh-theme(space.navbar-dashboard-mobile))] w-full flex-col pt-[env(safe-area-inset-top)]",
+                    "transform transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
+                    "lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]",
+                    "top-navbar-dashboard-mobile lg:top-navbar-dashboard-desktop",
+                    SIDE_MENU_PANEL,
+                    isOpen ? "translate-x-0" : "translate-x-full"
+                )}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Menú de navegación"
+                aria-hidden={!isOpen}
             >
-                <div className="flex flex-col h-full">
-                    <nav className="flex-1 overflow-y-auto pt-8 px-6">
-                        <ul className="space-y-2">
-                            {menuItems.map(({ path, label }, index) => (
-                                <li key={`${path}-${label}-${index}`}>
-                                    <Link
-                                        to={path}
-                                        onClick={onClose}
-                                        className={`flex items-center space-x-3 rounded-lg px-4 py-3 transition-colors ${
-                                            isActiveLink(path)
-                                                ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
-                                                : "text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-                                        }`}
-                                    >
-                                        <span className="text-lg">{label}</span>
-                                    </Link>
-                                </li>
-                            ))}
-                        </ul>
-                    </nav>
-                    <div className="px-6 pb-6">
-                        <div className="mb-6 pt-6 border-t border-sidebar-border">
-                            <div className="mb-4 text-center">
-                                <p className="font-medium text-sidebar-foreground">
-                                    {user?.nombre} {user?.apellidos}
-                                </p>
-                                <p className="text-sm text-sidebar-foreground/70">{footerSubtitle}</p>
-                            </div>
-                            <LogoutButton
-                                variant="secondary"
-                                confirmationRequired={true}
-                                showUserName={false}
-                                className="w-full bg-surface-2 text-sm hover:bg-surface-2/80"
-                            />
+                <NexiaGlassAccentRim />
+                <nav className={cn("flex-1 overflow-y-auto px-6 pt-10", NEXIA_SCROLLBAR)}>
+                    <h3 className={`mb-3 ${SIDE_MENU_SECTION_LABEL}`}>Navegación</h3>
+                    <NexiaPremiumDivider className="mb-6 w-full" />
+                    <ul className="space-y-2">
+                        {menuItems.map(({ path, label }, index) => (
+                            <li key={`${path}-${label}-${index}`}>
+                                <Link
+                                    to={path}
+                                    onClick={onClose}
+                                    className={sideMenuLinkClass(isActiveLink(path))}
+                                >
+                                    <span>{label}</span>
+                                </Link>
+                            </li>
+                        ))}
+                    </ul>
+                </nav>
+
+                <div className="relative border-t border-border/40 p-6 pt-5">
+                    <div
+                        className="pointer-events-none absolute inset-x-0 top-0 overflow-hidden"
+                        aria-hidden
+                    >
+                        <div className={cn("mx-6", NEXIA_DIVIDER_STRONG)} />
+                    </div>
+                    <div className="space-y-4 pt-2 text-center">
+                        <div>
+                            <p className="font-medium text-foreground">
+                                {user?.nombre} {user?.apellidos}
+                            </p>
+                            <p className="text-sm text-muted-foreground">{footerSubtitle}</p>
                         </div>
+                        <LogoutButton
+                            variant="secondary"
+                            confirmationRequired
+                            showUserName={false}
+                            className="min-h-touch-athlete w-full text-sm"
+                        />
                     </div>
                 </div>
             </div>

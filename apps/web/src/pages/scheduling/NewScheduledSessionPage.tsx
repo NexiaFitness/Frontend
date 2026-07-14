@@ -12,6 +12,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
@@ -38,10 +39,11 @@ export const NewScheduledSessionPage: React.FC = () => {
     const navigate = useNavigate();
     const [searchParams] = useSearchParams();
     const dateParam = searchParams.get("date");
+    const clientIdParam = searchParams.get("clientId");
 
 
     const { user } = useSelector((state: RootState) => state.auth);
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
+    const { data: trainerProfile, isLoading: isLoadingProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
     });
     const trainerId = trainerProfile?.id ?? 0;
@@ -104,6 +106,16 @@ export const NewScheduledSessionPage: React.FC = () => {
             setFormData((prev) => ({ ...prev, scheduledDate: dateParam }));
         }
     }, [dateParam]);
+
+    useEffect(() => {
+        if (clientIdParam && clientsData?.items) {
+            const clientId = Number(clientIdParam);
+            const exists = clientsData.items.some((c) => c.id === clientId);
+            if (exists) {
+                setFormData((prev) => ({ ...prev, clientId }));
+            }
+        }
+    }, [clientIdParam, clientsData]);
 
     const fetchAvailableSlots = useCallback(async () => {
         if (!trainerId || !formData.scheduledDate) {
@@ -209,6 +221,7 @@ export const NewScheduledSessionPage: React.FC = () => {
                             subtitle="Programa una cita con tu cliente"
                         />
                         <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/scheduling")}>
+                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                             Volver al calendario
                         </Button>
                     </div>
@@ -216,7 +229,7 @@ export const NewScheduledSessionPage: React.FC = () => {
 
                 <div className="px-4 lg:px-8 pb-12 lg:pb-20">
                     <div className="bg-card border border-border rounded-lg p-6 lg:p-8">
-                        {isLoadingClients ? (
+                        {isLoadingProfile || isLoadingClients ? (
                             <p className="text-muted-foreground">Cargando clientes...</p>
                         ) : (
                             <form id="new-scheduled-session-form" onSubmit={handleSubmit} className="space-y-5">

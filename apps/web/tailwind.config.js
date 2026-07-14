@@ -124,10 +124,15 @@ export default {
             minHeight: {
                 'touch': '2.75rem',
                 'touch-sm': '2.5rem',
+                'touch-athlete': '3rem',
             },
             minWidth: {
                 'touch': '2.75rem',
                 'touch-sm': '2.5rem',
+                'touch-athlete': '3rem',
+            },
+            height: {
+                'touch-athlete': '3rem',
             },
             fontSize: {
                 /** Etiquetas y badges pequeños (11px). */

@@ -1,142 +1,86 @@
 import { describe, expect, it } from "vitest";
-import { buildWeeklyVolumePanelRows, summarizeVolumeRowStatuses } from "./weeklyVolumePanelModel";
-import { mondayOfIsoWeekContaining } from "../utils/isoWeekRange";
+import {
+    buildWeeklyVolumePanelRows,
+    formatVolumeRatioHoy,
+    mapSessionLoadDraftRowToPanelInput,
+    mapWeeklySavedRowToPanelInput,
+} from "./weeklyVolumePanelModel";
 
-describe("mondayOfIsoWeekContaining", () => {
-    it("returns Monday for a Wednesday in April 2026", () => {
-        expect(mondayOfIsoWeekContaining("2026-04-15")).toBe("2026-04-13");
-    });
+describe("mapSessionLoadDraftRowToPanelInput", () => {
+    it("usa solo draft_sets y desglose del borrador (no acumulado semanal)", () => {
+        const input = mapSessionLoadDraftRowToPanelInput({
+            muscle_group_id: 1,
+            name_es: "glúteos",
+            draft_sets: 4,
+            draft_direct: 3,
+            draft_indirect: 1,
+            daily_target: 9,
+            pattern_session_days: 2,
+        });
 
-    it("returns same Monday when input is Monday", () => {
-        expect(mondayOfIsoWeekContaining("2026-04-13")).toBe("2026-04-13");
+        expect(input.planned_sets_sum).toBe(4);
+        expect(input.direct_sets).toBe(3);
+        expect(input.indirect_sets).toBe(1);
+        expect(input.data_scope).toBe("session_draft");
     });
 });
 
 describe("buildWeeklyVolumePanelRows", () => {
-    it("marks no_target when target is null", () => {
-        const rows = buildWeeklyVolumePanelRows(
-            [{ muscle_group_id: 1, name_es: "Pecho", planned_sets_sum: 5 }],
-            null
-        );
-        expect(rows[0].status).toBe("no_target");
-        expect(rows[0].rangeMin).toBeNull();
-        expect(rows[0].draftSets).toBe(0);
-        expect(rows[0].targetToday).toBeNull();
-    });
-
-    it("preserves D1 breakdown fields when provided", () => {
-        const rows = buildWeeklyVolumePanelRows(
-            [{
-                muscle_group_id: 1,
-                name_es: "Pecho",
-                planned_sets_sum: 15,
-                direct_sets: 10,
-                indirect_sets: 5, // e.g. 10 synergist sets * 0.5 floor = 5
-            }],
-            16
-        );
-        expect(rows[0].accumulated).toBe(15);
-        expect(rows[0].directSets).toBe(10);
-        expect(rows[0].indirectSets).toBe(5);
-        expect(rows[0].status).toBe("on_target");
-    });
-
-    it("classifies deficit and excess with ±10% band (weekly fallback)", () => {
-        const target = 10;
+    it("modo diario: status según draft_sets vs daily_target", () => {
         const rows = buildWeeklyVolumePanelRows(
             [
-                { muscle_group_id: 1, name_es: "A", planned_sets_sum: 8 },
-                { muscle_group_id: 2, name_es: "B", planned_sets_sum: 10 },
-                { muscle_group_id: 3, name_es: "C", planned_sets_sum: 12 },
+                mapSessionLoadDraftRowToPanelInput({
+                    muscle_group_id: 1,
+                    name_es: "glúteos",
+                    draft_sets: 4,
+                    draft_direct: 3,
+                    draft_indirect: 1,
+                    daily_target: 9,
+                }),
             ],
-            target
+            18
         );
-        expect(rows[0].status).toBe("deficit");   // 8 < 9
-        expect(rows[1].status).toBe("on_target"); // 10 within 9–11
-        expect(rows[2].status).toBe("excess");    // 12 > 11
+
+        expect(rows[0]?.draftSets).toBe(4);
+        expect(rows[0]?.accumulated).toBe(4);
+        expect(rows[0]?.status).toBe("deficit");
+        expect(rows[0]?.dataScope).toBe("session_draft");
     });
 
-    it("classifies daily mode when daily_target is provided", () => {
-        const target = 10; // targetCenter semanal, no se usa en modo diario
-        const rows = buildWeeklyVolumePanelRows(
-            [
-                { muscle_group_id: 1, name_es: "A", planned_sets_sum: 20, draft_sets: 3, daily_target: 5 },
-                { muscle_group_id: 2, name_es: "B", planned_sets_sum: 20, draft_sets: 5, daily_target: 5 },
-                { muscle_group_id: 3, name_es: "C", planned_sets_sum: 20, draft_sets: 6, daily_target: 5 },
-            ],
-            target
-        );
-        // daily_target=5 => range 4–5 (floor 4.5=4, ceil 5.5=6)
-        expect(rows[0].status).toBe("deficit");   // 3 < 4
-        expect(rows[0].targetToday).toBe(5);
-        expect(rows[0].draftSets).toBe(3);
-        expect(rows[0].savedWeekWithoutSession).toBeNull();
-        expect(rows[1].status).toBe("on_target"); // 5 within 4–6
-        expect(rows[2].status).toBe("on_target"); // 6 === 6 => on_target
-    });
-
-    it("passes through accumulated_saved_without_session in daily mode", () => {
+    it("fallback semanal: session_draft usa draft_sets como numerador, no projected_total", () => {
         const rows = buildWeeklyVolumePanelRows(
             [
                 {
-                    muscle_group_id: 1,
-                    name_es: "Bíceps",
-                    planned_sets_sum: 10,
-                    draft_sets: 3,
-                    daily_target: 11,
-                    accumulated_saved_without_session: 7,
+                    muscle_group_id: 2,
+                    name_es: "cuádriceps",
+                    planned_sets_sum: 4,
+                    direct_sets: 3,
+                    indirect_sets: 1,
+                    draft_sets: 4,
+                    daily_target: 0,
+                    data_scope: "session_draft",
                 },
             ],
-            20
+            18
         );
-        expect(rows[0].savedWeekWithoutSession).toBe(7);
-        expect(rows[0].targetToday).toBe(11);
+
+        expect(rows[0]?.status).toBe("deficit");
+        expect(formatVolumeRatioHoy(rows[0]!)).toBe("4 / 18 esta sesión");
     });
 
-    it("daily mode: excess when strictly above ceil band", () => {
+    it("weekly_saved: numerador es acumulado semanal guardado", () => {
         const rows = buildWeeklyVolumePanelRows(
-            [
-                { muscle_group_id: 1, name_es: "X", planned_sets_sum: 10, draft_sets: 7, daily_target: 5 },
-            ],
-            10
+            [mapWeeklySavedRowToPanelInput({
+                muscle_group_id: 3,
+                name_es: "gemelos",
+                planned_sets_sum: 11,
+                direct_sets: 9,
+                indirect_sets: 2,
+            })],
+            18
         );
-        // daily_target=5 => rangeMax = max(4, ceil(5.5)) = 6
-        expect(rows[0].status).toBe("excess"); // 7 > 6
-    });
-});
 
-describe("summarizeVolumeRowStatuses", () => {
-    it("counts statuses", () => {
-        const s = summarizeVolumeRowStatuses([
-            {
-                muscleGroupId: 1,
-                nameEs: "",
-                accumulated: 1,
-                savedWeekWithoutSession: null,
-                draftSets: 1,
-                targetToday: null,
-                rangeMin: 1,
-                rangeMax: 2,
-                targetCenter: 1,
-                status: "deficit",
-                patternSessionDays: null,
-            },
-            {
-                muscleGroupId: 2,
-                nameEs: "",
-                accumulated: 2,
-                savedWeekWithoutSession: null,
-                draftSets: 2,
-                targetToday: null,
-                rangeMin: 1,
-                rangeMax: 2,
-                targetCenter: 1,
-                status: "on_target",
-                patternSessionDays: null,
-            },
-        ]);
-        expect(s.deficit).toBe(1);
-        expect(s.on_target).toBe(1);
-        expect(s.excess).toBe(0);
+        expect(rows[0]?.accumulated).toBe(11);
+        expect(formatVolumeRatioHoy(rows[0]!)).toBe("11 / 18 semana");
     });
 });

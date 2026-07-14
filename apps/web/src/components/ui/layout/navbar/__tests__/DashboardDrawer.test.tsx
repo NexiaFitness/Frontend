@@ -29,11 +29,17 @@ function renderDrawer(props: Partial<DashboardDrawerProps> = {}) {
     return render(<DashboardDrawer {...defaultProps} {...props} />);
 }
 
+function getDrawerDialog(options?: { hidden?: boolean }) {
+    return screen.getByRole("dialog", {
+        name: /menú de navegación/i,
+        hidden: options?.hidden,
+    });
+}
+
 describe("DashboardDrawer", () => {
     it("renders dialog with aria-label when open", () => {
         renderDrawer({ isOpen: true });
-        const dialog = screen.getByRole("dialog", { name: /menú de navegación/i });
-        expect(dialog).toBeInTheDocument();
+        expect(getDrawerDialog()).toBeInTheDocument();
     });
 
     it("renders menu items as links", () => {
@@ -54,26 +60,24 @@ describe("DashboardDrawer", () => {
         expect(screen.getByText("Professional Trainer")).toBeInTheDocument();
     });
 
-    it("calls onClose when overlay is clicked", async () => {
+    it("calls onClose when backdrop is clicked", async () => {
         const onClose = vi.fn();
         renderDrawer({ isOpen: true, onClose });
-        const overlay = document.querySelector('[aria-hidden="true"]');
-        expect(overlay).toBeInTheDocument();
-        if (overlay) {
-            await userEvent.click(overlay as HTMLElement);
-            expect(onClose).toHaveBeenCalled();
-        }
+        const backdrop = screen.getByTestId("dashboard-drawer-backdrop");
+        await userEvent.click(backdrop);
+        expect(onClose).toHaveBeenCalledTimes(1);
     });
 
     it("dialog is in DOM when closed (translate-x-full) for animation", () => {
         renderDrawer({ isOpen: false });
-        const dialog = screen.getByRole("dialog", { name: /menú de navegación/i });
-        expect(dialog).toBeInTheDocument();
+        const dialog = screen.getByRole("dialog", { hidden: true });
+        expect(dialog).toHaveAttribute("aria-label", "Menú de navegación");
+        expect(dialog).toHaveAttribute("aria-hidden", "true");
         expect(dialog.className).toContain("translate-x-full");
     });
 
     it("handles null user", () => {
         renderDrawer({ user: null });
-        expect(screen.getByRole("dialog", { name: /menú de navegación/i })).toBeInTheDocument();
+        expect(getDrawerDialog()).toBeInTheDocument();
     });
 });

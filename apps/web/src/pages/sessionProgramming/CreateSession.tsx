@@ -20,8 +20,11 @@
  */
 
 import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
+import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -40,10 +43,12 @@ import {
     useCreateSessionBlockExerciseMutation,
     useCreateSessionTemplateMutation,
 } from "@nexia/shared/api/sessionProgrammingApi";
+import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import { exerciseDisplayName } from "@nexia/shared";
+import { exerciseDisplayName, useDefaultSessionName } from "@nexia/shared";
 import { ExercisePickerPanel } from "@/components/exercises/ExercisePickerPanel";
 import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
+import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
 import {
@@ -55,16 +60,18 @@ import { buildExercisePayloadFromLine } from "./buildExercisePayload";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import { getRowVolumeSetsPerExercise } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
+import { SaveAsTemplateModal } from "@/components/sessionProgramming/SaveAsTemplateModal";
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
-import { PageTitle } from "@/components/dashboard/shared";
+import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS, PageTitle } from "@/components/dashboard/shared";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
-import { SessionValidationPanel } from "@/components/sessionProgramming/SessionValidationPanel";
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
+import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
+import { getVolumeIntensityPrefillSourceLabel } from "@nexia/shared/training/sessionVolumeIntensityPrefill";
 import type { RootState } from "@nexia/shared/store";
 import type {
     CreateSessionFormErrors,
@@ -72,7 +79,6 @@ import type {
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import type {
     TrainingSessionCreate,
-    SessionCoherenceWarning,
 } from "@nexia/shared/types/trainingSessions";
 import type { TrainingPlanInstance } from "@nexia/shared/types/training";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
@@ -132,6 +138,10 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         { skip: !trainerId }
     );
 
+    useScrollDashboardWhenReady(
+        !isLoadingClient && !isLoadingPlan && !isLoadingPlans,
+    );
+
     // Estado para el plan seleccionado (si se elige manualmente o se autoselecciona)
     const [selectedPlanId, setSelectedPlanId] = useState<number | null>(planId);
 
@@ -161,7 +171,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         includeHistory: false,
     });
 
-    // Recomendaciones de plan (para pre-llenar duración, intensidad, volumen y mostrar bloque Lovable)
+    // Recomendaciones de plan (tarjetas Lovable + panel volumen semanal)
     const { data: recommendationsData } = useGetTrainingPlanRecommendationsQuery(
         { clientId: effectiveClientId ?? 0 },
         { skip: !effectiveClientId || effectiveClientId <= 0 }
@@ -170,7 +180,23 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // Cliente a mostrar (prioridad: cliente directo > cliente del plan)
     const displayClient = client || planClient;
 
-    const prefillApplied = useRef<{ clientId: number; duration: boolean; rec: boolean } | null>(null);
+    const [formData, setFormData] = useState({
+        sessionName: "",
+        sessionDate: dateFromQuery || new Date().toISOString().split("T")[0],
+        sessionType: "strength",
+        plannedDuration: "60",
+        plannedIntensity: "5",
+        plannedVolume: "5",
+        notes: "",
+    });
+
+    const [volumeIntensityTouched, setVolumeIntensityTouched] = useState(false);
+
+    const prefillApplied = useRef<{ clientId: number; duration: boolean } | null>(null);
+
+    useEffect(() => {
+        setVolumeIntensityTouched(false);
+    }, [effectiveClientId]);
 
     useEffect(() => {
         if (!effectiveClientId || effectiveClientId <= 0) {
@@ -178,7 +204,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             return;
         }
         if (prefillApplied.current?.clientId !== effectiveClientId) {
-            prefillApplied.current = { clientId: effectiveClientId, duration: false, rec: false };
+            prefillApplied.current = { clientId: effectiveClientId, duration: false };
         }
         const state = prefillApplied.current;
         const updates: Partial<typeof formData> = {};
@@ -194,48 +220,47 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             state.duration = true;
         }
 
-        const rec = recommendationsData as { status?: string; recommendations?: { volume?: { level?: string }; intensity?: { level?: string } } } | undefined;
-        if (!state.rec && rec?.status === "complete" && rec.recommendations) {
-            const levelToSlider: Record<string, string> = {
-                low: "3",
-                Low: "3",
-                medium: "6",
-                Medium: "6",
-                high: "8",
-                High: "8",
-            };
-            const volLevel = rec.recommendations.volume?.level;
-            const intLevel = rec.recommendations.intensity?.level;
-            if (volLevel) updates.plannedVolume = levelToSlider[volLevel] ?? "6";
-            if (intLevel) updates.plannedIntensity = levelToSlider[intLevel] ?? "6";
-            state.rec = true;
-        }
-
         if (Object.keys(updates).length > 0) {
             setFormData((prev) => ({ ...prev, ...updates }));
         }
-    }, [effectiveClientId, displayClient, recommendationsData]);
+    }, [effectiveClientId, displayClient]);
+
+    const volumeIntensityPrefill = useSessionVolumeIntensityPrefill({
+        clientId: effectiveClientId,
+        sessionDate: formData.sessionDate,
+        trainerId,
+        enabled: !!effectiveClientId && effectiveClientId > 0,
+    });
+
+    useEffect(() => {
+        if (volumeIntensityTouched || volumeIntensityPrefill.isLoading) return;
+        setFormData((prev) => ({
+            ...prev,
+            plannedVolume: String(volumeIntensityPrefill.volume),
+            plannedIntensity: String(volumeIntensityPrefill.intensity),
+        }));
+    }, [
+        volumeIntensityTouched,
+        volumeIntensityPrefill.isLoading,
+        volumeIntensityPrefill.volume,
+        volumeIntensityPrefill.intensity,
+        formData.sessionDate,
+        effectiveClientId,
+    ]);
 
     // Hook de mutación para crear sesión
     const [createTrainingSession, { isLoading: isCreatingSession }] = useCreateTrainingSessionMutation();
     const [createStandaloneSession, { isLoading: isCreatingStandalone }] = useCreateStandaloneSessionMutation();
     const [createStandaloneExercise, { isLoading: isSavingStandaloneExercises }] = useCreateStandaloneSessionExerciseMutation();
 
-    const [formData, setFormData] = useState({
-        sessionName: "",
-        sessionDate: dateFromQuery || new Date().toISOString().split("T")[0],
-        sessionType: "strength",
-        plannedDuration: "60",
-        plannedIntensity: "5",
-        plannedVolume: "5",
-        notes: "",
-    });
-
     const volumeRecComplete =
         recommendationsData?.status === "complete"
             ? (recommendationsData as TrainingPlanRecommendationsComplete)
             : null;
     const volumeMaxSets = volumeRecComplete?.recommendations.volume.max_sets;
+    const sliderValueNote = !volumeIntensityTouched
+        ? getVolumeIntensityPrefillSourceLabel(volumeIntensityPrefill.source)
+        : undefined;
 
     const plannedVolumeInt = Math.min(
         10,
@@ -258,12 +283,49 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
     // P2: Usar StandaloneSession cuando no hay plan activo para la fecha (solo en contexto cliente sin planId)
     const useStandaloneSession = !planId && !!resolvedClientId && !isLoadingPlans && !hasActivePlanForDate;
 
+    const nameTouchedRef = useRef(false);
+    const defaultSessionName = useDefaultSessionName({
+        clientId: effectiveClientId,
+        trainerId,
+        sessionDate: formData.sessionDate,
+        isStandalone: useStandaloneSession,
+        enabled: !!effectiveClientId && effectiveClientId > 0,
+    });
+
+    useEffect(() => {
+        nameTouchedRef.current = false;
+    }, [effectiveClientId]);
+
+    useEffect(() => {
+        if (nameTouchedRef.current) return;
+        setFormData((prev) =>
+            prev.sessionName === defaultSessionName
+                ? prev
+                : { ...prev, sessionName: defaultSessionName },
+        );
+    }, [defaultSessionName]);
+
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
 
     /** Fase 4+7: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
     const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
+
+    const { captureBeforePickerChange } = usePreserveDashboardScrollOnConstructorPicker(
+        showExercisePickerModal,
+        targetRowIdForPicker
+    );
+
+    const handleAddExerciseRequest = useCallback(
+        (rowId: string, exerciseSlotId?: string) => {
+            captureBeforePickerChange(rowId);
+            setTargetRowIdForPicker(rowId);
+            setTargetExerciseSlotId(exerciseSlotId ?? null);
+            setShowExercisePickerModal(true);
+        },
+        [captureBeforePickerChange]
+    );
 
     const draftExercisesForVolumePanel = useMemo(
         () => aggregateConstructorRowsForSessionLoadDraft(constructorRows),
@@ -278,20 +340,13 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         volumeMaxSets,
         includeStandalone: true,
         draftExercises: draftExercisesForVolumePanel,
+        intent: "create_session",
     });
 
     const { data: blockTypes = [] } = useGetTrainingBlockTypesQuery({ skip: 0, limit: 100 });
     const [createSessionBlock] = useCreateSessionBlockMutation();
     const [createSessionBlockExercise] = useCreateSessionBlockExerciseMutation();
     const [createSessionTemplate, { isLoading: isSavingTemplate }] = useCreateSessionTemplateMutation();
-
-    /** Fase 3: avisos de coherencia tras crear sesión; al confirmar "Entendido" se redirige. */
-    const [postCreateCoherenceWarnings, setPostCreateCoherenceWarnings] = useState<
-        SessionCoherenceWarning[] | null
-    >(null);
-    const [postCreateRedirectPath, setPostCreateRedirectPath] = useState<string | null>(null);
-    const [validationPanelOpen, setValidationPanelOpen] = useState(false);
-    const [createdSessionId, setCreatedSessionId] = useState<number | null>(null);
 
     /** Fase 4: Añadir ejercicio seleccionado a la fila del Constructor */
     const handleSelectFromPicker = (exercise: Exercise) => {
@@ -309,18 +364,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         setTargetExerciseSlotId(null);
     };
 
-    /** Guardar como plantilla — incluye bloques y ejercicios del Constructor */
-    const handleSaveAsTemplate = async () => {
-        const payload = buildTemplatePayloadFromConstructorRows({
+    const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false);
+
+    /** Guardar como plantilla — modal con nombre obligatorio (B15) */
+    const handleSaveAsTemplate = async (payload: { templateName: string; description: string }) => {
+        const templatePayload = buildTemplatePayloadFromConstructorRows({
             constructorRows,
-            sessionName: formData.sessionName,
+            sessionName: payload.templateName,
             sessionType: formData.sessionType,
             plannedDuration: formData.plannedDuration,
-            notes: formData.notes,
+            notes: payload.description || formData.notes,
         });
         try {
-            await createSessionTemplate(payload).unwrap();
+            await createSessionTemplate(templatePayload).unwrap();
             showSuccess("Plantilla guardada correctamente", 2000);
+            setShowSaveTemplateModal(false);
             setTimeout(() => navigate(-1), 1500);
         } catch {
             showError("Error al guardar la plantilla. Inténtalo de nuevo.");
@@ -329,9 +387,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     const validateForm = useCallback((): { valid: boolean; errors: CreateSessionFormErrors } => {
         const errors: CreateSessionFormErrors = {};
-        if (!formData.sessionName.trim()) {
-            errors.sessionName = "El nombre de la sesión es obligatorio";
-        }
         if (!formData.sessionDate) {
             errors.sessionDate = "La fecha es obligatoria";
         }
@@ -342,7 +397,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             errors.trainingPlanId = "Debes seleccionar un plan de entrenamiento para esta sesión";
         }
         return { valid: Object.keys(errors).length === 0, errors };
-    }, [formData.sessionName, formData.sessionDate, formData.sessionType, useStandaloneSession, selectedPlanId]);
+    }, [formData.sessionDate, formData.sessionType, useStandaloneSession, selectedPlanId]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -362,9 +417,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
         const redirectTo =
             returnToPath ??
-            (selectedPlanId
-                ? `/dashboard/training-plans/${selectedPlanId}?tab=sessions`
-                : `/dashboard/clients/${effectiveClientId}?tab=sessions`);
+            `/dashboard/clients/${effectiveClientId}?tab=sessions`;
 
         const convertPlannedReps = (repsStr: string): number | null => {
             if (!repsStr?.trim()) return null;
@@ -377,6 +430,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
             return !isNaN(parsed) ? parsed : null;
         };
 
+        const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
+
         try {
             if (useStandaloneSession) {
                 // P2: Crear StandaloneSession (sesión libre) — ejercicios aplanados del Constructor
@@ -384,7 +439,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     trainer_id: trainerId,
                     client_id: effectiveClientId,
                     session_date: formData.sessionDate,
-                    session_name: formData.sessionName.trim(),
+                    session_name: resolvedSessionName,
                     session_type: formData.sessionType,
                     planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
                     actual_duration: null,
@@ -449,7 +504,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     training_plan_id: selectedPlanId!,
                     client_id: effectiveClientId,
                     trainer_id: trainerId,
-                    session_name: formData.sessionName.trim(),
+                    session_name: resolvedSessionName,
                     session_date: formData.sessionDate,
                     session_type: formData.sessionType,
                     planned_duration: formData.plannedDuration ? Number(formData.plannedDuration) : null,
@@ -460,7 +515,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 };
 
                 const createdSession = await createTrainingSession(sessionData).unwrap();
-                setCreatedSessionId(createdSession.id);
 
                 if (constructorRows.length > 0) {
                     let blocksSaved = 0;
@@ -473,7 +527,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 block_type_id: row.blockTypeId,
                                 order_in_session: i + 1,
                                 set_type: row.setType,
-                                rounds: row.rounds,
+                                rounds: getBlockRoundsFromConstructorRow(row),
                                 time_cap: row.timeCap,
                                 interval_seconds: row.intervalSeconds,
                                 objective_text:
@@ -522,18 +576,9 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     showSuccess("Sesión creada exitosamente.", 2000);
                 }
 
-                const coherence = createdSession.coherence;
-                const warnings =
-                    coherence?.coherence_warnings && coherence.coherence_warnings.length > 0
-                        ? coherence.coherence_warnings
-                        : null;
-
-                if (warnings && warnings.length > 0) {
-                    setPostCreateCoherenceWarnings(warnings);
-                    setPostCreateRedirectPath(redirectTo);
-                } else {
-                    setValidationPanelOpen(true);
-                }
+                navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`, {
+                    state: returnToStateFromView(location),
+                });
             }
         } catch (err) {
             console.error("Error creando sesión:", err);
@@ -550,33 +595,6 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         return (
             <div className="flex items-center justify-center min-h-screen">
                 <LoadingSpinner size="lg" />
-            </div>
-        );
-    }
-
-    if (postCreateCoherenceWarnings != null && postCreateCoherenceWarnings.length > 0 && postCreateRedirectPath) {
-        return (
-            <div className="mb-6 lg:mb-8">
-                <div className="rounded-xl border border-warning/30 bg-warning/10 p-6 space-y-4">
-                    <h2 className="text-xl font-semibold text-foreground">Sesión creada con avisos de coherencia</h2>
-                    <p className="text-sm text-muted-foreground">
-                        La sesión se ha guardado correctamente. Revisa los siguientes avisos respecto al plan del día:
-                    </p>
-                    <ul className="list-disc list-inside space-y-1 text-sm text-foreground">
-                        {postCreateCoherenceWarnings.map((w, i) => (
-                            <li key={i}>{w.message}</li>
-                        ))}
-                    </ul>
-                    <Button
-                        variant="primary"
-                        onClick={() => {
-                            setPostCreateCoherenceWarnings(null);
-                            setValidationPanelOpen(true);
-                        }}
-                    >
-                        Entendido
-                    </Button>
-                </div>
             </div>
         );
     }
@@ -654,16 +672,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
                                 <div>
                                     <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Nombre de la Sesión *
+                                        Nombre de la sesión
                                     </label>
                                     <Input
                                         type="text"
                                         value={formData.sessionName}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, sessionName: e.target.value }))}
-                                        required
+                                        onChange={(e) => {
+                                            nameTouchedRef.current = true;
+                                            setFormData((prev) => ({ ...prev, sessionName: e.target.value }));
+                                        }}
                                         placeholder="Ej: Fuerza — Tren superior A"
                                         className="bg-surface"
                                     />
+                                    <p className="text-xs text-muted-foreground mt-1">
+                                        Se genera automáticamente; puedes cambiarlo
+                                    </p>
                                     {formErrors.sessionName && <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>}
                                 </div>
                                 {resolvedClientId && (
@@ -765,7 +788,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         min={1}
                                         max={10}
                                         color="primary"
-                                        onChange={(v) => setFormData({ ...formData, plannedVolume: String(v) })}
+                                        valueNote={sliderValueNote}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData({ ...formData, plannedVolume: String(v) });
+                                        }}
                                     />
                                 </div>
                                 <div className="mt-3 md:mt-0">
@@ -776,7 +803,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         min={1}
                                         max={10}
                                         color="warning"
-                                        onChange={(v) => setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }))}
+                                        valueNote={sliderValueNote}
+                                        onChange={(v) => {
+                                            setVolumeIntensityTouched(true);
+                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
+                                        }}
                                     />
                                 </div>
                             </div>
@@ -833,7 +864,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             {effectiveClientId && hasActiveInjuries && displayClient && (
                                 <Alert variant="warning">
                                     Atención: {displayClient.nombre} {displayClient.apellidos} tiene lesiones activas (
-                                    {clientActiveInjuries.map((i) => i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
+                                    {clientActiveInjuries.map((i) => i.joint_name_es || i.joint_name).filter(Boolean).join(", ") || "ver ficha del cliente"}
                                     ). Los ejercicios contraindicados están marcados en la lista.
                                 </Alert>
                             )}
@@ -848,83 +879,78 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         isLoading={weeklyVolumePanel.isLoading}
                                         isError={weeklyVolumePanel.isError}
                                         hasClient={weeklyVolumePanel.hasClient}
+                                        intent={weeklyVolumePanel.intent}
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                         weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                    />
+                                    <SessionMovementPatternsCard
+                                        clientId={effectiveClientId}
+                                        sessionDate={formData.sessionDate}
+                                        trainerId={trainerId}
                                     />
                                 </>
                             )}
 
-                            {/* Bloques + Constructor + Panel lateral — flex cuando panel abierto */}
-                            <div className="flex gap-6">
-                                <div
-                                    className={cn(
-                                        "flex-1 space-y-5 min-w-0",
-                                        showExercisePickerModal && "lg:max-w-[calc(100%-324px)]"
-                                    )}
-                                >
-                                    <div className="space-y-5">
-                                        <TrainingBlockSelector
-                                            selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
-                                            onSelect={(blockTypeId) => {
-                                                if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
-                                                const newRow: ConstructorRow = {
-                                                    id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                                                    blockTypeId: blockTypeId,
-                                                    setType: SET_TYPE.SINGLE_SET,
-                                                    sets: 3,
-                                                    rounds: null,
-                                                    timeCap: null,
-                                                    intervalSeconds: null,
-                                                    exercises: [],
-                                                    rest: 60,
-                                                    repsTipo: "reps",
-                                                };
-                                                setConstructorRows((prev) => [...prev, newRow]);
-                                            }}
-                                        />
-                                        <SessionConstructor
-                                            rows={constructorRows}
-                                            blockTypes={blockTypes}
-                                            onRowsChange={setConstructorRows}
-                                            onAddExerciseRequest={(rowId, exerciseSlotId) => {
-                                                setTargetRowIdForPicker(rowId);
-                                                setTargetExerciseSlotId(exerciseSlotId ?? null);
-                                                setShowExercisePickerModal(true);
-                                            }}
-                                            titleAccessory={
-                                                constructorRows.length > 0 ? (
-                                                    <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
-                                                ) : undefined
-                                            }
-                                        />
-                                    </div>
+                            <div className="space-y-5">
+                                <TrainingBlockSelector
+                                    selectedBlockTypeIds={[...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean))]}
+                                    onSelect={(blockTypeId) => {
+                                        if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId)) return;
+                                        const newRow: ConstructorRow = {
+                                            id: `row-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
+                                            blockTypeId: blockTypeId,
+                                            setType: SET_TYPE.SINGLE_SET,
+                                            sets: 3,
+                                            rounds: null,
+                                            timeCap: null,
+                                            intervalSeconds: null,
+                                            exercises: [],
+                                            rest: 60,
+                                            repsTipo: "reps",
+                                        };
+                                        setConstructorRows((prev) => [...prev, newRow]);
+                                    }}
+                                />
+                                <SessionConstructor
+                                    rows={constructorRows}
+                                    blockTypes={blockTypes}
+                                    onRowsChange={setConstructorRows}
+                                    onAddExerciseRequest={handleAddExerciseRequest}
+                                    titleAccessory={
+                                        constructorRows.length > 0 ? (
+                                            <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                        ) : undefined
+                                    }
+                                    activePickerRowId={targetRowIdForPicker}
+                                    exercisePickerPanel={
+                                        showExercisePickerModal ? (
+                                            <ExercisePickerPanel
+                                                mode="inline"
+                                                isOpen={true}
+                                                onClose={() => {
+                                                    setShowExercisePickerModal(false);
+                                                    setTargetRowIdForPicker(null);
+                                                }}
+                                                onSelect={handleSelectFromPicker}
+                                                clientId={effectiveClientId ?? undefined}
+                                                activeInjuries={clientActiveInjuries}
+                                            />
+                                        ) : null
+                                    }
+                                />
+                            </div>
 
-                                    {/* Notas — al final del formulario */}
-                                    <div className="pt-6 border-t border-border">
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                            Notas de la Sesión
-                                        </label>
-                                        <Textarea
-                                            value={formData.notes}
-                                            onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
-                                            rows={3}
-                                            placeholder="Instrucciones generales para la sesión..."
-                                        />
-                                    </div>
-                                </div>
-
-                                {showExercisePickerModal && (
-                                    <ExercisePickerPanel
-                                        isOpen={true}
-                                        onClose={() => {
-                                            setShowExercisePickerModal(false);
-                                            setTargetRowIdForPicker(null);
-                                        }}
-                                        onSelect={handleSelectFromPicker}
-                                        clientId={effectiveClientId ?? undefined}
-                                        activeInjuries={clientActiveInjuries}
-                                    />
-                                )}
+                            {/* Notas — al final del formulario */}
+                            <div className="pt-6 border-t border-border">
+                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                    Notas de la Sesión
+                                </label>
+                                <Textarea
+                                    value={formData.notes}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
+                                    rows={3}
+                                    placeholder="Instrucciones generales para la sesión..."
+                                />
                             </div>
                 </div>
                 </form>
@@ -932,7 +958,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
             {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
             <div
-                className="fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 py-4"
+                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
                 style={{ left: "var(--sidebar-width, 0)" }}
             >
                 <div className="flex items-center justify-between gap-3">
@@ -940,9 +966,8 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={handleSaveAsTemplate}
+                        onClick={() => setShowSaveTemplateModal(true)}
                         disabled={isSavingTemplate}
-                        isLoading={isSavingTemplate}
                     >
                         Guardar como Plantilla
                     </Button>
@@ -1002,26 +1027,11 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 </div>
             </div>
 
-            <SessionValidationPanel
-                trainingSessionId={createdSessionId}
-                isOpen={validationPanelOpen}
-                onClose={() => {
-                    setValidationPanelOpen(false);
-                    const target = postCreateRedirectPath || backPath;
-                    if (target) {
-                        navigate(target);
-                    } else {
-                        const state = location.state as LocationStateReturnTo | null;
-                        if (state?.from) {
-                            navigate(state.from);
-                        } else {
-                            navigate(-1);
-                        }
-                    }
-                }}
-                onEdit={() => {
-                    setValidationPanelOpen(false);
-                }}
+            <SaveAsTemplateModal
+                isOpen={showSaveTemplateModal}
+                onClose={() => setShowSaveTemplateModal(false)}
+                onConfirm={handleSaveAsTemplate}
+                isLoading={isSavingTemplate}
             />
         </>
     );

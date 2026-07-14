@@ -5,6 +5,7 @@ export * from "./analytics/planBlockAnalytics";
 export * from "./api/authApi";
 export * from "./api/baseApi";
 export * from "./api/clientsApi";
+export * from "./api/invitationsApi";
 export * from "./api/sessionLoadApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
@@ -41,6 +42,8 @@ export {
 export * from "./api/exercisesApi";
 export * from "./api/fatigueApi";
 export * from "./api/injuriesApi";
+export * from "./api/notificationsApi";
+export * from "./api/athleteApi";
 export * from "./api";
 
 // Store
@@ -132,16 +135,30 @@ export {
 // Tipos
 export * from "./types/auth";
 export * from "./types/client";
+export * from "./types/invitation";
+export * from "./types/athleteOnboarding";
 export * from "./types/clientOnboarding";
 export * from "./types/clientStats";
 export * from "./types/trainer";
+export {
+    TRAINER_OCCUPATION_CATALOG_LABELS,
+    TRAINER_SPECIALTY_CATALOG_LABELS,
+    getTrainerOccupationLabel,
+    getTrainerModalityLabel,
+    getTrainerSpecialtyLabel,
+    toTrainerCatalogOptions,
+} from "./utils/trainerCatalogLabels";
 export * from "./types/exercise";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";
+export * from "./types/notification";
 export * from "./training/trainingPlanEditor";
 export * from "./training/activePeriodBlock";
+export * from "./training/trainingPlanLifecycle";
 export * from "./training/weeklyVolumeTarget";
+export * from "./training/volumeIntensityContext";
+export * from "./training/sessionVolumeIntensityPrefill";
 export * from "./training/weeklyVolumePanelModel";
 export {
     mondayOfIsoWeekContaining,
@@ -179,6 +196,7 @@ export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
 export * from "./types/coherence";
+export * from "./types/athleteWeeklySummary";
 export * from "./types/dashboard";
 export * from "./types/testing";
 export * from "./types/reports";
@@ -295,15 +313,27 @@ export * from "./hooks/clients/useClientsListWithMetrics";
 export * from "./hooks/clients/useFatigueAlerts";
 export * from "./hooks/clients/useClientForm";
 export * from "./hooks/clients/useClientOnboarding";
+export * from "./hooks/clients/useClientInvite";
+export * from "./hooks/clients/usePendingInvitationsForList";
+export * from "./hooks/clients/useInvitationAccept";
 export * from "./hooks/clients/useClientPreview";
 export * from "./hooks/clients/useClientProgress";
+export * from "./hooks/clients/useClientSetHistory";
+export * from "./hooks/clients/useClientExecutedLoadTrend";
+export * from "./hooks/clients/useClientExerciseLoadProfile";
+export * from "./hooks/clients/useCreateClientExercisePerformanceRecord";
 export * from "./hooks/clients/useClientStats";
 export * from "./hooks/clients/useCreateClientProgress";
 export * from "./hooks/clients/useUpdateClient";
 export * from "./hooks/clients/useUpdateClientProgress";
 export * from "./hooks/clients/useCoherence";
+export * from "./hooks/athlete/useAthleteContext";
+export * from "./hooks/athlete/useAthleteOnboarding";
 export * from "./hooks/clients/useClientTests";
+export * from "./hooks/clients/useTestingAiInsights";
 export * from "./hooks/clients/useCreateTestResult";
+export * from "./hooks/clients/useCreatePhysicalTest";
+export * from "./hooks/clients/useCreateTestEvaluation";
 
 // Hooks - Exercises
 export * from "./hooks/exercises";
@@ -333,6 +363,7 @@ export * from "./utils/validations";
 export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
+export * from "./utils/clientListMetricsPresentation";
 export {
     getClientAvatarColor,
     getClientInitials,
@@ -347,13 +378,57 @@ export * from "./utils/exerciseUiBucket";
 export {
     generateSyntheticWeeks,
     mergeWeeklyStructureWeeks,
+    getTrainingDatesInRange,
+    type TrainingDateInfo,
 } from "./utils/weeklyStructure";
+export {
+    getMondayOfWeekLocal,
+    getBlockCalendarWeekOrdinal,
+    getBlockCalendarWeekCount,
+    formatCalendarWeekRange,
+} from "./utils/calendarWeekForBlock";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
-export { hasOverlap, isDateInRange, countPlannedDays, toLocalISO, type DateRange } from "./utils/periodBlockOverlap";
+export {
+  hasOverlap,
+  isDateInRange,
+  countPlannedDays,
+  toLocalISO,
+  parseISODateLocal,
+  findBlockContainingDate,
+  findNextFreeDate,
+  getBlockOverlapHint,
+  type DateRange,
+} from "./utils/periodBlockOverlap";
 export {
     isoLocalDateToTrainingDayValue,
     parseHabitualTrainingDaySet,
+    resolveClientTrainingFrequency,
 } from "./utils/clientTrainingDays";
+
+export {
+    computeRunSuggestion,
+    resolvePrescribedRpe,
+    mapRpeDelta,
+    exposureToConfidence,
+    roundToLoadStep,
+} from "./utils/athlete/computeRunSuggestion";
+export {
+    shouldShowRunSuggestion,
+    type AthleteRunSuggestion,
+    type AthleteRunSuggestionContext,
+    type AthleteRunSuggestionReference,
+} from "./types/athleteRunSuggestion";
+
+export {
+    buildClientInboxItemsFromNotifications,
+    buildInboxDeepLink,
+    computeInboxBadge,
+    countPendingTrainerResponses,
+    feedbackNeedsUrgentAttention,
+    formatInboxBadgeCount,
+    getInboxItemBorderClass,
+    notificationToInboxItem,
+} from "./utils/trainer/trainerInboxUtils";
 
 // Components
 export * from "./components/SmartNavigation";
@@ -370,10 +445,26 @@ export * from "./hooks/scheduling";
 // Hooks - Session Programming
 export * from "./hooks/sessionProgramming";
 
+// Session Programming - Vista agrupada de bloques (lógica pura)
+export * from "./sessionProgramming/sessionBlockView";
+export * from "./sessionProgramming/dropsetCollapse";
+export * from "./sessionProgramming/parallelRoundCollapse";
+export * from "./sessionProgramming/blockRounds";
+export * from "./sessionProgramming/parallelConstructorHydration";
+export * from "./sessionProgramming/amrapPlannedReps";
+export * from "./sessionProgramming/loadInheritance";
+export * from "./sessionProgramming/sessionBriefMath";
+
 // Hooks - Injuries
 export * from "./hooks/injuries";
 
 // Hooks - Metrics
 export * from "./hooks/metrics";
+
+// Offline — cola ejecución atleta (F1)
+export * from "./offline";
+
+// PWA — detección instalación atleta
+export * from "./pwa";
 
 // Mocks (temporal - mientras backend implementa endpoints)

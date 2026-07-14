@@ -62,6 +62,23 @@ import type {
     GetWeeklySessionLoadByMuscleArg,
     WeeklyMusclePlannedLoadOut,
 } from "../types/sessionLoad";
+import type { ClientLoadInsights } from "../types/clientLoadInsights";
+import type { AthleteOnboardingCompletePayload } from "../types/athleteOnboarding";
+import type {
+    ClientExecutedLoadSummary,
+    ClientSetExecutionsPage,
+    ClientTimedBlockResultsPage,
+    ClientExerciseLoadProfile,
+    GetClientExecutedLoadSummaryArg,
+    GetClientExerciseLoadProfileArg,
+    GetClientSetExecutionsArg,
+    GetClientTimedBlockResultsArg,
+} from "../types/trainerSetExecutions";
+import type {
+    CreateExercisePerformanceRecordArg,
+    ExercisePerformanceRecord,
+    ListExercisePerformanceRecordsArg,
+} from "../types/exercisePerformance";
 import {
     buildCoherenceDevMockResponse,
     shouldServeCoherenceDevMock,
@@ -69,9 +86,12 @@ import {
 import type {
     PhysicalTestResultOut,
     PhysicalTestOut,
+    PhysicalTestCreate,
     ClientTestingSummary,
     CreateTestResultData,
     UpdateTestResultData,
+    TestingAiInsightsRequest,
+    TestingAiInsightsOut,
 } from "../types/testing";
 
 /** Límite máximo de page_size para GET /trainers/{id}/clients (backend: 1–50) */
@@ -166,6 +186,27 @@ export const clientsApi = baseApi.injectEndpoints({
                         { type: "Client", id: "LIST" },
                     ]
                     : [{ type: "Client", id: "LIST" }],
+        }),
+
+        /**
+         * Perfil del cliente autenticado (solo rol athlete).
+         * Endpoint: GET /api/v1/clients/profile
+         */
+        getCurrentClientProfile: builder.query<Client, void>({
+            query: () => ({
+                url: "/clients/profile",
+                method: "GET",
+            }),
+            providesTags: [{ type: "Client", id: "CURRENT_ATHLETE" }],
+        }),
+
+        completeAthleteOnboarding: builder.mutation<Client, AthleteOnboardingCompletePayload>({
+            query: (body) => ({
+                url: "/clients/profile/onboarding",
+                method: "PUT",
+                body,
+            }),
+            invalidatesTags: [{ type: "Client", id: "CURRENT_ATHLETE" }],
         }),
 
         /**
@@ -461,6 +502,23 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * Tracking de un ejercicio concreto (portal atleta V11).
+         * GET /training-sessions/progress/client/{client_id}/exercise/{exercise_id}
+         */
+        getClientExerciseProgressTracking: builder.query<
+            ProgressTracking[],
+            { clientId: number; exerciseId: number; skip?: number; limit?: number }
+        >({
+            query: ({ clientId, exerciseId, skip = 0, limit = 100 }) => ({
+                url: `/training-sessions/progress/client/${clientId}/exercise/${exerciseId}?skip=${skip}&limit=${limit}`,
+                method: "GET",
+            }),
+            providesTags: (result, error, { clientId, exerciseId }) => [
+                { type: "Client", id: `TRACKING-${clientId}-${exerciseId}` },
+            ],
+        }),
+
+        /**
          * Crear registro de progreso del cliente
          */
         createProgressRecord: builder.mutation<ClientProgress, CreateClientProgressData>({
@@ -745,6 +803,40 @@ export const clientsApi = baseApi.injectEndpoints({
         }),
 
         /**
+         * Spec 01 F2 — insight IA (lectura, sin generar)
+         * GET /api/v1/physical-tests/clients/{client_id}/ai-insights
+         */
+        getTestingAiInsights: builder.query<TestingAiInsightsOut, number>({
+            query: (clientId) => ({
+                url: `/physical-tests/clients/${clientId}/ai-insights`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, clientId) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: `${clientId}-TESTING_AI_INSIGHT` },
+            ],
+        }),
+
+        /**
+         * Spec 01 F2 — generar o regenerar insight IA
+         * POST /api/v1/physical-tests/clients/{client_id}/ai-insights
+         */
+        createTestingAiInsights: builder.mutation<
+            TestingAiInsightsOut,
+            { clientId: number; body?: TestingAiInsightsRequest }
+        >({
+            query: ({ clientId, body }) => ({
+                url: `/physical-tests/clients/${clientId}/ai-insights`,
+                method: "POST",
+                body: body ?? {},
+            }),
+            invalidatesTags: (_result, _error, { clientId }) => [
+                { type: "Client", id: clientId },
+                { type: "Client", id: `${clientId}-TESTING_AI_INSIGHT` },
+            ],
+        }),
+
+        /**
          * Crear resultado de test físico
          * Endpoint: POST /api/v1/physical-tests/results
          */
@@ -758,7 +850,21 @@ export const clientsApi = baseApi.injectEndpoints({
                 { type: "Client", id: client_id },
                 { type: "Client", id: "TESTS" },
                 { type: "Client", id: "TESTING_SUMMARY" },
+                { type: "Client", id: `${client_id}-TESTING_AI_INSIGHT` },
             ],
+        }),
+
+        /**
+         * Crear definición de evaluación física (Spec 01 F0)
+         * Endpoint: POST /api/v1/physical-tests/
+         */
+        createPhysicalTest: builder.mutation<PhysicalTestOut, PhysicalTestCreate>({
+            query: (body) => ({
+                url: "/physical-tests/",
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: [{ type: "PhysicalTest", id: "LIST" }],
         }),
 
         /**
@@ -986,6 +1092,133 @@ export const clientsApi = baseApi.injectEndpoints({
             ],
         }),
 
+        getClientLoadInsights: builder.query<ClientLoadInsights, number>({
+            query: (clientId) => `/clients/${clientId}/load-insights`,
+            providesTags: (_result, _error, clientId) => [
+                { type: "Client" as const, id: clientId },
+            ],
+        }),
+
+        getClientSetExecutions: builder.query<
+            ClientSetExecutionsPage,
+            GetClientSetExecutionsArg
+        >({
+            query: ({
+                clientId,
+                exerciseId,
+                trainingSessionId,
+                fromDate,
+                toDate,
+                skip = 0,
+                limit = 50,
+            }) => {
+                const params = new URLSearchParams();
+                if (exerciseId != null) {
+                    params.append("exercise_id", String(exerciseId));
+                }
+                if (trainingSessionId != null) {
+                    params.append("training_session_id", String(trainingSessionId));
+                }
+                if (fromDate) params.append("from_date", fromDate);
+                if (toDate) params.append("to_date", toDate);
+                params.append("skip", String(skip));
+                params.append("limit", String(limit));
+                const qs = params.toString();
+                return {
+                    url: `/clients/${clientId}/set-executions${qs ? `?${qs}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "TrainingSession" as const, id: "LIST" },
+            ],
+        }),
+
+        getClientExecutedLoadSummary: builder.query<
+            ClientExecutedLoadSummary,
+            GetClientExecutedLoadSummaryArg
+        >({
+            query: ({ clientId, fromDate, toDate }) => ({
+                url: `/clients/${clientId}/session-load/executed-summary?from_date=${fromDate}&to_date=${toDate}`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+            ],
+        }),
+
+        getClientTimedBlockResults: builder.query<
+            ClientTimedBlockResultsPage,
+            GetClientTimedBlockResultsArg
+        >({
+            query: ({ clientId, fromDate, toDate, skip = 0, limit = 100 }) => {
+                const params = new URLSearchParams();
+                if (fromDate) params.append("from_date", fromDate);
+                if (toDate) params.append("to_date", toDate);
+                params.append("skip", String(skip));
+                params.append("limit", String(limit));
+                const qs = params.toString();
+                return {
+                    url: `/clients/${clientId}/timed-block-results${qs ? `?${qs}` : ""}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "TrainingSession" as const, id: "LIST" },
+            ],
+        }),
+
+        getClientExerciseLoadProfile: builder.query<
+            ClientExerciseLoadProfile,
+            GetClientExerciseLoadProfileArg
+        >({
+            query: ({ clientId, exerciseId, weeks = 12 }) => ({
+                url: `/clients/${clientId}/exercises/${exerciseId}/load-profile?weeks=${weeks}`,
+                method: "GET",
+            }),
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "Client" as const, id: `exercise-load-${arg.clientId}-${arg.exerciseId}` },
+            ],
+        }),
+
+        getClientExercisePerformanceRecords: builder.query<
+            ExercisePerformanceRecord[],
+            ListExercisePerformanceRecordsArg
+        >({
+            query: ({ clientId, exerciseId, metric, skip = 0, limit = 20 }) => {
+                const params = new URLSearchParams();
+                params.set("skip", String(skip));
+                params.set("limit", String(limit));
+                if (metric) params.set("metric", metric);
+                return {
+                    url: `/clients/${clientId}/exercises/${exerciseId}/performance-records?${params.toString()}`,
+                    method: "GET",
+                };
+            },
+            providesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "Client" as const, id: `exercise-load-${arg.clientId}-${arg.exerciseId}` },
+            ],
+        }),
+
+        createClientExercisePerformanceRecord: builder.mutation<
+            ExercisePerformanceRecord,
+            CreateExercisePerformanceRecordArg
+        >({
+            query: ({ clientId, exerciseId, body }) => ({
+                url: `/clients/${clientId}/exercises/${exerciseId}/performance-records`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, arg) => [
+                { type: "Client" as const, id: arg.clientId },
+                { type: "Client" as const, id: `exercise-load-${arg.clientId}-${arg.exerciseId}` },
+            ],
+        }),
+
     }),
     overrideExisting: false,
 });
@@ -996,6 +1229,8 @@ export const clientsApi = baseApi.injectEndpoints({
 export const {
     useGetTrainerClientsQuery,
     useGetClientsQuery,
+    useGetCurrentClientProfileQuery,
+    useCompleteAthleteOnboardingMutation,
     useGetClientQuery,
     useCreateClientMutation,
     usePreviewClientCalculationsMutation,
@@ -1015,6 +1250,7 @@ export const {
     useGetClientProgressHistoryQuery,
     useGetProgressAnalyticsQuery,
     useGetClientProgressTrackingQuery,
+    useGetClientExerciseProgressTrackingQuery,
     useCreateProgressRecordMutation,
     useUpdateProgressRecordMutation,
     // Training hooks
@@ -1033,7 +1269,10 @@ export const {
     useGetClientTestResultsQuery,
     useGetPhysicalTestsQuery,
     useGetClientTestingSummaryQuery,
+    useCreateTestingAiInsightsMutation,
+    useGetTestingAiInsightsQuery,
     useCreateTestResultMutation,
+    useCreatePhysicalTestMutation,
     useUpdateTestResultMutation,
     useDeleteTestResultMutation,
     // Training Plan Analytics hooks
@@ -1045,4 +1284,11 @@ export const {
     useGetClientsWithMetricsQuery,
     useGetRecentActivityQuery,
     useGetWeeklySessionLoadByMuscleQuery,
+    useGetClientLoadInsightsQuery,
+    useGetClientSetExecutionsQuery,
+    useGetClientExecutedLoadSummaryQuery,
+    useGetClientTimedBlockResultsQuery,
+    useGetClientExerciseLoadProfileQuery,
+    useGetClientExercisePerformanceRecordsQuery,
+    useCreateClientExercisePerformanceRecordMutation,
 } = clientsApi;

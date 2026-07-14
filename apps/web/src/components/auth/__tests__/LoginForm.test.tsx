@@ -17,6 +17,7 @@ import {
   loginRetryHandler,
   loginRateLimitHandler,
   loginTimeoutHandler,
+  loginSlowHandler,
   emailValidationHandler,
   networkErrorHandler
 } from "@/test-utils/mocks/handlers/auth";
@@ -287,6 +288,10 @@ describe("LoginForm", () => {
   });
 
   describe("Loading States", () => {
+    beforeEach(() => {
+      server.use(loginSlowHandler);
+    });
+
     it("shows loading state during submission", async () => {
       const user = userEvent.setup();
       render(<LoginForm />);
@@ -296,17 +301,11 @@ describe("LoginForm", () => {
 
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
-      // Buscar directamente el botón en estado de loading
-      const submitButton = await screen.findByRole("button", { name: /iniciando sesión/i });
-
-      // Esperar a que se aplique el atributo disabled
       await waitFor(() => {
-        expect(submitButton).toBeDisabled();
+        expect(screen.getByRole("button", { name: /iniciando sesión/i })).toBeDisabled();
+        expect(screen.getByLabelText(/correo electrónico/i)).toBeDisabled();
+        expect(screen.getByPlaceholderText("Introduce tu contraseña")).toBeDisabled();
       });
-
-      // Verificar que los inputs también se deshabilitan
-      expect(screen.getByLabelText(/correo electrónico/i)).toBeDisabled();
-      expect(screen.getByPlaceholderText("Introduce tu contraseña")).toBeDisabled();
     });
 
     it("disables navigation links during loading", async () => {
@@ -324,10 +323,12 @@ describe("LoginForm", () => {
 
       await user.click(screen.getByRole("button", { name: /iniciar sesión/i }));
 
-      expect(screen.getByRole("button", { name: /olvidaste tu contraseña/i }))
-        .toBeDisabled();
-      expect(screen.getByRole("button", { name: /regístrate aquí/i }))
-        .toBeDisabled();
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /olvidaste tu contraseña/i }))
+          .toBeDisabled();
+        expect(screen.getByRole("button", { name: /regístrate aquí/i }))
+          .toBeDisabled();
+      });
     });
   });
 

@@ -53,7 +53,7 @@ export async function navigateToScheduling(page: Page): Promise<void> {
 }
 
 /**
- * Nombre accesible del botón que abre el onboarding de cliente (VISTA_CLIENTES_SPEC).
+ * Nombre accesible del botón que abre la invitación de cliente (VISTA_CLIENTES_SPEC).
  * Header: "Nuevo cliente"; empty state: "Añadir tu primer cliente".
  */
 export const ADD_CLIENT_BUTTON_NAME = /nuevo cliente|añadir tu primer cliente/i;

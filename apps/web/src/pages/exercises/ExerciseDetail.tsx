@@ -1,9 +1,12 @@
 /**
  * ExerciseDetail.tsx — Detalle de ejercicio (API) o borrador local (ex-new-* + location.state)
+ *
+ * Diseño: docs/design/00_LEEME_PRIMERO.md
  */
 
 import React, { useMemo } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { ArrowLeft, ExternalLink } from "lucide-react";
 import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
@@ -11,16 +14,58 @@ import {
     getMuscleLabel,
     getEquipmentLabel,
     getLevelLabel,
-    getLevelBadgeColor,
-    getMuscleGradient,
     localViewToExercise,
-    equipmentParts,
+    muscleFacetLabel,
+    exercisePatternLabels,
+    equipmentDisplayLine,
+    tipoLabelFromBackend,
+    getGroupColor,
+    normalizeLevel,
+    getLevelTextClass,
 } from "@/utils/exercises";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 
 import { Button } from "@/components/ui/buttons";
+import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { PageTitle } from "@/components/dashboard/shared";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { ExerciseMediaEmptyState } from "@/components/exercises/ExerciseMediaEmptyState";
 import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlternativesSection";
+import {
+    EXERCISE_DETAIL_ALERT_SPACING,
+    EXERCISE_DETAIL_BACK_BUTTON,
+    EXERCISE_DETAIL_BADGE_MUTED,
+    EXERCISE_DETAIL_BADGE_NEUTRAL,
+    EXERCISE_DETAIL_BADGE_ROW,
+    EXERCISE_DETAIL_BODY,
+    EXERCISE_DETAIL_BODY_MUTED,
+    EXERCISE_DETAIL_BODY_MUTED_PRESERVE,
+    EXERCISE_DETAIL_CHIP,
+    EXERCISE_DETAIL_CHIP_ROW,
+    EXERCISE_DETAIL_EQUIP_CHIP,
+    EXERCISE_DETAIL_ERROR_ACTION,
+    EXERCISE_DETAIL_ERROR_DETAIL,
+    EXERCISE_DETAIL_GRID_SPAN_FULL,
+    EXERCISE_DETAIL_HEADER,
+    EXERCISE_DETAIL_ICON_BACK_GAP,
+    EXERCISE_DETAIL_ICON_SM,
+    EXERCISE_DETAIL_ICON_XS,
+    EXERCISE_DETAIL_LEVEL_BADGE,
+    EXERCISE_DETAIL_LOADING_ROW,
+    EXERCISE_DETAIL_LOADING_TEXT,
+    EXERCISE_DETAIL_MUSCLE_BADGE,
+    EXERCISE_DETAIL_PAGE,
+    EXERCISE_DETAIL_SECTION_LABELS,
+    EXERCISE_DETAIL_SHELL,
+    EXERCISE_DETAIL_SPEC_GRID,
+    EXERCISE_DETAIL_SPEC_LABEL,
+    EXERCISE_DETAIL_SPEC_VALUE,
+    EXERCISE_DETAIL_TITLE_WRAP,
+    EXERCISE_DETAIL_VIDEO_HERO,
+    EXERCISE_DETAIL_VIDEO_LINK_CENTERED,
+} from "@/components/exercises/exerciseDetailPresentation";
+import { cn } from "@/lib/utils";
 
 interface LocationState {
     localExercise?: LocalExerciseView;
@@ -63,28 +108,57 @@ export const ExerciseDetail: React.FC = () => {
     };
 
     const primaryMuscle = useMemo(() => {
-        if (!exercise?.musculatura_principal) return "";
-        return exercise.musculatura_principal.split(",")[0].trim();
-    }, [exercise?.musculatura_principal]);
+        if (!exercise) return "";
+        return muscleFacetLabel(exercise);
+    }, [exercise]);
+
+    const patternLabels = useMemo(() => {
+        if (!exercise) return [];
+        return exercisePatternLabels(exercise);
+    }, [exercise]);
 
     const secondaryMuscles = useMemo(() => {
-        if (!exercise?.musculatura_secundaria) return [];
+        if (!exercise) return [];
+        const fromCatalog = (exercise.muscles || [])
+            .filter((m) => {
+                const role = (m.role || "").toLowerCase().replace(/\s+/g, "_");
+                return role && role !== "prime_mover" && role !== "primary";
+            })
+            .map((m) => (m.name_es || m.name || m.name_en || "").trim())
+            .filter(Boolean);
+        if (fromCatalog.length > 0) return fromCatalog;
+        if (!exercise.musculatura_secundaria) return [];
         return exercise.musculatura_secundaria
             .split(",")
             .map((m) => m.trim())
             .filter((m) => m.length > 0);
-    }, [exercise?.musculatura_secundaria]);
+    }, [exercise]);
 
-    const equipmentList = useMemo(
-        () => equipmentParts(exercise?.equipo),
-        [exercise?.equipo]
-    );
+    const equipmentLabels = useMemo(() => {
+        if (!exercise) return [];
+        const fromCatalog = (exercise.equipment || [])
+            .map((item) => (item.name_es?.trim() || item.name_en || "").trim())
+            .filter(Boolean);
+        if (fromCatalog.length > 0) return fromCatalog;
+        const legacy = (exercise.equipo || "").trim();
+        if (legacy && legacy.toLowerCase() !== "none") {
+            return [getEquipmentLabel(legacy)];
+        }
+        return [];
+    }, [exercise]);
+
+    const muscleColors = getGroupColor(primaryMuscle || exercise?.musculatura_principal || "");
+    const levelNorm = normalizeLevel(exercise?.nivel || "");
+    const levelClass = getLevelTextClass(levelNorm);
+    const tipoLabel = tipoLabelFromBackend(exercise?.tipo || "");
+    const equipLine = exercise ? equipmentDisplayLine(exercise) : "";
+    const hasVideo = Boolean(localPayload?.videoUrl);
 
     if (!routeId) {
         return (
-            <div className="px-4 lg:px-8">
+            <div className={EXERCISE_DETAIL_PAGE}>
                 <Alert variant="error">ID de ejercicio inválido</Alert>
-                <Button onClick={handleBack} className="mt-4">
+                <Button onClick={handleBack} className={EXERCISE_DETAIL_ERROR_ACTION}>
                     Volver a Ejercicios
                 </Button>
             </div>
@@ -93,12 +167,12 @@ export const ExerciseDetail: React.FC = () => {
 
     if (isLocalRoute && !localPayload) {
         return (
-            <div className="px-4 lg:px-8">
+            <div className={EXERCISE_DETAIL_PAGE}>
                 <Alert variant="error">
                     Este ejercicio solo estaba disponible en la navegación anterior. Abre de nuevo el
                     listado y selecciónalo desde ahí, o recarga la página de ejercicios.
                 </Alert>
-                <Button onClick={handleBack} className="mt-4">
+                <Button onClick={handleBack} className={EXERCISE_DETAIL_ERROR_ACTION}>
                     Volver a Ejercicios
                 </Button>
             </div>
@@ -107,9 +181,9 @@ export const ExerciseDetail: React.FC = () => {
 
     if (!isLocalRoute && !hasValidNumericId) {
         return (
-            <div className="px-4 lg:px-8">
+            <div className={EXERCISE_DETAIL_PAGE}>
                 <Alert variant="error">ID de ejercicio inválido</Alert>
-                <Button onClick={handleBack} className="mt-4">
+                <Button onClick={handleBack} className={EXERCISE_DETAIL_ERROR_ACTION}>
                     Volver a Ejercicios
                 </Button>
             </div>
@@ -118,25 +192,25 @@ export const ExerciseDetail: React.FC = () => {
 
     if (!isLocalRoute && isLoading) {
         return (
-            <div className="flex justify-center items-center py-16">
+            <div className={EXERCISE_DETAIL_LOADING_ROW}>
                 <LoadingSpinner size="lg" />
-                <p className="ml-4 text-muted-foreground">Cargando ejercicio...</p>
+                <p className={EXERCISE_DETAIL_LOADING_TEXT}>Cargando ejercicio...</p>
             </div>
         );
     }
 
     if (!isLocalRoute && (isError || !exercise)) {
         return (
-            <div className="px-4 lg:px-8">
+            <div className={EXERCISE_DETAIL_PAGE}>
                 <Alert variant="error">
                     Error al cargar el ejercicio. Por favor, intenta de nuevo.
                     {error && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data && (
-                        <div className="mt-2 text-sm">
+                        <div className={EXERCISE_DETAIL_ERROR_DETAIL}>
                             {String((error.data as { detail?: unknown }).detail)}
                         </div>
                     )}
                 </Alert>
-                <Button onClick={handleBack} className="mt-4">
+                <Button onClick={handleBack} className={EXERCISE_DETAIL_ERROR_ACTION}>
                     Volver a Ejercicios
                 </Button>
             </div>
@@ -147,69 +221,133 @@ export const ExerciseDetail: React.FC = () => {
         return null;
     }
 
+    const subtitleParts = [equipLine, exercise.nivel ? getLevelLabel(exercise.nivel) : ""]
+        .filter(Boolean)
+        .join(" · ");
+
     return (
-        <>
-            <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                <Button variant="outline" size="sm" onClick={handleBack} className="mb-4">
-                    ← Volver a Ejercicios
+        <div className={EXERCISE_DETAIL_PAGE}>
+            {isLocalRoute && (
+                <Alert variant="warning" className={EXERCISE_DETAIL_ALERT_SPACING}>
+                    Ejercicio solo en esta sesión (no guardado en el servidor).
+                </Alert>
+            )}
+
+            <div className={EXERCISE_DETAIL_HEADER}>
+                <PageTitle
+                    title={exerciseDisplayName(exercise)}
+                    subtitle={subtitleParts || undefined}
+                    className={EXERCISE_DETAIL_TITLE_WRAP}
+                />
+                <Button
+                    variant="ghost-primary"
+                    size="sm"
+                    className={EXERCISE_DETAIL_BACK_BUTTON}
+                    onClick={handleBack}
+                >
+                    <ArrowLeft className={cn(EXERCISE_DETAIL_ICON_BACK_GAP, EXERCISE_DETAIL_ICON_SM)} aria-hidden />
+                    Volver a Ejercicios
                 </Button>
-                {isLocalRoute && (
-                    <Alert variant="warning" className="mb-4">
-                        Ejercicio solo en esta sesión (no guardado en el servidor).
-                    </Alert>
-                )}
-                <h2 className="text-2xl font-bold text-foreground md:text-3xl mb-2">{exerciseDisplayName(exercise)}</h2>
             </div>
 
-            <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                <div className="rounded-2xl border border-border bg-card p-6 shadow-xl backdrop-blur-sm lg:p-8">
-                    <div
-                        className={`mb-6 flex aspect-video items-center justify-center rounded-xl bg-gradient-to-br ${getMuscleGradient(primaryMuscle)}`}
-                    >
-                        <div className="text-6xl font-bold text-white opacity-50">💪</div>
+            <article className={EXERCISE_DETAIL_SHELL}>
+                <NexiaGlassAccentRim />
+                {hasVideo ? (
+                    <div className={EXERCISE_DETAIL_VIDEO_HERO}>
+                        <p className={EXERCISE_DETAIL_SPEC_LABEL}>{EXERCISE_DETAIL_SECTION_LABELS.video}</p>
+                        <a
+                            href={localPayload!.videoUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={EXERCISE_DETAIL_VIDEO_LINK_CENTERED}
+                        >
+                            Abrir enlace de video
+                            <ExternalLink className={EXERCISE_DETAIL_ICON_XS} aria-hidden />
+                        </a>
+                    </div>
+                ) : (
+                    <ExerciseMediaEmptyState />
+                )}
+
+                <div className={EXERCISE_DETAIL_BODY}>
+                    <div className={EXERCISE_DETAIL_BADGE_ROW}>
+                        {primaryMuscle && (
+                            <Badge
+                                variant="outline"
+                                className={cn(EXERCISE_DETAIL_MUSCLE_BADGE, muscleColors.bg, muscleColors.text)}
+                            >
+                                {getMuscleLabel(primaryMuscle)}
+                            </Badge>
+                        )}
+                        {tipoLabel && (
+                            <Badge variant="outline" className={EXERCISE_DETAIL_BADGE_NEUTRAL}>
+                                {tipoLabel}
+                            </Badge>
+                        )}
+                        {exercise.nivel && (
+                            <Badge variant="outline" className={cn(EXERCISE_DETAIL_LEVEL_BADGE, levelClass)}>
+                                {getLevelLabel(exercise.nivel)}
+                            </Badge>
+                        )}
+                        {patternLabels.map((pattern) => (
+                            <Badge key={pattern} variant="outline" className={EXERCISE_DETAIL_BADGE_MUTED}>
+                                {pattern}
+                            </Badge>
+                        ))}
                     </div>
 
-                    <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+                    <div className={EXERCISE_DETAIL_SPEC_GRID}>
                         <div>
-                            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Grupo Muscular Principal
+                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                {EXERCISE_DETAIL_SECTION_LABELS.primaryMuscle}
                             </p>
-                            {primaryMuscle ? (
-                                <p className="text-base font-semibold text-foreground">
-                                    {getMuscleLabel(primaryMuscle)}
-                                </p>
-                            ) : (
-                                <p className="text-base text-muted-foreground">No especificado</p>
-                            )}
+                            <p className={EXERCISE_DETAIL_SPEC_VALUE}>
+                                {primaryMuscle ? getMuscleLabel(primaryMuscle) : "No especificado"}
+                            </p>
                         </div>
 
                         <div>
-                            <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Nivel
+                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                {EXERCISE_DETAIL_SECTION_LABELS.level}
                             </p>
-                            {exercise.nivel ? (
-                                <span
-                                    className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-sm font-medium ${getLevelBadgeColor(exercise.nivel)}`}
-                                >
-                                    {getLevelLabel(exercise.nivel)}
-                                </span>
-                            ) : (
-                                <p className="text-base text-muted-foreground">No especificado</p>
-                            )}
+                            <p className={EXERCISE_DETAIL_SPEC_VALUE}>
+                                {exercise.nivel ? getLevelLabel(exercise.nivel) : "No especificado"}
+                            </p>
                         </div>
+
+                        {patternLabels.length > 0 && (
+                            <div>
+                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                    {EXERCISE_DETAIL_SECTION_LABELS.movementPattern}
+                                </p>
+                                <p className={EXERCISE_DETAIL_SPEC_VALUE}>{patternLabels.join(", ")}</p>
+                            </div>
+                        )}
+
+                        {equipmentLabels.length > 0 && (
+                            <div className={EXERCISE_DETAIL_GRID_SPAN_FULL}>
+                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                    {EXERCISE_DETAIL_SECTION_LABELS.equipment}
+                                </p>
+                                <div className={EXERCISE_DETAIL_CHIP_ROW}>
+                                    {equipmentLabels.map((eq) => (
+                                        <span key={eq} className={EXERCISE_DETAIL_EQUIP_CHIP}>
+                                            {eq}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {secondaryMuscles.length > 0 && (
-                        <div className="mb-6">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Músculos Secundarios
+                        <div>
+                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                {EXERCISE_DETAIL_SECTION_LABELS.secondaryMuscles}
                             </p>
-                            <div className="flex flex-wrap gap-2">
+                            <div className={EXERCISE_DETAIL_CHIP_ROW}>
                                 {secondaryMuscles.map((muscle, index) => (
-                                    <span
-                                        key={`${muscle}-${index}`}
-                                        className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-sm font-medium text-foreground"
-                                    >
+                                    <span key={`${muscle}-${index}`} className={EXERCISE_DETAIL_CHIP}>
                                         {getMuscleLabel(muscle)}
                                     </span>
                                 ))}
@@ -217,72 +355,30 @@ export const ExerciseDetail: React.FC = () => {
                         </div>
                     )}
 
-                    {exercise.equipo && (
-                        <div className="mb-6">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Equipamiento
-                            </p>
-                            <div className="flex flex-wrap gap-2">
-                                {equipmentList.length > 0 ? (
-                                    equipmentList.map((eq) => (
-                                        <span
-                                            key={eq}
-                                            className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary"
-                                        >
-                                            {getEquipmentLabel(eq)}
-                                        </span>
-                                    ))
-                                ) : (
-                                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-sm font-medium text-primary">
-                                        {getEquipmentLabel(exercise.equipo)}
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {localPayload?.videoUrl ? (
-                        <div className="mb-6">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Video
-                            </p>
-                            <a
-                                href={localPayload.videoUrl}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm font-medium text-primary underline-offset-4 hover:underline"
-                            >
-                                Abrir enlace de video
-                            </a>
-                        </div>
-                    ) : null}
-
                     {exercise.descripcion && (
-                        <div className="mb-6">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Descripción
+                        <div>
+                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                {EXERCISE_DETAIL_SECTION_LABELS.description}
                             </p>
-                            <p className="text-base leading-relaxed text-muted-foreground">{exercise.descripcion}</p>
+                            <p className={EXERCISE_DETAIL_BODY_MUTED}>{exercise.descripcion}</p>
                         </div>
                     )}
 
                     {exercise.instrucciones && (
-                        <div className="mb-6">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Instrucciones
+                        <div>
+                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                {EXERCISE_DETAIL_SECTION_LABELS.instructions}
                             </p>
-                            <p className="whitespace-pre-line text-base leading-relaxed text-muted-foreground">
-                                {exercise.instrucciones}
-                            </p>
+                            <p className={EXERCISE_DETAIL_BODY_MUTED_PRESERVE}>{exercise.instrucciones}</p>
                         </div>
                     )}
 
                     {exercise.notas && (
-                        <div className="mb-6">
-                            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Notas
+                        <div>
+                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                {EXERCISE_DETAIL_SECTION_LABELS.notes}
                             </p>
-                            <p className="text-base leading-relaxed text-muted-foreground">{exercise.notas}</p>
+                            <p className={EXERCISE_DETAIL_BODY_MUTED}>{exercise.notas}</p>
                         </div>
                     )}
 
@@ -290,7 +386,7 @@ export const ExerciseDetail: React.FC = () => {
                         <ExerciseAlternativesSection exerciseId={exerciseIdForApi} />
                     ) : null}
                 </div>
-            </div>
-        </>
+            </article>
+        </div>
     );
 };

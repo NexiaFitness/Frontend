@@ -10,6 +10,7 @@
  */
 
 import React, { useEffect } from "react";
+import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
 import { useParams, useNavigate } from "react-router-dom";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
@@ -17,7 +18,9 @@ import { Button } from "@/components/ui/buttons";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import { TrainingPlanEditorForm } from "@/components/trainingPlans/editor/TrainingPlanEditorForm";
 import { useTrainingPlanEditor } from "@/hooks/trainingPlans/useTrainingPlanEditor";
+import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { TRAINING_PLAN_GOAL } from "@nexia/shared/types/training";
 
 const GOAL_OPTIONS = [
@@ -39,13 +42,21 @@ export const TrainingPlanEdit: React.FC = () => {
     const { data: trainerProfile, isLoading: isLoadingTrainer } = useGetCurrentTrainerProfileQuery();
     const trainerId = trainerProfile?.id ?? 0;
 
-    const detailPath = `/dashboard/training-plans/${planId}`;
+    const { data: planForPaths } = useGetTrainingPlanQuery(planId, {
+        skip: !planId || planId <= 0,
+    });
+    const detailPath =
+        planForPaths?.client_id != null && planForPaths.client_id > 0
+            ? buildClientTabPath(planForPaths.client_id, { tab: "planning", planId })
+            : `/dashboard/training-plans/${planId}`;
     const listPath = "/dashboard/training-plans";
 
     const editor = useTrainingPlanEditor(
         { kind: "edit", planId, trainerId },
-        { cancelPath: detailPath, editSuccessPath: detailPath }
+        { cancelPath: detailPath, editSuccessPath: detailPath },
     );
+
+    useScrollDashboardWhenReady(!editor.isPageLoading && !isLoadingTrainer && trainerId > 0);
 
     useEffect(() => {
         if (isLoadingTrainer) return;
@@ -98,8 +109,12 @@ export const TrainingPlanEdit: React.FC = () => {
             <TrainingPlanEditorForm
                 formId="edit-training-plan-form"
                 mode="edit"
-                pageTitle="Planificación"
-                cardTitle="Editar planificación"
+                title="Editar planificación"
+                subtitle={
+                    editor.clientForBlock
+                        ? `${editor.clientForBlock.nombre} ${editor.clientForBlock.apellidos}`.trim()
+                        : undefined
+                }
                 client={editor.clientForBlock}
                 showClientBlock={editor.showClientBlock}
                 draft={editor.draft}

@@ -71,6 +71,11 @@ export interface TrainingPlan {
     /** Contadores de sesiones del plan (listados por trainer/client desde backend). */
     sessions_completed: number;
     sessions_total: number;
+    /**
+     * Estado derivado (GET /training-plans/?client_id=): operational | future | past | completed | paused | cancelled.
+     * Usar para badges; status del documento puede quedar desalineado en datos legacy hasta sync.
+     */
+    lifecycle_status?: string | null;
 }
 
 /**
@@ -247,10 +252,32 @@ export interface ClientFeedback {
     muscle_soreness: string | null;
     pain_or_discomfort: string | null;
     notes: string | null;
+    trainer_response: string | null;
+    trainer_response_at: string | null; // ISO datetime
     feedback_date: string; // ISO datetime
     created_at: string; // ISO datetime
     updated_at: string; // ISO datetime
     is_active: boolean;
+}
+
+/** POST /training-sessions/{id}/feedback */
+export interface ClientFeedbackCreate {
+    client_id: number;
+    perceived_effort?: number | null;
+    fatigue_level?: number | null;
+    sleep_quality?: number | null;
+    stress_level?: number | null;
+    motivation_level?: number | null;
+    energy_level?: number | null;
+    muscle_soreness?: string | null;
+    pain_or_discomfort?: string | null;
+    notes?: string | null;
+    feedback_date?: string | null;
+}
+
+/** PATCH /training-sessions/feedback/{id}/trainer-response (F3a) */
+export interface ClientFeedbackTrainerResponseUpdate {
+    trainer_response: string;
 }
 
 // ========================================
@@ -345,7 +372,12 @@ export interface FatigueAnalysis {
 // FATIGUE ALERTS
 // ========================================
 
-export type FatigueAlertType = "overtraining" | "recovery_needed" | "session_adjustment";
+export type FatigueAlertType =
+    | "overtraining"
+    | "recovery_needed"
+    | "session_adjustment"
+    | "attendance"
+    | "plan_deviation";
 export type FatigueAlertSeverity = "low" | "medium" | "high" | "critical";
 
 export interface FatigueAlert {

@@ -9,6 +9,7 @@ import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { useGetExerciseLibraryQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { cn } from "@/lib/utils";
+import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { Textarea } from "@/components/ui/forms";
@@ -158,7 +159,7 @@ export const ExercisesPage: React.FC = () => {
 
     const handlePageChange = useCallback((page: number) => {
         setCurrentPage(page);
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        scrollDashboardMainToTop("smooth");
     }, []);
 
     const saveExercise = useCallback(() => {
@@ -178,7 +179,7 @@ export const ExercisesPage: React.FC = () => {
                 .filter(Boolean)
                 .join(", ") || "bodyweight",
             patron_movimiento: form.movementPattern.trim() || "general",
-            tipo_carga: "ext",
+            tipo_carga: "external",
             categoria: "Basic",
             descripcion: form.descripcion.trim() || null,
             instrucciones: form.instrucciones.trim() || null,

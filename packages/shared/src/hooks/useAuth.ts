@@ -16,6 +16,7 @@ import type {
     RegisterCredentials, 
     AuthResponse 
 } from '../types/auth';
+import { USER_ROLES } from '../utils/roles';
 
 /**
  * Hook de autenticación con autologin
@@ -78,12 +79,9 @@ export const useAuth = () => {
      */
     const getRedirectPath = (role: string): string => {
         switch (role) {
-            case 'TRAINER':
-                return '/dashboard/trainer';
-            case 'ATHLETE':
-                return '/dashboard/athlete';
-            case 'ADMIN':
-                return '/dashboard/admin';
+            case USER_ROLES.TRAINER:
+            case USER_ROLES.ATHLETE:
+            case USER_ROLES.ADMIN:
             default:
                 return '/dashboard';
         }
@@ -103,7 +101,7 @@ export const useAuth = () => {
      * @returns boolean
      */
     const isTrainer = useCallback((): boolean => {
-        return hasRole('TRAINER');
+        return hasRole(USER_ROLES.TRAINER);
     }, [hasRole]);
 
     /**
@@ -111,7 +109,7 @@ export const useAuth = () => {
      * @returns boolean
      */
     const isAthlete = useCallback((): boolean => {
-        return hasRole('ATHLETE');
+        return hasRole(USER_ROLES.ATHLETE);
     }, [hasRole]);
 
     /**
@@ -119,7 +117,7 @@ export const useAuth = () => {
      * @returns boolean
      */
     const isAdmin = useCallback((): boolean => {
-        return hasRole('ADMIN');
+        return hasRole(USER_ROLES.ADMIN);
     }, [hasRole]);
 
     return {

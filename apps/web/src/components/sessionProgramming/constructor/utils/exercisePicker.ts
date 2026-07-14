@@ -66,7 +66,7 @@ export function applyExercisePickerSelection(
                       : row.setType === SET_TYPE.FOR_TIME
                         ? normalizeForTimeRow(row)
                         : row.setType === SET_TYPE.AMRAP
-                          ? normalizeAmrapRow(row)
+                          ? normalizeAmrapRow(row, { applyDefaults: false })
                         : row;
             return {
                 ...base,

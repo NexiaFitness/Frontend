@@ -7,7 +7,7 @@
 
 import React from "react";
 import { ChevronDown, ChevronUp, Copy, Trash2 } from "lucide-react";
-import { FormSelect } from "@/components/ui/forms";
+import { FormCombobox } from "@/components/ui/forms";
 import type { SetType, TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
 import { SET_TYPE_LABELS } from "@nexia/shared/types/sessionProgramming";
 import { getTrainingBlockDisplayName } from "../utils/trainingBlockDisplay";
@@ -57,13 +57,14 @@ export const ConstructorCardHeader: React.FC<ConstructorCardHeaderProps> = ({
                 <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-foreground">
                     {blockLabel}
                 </span>
-                <FormSelect
+                <FormCombobox
                     size="xs"
                     value={setType}
-                    onChange={(e) => onSetTypeChange(e.target.value as SetType)}
+                    onChange={(value) => onSetTypeChange(value as SetType)}
                     options={SET_TYPE_OPTIONS}
-                    className={CONSTRUCTOR_SET_TYPE_SELECT_CLASS}
-                    aria-label="Tipo de serie"
+                    className="w-[118px] shrink-0"
+                    buttonClassName={CONSTRUCTOR_SET_TYPE_SELECT_CLASS}
+                    ariaLabel="Tipo de serie"
                 />
             </div>
             <div className="flex shrink-0 items-center gap-0.5">

@@ -20,46 +20,7 @@ import type {
 } from "@/components/sessionProgramming/constructorTypes";
 import type { PersistExerciseLine } from "@/components/sessionProgramming/constructor/utils/singleSetRow";
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
-
-function mapRepsTipoToPayload(
-    row: ConstructorRow,
-    ex: Pick<
-        ConstructorExercise,
-        "plannedReps" | "plannedDuration" | "effortCharacter" | "effortValue"
-    >
-): {
-    planned_reps: string | null;
-    planned_duration: number | null;
-    effort_character: ConstructorExercise["effortCharacter"];
-    effort_value: number | null;
-} {
-    const repsTipo = row.repsTipo ?? "reps";
-
-    if (row.setType === "amrap") {
-        return {
-            planned_reps: "AMRAP",
-            planned_duration: null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
-
-    if (repsTipo === "tiempo") {
-        return {
-            planned_reps: null,
-            planned_duration: ex.plannedDuration ?? null,
-            effort_character: ex.effortCharacter,
-            effort_value: ex.effortValue,
-        };
-    }
-
-    return {
-        planned_reps: ex.plannedReps ?? null,
-        planned_duration: null,
-        effort_character: ex.effortCharacter,
-        effort_value: ex.effortValue,
-    };
-}
+import { mapExerciseRepsToPayload } from "@/components/sessionProgramming/constructor/utils/exerciseRepsMode";
 
 function lineToExerciseFields(
     line: PersistExerciseLine
@@ -93,7 +54,7 @@ export function buildExercisePayload(
     orderInBlock: number,
     setType: ConstructorRow["setType"]
 ): SessionBlockExerciseCreate {
-    const mapped = mapRepsTipoToPayload(row, ex);
+    const mapped = mapExerciseRepsToPayload(ex, row.repsTipo ?? "reps");
 
     return {
         exercise_id: ex.exerciseId,
@@ -116,7 +77,10 @@ export function buildExercisePayloadFromLine(
     line: PersistExerciseLine
 ): SessionBlockExerciseCreate {
     const fields = lineToExerciseFields(line);
-    const mapped = mapRepsTipoToPayload(row, fields);
+    const mapped = mapExerciseRepsToPayload(
+        { ...line.exercise, ...fields },
+        row.repsTipo ?? "reps"
+    );
     const plannedRest =
         row.setType === SET_TYPE.DROPSET
             ? row.rest
@@ -149,7 +113,7 @@ export function buildExerciseUpdatePayload(
     row: ConstructorRow,
     ex: ConstructorExercise
 ): SessionBlockExerciseUpdate {
-    const mapped = mapRepsTipoToPayload(row, ex);
+    const mapped = mapExerciseRepsToPayload(ex, row.repsTipo ?? "reps");
 
     return {
         planned_sets: row.sets,
@@ -168,7 +132,10 @@ export function buildExerciseUpdatePayloadFromLine(
     line: PersistExerciseLine
 ): SessionBlockExerciseUpdate {
     const fields = lineToExerciseFields(line);
-    const mapped = mapRepsTipoToPayload(row, fields);
+    const mapped = mapExerciseRepsToPayload(
+        { ...line.exercise, ...fields },
+        row.repsTipo ?? "reps"
+    );
     const plannedRest =
         row.setType === SET_TYPE.DROPSET
             ? row.rest

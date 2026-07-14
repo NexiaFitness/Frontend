@@ -23,6 +23,7 @@ import {
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramming";
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
+import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
 import { cn } from "@/lib/utils";
 import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 
@@ -251,6 +252,13 @@ export const StandaloneSessionDetail: React.FC = () => {
                     ) : null}
                 </div>
             </div>
+
+            {session.status === "completed" && (
+                <StandaloneSessionLoadSummary
+                    exercises={exercises}
+                    enabled={session.status === "completed"}
+                />
+            )}
 
             <div>
                 <div className="flex items-center gap-2 mb-4">

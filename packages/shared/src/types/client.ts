@@ -171,7 +171,8 @@ export interface Client {
     notes_1?: string | null;
     notes_2?: string | null;
     notes_3?: string | null;
-    
+    onboarding_completed_at?: string | null;
+
     // Campos legacy (mantener por compatibilidad transitoria)
     activo?: boolean;
     created_at?: string;
