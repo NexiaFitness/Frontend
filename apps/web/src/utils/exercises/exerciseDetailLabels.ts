@@ -2,7 +2,7 @@
  * exerciseDetailLabels.ts — Etiquetas UI para campos catálogo en detalle de ejercicio.
  */
 
-import type { ExerciseJointActionRef } from "@nexia/shared/hooks/exercises";
+import type { ExerciseJointActionRef, ExerciseTagRef } from "@nexia/shared/hooks/exercises";
 
 const TIPO_CARGA_LABELS: Record<string, string> = {
     bodyweight: "Peso corporal",
@@ -77,8 +77,26 @@ export function mechanicalLoadLabel(level: number | null | undefined): string {
     return `Nivel ${level} / 5`;
 }
 
-export function tagDisplayLabel(tag: { name_es?: string | null; name_en: string }): string {
+export function tagDisplayLabel(tag: Pick<ExerciseTagRef, "name_es" | "name_en">): string {
     return (tag.name_es?.trim() || tag.name_en || "").trim();
+}
+
+/** Etiquetas catálogo deduplicadas por id para chips en detalle (spec §5 equipamiento y tags). */
+export function exerciseTagItems(
+    tags: ExerciseTagRef[] | null | undefined
+): Array<{ id: number; label: string }> {
+    if (!Array.isArray(tags) || tags.length === 0) return [];
+
+    const byId = new Map<number, string>();
+    for (const tag of tags) {
+        const label = tagDisplayLabel(tag);
+        if (label && tag.id != null) {
+            byId.set(tag.id, label);
+        }
+    }
+    return [...byId.entries()]
+        .sort((a, b) => a[1].localeCompare(b[1], "es"))
+        .map(([id, label]) => ({ id, label }));
 }
 
 export function jointActionDisplayLine(

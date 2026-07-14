@@ -339,7 +339,7 @@ export const ExerciseDetail: React.FC = () => {
                                 </p>
                                 <div className={EXERCISE_DETAIL_CHIP_ROW}>
                                     {equipmentLabels.map((eq) => (
-                                        <span key={eq} className={EXERCISE_DETAIL_EQUIP_CHIP}>
+                                        <span key={`eq-${eq}`} className={EXERCISE_DETAIL_EQUIP_CHIP}>
                                             {eq}
                                         </span>
                                     ))}

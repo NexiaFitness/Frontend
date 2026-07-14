@@ -23,11 +23,11 @@ import {
 import {
     axialLoadLabel,
     EXERCISE_DETAIL_EMPTY_COPY,
+    exerciseTagItems,
     jointActionDisplayLine,
     lateralityLabel,
     mechanicalLoadLabel,
     stimulusTypeLabel,
-    tagDisplayLabel,
     tipoCargaLabel,
 } from "@/utils/exercises/exerciseDetailLabels";
 import { exercisePatternLabels } from "@/utils/exercises";
@@ -70,10 +70,7 @@ export const ExerciseDetailCatalogSections: React.FC<ExerciseDetailCatalogSectio
         });
     }, [exercise]);
 
-    const tagLabels = useMemo(
-        () => (exercise.tags ?? []).map(tagDisplayLabel).filter(Boolean),
-        [exercise.tags]
-    );
+    const tagItems = useMemo(() => exerciseTagItems(exercise.tags), [exercise.tags]);
 
     const jointLines = useMemo(
         () =>
@@ -156,11 +153,11 @@ export const ExerciseDetailCatalogSections: React.FC<ExerciseDetailCatalogSectio
                         <p className={EXERCISE_DETAIL_SPEC_LABEL}>
                             {EXERCISE_DETAIL_SECTION_LABELS.tags}
                         </p>
-                        {tagLabels.length > 0 ? (
+                        {tagItems.length > 0 ? (
                             <div className={EXERCISE_DETAIL_CHIP_ROW}>
-                                {tagLabels.map((tag) => (
-                                    <span key={tag} className={EXERCISE_DETAIL_TAG_CHIP}>
-                                        {tag}
+                                {tagItems.map((tag) => (
+                                    <span key={`tag-${tag.id}`} className={EXERCISE_DETAIL_TAG_CHIP}>
+                                        {tag.label}
                                     </span>
                                 ))}
                             </div>

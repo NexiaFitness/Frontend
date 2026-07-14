@@ -37,6 +37,7 @@ export {
     type Exercise,
     type ExercisePhysicalQualityRef,
     type ExerciseJointActionRef,
+    type ExerciseTagRef,
     type ExerciseFilters,
     type ExerciseListResponse,
     type ExerciseCreate,
