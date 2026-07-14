@@ -34,6 +34,12 @@ function isPrimeMoverRole(role: string | undefined | null): boolean {
     return r === "prime_mover" || r === "primary";
 }
 
+const LEGACY_PATTERN_PLACEHOLDERS = new Set(["general"]);
+
+function isLegacyPlaceholder(value: string, placeholders: Set<string>): boolean {
+    return placeholders.has(value.trim().toLowerCase());
+}
+
 /** Texto de músculo para badge / filtro / búsqueda (prioriza catálogo). */
 export function muscleFacetLabel(ex: Exercise): string {
     const muscles = ex.muscles;
@@ -83,7 +89,10 @@ export function exercisePatternLabels(ex: Exercise): string[] {
         if (label) out.push(label);
     }
     const leg = (ex.patron_movimiento || "").trim();
-    if (leg && !out.some((x) => normKey(x) === normKey(leg))) {
+    const hasCatalogPatterns = out.length > 0;
+    const legacyIsPlaceholder =
+        hasCatalogPatterns && isLegacyPlaceholder(leg, LEGACY_PATTERN_PLACEHOLDERS);
+    if (leg && !legacyIsPlaceholder && !out.some((x) => normKey(x) === normKey(leg))) {
         out.push(leg);
     }
     return out;

@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from "vitest";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import { muscleFacetLabel } from "./filterOptions";
+import { exercisePatternLabels, muscleFacetLabel } from "./filterOptions";
 
 describe("muscleFacetLabel", () => {
     it("uses catalog muscles when musculatura_principal is legacy placeholder", () => {
@@ -30,5 +30,23 @@ describe("muscleFacetLabel", () => {
         } as Exercise;
 
         expect(muscleFacetLabel(exercise)).toBe("pectoral mayor");
+    });
+});
+
+describe("exercisePatternLabels", () => {
+    it("ignores legacy general when catalog movement_patterns exist", () => {
+        const exercise = {
+            patron_movimiento: "general",
+            movement_patterns: [
+                {
+                    id: 1,
+                    name_en: "accessory_single_joint",
+                    name_es: "Accesorio / monoarticular",
+                    role: "primary",
+                },
+            ],
+        } as Exercise;
+
+        expect(exercisePatternLabels(exercise)).toEqual(["Accesorio / monoarticular"]);
     });
 });
