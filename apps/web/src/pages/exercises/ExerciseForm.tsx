@@ -23,6 +23,11 @@ import {
     useUpdateExerciseMutation,
 } from "@nexia/shared/hooks/exercises";
 import type { ExerciseCreate, ExerciseUpdate } from "@nexia/shared/hooks/exercises";
+import {
+    EXERCISE_LOAD_TYPE,
+    EXERCISE_LOAD_TYPE_FILTER_OPTIONS,
+    normalizeExerciseLoadType,
+} from "@nexia/shared/types/exerciseLoadType";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 
 const TIPO_OPTIONS = [
@@ -35,12 +40,6 @@ const NIVEL_OPTIONS = [
     { value: "beginner", label: "Principiante" },
     { value: "intermediate", label: "Intermedio" },
     { value: "advanced", label: "Avanzado" },
-];
-
-const TIPO_CARGA_OPTIONS = [
-    { value: "bodyweight", label: "Peso corporal" },
-    { value: "external", label: "Carga externa" },
-    { value: "mixed", label: "Mixta" },
 ];
 
 const defaultForm: Partial<ExerciseCreate> = {
@@ -93,9 +92,7 @@ export const ExerciseForm: React.FC = () => {
                 equipo: exercise.equipo,
                 patron_movimiento: exercise.patron_movimiento,
                 tipo_carga:
-                    exercise.tipo_carga === "ext" || exercise.tipo_carga === "free_weight"
-                        ? "external"
-                        : exercise.tipo_carga,
+                    normalizeExerciseLoadType(exercise.tipo_carga) ?? EXERCISE_LOAD_TYPE.EXTERNAL,
                 musculatura_principal: exercise.musculatura_principal,
                 musculatura_secundaria: exercise.musculatura_secundaria ?? "",
                 descripcion: exercise.descripcion ?? "",
@@ -113,6 +110,9 @@ export const ExerciseForm: React.FC = () => {
         if (!formData.exercise_id?.trim()) err.exercise_id = "ID de ejercicio obligatorio";
         if (!formData.nombre?.trim()) err.nombre = "Nombre obligatorio";
         if (!formData.musculatura_principal?.trim()) err.musculatura_principal = "Músculos principales obligatorios";
+        if (!normalizeExerciseLoadType(formData.tipo_carga)) {
+            err.tipo_carga = "Selecciona un tipo de carga válido";
+        }
         setFormErrors(err);
         return Object.keys(err).length === 0;
     };
@@ -121,6 +121,9 @@ export const ExerciseForm: React.FC = () => {
         e.preventDefault();
         setFormErrors({});
         if (!validate()) return;
+
+        const tipoCarga =
+            normalizeExerciseLoadType(formData.tipo_carga) ?? EXERCISE_LOAD_TYPE.EXTERNAL;
 
         try {
             if (isEdit && exerciseId) {
@@ -133,7 +136,7 @@ export const ExerciseForm: React.FC = () => {
                     nivel: formData.nivel,
                     equipo: formData.equipo,
                     patron_movimiento: formData.patron_movimiento,
-                    tipo_carga: formData.tipo_carga,
+                    tipo_carga: tipoCarga,
                     musculatura_principal: formData.musculatura_principal?.trim() || undefined,
                     musculatura_secundaria: formData.musculatura_secundaria?.trim() || null,
                     descripcion: formData.descripcion?.trim() || null,
@@ -154,7 +157,7 @@ export const ExerciseForm: React.FC = () => {
                     nivel: formData.nivel!,
                     equipo: formData.equipo!,
                     patron_movimiento: formData.patron_movimiento!,
-                    tipo_carga: formData.tipo_carga!,
+                    tipo_carga: tipoCarga,
                     musculatura_principal: formData.musculatura_principal!.trim(),
                     musculatura_secundaria: formData.musculatura_secundaria?.trim() || null,
                     descripcion: formData.descripcion?.trim() || null,
@@ -294,12 +297,18 @@ export const ExerciseForm: React.FC = () => {
                             <div>
                                 <label className="block text-sm font-semibold text-slate-700 mb-2">Tipo carga</label>
                                 <FormSelect
-                                    value={formData.tipo_carga ?? "external"}
+                                    value={formData.tipo_carga ?? EXERCISE_LOAD_TYPE.EXTERNAL}
                                     onChange={(e) =>
                                         setFormData({ ...formData, tipo_carga: e.target.value })
                                     }
-                                    options={TIPO_CARGA_OPTIONS}
+                                    options={EXERCISE_LOAD_TYPE_FILTER_OPTIONS.map((o) => ({
+                                        value: o.value,
+                                        label: o.label,
+                                    }))}
                                 />
+                                {formErrors.tipo_carga && (
+                                    <p className="text-destructive text-xs mt-1">{formErrors.tipo_carga}</p>
+                                )}
                             </div>
                         </div>
 

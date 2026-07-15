@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { exerciseTagItems, tagDisplayLabel } from "./exerciseDetailLabels";
+import { exerciseTagItems, tagDisplayLabel, tipoCargaLabel } from "./exerciseDetailLabels";
 
 describe("tagDisplayLabel", () => {
     it("prefers Spanish catalog label", () => {
@@ -10,6 +10,13 @@ describe("tagDisplayLabel", () => {
 
     it("falls back to English slug", () => {
         expect(tagDisplayLabel({ name_en: "gymnastic", name_es: null })).toBe("gymnastic");
+    });
+});
+
+describe("tipoCargaLabel", () => {
+    it("uses shared load type labels", () => {
+        expect(tipoCargaLabel("external")).toBe("Carga externa");
+        expect(tipoCargaLabel("ext")).toBe("Carga externa");
     });
 });
 

@@ -344,7 +344,7 @@ function App() {
             path="exercises/create"
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
-                <ExerciseForm />
+                <Navigate to="/dashboard/exercises" replace />
               </RoleProtectedRoute>
             }
           />

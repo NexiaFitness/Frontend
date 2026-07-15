@@ -15,14 +15,14 @@ import {
     getEquipmentLabel,
     getLevelLabel,
     localViewToExercise,
-    muscleFacetLabel,
     exercisePatternLabels,
     equipmentDisplayLine,
+    exercisePrimeMoverLabels,
     tipoLabelFromBackend,
-    getGroupColor,
     normalizeLevel,
     getLevelTextClass,
 } from "@/utils/exercises";
+import { ExercisePrimeMoverBadges } from "@/components/exercises/ExercisePrimeMoverBadges";
 import { tipoCargaLabel } from "@/utils/exercises/exerciseDetailLabels";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 
@@ -109,9 +109,9 @@ export const ExerciseDetail: React.FC = () => {
         navigate("/dashboard/exercises");
     };
 
-    const primaryMuscle = useMemo(() => {
-        if (!exercise) return "";
-        return muscleFacetLabel(exercise);
+    const primeMoverLabels = useMemo(() => {
+        if (!exercise) return [];
+        return exercisePrimeMoverLabels(exercise);
     }, [exercise]);
 
     const patternLabels = useMemo(() => {
@@ -149,7 +149,6 @@ export const ExerciseDetail: React.FC = () => {
         return [];
     }, [exercise]);
 
-    const muscleColors = getGroupColor(primaryMuscle || exercise?.musculatura_principal || "");
     const levelNorm = normalizeLevel(exercise?.nivel || "");
     const levelClass = getLevelTextClass(levelNorm);
     const tipoLabel = tipoLabelFromBackend(exercise?.tipo || "");
@@ -273,15 +272,11 @@ export const ExerciseDetail: React.FC = () => {
                 )}
 
                 <div className={EXERCISE_DETAIL_BODY}>
-                    <div className={EXERCISE_DETAIL_BADGE_ROW}>
-                        {primaryMuscle && (
-                            <Badge
-                                variant="outline"
-                                className={cn(EXERCISE_DETAIL_MUSCLE_BADGE, muscleColors.bg, muscleColors.text)}
-                            >
-                                {getMuscleLabel(primaryMuscle)}
-                            </Badge>
-                        )}
+                    <div className={cn(EXERCISE_DETAIL_BADGE_ROW, "flex-wrap")}>
+                        <ExercisePrimeMoverBadges
+                            exercise={exercise}
+                            badgeClassName={EXERCISE_DETAIL_MUSCLE_BADGE}
+                        />
                         {tipoLabel && (
                             <Badge variant="outline" className={EXERCISE_DETAIL_BADGE_NEUTRAL}>
                                 {tipoLabel}
@@ -310,7 +305,9 @@ export const ExerciseDetail: React.FC = () => {
                                 {EXERCISE_DETAIL_SECTION_LABELS.primaryMuscle}
                             </p>
                             <p className={EXERCISE_DETAIL_SPEC_VALUE}>
-                                {primaryMuscle ? getMuscleLabel(primaryMuscle) : "No especificado"}
+                                {primeMoverLabels.length > 0
+                                    ? primeMoverLabels.map(getMuscleLabel).join(", ")
+                                    : "No especificado"}
                             </p>
                         </div>
 

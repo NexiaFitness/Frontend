@@ -2,8 +2,12 @@
  * muscleFacetLabel — prioriza catálogo muscles[] sobre musculatura_principal legacy.
  */
 import { describe, expect, it } from "vitest";
-import { exercisePatternLabels, muscleFacetLabel } from "./filterOptions";
-import type { MuscleFacetInput, PatternLabelsInput } from "./filterOptions";
+import {
+    exerciseMatchesMuscleFilter,
+    exercisePrimeMoverLabels,
+    muscleFacetLabel,
+} from "./filterOptions";
+import type { MuscleFacetInput } from "./filterOptions";
 
 describe("muscleFacetLabel", () => {
     it("uses catalog muscles when musculatura_principal is legacy placeholder", () => {
@@ -16,6 +20,7 @@ describe("muscleFacetLabel", () => {
                     name_en: "biceps_brachii",
                     name_es: "bíceps braquial",
                     role: "prime_mover",
+                    priority: 1,
                 },
             ],
         } as MuscleFacetInput;
@@ -33,20 +38,26 @@ describe("muscleFacetLabel", () => {
     });
 });
 
-describe("exercisePatternLabels", () => {
-    it("ignores legacy general when catalog movement_patterns exist", () => {
+describe("exerciseMatchesMuscleFilter", () => {
+    it("matches any prime mover label", () => {
         const exercise = {
-            patron_movimiento: "general",
-            movement_patterns: [
-                {
-                    id: 1,
-                    name_en: "accessory_single_joint",
-                    name_es: "Accesorio / monoarticular",
-                    role: "primary",
-                },
+            muscles: [
+                { name_es: "glúteo mayor", role: "prime_mover", priority: 1 },
+                { name_es: "cuádriceps femoral", role: "prime_mover", priority: 2 },
             ],
-        } as PatternLabelsInput;
+        } as MuscleFacetInput;
+        expect(exerciseMatchesMuscleFilter(exercise, "cuádriceps femoral")).toBe(true);
+    });
+});
 
-        expect(exercisePatternLabels(exercise)).toEqual(["Accesorio / monoarticular"]);
+describe("exercisePrimeMoverLabels", () => {
+    it("returns multiple prime movers", () => {
+        const exercise = {
+            muscles: [
+                { name_es: "glúteo mayor", role: "prime_mover", priority: 1 },
+                { name_es: "cuádriceps femoral", role: "prime_mover", priority: 2 },
+            ],
+        } as MuscleFacetInput;
+        expect(exercisePrimeMoverLabels(exercise)).toHaveLength(2);
     });
 });

@@ -149,6 +149,8 @@ export {
     toTrainerCatalogOptions,
 } from "./utils/trainerCatalogLabels";
 export * from "./types/exercise";
+export * from "./exercises";
+export * from "./types/exerciseLoadType";
 export * from "./types/account";
 export * from "./types/progress";
 export * from "./types/training";

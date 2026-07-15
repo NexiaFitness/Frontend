@@ -46,7 +46,7 @@ export const EXERCISE_MEDIA_EMPTY_COPY = {
 } as const;
 
 export const EXERCISE_DETAIL_SECTION_LABELS = {
-    primaryMuscle: "Músculo principal",
+    primaryMuscle: "Músculos objetivo",
     secondaryMuscles: "Músculos secundarios",
     level: "Nivel",
     movementPattern: "Patrón de movimiento",

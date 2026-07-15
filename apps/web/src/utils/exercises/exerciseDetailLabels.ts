@@ -4,13 +4,7 @@
 
 import type { ExerciseJointActionRef, ExerciseTagRef } from "@nexia/shared/hooks/exercises";
 
-const TIPO_CARGA_LABELS: Record<string, string> = {
-    bodyweight: "Peso corporal",
-    external: "Carga externa",
-    mixed: "Mixta",
-    ext: "Carga externa",
-    free_weight: "Carga externa",
-};
+export { exerciseLoadTypeLabel as tipoCargaLabel } from "@nexia/shared/types/exerciseLoadType";
 
 const LATERALITY_LABELS: Record<string, string> = {
     bilateral: "Bilateral",
@@ -41,12 +35,6 @@ const ROLE_LABELS: Record<string, string> = {
     primary: "Principal",
     secondary: "Secundario",
 };
-
-export function tipoCargaLabel(value: string | null | undefined): string {
-    if (!value?.trim()) return "";
-    const key = value.trim().toLowerCase();
-    return TIPO_CARGA_LABELS[key] ?? value;
-}
 
 export function lateralityLabel(value: string | null | undefined): string {
     if (!value?.trim()) return "";

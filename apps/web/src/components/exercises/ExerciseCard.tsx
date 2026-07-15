@@ -2,7 +2,7 @@
  * ExerciseCard.tsx — Card de ejercicio (biblioteca / picker)
  *
  * Layout alineado con spec Lovable: nombre, badges grupo/tipo, equipo · nivel, video opcional.
- * En modales legacy (picker) pasar className para fondo claro.
+ * appearance="plain" para picker modal legacy; "premium" (default) glass biblioteca.
  */
 
 import React from "react";
@@ -11,22 +11,36 @@ import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
-    getMuscleLabel,
+    EXERCISES_LIBRARY_CARD,
+    EXERCISES_LIBRARY_CARD_BADGE_ROW,
+    EXERCISES_LIBRARY_CARD_META,
+    EXERCISES_LIBRARY_CARD_MUSCLE_BADGE,
+    EXERCISES_LIBRARY_CARD_PLAIN,
+    EXERCISES_LIBRARY_CARD_TITLE,
+    EXERCISES_LIBRARY_CARD_TYPE_BADGE,
+    EXERCISES_LIBRARY_CARD_VIDEO,
+} from "./exercisesLibraryPresentation";
+import {
     getLevelLabel,
     getGroupColor,
     normalizeLevel,
     getLevelTextClass,
-    muscleFacetLabel,
     equipmentDisplayLine,
     tipoLabelFromBackend,
 } from "@/utils/exercises";
+import {
+    ExercisePrimeMoverBadges,
+    exercisePrimeMoverAriaSuffix,
+} from "./ExercisePrimeMoverBadges";
 
 export interface ExerciseCardProps {
     exercise: Exercise;
     videoUrl?: string | null;
     onSelect?: (exercise: Exercise) => void;
     className?: string;
+    appearance?: "premium" | "plain";
 }
 
 export const ExerciseCard: React.FC<ExerciseCardProps> = ({
@@ -34,14 +48,17 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     videoUrl = null,
     onSelect,
     className,
+    appearance = "premium",
 }) => {
-    const muscleLabel = muscleFacetLabel(exercise);
-    const colors = getGroupColor(muscleLabel || exercise.musculatura_principal || "");
+    const primaryMuscleForGlow = exercisePrimeMoverAriaSuffix(exercise).split(",")[0]?.trim() || "";
+    const colors = getGroupColor(primaryMuscleForGlow || exercise.musculatura_principal || "");
     const levelNorm = normalizeLevel(exercise.nivel || "");
     const levelClass = getLevelTextClass(levelNorm);
     const tipoLabel = tipoLabelFromBackend(exercise.tipo || "");
     const equipLine = equipmentDisplayLine(exercise);
-    const ariaLabel = `${exerciseDisplayName(exercise)} - ${getMuscleLabel(muscleLabel)}`;
+    const muscleAria = exercisePrimeMoverAriaSuffix(exercise);
+    const ariaLabel = `${exerciseDisplayName(exercise)}${muscleAria ? ` - ${muscleAria}` : ""}`;
+    const isPremium = appearance === "premium";
 
     const handleClick = () => onSelect?.(exercise);
     const handleKeyDown = (e: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -59,33 +76,27 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             disabled={!onSelect}
             aria-label={onSelect ? ariaLabel : undefined}
             className={cn(
-                "flex flex-col rounded-lg bg-card p-5 text-left transition-all hover:bg-surface-2",
+                isPremium ? EXERCISES_LIBRARY_CARD : EXERCISES_LIBRARY_CARD_PLAIN,
                 colors.glow,
                 onSelect ? "cursor-pointer" : "cursor-default",
+                "relative",
                 className
             )}
         >
-            <h3 className="text-sm font-bold text-foreground line-clamp-2">{exerciseDisplayName(exercise)}</h3>
+            {isPremium && <NexiaGlassAccentRim />}
+            <h3 className={EXERCISES_LIBRARY_CARD_TITLE}>{exerciseDisplayName(exercise)}</h3>
 
-            <div className="mt-2 flex flex-wrap gap-1.5">
-                {muscleLabel && (
-                    <Badge
-                        variant="outline"
-                        className={cn(
-                            "border-0 px-1.5 py-0 text-[10px] font-medium leading-tight",
-                            colors.bg,
-                            colors.text
-                        )}
-                    >
-                        {getMuscleLabel(muscleLabel)}
-                    </Badge>
-                )}
-                <Badge variant="outline" className="border-border text-[10px] text-muted-foreground">
+            <div className={cn(EXERCISES_LIBRARY_CARD_BADGE_ROW, "flex-wrap")}>
+                <ExercisePrimeMoverBadges
+                    exercise={exercise}
+                    badgeClassName={EXERCISES_LIBRARY_CARD_MUSCLE_BADGE}
+                />
+                <Badge variant="outline" className={EXERCISES_LIBRARY_CARD_TYPE_BADGE}>
                     {tipoLabel}
                 </Badge>
             </div>
 
-            <p className="mt-3 text-xs text-muted-foreground">
+            <p className={EXERCISES_LIBRARY_CARD_META}>
                 {equipLine ? (
                     <span>
                         {equipLine}
@@ -96,7 +107,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </p>
 
             {videoUrl ? (
-                <div className="mt-2 flex items-center gap-1 text-[10px] text-primary">
+                <div className={EXERCISES_LIBRARY_CARD_VIDEO}>
                     <Play className="h-3 w-3 shrink-0" aria-hidden />
                     <span>Video disponible</span>
                 </div>

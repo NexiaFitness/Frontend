@@ -1,11 +1,28 @@
 /**
  * Opciones de filtro derivadas de la lista de ejercicios (spec Lovable).
- * Prioriza relaciones del catálogo nuevo (muscles, equipment, movement_patterns)
- * cuando existen; las columnas legacy a menudo quedan genéricas tras el import Excel.
+ * Lógica de músculo prime_mover: @nexia/shared/exercises/muscleDisplay (DC-11).
  */
 
 import type { Exercise } from "@nexia/shared/hooks/exercises";
+import {
+    collectPrimeMoverFilterOptions,
+    exerciseMatchesMuscleFilter,
+    exerciseMuscleSearchText,
+    exercisePrimeMoverLabels,
+    muscleFacetLabel,
+    type ExerciseMuscleFacetInput,
+    type MuscleRoleRef,
+} from "@nexia/shared";
 import { getEquipmentLabel } from "./translations";
+
+export type { ExerciseMuscleFacetInput, MuscleRoleRef };
+export {
+    collectPrimeMoverFilterOptions,
+    exerciseMatchesMuscleFilter,
+    exerciseMuscleSearchText,
+    exercisePrimeMoverLabels,
+    muscleFacetLabel,
+};
 
 function uniqSorted(values: string[]): string[] {
     const set = new Set(values.map((v) => v.trim()).filter(Boolean));
@@ -29,11 +46,6 @@ function equipmentParts(equipo: string | null | undefined): string[] {
         .filter(Boolean);
 }
 
-function isPrimeMoverRole(role: string | undefined | null): boolean {
-    const r = (role || "").toLowerCase().replace(/\s+/g, "_");
-    return r === "prime_mover" || r === "primary";
-}
-
 const LEGACY_PATTERN_PLACEHOLDERS = new Set(["general"]);
 
 function isLegacyPlaceholder(value: string, placeholders: Set<string>): boolean {
@@ -41,18 +53,6 @@ function isLegacyPlaceholder(value: string, placeholders: Set<string>): boolean 
 }
 
 export type MuscleFacetInput = Pick<Exercise, "muscles" | "musculatura_principal">;
-
-/** Texto de músculo para badge / filtro / búsqueda (prioriza catálogo). */
-export function muscleFacetLabel(ex: MuscleFacetInput): string {
-    const muscles = ex.muscles;
-    if (Array.isArray(muscles) && muscles.length > 0) {
-        const prime = muscles.filter((m) => isPrimeMoverRole(m.role));
-        const pick = (prime.length ? prime : muscles)[0];
-        const label = (pick?.name_es || pick?.name || pick?.name_en || "").trim();
-        if (label) return label;
-    }
-    return primaryMuscleSegment(ex.musculatura_principal) || (ex.musculatura_principal || "").trim();
-}
 
 /** Tokens de equipo normalizados (slug) para filtrar y deduplicar opciones. */
 export function exerciseEquipmentTokens(ex: Exercise): string[] {
@@ -107,21 +107,10 @@ export function getFilterOptions(exercises: Exercise[]): {
     equip: string[];
     patterns: string[];
 } {
-    const groups: string[] = [];
-    const equip: string[] = [];
-    const patterns: string[] = [];
-
-    for (const e of exercises) {
-        const g = muscleFacetLabel(e);
-        if (g) groups.push(g);
-        equip.push(...exerciseEquipmentTokens(e));
-        patterns.push(...exercisePatternLabels(e));
-    }
-
     return {
-        groups: uniqSorted(groups),
-        equip: uniqSorted(equip),
-        patterns: uniqSorted(patterns),
+        groups: collectPrimeMoverFilterOptions(exercises),
+        equip: uniqSorted(exercises.flatMap((e) => exerciseEquipmentTokens(e))),
+        patterns: uniqSorted(exercises.flatMap((e) => exercisePatternLabels(e))),
     };
 }
 
