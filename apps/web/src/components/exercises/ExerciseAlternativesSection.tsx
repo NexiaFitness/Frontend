@@ -8,7 +8,7 @@ import {
     useGetExerciseAlternativesQuery,
     useGetAutoSuggestedAlternativesQuery,
 } from "@nexia/shared/api/exerciseAlternativesApi";
-import { getEquipmentLabel } from "@/utils/exercises";
+import { formatEquipmentLabelLine } from "@/utils/exercises";
 import {
     EXERCISE_DETAIL_ALT_DIVIDER,
     EXERCISE_DETAIL_ALT_EMPTY,
@@ -22,16 +22,23 @@ import {
     EXERCISE_DETAIL_ALT_ITEM_TITLE,
     EXERCISE_DETAIL_ALT_BLOCK,
     EXERCISE_DETAIL_SECTION_LABELS,
+    EXERCISE_DETAIL_SIDE_CARD,
+    EXERCISE_DETAIL_SIDE_SECTION_TITLE,
     EXERCISE_DETAIL_SPEC_LABEL,
 } from "./exerciseDetailPresentation";
+import { cn } from "@/lib/utils";
 
 interface ExerciseAlternativesSectionProps {
     exerciseId: number;
+    variant?: "default" | "sidebar";
 }
 
 export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionProps> = ({
     exerciseId,
+    variant = "default",
 }) => {
+    const isSidebar = variant === "sidebar";
+
     const {
         data: manualAlternatives = [],
         isLoading: isLoadingManual,
@@ -49,14 +56,20 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
     const hasManual = manualAlternatives.length > 0;
     const hasSuggested = suggestedAlternatives.length > 0;
     const isEmpty = !hasManual && !hasSuggested;
+    const totalCount = manualAlternatives.length + suggestedAlternatives.length;
+
+    const rootClass = isSidebar ? EXERCISE_DETAIL_SIDE_CARD : EXERCISE_DETAIL_ALT_DIVIDER;
+    const titleClass = isSidebar ? EXERCISE_DETAIL_SIDE_SECTION_TITLE : EXERCISE_DETAIL_SPEC_LABEL;
+
+    const title = isSidebar
+        ? `${EXERCISE_DETAIL_SECTION_LABELS.alternatives}${totalCount > 0 ? ` · ${totalCount}` : ""}`
+        : EXERCISE_DETAIL_SECTION_LABELS.alternatives;
 
     if (isLoading) {
         return (
-            <div className={EXERCISE_DETAIL_ALT_DIVIDER}>
-                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                    {EXERCISE_DETAIL_SECTION_LABELS.alternatives}
-                </p>
-                <div className={EXERCISE_DETAIL_ALT_LOADING}>
+            <div className={rootClass}>
+                <p className={titleClass}>{title}</p>
+                <div className={cn(EXERCISE_DETAIL_ALT_LOADING, isSidebar && "py-4")}>
                     <LoadingSpinner size="sm" />
                 </div>
             </div>
@@ -65,10 +78,8 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
 
     if (isEmpty) {
         return (
-            <div className={EXERCISE_DETAIL_ALT_DIVIDER}>
-                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                    {EXERCISE_DETAIL_SECTION_LABELS.alternatives}
-                </p>
+            <div className={rootClass}>
+                <p className={titleClass}>{title}</p>
                 <p className={EXERCISE_DETAIL_ALT_EMPTY}>
                     No hay alternativas definidas ni sugerencias disponibles.
                 </p>
@@ -77,10 +88,8 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
     }
 
     return (
-        <div className={EXERCISE_DETAIL_ALT_DIVIDER}>
-            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                {EXERCISE_DETAIL_SECTION_LABELS.alternatives}
-            </p>
+        <div className={rootClass}>
+            <p className={titleClass}>{title}</p>
 
             {hasManual && (
                 <div className={EXERCISE_DETAIL_ALT_BLOCK}>
@@ -96,7 +105,7 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
                                 </p>
                                 {alt.alternative_exercise_equipo && (
                                     <p className={EXERCISE_DETAIL_ALT_META}>
-                                        {getEquipmentLabel(alt.alternative_exercise_equipo)}
+                                        {formatEquipmentLabelLine(alt.alternative_exercise_equipo)}
                                     </p>
                                 )}
                             </li>
@@ -115,7 +124,10 @@ export const ExerciseAlternativesSection: React.FC<ExerciseAlternativesSectionPr
                             <li key={alt.id} className={EXERCISE_DETAIL_ALT_ITEM}>
                                 <p className={EXERCISE_DETAIL_ALT_ITEM_TITLE}>{alt.nombre}</p>
                                 <p className={EXERCISE_DETAIL_ALT_META}>
-                                    {[alt.equipo && getEquipmentLabel(alt.equipo), alt.musculatura_principal]
+                                    {[
+                                        alt.equipo && formatEquipmentLabelLine(alt.equipo),
+                                        alt.musculatura_principal,
+                                    ]
                                         .filter(Boolean)
                                         .join(" · ")}
                                 </p>

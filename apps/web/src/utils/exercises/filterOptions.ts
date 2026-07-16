@@ -13,7 +13,7 @@ import {
     type ExerciseMuscleFacetInput,
     type MuscleRoleRef,
 } from "@nexia/shared";
-import { getEquipmentLabel } from "./translations";
+import { formatEquipmentLabelLine } from "./translations";
 
 export type { ExerciseMuscleFacetInput, MuscleRoleRef };
 export {
@@ -77,9 +77,7 @@ export function equipmentDisplayLine(ex: Exercise): string {
             .filter(Boolean)
             .join(", ");
     }
-    return equipmentParts(ex.equipo)
-        .map((p) => getEquipmentLabel(p))
-        .join(", ");
+    return formatEquipmentLabelLine(ex.equipo || "");
 }
 
 export type PatternLabelsInput = Pick<Exercise, "movement_patterns" | "patron_movimiento">;

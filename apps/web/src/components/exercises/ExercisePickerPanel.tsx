@@ -33,6 +33,7 @@ import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
+import { equipmentDisplayLine } from "@/utils/exercises";
 
 /** Normaliza texto para búsqueda insensible a mayúsculas y tildes. */
 function foldForSearch(value: string): string {
@@ -544,8 +545,9 @@ const AlternativesView: React.FC<AlternativesViewProps> = ({
                                     {exerciseDisplayName(alt)}
                                 </p>
                                 <p className="text-[10px] text-muted-foreground truncate">
-                                    {alt.patron_movimiento}
-                                    {alt.equipo ? ` · ${alt.equipo}` : ""}
+                                    {[alt.patron_movimiento, equipmentDisplayLine(alt)]
+                                        .filter(Boolean)
+                                        .join(" · ")}
                                 </p>
                             </div>
                             <Plus className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />

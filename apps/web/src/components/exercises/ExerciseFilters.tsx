@@ -87,9 +87,15 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
     const handleMovementPatternChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const value = e.target.value;
         if (value) {
-            onChange({ movement_pattern_ids: [Number(value)] });
+            onChange({
+                movement_pattern_ids: [Number(value)],
+                movement_pattern_role: "primary",
+            });
         } else {
-            onChange({ movement_pattern_ids: undefined });
+            onChange({
+                movement_pattern_ids: undefined,
+                movement_pattern_role: undefined,
+            });
         }
     };
 
@@ -104,6 +110,7 @@ export const ExerciseFilters: React.FC<ExerciseFiltersProps> = ({ filters, onCha
             muscle_group_ids: undefined,
             equipment_ids: undefined,
             movement_pattern_ids: undefined,
+            movement_pattern_role: undefined,
             nivel: undefined,
             tipo_carga: undefined,
             search: undefined,

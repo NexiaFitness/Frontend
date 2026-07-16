@@ -145,6 +145,8 @@ export interface ExerciseFilters {
     equipment_ids?: number[];
     /** Filtro por IDs de patrón de movimiento (Exercise Catalog) */
     movement_pattern_ids?: number[];
+    /** Rol del patrón al filtrar: primary (default UI), secondary, any */
+    movement_pattern_role?: "primary" | "secondary" | "any";
     /** Filtra ejercicios compatibles con el equipamiento del cliente */
     client_id?: number;
 }
@@ -261,6 +263,7 @@ interface GetExercisesParams {
     muscle_group_ids?: number[];
     equipment_ids?: number[];
     movement_pattern_ids?: number[];
+    movement_pattern_role?: "primary" | "secondary" | "any";
     client_id?: number;
 }
 // ========================================
@@ -317,6 +320,10 @@ const exercisesListApi = baseApi.injectEndpoints({
                     for (const id of filters.movement_pattern_ids) {
                         params.append('movement_pattern_ids', id.toString());
                     }
+                    params.append(
+                        'movement_pattern_role',
+                        filters.movement_pattern_role ?? 'primary',
+                    );
                 }
                 if (filters.client_id != null) {
                     params.append('client_id', String(filters.client_id));

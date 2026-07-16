@@ -137,9 +137,16 @@ export function getLevelTextClass(level: NormalizedLevel): string {
     }
 }
 
-/** Mapea `tipo` del backend (p. ej. monoarticular) a etiqueta de UI de la biblioteca. */
-export function tipoLabelFromBackend(tipo: string): "Compuesto" | "Aislamiento" {
-    const t = tipo.toLowerCase();
+export type ExerciseTipoLabel = "Aislamiento" | "Compuesto" | "Complejo";
+
+/** Mapea `tipo` del backend (monoarticular | multiarticular | complex) a etiqueta UI. */
+export function tipoLabelFromBackend(tipo: string): ExerciseTipoLabel {
+    const t = tipo.toLowerCase().trim();
     if (t === "monoarticular") return "Aislamiento";
+    if (t === "complex") return "Complejo";
     return "Compuesto";
+}
+
+export function isComplexExerciseTipo(tipo: string): boolean {
+    return tipo.toLowerCase().trim() === "complex";
 }

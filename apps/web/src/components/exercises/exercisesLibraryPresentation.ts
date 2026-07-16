@@ -24,6 +24,12 @@ export {
 export const EXERCISES_LIBRARY_FILTER_LABEL =
     "mb-1 block text-xs font-medium text-muted-foreground";
 
+/** Opción de filtro desde catálogo (muscle_groups, equipment, movement_patterns). */
+export interface ExercisesLibraryCatalogOption {
+    id: number;
+    label: string;
+}
+
 /** Título accesible con contador (E2E: «Ejercicios · {n}»). */
 export function exercisesLibraryHeading(count: number): string {
     return `Ejercicios · ${count}`;
@@ -149,6 +155,9 @@ export const EXERCISES_LIBRARY_CARD_MUSCLE_BADGE = "border-0 px-1.5 py-0 text-[1
 
 export const EXERCISES_LIBRARY_CARD_TYPE_BADGE = "border-border text-[10px] text-muted-foreground";
 
+export const EXERCISES_LIBRARY_CARD_COMPLEX_TYPE_BADGE =
+    "border-[hsl(var(--warning))]/40 text-[10px] font-medium text-[hsl(var(--warning))]";
+
 export const EXERCISES_LIBRARY_CARD_META = "mt-3 text-xs text-muted-foreground";
 
 export const EXERCISES_LIBRARY_CARD_VIDEO = "mt-2 flex items-center gap-1 text-[10px] text-primary";
@@ -189,6 +198,9 @@ export const EXERCISES_LIBRARY_TABLE_NAME = "font-medium text-foreground";
 export const EXERCISES_LIBRARY_TABLE_MUSCLE_BADGE = "border-0 px-1.5 py-0 text-[10px] font-medium";
 
 export const EXERCISES_LIBRARY_TABLE_META = "text-sm text-muted-foreground";
+
+export const EXERCISES_LIBRARY_TABLE_COMPLEX_TYPE =
+    "text-sm font-medium text-[hsl(var(--warning))]";
 
 export const EXERCISES_LIBRARY_TABLE_EQUIP = cn(
     EXERCISES_LIBRARY_TABLE_META,

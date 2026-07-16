@@ -11,19 +11,18 @@ import { useGetExerciseByIdQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import {
-    getMuscleLabel,
-    getEquipmentLabel,
+    formatEquipmentLabelLine,
     getLevelLabel,
     localViewToExercise,
-    exercisePatternLabels,
     equipmentDisplayLine,
-    exercisePrimeMoverLabels,
     tipoLabelFromBackend,
+    isComplexExerciseTipo,
     normalizeLevel,
     getLevelTextClass,
+    getMuscleLabel,
 } from "@/utils/exercises";
 import { ExercisePrimeMoverBadges } from "@/components/exercises/ExercisePrimeMoverBadges";
-import { tipoCargaLabel } from "@/utils/exercises/exerciseDetailLabels";
+import { tipoCargaLabel, catalogRoleLabel } from "@/utils/exercises/exerciseDetailLabels";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 
 import { Button } from "@/components/ui/buttons";
@@ -34,35 +33,34 @@ import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim
 import { ExerciseMediaEmptyState } from "@/components/exercises/ExerciseMediaEmptyState";
 import { ExerciseAlternativesSection } from "@/components/exercises/ExerciseAlternativesSection";
 import { ExerciseDetailCatalogSections } from "@/components/exercises/ExerciseDetailCatalogSections";
+import { ExerciseDetailExpandableSection } from "@/components/exercises/ExerciseDetailExpandableSection";
+import { ExerciseDetailTrainerEssentials } from "@/components/exercises/ExerciseDetailTrainerEssentials";
 import {
     EXERCISE_DETAIL_ALERT_SPACING,
     EXERCISE_DETAIL_BACK_BUTTON,
     EXERCISE_DETAIL_BADGE_MUTED,
     EXERCISE_DETAIL_BADGE_NEUTRAL,
     EXERCISE_DETAIL_BADGE_ROW,
+    EXERCISE_DETAIL_COMPLEX_TYPE_BADGE,
     EXERCISE_DETAIL_BODY,
     EXERCISE_DETAIL_BODY_MUTED,
     EXERCISE_DETAIL_BODY_MUTED_PRESERVE,
-    EXERCISE_DETAIL_CHIP,
-    EXERCISE_DETAIL_CHIP_ROW,
-    EXERCISE_DETAIL_EQUIP_CHIP,
     EXERCISE_DETAIL_ERROR_ACTION,
     EXERCISE_DETAIL_ERROR_DETAIL,
-    EXERCISE_DETAIL_GRID_SPAN_FULL,
     EXERCISE_DETAIL_HEADER,
     EXERCISE_DETAIL_ICON_BACK_GAP,
     EXERCISE_DETAIL_ICON_SM,
     EXERCISE_DETAIL_ICON_XS,
+    EXERCISE_DETAIL_LAYOUT,
     EXERCISE_DETAIL_LEVEL_BADGE,
     EXERCISE_DETAIL_LOADING_ROW,
     EXERCISE_DETAIL_LOADING_TEXT,
+    EXERCISE_DETAIL_META_DIVIDER,
     EXERCISE_DETAIL_MUSCLE_BADGE,
     EXERCISE_DETAIL_PAGE,
     EXERCISE_DETAIL_SECTION_LABELS,
     EXERCISE_DETAIL_SHELL,
-    EXERCISE_DETAIL_SPEC_GRID,
     EXERCISE_DETAIL_SPEC_LABEL,
-    EXERCISE_DETAIL_SPEC_VALUE,
     EXERCISE_DETAIL_TITLE_WRAP,
     EXERCISE_DETAIL_VIDEO_HERO,
     EXERCISE_DETAIL_VIDEO_LINK_CENTERED,
@@ -109,31 +107,33 @@ export const ExerciseDetail: React.FC = () => {
         navigate("/dashboard/exercises");
     };
 
-    const primeMoverLabels = useMemo(() => {
-        if (!exercise) return [];
-        return exercisePrimeMoverLabels(exercise);
-    }, [exercise]);
-
-    const patternLabels = useMemo(() => {
-        if (!exercise) return [];
-        return exercisePatternLabels(exercise);
-    }, [exercise]);
-
-    const secondaryMuscles = useMemo(() => {
+    const secondaryMuscleItems = useMemo(() => {
         if (!exercise) return [];
         const fromCatalog = (exercise.muscles || [])
             .filter((m) => {
                 const role = (m.role || "").toLowerCase().replace(/\s+/g, "_");
                 return role && role !== "prime_mover" && role !== "primary";
             })
-            .map((m) => (m.name_es || m.name || m.name_en || "").trim())
-            .filter(Boolean);
+            .map((m) => {
+                const label = getMuscleLabel((m.name_es || m.name || m.name_en || "").trim());
+                const roleLabel = catalogRoleLabel(m.role);
+                return {
+                    id: `${label}-${m.role ?? "na"}`,
+                    label,
+                    roleLabel: roleLabel || undefined,
+                };
+            })
+            .filter((item) => item.label);
         if (fromCatalog.length > 0) return fromCatalog;
         if (!exercise.musculatura_secundaria) return [];
         return exercise.musculatura_secundaria
             .split(",")
             .map((m) => m.trim())
-            .filter((m) => m.length > 0);
+            .filter((m) => m.length > 0)
+            .map((name, index) => ({
+                id: `legacy-${name}-${index}`,
+                label: getMuscleLabel(name),
+            }));
     }, [exercise]);
 
     const equipmentLabels = useMemo(() => {
@@ -144,7 +144,10 @@ export const ExerciseDetail: React.FC = () => {
         if (fromCatalog.length > 0) return fromCatalog;
         const legacy = (exercise.equipo || "").trim();
         if (legacy && legacy.toLowerCase() !== "none") {
-            return [getEquipmentLabel(legacy)];
+            const legacyLine = formatEquipmentLabelLine(legacy);
+            if (legacyLine) {
+                return legacyLine.split(", ");
+            }
         }
         return [];
     }, [exercise]);
@@ -152,9 +155,18 @@ export const ExerciseDetail: React.FC = () => {
     const levelNorm = normalizeLevel(exercise?.nivel || "");
     const levelClass = getLevelTextClass(levelNorm);
     const tipoLabel = tipoLabelFromBackend(exercise?.tipo || "");
+    const tipoBadgeClass = isComplexExerciseTipo(exercise?.tipo || "")
+        ? EXERCISE_DETAIL_COMPLEX_TYPE_BADGE
+        : EXERCISE_DETAIL_BADGE_NEUTRAL;
     const tipoCarga = tipoCargaLabel(exercise?.tipo_carga);
     const equipLine = exercise ? equipmentDisplayLine(exercise) : "";
     const hasVideo = Boolean(localPayload?.videoUrl);
+
+    const contentFieldCount = [
+        exercise?.descripcion,
+        exercise?.instrucciones,
+        exercise?.notas,
+    ].filter(Boolean).length;
 
     if (!routeId) {
         return (
@@ -278,7 +290,7 @@ export const ExerciseDetail: React.FC = () => {
                             badgeClassName={EXERCISE_DETAIL_MUSCLE_BADGE}
                         />
                         {tipoLabel && (
-                            <Badge variant="outline" className={EXERCISE_DETAIL_BADGE_NEUTRAL}>
+                            <Badge variant="outline" className={tipoBadgeClass}>
                                 {tipoLabel}
                             </Badge>
                         )}
@@ -292,106 +304,77 @@ export const ExerciseDetail: React.FC = () => {
                                 {getLevelLabel(exercise.nivel)}
                             </Badge>
                         )}
-                        {patternLabels.map((pattern) => (
-                            <Badge key={pattern} variant="outline" className={EXERCISE_DETAIL_BADGE_MUTED}>
-                                {pattern}
-                            </Badge>
-                        ))}
                     </div>
 
-                    <div className={EXERCISE_DETAIL_SPEC_GRID}>
-                        <div>
-                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                {EXERCISE_DETAIL_SECTION_LABELS.primaryMuscle}
-                            </p>
-                            <p className={EXERCISE_DETAIL_SPEC_VALUE}>
-                                {primeMoverLabels.length > 0
-                                    ? primeMoverLabels.map(getMuscleLabel).join(", ")
-                                    : "No especificado"}
-                            </p>
-                        </div>
-
-                        <div>
-                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                {EXERCISE_DETAIL_SECTION_LABELS.level}
-                            </p>
-                            <p className={EXERCISE_DETAIL_SPEC_VALUE}>
-                                {exercise.nivel ? getLevelLabel(exercise.nivel) : "No especificado"}
-                            </p>
-                        </div>
-
-                        {patternLabels.length > 0 && (
-                            <div>
-                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                    {EXERCISE_DETAIL_SECTION_LABELS.movementPattern}
-                                </p>
-                                <p className={EXERCISE_DETAIL_SPEC_VALUE}>{patternLabels.join(", ")}</p>
-                            </div>
-                        )}
-
-                        {equipmentLabels.length > 0 && (
-                            <div className={EXERCISE_DETAIL_GRID_SPAN_FULL}>
-                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                    {EXERCISE_DETAIL_SECTION_LABELS.equipment}
-                                </p>
-                                <div className={EXERCISE_DETAIL_CHIP_ROW}>
-                                    {equipmentLabels.map((eq) => (
-                                        <span key={`eq-${eq}`} className={EXERCISE_DETAIL_EQUIP_CHIP}>
-                                            {eq}
-                                        </span>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+                    <div className={EXERCISE_DETAIL_META_DIVIDER}>
+                        <ExerciseDetailTrainerEssentials
+                            exercise={exercise}
+                            equipmentLabels={equipmentLabels}
+                            secondaryMuscleItems={secondaryMuscleItems}
+                        />
                     </div>
 
-                    {secondaryMuscles.length > 0 && (
-                        <div>
-                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                {EXERCISE_DETAIL_SECTION_LABELS.secondaryMuscles}
-                            </p>
-                            <div className={EXERCISE_DETAIL_CHIP_ROW}>
-                                {secondaryMuscles.map((muscle, index) => (
-                                    <span key={`${muscle}-${index}`} className={EXERCISE_DETAIL_CHIP}>
-                                        {getMuscleLabel(muscle)}
-                                    </span>
-                                ))}
+                    <div className={EXERCISE_DETAIL_LAYOUT}>
+                        {!isLocalRoute && exerciseIdForApi ? (
+                            <div className="order-2 min-w-0 lg:sticky lg:top-4 lg:col-start-2 lg:row-start-1 lg:self-start">
+                                <ExerciseAlternativesSection
+                                    exerciseId={exerciseIdForApi}
+                                    variant="sidebar"
+                                />
                             </div>
+                        ) : null}
+
+                        <div className="order-3 min-w-0 space-y-5 lg:col-start-1 lg:row-start-1">
+                            <ExerciseDetailExpandableSection
+                                id="exercise-planning-section"
+                                title={EXERCISE_DETAIL_SECTION_LABELS.advancedPlanning}
+                            >
+                                <ExerciseDetailCatalogSections exercise={exercise} />
+                            </ExerciseDetailExpandableSection>
+
+                            {contentFieldCount > 0 ? (
+                                <ExerciseDetailExpandableSection
+                                    id="exercise-content-section"
+                                    title={EXERCISE_DETAIL_SECTION_LABELS.exerciseContent}
+                                    badge={String(contentFieldCount)}
+                                    defaultOpen
+                                >
+                                    <div className="space-y-5">
+                                        {exercise.descripcion ? (
+                                            <div>
+                                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                                    {EXERCISE_DETAIL_SECTION_LABELS.description}
+                                                </p>
+                                                <p className={EXERCISE_DETAIL_BODY_MUTED}>
+                                                    {exercise.descripcion}
+                                                </p>
+                                            </div>
+                                        ) : null}
+                                        {exercise.instrucciones ? (
+                                            <div>
+                                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                                    {EXERCISE_DETAIL_SECTION_LABELS.instructions}
+                                                </p>
+                                                <p className={EXERCISE_DETAIL_BODY_MUTED_PRESERVE}>
+                                                    {exercise.instrucciones}
+                                                </p>
+                                            </div>
+                                        ) : null}
+                                        {exercise.notas ? (
+                                            <div>
+                                                <p className={EXERCISE_DETAIL_SPEC_LABEL}>
+                                                    {EXERCISE_DETAIL_SECTION_LABELS.notes}
+                                                </p>
+                                                <p className={EXERCISE_DETAIL_BODY_MUTED}>
+                                                    {exercise.notas}
+                                                </p>
+                                            </div>
+                                        ) : null}
+                                    </div>
+                                </ExerciseDetailExpandableSection>
+                            ) : null}
                         </div>
-                    )}
-
-                    {exercise.descripcion && (
-                        <div>
-                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                {EXERCISE_DETAIL_SECTION_LABELS.description}
-                            </p>
-                            <p className={EXERCISE_DETAIL_BODY_MUTED}>{exercise.descripcion}</p>
-                        </div>
-                    )}
-
-                    {exercise.instrucciones && (
-                        <div>
-                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                {EXERCISE_DETAIL_SECTION_LABELS.instructions}
-                            </p>
-                            <p className={EXERCISE_DETAIL_BODY_MUTED_PRESERVE}>{exercise.instrucciones}</p>
-                        </div>
-                    )}
-
-                    {exercise.notas && (
-                        <div>
-                            <p className={EXERCISE_DETAIL_SPEC_LABEL}>
-                                {EXERCISE_DETAIL_SECTION_LABELS.notes}
-                            </p>
-                            <p className={EXERCISE_DETAIL_BODY_MUTED}>{exercise.notas}</p>
-                        </div>
-                    )}
-
-                    <ExerciseDetailCatalogSections exercise={exercise} />
-
-                    {!isLocalRoute && exerciseIdForApi ? (
-                        <ExerciseAlternativesSection exerciseId={exerciseIdForApi} />
-                    ) : null}
+                    </div>
                 </div>
             </article>
         </div>

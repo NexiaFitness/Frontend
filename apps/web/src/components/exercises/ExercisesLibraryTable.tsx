@@ -17,6 +17,7 @@ import {
     EXERCISES_LIBRARY_TABLE_HEAD,
     EXERCISES_LIBRARY_TABLE_LEVEL,
     EXERCISES_LIBRARY_TABLE_META,
+    EXERCISES_LIBRARY_TABLE_COMPLEX_TYPE,
     EXERCISES_LIBRARY_TABLE_EQUIP,
     EXERCISES_LIBRARY_TABLE_MUSCLE_BADGE,
     EXERCISES_LIBRARY_TABLE_NAME,
@@ -27,11 +28,12 @@ import {
 } from "./exercisesLibraryPresentation";
 import {
     equipmentDisplayLine,
-    getEquipmentLabel,
+    formatEquipmentLabelLine,
     getLevelLabel,
     getLevelTextClass,
     normalizeLevel,
     tipoLabelFromBackend,
+    isComplexExerciseTipo,
 } from "@/utils/exercises";
 import { ExercisePrimeMoverBadges } from "@/components/exercises/ExercisePrimeMoverBadges";
 
@@ -89,11 +91,18 @@ export const ExercisesLibraryTable: React.FC<ExercisesLibraryTableProps> = ({
                                     />
                                 </div>
                             </td>
-                            <td className={cn(EXERCISES_LIBRARY_TABLE_TD, EXERCISES_LIBRARY_TABLE_META)}>
+                            <td
+                                className={cn(
+                                    EXERCISES_LIBRARY_TABLE_TD,
+                                    isComplexExerciseTipo(ex.tipo || "")
+                                        ? EXERCISES_LIBRARY_TABLE_COMPLEX_TYPE
+                                        : EXERCISES_LIBRARY_TABLE_META
+                                )}
+                            >
                                 {tipoLabelFromBackend(ex.tipo || "")}
                             </td>
                             <td className={cn(EXERCISES_LIBRARY_TABLE_TD, EXERCISES_LIBRARY_TABLE_EQUIP)}>
-                                {equipLine || getEquipmentLabel(ex.equipo || "")}
+                                {equipLine || formatEquipmentLabelLine(ex.equipo || "")}
                             </td>
                             <td
                                 className={cn(

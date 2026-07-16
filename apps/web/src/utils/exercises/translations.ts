@@ -40,28 +40,94 @@ export const getMuscleLabel = (muscle: string): string => {
 };
 
 /**
+ * Mapa canónico EN → ES alineado con catálogo (hoja 11.6, 26 equipos).
+ * @see docs/catalogo-ejercicios/01_INVENTARIO_EXCEL_BD_VISTA.md
+ */
+export const EQUIPMENT_NAME_EN_TO_ES: Record<string, string> = {
+    bodyweight: "peso corporal",
+    barbell: "barra",
+    dumbbell: "mancuerna",
+    kettlebell: "kettlebell",
+    machine: "máquina",
+    cable: "polea",
+    resistance_band: "banda elástica",
+    "resistance band": "banda elástica",
+    medicine_ball: "balón medicinal",
+    "medicine ball": "balón medicinal",
+    smith_machine: "multipower",
+    "smith machine": "multipower",
+    trap_bar: "barra hexagonal",
+    "trap bar": "barra hexagonal",
+    ez_bar: "barra EZ",
+    "ez bar": "barra EZ",
+    landmine: "landmine",
+    bench: "banco",
+    pull_up_bar: "barra de dominadas",
+    "pull up bar": "barra de dominadas",
+    rings: "anillas",
+    trx: "trx",
+    box: "cajón",
+    sled: "trineo",
+    rower: "remo ergómetro",
+    bike: "bici",
+    skierg: "skierg",
+    bumper_plates: "discos bumper",
+    "bumper plates": "discos bumper",
+    foam_roller: "foam roller",
+    "foam roller": "foam roller",
+    yoga_mat: "esterilla",
+    "yoga mat": "esterilla",
+    sandbag: "saco",
+    jump_rope: "comba",
+    "jump rope": "comba",
+    other: "otro",
+    none: "",
+};
+
+function normalizeEquipmentKey(equipment: string): string {
+    return equipment.trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+/**
  * Traduce equipamiento a español
  *
- * @param equipment - Nombre del equipamiento (string del backend)
- * @returns Etiqueta en español o el valor original si no se encuentra
+ * @param equipment - Slug EN del backend o token legacy (`bench`, `barbell`)
+ * @returns Etiqueta en español del catálogo, o el valor original si ya está en ES
  *
  * @example
- * getEquipmentLabel("barbell") // "Barra"
- * getEquipmentLabel("dumbbell") // "Mancuernas"
+ * getEquipmentLabel("barbell") // "barra"
+ * getEquipmentLabel("bench") // "banco"
  */
 export const getEquipmentLabel = (equipment: string): string => {
-    const labels: Record<string, string> = {
-        barbell: "Barra",
-        dumbbell: "Mancuernas",
-        kettlebell: "Kettlebell",
-        "resistance_band": "Banda de Resistencia",
-        "resistance band": "Banda de Resistencia",
-        bodyweight: "Peso Corporal",
-        machine: "Máquina",
-        cable: "Cable",
-        other: "Otro",
-    };
-    return labels[equipment.toLowerCase()] || equipment;
+    const trimmed = equipment.trim();
+    if (!trimmed) return "";
+
+    const lowered = trimmed.toLowerCase();
+    if (lowered === "none") return "";
+
+    const underscored = normalizeEquipmentKey(trimmed);
+    const spaced = trimmed.toLowerCase();
+
+    return (
+        EQUIPMENT_NAME_EN_TO_ES[underscored] ??
+        EQUIPMENT_NAME_EN_TO_ES[spaced] ??
+        trimmed
+    );
+};
+
+/**
+ * Traduce una línea legacy con uno o varios equipos separados por coma.
+ * Idempotente si la línea ya viene en español desde el catálogo (auto-suggest).
+ */
+export function formatEquipmentLabelLine(equipo: string): string {
+    if (!equipo.trim()) return "";
+    return equipo
+        .split(/[,;/]/)
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .map((part) => getEquipmentLabel(part))
+        .filter(Boolean)
+        .join(", ");
 };
 
 /**

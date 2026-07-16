@@ -20,6 +20,7 @@ import {
     EXERCISES_LIBRARY_CARD_PLAIN,
     EXERCISES_LIBRARY_CARD_TITLE,
     EXERCISES_LIBRARY_CARD_TYPE_BADGE,
+    EXERCISES_LIBRARY_CARD_COMPLEX_TYPE_BADGE,
     EXERCISES_LIBRARY_CARD_VIDEO,
 } from "./exercisesLibraryPresentation";
 import {
@@ -29,6 +30,7 @@ import {
     getLevelTextClass,
     equipmentDisplayLine,
     tipoLabelFromBackend,
+    isComplexExerciseTipo,
 } from "@/utils/exercises";
 import {
     ExercisePrimeMoverBadges,
@@ -55,6 +57,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     const levelNorm = normalizeLevel(exercise.nivel || "");
     const levelClass = getLevelTextClass(levelNorm);
     const tipoLabel = tipoLabelFromBackend(exercise.tipo || "");
+    const tipoBadgeClass = isComplexExerciseTipo(exercise.tipo || "")
+        ? EXERCISES_LIBRARY_CARD_COMPLEX_TYPE_BADGE
+        : EXERCISES_LIBRARY_CARD_TYPE_BADGE;
     const equipLine = equipmentDisplayLine(exercise);
     const muscleAria = exercisePrimeMoverAriaSuffix(exercise);
     const ariaLabel = `${exerciseDisplayName(exercise)}${muscleAria ? ` - ${muscleAria}` : ""}`;
@@ -91,7 +96,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                     exercise={exercise}
                     badgeClassName={EXERCISES_LIBRARY_CARD_MUSCLE_BADGE}
                 />
-                <Badge variant="outline" className={EXERCISES_LIBRARY_CARD_TYPE_BADGE}>
+                <Badge variant="outline" className={tipoBadgeClass}>
                     {tipoLabel}
                 </Badge>
             </div>

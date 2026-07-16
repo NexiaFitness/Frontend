@@ -1,5 +1,5 @@
 /**
- * ExercisesLibraryToolbar.tsx — Búsqueda, filtros y toggle vista (biblioteca ejercicios).
+ * ExercisesLibraryToolbar.tsx — Búsqueda, filtros catálogo (API) y toggle vista.
  */
 
 import React from "react";
@@ -24,6 +24,7 @@ import {
     EXERCISES_LIBRARY_VIEW_TOGGLE_BTN,
     EXERCISES_LIBRARY_VIEW_TOGGLE_BTN_ACTIVE,
     EXERCISES_LIBRARY_VIEW_TOGGLE_WRAP,
+    type ExercisesLibraryCatalogOption,
 } from "./exercisesLibraryPresentation";
 
 type ViewMode = "grid" | "list";
@@ -37,45 +38,47 @@ const LEVEL_FILTERS = [
 export interface ExercisesLibraryToolbarProps {
     search: string;
     onSearchChange: (value: string) => void;
-    groupFilter: string;
-    onGroupFilterChange: (value: string) => void;
-    equipFilter: string;
-    onEquipFilterChange: (value: string) => void;
+    muscleGroupFilterId: number | "all";
+    onMuscleGroupFilterChange: (value: number | "all") => void;
+    equipmentFilterId: number | "all";
+    onEquipmentFilterChange: (value: number | "all") => void;
     levelFilter: string;
     onLevelFilterChange: (value: string) => void;
-    patternFilter: string;
-    onPatternFilterChange: (value: string) => void;
+    patternFilterId: number | "all";
+    onPatternFilterChange: (value: number | "all") => void;
     loadTypeFilter: "all" | ExerciseLoadType;
     onLoadTypeFilterChange: (value: "all" | ExerciseLoadType) => void;
     viewMode: ViewMode;
     onViewModeChange: (mode: ViewMode) => void;
-    groups: string[];
-    equipment: string[];
-    patterns: string[];
-    getMuscleLabel: (value: string) => string;
-    getEquipmentLabel: (value: string) => string;
+    muscleGroups: ExercisesLibraryCatalogOption[];
+    equipmentOptions: ExercisesLibraryCatalogOption[];
+    patternOptions: ExercisesLibraryCatalogOption[];
+    isLoadingMuscleGroups?: boolean;
+    isLoadingEquipment?: boolean;
+    isLoadingPatterns?: boolean;
 }
 
 export const ExercisesLibraryToolbar: React.FC<ExercisesLibraryToolbarProps> = ({
     search,
     onSearchChange,
-    groupFilter,
-    onGroupFilterChange,
-    equipFilter,
-    onEquipFilterChange,
+    muscleGroupFilterId,
+    onMuscleGroupFilterChange,
+    equipmentFilterId,
+    onEquipmentFilterChange,
     levelFilter,
     onLevelFilterChange,
-    patternFilter,
+    patternFilterId,
     onPatternFilterChange,
     loadTypeFilter,
     onLoadTypeFilterChange,
     viewMode,
     onViewModeChange,
-    groups,
-    equipment,
-    patterns,
-    getMuscleLabel,
-    getEquipmentLabel,
+    muscleGroups,
+    equipmentOptions,
+    patternOptions,
+    isLoadingMuscleGroups = false,
+    isLoadingEquipment = false,
+    isLoadingPatterns = false,
 }) => (
     <div className={EXERCISES_LIBRARY_TOOLBAR}>
         <NexiaGlassAccentRim />
@@ -99,48 +102,59 @@ export const ExercisesLibraryToolbar: React.FC<ExercisesLibraryToolbarProps> = (
             </div>
 
             <div className={EXERCISES_LIBRARY_FILTER_FIELD}>
-                <span className={EXERCISES_LIBRARY_FILTER_LABEL}>
+                <label htmlFor="exercises-library-muscle-group" className={EXERCISES_LIBRARY_FILTER_LABEL}>
                     {EXERCISES_LIBRARY_SECTION_LABELS.muscleGroup}
-                </span>
+                </label>
                 <select
+                    id="exercises-library-muscle-group"
                     className={cn(EXERCISES_LIBRARY_SELECT, "mt-1")}
-                    value={groupFilter}
-                    onChange={(e) => onGroupFilterChange(e.target.value)}
+                    value={muscleGroupFilterId === "all" ? "all" : String(muscleGroupFilterId)}
+                    onChange={(e) => {
+                        const v = e.target.value;
+                        onMuscleGroupFilterChange(v === "all" ? "all" : Number(v));
+                    }}
+                    disabled={isLoadingMuscleGroups}
                     aria-label="Filtrar por grupo muscular"
                 >
-                    <option value="all">Todos</option>
-                    {groups.map((g) => (
-                        <option key={g} value={g}>
-                            {getMuscleLabel(g)}
+                    <option value="all">{isLoadingMuscleGroups ? "Cargando..." : "Todos"}</option>
+                    {muscleGroups.map((mg) => (
+                        <option key={mg.id} value={String(mg.id)}>
+                            {mg.label}
                         </option>
                     ))}
                 </select>
             </div>
 
             <div className={EXERCISES_LIBRARY_FILTER_FIELD}>
-                <span className={EXERCISES_LIBRARY_FILTER_LABEL}>
+                <label htmlFor="exercises-library-equipment" className={EXERCISES_LIBRARY_FILTER_LABEL}>
                     {EXERCISES_LIBRARY_SECTION_LABELS.equipment}
-                </span>
+                </label>
                 <select
+                    id="exercises-library-equipment"
                     className={cn(EXERCISES_LIBRARY_SELECT, "mt-1")}
-                    value={equipFilter}
-                    onChange={(e) => onEquipFilterChange(e.target.value)}
+                    value={equipmentFilterId === "all" ? "all" : String(equipmentFilterId)}
+                    onChange={(e) => {
+                        const v = e.target.value;
+                        onEquipmentFilterChange(v === "all" ? "all" : Number(v));
+                    }}
+                    disabled={isLoadingEquipment}
                     aria-label="Filtrar por equipamiento"
                 >
-                    <option value="all">Todos</option>
-                    {equipment.map((eq) => (
-                        <option key={eq} value={eq}>
-                            {getEquipmentLabel(eq.replace(/_/g, " "))}
+                    <option value="all">{isLoadingEquipment ? "Cargando..." : "Todos"}</option>
+                    {equipmentOptions.map((eq) => (
+                        <option key={eq.id} value={String(eq.id)}>
+                            {eq.label}
                         </option>
                     ))}
                 </select>
             </div>
 
             <div className={EXERCISES_LIBRARY_FILTER_FIELD}>
-                <span className={EXERCISES_LIBRARY_FILTER_LABEL}>
+                <label htmlFor="exercises-library-level" className={EXERCISES_LIBRARY_FILTER_LABEL}>
                     {EXERCISES_LIBRARY_SECTION_LABELS.level}
-                </span>
+                </label>
                 <select
+                    id="exercises-library-level"
                     className={cn(EXERCISES_LIBRARY_SELECT, "mt-1")}
                     value={levelFilter}
                     onChange={(e) => onLevelFilterChange(e.target.value)}
@@ -156,19 +170,24 @@ export const ExercisesLibraryToolbar: React.FC<ExercisesLibraryToolbarProps> = (
             </div>
 
             <div className={EXERCISES_LIBRARY_FILTER_FIELD_WIDE}>
-                <span className={EXERCISES_LIBRARY_FILTER_LABEL}>
+                <label htmlFor="exercises-library-pattern" className={EXERCISES_LIBRARY_FILTER_LABEL}>
                     {EXERCISES_LIBRARY_SECTION_LABELS.movementPattern}
-                </span>
+                </label>
                 <select
+                    id="exercises-library-pattern"
                     className={cn(EXERCISES_LIBRARY_SELECT, "mt-1")}
-                    value={patternFilter}
-                    onChange={(e) => onPatternFilterChange(e.target.value)}
+                    value={patternFilterId === "all" ? "all" : String(patternFilterId)}
+                    onChange={(e) => {
+                        const v = e.target.value;
+                        onPatternFilterChange(v === "all" ? "all" : Number(v));
+                    }}
+                    disabled={isLoadingPatterns}
                     aria-label="Filtrar por patrón de movimiento"
                 >
-                    <option value="all">Todos</option>
-                    {patterns.map((p) => (
-                        <option key={p} value={p}>
-                            {p}
+                    <option value="all">{isLoadingPatterns ? "Cargando..." : "Todos"}</option>
+                    {patternOptions.map((p) => (
+                        <option key={p.id} value={String(p.id)}>
+                            {p.label}
                         </option>
                     ))}
                 </select>

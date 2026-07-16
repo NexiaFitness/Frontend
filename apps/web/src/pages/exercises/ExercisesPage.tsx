@@ -1,8 +1,8 @@
 /**
  * ExercisesPage.tsx — Biblioteca de ejercicios premium (admin/entrenador).
  *
+ * Filtros server-side vía GET /exercises/ + catálogo de referencia (muscle_groups, equipment, patterns).
  * Ruta: /dashboard/exercises
- * Doc: docs/design/01_PREMIUM_PLATFORM_MIGRATION.md · exercisesLibraryPresentation.ts
  */
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -11,10 +11,11 @@ import { Plus } from "lucide-react";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import type { ExerciseLoadType } from "@nexia/shared/types/exerciseLoadType";
 import {
-    exerciseLoadTypeLabel,
-    exerciseLoadTypeMatchesFilter,
-} from "@nexia/shared/types/exerciseLoadType";
-import { useGetExerciseLibraryQuery } from "@nexia/shared/hooks/exercises";
+    useGetExercisesQuery,
+    useGetMuscleGroupsQuery,
+    useGetEquipmentQuery,
+    useGetMovementPatternsQuery,
+} from "@nexia/shared/hooks/exercises";
 import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -43,21 +44,17 @@ import {
 } from "@/components/exercises/exercisesLibraryPresentation";
 import type { LocalExerciseView } from "@/types/exerciseLocal";
 import {
-    getFilterOptions,
-    exerciseMatchesMuscleFilter,
-    exerciseMuscleSearchText,
-    exerciseEquipmentTokens,
-    exercisePatternLabels,
-    equipmentDisplayLine,
+    buildCatalogFilterOptions,
+    catalogOptionLabels,
     getMuscleLabel,
-    getEquipmentLabel,
-    normalizeLevel,
     localViewToExercise,
 } from "@/utils/exercises";
 
 type ViewMode = "grid" | "list";
+type CatalogFilterId = number | "all";
 
 const PAGE_SIZE = 9;
+const SEARCH_DEBOUNCE_MS = 300;
 
 const emptyForm = (): NewExerciseFormState => ({
     name: "",
@@ -74,76 +71,109 @@ const emptyForm = (): NewExerciseFormState => ({
 
 export const ExercisesPage: React.FC = () => {
     const navigate = useNavigate();
-    const { data, isLoading, isError, isFetching, refetch } = useGetExerciseLibraryQuery();
 
     const [showForm, setShowForm] = useState(false);
     const [search, setSearch] = useState("");
-    const [groupFilter, setGroupFilter] = useState("all");
-    const [equipFilter, setEquipFilter] = useState("all");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [muscleGroupFilterId, setMuscleGroupFilterId] = useState<CatalogFilterId>("all");
+    const [equipmentFilterId, setEquipmentFilterId] = useState<CatalogFilterId>("all");
     const [levelFilter, setLevelFilter] = useState("all");
-    const [patternFilter, setPatternFilter] = useState("all");
+    const [patternFilterId, setPatternFilterId] = useState<CatalogFilterId>("all");
     const [loadTypeFilter, setLoadTypeFilter] = useState<"all" | ExerciseLoadType>("all");
     const [viewMode, setViewMode] = useState<ViewMode>("grid");
     const [currentPage, setCurrentPage] = useState(1);
     const [localAdditions, setLocalAdditions] = useState<LocalExerciseView[]>([]);
     const [form, setForm] = useState<NewExerciseFormState>(emptyForm());
 
+    useEffect(() => {
+        const timer = window.setTimeout(() => setDebouncedSearch(search), SEARCH_DEBOUNCE_MS);
+        return () => window.clearTimeout(timer);
+    }, [search]);
+
+    const { data: rawMuscleGroups = [], isLoading: isLoadingMuscleGroups } =
+        useGetMuscleGroupsQuery({ limit: 100, is_active: true, level: 2 });
+
+    const { data: rawEquipment = [], isLoading: isLoadingEquipment } = useGetEquipmentQuery({
+        limit: 100,
+        is_active: true,
+    });
+
+    const { data: rawPatterns = [], isLoading: isLoadingPatterns } = useGetMovementPatternsQuery({
+        limit: 100,
+        is_active: true,
+    });
+
+    const muscleGroupOptions = useMemo(
+        () => buildCatalogFilterOptions(rawMuscleGroups),
+        [rawMuscleGroups]
+    );
+    const equipmentOptions = useMemo(() => buildCatalogFilterOptions(rawEquipment), [rawEquipment]);
+    const patternOptions = useMemo(() => buildCatalogFilterOptions(rawPatterns), [rawPatterns]);
+
+    const hasServerFilters =
+        muscleGroupFilterId !== "all" ||
+        equipmentFilterId !== "all" ||
+        levelFilter !== "all" ||
+        patternFilterId !== "all" ||
+        loadTypeFilter !== "all" ||
+        debouncedSearch.trim().length > 0;
+
+    const queryArgs = useMemo(
+        () => ({
+            skip: (currentPage - 1) * PAGE_SIZE,
+            limit: PAGE_SIZE,
+            ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+            ...(muscleGroupFilterId !== "all"
+                ? { muscle_group_ids: [muscleGroupFilterId] }
+                : {}),
+            ...(equipmentFilterId !== "all" ? { equipment_ids: [equipmentFilterId] } : {}),
+            ...(levelFilter !== "all" ? { nivel: levelFilter } : {}),
+            ...(patternFilterId !== "all"
+                ? {
+                      movement_pattern_ids: [patternFilterId],
+                      movement_pattern_role: "primary" as const,
+                  }
+                : {}),
+            ...(loadTypeFilter !== "all" ? { tipo_carga: loadTypeFilter } : {}),
+        }),
+        [
+            currentPage,
+            debouncedSearch,
+            muscleGroupFilterId,
+            equipmentFilterId,
+            levelFilter,
+            patternFilterId,
+            loadTypeFilter,
+        ]
+    );
+
+    const { data, isLoading, isError, isFetching, refetch } = useGetExercisesQuery(queryArgs);
+
+    const apiExercises = data?.exercises ?? [];
+    const totalFromApi = data?.total ?? 0;
+
     const exercises = useMemo(() => {
-        const apiExercises = data?.exercises ?? [];
+        if (hasServerFilters || localAdditions.length === 0) {
+            return apiExercises;
+        }
         const localEx = localAdditions.map(localViewToExercise);
-        return [...apiExercises, ...localEx];
-    }, [data?.exercises, localAdditions]);
+        return [...localEx, ...apiExercises];
+    }, [apiExercises, localAdditions, hasServerFilters]);
 
-    const filterOpts = useMemo(() => getFilterOptions(exercises), [exercises]);
-
-    const filtered = useMemo(() => {
-        let list = [...exercises];
-        if (groupFilter !== "all") {
-            list = list.filter((e) => exerciseMatchesMuscleFilter(e, groupFilter));
-        }
-        if (equipFilter !== "all") {
-            list = list.filter((e) => exerciseEquipmentTokens(e).includes(equipFilter));
-        }
-        if (levelFilter !== "all") {
-            list = list.filter((e) => normalizeLevel(e.nivel || "") === levelFilter);
-        }
-        if (patternFilter !== "all") {
-            const pf = patternFilter.trim().toLowerCase();
-            list = list.filter((e) =>
-                exercisePatternLabels(e).some((p) => p.trim().toLowerCase() === pf)
-            );
-        }
-        if (loadTypeFilter !== "all") {
-            list = list.filter((e) => exerciseLoadTypeMatchesFilter(e.tipo_carga, loadTypeFilter));
-        }
-        if (search.trim()) {
-            const q = search.toLowerCase();
-            list = list.filter((e) => {
-                const muscle = exerciseMuscleSearchText(e);
-                const equip = equipmentDisplayLine(e).toLowerCase();
-                const pat = exercisePatternLabels(e).join(" ").toLowerCase();
-                const loadLabel = exerciseLoadTypeLabel(e.tipo_carga).toLowerCase();
-                return (
-                    e.nombre.toLowerCase().includes(q) ||
-                    (e.nombre_ingles || "").toLowerCase().includes(q) ||
-                    muscle.includes(q) ||
-                    equip.includes(q) ||
-                    pat.includes(q) ||
-                    loadLabel.includes(q) ||
-                    (e.musculatura_principal || "").toLowerCase().includes(q)
-                );
-            });
-        }
-        return list.sort((a, b) => a.nombre.localeCompare(b.nombre, "es"));
-    }, [exercises, groupFilter, equipFilter, levelFilter, patternFilter, loadTypeFilter, search]);
+    const totalFiltered = hasServerFilters ? totalFromApi : totalFromApi + localAdditions.length;
+    const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
+    const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
 
     useEffect(() => {
         setCurrentPage(1);
-    }, [groupFilter, equipFilter, levelFilter, patternFilter, loadTypeFilter, search]);
-
-    const totalFiltered = filtered.length;
-    const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));
-    const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+    }, [
+        muscleGroupFilterId,
+        equipmentFilterId,
+        levelFilter,
+        patternFilterId,
+        loadTypeFilter,
+        debouncedSearch,
+    ]);
 
     useEffect(() => {
         if (currentPage > totalPages) {
@@ -151,10 +181,7 @@ export const ExercisesPage: React.FC = () => {
         }
     }, [currentPage, totalPages]);
 
-    const paginatedExercises = useMemo(() => {
-        const start = (safeCurrentPage - 1) * PAGE_SIZE;
-        return filtered.slice(start, start + PAGE_SIZE);
-    }, [filtered, safeCurrentPage]);
+    const paginatedExercises = exercises;
 
     const videoUrlByExerciseId = useMemo(() => {
         const map: Record<string, string | null | undefined> = {};
@@ -217,7 +244,17 @@ export const ExercisesPage: React.FC = () => {
         [navigate, localAdditions]
     );
 
+    const formMuscleGroupLabels = useMemo(
+        () => catalogOptionLabels(muscleGroupOptions),
+        [muscleGroupOptions]
+    );
+    const formPatternLabels = useMemo(
+        () => catalogOptionLabels(patternOptions),
+        [patternOptions]
+    );
+
     const showLoading = isLoading && !data;
+    const libraryIsEmpty = !hasServerFilters && totalFromApi === 0 && localAdditions.length === 0;
 
     return (
         <div className={EXERCISES_LIBRARY_PAGE}>
@@ -248,8 +285,8 @@ export const ExercisesPage: React.FC = () => {
                         onChange={(patch) => setForm((f) => ({ ...f, ...patch }))}
                         onSave={saveExercise}
                         onClose={() => setShowForm(false)}
-                        groups={filterOpts.groups}
-                        patterns={filterOpts.patterns}
+                        groups={formMuscleGroupLabels}
+                        patterns={formPatternLabels}
                         getMuscleLabel={getMuscleLabel}
                     />
                 )}
@@ -257,23 +294,24 @@ export const ExercisesPage: React.FC = () => {
                 <ExercisesLibraryToolbar
                     search={search}
                     onSearchChange={setSearch}
-                    groupFilter={groupFilter}
-                    onGroupFilterChange={setGroupFilter}
-                    equipFilter={equipFilter}
-                    onEquipFilterChange={setEquipFilter}
+                    muscleGroupFilterId={muscleGroupFilterId}
+                    onMuscleGroupFilterChange={setMuscleGroupFilterId}
+                    equipmentFilterId={equipmentFilterId}
+                    onEquipmentFilterChange={setEquipmentFilterId}
                     levelFilter={levelFilter}
                     onLevelFilterChange={setLevelFilter}
-                    patternFilter={patternFilter}
-                    onPatternFilterChange={setPatternFilter}
+                    patternFilterId={patternFilterId}
+                    onPatternFilterChange={setPatternFilterId}
                     loadTypeFilter={loadTypeFilter}
                     onLoadTypeFilterChange={setLoadTypeFilter}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
-                    groups={filterOpts.groups}
-                    equipment={filterOpts.equip}
-                    patterns={filterOpts.patterns}
-                    getMuscleLabel={getMuscleLabel}
-                    getEquipmentLabel={getEquipmentLabel}
+                    muscleGroups={muscleGroupOptions}
+                    equipmentOptions={equipmentOptions}
+                    patternOptions={patternOptions}
+                    isLoadingMuscleGroups={isLoadingMuscleGroups}
+                    isLoadingEquipment={isLoadingEquipment}
+                    isLoadingPatterns={isLoadingPatterns}
                 />
 
                 {isError && (
@@ -300,11 +338,11 @@ export const ExercisesPage: React.FC = () => {
                     </div>
                 )}
 
-                {!showLoading && !isError && filtered.length === 0 && (
+                {!showLoading && !isError && paginatedExercises.length === 0 && (
                     <ExercisesLibraryEmptyState
-                        variant={exercises.length === 0 ? "library" : "filtered"}
+                        variant={libraryIsEmpty ? "library" : "filtered"}
                         action={
-                            EXERCISE_MANUAL_CREATE_ENABLED && exercises.length === 0 ? (
+                            EXERCISE_MANUAL_CREATE_ENABLED && libraryIsEmpty ? (
                                 <Button
                                     type="button"
                                     variant="primary"
@@ -320,7 +358,7 @@ export const ExercisesPage: React.FC = () => {
                     />
                 )}
 
-                {!showLoading && !isError && filtered.length > 0 && viewMode === "grid" && (
+                {!showLoading && !isError && paginatedExercises.length > 0 && viewMode === "grid" && (
                     <div className={EXERCISES_LIBRARY_CARD_GRID}>
                         {paginatedExercises.map((ex) => {
                             const key = ex.exercise_id.startsWith("ex-new")
@@ -340,14 +378,14 @@ export const ExercisesPage: React.FC = () => {
                     </div>
                 )}
 
-                {!showLoading && !isError && filtered.length > 0 && viewMode === "list" && (
+                {!showLoading && !isError && paginatedExercises.length > 0 && viewMode === "list" && (
                     <ExercisesLibraryTable
                         exercises={paginatedExercises}
                         onSelect={openExercise}
                     />
                 )}
 
-                {!showLoading && !isError && filtered.length > 0 && totalPages > 1 && (
+                {!showLoading && !isError && paginatedExercises.length > 0 && totalPages > 1 && (
                     <PaginationBar
                         currentPage={safeCurrentPage}
                         totalPages={totalPages}

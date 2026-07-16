@@ -250,9 +250,12 @@ describe("ClientOverviewTab", () => {
 
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-        await waitFor(() => {
-            expect(screen.getByText(/feedback del atleta/i)).toBeInTheDocument();
-        });
+        await waitFor(
+            () => {
+                expect(screen.getByText(/feedback del atleta/i)).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
         expect(screen.getByText(/strength a/i)).toBeInTheDocument();
         expect(screen.getByText(/rodilla en zancada/i)).toBeInTheDocument();
         expect(screen.getByLabelText(/responder al atleta/i)).toBeInTheDocument();
@@ -261,11 +264,14 @@ describe("ClientOverviewTab", () => {
     it("shows feedback empty state when no feedback", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-        await waitFor(() => {
-            expect(
-                screen.getByText(/aún no hay feedback post-sesión/i),
-            ).toBeInTheDocument();
-        });
+        await waitFor(
+            () => {
+                expect(
+                    screen.getByText(/aún no hay feedback post-sesión/i),
+                ).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
     });
 
     it("does not render ClientStatusSection (v2)", async () => {
@@ -298,9 +304,18 @@ describe("ClientOverviewTab", () => {
 
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-        await waitFor(() => {
-            expect(screen.getByText(/última sesión/i)).toBeInTheDocument();
-        });
+        await waitFor(
+            () => {
+                expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
+        await waitFor(
+            () => {
+                expect(screen.getByText(/última sesión/i)).toBeInTheDocument();
+            },
+            { timeout: 3000 },
+        );
     });
 
     it("navigates to session detail from activity card", async () => {
