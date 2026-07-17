@@ -23,12 +23,33 @@ import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
 import {
     Checkbox,
     DatePickerButton,
-    FormSelect,
+    FormCombobox,
     Input,
+    Label,
     Textarea,
 } from "@/components/ui/forms";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import {
+    CREATE_EVAL_BACK_BUTTON,
+    CREATE_EVAL_BACK_LABEL,
+    CREATE_EVAL_CATEGORY_LABEL,
+    CREATE_EVAL_CREATE_TOGGLE,
+    CREATE_EVAL_CUSTOM_PANEL,
+    CREATE_EVAL_EMPTY_HINT,
+    CREATE_EVAL_FOOTER_ACTIONS,
+    CREATE_EVAL_FOOTER_BTN,
+    CREATE_EVAL_FORM_BODY,
+    CREATE_EVAL_FORM_CARD,
+    CREATE_EVAL_GLOW,
+    CREATE_EVAL_HEADER,
+    CREATE_EVAL_ICON_BACK_GAP,
+    CREATE_EVAL_ICON_SM,
+    CREATE_EVAL_LOADING_ROW,
+    CREATE_EVAL_PAGE,
+    CREATE_EVAL_TITLE_WRAP,
+    CREATE_EVAL_VALUE_GRID,
     CREATE_EVAL_CANCEL,
     CREATE_EVAL_CLIENT_LABEL,
     CREATE_EVAL_CONDITIONS_LABEL,
@@ -42,10 +63,12 @@ import {
     CREATE_EVAL_BASELINE_LABEL,
     CREATE_EVAL_ERROR,
     CREATE_EVAL_INVALID_VALUE,
+    CREATE_EVAL_INVALID_TIME,
     CREATE_EVAL_MISSING_CLIENT,
     CREATE_EVAL_MISSING_TRAINER,
     CREATE_EVAL_NOTES_LABEL,
     CREATE_EVAL_PAGE_SUBTITLE,
+    CREATE_EVAL_PAGE_SUBTITLE_RETEST,
     CREATE_EVAL_PAGE_TITLE,
     CREATE_EVAL_SELECT_TEST,
     CREATE_EVAL_STRENGTH_PR_HINT,
@@ -54,9 +77,14 @@ import {
     CREATE_EVAL_SURFACE_LABEL,
     CREATE_EVAL_TEST_LABEL,
     CREATE_EVAL_TEST_PLACEHOLDER,
+    CREATE_EVAL_UNIT_LABEL,
     CREATE_EVAL_VALUE_LABEL,
+    CREATE_EVAL_VALUE_TIME_HINT,
     TEST_CATEGORY_OPTIONS,
     isStrengthRmUnit,
+    isTimeUnit,
+    parseEvaluationValue,
+    unitSelectOptions,
 } from "./createTestEvaluationPresentation";
 
 const VALID_CATEGORIES = new Set<string>([
@@ -115,7 +143,7 @@ export const CreateTestEvaluation: React.FC = () => {
     const { data: tests = [], isLoading: isLoadingTests, refetch: refetchTests } =
         useGetPhysicalTestsQuery({ category: filterCategory });
 
-    const { registerEvaluation, createCustomTest, isSubmitting } =
+    const { registerEvaluation, createCustomTest, isRegistering, isCreatingTest } =
         useCreateTestEvaluation();
 
     const [selectedTestId, setSelectedTestId] = useState<number | "">("");
@@ -229,9 +257,11 @@ export const CreateTestEvaluation: React.FC = () => {
             return;
         }
 
-        const numericValue = Number.parseFloat(value.replace(",", "."));
-        if (!Number.isFinite(numericValue)) {
-            setFormError(CREATE_EVAL_INVALID_VALUE);
+        const parsed = parseEvaluationValue(value, unit.trim() || selectedTest?.unit || "");
+        if (!parsed.ok) {
+            setFormError(
+                parsed.timeExpected ? CREATE_EVAL_INVALID_TIME : CREATE_EVAL_INVALID_VALUE,
+            );
             return;
         }
 
@@ -247,7 +277,7 @@ export const CreateTestEvaluation: React.FC = () => {
                 trainer_id: trainerId,
                 test_id: selectedTestId,
                 test_date: testDate,
-                value: numericValue,
+                value: parsed.value,
                 unit: resolvedUnit,
                 is_baseline: isBaseline,
                 notes: notes.trim() || null,
@@ -263,7 +293,7 @@ export const CreateTestEvaluation: React.FC = () => {
 
     if (!Number.isFinite(clientId)) {
         return (
-            <div className="mx-auto max-w-2xl space-y-4 p-6">
+            <div className={cn(CREATE_EVAL_PAGE, "space-y-4")}>
                 <Alert variant="error">{CREATE_EVAL_MISSING_CLIENT}</Alert>
                 <Button variant="outline" onClick={() => navigate("/dashboard")}>
                     Volver al panel
@@ -273,31 +303,45 @@ export const CreateTestEvaluation: React.FC = () => {
     }
 
     const isPageLoading = isLoadingClient || isLoadingTrainer || isLoadingTests;
+    const pageSubtitle =
+        preselectedTestId != null && Number.isFinite(preselectedTestId)
+            ? CREATE_EVAL_PAGE_SUBTITLE_RETEST
+            : CREATE_EVAL_PAGE_SUBTITLE;
 
     return (
-        <div className="mx-auto max-w-2xl pb-28">
-            <div className="mb-6 flex items-center gap-3">
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => navigate(returnPath)}
-                    aria-label="Volver"
-                >
-                    <ArrowLeft className="size-4" aria-hidden />
-                </Button>
+        <div className={CREATE_EVAL_PAGE}>
+            <div className={CREATE_EVAL_GLOW} aria-hidden />
+
+            <div className={CREATE_EVAL_HEADER}>
                 <PageTitle
                     title={CREATE_EVAL_PAGE_TITLE}
-                    subtitle={CREATE_EVAL_PAGE_SUBTITLE}
+                    subtitle={pageSubtitle}
+                    className={CREATE_EVAL_TITLE_WRAP}
                 />
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={CREATE_EVAL_BACK_BUTTON}
+                    onClick={() => navigate(returnPath)}
+                >
+                    <ArrowLeft
+                        className={cn(CREATE_EVAL_ICON_BACK_GAP, CREATE_EVAL_ICON_SM)}
+                        aria-hidden
+                    />
+                    {CREATE_EVAL_BACK_LABEL}
+                </Button>
             </div>
 
             {isPageLoading ? (
-                <div className="flex min-h-[240px] items-center justify-center">
+                <div className={CREATE_EVAL_LOADING_ROW}>
                     <LoadingSpinner size="lg" />
                 </div>
             ) : (
-                <form onSubmit={handleSubmit} className="space-y-6">
+                <form onSubmit={handleSubmit}>
+                    <div className={CREATE_EVAL_FORM_CARD}>
+                        <NexiaGlassAccentRim />
+                        <div className={CREATE_EVAL_FORM_BODY}>
                     {formError && <Alert variant="error">{formError}</Alert>}
 
                     <Input
@@ -311,42 +355,48 @@ export const CreateTestEvaluation: React.FC = () => {
                         disabled
                     />
 
-                    <FormSelect
-                        label="Categoría"
-                        value={filterCategory}
-                        options={TEST_CATEGORY_OPTIONS.map((option) => ({
-                            value: option.value,
-                            label: option.label,
-                        }))}
-                        onChange={(event) => {
-                            const next = event.target.value as TestCategory;
-                            setFilterCategory(next);
-                            setSelectedTestId("");
-                        }}
-                    />
+                    <div className="space-y-1.5">
+                        <Label className="text-foreground">{CREATE_EVAL_CATEGORY_LABEL}</Label>
+                        <FormCombobox
+                            size="sm"
+                            value={filterCategory}
+                            options={TEST_CATEGORY_OPTIONS.map((option) => ({
+                                value: option.value,
+                                label: option.label,
+                            }))}
+                            onChange={(next) => {
+                                setFilterCategory(next as TestCategory);
+                                setSelectedTestId("");
+                            }}
+                            ariaLabel={CREATE_EVAL_CATEGORY_LABEL}
+                        />
+                    </div>
 
-                    <FormSelect
-                        label={CREATE_EVAL_TEST_LABEL}
-                        value={selectedTestId === "" ? "" : String(selectedTestId)}
-                        placeholder={CREATE_EVAL_TEST_PLACEHOLDER}
-                        options={testOptions}
-                        onChange={(event) => {
-                            const next = event.target.value;
-                            setSelectedTestId(next ? Number.parseInt(next, 10) : "");
-                        }}
-                        helperText={
-                            tests.length === 0
-                                ? "No hay evaluaciones en esta categoría. Crea una nueva abajo."
-                                : undefined
-                        }
-                    />
+                    <div className="space-y-1.5">
+                        <Label className="text-foreground">{CREATE_EVAL_TEST_LABEL}</Label>
+                        <FormCombobox
+                            size="sm"
+                            value={selectedTestId === "" ? "" : String(selectedTestId)}
+                            placeholder={CREATE_EVAL_TEST_PLACEHOLDER}
+                            options={testOptions}
+                            onChange={(next) => {
+                                setSelectedTestId(next ? Number.parseInt(next, 10) : "");
+                            }}
+                            ariaLabel={CREATE_EVAL_TEST_LABEL}
+                        />
+                        {tests.length === 0 && (
+                            <p className={CREATE_EVAL_EMPTY_HINT}>
+                                No hay evaluaciones en esta categoría. Crea una nueva abajo.
+                            </p>
+                        )}
+                    </div>
 
                     <div>
                         <Button
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="h-auto px-0 text-primary"
+                            className={CREATE_EVAL_CREATE_TOGGLE}
                             onClick={() => setShowCustomForm((prev) => !prev)}
                         >
                             {CREATE_EVAL_CREATE_TEST_TOGGLE}
@@ -354,20 +404,28 @@ export const CreateTestEvaluation: React.FC = () => {
                     </div>
 
                     {showCustomForm && (
-                        <section className="space-y-4 rounded-lg border border-border bg-muted/20 p-4">
+                        <section className={CREATE_EVAL_CUSTOM_PANEL}>
+                            <NexiaGlassAccentRim />
                             <Input
                                 label={CREATE_EVAL_CUSTOM_NAME}
                                 value={customName}
                                 onChange={(event) => setCustomName(event.target.value)}
                                 isRequired
                             />
-                            <Input
-                                label={CREATE_EVAL_CUSTOM_UNIT}
-                                value={customUnit}
-                                onChange={(event) => setCustomUnit(event.target.value)}
-                                placeholder="kg, s, cm, ml/kg/min…"
-                                isRequired
-                            />
+                            <div className="space-y-1.5">
+                                <Label className="text-foreground">
+                                    {CREATE_EVAL_CUSTOM_UNIT}{" "}
+                                    <span className="text-destructive">*</span>
+                                </Label>
+                                <FormCombobox
+                                    size="sm"
+                                    value={customUnit}
+                                    options={unitSelectOptions(customUnit)}
+                                    placeholder="Selecciona unidad"
+                                    onChange={setCustomUnit}
+                                    ariaLabel={CREATE_EVAL_CUSTOM_UNIT}
+                                />
+                            </div>
                             <Input
                                 label={CREATE_EVAL_CUSTOM_FREQUENCY}
                                 type="number"
@@ -385,32 +443,43 @@ export const CreateTestEvaluation: React.FC = () => {
                                 type="button"
                                 variant="outline"
                                 size="sm"
-                                disabled={isCreatingCustom}
+                                disabled={isCreatingCustom || isCreatingTest}
                                 onClick={() => void handleCreateCustomTest()}
                             >
-                                {isCreatingCustom
+                                {isCreatingCustom || isCreatingTest
                                     ? "Creando…"
                                     : CREATE_EVAL_CREATE_TEST_SUBMIT}
                             </Button>
                         </section>
                     )}
 
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className={CREATE_EVAL_VALUE_GRID}>
                         <Input
                             label={CREATE_EVAL_VALUE_LABEL}
                             type="text"
-                            inputMode="decimal"
+                            inputMode={isTimeUnit(unit) ? "text" : "decimal"}
                             value={value}
                             onChange={(event) => setValue(event.target.value)}
+                            placeholder={isTimeUnit(unit) ? "1:25" : undefined}
+                            helperText={
+                                isTimeUnit(unit) ? CREATE_EVAL_VALUE_TIME_HINT : undefined
+                            }
                             isRequired
                         />
-                        <Input
-                            label="Unidad"
-                            value={unit}
-                            onChange={(event) => setUnit(event.target.value)}
-                            placeholder={selectedTest?.unit ?? ""}
-                            isRequired
-                        />
+                        <div className="space-y-1.5">
+                            <Label className="text-foreground">
+                                {CREATE_EVAL_UNIT_LABEL}{" "}
+                                <span className="text-destructive">*</span>
+                            </Label>
+                            <FormCombobox
+                                size="sm"
+                                value={unit}
+                                options={unitSelectOptions(unit)}
+                                placeholder="Selecciona unidad"
+                                onChange={setUnit}
+                                ariaLabel={CREATE_EVAL_UNIT_LABEL}
+                            />
+                        </div>
                     </div>
 
                     <DatePickerButton
@@ -449,16 +518,19 @@ export const CreateTestEvaluation: React.FC = () => {
                     )}
 
                     {selectedTest && (
-                        <p className="text-xs text-muted-foreground">
+                        <p className={CREATE_EVAL_EMPTY_HINT}>
                             Categoría: {TEST_CATEGORIES[selectedTest.category as TestCategory]?.label ?? selectedTest.category}
                         </p>
                     )}
+                        </div>
+                    </div>
 
                     <DashboardFixedFooter>
-                        <div className="flex w-full max-w-2xl justify-end gap-3">
+                        <div className={CREATE_EVAL_FOOTER_ACTIONS}>
                             <Button
                                 type="button"
                                 variant="outline"
+                                className={CREATE_EVAL_FOOTER_BTN}
                                 onClick={() => navigate(returnPath)}
                             >
                                 {CREATE_EVAL_CANCEL}
@@ -466,9 +538,10 @@ export const CreateTestEvaluation: React.FC = () => {
                             <Button
                                 type="submit"
                                 variant="primary"
-                                disabled={isSubmitting || !trainerId}
+                                className={CREATE_EVAL_FOOTER_BTN}
+                                disabled={isRegistering || isCreatingTest || !trainerId}
                             >
-                                {isSubmitting ? "Guardando…" : CREATE_EVAL_SUBMIT}
+                                {isRegistering ? "Guardando…" : CREATE_EVAL_SUBMIT}
                             </Button>
                         </div>
                     </DashboardFixedFooter>

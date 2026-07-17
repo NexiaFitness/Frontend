@@ -82,6 +82,7 @@ export interface PhysicalQualityProfile {
  * Punto de tendencia para gráficos de progresión
  */
 export interface TestTrendPoint {
+    result_id: number;
     test_date: string; // ISO date
     value: number;
     unit: string;

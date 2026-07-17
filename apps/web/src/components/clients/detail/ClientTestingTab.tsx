@@ -6,23 +6,29 @@ import React, { useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Activity, AlertCircle, Plus } from "lucide-react";
 import { TEST_CATEGORIES, TestCategory } from "@nexia/shared";
+import { getMutationErrorMessage } from "@nexia/shared";
 import { useClientTests } from "@nexia/shared/hooks/clients/useClientTests";
 import { useTestingAiInsights } from "@nexia/shared/hooks/clients/useTestingAiInsights";
+import {
+    useDeleteTestResultMutation,
+    useGetClientTestResultsQuery,
+} from "@nexia/shared/api/clientsApi";
 import type {
     BilateralComparisonPoint,
-    TestResultWithProgress,
     CategoryTrendData,
     UpcomingTest,
 } from "@nexia/shared/types/testing";
-import { Alert } from "@/components/ui/feedback";
-import { EmptyState } from "@/components/ui/feedback/EmptyState";
+import { Alert, useToast } from "@/components/ui/feedback";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Badge } from "@/components/ui/Badge";
 import { RadarChart } from "@/components/ui/charts/RadarChart";
 import { ProgressLineChart } from "@/components/ui/charts/ProgressLineChart";
 import { Button } from "@/components/ui/buttons/Button";
+import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { PageTitle } from "@/components/dashboard/shared";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { cn } from "@/lib/utils";
 import {
     TESTING_ASYMMETRY_THRESHOLD_PCT,
     TESTING_AI_INSIGHT_ERROR,
@@ -34,25 +40,44 @@ import {
     TESTING_AI_SOURCE_LABEL,
     TESTING_BILATERAL_ASYMMETRY_BADGE,
     TESTING_BILATERAL_TITLE,
+    TESTING_CATEGORY_PILL,
+    TESTING_CATEGORY_PILL_ACTIVE,
+    TESTING_CATEGORY_PILL_INACTIVE,
+    TESTING_CATEGORY_PILLS,
     TESTING_CTA_REGISTER,
+    TESTING_DELETE_MODAL_DESCRIPTION,
+    TESTING_DELETE_MODAL_TITLE,
+    TESTING_DELETE_SUCCESS,
+    TESTING_EMPTY_CARD,
     TESTING_EMPTY_DESCRIPTION,
+    TESTING_EMPTY_DESCRIPTION_CLASS,
+    TESTING_EMPTY_GLOW,
     TESTING_EMPTY_TITLE,
+    TESTING_EMPTY_TITLE_CLASS,
+    TESTING_EMPTY_ACTION_CLASS,
+    TESTING_INSIGHT_CARD,
+    TESTING_PAGE_HEADER,
+    TESTING_PAGE_TITLE_WRAP,
+    TESTING_RESULTS_GRID,
+    TESTING_SECTION_CARD,
     TESTING_STRENGTH_PILL_TITLE,
+    TESTING_TAB_GLOW,
+    TESTING_TAB_SHELL,
     TESTING_TAB_SUBTITLE,
     TESTING_TAB_TITLE,
+    TESTING_UPCOMING_BANNER,
     TESTING_UPCOMING_CTA,
     TESTING_UPCOMING_TITLE,
     TEST_CATEGORY_ORDER,
     asymmetryPercent,
     formatTestingDate,
 } from "./clientTestingPresentation";
+import { TestResultCard, type TestResultCardModel } from "./testing/TestResultCard";
+import { EditTestResultModal } from "./testing/EditTestResultModal";
+import { TestHistoryModal } from "./testing/TestHistoryModal";
 
 interface ClientTestingTabProps {
     clientId: number;
-}
-
-interface TestWithName extends TestResultWithProgress {
-    test_name: string;
 }
 
 function TestingAiInsightBlock({
@@ -97,8 +122,8 @@ function TestingAiInsightBlock({
     const showSourceBadge =
         insight.source != null && insight.source !== "cache" && !insight.is_stale;
 
-        return (
-            <div className="mb-4 space-y-3">
+    return (
+        <div className="mb-4 space-y-3">
             {insight.is_stale && (
                 <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/50 bg-muted/15 px-3 py-2.5">
                     <p className="text-xs text-muted-foreground">
@@ -123,32 +148,26 @@ function TestingAiInsightBlock({
                     <p className="text-sm">{error || TESTING_AI_INSIGHT_ERROR}</p>
                 </Alert>
             )}
-            <div className="rounded-lg border border-border bg-muted/30 p-4">
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                    <h4 className="text-sm font-semibold text-foreground">
-                        {TESTING_AI_INSIGHT_TITLE}
-                    </h4>
-                    {showSourceBadge && insight.source && (
-                        <Badge variant="secondary" className="text-xs">
-                            {TESTING_AI_SOURCE_LABEL[insight.source]}
-                        </Badge>
-                    )}
+            <div className={TESTING_INSIGHT_CARD}>
+                <NexiaGlassAccentRim />
+                <div className="relative pt-1">
+                    <div className="mb-2 flex flex-wrap items-center gap-2">
+                        <h4 className="text-sm font-semibold text-foreground">
+                            {TESTING_AI_INSIGHT_TITLE}
+                        </h4>
+                        {showSourceBadge && insight.source && (
+                            <Badge variant="secondary" className="text-xs">
+                                {TESTING_AI_SOURCE_LABEL[insight.source]}
+                            </Badge>
+                        )}
+                    </div>
+                    <p className="whitespace-pre-wrap text-sm text-foreground">
+                        {insight.insights_text}
+                    </p>
                 </div>
-                <p className="whitespace-pre-wrap text-sm text-foreground">
-                    {insight.insights_text}
-                </p>
             </div>
         </div>
     );
-}
-
-function progressBadgeClass(progress: number): string {
-    const base =
-        "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium";
-    if (progress > 0) return `${base} bg-success/10 text-success border-success/30`;
-    if (progress < 0)
-        return `${base} bg-destructive/10 text-destructive border-destructive/30`;
-    return `${base} bg-muted text-muted-foreground border-border`;
 }
 
 function UpcomingTestsBanner({
@@ -163,40 +182,43 @@ function UpcomingTestsBanner({
     if (tests.length === 0) return null;
 
     return (
-        <section className="rounded-lg border border-warning/40 bg-warning/10 p-4 space-y-3">
-            <div className="flex items-center gap-2">
-                <AlertCircle className="size-4 text-warning" aria-hidden />
-                <h4 className="text-sm font-semibold text-foreground">
-                    {TESTING_UPCOMING_TITLE}
-                </h4>
-            </div>
-            <ul className="space-y-2">
-                {tests.map((item) => (
-                    <li
-                        key={item.test_id}
-                        className="flex flex-wrap items-center justify-between gap-2 text-sm"
-                    >
-                        <div>
-                            <span className="font-medium text-foreground">
-                                {item.test_name}
-                            </span>
-                            <span className="ml-2 text-muted-foreground">
-                                vencía {formatTestingDate(item.next_due_date)}
-                            </span>
-                        </div>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                                onRegister(clientId, item.category, item.test_id)
-                            }
+        <section className={TESTING_UPCOMING_BANNER}>
+            <NexiaGlassAccentRim />
+            <div className="relative space-y-3 pt-1">
+                <div className="flex items-center gap-2">
+                    <AlertCircle className="size-4 text-warning" aria-hidden />
+                    <h4 className="text-sm font-semibold text-foreground">
+                        {TESTING_UPCOMING_TITLE}
+                    </h4>
+                </div>
+                <ul className="space-y-2">
+                    {tests.map((item) => (
+                        <li
+                            key={item.test_id}
+                            className="flex flex-wrap items-center justify-between gap-2 text-sm"
                         >
-                            {TESTING_UPCOMING_CTA}
-                        </Button>
-                    </li>
-                ))}
-            </ul>
+                            <div>
+                                <span className="font-medium text-foreground">
+                                    {item.test_name}
+                                </span>
+                                <span className="ml-2 text-muted-foreground">
+                                    vencía {formatTestingDate(item.next_due_date)}
+                                </span>
+                            </div>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() =>
+                                    onRegister(clientId, item.category, item.test_id)
+                                }
+                            >
+                                {TESTING_UPCOMING_CTA}
+                            </Button>
+                        </li>
+                    ))}
+                </ul>
+            </div>
         </section>
     );
 }
@@ -209,8 +231,9 @@ function BilateralMobilitySection({
     if (!points.length) return null;
 
     return (
-        <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
-            <h3 className={`${TYPOGRAPHY.cardTitle} mb-4 text-foreground`}>
+        <section className={TESTING_SECTION_CARD}>
+            <NexiaGlassAccentRim />
+            <h3 className={`${TYPOGRAPHY.cardTitle} relative mb-4 pt-1 text-foreground`}>
                 {TESTING_BILATERAL_TITLE}
             </h3>
             <div className="overflow-x-auto">
@@ -274,6 +297,7 @@ function BilateralMobilitySection({
 export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const { showSuccess, showError } = useToast();
     const originState = useMemo(
         () => ({
             from: `${location.pathname}${location.search}${location.hash}`,
@@ -284,50 +308,65 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
     const [activeCategory, setActiveCategory] =
         useState<TestCategory>("mobility");
 
-    const { summary, isLoading, isError, refetch } = useClientTests(clientId);
+    const [editResultId, setEditResultId] = useState<number | null>(null);
+    const [deleteTarget, setDeleteTarget] = useState<{
+        resultId: number;
+        testName: string;
+    } | null>(null);
+    const [historyTarget, setHistoryTarget] = useState<{
+        testId: number;
+        testName: string;
+    } | null>(null);
 
-    const latestTestsInCategory = useMemo<TestWithName[]>(() => {
+    const { summary, isLoading, isError, refetch } = useClientTests(clientId);
+    const [deleteResult, { isLoading: isDeleting }] = useDeleteTestResultMutation();
+
+    const { data: clientResults = [] } = useGetClientTestResultsQuery(
+        { clientId },
+        { skip: editResultId == null },
+    );
+    const editResult =
+        editResultId != null
+            ? clientResults.find((row) => row.id === editResultId) ?? null
+            : null;
+    const editTestName =
+        editResult != null
+            ? (summary?.category_trends.find((t) => t.test_id === editResult.test_id)
+                  ?.test_name ?? `Test #${editResult.test_id}`)
+            : deleteTarget?.testName ?? historyTarget?.testName ?? "";
+
+    const latestTestsInCategory = useMemo<TestResultCardModel[]>(() => {
         if (!summary?.category_trends) return [];
 
         const categoryTrends = summary.category_trends.filter(
             (trend: CategoryTrendData) => trend.category === activeCategory,
         );
 
-        const tests: TestWithName[] = [];
+        const tests: TestResultCardModel[] = [];
         for (const trend of categoryTrends) {
             if (!trend.trend_points?.length) continue;
             const latestPoint = trend.trend_points[trend.trend_points.length - 1];
+            if (latestPoint.result_id == null) continue;
             tests.push({
-                id: latestPoint.test_id,
-                client_id: summary.client_id,
-                test_id: latestPoint.test_id,
-                trainer_id: 0,
-                test_date: latestPoint.test_date,
+                resultId: latestPoint.result_id,
+                testId: latestPoint.test_id,
+                testName: trend.test_name,
                 value: latestPoint.value,
                 unit: latestPoint.unit,
-                is_baseline: trend.baseline_date
+                testDate: latestPoint.test_date,
+                isBaseline: trend.baseline_date
                     ? new Date(trend.baseline_date).getTime() ===
                       new Date(latestPoint.test_date).getTime()
                     : false,
-                notes: null,
-                surface: trend.latest_surface || null,
-                conditions: null,
-                created_at: latestPoint.test_date,
-                updated_at: latestPoint.test_date,
-                is_active: true,
-                baseline_value: trend.baseline_value,
-                baseline_date: trend.baseline_date,
-                progress_percentage: latestPoint.progress_percentage,
-                trend: null,
-                test_name: trend.test_name,
+                progressPercentage: latestPoint.progress_percentage,
             });
         }
 
         return tests.sort(
             (a, b) =>
-                new Date(b.test_date).getTime() - new Date(a.test_date).getTime(),
+                new Date(b.testDate).getTime() - new Date(a.testDate).getTime(),
         );
-    }, [summary?.category_trends, summary?.client_id, activeCategory]);
+    }, [summary?.category_trends, activeCategory]);
 
     const categoryTrendsData = useMemo<CategoryTrendData[]>(() => {
         if (!summary?.category_trends) return [];
@@ -348,6 +387,17 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
         navigate(`/dashboard/testing/register-evaluation?${params.toString()}`, {
             state: originState,
         });
+    };
+
+    const handleDelete = async () => {
+        if (!deleteTarget) return;
+        try {
+            await deleteResult(deleteTarget.resultId).unwrap();
+            showSuccess(TESTING_DELETE_SUCCESS);
+            setDeleteTarget(null);
+        } catch (err) {
+            showError(getMutationErrorMessage(err));
+        }
     };
 
     if (isLoading) {
@@ -390,13 +440,17 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
     const bilateralPoints = summary.bilateral_comparison ?? [];
 
     return (
-        <section className="space-y-6 pb-24" data-testid="client-testing-tab">
-            <div className="flex items-start justify-between gap-4">
-                <PageTitle
-                    titleAs="h3"
-                    title={TESTING_TAB_TITLE}
-                    subtitle={TESTING_TAB_SUBTITLE}
-                />
+        <section className={TESTING_TAB_SHELL} data-testid="client-testing-tab">
+            <div className={TESTING_TAB_GLOW} aria-hidden />
+
+            <div className={TESTING_PAGE_HEADER}>
+                <div className={TESTING_PAGE_TITLE_WRAP}>
+                    <PageTitle
+                        titleAs="h3"
+                        title={TESTING_TAB_TITLE}
+                        subtitle={TESTING_TAB_SUBTITLE}
+                    />
+                </div>
                 <Button
                     variant="ghost-primary"
                     size="sm"
@@ -426,22 +480,11 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             <div
                 role="tablist"
                 aria-label="Categorías de evaluación"
-                className="flex flex-wrap gap-2"
+                className={TESTING_CATEGORY_PILLS}
             >
                 {TEST_CATEGORY_ORDER.map((category) => {
                     const isActive = activeCategory === category;
                     const info = TEST_CATEGORIES[category];
-                    const baseStyle: React.CSSProperties = isActive
-                        ? {
-                              backgroundColor: info.color,
-                              color: "#ffffff",
-                              borderColor: info.color,
-                          }
-                        : {
-                              backgroundColor: `${info.color}1A`,
-                              color: info.color,
-                              borderColor: `${info.color}66`,
-                          };
                     return (
                         <button
                             key={category}
@@ -454,8 +497,12 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                                     : undefined
                             }
                             onClick={() => setActiveCategory(category)}
-                            className="inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium transition-colors"
-                            style={baseStyle}
+                            className={cn(
+                                TESTING_CATEGORY_PILL,
+                                isActive
+                                    ? TESTING_CATEGORY_PILL_ACTIVE
+                                    : TESTING_CATEGORY_PILL_INACTIVE,
+                            )}
                         >
                             {info.label}
                         </button>
@@ -464,57 +511,53 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             </div>
 
             {latestTestsInCategory.length === 0 ? (
-                <div className="rounded-xl border-2 border-dashed border-border bg-muted/30">
-                    <EmptyState
-                        icon={<Activity />}
-                        title={TESTING_EMPTY_TITLE(activeCategoryInfo.label)}
-                        description={TESTING_EMPTY_DESCRIPTION}
-                    />
+                <div className={TESTING_EMPTY_CARD}>
+                    <div className={TESTING_EMPTY_GLOW} aria-hidden />
+                    <div className="relative space-y-3">
+                        <Activity
+                            className="mx-auto size-10 text-primary/70"
+                            aria-hidden
+                        />
+                        <h4 className={TESTING_EMPTY_TITLE_CLASS}>
+                            {TESTING_EMPTY_TITLE(activeCategoryInfo.label)}
+                        </h4>
+                        <p className={TESTING_EMPTY_DESCRIPTION_CLASS}>
+                            {TESTING_EMPTY_DESCRIPTION}
+                        </p>
+                        <Button
+                            type="button"
+                            variant="ghost-primary"
+                            size="sm"
+                            className={TESTING_EMPTY_ACTION_CLASS}
+                            onClick={() => goToRegisterEvaluation()}
+                        >
+                            {TESTING_CTA_REGISTER}
+                        </Button>
+                    </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div className={TESTING_RESULTS_GRID}>
                     {latestTestsInCategory.map((test) => (
-                        <article
-                            key={`${test.test_id}-${test.test_date}`}
-                            className="rounded-lg border border-l-2 border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"
-                            style={{ borderLeftColor: activeCategoryInfo.color }}
-                        >
-                            <header className="mb-3">
-                                <h3 className="truncate font-semibold text-foreground">
-                                    {test.test_name || `Test #${test.test_id}`}
-                                </h3>
-                            </header>
-                            <div className="mb-3 flex items-baseline gap-2">
-                                <span className="text-3xl font-bold text-foreground">
-                                    {test.value}
-                                </span>
-                                <span className="text-sm text-muted-foreground">
-                                    {test.unit}
-                                </span>
-                            </div>
-                            {test.progress_percentage !== null && (
-                                <div className="mb-2">
-                                    <span
-                                        className={progressBadgeClass(
-                                            test.progress_percentage,
-                                        )}
-                                    >
-                                        {test.progress_percentage > 0 ? "+" : ""}
-                                        {test.progress_percentage.toFixed(1)}% vs línea base
-                                    </span>
-                                </div>
-                            )}
-                            <p className="text-xs text-muted-foreground">
-                                {formatTestingDate(test.test_date)}
-                            </p>
-                        </article>
+                        <TestResultCard
+                            key={`${test.testId}-${test.resultId}`}
+                            test={test}
+                            onRetest={(testId) => goToRegisterEvaluation(activeCategory, testId)}
+                            onEdit={setEditResultId}
+                            onHistory={(testId, testName) =>
+                                setHistoryTarget({ testId, testName })
+                            }
+                            onDelete={(resultId, testName) =>
+                                setDeleteTarget({ resultId, testName })
+                            }
+                        />
                     ))}
                 </div>
             )}
 
             {categoryTrendsData.length > 0 && (
-                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                    <h3 className={`${TYPOGRAPHY.cardTitle} mb-4 text-foreground`}>
+                <section className={TESTING_SECTION_CARD}>
+                    <NexiaGlassAccentRim />
+                    <h3 className={`${TYPOGRAPHY.cardTitle} relative mb-4 pt-1 text-foreground`}>
                         Progresión — {activeCategoryInfo.label}
                     </h3>
                     <ProgressLineChart
@@ -527,8 +570,9 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
             <BilateralMobilitySection points={bilateralPoints} />
 
             {summary.physical_quality_profile && (
-                <section className="rounded-lg border border-border bg-card p-6 shadow-sm">
-                    <h3 className={`${TYPOGRAPHY.cardTitle} mb-4 text-foreground`}>
+                <section className={TESTING_SECTION_CARD}>
+                    <NexiaGlassAccentRim />
+                    <h3 className={`${TYPOGRAPHY.cardTitle} relative mb-4 pt-1 text-foreground`}>
                         Perfil de cualidades físicas
                     </h3>
                     {summary.profile_analysis && (
@@ -541,6 +585,57 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                     <RadarChart data={summary.physical_quality_profile} />
                 </section>
             )}
+
+            <EditTestResultModal
+                isOpen={editResultId != null}
+                onClose={() => setEditResultId(null)}
+                result={editResult}
+                testName={editTestName}
+            />
+
+            <TestHistoryModal
+                isOpen={historyTarget != null}
+                onClose={() => setHistoryTarget(null)}
+                clientId={clientId}
+                testId={historyTarget?.testId ?? null}
+                testName={historyTarget?.testName ?? ""}
+                onEdit={setEditResultId}
+                onDelete={(resultId, testName) =>
+                    setDeleteTarget({ resultId, testName })
+                }
+            />
+
+            <BaseModal
+                isOpen={deleteTarget != null}
+                onClose={() => setDeleteTarget(null)}
+                title={TESTING_DELETE_MODAL_TITLE}
+                description={
+                    deleteTarget
+                        ? `${deleteTarget.testName}. ${TESTING_DELETE_MODAL_DESCRIPTION}`
+                        : TESTING_DELETE_MODAL_DESCRIPTION
+                }
+                iconType="danger"
+                maxWidth="sm"
+            >
+                <div className="flex justify-end gap-3 pt-2">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setDeleteTarget(null)}
+                        disabled={isDeleting}
+                    >
+                        Cancelar
+                    </Button>
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        disabled={isDeleting}
+                        onClick={() => void handleDelete()}
+                    >
+                        {isDeleting ? "Eliminando…" : "Eliminar evaluación"}
+                    </Button>
+                </div>
+            </BaseModal>
         </section>
     );
 };

@@ -29,7 +29,7 @@ import type {
 // ========================================
 
 interface UseClientImprovementReturn {
-    value: number;
+    value: string;
     trend: string;
     label: string;
     description: string;
@@ -38,25 +38,29 @@ interface UseClientImprovementReturn {
 }
 
 /**
- * Hook para obtener promedio de mejora de clientes
+ * Hook — card "Progreso Activo" (S3)
  * Endpoint: GET /api/v1/clients/improvement-avg
+ * Display: improving / with_data (90d). Empty → "--".
  */
 export const useClientImprovement = (): UseClientImprovementReturn => {
     const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-    
+
     const { data, isLoading, isError } = useGetClientImprovementAvgQuery(undefined, {
         skip: !isAuthenticated,
-        // ✅ FASE 1.2: Solo refetch si está autenticado
         refetchOnMountOrArgChange: isAuthenticated,
         refetchOnFocus: false,
         refetchOnReconnect: isAuthenticated,
     });
 
+    const withData = data?.clients_with_data ?? 0;
+    const improving = data?.clients_improving ?? 0;
+    const hasSignal = withData > 0;
+
     return {
-        value: data?.average ?? 0,
-        trend: data?.trend ?? "",
-        label: "Avg Client Improvement",
-        description: "across all programs",
+        value: hasSignal ? `${improving}/${withData}` : "--",
+        trend: hasSignal ? (data?.trend ?? "") : "",
+        label: "Progreso Activo",
+        description: "tests y PRs · 90 días",
         isLoading,
         isError,
     };

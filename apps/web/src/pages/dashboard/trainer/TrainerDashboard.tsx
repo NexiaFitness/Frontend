@@ -77,10 +77,10 @@ export const TrainerDashboard: React.FC = () => {
                     isLoading={isLoadingStats}
                 />
                 <KPICard
-                    value={`${clientImprovement.value}%`}
+                    value={clientImprovement.value}
                     trend={clientImprovement.trend}
-                    label="Progreso Promedio"
-                    description="en todos los programas"
+                    label={clientImprovement.label}
+                    description={clientImprovement.description}
                     icon={TrendingUp}
                     color="success"
                     isLoading={clientImprovement.isLoading}

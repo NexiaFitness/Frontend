@@ -39,6 +39,11 @@ export interface CreateCustomTestPayload {
 interface UseCreateTestEvaluationReturn {
     registerEvaluation: (payload: RegisterEvaluationPayload) => Promise<void>;
     createCustomTest: (payload: CreateCustomTestPayload) => Promise<PhysicalTestOut>;
+    /** True solo mientras se guarda un resultado (no al crear definición custom). */
+    isRegistering: boolean;
+    /** True solo mientras se crea un PhysicalTest custom. */
+    isCreatingTest: boolean;
+    /** @deprecated Preferir isRegistering / isCreatingTest. */
     isSubmitting: boolean;
     error: unknown;
 }
@@ -84,6 +89,8 @@ export const useCreateTestEvaluation = (): UseCreateTestEvaluationReturn => {
     return {
         registerEvaluation,
         createCustomTest,
+        isRegistering: resultState.isLoading,
+        isCreatingTest: testState.isLoading,
         isSubmitting: resultState.isLoading || testState.isLoading,
         error: resultState.error ?? testState.error,
     };

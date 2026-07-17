@@ -15,12 +15,20 @@
 // ========================================
 
 /**
- * Respuesta de Avg Client Improvement
+ * Respuesta de mejora de clientes (dashboard)
  * Endpoint: GET /api/v1/clients/improvement-avg
+ * S3: conteo clientes en mejora / con señal (90 días) — no media de %.
  */
 export interface ClientImprovementResponse {
     average: number;
     trend: string;
+    sample_size?: number;
+    clients_improving?: number;
+    clients_with_data?: number;
+    window_days?: number;
+    method?: string;
+    source?: string;
+    note?: string | null;
 }
 
 /**
