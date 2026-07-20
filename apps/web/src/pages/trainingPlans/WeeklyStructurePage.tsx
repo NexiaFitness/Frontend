@@ -14,9 +14,9 @@
  * @since v6.3.0 — Fase 5 SPEC_ESTRUCTURA_SEMANAL_VALIDACION.md
  */
 
-import React, { useRef, useCallback } from "react";
+import React, { useRef, useCallback, useMemo } from "react";
 import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -30,6 +30,7 @@ import {
     type WeeklyStructureEditorHandle,
 } from "@/components/trainingPlans/periodization/WeeklyStructureEditor";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
+import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 import { cn } from "@/lib/utils";
 
 export const WeeklyStructurePage: React.FC = () => {
@@ -38,7 +39,16 @@ export const WeeklyStructurePage: React.FC = () => {
         blockId: string;
     }>();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [searchParams] = useSearchParams();
     const editorRef = useRef<WeeklyStructureEditorHandle>(null);
+
+    const initialWeekOrdinal = useMemo(() => {
+        const raw = searchParams.get("week");
+        if (!raw) return null;
+        const n = parseInt(raw, 10);
+        return Number.isFinite(n) && n > 0 ? n : null;
+    }, [searchParams]);
 
     const planId = parseInt(planIdParam || "0", 10);
     const blockId = parseInt(blockIdParam || "0", 10);
@@ -61,12 +71,17 @@ export const WeeklyStructurePage: React.FC = () => {
     );
 
     const handleBack = useCallback(() => {
+        const from = readSafeReturnTo(location.state);
+        if (from) {
+            navigate(from);
+            return;
+        }
         if (plan?.client_id) {
             navigate(`/dashboard/clients/${plan.client_id}?tab=planning&plan=${planId}`);
         } else {
             navigate(`/dashboard/training-plans/${planId}`);
         }
-    }, [navigate, plan?.client_id, planId]);
+    }, [navigate, location.state, plan?.client_id, planId]);
 
     const handleVolver = useCallback(() => {
         if (editorRef.current?.stepBack()) {
@@ -135,6 +150,7 @@ export const WeeklyStructurePage: React.FC = () => {
                 planId={planId}
                 blockId={blockId}
                 block={block}
+                initialWeekOrdinal={initialWeekOrdinal}
             />
         </div>
     );

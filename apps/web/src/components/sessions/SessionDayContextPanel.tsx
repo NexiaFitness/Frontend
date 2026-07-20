@@ -6,7 +6,7 @@
  */
 
 import React, { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
     CalendarDays,
     Dumbbell,
@@ -32,6 +32,7 @@ import {
     isSessionRecommendationsWithValues,
     resolveQualityLabel,
 } from "./sessionDayContextPresentation";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 
 interface SessionDayContextPanelProps {
     clientId: number | null;
@@ -101,6 +102,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
     className,
 }) => {
     const navigate = useNavigate();
+    const location = useLocation();
     const skip =
         !clientId || clientId <= 0 || !sessionDate || !trainerId || trainerId <= 0;
 
@@ -266,7 +268,11 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                 variant="outline"
                                 size="sm"
                                 className="mt-3 border-warning/40 text-warning hover:bg-warning/10"
-                                onClick={() => navigate(structureGap.configurePath!)}
+                                onClick={() =>
+                                    navigate(structureGap.configurePath!, {
+                                        state: returnToStateFromView(location),
+                                    })
+                                }
                             >
                                 <ExternalLink className="mr-2 h-3.5 w-3.5" aria-hidden />
                                 {SESSION_DAY_CONTEXT_COPY.configureWeekCta}

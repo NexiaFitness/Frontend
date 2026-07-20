@@ -61,13 +61,16 @@ describe("sessionDayContextPresentation", () => {
         expect(buildWeeklyStructurePath(513, 35)).toBe(
             "/dashboard/training-plans/513/period-blocks/35/weekly-structure",
         );
+        expect(buildWeeklyStructurePath(513, 35, 5)).toBe(
+            "/dashboard/training-plans/513/period-blocks/35/weekly-structure?week=5",
+        );
     });
 
     it("detects structure gap when current week is missing", () => {
         const gap = buildStructureGapViewModel(baseRec);
         expect(gap.show).toBe(true);
         expect(gap.message).toContain("semana 3");
-        expect(gap.configurePath).toContain("weekly-structure");
+        expect(gap.configurePath).toContain("weekly-structure?week=3");
     });
 
     it("hides structure gap when patterns exist", () => {

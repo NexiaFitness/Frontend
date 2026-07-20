@@ -91,9 +91,14 @@ export function buildBlockContextLine(rec: SessionDayRecommendations): string | 
 export function buildWeeklyStructurePath(
     trainingPlanId: number | null | undefined,
     periodBlockId: number | null | undefined,
+    weekOrdinal?: number | null,
 ): string | null {
     if (!trainingPlanId || !periodBlockId) return null;
-    return `/dashboard/training-plans/${trainingPlanId}/period-blocks/${periodBlockId}/weekly-structure`;
+    const base = `/dashboard/training-plans/${trainingPlanId}/period-blocks/${periodBlockId}/weekly-structure`;
+    if (weekOrdinal != null && weekOrdinal > 0) {
+        return `${base}?week=${weekOrdinal}`;
+    }
+    return base;
 }
 
 export interface StructureGapViewModel {
@@ -110,6 +115,7 @@ export function buildStructureGapViewModel(
     const configurePath = buildWeeklyStructurePath(
         rec.training_plan_id,
         rec.period_block_id,
+        weekOrdinal,
     );
 
     if (patterns.length > 0) {

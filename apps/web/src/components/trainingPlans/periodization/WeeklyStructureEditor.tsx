@@ -111,6 +111,8 @@ interface WeeklyStructureEditorProps {
         start_date: string;
         end_date: string;
     } | null;
+    /** Semana calendario del bloque a abrir (query ?week=). */
+    initialWeekOrdinal?: number | null;
     /** true cuando create/edit o un modal local está abierto */
     onBusyChange?: (busy: boolean) => void;
 }
@@ -277,7 +279,7 @@ const DayEditor: React.FC<DayEditorProps> = ({
 export const WeeklyStructureEditor = forwardRef<
     WeeklyStructureEditorHandle,
     WeeklyStructureEditorProps
->(function WeeklyStructureEditor({ planId, blockId, block, onBusyChange }, ref) {
+>(function WeeklyStructureEditor({ planId, blockId, block, initialWeekOrdinal, onBusyChange }, ref) {
     const { showSuccess, showError } = useToast();
 
     const {
@@ -314,9 +316,9 @@ export const WeeklyStructureEditor = forwardRef<
 
     const realWeeks = useMemo(() => structure?.weeks ?? [], [structure]);
     const syntheticWeeks = useMemo(() => {
-        if (realWeeks.length > 0 || !block?.start_date || !block?.end_date) return [];
+        if (!block?.start_date || !block?.end_date) return [];
         return generateSyntheticWeeks(block.start_date, block.end_date);
-    }, [realWeeks.length, block]);
+    }, [block?.start_date, block?.end_date]);
 
     const weeks = useMemo(
         () => mergeWeeklyStructureWeeks(realWeeks, syntheticWeeks),
@@ -330,6 +332,15 @@ export const WeeklyStructureEditor = forwardRef<
 
     React.useEffect(() => {
         if (weeks.length === 0) return;
+
+        if (initialWeekOrdinal != null && initialWeekOrdinal > 0) {
+            const target = String(initialWeekOrdinal);
+            if (weeks.some((w) => String(w.week_ordinal) === target)) {
+                setActiveWeekOrdinal(target);
+                return;
+            }
+        }
+
         const current = activeWeekOrdinal || String(weeks[0].week_ordinal);
         const exists = weeks.some((w) => String(w.week_ordinal) === current);
         if (!exists) {
@@ -337,7 +348,7 @@ export const WeeklyStructureEditor = forwardRef<
         } else if (!activeWeekOrdinal) {
             setActiveWeekOrdinal(current);
         }
-    }, [weeks, activeWeekOrdinal]);
+    }, [weeks, initialWeekOrdinal, activeWeekOrdinal]);
 
     const handleStartCreate = useCallback(() => {
         const nextOrdinal = weeks.length > 0 ? Math.max(...weeks.map((w) => w.week_ordinal)) + 1 : 1;
