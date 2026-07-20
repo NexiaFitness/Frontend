@@ -42,6 +42,10 @@ import {
     createMockTrainingSession,
 } from "@/test-utils/fixtures/clients";
 import { GENDER_ENUM } from "@nexia/shared/types/client";
+import {
+    createMockTrainingPlanRecommendationsComplete,
+    createMockTrainingPlanRecommendationsIncomplete,
+} from "@/test-utils/fixtures/trainingRecommendations";
 
 describe("ClientOverviewTab", () => {
     const mockClient = createMockClient({
@@ -86,22 +90,9 @@ describe("ClientOverviewTab", () => {
             http.get("*/clients/:clientId/ratings", () => HttpResponse.json([], { status: 200 })),
             http.get("*/clients/:clientId/injuries", () => HttpResponse.json([], { status: 200 })),
             http.get("*/training-plans/recommendations/:clientId", () =>
-                HttpResponse.json(
-                    {
-                        client_id: 1,
-                        status: "incomplete",
-                        message: "Ficha incompleta",
-                        missing_fields: [],
-                        recommendations: null,
-                        based_on: {
-                            experience: null,
-                            training_frequency: null,
-                            session_duration: null,
-                            objective: null,
-                        },
-                    },
-                    { status: 200 },
-                ),
+                HttpResponse.json(createMockTrainingPlanRecommendationsIncomplete(), {
+                    status: 200,
+                }),
             ),
             http.get("*/clients/:clientId/load-insights", () =>
                 HttpResponse.json(
@@ -172,25 +163,9 @@ describe("ClientOverviewTab", () => {
         server.use(
             getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
             http.get("*/training-plans/recommendations/:clientId", () =>
-                HttpResponse.json(
-                    {
-                        client_id: 1,
-                        status: "complete",
-                        message: "Ficha completa",
-                        missing_fields: [],
-                        recommendations: {
-                            plan_type: "strength",
-                            sessions_per_week: 3,
-                        },
-                        based_on: {
-                            experience: "intermediate",
-                            training_frequency: 3,
-                            session_duration: 60,
-                            objective: "strength",
-                        },
-                    },
-                    { status: 200 },
-                ),
+                HttpResponse.json(createMockTrainingPlanRecommendationsComplete(), {
+                    status: 200,
+                }),
             ),
         );
 
