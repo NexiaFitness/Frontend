@@ -6,6 +6,7 @@
  */
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
 import type { TrainingBlockType } from "@nexia/shared/types/sessionProgramming";
@@ -17,7 +18,11 @@ import {
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
-import { ExercisePickerField } from "../primitives/ExercisePickerField";
+import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
+import {
+    ConstructorFieldAnchor,
+    useConstructorFieldValidation,
+} from "../primitives/ConstructorFieldAnchor";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import { isFilledConstructorExercise } from "../utils/supersetRow";
@@ -58,6 +63,7 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeSingleSetRow(row);
+    const setsValidation = useConstructorFieldValidation(normalized.id, "sets");
     const repsTipo = normalized.repsTipo ?? "reps";
     const exercise = normalized.exercises[0];
     const hasExercise = exercise && isFilledConstructorExercise(exercise);
@@ -108,20 +114,27 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
             {!collapsed ? (
                 <>
                     <ConstructorGroupParamsBar badgeLabel="SINGLE SET">
-                        <div className="flex items-center gap-2">
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={normalized.sets ?? ""}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        sets: e.target.value ? Number(e.target.value) : null,
-                                    })
-                                }
-                                className="w-12"
-                            />
-                        </div>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="sets">
+                            <div className="flex items-center gap-2">
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Series</span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    value={normalized.sets ?? ""}
+                                    onChange={(e) => {
+                                        setsValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            sets: e.target.value ? Number(e.target.value) : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-12",
+                                        setsValidation.error && "border-destructive/70"
+                                    )}
+                                    {...setsValidation.inputInvalidProps}
+                                />
+                            </div>
+                        </ConstructorFieldAnchor>
                     </ConstructorGroupParamsBar>
 
                     <div
@@ -150,13 +163,12 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
                                     <div className={EXERCISE_GRID_CLASS}>
                                         {index === 0 ? (
                                             hasExercise ? (
-                                                <ExercisePickerField
+                                                <ValidatedExercisePickerField
+                                                    rowId={normalized.id}
+                                                    exerciseSlotId={exercise.id}
                                                     exerciseName={exercise.exerciseName}
                                                     onPick={() =>
-                                                        onAddExercise(
-                                                            normalized.id,
-                                                            exercise.id
-                                                        )
+                                                        onAddExercise(normalized.id, exercise.id)
                                                     }
                                                     onClear={() =>
                                                         onUpdate(normalized.id, {
@@ -169,11 +181,11 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
                                                     }
                                                 />
                                             ) : (
-                                                <ExercisePickerField
+                                                <ValidatedExercisePickerField
+                                                    rowId={normalized.id}
+                                                    exerciseSlotId={baseExercise.id}
                                                     exerciseName=""
-                                                    onPick={() =>
-                                                        onAddExercise(normalized.id)
-                                                    }
+                                                    onPick={() => onAddExercise(normalized.id)}
                                                 />
                                             )
                                         ) : (

@@ -6,6 +6,7 @@
  */
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import { Plus, Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
@@ -22,7 +23,11 @@ import {
 } from "../utils/emomRow";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
-import { ExercisePickerField } from "../primitives/ExercisePickerField";
+import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
+import {
+    ConstructorFieldAnchor,
+    useConstructorFieldValidation,
+} from "../primitives/ConstructorFieldAnchor";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
@@ -64,13 +69,19 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeEmomRow(row);
+    const intervalValidation = useConstructorFieldValidation(normalized.id, "intervalSeconds");
+    const roundsValidation = useConstructorFieldValidation(normalized.id, "rounds");
     const windows = normalized.emomWindows ?? [];
     const windowCount = windows.length;
-    const rounds = normalized.rounds ?? 3;
-    const intervalMinutes = Math.max(
-        1,
-        Math.floor((normalized.intervalSeconds ?? 60) / 60)
-    );
+    const intervalMinutes =
+        normalized.intervalSeconds != null
+            ? Math.max(1, Math.floor(normalized.intervalSeconds / 60))
+            : "";
+    const roundsDisplay = normalized.rounds ?? "";
+    const roundsMeta =
+        normalized.rounds != null
+            ? `${normalized.rounds} ronda${normalized.rounds === 1 ? "" : "s"}`
+            : "sin rondas";
     const totalMinutes = computeEmomTotalMinutes(normalized);
     const canRemoveWindow = windowCount > MIN_EMOM_WINDOWS;
 
@@ -120,45 +131,61 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
                     <ConstructorGroupParamsBar
                         badgeLabel={`${groupLabel} · ${totalMinutes}'`}
                         variant="emom"
-                        metaLabel={`${windowCount} ventana${windowCount === 1 ? "" : "s"} · ${rounds} ronda${rounds === 1 ? "" : "s"}`}
+                        metaLabel={`${windowCount} ventana${windowCount === 1 ? "" : "s"} · ${roundsMeta}`}
                     >
-                        <div className="flex items-center gap-2">
-                            <Timer
-                                className="h-3.5 w-3.5 text-purple-600/70 dark:text-purple-400/70 shrink-0"
-                                aria-hidden
-                            />
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
-                                Duración ventana
-                            </span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                max={3}
-                                step={1}
-                                value={intervalMinutes}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        intervalSeconds: Number(e.target.value) * 60,
-                                    })
-                                }
-                                className="w-12"
-                            />
-                            <span className="text-[10px] text-muted-foreground">min</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={rounds}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        rounds: e.target.value ? Number(e.target.value) : null,
-                                    })
-                                }
-                                className="w-12"
-                            />
-                        </div>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="intervalSeconds">
+                            <div className="flex items-center gap-2">
+                                <Timer
+                                    className="h-3.5 w-3.5 text-purple-600/70 dark:text-purple-400/70 shrink-0"
+                                    aria-hidden
+                                />
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
+                                    Duración ventana
+                                </span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    max={3}
+                                    step={1}
+                                    value={intervalMinutes}
+                                    onChange={(e) => {
+                                        intervalValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            intervalSeconds: e.target.value
+                                                ? Number(e.target.value) * 60
+                                                : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-12",
+                                        intervalValidation.error && "border-destructive/70"
+                                    )}
+                                    {...intervalValidation.inputInvalidProps}
+                                />
+                                <span className="text-[10px] text-muted-foreground">min</span>
+                            </div>
+                        </ConstructorFieldAnchor>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="rounds">
+                            <div className="flex items-center gap-2">
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    value={roundsDisplay}
+                                    onChange={(e) => {
+                                        roundsValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            rounds: e.target.value ? Number(e.target.value) : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-12",
+                                        roundsValidation.error && "border-destructive/70"
+                                    )}
+                                    {...roundsValidation.inputInvalidProps}
+                                />
+                            </div>
+                        </ConstructorFieldAnchor>
                     </ConstructorGroupParamsBar>
 
                     <div
@@ -200,13 +227,12 @@ export const EmomBlock: React.FC<EmomBlockProps> = ({
                                                     <span aria-hidden />
                                                 )}
                                                 <div className={EXERCISE_GRID_CLASS}>
-                                                    <ExercisePickerField
+                                                    <ValidatedExercisePickerField
+                                                        rowId={normalized.id}
+                                                        exerciseSlotId={ex.id}
                                                         exerciseName={ex.exerciseName}
                                                         onPick={() =>
-                                                            onAddExercise(
-                                                                normalized.id,
-                                                                ex.id
-                                                            )
+                                                            onAddExercise(normalized.id, ex.id)
                                                         }
                                                         onClear={() =>
                                                             handleExerciseChange(

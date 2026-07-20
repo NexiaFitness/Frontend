@@ -19,19 +19,24 @@ import { amrapFooterHint } from "@nexia/shared";
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
-import { ExercisePickerField } from "../primitives/ExercisePickerField";
+import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
     applyCaracterUpdateWithInheritance,
     hasCaracterChange,
 } from "../utils/exerciseCaracterInheritance";
+import { cn } from "@/lib/utils";
 import {
     CONSTRUCTOR_AMRAP_CARD_CLASS,
     CONSTRUCTOR_COLUMN_HEADER_CLASS,
     CONSTRUCTOR_FIELD_LABEL_CLASS,
     CONSTRUCTOR_FOOTER_HINT_CLASS,
 } from "../primitives/constructorCardStyles";
+import {
+    ConstructorFieldAnchor,
+    useConstructorFieldValidation,
+} from "../primitives/ConstructorFieldAnchor";
 
 const EXERCISE_GRID_CLASS =
     "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_102px_102px] gap-2 items-center sm:justify-items-stretch [&>*:nth-child(2)]:sm:justify-self-center [&>*:nth-child(3)]:sm:justify-self-center";
@@ -70,6 +75,8 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = ensureAmrapStructure(row);
+    const timeCapValidation = useConstructorFieldValidation(normalized.id, "timeCap");
+    const roundsValidation = useConstructorFieldValidation(normalized.id, "rounds");
     const exerciseCount = normalized.exercises.length;
     const canRemoveLast = exerciseCount > MIN_AMRAP_SLOTS;
 
@@ -120,52 +127,63 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
             {!collapsed ? (
                 <>
                     <ConstructorGroupParamsBar badgeLabel={groupLabel} variant="amrap">
-                        <div className="flex items-center gap-2">
-                            <Timer
-                                className="h-3.5 w-3.5 text-red-600/70 dark:text-red-400/70 shrink-0"
-                                aria-hidden
-                            />
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
-                                Duración total
-                            </span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={durationMinutes}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        timeCap: e.target.value
-                                            ? Number(e.target.value) * 60
-                                            : null,
-                                    })
-                                }
-                                className="w-14"
-                                aria-label="Duración total"
-                            />
-                            <span className="text-[10px] text-muted-foreground">min</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
-                                Rondas objetivo
-                            </span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={normalized.rounds ?? ""}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        rounds: e.target.value
-                                            ? Number(e.target.value)
-                                            : null,
-                                    })
-                                }
-                                className="w-12"
-                                aria-label="Rondas objetivo"
-                            />
-                            <span className="text-[10px] italic text-muted-foreground">
-                                opcional
-                            </span>
-                        </div>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="timeCap">
+                            <div className="flex items-center gap-2">
+                                <Timer
+                                    className="h-3.5 w-3.5 text-red-600/70 dark:text-red-400/70 shrink-0"
+                                    aria-hidden
+                                />
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
+                                    Duración total
+                                </span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    value={durationMinutes}
+                                    onChange={(e) => {
+                                        timeCapValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            timeCap: e.target.value
+                                                ? Number(e.target.value) * 60
+                                                : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-14",
+                                        timeCapValidation.error && "border-destructive/70"
+                                    )}
+                                    aria-label="Duración total"
+                                    {...timeCapValidation.inputInvalidProps}
+                                />
+                                <span className="text-[10px] text-muted-foreground">min</span>
+                            </div>
+                        </ConstructorFieldAnchor>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="rounds">
+                            <div className="flex items-center gap-2">
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
+                                    Rondas objetivo
+                                </span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    value={normalized.rounds ?? ""}
+                                    onChange={(e) => {
+                                        roundsValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            rounds: e.target.value
+                                                ? Number(e.target.value)
+                                                : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-12",
+                                        roundsValidation.error && "border-destructive/70"
+                                    )}
+                                    aria-label="Rondas objetivo"
+                                    {...roundsValidation.inputInvalidProps}
+                                />
+                            </div>
+                        </ConstructorFieldAnchor>
                     </ConstructorGroupParamsBar>
 
                     <div
@@ -186,7 +204,9 @@ export const AmrapBlock: React.FC<AmrapBlockProps> = ({
                                 isLast={index === normalized.exercises.length - 1}
                             >
                                 <div className={EXERCISE_GRID_CLASS}>
-                                    <ExercisePickerField
+                                    <ValidatedExercisePickerField
+                                        rowId={normalized.id}
+                                        exerciseSlotId={ex.id}
                                         exerciseName={ex.exerciseName}
                                         onPick={() => onAddExercise(normalized.id, ex.id)}
                                         onClear={() =>

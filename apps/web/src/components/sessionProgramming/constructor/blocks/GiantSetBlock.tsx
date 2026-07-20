@@ -7,6 +7,7 @@
  */
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import { Plus, Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import { ConstructorRoundNavigator } from "../primitives/ConstructorRoundNavigator";
@@ -21,7 +22,11 @@ import {
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
-import { ExercisePickerField } from "../primitives/ExercisePickerField";
+import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
+import {
+    ConstructorFieldAnchor,
+    useConstructorFieldValidation,
+} from "../primitives/ConstructorFieldAnchor";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {
@@ -89,6 +94,7 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
     const [collapsed, setCollapsed] = React.useState(false);
     const [activeSetIndex, setActiveSetIndex] = React.useState(0);
     const normalized = normalizeGiantSetRow(row);
+    const setsValidation = useConstructorFieldValidation(normalized.id, "sets");
     const exerciseCount = normalized.exercises.length;
     const totalSets = normalized.sets ?? 3;
     const canRemoveLast = exerciseCount > MIN_GIANT_SET_SLOTS;
@@ -171,20 +177,27 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                         variant="giant_set"
                         metaLabel={`${exerciseCount} ejercicio${exerciseCount === 1 ? "" : "s"}`}
                     >
-                        <div className="flex items-center gap-2">
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={normalized.sets ?? ""}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        sets: e.target.value ? Number(e.target.value) : null,
-                                    })
-                                }
-                                className="w-12"
-                            />
-                        </div>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="sets">
+                            <div className="flex items-center gap-2">
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    value={normalized.sets ?? ""}
+                                    onChange={(e) => {
+                                        setsValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            sets: e.target.value ? Number(e.target.value) : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-12",
+                                        setsValidation.error && "border-destructive/70"
+                                    )}
+                                    {...setsValidation.inputInvalidProps}
+                                />
+                            </div>
+                        </ConstructorFieldAnchor>
                         <div className="flex items-center gap-2">
                             <Timer
                                 className="h-3.5 w-3.5 text-primary/70 shrink-0"
@@ -228,7 +241,9 @@ export const GiantSetBlock: React.FC<GiantSetBlockProps> = ({
                                     isLast={index === normalized.exercises.length - 1}
                                 >
                                     <div className={EXERCISE_GRID_CLASS}>
-                                        <ExercisePickerField
+                                        <ValidatedExercisePickerField
+                                            rowId={normalized.id}
+                                            exerciseSlotId={ex.id}
                                             exerciseName={ex.exerciseName}
                                             onPick={() =>
                                                 onAddExercise(normalized.id, ex.id)

@@ -111,3 +111,20 @@ export {
     getPersistLinePlannedSets,
 } from "./utils/volumeEquivalentSets";
 export { applyExercisePickerSelection } from "./utils/exercisePicker";
+export {
+    validateConstructorRows,
+    constructorValidationIssuesToMap,
+} from "./utils/validateConstructorRows";
+export {
+    ConstructorValidationProvider,
+    useConstructorValidationContext,
+} from "./ConstructorValidationContext";
+export {
+    ConstructorFieldAnchor,
+    useConstructorFieldValidation,
+} from "./primitives/ConstructorFieldAnchor";
+export { ValidatedExercisePickerField } from "./primitives/ValidatedExercisePickerField";
+export {
+    formatConstructorValidationToast,
+    emptySessionCreatedToast,
+} from "./constructorValidationPresentation";

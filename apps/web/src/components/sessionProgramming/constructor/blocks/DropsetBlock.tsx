@@ -6,6 +6,7 @@
  */
 
 import React from "react";
+import { cn } from "@/lib/utils";
 import { Timer } from "lucide-react";
 import { InlineNumberInput } from "@/components/ui/forms/InlineNumberInput";
 import type { ConstructorExercise, ConstructorRow } from "../../constructorTypes";
@@ -23,7 +24,12 @@ import {
 import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { DropStepRow } from "../primitives/DropStepRow";
+import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
+import {
+    ConstructorFieldAnchor,
+    useConstructorFieldValidation,
+} from "../primitives/ConstructorFieldAnchor";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import { isFilledConstructorExercise } from "../utils/supersetRow";
@@ -67,6 +73,7 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
 }) => {
     const [collapsed, setCollapsed] = React.useState(false);
     const normalized = normalizeDropsetRow(row);
+    const setsValidation = useConstructorFieldValidation(normalized.id, "sets");
     const repsTipo = normalized.repsTipo ?? "reps";
     const exercise = normalized.exercises[0];
     const hasExercise = exercise && isFilledConstructorExercise(exercise);
@@ -125,20 +132,27 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
             {!collapsed ? (
                 <>
                     <ConstructorGroupParamsBar badgeLabel={groupLabel} variant="dropset">
-                        <div className="flex items-center gap-2">
-                            <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
-                            <InlineNumberInput
-                                size="xs"
-                                min={1}
-                                value={normalized.sets ?? ""}
-                                onChange={(e) =>
-                                    onUpdate(normalized.id, {
-                                        sets: e.target.value ? Number(e.target.value) : null,
-                                    })
-                                }
-                                className="w-12"
-                            />
-                        </div>
+                        <ConstructorFieldAnchor rowId={normalized.id} field="sets">
+                            <div className="flex items-center gap-2">
+                                <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>Rondas</span>
+                                <InlineNumberInput
+                                    size="xs"
+                                    min={1}
+                                    value={normalized.sets ?? ""}
+                                    onChange={(e) => {
+                                        setsValidation.clearOnEdit();
+                                        onUpdate(normalized.id, {
+                                            sets: e.target.value ? Number(e.target.value) : null,
+                                        });
+                                    }}
+                                    className={cn(
+                                        "w-12",
+                                        setsValidation.error && "border-destructive/70"
+                                    )}
+                                    {...setsValidation.inputInvalidProps}
+                                />
+                            </div>
+                        </ConstructorFieldAnchor>
                         <div className="flex items-center gap-2">
                             <Timer className="h-3.5 w-3.5 text-primary/70 shrink-0" aria-hidden />
                             <span className={CONSTRUCTOR_FIELD_LABEL_CLASS}>
@@ -185,13 +199,12 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                                     <div className={EXERCISE_GRID_CLASS}>
                                         {isMain ? (
                                             hasExercise ? (
-                                                <ExercisePickerField
+                                                <ValidatedExercisePickerField
+                                                    rowId={normalized.id}
+                                                    exerciseSlotId={exercise.id}
                                                     exerciseName={exercise.exerciseName}
                                                     onPick={() =>
-                                                        onAddExercise(
-                                                            normalized.id,
-                                                            exercise.id
-                                                        )
+                                                        onAddExercise(normalized.id, exercise.id)
                                                     }
                                                     onClear={() =>
                                                         onUpdate(normalized.id, {
@@ -204,11 +217,11 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
                                                     }
                                                 />
                                             ) : (
-                                                <ExercisePickerField
+                                                <ValidatedExercisePickerField
+                                                    rowId={normalized.id}
+                                                    exerciseSlotId={baseExercise.id}
                                                     exerciseName=""
-                                                    onPick={() =>
-                                                        onAddExercise(normalized.id)
-                                                    }
+                                                    onPick={() => onAddExercise(normalized.id)}
                                                 />
                                             )
                                         ) : hasExercise ? (

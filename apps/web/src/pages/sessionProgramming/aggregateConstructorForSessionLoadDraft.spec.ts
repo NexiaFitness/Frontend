@@ -207,6 +207,44 @@ describe("aggregateConstructorRowsForSessionLoadDraft", () => {
         );
     });
 
+    it("for_time sin rondas → no aporta volumen", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.FOR_TIME,
+                rounds: null,
+                exercises: [ex({ exerciseId: 10 })],
+            }),
+        ]);
+        expect(out).toEqual([]);
+    });
+
+    it("emom: volumen = rondas (row.rounds)", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.EMOM,
+                intervalSeconds: 60,
+                rounds: 5,
+                exercises: [ex({ exerciseId: 20 })],
+            }),
+        ]);
+        expect(out).toEqual([{ exercise_id: 20, planned_sets: 5 }]);
+    });
+
+    it("emom sin rondas → no aporta volumen", () => {
+        const out = aggregateConstructorRowsForSessionLoadDraft([
+            row({
+                id: "r1",
+                setType: SET_TYPE.EMOM,
+                intervalSeconds: 60,
+                rounds: null,
+                exercises: [ex({ exerciseId: 20 })],
+            }),
+        ]);
+        expect(out).toEqual([]);
+    });
+
     it("amrap: volumen = rondas objetivo (row.rounds)", () => {
         const out = aggregateConstructorRowsForSessionLoadDraft([
             row({

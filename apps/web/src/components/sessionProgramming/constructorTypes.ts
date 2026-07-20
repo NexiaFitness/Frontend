@@ -100,3 +100,34 @@ export function legacyRowAsBlock(row: ConstructorRow): LegacyConstructorBlock {
         row,
     };
 }
+
+/** Campo validable en el constructor (submit). */
+export type ConstructorValidationField =
+    | "blockTypeId"
+    | "sets"
+    | "rounds"
+    | "timeCap"
+    | "intervalSeconds"
+    | "exercise";
+
+export interface ConstructorValidationIssue {
+    rowId: string;
+    setType: SetType;
+    field: ConstructorValidationField;
+    /** id del slot ConstructorExercise cuando field === "exercise" */
+    exerciseSlotId?: string;
+    message: string;
+}
+
+export interface ConstructorValidationResult {
+    valid: boolean;
+    issues: ConstructorValidationIssue[];
+}
+
+export function constructorValidationFieldKey(
+    rowId: string,
+    field: ConstructorValidationField,
+    exerciseSlotId?: string
+): string {
+    return exerciseSlotId ? `${rowId}:${field}:${exerciseSlotId}` : `${rowId}:${field}`;
+}

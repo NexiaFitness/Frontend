@@ -14,6 +14,8 @@ export interface ExercisePickerFieldProps {
     onClear?: () => void;
     /** Mismo aspecto que picker relleno pero sin interacción (filas DROP del dropset). */
     readOnly?: boolean;
+    /** Borde destructivo cuando hay error de validación submit. */
+    hasError?: boolean;
     className?: string;
 }
 
@@ -22,6 +24,7 @@ export const ExercisePickerField: React.FC<ExercisePickerFieldProps> = ({
     onPick,
     onClear,
     readOnly = false,
+    hasError = false,
     className,
 }) => {
     const filled = exerciseName.trim().length > 0;
@@ -66,9 +69,11 @@ export const ExercisePickerField: React.FC<ExercisePickerFieldProps> = ({
 
     const fieldClass = cn(
         "flex h-8 w-full min-w-0 items-center gap-2 rounded-md border bg-surface px-2.5 text-left text-xs",
-        filled
-            ? "border-emerald-500/35 text-foreground"
-            : "border-border/60 text-muted-foreground",
+        hasError && "border-destructive/70 text-foreground",
+        !hasError &&
+            (filled
+                ? "border-emerald-500/35 text-foreground"
+                : "border-border/60 text-muted-foreground"),
         !readOnly &&
             "transition-colors hover:border-primary/40 focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.12)]",
         readOnly && "cursor-default opacity-95",

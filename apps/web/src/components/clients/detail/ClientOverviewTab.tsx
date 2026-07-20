@@ -329,6 +329,18 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 </div>
             )}
 
+            {recommendationsMode === "compact_ok" && (
+                <section>
+                    <h3 className={`${TYPOGRAPHY.dashboardViewHeading} mb-1 text-foreground`}>
+                        {OVERVIEW_ZONE_TITLES.trainingProfile}
+                    </h3>
+                    <p className="mb-4 text-xs text-muted-foreground">
+                        {OVERVIEW_ZONE_TITLES.trainingProfileHint}
+                    </p>
+                    <RecommendationsCards clientId={clientId} />
+                </section>
+            )}
+
             <ClientLoadInsightsCard clientId={clientId} />
 
             {(lastCompletedSession || lastTest || lastProgressRecord) && (

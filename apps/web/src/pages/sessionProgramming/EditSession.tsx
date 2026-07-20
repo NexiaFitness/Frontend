@@ -39,8 +39,7 @@ import { exerciseDisplayName, normalizeSessionName, useDefaultSessionName } from
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import { getBlockRoundsFromConstructorRow } from "@nexia/shared/sessionProgramming/blockRounds";
 import type { AppDispatch, RootState } from "@nexia/shared/store";
-import { SessionDayPlan } from "@/components/sessions/SessionDayPlan";
-import { SessionMovementPatternsCard } from "@/components/sessions/SessionMovementPatternsCard";
+import { SessionDayContextPanel } from "@/components/sessions/SessionDayContextPanel";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { TrainingBlockSelector } from "@/components/sessionProgramming/TrainingBlockSelector";
 import { SessionConstructor } from "@/components/sessionProgramming/SessionConstructor";
@@ -57,6 +56,8 @@ import {
 import {
     applyExercisePickerSelection,
     getConstructorPersistLines,
+    ConstructorValidationProvider,
+    formatConstructorValidationToast,
     hydrateSingleSetConstructorRow,
     canHydrateDropsetApiLines,
     hydrateDropsetConstructorRow,
@@ -79,7 +80,6 @@ import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS, PageTitle } from "@/components/dashboard/shared";
-import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
@@ -87,6 +87,8 @@ import { getVolumeIntensityPrefillSourceLabel } from "@nexia/shared/training/ses
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import type { TrainingPlanRecommendationsComplete } from "@nexia/shared/types/trainingRecommendations";
 import { SESSION_TYPES } from "./sessionFormConstants";
+import { useConstructorValidation } from "@/hooks/useConstructorValidation";
+import { useScrollToConstructorValidationIssue } from "@/hooks/useScrollToConstructorValidationIssue";
 
 /** Escala 1–10 del slider; el API a veces devuelve floats o valores fuera de rango. */
 function clampIntSlider1to10(value: unknown, fallback: number): string {
@@ -106,7 +108,7 @@ export const EditSession: React.FC = () => {
     const location = useLocation();
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
-    const { showSuccess, showError } = useToast();
+    const { showSuccess, showError, showWarning } = useToast();
     const { user } = useSelector((state: RootState) => state.auth);
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined, {
         skip: !user || user.role !== "trainer",
@@ -237,6 +239,8 @@ export const EditSession: React.FC = () => {
 
     /** Fase 8: Constructor por bloques */
     const [constructorRows, setConstructorRows] = useState<ConstructorRow[]>([]);
+    const constructorValidation = useConstructorValidation();
+    const scrollToConstructorIssue = useScrollToConstructorValidationIssue();
     const [targetRowIdForPicker, setTargetRowIdForPicker] = useState<string | null>(null);
     const [targetExerciseSlotId, setTargetExerciseSlotId] = useState<string | null>(null);
     const [showExercisePickerModal, setShowExercisePickerModal] = useState(false);
@@ -551,6 +555,15 @@ export const EditSession: React.FC = () => {
             return;
         }
 
+        if (constructorRows.length > 0) {
+            const ctorResult = constructorValidation.validate(constructorRows);
+            if (!ctorResult.valid) {
+                showWarning(formatConstructorValidationToast(ctorResult.issues), 6000);
+                scrollToConstructorIssue(ctorResult.issues);
+                return;
+            }
+        }
+
         setIsSaving(true);
         try {
             const resolvedSessionName = formData.sessionName.trim() || defaultSessionName;
@@ -828,7 +841,8 @@ export const EditSession: React.FC = () => {
 
                         {session.client_id ? (
                             <div className="flex h-full min-h-0 flex-col lg:self-stretch">
-                                <SessionDayPlan
+                                <SessionDayContextPanel
+                                    layout="sidebar"
                                     clientId={session.client_id}
                                     sessionDate={formData.sessionDate}
                                     trainerId={trainerIdForDayPlan}
@@ -838,6 +852,15 @@ export const EditSession: React.FC = () => {
                     </div>
 
                     <div className="mt-6 space-y-5 w-full">
+                        {session.client_id ? (
+                            <SessionDayContextPanel
+                                layout="hero"
+                                clientId={session.client_id}
+                                sessionDate={formData.sessionDate}
+                                trainerId={trainerIdForDayPlan}
+                            />
+                        ) : null}
+
                         {session.client_id && hasActiveInjuries && client ? (
                             <Alert variant="warning">
                                 Atención: {client.nombre} {client.apellidos} tiene lesiones activas (
@@ -849,7 +872,6 @@ export const EditSession: React.FC = () => {
 
                         {session.client_id ? (
                             <>
-                                <RecommendationsCards clientId={session.client_id} />
                                 <WeeklyClientVolumePanel
                                     weekLabel={weeklyVolumePanel.weekLabel}
                                     rows={weeklyVolumePanel.rows}
@@ -859,11 +881,6 @@ export const EditSession: React.FC = () => {
                                     intent={weeklyVolumePanel.intent}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
-                                />
-                                <SessionMovementPatternsCard
-                                    clientId={session.client_id}
-                                    sessionDate={formData.sessionDate}
-                                    trainerId={trainerIdForDayPlan}
                                 />
                             </>
                         ) : null}
@@ -891,33 +908,38 @@ export const EditSession: React.FC = () => {
                                         setConstructorRows((prev) => [...prev, newRow]);
                                     }}
                                 />
-                                <SessionConstructor
-                                    rows={constructorRows}
-                                    blockTypes={blockTypes}
-                                    onRowsChange={setConstructorRows}
-                                    onAddExerciseRequest={handleAddExerciseRequest}
-                                    titleAccessory={
-                                        constructorRows.length > 0 ? (
-                                            <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
-                                        ) : undefined
-                                    }
-                                    activePickerRowId={targetRowIdForPicker}
-                                    exercisePickerPanel={
-                                        showExercisePickerModal ? (
-                                            <ExercisePickerPanel
-                                                mode="inline"
-                                                isOpen={true}
-                                                onClose={() => {
-                                                    setShowExercisePickerModal(false);
-                                                    setTargetRowIdForPicker(null);
-                                                }}
-                                                onSelect={handleSelectFromPicker}
-                                                clientId={session.client_id ?? undefined}
-                                                activeInjuries={clientActiveInjuries}
-                                            />
-                                        ) : null
-                                    }
-                                />
+                                <ConstructorValidationProvider
+                                    issuesByKey={constructorValidation.issuesByKey}
+                                    onClearField={constructorValidation.clearFieldError}
+                                >
+                                    <SessionConstructor
+                                        rows={constructorRows}
+                                        blockTypes={blockTypes}
+                                        onRowsChange={setConstructorRows}
+                                        onAddExerciseRequest={handleAddExerciseRequest}
+                                        titleAccessory={
+                                            constructorRows.length > 0 ? (
+                                                <AxialLoadBar axialScore={weeklyVolumePanel.axialScore} />
+                                            ) : undefined
+                                        }
+                                        activePickerRowId={targetRowIdForPicker}
+                                        exercisePickerPanel={
+                                            showExercisePickerModal ? (
+                                                <ExercisePickerPanel
+                                                    mode="inline"
+                                                    isOpen={true}
+                                                    onClose={() => {
+                                                        setShowExercisePickerModal(false);
+                                                        setTargetRowIdForPicker(null);
+                                                    }}
+                                                    onSelect={handleSelectFromPicker}
+                                                    clientId={session.client_id ?? undefined}
+                                                    activeInjuries={clientActiveInjuries}
+                                                />
+                                            ) : null
+                                        }
+                                    />
+                                </ConstructorValidationProvider>
                             </div>
 
                             <div className="border-t border-border pt-6">

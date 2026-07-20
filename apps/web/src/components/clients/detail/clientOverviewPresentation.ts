@@ -14,6 +14,9 @@ export const OVERVIEW_ZONE_TITLES = {
     planEmptyDetail: "Asigna un plan para estructurar el programa del atleta.",
     /** Badge en card Plan activo cuando recomendaciones = compact_ok */
     planAlignedBadge: "Alineado con objetivo",
+    trainingProfile: "Perfil de entrenamiento",
+    trainingProfileHint:
+        "Referencia general según experiencia, frecuencia y duración de sesión del cliente.",
 } as const;
 
 export const OVERVIEW_ACTIVITY_LABELS = {

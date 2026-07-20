@@ -39,6 +39,12 @@ export interface SessionDayMovementPattern {
     sub_pattern: string | null;
 }
 
+/** Grupo muscular objetivo derivado de los patrones del día */
+export interface SessionDayTargetMuscleGroup {
+    id: number;
+    name_es: string;
+}
+
 /** Detalle de recomendaciones para el día */
 export interface SessionDayRecommendations {
     physical_quality: string;
@@ -67,6 +73,19 @@ export interface SessionDayRecommendations {
     week_intensity: number | null;
     /** Patrones de movimiento planificados para esta fecha (Fase A — movement_patterns) */
     movement_patterns?: SessionDayMovementPattern[] | null;
+    /** Grupos musculares objetivo del día (heurística catálogo + estructura semanal) */
+    target_muscle_groups?: SessionDayTargetMuscleGroup[] | null;
+    /** Plan activo (navegación a estructura semanal) */
+    training_plan_id?: number | null;
+    /** Nivel volumen/intensidad nominal del bloque (1–10) */
+    volume_level?: number | null;
+    intensity_level?: number | null;
+    /** Cobertura de estructura semanal vs semanas calendario del bloque */
+    configured_week_count?: number | null;
+    calendar_week_count?: number | null;
+    has_complete_weekly_structure?: boolean | null;
+    /** Si la semana ordinal de session_date tiene fila en weekly_structure_weeks */
+    current_week_has_structure?: boolean | null;
 }
 
 /** Respuesta sin plan activo */
