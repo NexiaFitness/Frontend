@@ -72,6 +72,12 @@ export interface SessionLoadHintOut {
     severity: "info" | "warning" | "excess";
 }
 
+export interface SessionLoadUnmappedExerciseOut {
+    exercise_id: number;
+    exercise_code: string;
+    name_es: string;
+}
+
 export interface SessionLoadDraftValidateOut {
     client_id: number;
     week_start: string;
@@ -83,4 +89,6 @@ export interface SessionLoadDraftValidateOut {
     axial_score?: import("./engineSafety").AxialScoreResponse;
     /** Fase 4 — safety flags per exercise in the draft */
     safety_flags?: import("./engineSafety").ExerciseSafetyResponse[];
+    /** B6 — ejercicios del borrador sin mapeo muscular volumétrico */
+    unmapped_exercises?: SessionLoadUnmappedExerciseOut[];
 }

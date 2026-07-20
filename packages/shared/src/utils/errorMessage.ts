@@ -10,12 +10,25 @@
  * @updated 2026-04 — detail en array (validación), message, fallback por status HTTP
  */
 
-const FALLBACK = "Error desconocido";
+const FALLBACK = "Ha ocurrido un error. Inténtalo de nuevo.";
+
+const GENERIC_SERVER_ERROR_EN = "internal server error";
+
+/** Mensajes genéricos del backend en inglés → español para la UI. */
+function localizeHttpDetail(detail: string): string {
+    if (detail.trim().toLowerCase() === GENERIC_SERVER_ERROR_EN) {
+        return (
+            "Ha ocurrido un error inesperado en el servidor. " +
+            "Inténtalo de nuevo en unos instantes."
+        );
+    }
+    return detail;
+}
 
 /** Normaliza `detail` de respuestas FastAPI a texto único para la UI. */
 function formatHttpDetail(detail: unknown): string | null {
     if (detail == null) return null;
-    if (typeof detail === "string") return detail;
+    if (typeof detail === "string") return localizeHttpDetail(detail);
     if (Array.isArray(detail)) {
         const parts = detail.map((item) => {
             if (item && typeof item === "object" && "msg" in item) {
@@ -80,8 +93,14 @@ export function getMutationErrorMessage(error: unknown): string {
                 "aún no tenga desplegada la última versión de la API."
             );
         }
+        if (typeof st === "number" && st >= 500) {
+            return (
+                "No se pudo completar la operación por un error del servidor. " +
+                "Inténtalo de nuevo en unos instantes."
+            );
+        }
         if (typeof st === "number" && st >= 400) {
-            return `Error del servidor (${st}).`;
+            return `No se pudo completar la operación (código ${st}).`;
         }
     }
 

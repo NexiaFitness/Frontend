@@ -910,6 +910,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         intent={weeklyVolumePanel.intent}
                                         usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                         weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                        unmappedExercises={weeklyVolumePanel.unmappedExercises}
                                     />
                                 </>
                             ) : null}

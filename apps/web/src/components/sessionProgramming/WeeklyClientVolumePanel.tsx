@@ -3,10 +3,18 @@
  */
 
 import React, { useMemo, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { AlertTriangle, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { LoadingSpinner } from "@/components/ui/feedback";
-import type { WeeklyClientVolumePanelIntent, WeeklyVolumePanelRowModel } from "@nexia/shared";
+import type {
+    SessionLoadUnmappedExerciseOut,
+    WeeklyClientVolumePanelIntent,
+    WeeklyVolumePanelRowModel,
+} from "@nexia/shared";
+import {
+    VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE,
+    VOLUME_WEEKLY_SAVED_SUBTITLE,
+} from "@nexia/shared/training/weeklyVolumePanelPresentation";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
 
 export interface WeeklyClientVolumePanelProps {
@@ -19,6 +27,7 @@ export interface WeeklyClientVolumePanelProps {
     /** True cuando el panel refleja el borrador del constructor (no acumulado semanal). */
     usesDraftProjection?: boolean;
     weeklyTarget?: number | null;
+    unmappedExercises?: SessionLoadUnmappedExerciseOut[];
 }
 
 export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = ({
@@ -30,6 +39,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     intent = "edit_session",
     usesDraftProjection = false,
     weeklyTarget = null,
+    unmappedExercises = [],
 }) => {
     const [open, setOpen] = useState(true);
 
@@ -52,13 +62,13 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     const panelSubtitle = useMemo(() => {
         if (intent === "create_session") {
             return usesDraftProjection
-                ? "Borrador vs reparto orientativo de esta sesión (plan semanal)"
+                ? VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE
                 : "Sin ejercicios en el constructor — el panel se actualiza al añadir ejercicios";
         }
         if (usesDraftProjection) {
-            return "Borrador vs reparto orientativo de esta sesión (plan semanal)";
+            return VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE;
         }
-        return "Acumulado semanal según sesiones guardadas y objetivos del plan";
+        return VOLUME_WEEKLY_SAVED_SUBTITLE;
     }, [intent, usesDraftProjection]);
 
     const emptyMessage = useMemo(() => {
@@ -112,10 +122,34 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
                         <p className="text-sm text-destructive py-4">
                             No se pudo cargar el volumen semanal. Revisa la conexión o vuelve a intentar.
                         </p>
-                    ) : rows.length === 0 ? (
+                    ) : rows.length === 0 && unmappedExercises.length === 0 ? (
                         <p className="py-4 text-sm text-muted-foreground leading-relaxed">{emptyMessage}</p>
                     ) : (
                         <div className="space-y-3">
+                            {unmappedExercises.length > 0 ? (
+                                <div
+                                    role="alert"
+                                    className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2.5 text-xs leading-relaxed text-warning"
+                                >
+                                    <div className="flex items-start gap-2">
+                                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                                        <div>
+                                            <p className="font-medium">
+                                                {unmappedExercises.length === 1
+                                                    ? "1 ejercicio no suma volumen muscular"
+                                                    : `${unmappedExercises.length} ejercicios no suman volumen muscular`}
+                                            </p>
+                                            <p className="mt-1 text-warning/90">
+                                                Falta mapeo en catálogo:{" "}
+                                                {unmappedExercises
+                                                    .map((e) => e.name_es || e.exercise_code)
+                                                    .join(", ")}
+                                                . El admin debe corregir el catálogo.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            ) : null}
                             {noBlockMode ? (
                                 <div
                                     role="status"

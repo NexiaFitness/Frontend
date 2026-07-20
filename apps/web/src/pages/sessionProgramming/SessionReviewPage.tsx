@@ -134,15 +134,21 @@ function PlanActualMetric({
 }) {
     const hasActual = actual !== "—";
     return (
-        <div className="flex flex-col gap-0.5 min-w-0 rounded-md border border-border/60 bg-surface/80 px-2.5 py-1.5">
+        <div className="flex flex-col gap-1 min-w-0 rounded-md border border-border/60 bg-surface/80 px-2.5 py-1.5">
             <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 {label}
             </span>
-            <div className="flex items-baseline gap-1.5 tabular-nums">
-                <span className={cn("text-sm font-bold", hasActual ? accentClass : "text-muted-foreground")}>
-                    {actual}
-                </span>
-                <span className="text-xs text-muted-foreground">/ {planned}</span>
+            <div className="space-y-0.5 text-xs tabular-nums">
+                <p className="text-muted-foreground">
+                    Programado:{" "}
+                    <span className="font-medium text-foreground">{planned}</span>
+                </p>
+                <p className={hasActual ? accentClass : "text-muted-foreground"}>
+                    Registrado:{" "}
+                    <span className={cn("font-semibold", hasActual ? "text-foreground" : "")}>
+                        {actual}
+                    </span>
+                </p>
             </div>
         </div>
     );

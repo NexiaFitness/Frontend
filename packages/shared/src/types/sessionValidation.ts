@@ -39,6 +39,8 @@ export interface VolumeMuscleValidation {
     weekly_target: number;
     daily_expected: number;
     actual_sets: number;
+    direct_sets?: number;
+    indirect_sets?: number;
     deviation_percent: number;
 }
 

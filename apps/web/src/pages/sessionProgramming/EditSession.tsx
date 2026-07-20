@@ -881,6 +881,7 @@ export const EditSession: React.FC = () => {
                                     intent={weeklyVolumePanel.intent}
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
+                                    unmappedExercises={weeklyVolumePanel.unmappedExercises}
                                 />
                             </>
                         ) : null}

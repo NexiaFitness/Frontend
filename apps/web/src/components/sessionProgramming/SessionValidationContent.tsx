@@ -25,6 +25,11 @@ import {
     volumeMuscleValidationToPanelRow,
     type WeeklyVolumePanelRowModel,
 } from "@nexia/shared";
+import {
+    VOLUME_MUSCLE_PROGRAMMED_NOTE,
+    VOLUME_REVIEW_GROUPS_HEADING,
+    VOLUME_REVIEW_SECTION_TITLE,
+} from "@nexia/shared/training/weeklyVolumePanelPresentation";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
 import { SessionPanelShell } from "./SessionPanelShell";
 import { VolumeReviewKpiStrip } from "./VolumeReviewKpiStrip";
@@ -313,14 +318,17 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
         };
     }, [data.muscle_groups]);
 
-    const totalActual = coveredRows.reduce((s, r) => s + r.draftSets, 0);
+    const totalProgrammed = coveredRows.reduce((s, r) => s + r.draftSets, 0);
     const totalExpectedCovered = coveredRows.reduce((s, r) => s + (r.targetToday ?? 0), 0);
 
     return (
         <div className="space-y-5">
+            <p className="text-[11px] leading-snug text-muted-foreground">
+                {VOLUME_MUSCLE_PROGRAMMED_NOTE}
+            </p>
             <VolumeReviewKpiStrip
                 coveredCount={coveredRows.length}
-                totalActual={totalActual}
+                totalProgrammed={totalProgrammed}
                 totalExpectedCovered={totalExpectedCovered}
                 statusSummary={statusSummary}
             />
@@ -328,7 +336,7 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
             {coveredRows.length > 0 ? (
                 <div className="space-y-2.5">
                     <h5 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Volumen en esta sesión
+                        {VOLUME_REVIEW_GROUPS_HEADING}
                     </h5>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                         {coveredRows.map((row) => (
@@ -388,7 +396,7 @@ const VolumeSection: React.FC<{
                         <div className="flex items-center justify-between">
                             <span className="text-sm font-medium text-foreground">{mg.name_es}</span>
                             <span className="text-xs text-muted-foreground">
-                                {mg.actual_sets} / {mg.daily_expected} series
+                                {mg.actual_sets} / {mg.daily_expected} programadas
                             </span>
                         </div>
                         <DeviationBar percent={mg.deviation_percent} />
@@ -562,8 +570,14 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
 
             {error != null ? (
                 <Alert variant="error">
-                    <p className="font-medium">Error al validar</p>
-                    <p className="text-sm opacity-90">{getMutationErrorMessage(error)}</p>
+                    <p className="font-medium">No se pudo validar la alineación con el plan</p>
+                    <p className="text-sm opacity-90">
+                        {getMutationErrorMessage(error)}
+                    </p>
+                    <p className="text-xs opacity-80 mt-1">
+                        El resumen de sesión sigue disponible arriba. Si el problema persiste,
+                        revisa la conexión o vuelve a guardar la sesión.
+                    </p>
                 </Alert>
             ) : null}
 
@@ -629,7 +643,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                     </div>
 
                     <ValidationInsightCard
-                        title="Volumen por grupo muscular"
+                        title={VOLUME_REVIEW_SECTION_TITLE}
                         badge={<StatusBadge status={data.volume?.status ?? null} />}
                         borderAccent={validationBorderAccent(data.volume?.status ?? null)}
                     >
@@ -662,8 +676,14 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
 
             {error != null && (
                 <Alert variant="error">
-                    <p className="font-medium">Error al validar</p>
-                    <p className="text-sm opacity-90">{getMutationErrorMessage(error)}</p>
+                    <p className="font-medium">No se pudo validar la alineación con el plan</p>
+                    <p className="text-sm opacity-90">
+                        {getMutationErrorMessage(error)}
+                    </p>
+                    <p className="text-xs opacity-80 mt-1">
+                        El resumen de sesión sigue disponible arriba. Si el problema persiste,
+                        revisa la conexión o vuelve a guardar la sesión.
+                    </p>
                 </Alert>
             )}
 

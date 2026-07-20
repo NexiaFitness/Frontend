@@ -7,6 +7,12 @@ import React from "react";
 import { Activity, BarChart3, SlidersHorizontal } from "lucide-react";
 
 import type { WeeklyVolumeSummaryCounts } from "@nexia/shared";
+import {
+    VOLUME_REVIEW_KPI_ARIA,
+    VOLUME_REVIEW_KPI_GROUPS_LABEL,
+    VOLUME_REVIEW_KPI_SERIES_HINT,
+    VOLUME_REVIEW_KPI_SERIES_LABEL,
+} from "@nexia/shared/training/weeklyVolumePanelPresentation";
 import { volumeStatusDotClass, volumeStatusLabel } from "@nexia/shared";
 import { ContextStripShell } from "@/components/ui/ContextStripShell";
 import { cn } from "@/lib/utils";
@@ -36,14 +42,14 @@ function StatusChip({
 
 export interface VolumeReviewKpiStripProps {
     coveredCount: number;
-    totalActual: number;
+    totalProgrammed: number;
     totalExpectedCovered: number;
     statusSummary: WeeklyVolumeSummaryCounts;
 }
 
 export const VolumeReviewKpiStrip: React.FC<VolumeReviewKpiStripProps> = ({
     coveredCount,
-    totalActual,
+    totalProgrammed,
     totalExpectedCovered,
     statusSummary,
 }) => {
@@ -54,11 +60,11 @@ export const VolumeReviewKpiStrip: React.FC<VolumeReviewKpiStripProps> = ({
 
     return (
         <ContextStripShell
-            ariaLabel="Resumen de volumen de la sesión"
+            ariaLabel={VOLUME_REVIEW_KPI_ARIA}
             zones={[
                 {
                     icon: <Activity className="h-3.5 w-3.5" />,
-                    label: "Con series en sesión",
+                    label: VOLUME_REVIEW_KPI_GROUPS_LABEL,
                     children: (
                         <>
                             <p className="text-sm font-semibold text-foreground tabular-nums">
@@ -72,18 +78,18 @@ export const VolumeReviewKpiStrip: React.FC<VolumeReviewKpiStripProps> = ({
                 },
                 {
                     icon: <BarChart3 className="h-3.5 w-3.5" />,
-                    label: "Series hoy",
+                    label: VOLUME_REVIEW_KPI_SERIES_LABEL,
                     children: (
                         <>
                             <p className="text-sm font-semibold text-foreground tabular-nums">
-                                {totalActual}
+                                {totalProgrammed}
                                 <span className="text-muted-foreground font-medium">
                                     {" "}
                                     / {totalExpectedCovered}
                                 </span>
                             </p>
                             <p className="text-xs text-muted-foreground">
-                                Realizadas frente al objetivo del día
+                                {VOLUME_REVIEW_KPI_SERIES_HINT}
                             </p>
                         </>
                     ),

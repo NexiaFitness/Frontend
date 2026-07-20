@@ -78,6 +78,8 @@ export interface UseWeeklyClientVolumePanelResult {
     axialScore: import("../../types/engineSafety").AxialScoreResponse | null;
     safetyFlags: import("../../types/engineSafety").ExerciseSafetyResponse[];
     weeklyTarget: number | null;
+    /** Ejercicios del borrador sin mapeo muscular (B6). */
+    unmappedExercises: import("../../types/sessionLoad").SessionLoadUnmappedExerciseOut[];
 }
 
 export function useWeeklyClientVolumePanel(
@@ -275,5 +277,6 @@ export function useWeeklyClientVolumePanel(
         axialScore: showDraftSafety ? draftProjection?.axial_score ?? null : null,
         safetyFlags: showDraftSafety ? draftProjection?.safety_flags ?? [] : [],
         weeklyTarget: effectiveTargetCenter,
+        unmappedExercises: showDraftSafety ? draftProjection?.unmapped_exercises ?? [] : [],
     };
 }

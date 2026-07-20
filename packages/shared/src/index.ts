@@ -7,6 +7,7 @@ export * from "./api/baseApi";
 export * from "./api/clientsApi";
 export * from "./api/invitationsApi";
 export * from "./api/sessionLoadApi";
+export * from "./api/adminApi";
 export * from "./api/accountApi";
 export * from "./api/trainerApi";
 export * from "./api/trainingPlansApi";
@@ -162,6 +163,7 @@ export * from "./training/weeklyVolumeTarget";
 export * from "./training/volumeIntensityContext";
 export * from "./training/sessionVolumeIntensityPrefill";
 export * from "./training/weeklyVolumePanelModel";
+export * from "./training/weeklyVolumePanelPresentation";
 export {
     mondayOfIsoWeekContaining,
     formatWeekRangeLabelEs,

@@ -110,19 +110,19 @@ export function formatVolumeRatioHoy(
         WeeklyVolumePanelRowModel,
         "draftSets" | "targetToday" | "accumulated" | "rangeMax" | "targetCenter" | "dataScope"
     >,
-    style: VolumeRatioHoyStyle = "constructor"
+    _style: VolumeRatioHoyStyle = "constructor"
 ): string {
     if (row.targetToday != null && row.targetToday > 0) {
         const base = `${row.draftSets} / ${row.targetToday}`;
-        return style === "session_review" ? `${base} series hoy` : `${base} hoy`;
+        return `${base} programadas · hoy`;
     }
     if (row.rangeMax != null && row.rangeMax > 0 && row.targetCenter != null) {
         const numerator = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
         const unit = row.dataScope === "session_draft" ? "esta sesión" : "semana";
-        return `${numerator} / ${row.targetCenter} ${unit}`;
+        return `${numerator} / ${row.targetCenter} programadas · ${unit}`;
     }
     const fallbackTotal = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
-    return `${fallbackTotal} series`;
+    return `${fallbackTotal} programadas`;
 }
 
 /** Mapea fila validate-draft a input del panel: solo volumen de esta sesión. */
@@ -175,6 +175,8 @@ export function volumeMuscleValidationToPanelRow(mg: {
     weekly_target: number;
     daily_expected: number;
     actual_sets: number;
+    direct_sets?: number;
+    indirect_sets?: number;
 }): WeeklyVolumePanelRowModel {
     const targetToday = mg.daily_expected > 0 ? mg.daily_expected : null;
     const draftSets = mg.actual_sets;
@@ -187,6 +189,8 @@ export function volumeMuscleValidationToPanelRow(mg: {
         nameEs: mg.name_es?.trim() || "",
         accumulated: draftSets,
         savedWeekWithoutSession: null,
+        directSets: mg.direct_sets ?? 0,
+        indirectSets: mg.indirect_sets ?? 0,
         draftSets,
         targetToday,
         rangeMin: band?.rangeMin ?? null,
