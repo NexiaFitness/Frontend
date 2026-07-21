@@ -10,6 +10,9 @@
  *   <h1 className={`${TYPOGRAPHY.pageTitle} text-foreground`}>
  * El color (text-foreground, text-muted-foreground, etc.) se añade en el componente.
  *
+ * **Portal premium (admin/atleta/trainer migrado):** preferir `NEXIA_PORTAL_*` de
+ * `athleteSettingsPresentation.ts` — techo tipográfico. Ver design/platform/04_REGISTRY_CODIGO_FUENTE.md §1.
+ *
  * @author Frontend Team
  * @since v4.3.0
  * @updated v6.4.0 - Redefinido según vistas rediseñadas (ClientList, ClientHeader, dashboard)

@@ -1,6 +1,7 @@
 /**
  * athleteLayoutClasses.ts — Tokens de layout portal atleta (mobile-first).
- * @see docs/audits/portal-atleta/DESIGN_MOBILE_FIRST_ATLETA.md §2, §7
+ * @see design/atleta/DESIGN_MOBILE_FIRST_ATLETA.md §2, §7
+ * @see design/platform/04_REGISTRY_CODIGO_FUENTE.md §4.3
  */
 
 import { cn } from "@/lib/utils";

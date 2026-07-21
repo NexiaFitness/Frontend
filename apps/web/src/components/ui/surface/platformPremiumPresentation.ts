@@ -1,8 +1,9 @@
 /**
  * platformPremiumPresentation.ts — Tokens premium compartidos (admin/trainer + base plataforma).
  *
- * Doc: docs/design/00_LEEME_PRIMERO.md · docs/design/01_PREMIUM_PLATFORM_MIGRATION.md
- * Glass: glassSurfacePresentation.ts · Atleta F3b: docs/audits/portal-atleta/.../F3b_PREMIUM_DESIGN_SYSTEM.md
+ * Doc: design/00_LEEME_PRIMERO.md · design/platform/01_PREMIUM_MIGRATION.md
+ * Glass: glassSurfacePresentation.ts · Atleta F3b: design/atleta/run-y-diseno/F3b_PREMIUM_DESIGN_SYSTEM.md
+ * Registro: design/platform/04_REGISTRY_CODIGO_FUENTE.md
  */
 
 import { cn } from "@/lib/utils";
