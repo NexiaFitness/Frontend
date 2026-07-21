@@ -1,5 +1,5 @@
 /**
- * ClientOverviewTab Test Suite — UX-OVERVIEW v2 F0.
+ * ClientOverviewTab Test Suite — UX-OVERVIEW v2.
  */
 
 import { screen, waitFor } from "@testing-library/react";
@@ -122,41 +122,40 @@ describe("ClientOverviewTab", () => {
         expect(screen.getByText(/id de cliente inválido/i)).toBeInTheDocument();
     });
 
-    it("renders F0 zones after loading", async () => {
+    it("renders v2 zones after loading", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-top-section")).toBeInTheDocument();
         });
 
-        expect(screen.getByTestId("client-overview-top-section")).toBeInTheDocument();
+        expect(screen.getByTestId("client-comms-section")).toBeInTheDocument();
         expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+        expect(screen.getByTestId("client-overview-activity")).toBeInTheDocument();
     });
 
-    it("renders KPI section before action section in DOM order", async () => {
+    it("renders action section before KPI section in DOM order", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-top-section")).toBeInTheDocument();
         });
 
         const kpiSection = screen.getByTestId("client-overview-kpi-section");
         const topSection = screen.getByTestId("client-overview-top-section");
         expect(
-            kpiSection.compareDocumentPosition(topSection) & Node.DOCUMENT_POSITION_FOLLOWING,
+            topSection.compareDocumentPosition(kpiSection) & Node.DOCUMENT_POSITION_FOLLOWING,
         ).toBeTruthy();
     });
 
-    it("does not show visible page subtitle", async () => {
+    it("shows page subtitle", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+            expect(
+                screen.getByText(/relación, acción y contexto del atleta/i),
+            ).toBeInTheDocument();
         });
-
-        expect(
-            screen.queryByText(/relación, acción y contexto del atleta/i),
-        ).not.toBeInTheDocument();
     });
 
     it("shows aligned badge on plan card when recommendations are complete", async () => {
@@ -174,22 +173,18 @@ describe("ClientOverviewTab", () => {
         await waitFor(() => {
             expect(screen.getByText(/alineado con objetivo/i)).toBeInTheDocument();
         });
-
-        expect(
-            screen.queryByText(/plan alineado con el objetivo del cliente/i),
-        ).not.toBeInTheDocument();
     });
 
-    it("shows metric cards with adherence and weight", async () => {
+    it("shows KPI row with adherence and weight", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
             expect(screen.getByText(/adherencia/i)).toBeInTheDocument();
         });
-        expect(screen.getByText(/último peso/i)).toBeInTheDocument();
+        expect(screen.getByText(/^peso$/i)).toBeInTheDocument();
     });
 
-    it("shows athlete feedback card with response form when feedback exists", async () => {
+    it("shows comms section with response form when feedback exists", async () => {
         server.use(
             http.get("*/training-sessions/feedback/client/:clientId", () =>
                 HttpResponse.json(
@@ -227,7 +222,9 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(
             () => {
-                expect(screen.getByText(/feedback del atleta/i)).toBeInTheDocument();
+                expect(
+                    screen.getByText(/comunicación con el atleta/i),
+                ).toBeInTheDocument();
             },
             { timeout: 3000 },
         );
@@ -236,13 +233,13 @@ describe("ClientOverviewTab", () => {
         expect(screen.getByLabelText(/responder al atleta/i)).toBeInTheDocument();
     });
 
-    it("shows feedback empty state when no feedback", async () => {
+    it("shows comms empty state when no feedback", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(
             () => {
                 expect(
-                    screen.getByText(/aún no hay feedback post-sesión/i),
+                    screen.getByText(/cuando el atleta complete una sesión/i),
                 ).toBeInTheDocument();
             },
             { timeout: 3000 },
@@ -259,7 +256,7 @@ describe("ClientOverviewTab", () => {
         expect(screen.queryByText(/estado del cliente/i)).not.toBeInTheDocument();
     });
 
-    it("displays last session in activity when completed session exists", async () => {
+    it("displays last session card when completed session exists", async () => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         server.use(
@@ -281,19 +278,14 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(
             () => {
-                expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
+                expect(screen.getByTestId("client-overview-last-session")).toBeInTheDocument();
             },
             { timeout: 3000 },
         );
-        await waitFor(
-            () => {
-                expect(screen.getByText(/última sesión/i)).toBeInTheDocument();
-            },
-            { timeout: 3000 },
-        );
+        expect(screen.getByText(/última sesión/i)).toBeInTheDocument();
     });
 
-    it("navigates to session detail from activity card", async () => {
+    it("navigates to session detail from last session card", async () => {
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
         server.use(
@@ -315,7 +307,7 @@ describe("ClientOverviewTab", () => {
         const user = userEvent.setup();
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
-        const link = await screen.findByRole("button", { name: /última sesión/i });
+        const link = await screen.findByRole("button", { name: /ver ejecución/i });
         await user.click(link);
         expect(mockNavigate).toHaveBeenCalledWith(
             "/dashboard/session-programming/sessions/99",
@@ -323,7 +315,7 @@ describe("ClientOverviewTab", () => {
         );
     });
 
-    it("shows sin programar in metric card when no upcoming sessions", async () => {
+    it("shows no programada in next session KPI when no upcoming sessions", async () => {
         server.use(
             getClientTrainingSessionsEmptyHandler,
             getClientTestResultsEmptyHandler,
@@ -333,7 +325,7 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByText(/sin programar/i)).toBeInTheDocument();
+            expect(screen.getByText(/no programada/i)).toBeInTheDocument();
         });
     });
 

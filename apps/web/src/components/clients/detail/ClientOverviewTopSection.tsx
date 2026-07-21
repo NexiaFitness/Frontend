@@ -7,6 +7,7 @@ import { useFatigueAlerts } from "@nexia/shared/hooks/clients/useFatigueAlerts";
 import type { OverviewPlanCompact } from "@/hooks/clients/clientOverviewPulse.types";
 import { ClientAlertsSection } from "./ClientAlertsSection";
 import { ClientOverviewPlanCard } from "./ClientOverviewPlanCard";
+import { OVERVIEW_ZONE_TITLES } from "./clientOverviewPresentation";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export interface ClientOverviewTopSectionProps {
@@ -40,7 +41,7 @@ export const ClientOverviewTopSection: React.FC<ClientOverviewTopSectionProps> =
     return (
         <section data-testid="client-overview-top-section">
             <h3 className={`${TYPOGRAPHY.dashboardViewHeading} mb-4 text-foreground`}>
-                Acción inmediata
+                {OVERVIEW_ZONE_TITLES.action}
             </h3>
             <div
                 className={`grid gap-4 ${hasAlerts ? "lg:grid-cols-2" : "grid-cols-1"}`}

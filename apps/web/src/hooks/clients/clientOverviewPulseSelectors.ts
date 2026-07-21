@@ -360,6 +360,8 @@ export function buildOverviewViewModel(
 ): Pick<
     ClientOverviewPulseViewModel,
     | "planCompact"
+    | "lastCompletedSession"
+    | "loadInsights"
     | "pulseRows"
     | "hasPulseContent"
     | "statChips"
@@ -371,13 +373,15 @@ export function buildOverviewViewModel(
     | "lastRating"
     | "isError"
 > {
-    const { clientId, client, habitInsights, recommendations, ratings } = input;
+    const { clientId, client, habitInsights, recommendations, ratings, sessions = [] } = input;
     const pulseRows = buildPulseRows(input);
     const hasRealPulse = pulseRows.some((r) => r.kind !== "empty");
 
     return {
         isError: Boolean(input.isError),
         planCompact: buildPlanCompact(input.activePlan, input.trainingPlans ?? []),
+        lastCompletedSession: findLastCompletedSession(sessions),
+        loadInsights: input.loadInsights ?? null,
         pulseRows,
         hasPulseContent: hasRealPulse,
         statChips: buildStatChips(input),
