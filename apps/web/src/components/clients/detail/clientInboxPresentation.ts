@@ -3,18 +3,20 @@
  */
 
 import { cn } from "@/lib/utils";
+import {
+    CLIENT_HEADER_INBOX_BELL,
+    CLIENT_HEADER_INBOX_BELL_ICON,
+} from "./clientHeaderPresentation";
 
-export const CLIENT_INBOX_BELL_BUTTON = cn(
-    "relative inline-flex min-h-9 min-w-9 items-center justify-center rounded-md",
-    "border border-border bg-card text-foreground",
-    "transition-colors hover:border-primary/45 hover:bg-primary/10",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-);
+export const CLIENT_INBOX_BELL_BUTTON = CLIENT_HEADER_INBOX_BELL;
+
+export const CLIENT_INBOX_BELL_ICON = CLIENT_HEADER_INBOX_BELL_ICON;
 
 export const CLIENT_INBOX_BELL_BADGE = cn(
-    "absolute -right-1 -top-1 flex min-h-[18px] min-w-[18px] items-center justify-center",
-    "rounded-full bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground",
-    "ring-2 ring-card",
+    "pointer-events-none absolute -right-1 -top-1 z-[1]",
+    "flex h-[18px] min-w-[18px] items-center justify-center rounded-full",
+    "bg-primary px-1 text-[10px] font-bold leading-none text-primary-foreground",
+    "shadow-[0_0_8px] shadow-primary/60 ring-2 ring-card",
 );
 
 export const CLIENT_INBOX_PANEL_HEADER = "flex items-start justify-between gap-3 border-b border-border px-5 py-4";

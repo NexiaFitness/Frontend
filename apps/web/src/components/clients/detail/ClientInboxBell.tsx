@@ -9,6 +9,7 @@ import { useClientInbox } from "@nexia/shared/hooks/clients/useClientInbox";
 import {
     CLIENT_INBOX_BELL_BADGE,
     CLIENT_INBOX_BELL_BUTTON,
+    CLIENT_INBOX_BELL_ICON,
 } from "./clientInboxPresentation";
 import { ClientInboxPanel } from "./ClientInboxPanel";
 
@@ -41,7 +42,7 @@ export const ClientInboxBell: React.FC<ClientInboxBellProps> = ({ clientId }) =>
                 aria-label={ariaLabel}
                 data-testid="client-inbox-bell"
             >
-                <Bell className="size-4" aria-hidden />
+                <Bell className={CLIENT_INBOX_BELL_ICON} aria-hidden />
                 {badgeLabel && (
                     <span className={CLIENT_INBOX_BELL_BADGE} aria-hidden>
                         {badgeLabel}
