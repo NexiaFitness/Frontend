@@ -4,7 +4,7 @@
  * Contexto:
  * - Vista completa del cliente con 7 tabs.
  * - Tabs: Resumen, Sesiones, Coherencia Diaria, Tests, Progreso, Planificación, Lesiones.
- * - Layout: Header + TabsBar + Content.
+ * - Layout: Header + TabsBar (segmentado premium) + Content.
  *
  * Navegación de planes:
  * - "Ver plan" desde cualquier tab navega a ?tab=planning&plan=:id (detalle inline).

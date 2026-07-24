@@ -134,28 +134,30 @@ describe("ClientOverviewTab", () => {
         expect(screen.getByTestId("client-overview-activity")).toBeInTheDocument();
     });
 
-    it("renders action section before KPI section in DOM order", async () => {
+    it("renders KPI section before action section in DOM order (main parity)", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(screen.getByTestId("client-overview-top-section")).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
         });
 
         const kpiSection = screen.getByTestId("client-overview-kpi-section");
         const topSection = screen.getByTestId("client-overview-top-section");
         expect(
-            topSection.compareDocumentPosition(kpiSection) & Node.DOCUMENT_POSITION_FOLLOWING,
+            kpiSection.compareDocumentPosition(topSection) & Node.DOCUMENT_POSITION_FOLLOWING,
         ).toBeTruthy();
     });
 
-    it("shows page subtitle", async () => {
+    it("does not render page subtitle above zones", async () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
 
         await waitFor(() => {
-            expect(
-                screen.getByText(/relación, acción y contexto del atleta/i),
-            ).toBeInTheDocument();
+            expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
         });
+
+        expect(
+            screen.queryByText(/relación, acción y contexto del atleta/i),
+        ).not.toBeInTheDocument();
     });
 
     it("shows aligned badge on plan card when recommendations are complete", async () => {

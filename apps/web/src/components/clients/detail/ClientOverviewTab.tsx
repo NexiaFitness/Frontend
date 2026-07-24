@@ -1,7 +1,8 @@
 /**
- * ClientOverviewTab.tsx — Tab Resumen premium (UX-OVERVIEW v2).
+ * ClientOverviewTab.tsx — Tab Resumen (ficha cliente).
  *
- * Zonas: Acción → Comunicación → KPIs → Recomendaciones → Actividad gym → Relación.
+ * Orden canónico (paridad main / producción): KPIs → Acción → Comunicación →
+ * Recomendaciones → Actividad → Relación. No reordenar sin petición explícita del usuario.
  */
 
 import React, { useEffect, useRef } from "react";
@@ -17,10 +18,7 @@ import { ClientOverviewLoadBridge } from "./ClientOverviewLoadBridge";
 import { ClientOverviewRelationCollapsible } from "./ClientOverviewRelationCollapsible";
 import { ClientOverviewTopSection } from "./ClientOverviewTopSection";
 import { RecommendationsCards } from "./RecommendationsCards";
-import {
-    OVERVIEW_PAGE_SUBTITLE,
-    OVERVIEW_ZONE_TITLES,
-} from "./clientOverviewPresentation";
+import { OVERVIEW_ZONE_TITLES } from "./clientOverviewPresentation";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 interface ClientOverviewTabProps {
@@ -103,7 +101,8 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     return (
         <section className="space-y-8">
             <h2 className="sr-only">{OVERVIEW_ZONE_TITLES.pageTitle}</h2>
-            <p className="text-sm text-muted-foreground">{OVERVIEW_PAGE_SUBTITLE}</p>
+
+            <ClientOverviewKpiRow chips={vm.statChips} loadingFlags={vm.loadingFlags} />
 
             <ClientOverviewTopSection
                 clientId={clientId}
@@ -119,8 +118,6 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
             <div ref={commsSectionRef}>
                 <ClientAthleteCommsSection clientId={clientId} />
             </div>
-
-            <ClientOverviewKpiRow chips={vm.statChips} loadingFlags={vm.loadingFlags} />
 
             {vm.recommendationsMode === "incomplete" && (
                 <div className="rounded-lg border border-warning/30 bg-warning/10 p-5">

@@ -380,6 +380,7 @@ export const SessionsPage: React.FC = () => {
                     { id: "sessions", label: "Sesiones" },
                     { id: "templates", label: "Plantillas" },
                 ]}
+                distribute="equal"
             />
 
             {activeTab === "sessions" && (

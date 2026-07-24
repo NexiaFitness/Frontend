@@ -2,24 +2,24 @@
  * NewScheduledSessionPage — Vista dedicada para crear sesión agendada
  *
  * Ruta: /dashboard/scheduling/new
- * Query params: date (YYYY-MM-DD)
- * Listado de clientes con buscador (request con search al backend) y 30 por vista.
+ * Query params: date (YYYY-MM-DD), clientId (opcional)
+ * Diseño: design/platform/01_PREMIUM_MIGRATION.md · newScheduledSessionPresentation.ts
  *
  * @author NEXIA Frontend Team
  * @since v1.0.0 (refactor desde modal)
  */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Search } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { Alert } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
+import { Alert, LoadingSpinner } from "@/components/ui/feedback";
+import { Input, FormCombobox, Textarea, DatePickerButton, TimePickerButton } from "@/components/ui/forms";
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { useScheduleSession, getMutationErrorMessage } from "@nexia/shared";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
-
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
 import type {
@@ -31,6 +31,38 @@ import type {
     AvailableSlot,
 } from "@nexia/shared/types/scheduling";
 import { SCHEDULED_SESSION_TYPE, SESSION_LOCATION } from "@nexia/shared/types/scheduling";
+import { cn } from "@/lib/utils";
+import {
+    SCHEDULE_NEW_BACK_BUTTON,
+    SCHEDULE_NEW_BODY,
+    SCHEDULE_NEW_CONFLICT_ERROR,
+    SCHEDULE_NEW_CONFLICT_OK,
+    SCHEDULE_NEW_CONFLICT_TEXT_ERROR,
+    SCHEDULE_NEW_CONFLICT_TEXT_OK,
+    SCHEDULE_NEW_FIELD_ERROR,
+    SCHEDULE_NEW_FIELD_LABEL,
+    SCHEDULE_NEW_FIELD_WRAP,
+    SCHEDULE_NEW_FOOTER_ACTIONS,
+    SCHEDULE_NEW_FOOTER_PRIMARY,
+    SCHEDULE_NEW_FORM,
+    SCHEDULE_NEW_FORM_GRID_2,
+    SCHEDULE_NEW_FORM_GRID_4,
+    SCHEDULE_NEW_HEADER,
+    SCHEDULE_NEW_HINT,
+    SCHEDULE_NEW_ICON_BACK_GAP,
+    SCHEDULE_NEW_ICON_SM,
+    SCHEDULE_NEW_LOADING_ROW,
+    SCHEDULE_NEW_LOCATION_OPTIONS,
+    SCHEDULE_NEW_PAGE,
+    SCHEDULE_NEW_SEARCH_ICON,
+    SCHEDULE_NEW_SEARCH_INPUT,
+    SCHEDULE_NEW_SEARCH_WRAP,
+    SCHEDULE_NEW_SESSION_TYPE_OPTIONS,
+    SCHEDULE_NEW_SHELL,
+    SCHEDULE_NEW_SLOT_BUTTON,
+    SCHEDULE_NEW_SLOTS_ROW,
+    SCHEDULE_NEW_TITLE_WRAP,
+} from "./newScheduledSessionPresentation";
 
 const PAGE_SIZE = 30;
 const CLIENT_SEARCH_DEBOUNCE_MS = 500;
@@ -40,7 +72,6 @@ export const NewScheduledSessionPage: React.FC = () => {
     const [searchParams] = useSearchParams();
     const dateParam = searchParams.get("date");
     const clientIdParam = searchParams.get("clientId");
-
 
     const { user } = useSelector((state: RootState) => state.auth);
     const { data: trainerProfile, isLoading: isLoadingProfile } = useGetCurrentTrainerProfileQuery(undefined, {
@@ -60,7 +91,13 @@ export const NewScheduledSessionPage: React.FC = () => {
     const [clientSearchInput, setClientSearchInput] = useState("");
     const [debouncedClientSearch, setDebouncedClientSearch] = useState("");
 
-    const { data: clientsData, isLoading: isLoadingClients } = useGetTrainerClientsQuery(
+    const {
+        data: clientsData,
+        isLoading: isLoadingClients,
+        isFetching: isFetchingClients,
+        isError: isClientsError,
+        error: clientsError,
+    } = useGetTrainerClientsQuery(
         {
             trainerId,
             page: 1,
@@ -69,6 +106,11 @@ export const NewScheduledSessionPage: React.FC = () => {
         },
         { skip: !trainerId }
     );
+
+    const isClientsPending =
+        isLoadingProfile ||
+        isLoadingClients ||
+        (isFetchingClients && !clientsData?.items?.length);
 
     useEffect(() => {
         const timer = setTimeout(() => {
@@ -143,8 +185,6 @@ export const NewScheduledSessionPage: React.FC = () => {
         fetchAvailableSlots();
     }, [fetchAvailableSlots]);
 
-
-
     useEffect(() => {
         if (formData.startTime && formData.endTime) {
             const start = new Date(`2000-01-01T${formData.startTime}`);
@@ -155,6 +195,25 @@ export const NewScheduledSessionPage: React.FC = () => {
             }
         }
     }, [formData.startTime, formData.endTime]);
+
+    const clientOptions = useMemo(
+        () =>
+            (clientsData?.items ?? []).map((c) => ({
+                value: c.id.toString(),
+                label: `${c.nombre} ${c.apellidos}`,
+            })),
+        [clientsData?.items]
+    );
+
+    const sessionTypeOptions = useMemo(
+        () => SCHEDULE_NEW_SESSION_TYPE_OPTIONS.map((opt) => ({ ...opt })),
+        []
+    );
+
+    const locationOptions = useMemo(
+        () => SCHEDULE_NEW_LOCATION_OPTIONS.map((opt) => ({ ...opt })),
+        []
+    );
 
     const handleCheckConflict = async () => {
         if (!formData.trainerId || !formData.scheduledDate || !formData.startTime || !formData.endTime) return;
@@ -204,76 +263,87 @@ export const NewScheduledSessionPage: React.FC = () => {
         }
     };
 
-    const clientOptions = [
-        { value: "0", label: "Seleccionar cliente" },
-        ...(clientsData?.items?.map((c) => ({
-            value: c.id.toString(),
-            label: `${c.nombre} ${c.apellidos}`,
-        })) ?? []),
-    ];
-
     return (
         <>
-                <div className="mb-6 lg:mb-8 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <PageTitle
-                            title="Nueva cita"
-                            subtitle="Programa una cita con tu cliente"
+            <div className={SCHEDULE_NEW_PAGE}>
+                <div className={SCHEDULE_NEW_HEADER}>
+                    <PageTitle
+                        title="Nueva cita"
+                        subtitle="Programa una cita con tu cliente"
+                        className={SCHEDULE_NEW_TITLE_WRAP}
+                    />
+                    <Button
+                        variant="ghost-primary"
+                        size="sm"
+                        className={SCHEDULE_NEW_BACK_BUTTON}
+                        onClick={() => navigate("/dashboard/scheduling")}
+                    >
+                        <ArrowLeft
+                            className={cn(SCHEDULE_NEW_ICON_BACK_GAP, SCHEDULE_NEW_ICON_SM)}
+                            aria-hidden
                         />
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard/scheduling")}>
-                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                            Volver al calendario
-                        </Button>
-                    </div>
+                        Volver al calendario
+                    </Button>
                 </div>
 
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <div className="bg-card border border-border rounded-lg p-6 lg:p-8">
-                        {isLoadingProfile || isLoadingClients ? (
-                            <p className="text-muted-foreground">Cargando clientes...</p>
+                <article className={SCHEDULE_NEW_SHELL}>
+                    <NexiaGlassAccentRim />
+                    <div className={SCHEDULE_NEW_BODY}>
+                        {isClientsPending ? (
+                            <div className={SCHEDULE_NEW_LOADING_ROW}>
+                                <LoadingSpinner size="md" />
+                                <span className="ml-3 text-sm text-muted-foreground">Cargando clientes...</span>
+                            </div>
+                        ) : isClientsError ? (
+                            <Alert variant="error">
+                                {getMutationErrorMessage(clientsError) ||
+                                    "No se pudieron cargar tus clientes. Recarga la página e inténtalo de nuevo."}
+                            </Alert>
                         ) : (
-                            <form id="new-scheduled-session-form" onSubmit={handleSubmit} className="space-y-5">
-
-                                {/* Búsqueda + selección de cliente */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label htmlFor="new-schedule-client-search" className="block text-sm font-medium text-muted-foreground mb-2">
+                            <form id="new-scheduled-session-form" onSubmit={handleSubmit} className={SCHEDULE_NEW_FORM}>
+                                <div className={SCHEDULE_NEW_FORM_GRID_2}>
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <label htmlFor="new-schedule-client-search" className={SCHEDULE_NEW_FIELD_LABEL}>
                                             Buscar cliente
                                         </label>
-                                        <Input
-                                            id="new-schedule-client-search"
-                                            type="text"
-                                            value={clientSearchInput}
-                                            onChange={(e) => setClientSearchInput(e.target.value)}
-                                            placeholder="Nombre, apellidos o mail..."
-                                            aria-label="Buscar cliente"
-                                        />
+                                        <div className={SCHEDULE_NEW_SEARCH_WRAP}>
+                                            <Search className={SCHEDULE_NEW_SEARCH_ICON} aria-hidden />
+                                            <Input
+                                                id="new-schedule-client-search"
+                                                type="text"
+                                                size="sm"
+                                                value={clientSearchInput}
+                                                onChange={(e) => setClientSearchInput(e.target.value)}
+                                                placeholder="Nombre, apellidos o mail..."
+                                                className={SCHEDULE_NEW_SEARCH_INPUT}
+                                                aria-label="Buscar cliente"
+                                            />
+                                        </div>
                                     </div>
-                                    <div>
-                                        <label htmlFor="new-schedule-client" className="block text-sm font-medium text-muted-foreground mb-2">
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <label htmlFor="new-schedule-client" className={SCHEDULE_NEW_FIELD_LABEL}>
                                             Cliente *
                                         </label>
-                                        <FormSelect
+                                        <FormCombobox
                                             id="new-schedule-client"
-                                            value={formData.clientId.toString()}
-                                            onChange={(e) =>
-                                                setFormData({ ...formData, clientId: Number(e.target.value) })
+                                            value={formData.clientId ? formData.clientId.toString() : ""}
+                                            onChange={(value) =>
+                                                setFormData({ ...formData, clientId: value ? Number(value) : 0 })
                                             }
-                                            required
                                             options={clientOptions}
+                                            placeholder="Seleccionar cliente"
+                                            ariaLabel="Cliente"
+                                            className="w-full"
                                         />
                                         {formErrors.clientId && (
-                                            <p className="text-destructive text-xs mt-1">{formErrors.clientId}</p>
+                                            <p className={SCHEDULE_NEW_FIELD_ERROR}>{formErrors.clientId}</p>
                                         )}
                                     </div>
                                 </div>
 
-                                {/* Fecha + Tipo de sesión */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                            Fecha *
-                                        </label>
+                                <div className={SCHEDULE_NEW_FORM_GRID_2}>
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <span className={SCHEDULE_NEW_FIELD_LABEL}>Fecha *</span>
                                         <DatePickerButton
                                             label="Seleccionar fecha"
                                             value={formData.scheduledDate}
@@ -285,37 +355,29 @@ export const NewScheduledSessionPage: React.FC = () => {
                                             aria-label="Fecha de la sesión"
                                         />
                                         {formErrors.scheduledDate && (
-                                            <p className="text-destructive text-xs mt-1">{formErrors.scheduledDate}</p>
+                                            <p className={SCHEDULE_NEW_FIELD_ERROR}>{formErrors.scheduledDate}</p>
                                         )}
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                            Tipo de sesión *
-                                        </label>
-                                        <FormSelect
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <span className={SCHEDULE_NEW_FIELD_LABEL}>Tipo de sesión *</span>
+                                        <FormCombobox
                                             value={formData.sessionType}
-                                            onChange={(e) =>
+                                            onChange={(value) =>
                                                 setFormData({
                                                     ...formData,
-                                                    sessionType: e.target.value as ScheduledSessionType,
+                                                    sessionType: value as ScheduledSessionType,
                                                 })
                                             }
-                                            required
-                                            options={[
-                                                { value: SCHEDULED_SESSION_TYPE.TRAINING, label: "Entrenamiento" },
-                                                { value: SCHEDULED_SESSION_TYPE.CONSULTATION, label: "Consulta" },
-                                                { value: SCHEDULED_SESSION_TYPE.ASSESSMENT, label: "Evaluación" },
-                                            ]}
+                                            options={sessionTypeOptions}
+                                            ariaLabel="Tipo de sesión"
+                                            className="w-full"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Hora inicio + Hora fin + Duración + Ubicación */}
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                            Hora inicio *
-                                        </label>
+                                <div className={SCHEDULE_NEW_FORM_GRID_4}>
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <span className={SCHEDULE_NEW_FIELD_LABEL}>Hora inicio *</span>
                                         <TimePickerButton
                                             label="Hora inicio"
                                             value={formData.startTime}
@@ -326,13 +388,11 @@ export const NewScheduledSessionPage: React.FC = () => {
                                             aria-label="Hora de inicio"
                                         />
                                         {formErrors.startTime && (
-                                            <p className="text-destructive text-xs mt-1">{formErrors.startTime}</p>
+                                            <p className={SCHEDULE_NEW_FIELD_ERROR}>{formErrors.startTime}</p>
                                         )}
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                            Hora fin *
-                                        </label>
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <span className={SCHEDULE_NEW_FIELD_LABEL}>Hora fin *</span>
                                         <TimePickerButton
                                             label="Hora fin"
                                             value={formData.endTime}
@@ -343,15 +403,17 @@ export const NewScheduledSessionPage: React.FC = () => {
                                             aria-label="Hora de fin"
                                         />
                                         {formErrors.endTime && (
-                                            <p className="text-destructive text-xs mt-1">{formErrors.endTime}</p>
+                                            <p className={SCHEDULE_NEW_FIELD_ERROR}>{formErrors.endTime}</p>
                                         )}
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <label htmlFor="new-schedule-duration" className={SCHEDULE_NEW_FIELD_LABEL}>
                                             Duración (min)
                                         </label>
                                         <Input
+                                            id="new-schedule-duration"
                                             type="number"
+                                            size="sm"
                                             value={formData.durationMinutes}
                                             onChange={(e) =>
                                                 setFormData({ ...formData, durationMinutes: Number(e.target.value) })
@@ -361,41 +423,36 @@ export const NewScheduledSessionPage: React.FC = () => {
                                             required
                                         />
                                         {formErrors.durationMinutes && (
-                                            <p className="text-destructive text-xs mt-1">{formErrors.durationMinutes}</p>
+                                            <p className={SCHEDULE_NEW_FIELD_ERROR}>{formErrors.durationMinutes}</p>
                                         )}
                                     </div>
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                            Ubicación
-                                        </label>
-                                        <FormSelect
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <span className={SCHEDULE_NEW_FIELD_LABEL}>Ubicación</span>
+                                        <FormCombobox
                                             value={formData.location ?? ""}
-                                            onChange={(e) =>
+                                            onChange={(value) =>
                                                 setFormData({
                                                     ...formData,
-                                                    location: e.target.value
-                                                        ? (e.target.value as SessionLocation)
-                                                        : null,
+                                                    location: value ? (value as SessionLocation) : null,
                                                 })
                                             }
-                                            options={[
-                                                { value: "", label: "Ubicación..." },
-                                                { value: SESSION_LOCATION.GYM, label: "Gimnasio" },
-                                                { value: SESSION_LOCATION.ONLINE, label: "Online" },
-                                                { value: SESSION_LOCATION.CLIENT_HOME, label: "Casa del Cliente" },
-                                                { value: SESSION_LOCATION.OTHER, label: "Otra" },
-                                            ]}
+                                            options={locationOptions}
+                                            placeholder="Ubicación..."
+                                            ariaLabel="Ubicación"
+                                            className="w-full"
                                         />
                                     </div>
                                 </div>
 
                                 {formData.location === SESSION_LOCATION.ONLINE && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <label htmlFor="new-schedule-meeting-link" className={SCHEDULE_NEW_FIELD_LABEL}>
                                             Enlace de reunión
                                         </label>
                                         <Input
+                                            id="new-schedule-meeting-link"
                                             type="url"
+                                            size="sm"
                                             value={formData.meetingLink ?? ""}
                                             onChange={(e) =>
                                                 setFormData({ ...formData, meetingLink: e.target.value || null })
@@ -405,28 +462,26 @@ export const NewScheduledSessionPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Slots disponibles */}
                                 {formData.scheduledDate && trainerId > 0 && (
-                                    <div>
-                                        <label className="block text-sm font-medium text-muted-foreground mb-2">
-                                            Slots disponibles
-                                        </label>
+                                    <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                        <span className={SCHEDULE_NEW_FIELD_LABEL}>Slots disponibles</span>
                                         {isLoadingSlots ? (
-                                            <p className="text-muted-foreground text-sm italic">
+                                            <p className={SCHEDULE_NEW_HINT}>
                                                 Cargando slots según tu disponibilidad...
                                             </p>
                                         ) : availableSlots.length === 0 ? (
-                                            <p className="text-muted-foreground text-sm italic">
+                                            <p className={SCHEDULE_NEW_HINT}>
                                                 No hay slots configurados. Añade tu disponibilidad en el calendario.
                                             </p>
                                         ) : (
-                                            <div className="flex flex-wrap gap-2">
+                                            <div className={SCHEDULE_NEW_SLOTS_ROW}>
                                                 {availableSlots.map((slot, idx) => (
                                                     <Button
                                                         key={`${slot.start_time}-${slot.end_time}-${idx}`}
                                                         type="button"
                                                         variant="outline"
                                                         size="sm"
+                                                        className={SCHEDULE_NEW_SLOT_BUTTON}
                                                         onClick={() => {
                                                             setFormData((prev) => ({
                                                                 ...prev,
@@ -445,10 +500,12 @@ export const NewScheduledSessionPage: React.FC = () => {
                                     </div>
                                 )}
 
-                                {/* Notas */}
-                                <div>
-                                    <label className="block text-sm font-medium text-muted-foreground mb-2">Notas</label>
+                                <div className={SCHEDULE_NEW_FIELD_WRAP}>
+                                    <label htmlFor="new-schedule-notes" className={SCHEDULE_NEW_FIELD_LABEL}>
+                                        Notas
+                                    </label>
                                     <Textarea
+                                        id="new-schedule-notes"
                                         value={formData.notes ?? ""}
                                         onChange={(e) =>
                                             setFormData({ ...formData, notes: e.target.value || null })
@@ -471,34 +528,42 @@ export const NewScheduledSessionPage: React.FC = () => {
                                         </Button>
                                         {conflictCheck && (
                                             <div
-                                                className={`mt-2 p-3 rounded-lg ${
+                                                className={
                                                     conflictCheck.hasConflict
-                                                        ? "bg-destructive/10 text-destructive"
-                                                        : "bg-success/10 text-success"
-                                                }`}
+                                                        ? SCHEDULE_NEW_CONFLICT_ERROR
+                                                        : SCHEDULE_NEW_CONFLICT_OK
+                                                }
                                             >
-                                                <p className="text-sm font-medium">{conflictCheck.message}</p>
+                                                <p
+                                                    className={
+                                                        conflictCheck.hasConflict
+                                                            ? SCHEDULE_NEW_CONFLICT_TEXT_ERROR
+                                                            : SCHEDULE_NEW_CONFLICT_TEXT_OK
+                                                    }
+                                                >
+                                                    {conflictCheck.message}
+                                                </p>
                                             </div>
                                         )}
                                     </div>
                                 )}
 
                                 {isCreateError && createError ? (
-                                    <Alert variant="error">
-                                        {getMutationErrorMessage(createError)}
-                                    </Alert>
+                                    <Alert variant="error">{getMutationErrorMessage(createError)}</Alert>
                                 ) : null}
                             </form>
                         )}
                     </div>
-                </div>
+                </article>
+            </div>
 
             <DashboardFixedFooter>
-                <div className="flex items-center justify-end gap-3">
+                <div className={SCHEDULE_NEW_FOOTER_ACTIONS}>
                     <Button
                         type="button"
                         variant="outline-destructive"
                         size="sm"
+                        className={SCHEDULE_NEW_FOOTER_PRIMARY}
                         onClick={() => navigate("/dashboard/scheduling")}
                         disabled={isCreating}
                     >
@@ -509,7 +574,8 @@ export const NewScheduledSessionPage: React.FC = () => {
                         form="new-scheduled-session-form"
                         variant="primary"
                         size="sm"
-                        disabled={isCreating}
+                        className={SCHEDULE_NEW_FOOTER_PRIMARY}
+                        disabled={isCreating || isClientsPending}
                     >
                         {isCreating ? "Agendando..." : "Agendar sesión"}
                     </Button>

@@ -16,7 +16,7 @@
  * @since v3.1.0
  * @updated v3.2.0 - Agregados tipos para CRUD Training Plans (Fase 1)
  * @updated v3.3.0 - Agregados tipos para Cycles System (Fase 2)
- * @updated v6.0.0 - Agregados campos para Templates Genéricos (is_generic, folder_name, level, etc.)
+ * @updated v7.0.0 - Plantillas greenfield: lifecycle/validation; sin is_generic en templates
  */
 
 // ========================================
@@ -519,27 +519,11 @@ export const TEMPLATE_LEVEL = {
 
 export type TemplateLevel = (typeof TEMPLATE_LEVEL)[keyof typeof TEMPLATE_LEVEL];
 
-/**
- * Constantes para duration unit
- * Backend: "days" | "weeks" | "months"
- */
-export const DURATION_UNIT = {
-    DAYS: "days",
-    WEEKS: "weeks",
-    MONTHS: "months",
-} as const;
-
-export type DurationUnit = (typeof DURATION_UNIT)[keyof typeof DURATION_UNIT];
-
 // ========================================
-// TRAINING PLAN TEMPLATE
+// TRAINING PLAN TEMPLATE (program greenfield v3)
 // ========================================
 
-/**
- * TrainingPlanTemplate - Plantilla reutilizable de plan de entrenamiento
- * Alineado con TrainingPlanTemplateOut schema de Swagger
- * @updated v6.0.0 - Agregados campos para templates genéricos (is_generic, folder_name, level, etc.)
- */
+/** Alineado con TrainingPlanTemplateOut (Swagger / BE PR1). */
 export interface TrainingPlanTemplate {
     id: number;
     trainer_id: number;
@@ -549,26 +533,25 @@ export interface TrainingPlanTemplate {
     category: string | null;
     tags: string[] | null;
     estimated_duration_weeks: number | null;
-    // Generic plan support
-    duration_value?: number | null;
-    duration_unit?: DurationUnit | null;
-    folder_name?: string | null;
-    level?: TemplateLevel | null;
-    training_days_per_week?: number | null; // 1-7
-    is_generic: boolean; // default=False
+    folder_name: string | null;
+    level: TemplateLevel | null;
+    lifecycle_status: string;
+    validation_status: string;
+    validation_report: Record<string, unknown> | null;
+    template_revision: number;
+    program_week_count: number | null;
+    published_at: string | null;
+    validated_at: string | null;
     usage_count: number;
     success_rate: number | null;
     is_template: boolean;
     is_public: boolean;
-    created_at: string; // ISO datetime
-    updated_at: string; // ISO datetime
+    created_at: string;
+    updated_at: string;
     is_active: boolean;
 }
 
-/**
- * TrainingPlanTemplateCreate - POST /training-plans/templates/
- * @updated v6.0.0 - Agregados campos para templates genéricos
- */
+/** POST /training-plans/templates/ */
 export interface TrainingPlanTemplateCreate {
     trainer_id: number;
     name: string;
@@ -577,20 +560,12 @@ export interface TrainingPlanTemplateCreate {
     category?: string | null;
     tags?: string[] | null;
     estimated_duration_weeks?: number | null;
-    // Generic plan support
-    duration_value?: number | null;
-    duration_unit?: DurationUnit | null;
     folder_name?: string | null;
     level?: TemplateLevel | null;
-    training_days_per_week?: number | null; // 1-7
-    is_generic?: boolean; // default=False
-    is_public?: boolean; // default=False
+    is_public?: boolean;
 }
 
-/**
- * TrainingPlanTemplateUpdate - PUT /training-plans/templates/{id}
- * @updated v6.0.0 - Agregados campos para templates genéricos
- */
+/** PUT /training-plans/templates/{id} */
 export interface TrainingPlanTemplateUpdate {
     name?: string;
     description?: string | null;
@@ -599,13 +574,8 @@ export interface TrainingPlanTemplateUpdate {
     tags?: string[] | null;
     estimated_duration_weeks?: number | null;
     is_public?: boolean;
-    // Generic plan support
-    duration_value?: number | null;
-    duration_unit?: DurationUnit | null;
     folder_name?: string | null;
     level?: TemplateLevel | null;
-    training_days_per_week?: number | null; // 1-7
-    is_generic?: boolean | null;
 }
 
 // ========================================
@@ -628,9 +598,13 @@ export interface TrainingPlanInstance {
     end_date: string; // ISO date
     goal: string;
     status: string;
-    customizations: Record<string, any> | null;
-    assigned_at: string; // ISO datetime
-    created_at: string; // ISO datetime
+    customizations: Record<string, unknown> | null;
+    assigned_at: string;
+    template_revision_snapshot_id: number | null;
+    template_revision_number: number | null;
+    materialized_at: string | null;
+    materialized_structure_hash: string | null;
+    created_at: string;
     updated_at: string; // ISO datetime
     is_active: boolean;
 }

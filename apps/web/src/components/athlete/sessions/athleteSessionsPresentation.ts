@@ -9,28 +9,6 @@ import {
     isSessionToday,
 } from "@nexia/shared/utils/athlete/athleteSessionUtils";
 
-/** Barra segmentada — filtros en línea (rectangular, no pill). */
-export const ATHLETE_SESSION_FILTER_ROW = cn(
-    "flex gap-1 overflow-x-auto rounded-lg border border-border/60 bg-background/30 p-1",
-    "backdrop-blur-sm scrollbar-none"
-);
-
-export const ATHLETE_SESSION_FILTER_CHIP = cn(
-    "inline-flex h-8 min-w-[4.25rem] flex-1 shrink-0 items-center justify-center rounded-md",
-    "border border-transparent px-2 text-xs font-medium transition-all duration-150",
-    "motion-safe:active:scale-[0.98] motion-reduce:active:scale-100",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
-);
-
-export const ATHLETE_SESSION_FILTER_CHIP_SELECTED = cn(
-    "border-primary/30 bg-primary/20 text-primary",
-    "shadow-[0_0_14px_-6px] shadow-primary/30"
-);
-
-export const ATHLETE_SESSION_FILTER_CHIP_IDLE = cn(
-    "text-muted-foreground/80 hover:bg-surface/40 hover:text-foreground"
-);
-
 export const ATHLETE_SESSION_LIST_ITEM = cn(
     "relative flex w-full min-h-touch-athlete items-center gap-3 overflow-hidden",
     "rounded-xl border border-border/80 bg-card/40 p-4 backdrop-blur-md",

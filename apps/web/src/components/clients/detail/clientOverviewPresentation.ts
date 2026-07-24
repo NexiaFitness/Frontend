@@ -1,21 +1,29 @@
 /**
- * clientOverviewPresentation.ts — Tokens copy y clases UI tab Resumen (UX-OVERVIEW v2).
+ * clientOverviewPresentation.ts — Tokens copy y clases UI tab Resumen.
  *
- * Doc: design/entrenador/UX-OVERVIEW-COCKPIT.md §9 · design/platform/04_REGISTRY_CODIGO_FUENTE.md §11
+ * Orden scroll canónico (main/producción): KPIs → Acción → Comunicación → …
+ * Doc: design/entrenador/UX-OVERVIEW-COCKPIT.md §0.4 · design/platform/04_REGISTRY_CODIGO_FUENTE.md §11
  */
 
 import type { OverviewStatChipTone } from "@/hooks/clients/clientOverviewPulse.types";
 import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 
-export const OVERVIEW_PAGE_SUBTITLE =
-    "Relación, acción y contexto del atleta";
+/** Orden de zonas en ClientOverviewTab — no cambiar sin petición explícita del usuario. */
+export const OVERVIEW_ZONE_SCROLL_ORDER = [
+    "kpi",
+    "action",
+    "comms",
+    "recommendations",
+    "activity",
+    "relation",
+] as const;
 
 export const OVERVIEW_ZONE_TITLES = {
     pageTitle: "Resumen",
     action: "Acción inmediata",
     comms: "Comunicación con el atleta",
     kpiSection: "Indicadores clave",
-    activity: "Actividad en el gym",
+    activity: "Actividad reciente",
     relation: "Relación y seguimiento",
     planActive: "Plan activo",
     planEmpty: "Sin plan activo",
@@ -63,8 +71,12 @@ export const OVERVIEW_KPI_DESCRIPTIONS: Record<string, string> = {
     weight: "Último registro corporal",
     fatigue: "Pre / post sesión (media)",
     risk: "Nivel de riesgo de fatiga",
-    nextSession: "Siguiente sesión programada",
+    next_session: "Siguiente sesión programada",
 };
+
+/** Card KPI compacto — grid tab Resumen (ClientOverviewKpiGrid). */
+export const OVERVIEW_KPI_TILE_CLASS =
+    "flex min-h-[112px] flex-col gap-2 rounded-lg border bg-surface p-4 transition-all duration-150 ease-out hover:-translate-y-0.5";
 
 export const OVERVIEW_CHIP_TONE_TO_KPI: Record<
     OverviewStatChipTone,

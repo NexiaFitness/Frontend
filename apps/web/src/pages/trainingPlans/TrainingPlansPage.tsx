@@ -553,6 +553,7 @@ export const TrainingPlansPage: React.FC = () => {
                     { id: "planning", label: "Planificación" },
                     { id: "templates", label: "Plantillas" },
                 ]}
+                distribute="equal"
             />
 
             {activeTab === "planning" && (

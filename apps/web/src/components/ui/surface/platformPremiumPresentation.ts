@@ -1,5 +1,8 @@
 /**
- * platformPremiumPresentation.ts — Tokens premium compartidos (admin/trainer + base plataforma).
+ * platformPremiumPresentation.ts — Tokens premium compartidos (atleta + entrenador + admin).
+ *
+ * Regla canónica: el portal atleta define el techo visual; trainer y admin importan
+ * estos tokens (glass, segmented, PLATFORM_*) — no un design system paralelo.
  *
  * Doc: design/00_LEEME_PRIMERO.md · design/platform/01_PREMIUM_MIGRATION.md
  * Glass: glassSurfacePresentation.ts · Atleta F3b: design/atleta/run-y-diseno/F3b_PREMIUM_DESIGN_SYSTEM.md
@@ -12,6 +15,17 @@ export { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "./glassSurfacePresen
 
 /** Contenedor página detalle / formulario ancho completo. */
 export const PLATFORM_PAGE_SHELL = "w-full pb-10";
+
+/**
+ * Reserva inferior cuando la vista usa `<DashboardFixedFooter />`.
+ * Evita que el contenido scroll quede pegado a la barra fija (~64–72px + aire).
+ * Doc: design/platform/specs-vista/DASHBOARD_CONTENT_SPACING_SPEC.md §11
+ * Código: frontend/apps/web/src/lib/dashboardScroll.ts (`DASHBOARD_FIXED_FOOTER_PADDING_CLASS`)
+ */
+export const PLATFORM_PAGE_FOOTER_CLEARANCE = "pb-24";
+
+/** Shell ancho completo + clearance footer fijo (sustituye `pb-10` de PLATFORM_PAGE_SHELL). */
+export const PLATFORM_PAGE_WITH_FIXED_FOOTER = cn("w-full", PLATFORM_PAGE_FOOTER_CLEARANCE);
 
 /** Fila título izquierda + acción ghost derecha (Volver, etc.). */
 export const PLATFORM_PAGE_HEADER = cn(
@@ -91,3 +105,65 @@ export const PLATFORM_VIDEO_HERO = cn(
 export const PLATFORM_GRID_SPAN_FULL = "sm:col-span-2";
 
 export const PLATFORM_CHIP_ROW = "mt-2 flex flex-wrap gap-2";
+
+/**
+ * Barra segmentada premium — tabs, filtros in-page y conmutadores (TabsBar).
+ * Origen visual: V02 Mis sesiones atleta; reutilizado en ficha cliente trainer y admin.
+ *
+ * Estructura: shell (borde/glass) → scroll (overflow + gutter scrollbar) → track (flex).
+ */
+export const NEXIA_SEGMENTED_SHELL = cn(
+    "rounded-lg border border-border/60 bg-background/30 p-1 backdrop-blur-sm"
+);
+
+/** Área scroll horizontal; pb reserva hueco entre ítems y thumb (móvil). */
+export const NEXIA_SEGMENTED_SCROLL = cn(
+    "overflow-x-auto pb-1.5 scrollbar-nexia",
+    "[&::-webkit-scrollbar]:h-1.5"
+);
+
+/** Ítems repartidos a ancho completo (filtros 4 col, conmutador 2 col). */
+export const NEXIA_SEGMENTED_TRACK_EQUAL = "flex w-full min-w-0 gap-1";
+
+/** Ítems al ancho del contenido; scroll horizontal (ficha cliente 7 tabs). */
+export const NEXIA_SEGMENTED_TRACK_CONTENT = "flex w-max min-w-full gap-1";
+
+export const NEXIA_SEGMENTED_ITEM = cn(
+    "inline-flex min-h-9 items-center justify-center gap-1.5 rounded-md",
+    "border border-transparent px-2.5 py-2 text-xs font-medium leading-snug whitespace-nowrap",
+    "min-w-[4.25rem] transition-all duration-150",
+    "motion-safe:active:scale-[0.98] motion-reduce:active:scale-100",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+);
+
+export const NEXIA_SEGMENTED_ITEM_EQUAL = "min-w-0 flex-1 shrink-0";
+
+export const NEXIA_SEGMENTED_ITEM_CONTENT = "shrink-0";
+
+export const NEXIA_SEGMENTED_ITEM_SELECTED = cn(
+    "border-primary/30 bg-primary/20 text-primary",
+    "shadow-[0_0_14px_-6px] shadow-primary/30"
+);
+
+export const NEXIA_SEGMENTED_ITEM_IDLE = cn(
+    "text-muted-foreground/80 hover:bg-surface/40 hover:text-foreground"
+);
+
+export type NexiaSegmentedDistribute = "equal" | "content";
+
+export function nexiaSegmentedTrackClass(distribute: NexiaSegmentedDistribute): string {
+    return distribute === "equal"
+        ? NEXIA_SEGMENTED_TRACK_EQUAL
+        : NEXIA_SEGMENTED_TRACK_CONTENT;
+}
+
+export function nexiaSegmentedItemClass(
+    isSelected: boolean,
+    distribute: NexiaSegmentedDistribute = "content"
+): string {
+    return cn(
+        NEXIA_SEGMENTED_ITEM,
+        distribute === "equal" ? NEXIA_SEGMENTED_ITEM_EQUAL : NEXIA_SEGMENTED_ITEM_CONTENT,
+        isSelected ? NEXIA_SEGMENTED_ITEM_SELECTED : NEXIA_SEGMENTED_ITEM_IDLE
+    );
+}

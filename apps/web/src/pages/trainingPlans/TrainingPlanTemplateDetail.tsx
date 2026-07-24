@@ -1,15 +1,17 @@
 /**
- * TrainingPlanTemplateDetail.tsx — Detalle de plantilla de plan (solo lectura + asignar).
- *
- * Contexto: destino de "Ver plantilla" desde la biblioteca de templates.
- * @author Frontend Team
- * @since v6.1.0
+ * TrainingPlanTemplateDetail.tsx — Detalle de plantilla (metadata + assign stub).
  */
 
 import React, { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
+import {
+    formatTemplateDurationHint,
+    formatTemplateProgramWeekCount,
+    labelTemplateLifecycle,
+    labelTemplateValidation,
+} from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
@@ -19,12 +21,6 @@ const LEVEL_LABELS: Record<string, string> = {
     beginner: "Principiante",
     intermediate: "Intermedio",
     advanced: "Avanzado",
-};
-
-const DURATION_UNIT_LABELS: Record<string, string> = {
-    days: "días",
-    weeks: "semanas",
-    months: "meses",
 };
 
 export const TrainingPlanTemplateDetail: React.FC = () => {
@@ -94,6 +90,18 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             <dt className="font-medium text-muted-foreground">Objetivo</dt>
                             <dd className="text-foreground">{template.goal}</dd>
                         </div>
+                        <div>
+                            <dt className="font-medium text-muted-foreground">Ciclo de vida</dt>
+                            <dd className="text-foreground">
+                                {labelTemplateLifecycle(template.lifecycle_status)}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="font-medium text-muted-foreground">Validación</dt>
+                            <dd className="text-foreground">
+                                {labelTemplateValidation(template.validation_status)}
+                            </dd>
+                        </div>
                         {template.level ? (
                             <div>
                                 <dt className="font-medium text-muted-foreground">Nivel</dt>
@@ -102,39 +110,32 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                                 </dd>
                             </div>
                         ) : null}
-                        {(() => {
-                            if (template.estimated_duration_weeks != null) {
-                                return (
-                                    <div>
-                                        <dt className="font-medium text-muted-foreground">Duración</dt>
-                                        <dd className="text-foreground">
-                                            {template.estimated_duration_weeks} semanas
-                                        </dd>
-                                    </div>
-                                );
-                            }
-                            if (template.duration_value != null && template.duration_unit) {
-                                return (
-                                    <div>
-                                        <dt className="font-medium text-muted-foreground">Duración</dt>
-                                        <dd className="text-foreground">
-                                            {template.duration_value}{" "}
-                                            {DURATION_UNIT_LABELS[template.duration_unit] ??
-                                                template.duration_unit}
-                                        </dd>
-                                    </div>
-                                );
-                            }
-                            return null;
-                        })()}
-                        {template.training_days_per_week != null ? (
+                        {formatTemplateProgramWeekCount(template.program_week_count) ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">Días por semana</dt>
+                                <dt className="font-medium text-muted-foreground">Programa</dt>
                                 <dd className="text-foreground">
-                                    {template.training_days_per_week} días/semana
+                                    {formatTemplateProgramWeekCount(template.program_week_count)}
                                 </dd>
                             </div>
                         ) : null}
+                        {formatTemplateDurationHint(template.estimated_duration_weeks) ? (
+                            <div>
+                                <dt className="font-medium text-muted-foreground">Duración referencia</dt>
+                                <dd className="text-foreground">
+                                    {formatTemplateDurationHint(template.estimated_duration_weeks)}
+                                </dd>
+                            </div>
+                        ) : null}
+                        {template.folder_name ? (
+                            <div>
+                                <dt className="font-medium text-muted-foreground">Carpeta</dt>
+                                <dd className="text-foreground">{template.folder_name}</dd>
+                            </div>
+                        ) : null}
+                        <div>
+                            <dt className="font-medium text-muted-foreground">Revisión</dt>
+                            <dd className="text-foreground">{template.template_revision}</dd>
+                        </div>
                         <div>
                             <dt className="font-medium text-muted-foreground">Veces usada</dt>
                             <dd className="text-foreground">{template.usage_count}</dd>

@@ -164,6 +164,7 @@ export * from "./training/volumeIntensityContext";
 export * from "./training/sessionVolumeIntensityPrefill";
 export * from "./training/weeklyVolumePanelModel";
 export * from "./training/weeklyVolumePanelPresentation";
+export * from "./training/templateProgramPresentation";
 export {
     mondayOfIsoWeekContaining,
     formatWeekRangeLabelEs,

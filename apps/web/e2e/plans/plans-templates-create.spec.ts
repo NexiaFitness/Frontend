@@ -34,7 +34,7 @@ test.describe("Plans — Templates create", () => {
     });
 
     await expect(
-      page.getByRole("heading", { name: /crear template de plan de entrenamiento/i })
+      page.getByRole("heading", { name: /crear plantilla de plan/i })
     ).toBeVisible({ timeout: 5_000 });
 
     await page.getByPlaceholder(/ej: template de fuerza/i).fill(TEMPLATE_NAME);

@@ -5,7 +5,11 @@
 
 export const DASHBOARD_MAIN_SCROLL_ID = "dashboard-main-scroll";
 
-/** Padding inferior recomendado en páginas con DashboardFixedFooter. */
+/**
+ * Padding inferior obligatorio en páginas con `<DashboardFixedFooter />`.
+ * Alias canónico premium: `PLATFORM_PAGE_FOOTER_CLEARANCE` (platformPremiumPresentation.ts).
+ * Doc: design/platform/specs-vista/DASHBOARD_CONTENT_SPACING_SPEC.md §11
+ */
 export const DASHBOARD_FIXED_FOOTER_PADDING_CLASS = "pb-24";
 
 export function getDashboardMainScrollElement(): HTMLElement | null {

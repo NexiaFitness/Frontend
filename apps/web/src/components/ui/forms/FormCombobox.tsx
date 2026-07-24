@@ -29,6 +29,8 @@ export interface FormComboboxProps {
     buttonClassName?: string;
     size?: "xs" | "sm" | "md" | "lg";
     ariaLabel?: string;
+    /** id del botón trigger (E2E / label htmlFor). */
+    id?: string;
 }
 
 const sizeStyles = {
@@ -50,6 +52,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     buttonClassName,
     size = "sm",
     ariaLabel,
+    id,
 }) => {
     const [open, setOpen] = useState(false);
     const [coords, setCoords] = useState<PopoverCoords>({
@@ -126,9 +129,12 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
         <div ref={containerRef} className={cn("relative", className)}>
             <button
                 type="button"
+                id={id}
                 onClick={() => setOpen(!open)}
                 disabled={disabled}
                 aria-label={ariaLabel}
+                aria-haspopup="listbox"
+                aria-expanded={open}
                 className={cn(
                     "flex w-full items-center justify-between rounded-md border border-border bg-surface-2 ring-offset-background",
                     "placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
