@@ -29,6 +29,7 @@ import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { PlanPeriodizationSection } from "@/components/trainingPlans/periodization";
 import { MilestonesTab } from "@/components/trainingPlans";
 import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
+import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -66,6 +67,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const [, setSearchParams] = useSearchParams();
     const { showError } = useToast();
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [convertModalOpen, setConvertModalOpen] = useState(false);
     const [deletePlan, { isLoading: isDeletingPlan }] = useDeleteTrainingPlanMutation();
 
     const clearPlanQuery = useCallback(() => {
@@ -332,6 +334,16 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
 
             <DashboardFixedFooter>
                 <div className="flex flex-wrap items-center justify-end gap-3">
+                    {!plan.was_converted_to_template ? (
+                        <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setConvertModalOpen(true)}
+                        >
+                            Convertir en plantilla
+                        </Button>
+                    ) : null}
                     <Button
                         type="button"
                         variant="outline"
@@ -357,6 +369,12 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 onConfirm={handleDeleteConfirm}
                 plan={plan}
                 isLoading={isDeletingPlan}
+            />
+
+            <ConvertPlanToTemplateModal
+                open={convertModalOpen}
+                onClose={() => setConvertModalOpen(false)}
+                plan={plan}
             />
         </div>
     );

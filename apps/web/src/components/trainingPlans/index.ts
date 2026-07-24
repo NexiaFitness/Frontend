@@ -11,6 +11,7 @@ export { TrainingPlanTemplateCard } from "./TrainingPlanTemplateCard";
 export { TrainingPlansSection } from "./TrainingPlansSection";
 export { AssignTemplateModal } from "./AssignTemplateModal";
 export { AssignPlanModal } from "./AssignPlanModal";
+export { ConvertPlanToTemplateModal } from "./ConvertPlanToTemplateModal";
 export { TemplatePreviewModal } from "./TemplatePreviewModal";
 
 // Modales
