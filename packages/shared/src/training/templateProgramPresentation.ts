@@ -59,3 +59,34 @@ export function formatTemplateProgramWeekCount(
     if (programWeekCount == null) return null;
     return `${programWeekCount} semanas de programa`;
 }
+
+export function isTrainingPlanTemplateNotFoundError(error: unknown): boolean {
+    if (error == null || typeof error !== "object") return false;
+    if ("status" in error) {
+        const status = (error as { status?: unknown }).status;
+        if (status === 404 || status === "404" || status === "PARSING_ERROR") {
+            return true;
+        }
+    }
+    const message =
+        typeof error === "object" && "data" in error
+            ? String((error as { data?: unknown }).data ?? "")
+            : String(error);
+    return message.toLowerCase().includes("not found");
+}
+
+export function resolveTrainingPlanTemplateLoadError(error: unknown): string {
+    if (isTrainingPlanTemplateNotFoundError(error)) {
+        return "Esta plantilla no existe o ha sido eliminada.";
+    }
+    if (error != null && typeof error === "object" && "data" in error) {
+        const data = (error as { data?: unknown }).data;
+        if (typeof data === "object" && data != null && "detail" in data) {
+            const detail = (data as { detail?: unknown }).detail;
+            if (typeof detail === "string" && detail.trim()) {
+                return detail;
+            }
+        }
+    }
+    return "No se pudo cargar la plantilla. Comprueba tu conexión e inténtalo de nuevo.";
+}

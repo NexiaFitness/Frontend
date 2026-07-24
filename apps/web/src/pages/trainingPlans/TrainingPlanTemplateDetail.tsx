@@ -1,5 +1,5 @@
 /**
- * TrainingPlanTemplateDetail.tsx — Detalle de plantilla (metadata + assign stub).
+ * TrainingPlanTemplateDetail.tsx — Detalle de plantilla (metadata + assign).
  */
 
 import React, { useState, useMemo } from "react";
@@ -9,8 +9,10 @@ import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlans
 import {
     formatTemplateDurationHint,
     formatTemplateProgramWeekCount,
+    isTrainingPlanTemplateNotFoundError,
     labelTemplateLifecycle,
     labelTemplateValidation,
+    resolveTrainingPlanTemplateLoadError,
 } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
@@ -33,7 +35,12 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
 
     const [assignOpen, setAssignOpen] = useState(false);
 
-    const { data: template, isLoading, isError } = useGetTrainingPlanTemplateQuery(templateId, {
+    const {
+        data: template,
+        isLoading,
+        isError,
+        error,
+    } = useGetTrainingPlanTemplateQuery(templateId, {
         skip: templateId <= 0,
     });
 
@@ -46,11 +53,14 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
             <div className="px-4 py-8 lg:px-8">
                 <Alert variant="error">Identificador de plantilla no válido.</Alert>
                 <Button variant="outline" className="mt-4" onClick={handleBack}>
-                    Volver a planificación
+                    Volver a biblioteca
                 </Button>
             </div>
         );
     }
+
+    const isNotFound = isError && isTrainingPlanTemplateNotFoundError(error);
+    const loadFailed = isError || (!isLoading && !template);
 
     return (
         <div className="space-y-6 px-4 py-6 lg:px-8">
@@ -64,28 +74,50 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                     <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                     Volver a biblioteca
                 </Button>
-                <div className="flex flex-wrap gap-2">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() =>
-                            navigate(`/dashboard/training-plans/templates/${templateId}/edit`)
-                        }
-                    >
-                        Editar programa
-                    </Button>
-                    <Button variant="primary" size="sm" onClick={() => setAssignOpen(true)}>
-                        Asignar a cliente
-                    </Button>
-                </div>
+                {template ? (
+                    <div className="flex flex-wrap gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                                navigate(`/dashboard/training-plans/templates/${templateId}/edit`)
+                            }
+                        >
+                            Editar programa
+                        </Button>
+                        <Button variant="primary" size="sm" onClick={() => setAssignOpen(true)}>
+                            Asignar a cliente
+                        </Button>
+                    </div>
+                ) : null}
             </div>
 
             {isLoading ? (
                 <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-border bg-card p-12 shadow-lg">
                     <LoadingSpinner size="lg" />
                 </div>
-            ) : isError || !template ? (
-                <Alert variant="error">No se pudo cargar la plantilla.</Alert>
+            ) : loadFailed ? (
+                <div className="space-y-4 rounded-xl border border-border bg-card p-8 shadow-lg">
+                    <Alert variant="error">
+                        {resolveTrainingPlanTemplateLoadError(error)}
+                    </Alert>
+                    <div className="flex flex-wrap gap-2">
+                        <Button variant="outline" size="sm" onClick={handleBack}>
+                            Volver a biblioteca
+                        </Button>
+                        {isNotFound ? (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() =>
+                                    navigate("/dashboard/training-plans/templates/create")
+                                }
+                            >
+                                Crear plantilla
+                            </Button>
+                        ) : null}
+                    </div>
+                </div>
             ) : (
                 <article className="rounded-xl border border-border border-l-2 border-l-primary bg-card p-6 text-card-foreground shadow-lg">
                     <h1 className="text-2xl font-semibold text-foreground">

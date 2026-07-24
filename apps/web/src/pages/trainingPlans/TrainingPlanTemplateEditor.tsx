@@ -26,8 +26,10 @@ import {
 import {
     formatTemplateProgramWeekCount,
     getMutationErrorMessage,
+    isTrainingPlanTemplateNotFoundError,
     labelTemplateLifecycle,
     labelTemplateValidation,
+    resolveTrainingPlanTemplateLoadError,
 } from "@nexia/shared";
 import type {
     TemplateProgramBlock,
@@ -77,7 +79,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     }, [id]);
 
     const { showSuccess, showError } = useToast();
-    const { data: template, isLoading: isLoadingTemplate, isError: isErrorTemplate } =
+    const { data: template, isLoading: isLoadingTemplate, isError: isErrorTemplate, error: templateError } =
         useGetTrainingPlanTemplateQuery(templateId, { skip: templateId <= 0 });
     const { data: summary } = useGetTemplateProgramSummaryQuery(templateId, {
         skip: templateId <= 0,
@@ -264,7 +266,14 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     };
 
     if (templateId <= 0) {
-        return <Alert variant="error">Identificador de plantilla no válido.</Alert>;
+        return (
+            <div className="space-y-4 px-4 py-8 lg:px-8">
+                <Alert variant="error">Identificador de plantilla no válido.</Alert>
+                <Button variant="outline" size="sm" onClick={handleBack}>
+                    Volver a biblioteca
+                </Button>
+            </div>
+        );
     }
 
     if (isLoadingTemplate || isLoadingBlocks) {
@@ -276,7 +285,34 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     }
 
     if (isErrorTemplate || !template) {
-        return <Alert variant="error">No se pudo cargar la plantilla.</Alert>;
+        const isNotFound = isErrorTemplate && isTrainingPlanTemplateNotFoundError(templateError);
+        return (
+            <div className="space-y-4 px-4 py-8 lg:px-8">
+                <Button variant="ghost" size="sm" className="w-fit" onClick={handleBack}>
+                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                    Biblioteca
+                </Button>
+                <Alert variant="error">
+                    {resolveTrainingPlanTemplateLoadError(templateError)}
+                </Alert>
+                <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" onClick={handleBack}>
+                        Volver a biblioteca
+                    </Button>
+                    {isNotFound ? (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() =>
+                                navigate("/dashboard/training-plans/templates/create")
+                            }
+                        >
+                            Crear plantilla
+                        </Button>
+                    ) : null}
+                </div>
+            </div>
+        );
     }
 
     const isArchived = template.lifecycle_status === "archived";
@@ -658,13 +694,16 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         catalog={qualitiesCatalog}
                         overlapDetected={overlapDetected}
                         onAddQuality={(id) =>
-                            setBlockForm((prev) => ({
-                                ...prev,
-                                qualities: [
+                            setBlockForm((prev) => {
+                                const next = [
                                     ...prev.qualities,
                                     { physical_quality_id: id, percentage: 50 },
-                                ],
-                            }))
+                                ];
+                                if (next.length === 1) {
+                                    next[0] = { ...next[0], percentage: 100 };
+                                }
+                                return { ...prev, qualities: next };
+                            })
                         }
                         onRemoveQuality={(id) =>
                             setBlockForm((prev) => ({

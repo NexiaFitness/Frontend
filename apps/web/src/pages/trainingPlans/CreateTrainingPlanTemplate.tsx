@@ -8,7 +8,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { PageTitle } from "@/components/dashboard/shared";
-import { useToast } from "@/components/ui/feedback";
+import { useToast, LoadingSpinner } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
 import { useCreateTrainingPlanTemplateMutation } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -24,8 +24,9 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
     const navigate = useNavigate();
     const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/training-plans" });
 
-    const { data: trainerProfile } = useGetCurrentTrainerProfileQuery();
-    const trainerId = trainerProfile?.id || 0;
+    const { data: trainerProfile, isLoading: isLoadingTrainer } =
+        useGetCurrentTrainerProfileQuery();
+    const trainerId = trainerProfile?.id ?? 0;
 
     const [createTemplate, { isLoading: isCreatingTemplate }] =
         useCreateTrainingPlanTemplateMutation();
@@ -47,10 +48,10 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        if (!trainerId) {
+        if (!isLoadingTrainer && !trainerId) {
             navigate("/dashboard");
         }
-    }, [trainerId, navigate]);
+    }, [isLoadingTrainer, trainerId, navigate]);
 
     const validateForm = (): boolean => {
         const errors: Record<string, string> = {};
@@ -146,6 +147,14 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
         { value: TEMPLATE_LEVEL.INTERMEDIATE, label: "Intermedio" },
         { value: TEMPLATE_LEVEL.ADVANCED, label: "Avanzado" },
     ];
+
+    if (isLoadingTrainer || !trainerId) {
+        return (
+            <div className="flex min-h-[40vh] items-center justify-center px-4 lg:px-8">
+                <LoadingSpinner size="lg" />
+            </div>
+        );
+    }
 
     return (
         <>

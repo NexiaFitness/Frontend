@@ -62,7 +62,7 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
     emptyDescription,
     emptyShowCreateAction = false,
 }) => {
-    const isTemplate = items.length > 0 && "usage_count" in items[0];
+    const isTemplate = type === "template";
     const EmptyIcon = isTemplate ? FileStack : ClipboardList;
     const SectionIcon = type === "template" ? FileStack : type === "archived" ? Archive : ClipboardList;
 

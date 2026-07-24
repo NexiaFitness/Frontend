@@ -8,8 +8,9 @@ import React, { useState, useEffect, useMemo } from "react";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
-import { Alert } from "@/components/ui/feedback";
+import { Alert, useToast } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
+import { getMutationErrorMessage } from "@nexia/shared";
 import { usePreviewTemplateProgramAssignMutation } from "@nexia/shared/api/templateProgramApi";
 import { useGetTrainerClientsQuery, useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -35,6 +36,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     clientId: fixedClientId,
     clientName: fixedClientName,
 }) => {
+    const { showError } = useToast();
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
     const trainerId = trainerProfile?.id;
 
@@ -170,6 +172,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
             }
         } catch (err) {
             console.error("Error assigning template:", err);
+            showError(getMutationErrorMessage(err));
         }
     };
 

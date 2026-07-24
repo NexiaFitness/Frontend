@@ -538,6 +538,7 @@ export interface TrainingPlanTemplate {
     lifecycle_status: string;
     validation_status: string;
     validation_report: Record<string, unknown> | null;
+    content_status: "program_empty" | "program_in_progress" | "program_complete";
     template_revision: number;
     program_week_count: number | null;
     published_at: string | null;
