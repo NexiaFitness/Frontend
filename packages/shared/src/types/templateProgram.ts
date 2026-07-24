@@ -97,6 +97,29 @@ export interface TemplateProgramArchiveResult {
     archived_at: string;
 }
 
+export interface TemplateAssignWarning {
+    code: string;
+    message: string;
+}
+
+export interface TemplateAssignPreviewIn {
+    client_id: number;
+    start_date: string;
+}
+
+export interface TemplateAssignPreviewOut {
+    start_date: string;
+    end_date: string;
+    program_week_count: number | null;
+    duration_source: "structure" | "declared_metadata";
+    content_status: TemplateContentStatus;
+    lifecycle_status: string;
+    validation_status: string;
+    assignable: boolean;
+    block_reasons: string[];
+    warnings: TemplateAssignWarning[];
+}
+
 export interface TemplateProgramSessionCreate {
     template_program_block_id: number;
     session_name: string;

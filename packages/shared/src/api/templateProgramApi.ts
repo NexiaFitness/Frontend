@@ -7,6 +7,8 @@
 
 import { baseApi } from "./baseApi";
 import type {
+    TemplateAssignPreviewIn,
+    TemplateAssignPreviewOut,
     TemplateProgramArchiveResult,
     TemplateProgramBlock,
     TemplateProgramBlockCreate,
@@ -328,6 +330,17 @@ export const templateProgramApi = baseApi.injectEndpoints({
                 { type: "TrainingPlanTemplate", id: templateId },
             ],
         }),
+
+        previewTemplateProgramAssign: builder.mutation<
+            TemplateAssignPreviewOut,
+            { templateId: number; data: TemplateAssignPreviewIn }
+        >({
+            query: ({ templateId, data }) => ({
+                url: `/training-plans/templates/${templateId}/program/assign-preview`,
+                method: "POST",
+                body: data,
+            }),
+        }),
     }),
     overrideExisting: false,
 });
@@ -351,4 +364,5 @@ export const {
     useValidateTemplateProgramMutation,
     usePublishTemplateProgramMutation,
     useArchiveTemplateProgramMutation,
+    usePreviewTemplateProgramAssignMutation,
 } = templateProgramApi;

@@ -1,25 +1,19 @@
 /**
  * AssignTemplateModal.tsx — Modal para asignar plantilla a cliente
  *
- * Contexto:
- * - Permite seleccionar cliente y fechas para asignar una plantilla
- * - Si clientId (y opcionalmente clientName) se pasan, el cliente queda fijo y se oculta el selector;
- *   se muestra "Asignando a: [Nombre del cliente]" en texto plano.
- * - Validación de fechas. Feedback visual con loading y errores.
- *
- * @author Frontend Team
- * @since v5.0.0
- * @updated v6.4.0 - Fase 1.1: prop clientId opcional para uso desde ficha cliente ("Usar plantilla").
+ * PR6: end_date solo desde assign-preview (BE autoridad). Sin cálculo en TS.
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { Alert } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
+import { usePreviewTemplateProgramAssignMutation } from "@nexia/shared/api/templateProgramApi";
 import { useGetTrainerClientsQuery, useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import type { TemplateAssignPreviewOut } from "@nexia/shared/types/templateProgram";
 import type { SelectOption } from "@/components/ui/forms";
 
 interface AssignTemplateModalProps {
@@ -28,9 +22,7 @@ interface AssignTemplateModalProps {
     templateId: number | null;
     templateName?: string;
     onSuccess?: () => void;
-    /** Si se pasa, el cliente queda fijo; se oculta el selector y se muestra "Asignando a: [Nombre]". */
     clientId?: number;
-    /** Nombre del cliente cuando clientId está fijado (si no se pasa, se obtiene por API). */
     clientName?: string;
 }
 
@@ -43,11 +35,9 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     clientId: fixedClientId,
     clientName: fixedClientName,
 }) => {
-    // Obtener trainer_id
     const { data: trainerProfile } = useGetCurrentTrainerProfileQuery(undefined);
     const trainerId = trainerProfile?.id;
 
-    // Nombre del cliente cuando clientId está fijado (prop o API)
     const { data: clientData } = useGetClientQuery(fixedClientId ?? 0, {
         skip: !fixedClientId || !open,
     });
@@ -55,7 +45,6 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         fixedClientName ??
         (clientData ? `${clientData.nombre} ${clientData.apellidos}` : null);
 
-    // Obtener clientes (solo si no hay cliente fijo)
     const { data: clientsData } = useGetTrainerClientsQuery(
         {
             trainerId: trainerId!,
@@ -65,77 +54,117 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         },
         {
             skip: !trainerId || !open || !!fixedClientId,
-        }
+        },
     );
 
     const clients = clientsData?.items ?? [];
-
-    // Hook de asignación
     const { assignTemplate, isAssigning, isError, error } = useAssignTemplate();
+    const [previewAssign, { isLoading: isPreviewLoading }] =
+        usePreviewTemplateProgramAssignMutation();
 
-    // Estado del formulario
     const [formData, setFormData] = useState({
         client_id: "",
         start_date: "",
-        end_date: "",
         name: templateName || "",
     });
-
+    const [preview, setPreview] = useState<TemplateAssignPreviewOut | null>(null);
+    const [previewError, setPreviewError] = useState<string | null>(null);
     const [errors, setErrors] = useState<Record<string, string>>({});
 
-    // Reset form cuando se abre/cierra; si hay clientId fijo, prellenar client_id
+    const resolvedClientId = useMemo(() => {
+        if (fixedClientId != null) return fixedClientId;
+        const parsed = Number(formData.client_id);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    }, [fixedClientId, formData.client_id]);
+
     useEffect(() => {
         if (open) {
             setFormData({
                 client_id: fixedClientId != null ? String(fixedClientId) : "",
                 start_date: "",
-                end_date: "",
                 name: templateName || "",
             });
+            setPreview(null);
+            setPreviewError(null);
             setErrors({});
         }
     }, [open, templateName, fixedClientId]);
 
-    // Validación
+    useEffect(() => {
+        if (!open || !templateId || !resolvedClientId || !formData.start_date) {
+            setPreview(null);
+            setPreviewError(null);
+            return;
+        }
+
+        let cancelled = false;
+        const load = async () => {
+            try {
+                const result = await previewAssign({
+                    templateId,
+                    data: {
+                        client_id: resolvedClientId,
+                        start_date: formData.start_date,
+                    },
+                }).unwrap();
+                if (!cancelled) {
+                    setPreview(result);
+                    setPreviewError(null);
+                }
+            } catch (err) {
+                if (!cancelled) {
+                    setPreview(null);
+                    setPreviewError(
+                        err && typeof err === "object" && "data" in err
+                            ? String((err as { data: unknown }).data ?? "Error en preview")
+                            : "No se pudo calcular la duración del programa",
+                    );
+                }
+            }
+        };
+
+        void load();
+        return () => {
+            cancelled = true;
+        };
+    }, [open, templateId, resolvedClientId, formData.start_date, previewAssign]);
+
     const validate = (): boolean => {
         const newErrors: Record<string, string> = {};
 
-        if (!formData.client_id) {
+        if (!resolvedClientId) {
             newErrors.client_id = "Debes seleccionar un cliente";
         }
-
         if (!formData.start_date) {
             newErrors.start_date = "La fecha de inicio es obligatoria";
         }
-
-        if (!formData.end_date) {
-            newErrors.end_date = "La fecha de fin es obligatoria";
+        if (!preview?.end_date) {
+            newErrors.start_date =
+                newErrors.start_date ?? "Espera el cálculo de fin desde el servidor";
         }
-
-        if (formData.start_date && formData.end_date && formData.start_date > formData.end_date) {
-            newErrors.end_date = "La fecha de fin debe ser posterior a la fecha de inicio";
+        if (preview && !preview.assignable) {
+            newErrors.assign = preview.block_reasons[0] ?? "La plantilla no es asignable";
         }
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
     };
 
-    // Handler de submit
     const handleSubmit = async () => {
-        if (!validate() || !templateId || !trainerId) return;
+        if (!validate() || !templateId || !trainerId || !preview?.end_date || !resolvedClientId) {
+            return;
+        }
 
         try {
-            const clientIdToUse = fixedClientId ?? Number(formData.client_id);
             await assignTemplate({
                 template_id: templateId,
-                client_id: clientIdToUse,
+                client_id: resolvedClientId,
                 start_date: formData.start_date,
-                end_date: formData.end_date,
+                end_date: preview.end_date,
                 name: formData.name || undefined,
-                trainer_id: trainerId, // Agregar trainer_id requerido por backend
+                trainer_id: trainerId,
             });
 
-            // Éxito - cerrar modal y notificar
             if (onSuccess) {
                 onSuccess();
             } else {
@@ -143,52 +172,76 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
             }
         } catch (err) {
             console.error("Error assigning template:", err);
-            // El error se muestra automáticamente por el Alert en el modal
         }
     };
 
-    // Opciones de clientes
     const clientOptions: SelectOption[] = clients.map((client) => ({
         value: client.id.toString(),
         label: `${client.nombre} ${client.apellidos}`,
     }));
 
-    // Calcular fecha mínima (hoy)
     const today = new Date().toISOString().split("T")[0];
 
     return (
         <BaseModal
             isOpen={open}
             onClose={onClose}
-            title="Asignar Plantilla a Cliente"
-            description={templateName ? `Asignar "${templateName}" a un cliente` : "Selecciona un cliente y las fechas para asignar esta plantilla"}
+            title="Asignar plantilla a cliente"
+            description={
+                templateName
+                    ? `Asignar "${templateName}" a un cliente`
+                    : "Selecciona cliente e inicio; el fin lo calcula el servidor"
+            }
             closeOnBackdrop={!isAssigning}
             closeOnEsc={!isAssigning}
             isLoading={isAssigning}
         >
             <div className="space-y-4">
-                {/* Error general */}
-                {isError && (
+                {isError ? (
                     <Alert variant="error">
-                        {error && typeof error === "object" && "data" in error && typeof error.data === "object" && error.data && "detail" in error.data
+                        {error &&
+                        typeof error === "object" &&
+                        "data" in error &&
+                        typeof error.data === "object" &&
+                        error.data &&
+                        "detail" in error.data
                             ? String(error.data.detail)
                             : "Error al asignar la plantilla. Intenta de nuevo."}
                     </Alert>
-                )}
+                ) : null}
 
-                {/* Warning si no hay clientes */}
-                {clients.length === 0 && (
+                {previewError ? <Alert variant="error">{previewError}</Alert> : null}
+
+                {preview && !preview.assignable ? (
                     <Alert variant="warning">
-                        No tienes clientes disponibles. Por favor, crea un cliente primero.
+                        <ul className="list-disc space-y-1 pl-4 text-sm">
+                            {preview.block_reasons.map((reason) => (
+                                <li key={reason}>{reason}</li>
+                            ))}
+                        </ul>
                     </Alert>
-                )}
+                ) : null}
 
-                {/* Formulario */}
+                {preview?.warnings?.length ? (
+                    <Alert variant="warning">
+                        <ul className="list-disc space-y-1 pl-4 text-sm">
+                            {preview.warnings.map((w) => (
+                                <li key={w.code}>{w.message}</li>
+                            ))}
+                        </ul>
+                    </Alert>
+                ) : null}
+
+                {clients.length === 0 && fixedClientId == null ? (
+                    <Alert variant="warning">
+                        No tienes clientes disponibles. Crea un cliente primero.
+                    </Alert>
+                ) : null}
+
                 <div className="space-y-4">
-                    {/* Cliente: selector o texto fijo "Asignando a: [Nombre]" */}
                     {fixedClientId != null ? (
                         <div>
-                            <span className="block text-sm font-medium text-foreground mb-1.5">
+                            <span className="mb-1.5 block text-sm font-medium text-foreground">
                                 Cliente
                             </span>
                             <p className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground">
@@ -213,27 +266,24 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                         />
                     )}
 
-                    {/* Nombre personalizado (opcional) */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
+                        <label className="mb-1 block text-sm font-medium text-gray-600">
                             Nombre personalizado (opcional)
                         </label>
                         <Input
                             type="text"
                             placeholder={templateName || "Nombre del plan para este cliente"}
                             value={formData.name}
-                            onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
+                            onChange={(e) =>
+                                setFormData((prev) => ({ ...prev, name: e.target.value }))
+                            }
                             disabled={isAssigning}
                         />
-                        <p className="mt-1 text-xs text-gray-500">
-                            Si no especificas un nombre, se usará el nombre de la plantilla
-                        </p>
                     </div>
 
-                    {/* Fecha de inicio */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Fecha de Inicio <span className="text-red-500">*</span>
+                        <label className="mb-1 block text-sm font-medium text-gray-600">
+                            Fecha de inicio <span className="text-red-500">*</span>
                         </label>
                         <Input
                             type="date"
@@ -250,29 +300,33 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                         />
                     </div>
 
-                    {/* Fecha de fin */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">
-                            Fecha de Fin <span className="text-red-500">*</span>
+                        <label className="mb-1 block text-sm font-medium text-gray-600">
+                            Fecha de fin (calculada)
                         </label>
                         <Input
                             type="date"
-                            value={formData.end_date}
-                            onChange={(e) => {
-                                setFormData((prev) => ({ ...prev, end_date: e.target.value }));
-                                if (errors.end_date) {
-                                    setErrors((prev) => ({ ...prev, end_date: "" }));
-                                }
-                            }}
-                            error={errors.end_date}
-                            min={formData.start_date || today}
-                            disabled={isAssigning}
+                            value={preview?.end_date ?? ""}
+                            readOnly
+                            disabled
+                            placeholder={isPreviewLoading ? "Calculando…" : "Selecciona inicio"}
                         />
+                        {preview?.program_week_count ? (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                                {preview.program_week_count} semanas · origen:{" "}
+                                {preview.duration_source === "structure"
+                                    ? "estructura del programa"
+                                    : "metadata declarada"}
+                            </p>
+                        ) : null}
                     </div>
+
+                    {errors.assign ? (
+                        <p className="text-sm text-destructive">{errors.assign}</p>
+                    ) : null}
                 </div>
 
-                {/* Botones */}
-                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+                <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
                     <Button
                         variant="outline"
                         onClick={onClose}
@@ -284,17 +338,19 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                     <Button
                         variant="primary"
                         onClick={handleSubmit}
-                        isLoading={isAssigning}
+                        isLoading={isAssigning || isPreviewLoading}
                         disabled={
-                            (fixedClientId == null && clients.length === 0) || isAssigning
+                            (fixedClientId == null && clients.length === 0) ||
+                            isAssigning ||
+                            isPreviewLoading ||
+                            !preview?.assignable
                         }
                         className="flex-1 sm:flex-none"
                     >
-                        {isAssigning ? "Asignando..." : "Asignar Plantilla"}
+                        {isAssigning ? "Asignando…" : "Asignar plantilla"}
                     </Button>
                 </div>
             </div>
         </BaseModal>
     );
 };
-

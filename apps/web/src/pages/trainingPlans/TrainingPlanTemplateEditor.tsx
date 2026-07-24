@@ -101,6 +101,11 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     const [validateProgram, { isLoading: isValidating }] = useValidateTemplateProgramMutation();
     const [publishProgram, { isLoading: isPublishing }] = usePublishTemplateProgramMutation();
 
+    const [lastValidationReport, setLastValidationReport] = useState<{
+        status: string;
+        report: Record<string, unknown>;
+    } | null>(null);
+
     const [blockModalOpen, setBlockModalOpen] = useState(false);
     const [blockModalStep, setBlockModalStep] = useState<BlockModalStep>("meta");
     const [editingBlock, setEditingBlock] = useState<TemplateProgramBlock | null>(null);
@@ -229,6 +234,10 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     const handleValidate = async () => {
         try {
             const result = await validateProgram(templateId).unwrap();
+            setLastValidationReport({
+                status: result.validation_status,
+                report: result.validation_report,
+            });
             showSuccess(
                 result.validation_status === "valid"
                     ? "Programa válido."
@@ -241,8 +250,10 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
 
     const handlePublish = async () => {
         try {
-            await publishProgram(templateId).unwrap();
-            showSuccess("Plantilla publicada.");
+            const result = await publishProgram(templateId).unwrap();
+            showSuccess(
+                `Plantilla publicada (rev. ${result.template_revision}, hash ${result.structure_hash.slice(0, 8)}…).`,
+            );
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }
@@ -325,6 +336,40 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
 
             {summary?.duration_mismatch_warning ? (
                 <Alert variant="warning">{summary.duration_mismatch_warning}</Alert>
+            ) : null}
+
+            {lastValidationReport ? (
+                <Alert
+                    variant={lastValidationReport.status === "valid" ? "success" : "warning"}
+                >
+                    <p className="font-medium">
+                        Última validación: {labelTemplateValidation(lastValidationReport.status)}
+                    </p>
+                    {Array.isArray(lastValidationReport.report.errors) &&
+                    lastValidationReport.report.errors.length > 0 ? (
+                        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
+                            {(
+                                lastValidationReport.report.errors as {
+                                    message?: string;
+                                }[]
+                            ).map((issue, index) => (
+                                <li key={`err-${index}`}>{issue.message ?? "Error"}</li>
+                            ))}
+                        </ul>
+                    ) : null}
+                    {Array.isArray(lastValidationReport.report.warnings) &&
+                    lastValidationReport.report.warnings.length > 0 ? (
+                        <ul className="mt-2 list-disc space-y-1 pl-4 text-sm opacity-90">
+                            {(
+                                lastValidationReport.report.warnings as {
+                                    message?: string;
+                                }[]
+                            ).map((issue, index) => (
+                                <li key={`warn-${index}`}>{issue.message ?? "Aviso"}</li>
+                            ))}
+                        </ul>
+                    ) : null}
+                </Alert>
             ) : null}
 
             <section className="space-y-4">
