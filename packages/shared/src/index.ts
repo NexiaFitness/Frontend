@@ -198,6 +198,7 @@ export {
 export type { SessionDeletableInput } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
 export * from "./types/sessionContentContract";
+export * from "./types/templateProgram";
 export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
@@ -383,6 +384,7 @@ export { parseQualities, qualitiesToDisplayString } from "./utils/qualityUtils";
 export * from "./utils/exerciseUiBucket";
 export {
     generateSyntheticWeeks,
+    generateSyntheticProgramWeeks,
     mergeWeeklyStructureWeeks,
     getTrainingDatesInRange,
     type TrainingDateInfo,

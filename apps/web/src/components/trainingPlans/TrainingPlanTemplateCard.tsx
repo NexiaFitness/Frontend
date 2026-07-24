@@ -56,7 +56,7 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
             : null;
 
     const handleViewTemplate = (): void => {
-        navigate(`/dashboard/training-plans/templates/${template.id}`);
+        navigate(`/dashboard/training-plans/templates/${template.id}/edit`);
     };
 
     const levelBadge =
@@ -151,7 +151,7 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                     className="w-full border-primary/30 text-primary hover:bg-primary/10"
                     onClick={handleViewTemplate}
                 >
-                    Ver detalles
+                    Editar programa
                 </Button>
             </div>
         </article>

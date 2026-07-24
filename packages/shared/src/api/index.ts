@@ -10,6 +10,7 @@ export * from "./schedulingApi";
 export * from "./metricsApiV2";
 export * from "./exercisesApi";
 export * from "./periodBlocksApi";
+export * from "./templateProgramApi";
 export * from "./weeklyStructureApi";
 export * from "./sessionValidationApi";
 export * from "./standaloneSessionsApi";

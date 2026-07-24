@@ -110,12 +110,10 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                 is_public: formData.is_public || false,
             };
 
-            await createTemplate(templateData).unwrap();
+            const created = await createTemplate(templateData).unwrap();
 
-            showSuccess("Plantilla creada. Redirigiendo…", 2000);
-            setTimeout(() => {
-                navigate("/dashboard/training-plans");
-            }, 1500);
+            showSuccess("Plantilla creada. Abriendo editor…", 2000);
+            navigate(`/dashboard/training-plans/templates/${created.id}/edit`);
         } catch (err) {
             console.error("Error creando template:", err);
             const errorMessage =

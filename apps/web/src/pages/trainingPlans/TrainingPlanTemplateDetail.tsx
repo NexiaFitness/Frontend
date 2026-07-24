@@ -65,6 +65,15 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                     Volver a biblioteca
                 </Button>
                 <div className="flex flex-wrap gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                            navigate(`/dashboard/training-plans/templates/${templateId}/edit`)
+                        }
+                    >
+                        Editar programa
+                    </Button>
                     <Button variant="primary" size="sm" onClick={() => setAssignOpen(true)}>
                         Asignar a cliente
                     </Button>

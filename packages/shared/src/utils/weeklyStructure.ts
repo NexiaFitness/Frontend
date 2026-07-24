@@ -54,6 +54,28 @@ export function generateSyntheticWeeks(
     });
 }
 
+/** Relative program weeks for template blocks (no calendar dates). */
+export function generateSyntheticProgramWeeks(
+    programWeekStart: number,
+    programWeekEnd: number
+): WeeklyStructureWeek[] {
+    const numWeeks = programWeekEnd - programWeekStart + 1;
+    if (numWeeks <= 0) return [];
+
+    return Array.from({ length: numWeeks }, (_, i): WeeklyStructureWeek => {
+        const days: WeeklyStructureDay[] = Array.from({ length: 7 }, (_, d) => ({
+            day_of_week: d + 1,
+            patterns: [],
+        }));
+
+        return {
+            week_ordinal: i + 1,
+            label: null,
+            days,
+        };
+    });
+}
+
 /**
  * Fusiona semanas reales (persistidas en BD) con semanas sintéticas (calculadas
  * desde fechas) de forma que las semanas reales tienen prioridad.

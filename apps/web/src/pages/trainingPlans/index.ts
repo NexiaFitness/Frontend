@@ -4,3 +4,6 @@ export { TrainingPlanEdit } from "./TrainingPlanEdit";
 export { CreateTrainingPlan } from "./CreateTrainingPlan";
 export { CreateTrainingPlanTemplate } from "./CreateTrainingPlanTemplate";
 export { TrainingPlanTemplateDetail } from "./TrainingPlanTemplateDetail";
+export { TrainingPlanTemplateEditor } from "./TrainingPlanTemplateEditor";
+export { TemplateProgramWeeklyStructurePage } from "./TemplateProgramWeeklyStructurePage";
+export { EditTemplateSessionPage } from "./EditTemplateSessionPage";

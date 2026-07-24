@@ -31,6 +31,12 @@ import {
     useDeleteWeeklyStructureWeekMutation,
     useRepeatWeeklyStructureWeekMutation,
 } from "@nexia/shared/api/weeklyStructureApi";
+import {
+    useGetTemplateProgramWeeklyStructureQuery,
+    useCreateTemplateProgramWeeklyStructureWeekMutation,
+    useUpdateTemplateProgramWeeklyStructureWeekMutation,
+    useDeleteTemplateProgramWeeklyStructureWeekMutation,
+} from "@nexia/shared/api/templateProgramApi";
 import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
 import type {
     WeeklyStructureWeek,
@@ -45,6 +51,7 @@ import {
     UI_BUCKET_LABELS,
     UI_BUCKET_ORDER,
     generateSyntheticWeeks,
+    generateSyntheticProgramWeeks,
     mergeWeeklyStructureWeeks,
 } from "@nexia/shared";
 import { PatternBadge } from "./PatternBadge";
@@ -105,11 +112,16 @@ function cloneWeekCreate(week: WeeklyStructureWeek): WeeklyStructureWeekCreate {
 // ---------------------------------------------------------------------------
 
 interface WeeklyStructureEditorProps {
-    planId: number;
+    /** Plan mode — mutually exclusive with templateId */
+    planId?: number;
+    /** Template program mode — reuses same editor without repeat-week */
+    templateId?: number;
     blockId: number;
     block?: {
-        start_date: string;
-        end_date: string;
+        start_date?: string;
+        end_date?: string;
+        program_week_start?: number;
+        program_week_end?: number;
     } | null;
     /** Semana calendario del bloque a abrir (query ?week=). */
     initialWeekOrdinal?: number | null;
@@ -279,15 +291,32 @@ const DayEditor: React.FC<DayEditorProps> = ({
 export const WeeklyStructureEditor = forwardRef<
     WeeklyStructureEditorHandle,
     WeeklyStructureEditorProps
->(function WeeklyStructureEditor({ planId, blockId, block, initialWeekOrdinal, onBusyChange }, ref) {
+>(function WeeklyStructureEditor(
+    { planId, templateId, blockId, block, initialWeekOrdinal, onBusyChange },
+    ref,
+) {
     const { showSuccess, showError } = useToast();
+    const isTemplateScope = templateId != null && templateId > 0;
 
-    const {
-        data: structure,
-        isLoading: isLoadingStructure,
-        isError: isErrorStructure,
-        error: errorStructure,
-    } = useGetWeeklyStructureQuery({ planId, blockId });
+    const planStructureQuery = useGetWeeklyStructureQuery(
+        { planId: planId ?? 0, blockId },
+        { skip: isTemplateScope || !planId },
+    );
+    const templateStructureQuery = useGetTemplateProgramWeeklyStructureQuery(
+        { templateId: templateId ?? 0, blockId },
+        { skip: !isTemplateScope },
+    );
+
+    const structure = isTemplateScope ? templateStructureQuery.data : planStructureQuery.data;
+    const isLoadingStructure = isTemplateScope
+        ? templateStructureQuery.isLoading
+        : planStructureQuery.isLoading;
+    const isErrorStructure = isTemplateScope
+        ? templateStructureQuery.isError
+        : planStructureQuery.isError;
+    const errorStructure = isTemplateScope
+        ? templateStructureQuery.error
+        : planStructureQuery.error;
 
     const {
         data: patternsCatalog,
@@ -296,10 +325,24 @@ export const WeeklyStructureEditor = forwardRef<
         refetch: refetchPatterns,
     } = useGetMovementPatternsQuery({ limit: 100, is_active: true });
 
-    const [createWeek, { isLoading: isCreating }] = useCreateWeeklyStructureWeekMutation();
-    const [updateWeek, { isLoading: isUpdating }] = useUpdateWeeklyStructureWeekMutation();
-    const [deleteWeek, { isLoading: isDeleting }] = useDeleteWeeklyStructureWeekMutation();
+    const [createPlanWeek, { isLoading: isCreatingPlan }] =
+        useCreateWeeklyStructureWeekMutation();
+    const [updatePlanWeek, { isLoading: isUpdatingPlan }] =
+        useUpdateWeeklyStructureWeekMutation();
+    const [deletePlanWeek, { isLoading: isDeletingPlan }] =
+        useDeleteWeeklyStructureWeekMutation();
     const [repeatWeek, { isLoading: isRepeating }] = useRepeatWeeklyStructureWeekMutation();
+
+    const [createTemplateWeek, { isLoading: isCreatingTemplate }] =
+        useCreateTemplateProgramWeeklyStructureWeekMutation();
+    const [updateTemplateWeek, { isLoading: isUpdatingTemplate }] =
+        useUpdateTemplateProgramWeeklyStructureWeekMutation();
+    const [deleteTemplateWeek, { isLoading: isDeletingTemplate }] =
+        useDeleteTemplateProgramWeeklyStructureWeekMutation();
+
+    const isCreating = isTemplateScope ? isCreatingTemplate : isCreatingPlan;
+    const isUpdating = isTemplateScope ? isUpdatingTemplate : isUpdatingPlan;
+    const isDeleting = isTemplateScope ? isDeletingTemplate : isDeletingPlan;
 
     const [mode, setMode] = useState<EditorMode>("view");
     const [editingWeekId, setEditingWeekId] = useState<number | null>(null);
@@ -316,9 +359,25 @@ export const WeeklyStructureEditor = forwardRef<
 
     const realWeeks = useMemo(() => structure?.weeks ?? [], [structure]);
     const syntheticWeeks = useMemo(() => {
+        if (
+            isTemplateScope &&
+            block?.program_week_start != null &&
+            block?.program_week_end != null
+        ) {
+            return generateSyntheticProgramWeeks(
+                block.program_week_start,
+                block.program_week_end,
+            );
+        }
         if (!block?.start_date || !block?.end_date) return [];
         return generateSyntheticWeeks(block.start_date, block.end_date);
-    }, [block?.start_date, block?.end_date]);
+    }, [
+        isTemplateScope,
+        block?.program_week_start,
+        block?.program_week_end,
+        block?.start_date,
+        block?.end_date,
+    ]);
 
     const weeks = useMemo(
         () => mergeWeeklyStructureWeeks(realWeeks, syntheticWeeks),
@@ -417,10 +476,32 @@ export const WeeklyStructureEditor = forwardRef<
         if (!draft) return;
         try {
             if (mode === "create") {
-                await createWeek({ planId, blockId, body: draft }).unwrap();
+                if (isTemplateScope && templateId) {
+                    await createTemplateWeek({
+                        templateId,
+                        blockId,
+                        body: draft,
+                    }).unwrap();
+                } else if (planId) {
+                    await createPlanWeek({ planId, blockId, body: draft }).unwrap();
+                }
                 showSuccess("Semana creada correctamente.");
             } else if (mode === "edit" && editingWeekId != null) {
-                await updateWeek({ planId, blockId, weekId: editingWeekId, body: draft }).unwrap();
+                if (isTemplateScope && templateId) {
+                    await updateTemplateWeek({
+                        templateId,
+                        blockId,
+                        weekId: editingWeekId,
+                        body: draft,
+                    }).unwrap();
+                } else if (planId) {
+                    await updatePlanWeek({
+                        planId,
+                        blockId,
+                        weekId: editingWeekId,
+                        body: draft,
+                    }).unwrap();
+                }
                 showSuccess("Semana actualizada correctamente.");
             }
             setMode("view");
@@ -429,12 +510,34 @@ export const WeeklyStructureEditor = forwardRef<
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }
-    }, [draft, mode, editingWeekId, planId, blockId, createWeek, updateWeek, showSuccess, showError]);
+    }, [
+        draft,
+        mode,
+        editingWeekId,
+        planId,
+        templateId,
+        blockId,
+        isTemplateScope,
+        createPlanWeek,
+        createTemplateWeek,
+        updatePlanWeek,
+        updateTemplateWeek,
+        showSuccess,
+        showError,
+    ]);
 
     const handleConfirmDelete = useCallback(async () => {
         if (!deleteTarget?.id) return;
         try {
-            await deleteWeek({ planId, blockId, weekId: deleteTarget.id }).unwrap();
+            if (isTemplateScope && templateId) {
+                await deleteTemplateWeek({
+                    templateId,
+                    blockId,
+                    weekId: deleteTarget.id,
+                }).unwrap();
+            } else if (planId) {
+                await deletePlanWeek({ planId, blockId, weekId: deleteTarget.id }).unwrap();
+            }
             showSuccess("Semana eliminada correctamente.");
             setDeleteTarget(null);
             setMode("view");
@@ -443,7 +546,17 @@ export const WeeklyStructureEditor = forwardRef<
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }
-    }, [deleteTarget, planId, blockId, deleteWeek, showSuccess, showError]);
+    }, [
+        deleteTarget,
+        planId,
+        templateId,
+        blockId,
+        isTemplateScope,
+        deletePlanWeek,
+        deleteTemplateWeek,
+        showSuccess,
+        showError,
+    ]);
 
     const handleOpenRepeatModal = useCallback((week: WeeklyStructureWeek) => {
         setRepeatTargetWeek(week);
@@ -460,6 +573,7 @@ export const WeeklyStructureEditor = forwardRef<
             return;
         }
         try {
+            if (!planId) return;
             const result = await repeatWeek({
                 planId,
                 blockId,
@@ -506,7 +620,11 @@ export const WeeklyStructureEditor = forwardRef<
         });
     }, []);
 
-    const isMutating = isCreating || isUpdating || isDeleting || isRepeating;
+    const isMutating =
+        isCreating ||
+        isUpdating ||
+        isDeleting ||
+        (!isTemplateScope && isRepeating);
 
     // -----------------------------------------------------------------------
     // Loading / Error states
@@ -541,9 +659,11 @@ export const WeeklyStructureEditor = forwardRef<
 
     const activeOrdinal = displayWeek?.week_ordinal ?? 0;
     const weekRangeLabel =
-        block?.start_date && activeOrdinal > 0
+        !isTemplateScope && block?.start_date && activeOrdinal > 0
             ? formatCalendarWeekRange(activeOrdinal, block.start_date)
-            : null;
+            : isTemplateScope && activeOrdinal > 0
+              ? `Semana ${activeOrdinal} del bloque`
+              : null;
 
     const daysSource =
         isEditing && draft
@@ -779,15 +899,17 @@ export const WeeklyStructureEditor = forwardRef<
             {viewWeek && !isEditing && (
                 <DashboardFixedFooter>
                     <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Button
-                            variant="outline-primary"
-                            size="sm"
-                            onClick={() => handleOpenRepeatModal(viewWeek)}
-                            disabled={isMutating || viewWeek.id == null}
-                        >
-                            <Copy className="mr-1 h-4 w-4" aria-hidden />
-                            Repetir
-                        </Button>
+                        {!isTemplateScope ? (
+                            <Button
+                                variant="outline-primary"
+                                size="sm"
+                                onClick={() => handleOpenRepeatModal(viewWeek)}
+                                disabled={isMutating || viewWeek.id == null}
+                            >
+                                <Copy className="mr-1 h-4 w-4" aria-hidden />
+                                Repetir
+                            </Button>
+                        ) : null}
                         <Button
                             variant="outline"
                             size="sm"
@@ -833,7 +955,8 @@ export const WeeklyStructureEditor = forwardRef<
                 </div>
             </BaseModal>
 
-            {/* Repeat week modal */}
+            {/* Repeat week modal — solo planes (no aplica a plantillas) */}
+            {!isTemplateScope ? (
             <BaseModal
                 isOpen={repeatModalOpen}
                 onClose={() => {
@@ -940,6 +1063,7 @@ export const WeeklyStructureEditor = forwardRef<
                     </div>
                 </div>
             </BaseModal>
+            ) : null}
         </>
     );
 });

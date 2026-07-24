@@ -122,6 +122,21 @@ const TrainingPlanTemplateDetail = lazy(() =>
     default: m.TrainingPlanTemplateDetail,
   }))
 );
+const TrainingPlanTemplateEditor = lazy(() =>
+  import("./pages/trainingPlans/TrainingPlanTemplateEditor").then((m) => ({
+    default: m.TrainingPlanTemplateEditor,
+  }))
+);
+const TemplateProgramWeeklyStructurePage = lazy(() =>
+  import("./pages/trainingPlans/TemplateProgramWeeklyStructurePage").then((m) => ({
+    default: m.TemplateProgramWeeklyStructurePage,
+  }))
+);
+const EditTemplateSessionPage = lazy(() =>
+  import("./pages/trainingPlans/EditTemplateSessionPage").then((m) => ({
+    default: m.EditTemplateSessionPage,
+  }))
+);
 const WeeklyStructurePage = lazy(() =>
   import("./pages/trainingPlans/WeeklyStructurePage").then((m) => ({
     default: m.WeeklyStructurePage,
@@ -287,6 +302,30 @@ function App() {
             element={
               <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
                 <CreateTrainingPlanTemplate />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/templates/:templateId/blocks/:blockId/weekly-structure"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TemplateProgramWeeklyStructurePage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/templates/:templateId/sessions/:sessionId/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <EditTemplateSessionPage />
+              </RoleProtectedRoute>
+            }
+          />
+          <Route
+            path="training-plans/templates/:id/edit"
+            element={
+              <RoleProtectedRoute allowedRoles={[USER_ROLES.TRAINER]} redirectTo="/dashboard">
+                <TrainingPlanTemplateEditor />
               </RoleProtectedRoute>
             }
           />
