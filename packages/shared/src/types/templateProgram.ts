@@ -120,6 +120,22 @@ export interface TemplateAssignPreviewOut {
     warnings: TemplateAssignWarning[];
 }
 
+export interface TemplateAssignIn {
+    client_id: number;
+    start_date: string;
+    name?: string;
+}
+
+export interface TemplateAssignOut {
+    instance: import("./training").TrainingPlanInstance;
+    source_plan_id: number;
+    computed_end_date: string;
+    duration_source: "structure" | "declared_metadata";
+    template_revision: number;
+    template_revision_snapshot_id: number;
+    warnings: TemplateAssignWarning[];
+}
+
 export interface TemplateProgramSessionCreate {
     template_program_block_id: number;
     session_name: string;

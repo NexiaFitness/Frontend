@@ -151,7 +151,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     };
 
     const handleSubmit = async () => {
-        if (!validate() || !templateId || !trainerId || !preview?.end_date || !resolvedClientId) {
+        if (!validate() || !templateId || !preview?.end_date || !resolvedClientId) {
             return;
         }
 
@@ -160,9 +160,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                 template_id: templateId,
                 client_id: resolvedClientId,
                 start_date: formData.start_date,
-                end_date: preview.end_date,
                 name: formData.name || undefined,
-                trainer_id: trainerId,
             });
 
             if (onSuccess) {

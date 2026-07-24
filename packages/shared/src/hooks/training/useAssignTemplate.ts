@@ -23,7 +23,7 @@ import type {
 
 interface UseAssignTemplateReturn {
     // Actions
-    assignTemplate: (params: AssignTemplateToClientParams & { trainer_id: number }) => Promise<TrainingPlanInstance>;
+    assignTemplate: (params: AssignTemplateToClientParams) => Promise<TrainingPlanInstance>;
     assignPlan: (params: AssignPlanToClientParams) => Promise<TrainingPlanInstance>;
 
     // State
@@ -42,8 +42,9 @@ export const useAssignTemplate = (): UseAssignTemplateReturn => {
         useAssignPlanToClientMutation();
 
     const assignTemplate = useCallback(
-        async (params: AssignTemplateToClientParams & { trainer_id: number }): Promise<TrainingPlanInstance> => {
-            return await assignTemplateMutation(params).unwrap();
+        async (params: AssignTemplateToClientParams): Promise<TrainingPlanInstance> => {
+            const result = await assignTemplateMutation(params).unwrap();
+            return result.instance;
         },
         [assignTemplateMutation]
     );

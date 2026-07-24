@@ -645,12 +645,12 @@ export interface TrainingPlanInstanceUpdate {
 
 /**
  * AssignTemplateToClientParams - POST /training-plans/templates/{template_id}/assign
+ * end_date is computed server-side (use assign-preview for display).
  */
 export interface AssignTemplateToClientParams {
     template_id: number;
     client_id: number;
     start_date: string; // ISO date YYYY-MM-DD
-    end_date: string; // ISO date YYYY-MM-DD
     name?: string; // Optional custom name
 }
 

@@ -43,6 +43,7 @@ import type {
     MilestoneUpdate,
 } from "../types/training";
 import type { PlanAdherenceResponse } from "../types/dashboard";
+import type { TemplateAssignOut } from "../types/templateProgram";
 import type {
     PlanCoherenceResponse,
     TrainingPlanAlignmentResponse,
@@ -494,27 +495,18 @@ export const trainingPlansApi = baseApi.injectEndpoints({
          * Endpoint: POST /api/v1/training-plans/templates/{template_id}/assign
          */
         assignTemplateToClient: builder.mutation<
-            TrainingPlanInstance,
-            AssignTemplateToClientParams & { trainer_id: number }
+            TemplateAssignOut,
+            AssignTemplateToClientParams
         >({
-            query: ({ template_id, client_id, start_date, end_date, name, trainer_id }) => {
-                // Validar que client_id y trainer_id existan
-                if (!client_id || !trainer_id) {
-                    throw new Error("client_id and trainer_id are required");
-                }
-
-                const params = new URLSearchParams();
-                params.append("client_id", client_id.toString());
-                params.append("start_date", start_date);
-                params.append("end_date", end_date);
-                params.append("trainer_id", trainer_id.toString());
-                if (name) params.append("name", name);
-
-                return {
-                    url: `/training-plans/templates/${template_id}/assign?${params.toString()}`,
-                    method: "POST",
-                };
-            },
+            query: ({ template_id, client_id, start_date, name }) => ({
+                url: `/training-plans/templates/${template_id}/assign`,
+                method: "POST",
+                body: {
+                    client_id,
+                    start_date,
+                    ...(name ? { name } : {}),
+                },
+            }),
             invalidatesTags: (result, error, args) => [
                 { type: "TrainingPlanTemplate", id: "LIST" },
                 { type: "TrainingPlanInstance", id: "LIST" },
