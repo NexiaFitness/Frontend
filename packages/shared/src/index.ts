@@ -197,6 +197,7 @@ export {
 } from "./types/trainingSessions";
 export type { SessionDeletableInput } from "./types/trainingSessions";
 export * from "./types/sessionProgramming";
+export * from "./types/sessionContentContract";
 export * from "./types/sessionLoad";
 export type { SessionListItem, StandaloneSessionOut, StandaloneSessionCreate } from "./types/standaloneSessions";
 export type { DayException, DayExceptionCreate } from "./types/dayExceptions";
