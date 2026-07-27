@@ -90,3 +90,51 @@ export function resolveTrainingPlanTemplateLoadError(error: unknown): string {
     }
     return "No se pudo cargar la plantilla. Comprueba tu conexión e inténtalo de nuevo.";
 }
+
+export const DUPLICATE_TEMPLATE_MODAL_COPY = {
+    title: "Duplicar plantilla",
+    description: (name: string) =>
+        `Se creará una copia independiente en borrador a partir de «${name}». La plantilla original no se modifica.`,
+    body: "Se copiarán bloques, estructura semanal y sesiones. Después podrás validar y publicar la copia en el editor.",
+    confirm: "Duplicar plantilla",
+    confirming: "Duplicando…",
+    cancel: "Cancelar",
+    successToast: "Plantilla duplicada",
+} as const;
+
+export const TEMPLATE_PUBLISH_COPY = {
+    publishing: "Publicando…",
+    publish: "Publicar",
+    validationFailed: "Corrige los errores del programa antes de publicar.",
+    success: (revision: number, hashPrefix: string) =>
+        `Plantilla publicada (rev. ${revision}, hash ${hashPrefix}…).`,
+} as const;
+
+interface ValidationIssueRow {
+    message?: string;
+}
+
+function messagesFromReportSection(section: unknown): string[] {
+    if (!Array.isArray(section)) return [];
+    return section
+        .map((item) => {
+            if (item != null && typeof item === "object" && "message" in item) {
+                const message = (item as ValidationIssueRow).message;
+                return typeof message === "string" && message.trim()
+                    ? message.trim()
+                    : "Error";
+            }
+            return "Error";
+        })
+        .filter(Boolean);
+}
+
+export function getTemplateValidationIssues(report: Record<string, unknown>): {
+    errors: string[];
+    warnings: string[];
+} {
+    return {
+        errors: messagesFromReportSection(report.errors),
+        warnings: messagesFromReportSection(report.warnings),
+    };
+}

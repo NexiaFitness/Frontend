@@ -487,7 +487,12 @@ export const trainingPlansApi = baseApi.injectEndpoints({
                 url: `/training-plans/templates/${id}/duplicate`,
                 method: "POST",
             }),
-            invalidatesTags: [{ type: "TrainingPlanTemplate", id: "LIST" }],
+            invalidatesTags: (result) => [
+                { type: "TrainingPlanTemplate", id: "LIST" },
+                ...(result?.id != null
+                    ? [{ type: "TrainingPlanTemplate" as const, id: result.id }]
+                    : []),
+            ],
         }),
 
         /**

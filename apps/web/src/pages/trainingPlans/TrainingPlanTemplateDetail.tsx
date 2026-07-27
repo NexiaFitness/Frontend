@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
+import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
 import { displayTrainingPlanTemplateTitle } from "@/components/trainingPlans/goalLabels";
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -34,6 +35,7 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
     }, [id]);
 
     const [assignOpen, setAssignOpen] = useState(false);
+    const [duplicateOpen, setDuplicateOpen] = useState(false);
 
     const {
         data: template,
@@ -84,6 +86,13 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             }
                         >
                             Editar programa
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setDuplicateOpen(true)}
+                        >
+                            Duplicar plantilla
                         </Button>
                         <Button variant="primary" size="sm" onClick={() => setAssignOpen(true)}>
                             Asignar a cliente
@@ -184,6 +193,13 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                     </dl>
                 </article>
             )}
+
+            <DuplicateTemplateModal
+                open={duplicateOpen}
+                onClose={() => setDuplicateOpen(false)}
+                templateId={template?.id ?? null}
+                templateName={template?.name}
+            />
 
             <AssignTemplateModal
                 open={assignOpen}

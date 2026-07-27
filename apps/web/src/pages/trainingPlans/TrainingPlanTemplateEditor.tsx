@@ -26,10 +26,12 @@ import {
 import {
     formatTemplateProgramWeekCount,
     getMutationErrorMessage,
+    getTemplateValidationIssues,
     isTrainingPlanTemplateNotFoundError,
     labelTemplateLifecycle,
     labelTemplateValidation,
     resolveTrainingPlanTemplateLoadError,
+    TEMPLATE_PUBLISH_COPY,
 } from "@nexia/shared";
 import type {
     TemplateProgramBlock,
@@ -41,6 +43,7 @@ import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { PageTitle } from "@/components/dashboard/shared";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
 import { PeriodBlockQualitiesStep } from "@/components/trainingPlans/periodization/PeriodBlockQualitiesStep";
 import { SliderLevelBadge } from "@/components/trainingPlans/periodization/SliderLevelBadge";
 import { displayTrainingPlanTemplateTitle, GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
@@ -107,6 +110,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         status: string;
         report: Record<string, unknown>;
     } | null>(null);
+    const [duplicateOpen, setDuplicateOpen] = useState(false);
 
     const [blockModalOpen, setBlockModalOpen] = useState(false);
     const [blockModalStep, setBlockModalStep] = useState<BlockModalStep>("meta");
@@ -233,33 +237,35 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         }
     };
 
-    const handleValidate = async () => {
+    const handlePublish = async () => {
         try {
-            const result = await validateProgram(templateId).unwrap();
+            const validation = await validateProgram(templateId).unwrap();
             setLastValidationReport({
-                status: result.validation_status,
-                report: result.validation_report,
+                status: validation.validation_status,
+                report: validation.validation_report,
             });
+
+            if (validation.validation_status !== "valid") {
+                showError(TEMPLATE_PUBLISH_COPY.validationFailed);
+                return;
+            }
+
+            const result = await publishProgram(templateId).unwrap();
             showSuccess(
-                result.validation_status === "valid"
-                    ? "Programa válido."
-                    : "Validación completada con incidencias.",
+                TEMPLATE_PUBLISH_COPY.success(
+                    result.template_revision,
+                    result.structure_hash.slice(0, 8),
+                ),
             );
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }
     };
 
-    const handlePublish = async () => {
-        try {
-            const result = await publishProgram(templateId).unwrap();
-            showSuccess(
-                `Plantilla publicada (rev. ${result.template_revision}, hash ${result.structure_hash.slice(0, 8)}…).`,
-            );
-        } catch (err) {
-            showError(getMutationErrorMessage(err));
-        }
-    };
+    const isPublishingFlow = isValidating || isPublishing;
+    const validationIssues = lastValidationReport
+        ? getTemplateValidationIssues(lastValidationReport.report)
+        : null;
 
     const handleBack = () => {
         navigate("/dashboard/training-plans?tab=templates");
@@ -348,24 +354,21 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleValidate}
-                        isLoading={isValidating}
-                        disabled={isArchived || isValidating}
+                        onClick={() => setDuplicateOpen(true)}
+                        disabled={isPublishingFlow}
                     >
-                        Validar programa
+                        Duplicar
                     </Button>
                     <Button
                         variant="primary"
                         size="sm"
-                        onClick={handlePublish}
-                        isLoading={isPublishing}
-                        disabled={
-                            isArchived ||
-                            isPublishing ||
-                            template.validation_status !== "valid"
-                        }
+                        onClick={() => void handlePublish()}
+                        isLoading={isPublishingFlow}
+                        disabled={isArchived || isPublishingFlow}
                     >
-                        Publicar
+                        {isPublishingFlow
+                            ? TEMPLATE_PUBLISH_COPY.publishing
+                            : TEMPLATE_PUBLISH_COPY.publish}
                     </Button>
                 </div>
             </div>
@@ -374,34 +377,32 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                 <Alert variant="warning">{summary.duration_mismatch_warning}</Alert>
             ) : null}
 
-            {lastValidationReport ? (
+            {lastValidationReport && validationIssues ? (
                 <Alert
-                    variant={lastValidationReport.status === "valid" ? "success" : "warning"}
+                    variant={
+                        lastValidationReport.status === "valid"
+                            ? "success"
+                            : lastValidationReport.status === "invalid"
+                              ? "error"
+                              : "warning"
+                    }
                 >
                     <p className="font-medium">
-                        Última validación: {labelTemplateValidation(lastValidationReport.status)}
+                        {lastValidationReport.status === "invalid"
+                            ? "No se puede publicar hasta corregir estos problemas"
+                            : `Validación: ${labelTemplateValidation(lastValidationReport.status)}`}
                     </p>
-                    {Array.isArray(lastValidationReport.report.errors) &&
-                    lastValidationReport.report.errors.length > 0 ? (
+                    {validationIssues.errors.length > 0 ? (
                         <ul className="mt-2 list-disc space-y-1 pl-4 text-sm">
-                            {(
-                                lastValidationReport.report.errors as {
-                                    message?: string;
-                                }[]
-                            ).map((issue, index) => (
-                                <li key={`err-${index}`}>{issue.message ?? "Error"}</li>
+                            {validationIssues.errors.map((message, index) => (
+                                <li key={`err-${index}`}>{message}</li>
                             ))}
                         </ul>
                     ) : null}
-                    {Array.isArray(lastValidationReport.report.warnings) &&
-                    lastValidationReport.report.warnings.length > 0 ? (
+                    {validationIssues.warnings.length > 0 ? (
                         <ul className="mt-2 list-disc space-y-1 pl-4 text-sm opacity-90">
-                            {(
-                                lastValidationReport.report.warnings as {
-                                    message?: string;
-                                }[]
-                            ).map((issue, index) => (
-                                <li key={`warn-${index}`}>{issue.message ?? "Aviso"}</li>
+                            {validationIssues.warnings.map((message, index) => (
+                                <li key={`warn-${index}`}>{message}</li>
                             ))}
                         </ul>
                     ) : null}
@@ -825,6 +826,13 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                     </Button>
                 </div>
             </BaseModal>
+
+            <DuplicateTemplateModal
+                open={duplicateOpen}
+                onClose={() => setDuplicateOpen(false)}
+                templateId={template.id}
+                templateName={template.name}
+            />
         </div>
     );
 };

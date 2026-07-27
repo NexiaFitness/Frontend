@@ -10,6 +10,7 @@ export { useMilestones } from './useMilestones';
 export { useTrainingPlans } from './useTrainingPlans';
 export { useAssignTemplate } from './useAssignTemplate';
 export { useConvertPlanToTemplate } from './useConvertPlanToTemplate';
+export { useDuplicateTrainingPlanTemplate } from './useDuplicateTrainingPlanTemplate';
 export { useTrainingPlanTemplates } from './useTrainingPlanTemplates';
 export { useTrainingSessions } from './useTrainingSessions';
 export { useTrainingPlanCoherence } from './useTrainingPlanCoherence';
