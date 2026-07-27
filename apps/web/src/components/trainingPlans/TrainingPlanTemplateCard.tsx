@@ -3,11 +3,13 @@
  */
 
 import React, { useMemo, useState } from "react";
+import { Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 import type { TrainingPlanTemplate } from "@nexia/shared/types/training";
 import {
+    DUPLICATE_TEMPLATE_ACTION_LABEL,
     formatTemplateDurationHint,
     formatTemplateProgramWeekCount,
     getTemplateLibraryStatusChips,
@@ -16,6 +18,7 @@ import {
 } from "@nexia/shared";
 import { categoryChipsFromTemplate, displayTrainingPlanTemplateTitle } from "./goalLabels";
 import { AssignTemplateModal } from "./AssignTemplateModal";
+import { DuplicateTemplateModal } from "./DuplicateTemplateModal";
 
 const CARD_BASE =
     "rounded-xl border border-border bg-card p-5 text-card-foreground shadow-lg transition-all duration-200 hover:shadow-xl";
@@ -39,6 +42,7 @@ export interface TrainingPlanTemplateCardProps {
 export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> = ({ template }) => {
     const navigate = useNavigate();
     const [assignOpen, setAssignOpen] = useState(false);
+    const [duplicateOpen, setDuplicateOpen] = useState(false);
 
     const categoryChips = useMemo(() => categoryChipsFromTemplate(template), [template]);
 
@@ -200,6 +204,15 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                         <p className="text-xs text-muted-foreground">{cardActions.assignDisabledReason}</p>
                     ) : null}
                     <Button
+                        variant="ghost"
+                        size="sm"
+                        className="w-full text-muted-foreground hover:text-foreground"
+                        onClick={() => setDuplicateOpen(true)}
+                    >
+                        <Copy className="mr-2 h-4 w-4" aria-hidden />
+                        {DUPLICATE_TEMPLATE_ACTION_LABEL}
+                    </Button>
+                    <Button
                         variant="primary"
                         size="sm"
                         className="w-full"
@@ -221,6 +234,12 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
             <AssignTemplateModal
                 open={assignOpen}
                 onClose={() => setAssignOpen(false)}
+                templateId={template.id}
+                templateName={template.name}
+            />
+            <DuplicateTemplateModal
+                open={duplicateOpen}
+                onClose={() => setDuplicateOpen(false)}
                 templateId={template.id}
                 templateName={template.name}
             />

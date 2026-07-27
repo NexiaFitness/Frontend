@@ -65,9 +65,9 @@ export const TEMPLATE_EDITOR_COPY = {
     phasesHide: "Ocultar fases",
     addSession: "Añadir sesión",
     addPhase: "Añadir fase",
-    emptyProgramTitle: "Empieza tu programa",
+    emptyProgramTitle: "Monta tu programa",
     emptyProgramBody:
-        "Añade la primera sesión de la semana 1. Después podrás copiar y completar el resto del mesociclo.",
+        "Añade la primera sesión de la semana 1. Cuando termines, publica la plantilla para poder asignarla a un cliente.",
     emptyProgramCta: "Añadir primera sesión",
     weeklyDaysLink: "Días de entrenamiento",
     editPhase: "Editar fase",

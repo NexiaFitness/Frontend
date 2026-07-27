@@ -39,7 +39,6 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
         goal: "",
         category: "",
         tags: [],
-        estimated_duration_weeks: null,
         folder_name: "",
         level: null,
         is_public: false,
@@ -106,7 +105,6 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                 goal: formData.goal!,
                 category: formData.category || null,
                 tags: formData.tags && formData.tags.length > 0 ? formData.tags : null,
-                estimated_duration_weeks: formData.estimated_duration_weeks || null,
                 folder_name: formData.folder_name || null,
                 level: formData.level || null,
                 is_public: formData.is_public || false,
@@ -317,30 +315,6 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                     }
                                     options={levelOptions}
                                 />
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Duración estimada (semanas)
-                                </label>
-                                <Input
-                                    type="number"
-                                    min="1"
-                                    value={formData.estimated_duration_weeks || ""}
-                                    onChange={(e) => {
-                                        const value =
-                                            e.target.value === "" ? null : Number(e.target.value);
-                                        setFormData({
-                                            ...formData,
-                                            estimated_duration_weeks: value,
-                                        });
-                                    }}
-                                    placeholder="Ej: 12"
-                                />
-                                <p className="mt-1 text-sm text-muted-foreground">
-                                    Solo referencia en biblioteca; la duración real del assign
-                                    vendrá de la estructura del programa.
-                                </p>
                             </div>
                         </div>
                     </div>
