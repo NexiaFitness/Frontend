@@ -1,7 +1,7 @@
 /**
  * exerciseDetailPresentation.ts — Tokens UI detalle de ejercicio.
  *
- * Doc: docs/design/00_LEEME_PRIMERO.md
+ * Doc: DESIGN_PREMIUM.md (raíz)
  * Shared: platformPremiumPresentation.ts
  */
 

@@ -1,7 +1,7 @@
 /**
  * exercisesLibraryPresentation.ts — Tokens UI biblioteca de ejercicios (admin/entrenador).
  *
- * Doc: docs/design/00_LEEME_PRIMERO.md · docs/design/01_PREMIUM_PLATFORM_MIGRATION.md
+ * Doc: DESIGN_PREMIUM.md (raíz)
  * Shared: platformPremiumPresentation.ts · glassSurfacePresentation.ts
  */
 

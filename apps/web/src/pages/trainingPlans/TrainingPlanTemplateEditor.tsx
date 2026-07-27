@@ -1,13 +1,13 @@
 /**
- * TrainingPlanTemplateEditor — Hub de programa completo (bloques, sesiones, validate/publish).
+ * TrainingPlanTemplateEditor — Editor premium de programa de plantilla (mobile-first).
  *
- * Reutiliza PeriodBlockQualitiesStep + WeeklyStructureEditor (vía ruta dedicada).
- * Sin assign (PR6/PR7).
+ * Percepción: Programa → Semana → Sesión (no CRUD de bloques/filas).
+ * Doc: DESIGN_PREMIUM.md · templateEditorPresentation.ts
  */
 
 import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarRange, Check, Copy, Layers, Plus, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, Check, Copy } from "lucide-react";
 
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
@@ -35,7 +35,6 @@ import {
     resolveTrainingPlanTemplateLoadError,
     TEMPLATE_PUBLISH_COPY,
     TEMPLATE_STATUS_CHIP_CLASS,
-    TEMPLATE_TEMPORAL_BRIDGE_COPY,
     templatePublishSuccessMessage,
 } from "@nexia/shared";
 import type {
@@ -50,21 +49,39 @@ import { PageTitle } from "@/components/dashboard/shared";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
 import { PeriodBlockQualitiesStep } from "@/components/trainingPlans/periodization/PeriodBlockQualitiesStep";
-import { SliderLevelBadge } from "@/components/trainingPlans/periodization/SliderLevelBadge";
-import { displayTrainingPlanTemplateTitle, GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
+import { TemplateProgramPhasesPanel } from "@/components/trainingPlans/TemplateProgramPhasesPanel";
+import { TemplateProgramTimeline } from "@/components/trainingPlans/TemplateProgramTimeline";
+import {
+    TEMPLATE_EDITOR_COPY,
+    TEMPLATE_EDITOR_HEADER,
+    TEMPLATE_EDITOR_HINT,
+    TEMPLATE_EDITOR_HERO_EYEBROW,
+    TEMPLATE_EDITOR_HERO_SHELL,
+    TEMPLATE_EDITOR_HERO_STATS,
+    TEMPLATE_EDITOR_HERO_TITLE,
+    TEMPLATE_EDITOR_ICON_BACK,
+    TEMPLATE_EDITOR_PAGE,
+    TEMPLATE_EDITOR_STATUS_ROW,
+    TEMPLATE_EDITOR_TITLE_WRAP,
+    TEMPLATE_PROGRAM_DAY_LABELS,
+    formatTemplateProgramWeeks,
+    templateProgramExerciseTotal,
+} from "@/components/trainingPlans/templateEditorPresentation";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import {
+    PLATFORM_BACK_BUTTON,
+    PLATFORM_PAGE_HEADER,
+} from "@/components/ui/surface/platformPremiumPresentation";
+import { displayTrainingPlanTemplateTitle } from "@/components/trainingPlans/goalLabels";
 import { SESSION_TYPES } from "@/pages/sessionProgramming/sessionFormConstants";
+import { cn } from "@/lib/utils";
 
 type BlockModalStep = "meta" | "qualities";
 
-const DAY_OPTIONS = [
-    { value: "1", label: "Lunes" },
-    { value: "2", label: "Martes" },
-    { value: "3", label: "Miércoles" },
-    { value: "4", label: "Jueves" },
-    { value: "5", label: "Viernes" },
-    { value: "6", label: "Sábado" },
-    { value: "7", label: "Domingo" },
-];
+const DAY_OPTIONS = Object.entries(TEMPLATE_PROGRAM_DAY_LABELS).map(([value, label]) => ({
+    value,
+    label,
+}));
 
 function blocksOverlap(
     start: number,
@@ -179,6 +196,20 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         ? publicationUi.publishLoadingLabel
         : publicationUi.publishActionLabel;
 
+    const programWeekLabel = useMemo(
+        () =>
+            formatTemplateProgramWeeks(summary?.program_week_count) ??
+            formatTemplateProgramWeekCount(summary?.program_week_count),
+        [summary?.program_week_count],
+    );
+
+    const exerciseTotal = useMemo(() => templateProgramExerciseTotal(sessions), [sessions]);
+
+    const defaultBlockForSession = useMemo(() => {
+        if (blocks.length === 0) return null;
+        return [...blocks].sort((a, b) => a.program_week_start - b.program_week_start)[0] ?? null;
+    }, [blocks]);
+
     const resetBlockForm = useCallback(() => {
         setBlockForm({
             name: "",
@@ -216,6 +247,24 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         setBlockModalOpen(true);
     }, []);
 
+    const openAddSession = useCallback(() => {
+        if (blocks.length === 0) {
+            showError("Crea al menos una fase antes de añadir sesiones.");
+            openCreateBlock();
+            return;
+        }
+        const block = defaultBlockForSession;
+        if (!block) return;
+        setSessionBlockId(block.id);
+        setSessionForm({
+            sessionName: "",
+            sessionType: "training",
+            programWeek: String(block.program_week_start),
+            dayOfWeek: "1",
+        });
+        setSessionModalOpen(true);
+    }, [blocks.length, defaultBlockForSession, openCreateBlock, showError]);
+
     const handleSaveBlock = async () => {
         const payload: TemplateProgramBlockCreate = {
             name: blockForm.name.trim() || null,
@@ -234,10 +283,10 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                     blockId: editingBlock.id,
                     data: payload,
                 }).unwrap();
-                showSuccess("Bloque actualizado.");
+                showSuccess("Fase actualizada.");
             } else {
                 await createBlock({ templateId, data: payload }).unwrap();
-                showSuccess("Bloque creado.");
+                showSuccess("Fase creada.");
             }
             setBlockModalOpen(false);
             resetBlockForm();
@@ -263,6 +312,15 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
             navigate(
                 `/dashboard/training-plans/templates/${templateId}/sessions/${created.id}/edit`,
             );
+        } catch (err) {
+            showError(getMutationErrorMessage(err));
+        }
+    };
+
+    const handleDeleteSession = async (sessionId: number) => {
+        try {
+            await deleteSession({ templateId, sessionId }).unwrap();
+            showSuccess("Sesión eliminada.");
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }
@@ -323,7 +381,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         const isNotFound = isErrorTemplate && isTrainingPlanTemplateNotFoundError(templateError);
         return (
             <div className="space-y-4 px-4 py-8 lg:px-8">
-                <Button variant="ghost" size="sm" className="w-fit" onClick={handleBack}>
+                <Button variant="ghost-primary" size="sm" className="w-fit" onClick={handleBack}>
                     <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                     Biblioteca
                 </Button>
@@ -354,18 +412,23 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     const blockSaving = isCreatingBlock || isUpdatingBlock;
 
     return (
-        <div className="space-y-8 px-4 py-6 lg:px-8">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-2">
-                    <Button variant="ghost" size="sm" className="w-fit" onClick={handleBack}>
-                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+        <div className={TEMPLATE_EDITOR_PAGE}>
+            <header className={cn(PLATFORM_PAGE_HEADER, TEMPLATE_EDITOR_HEADER)}>
+                <div className={TEMPLATE_EDITOR_TITLE_WRAP}>
+                    <Button
+                        variant="ghost-primary"
+                        size="sm"
+                        className={cn("mb-2 w-fit", PLATFORM_BACK_BUTTON)}
+                        onClick={handleBack}
+                    >
+                        <ArrowLeft className={cn("h-4 w-4", TEMPLATE_EDITOR_ICON_BACK)} aria-hidden />
                         Biblioteca
                     </Button>
                     <PageTitle
                         title={displayTrainingPlanTemplateTitle(template.name)}
-                        subtitle="Programa por semanas — publica cuando esté listo para asignar"
+                        subtitle={TEMPLATE_EDITOR_COPY.pageSubtitle}
                     />
-                    <div className="flex flex-wrap gap-2 text-sm">
+                    <div className={TEMPLATE_EDITOR_STATUS_ROW}>
                         {statusChips.map((chip) => (
                             <span
                                 key={chip.key}
@@ -381,14 +444,9 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                                 )}
                             </span>
                         ))}
-                        {formatTemplateProgramWeekCount(summary?.program_week_count) ? (
-                            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
-                                {formatTemplateProgramWeekCount(summary?.program_week_count)}
-                            </span>
-                        ) : null}
                     </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
                     <Button
                         variant="outline"
                         size="sm"
@@ -410,9 +468,24 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         </Button>
                     ) : null}
                 </div>
-            </div>
+            </header>
 
-            <Alert variant="info">{TEMPLATE_TEMPORAL_BRIDGE_COPY}</Alert>
+            <p className={TEMPLATE_EDITOR_HINT}>{TEMPLATE_EDITOR_COPY.temporalHint}</p>
+
+            {programWeekLabel ? (
+                <article className={TEMPLATE_EDITOR_HERO_SHELL}>
+                    <NexiaGlassAccentRim />
+                    <p className={TEMPLATE_EDITOR_HERO_EYEBROW}>
+                        {TEMPLATE_EDITOR_COPY.programHeroEyebrow}
+                    </p>
+                    <h2 className={TEMPLATE_EDITOR_HERO_TITLE}>{programWeekLabel}</h2>
+                    <p className={TEMPLATE_EDITOR_HERO_STATS}>
+                        <span>{TEMPLATE_EDITOR_COPY.programHeroSessions(sessions.length)}</span>
+                        <span aria-hidden>·</span>
+                        <span>{TEMPLATE_EDITOR_COPY.programHeroExercises(exerciseTotal)}</span>
+                    </p>
+                </article>
+            ) : null}
 
             {summary?.duration_mismatch_warning ? (
                 <Alert variant="warning">{summary.duration_mismatch_warning}</Alert>
@@ -452,183 +525,31 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                 </Alert>
             ) : null}
 
-            <section className="space-y-4">
-                <div className="flex items-center justify-between gap-3">
-                    <h2 className="flex items-center gap-2 text-lg font-semibold">
-                        <Layers className="h-5 w-5 text-primary" aria-hidden />
-                        Bloques de periodización
-                    </h2>
-                    <Button
-                        variant="outline-primary"
-                        size="sm"
-                        onClick={openCreateBlock}
-                        disabled={isArchived}
-                    >
-                        <Plus className="mr-1 h-4 w-4" aria-hidden />
-                        Añadir bloque
-                    </Button>
-                </div>
+            <TemplateProgramTimeline
+                sessions={sessions}
+                isArchived={isArchived}
+                onEditSession={(sessionId) =>
+                    navigate(
+                        `/dashboard/training-plans/templates/${templateId}/sessions/${sessionId}/edit`,
+                    )
+                }
+                onDeleteSession={(sessionId) => void handleDeleteSession(sessionId)}
+                onAddSession={openAddSession}
+            />
 
-                {blocks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        Aún no hay bloques. Crea el primero para definir semanas de programa y
-                        cualidades.
-                    </p>
-                ) : (
-                    <ul className="space-y-3">
-                        {blocks.map((block) => (
-                            <li
-                                key={block.id}
-                                className="rounded-lg border border-border bg-card p-4 shadow-sm"
-                            >
-                                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                    <div>
-                                        <p className="font-medium text-foreground">
-                                            {block.name ||
-                                                (block.goal &&
-                                                    (GOAL_LABEL_ES[block.goal] ?? block.goal)) ||
-                                                `Bloque ${block.id}`}
-                                        </p>
-                                        <p className="mt-1 text-sm text-muted-foreground">
-                                            Semanas {block.program_week_start}–
-                                            {block.program_week_end}
-                                        </p>
-                                        <div className="mt-2 flex flex-wrap gap-2">
-                                            <SliderLevelBadge
-                                                level={block.volume_level}
-                                                tone="volume"
-                                                prefix="Vol"
-                                            />
-                                            <SliderLevelBadge
-                                                level={block.intensity_level}
-                                                tone="intensity"
-                                                prefix="Int"
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-wrap gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/dashboard/training-plans/templates/${templateId}/blocks/${block.id}/weekly-structure`,
-                                                )
-                                            }
-                                        >
-                                            <CalendarRange className="mr-1 h-4 w-4" aria-hidden />
-                                            Estructura semanal
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => openEditBlock(block)}
-                                            disabled={isArchived}
-                                        >
-                                            <Pencil className="mr-1 h-4 w-4" aria-hidden />
-                                            Editar
-                                        </Button>
-                                        <Button
-                                            variant="outline-destructive"
-                                            size="sm"
-                                            onClick={() => setDeleteBlockTarget(block)}
-                                            disabled={isArchived}
-                                        >
-                                            <Trash2 className="mr-1 h-4 w-4" aria-hidden />
-                                            Eliminar
-                                        </Button>
-                                    </div>
-                                </div>
-                            </li>
-                        ))}
-                    </ul>
-                )}
-            </section>
-
-            <section className="space-y-4">
-                <h2 className="text-lg font-semibold">Sesiones del programa</h2>
-                {blocks.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        Crea un bloque antes de añadir sesiones.
-                    </p>
-                ) : (
-                    <>
-                        <div className="flex flex-wrap gap-2">
-                            {blocks.map((block) => (
-                                <Button
-                                    key={block.id}
-                                    variant="outline"
-                                    size="sm"
-                                    disabled={isArchived}
-                                    onClick={() => {
-                                        setSessionBlockId(block.id);
-                                        setSessionForm({
-                                            sessionName: "",
-                                            sessionType: "training",
-                                            programWeek: String(block.program_week_start),
-                                            dayOfWeek: "1",
-                                        });
-                                        setSessionModalOpen(true);
-                                    }}
-                                >
-                                    <Plus className="mr-1 h-4 w-4" aria-hidden />
-                                    Sesión en bloque {block.program_week_start}–
-                                    {block.program_week_end}
-                                </Button>
-                            ))}
-                        </div>
-                        {sessions.length > 0 ? (
-                            <ul className="divide-y divide-border rounded-lg border border-border bg-card">
-                                {sessions.map((s) => (
-                                    <li
-                                        key={s.id}
-                                        className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between"
-                                    >
-                                        <div>
-                                            <p className="font-medium">{s.session_name}</p>
-                                            <p className="text-sm text-muted-foreground">
-                                                Semana {s.program_week} · día {s.day_of_week} ·{" "}
-                                                {s.exercise_count} ejercicios
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                variant="outline-primary"
-                                                size="sm"
-                                                onClick={() =>
-                                                    navigate(
-                                                        `/dashboard/training-plans/templates/${templateId}/sessions/${s.id}/edit`,
-                                                    )
-                                                }
-                                            >
-                                                Editar contenido
-                                            </Button>
-                                            <Button
-                                                variant="outline-destructive"
-                                                size="sm"
-                                                disabled={isArchived}
-                                                onClick={async () => {
-                                                    try {
-                                                        await deleteSession({
-                                                            templateId,
-                                                            sessionId: s.id,
-                                                        }).unwrap();
-                                                        showSuccess("Sesión eliminada.");
-                                                    } catch (err) {
-                                                        showError(getMutationErrorMessage(err));
-                                                    }
-                                                }}
-                                            >
-                                                Eliminar
-                                            </Button>
-                                        </div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : null}
-                    </>
-                )}
-            </section>
+            <TemplateProgramPhasesPanel
+                blocks={blocks}
+                isArchived={isArchived}
+                defaultOpen={blocks.length <= 1}
+                onAddPhase={openCreateBlock}
+                onEditPhase={openEditBlock}
+                onDeletePhase={setDeleteBlockTarget}
+                onOpenWeeklyDays={(blockId) =>
+                    navigate(
+                        `/dashboard/training-plans/templates/${templateId}/blocks/${blockId}/weekly-structure`,
+                    )
+                }
+            />
 
             <BaseModal
                 isOpen={blockModalOpen}
@@ -636,7 +557,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                     setBlockModalOpen(false);
                     resetBlockForm();
                 }}
-                title={editingBlock ? "Editar bloque" : "Nuevo bloque"}
+                title={editingBlock ? "Editar fase" : "Nueva fase"}
                 maxWidth="md"
             >
                 {blockModalStep === "meta" ? (
@@ -675,11 +596,11 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         </div>
                         {overlapDetected ? (
                             <Alert variant="warning">
-                                El rango se solapa con otro bloque del programa.
+                                El rango se solapa con otra fase del programa.
                             </Alert>
                         ) : null}
                         <Input
-                            placeholder="Nombre opcional"
+                            placeholder="Nombre opcional (ej. Acumulación)"
                             value={blockForm.name}
                             onChange={(e) => setBlockForm({ ...blockForm, name: e.target.value })}
                         />
@@ -768,7 +689,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                             }))
                         }
                         onContinue={handleSaveBlock}
-                        continueLabel={editingBlock ? "Guardar bloque" : "Crear bloque"}
+                        continueLabel={editingBlock ? "Guardar fase" : "Crear fase"}
                     />
                 )}
                 {blockModalStep === "qualities" ? (
@@ -789,17 +710,30 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                 isOpen={sessionModalOpen}
                 onClose={() => setSessionModalOpen(false)}
                 title="Nueva sesión"
+                description="Elige semana y día; después añadirás ejercicios."
                 maxWidth="sm"
             >
                 <div className="space-y-4 pt-2">
+                    {blocks.length > 1 ? (
+                        <FormSelect
+                            label="Fase"
+                            value={String(sessionBlockId ?? "")}
+                            onChange={(e) => setSessionBlockId(Number(e.target.value))}
+                            options={blocks.map((b) => ({
+                                value: String(b.id),
+                                label: `Semanas ${b.program_week_start}–${b.program_week_end}`,
+                            }))}
+                        />
+                    ) : null}
                     <Input
-                        placeholder="Nombre de sesión"
+                        placeholder="Nombre (opcional, ej. Empuje superior)"
                         value={sessionForm.sessionName}
                         onChange={(e) =>
                             setSessionForm({ ...sessionForm, sessionName: e.target.value })
                         }
                     />
                     <FormSelect
+                        label="Tipo"
                         value={sessionForm.sessionType}
                         onChange={(e) =>
                             setSessionForm({ ...sessionForm, sessionType: e.target.value })
@@ -807,15 +741,19 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         options={SESSION_TYPES}
                     />
                     <div className="grid grid-cols-2 gap-3">
-                        <Input
-                            type="number"
-                            min={1}
-                            value={sessionForm.programWeek}
-                            onChange={(e) =>
-                                setSessionForm({ ...sessionForm, programWeek: e.target.value })
-                            }
-                        />
+                        <div>
+                            <label className="mb-1 block text-sm font-medium">Semana</label>
+                            <Input
+                                type="number"
+                                min={1}
+                                value={sessionForm.programWeek}
+                                onChange={(e) =>
+                                    setSessionForm({ ...sessionForm, programWeek: e.target.value })
+                                }
+                            />
+                        </div>
                         <FormSelect
+                            label="Día"
                             value={sessionForm.dayOfWeek}
                             onChange={(e) =>
                                 setSessionForm({ ...sessionForm, dayOfWeek: e.target.value })
@@ -829,7 +767,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         onClick={handleCreateSession}
                         isLoading={isCreatingSession}
                     >
-                        Crear y abrir constructor
+                        Crear y editar ejercicios
                     </Button>
                 </div>
             </BaseModal>
@@ -837,12 +775,12 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
             <BaseModal
                 isOpen={!!deleteBlockTarget}
                 onClose={() => setDeleteBlockTarget(null)}
-                title="Eliminar bloque"
+                title="Eliminar fase"
                 iconType="danger"
                 maxWidth="sm"
             >
                 <p className="text-sm text-muted-foreground">
-                    Se eliminarán también sesiones y estructura semanal asociadas.
+                    Se eliminarán también las sesiones de esta fase.
                 </p>
                 <div className="flex justify-end gap-2 pt-4">
                     <Button variant="ghost" size="sm" onClick={() => setDeleteBlockTarget(null)}>
@@ -858,7 +796,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                                     templateId,
                                     blockId: deleteBlockTarget.id,
                                 }).unwrap();
-                                showSuccess("Bloque eliminado.");
+                                showSuccess("Fase eliminada.");
                                 setDeleteBlockTarget(null);
                             } catch (err) {
                                 showError(getMutationErrorMessage(err));
