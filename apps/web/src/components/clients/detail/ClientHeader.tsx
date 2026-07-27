@@ -8,6 +8,11 @@ import React, { useState } from "react";
 import { Pencil } from "lucide-react";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
+import {
+    labelClientExperience,
+    labelSessionDuration,
+    labelTrainingGoal,
+} from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
@@ -47,9 +52,7 @@ interface ClientHeaderProps {
     clientId?: number;
     onEditProfile?: () => void;
     breadcrumbItems?: BreadcrumbItem[];
-    hasActivePlan?: boolean;
     onPlanificar?: () => void;
-    onOpenUseTemplate?: () => void;
     onSaveQuickNote?: (text: string) => Promise<boolean>;
     isSavingQuickNote?: boolean;
 }
@@ -59,9 +62,7 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     clientId: clientIdProp,
     onEditProfile,
     breadcrumbItems,
-    hasActivePlan = false,
     onPlanificar,
-    onOpenUseTemplate,
     onSaveQuickNote,
     isSavingQuickNote = false,
 }) => {
@@ -95,26 +96,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
             month: "long",
             day: "numeric",
         });
-    };
-
-    const translateObjective = (objetivo?: string | null): string => {
-        if (!objetivo) return "No definido";
-        return objetivo;
-    };
-
-    const translateExperience = (exp?: string | null): string => {
-        if (!exp) return "No especificada";
-        return exp;
-    };
-
-    const translateSessionDuration = (duration?: string | null): string => {
-        if (!duration) return "No especificada";
-        const translations: Record<string, string> = {
-            short_lt_1h: "Menos de 1h",
-            medium_1h_to_1h30: "1h-1h30'",
-            long_gt_1h30: "Más de 1h30'",
-        };
-        return translations[duration] || duration;
     };
 
     const formatTrainingDays = (days?: string[] | null): string => {
@@ -151,9 +132,9 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
         .join(" · ");
 
     const preferences = [
-        { label: "Objetivo", value: translateObjective(client.objetivo_entrenamiento) },
-        { label: "Nivel de experiencia", value: translateExperience(client.experiencia) },
-        { label: "Duración sesiones", value: translateSessionDuration(client.session_duration) },
+        { label: "Objetivo", value: labelTrainingGoal(client.objetivo_entrenamiento) },
+        { label: "Nivel de experiencia", value: labelClientExperience(client.experiencia) },
+        { label: "Duración sesiones", value: labelSessionDuration(client.session_duration) },
         { label: "Días de entreno", value: formatTrainingDays(client.training_days) },
     ];
 
@@ -169,17 +150,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     aria-label="Planificar"
                 >
                     Planificar
-                </Button>
-            )}
-            {!hasActivePlan && onOpenUseTemplate && (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className={CLIENT_HEADER_ACTION_BUTTON_MOBILE}
-                    onClick={onOpenUseTemplate}
-                    aria-label="Usar plantilla"
-                >
-                    Usar plantilla
                 </Button>
             )}
             {CLIENT_HEADER_SHOW_GENERATE_REPORT && (

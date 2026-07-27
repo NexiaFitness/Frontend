@@ -7,7 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { CalendarRange, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { Badge } from "@/components/ui/Badge";
-import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
+import { LoadingSpinner } from "@/components/ui/feedback";
 import type { OverviewPlanCompact } from "@/hooks/clients/clientOverviewPulse.types";
 import {
     OVERVIEW_ACTION_CARD,
@@ -23,8 +23,7 @@ export interface ClientOverviewPlanCardProps {
     isLoading?: boolean;
     embedded?: boolean;
     planAlignedWithObjective?: boolean;
-    onOpenCreatePlan?: () => void;
-    onOpenUseTemplate?: () => void;
+    onPlanificar?: () => void;
     onViewPlan?: (planId: number) => void;
 }
 
@@ -34,8 +33,7 @@ export const ClientOverviewPlanCard: React.FC<ClientOverviewPlanCardProps> = ({
     isLoading = false,
     embedded = false,
     planAlignedWithObjective = false,
-    onOpenCreatePlan,
-    onOpenUseTemplate,
+    onPlanificar,
     onViewPlan,
 }) => {
     const navigate = useNavigate();
@@ -70,18 +68,11 @@ export const ClientOverviewPlanCard: React.FC<ClientOverviewPlanCardProps> = ({
                             {OVERVIEW_ZONE_TITLES.planEmptyDetail}
                         </p>
                     </div>
-                    <div className="flex flex-wrap gap-2">
-                        {onOpenCreatePlan && (
-                            <Button variant="primary" size="sm" onClick={onOpenCreatePlan}>
-                                Crear plan
-                            </Button>
-                        )}
-                        {onOpenUseTemplate && (
-                            <Button variant="outline" size="sm" onClick={onOpenUseTemplate}>
-                                Usar plantilla
-                            </Button>
-                        )}
-                    </div>
+                    {onPlanificar ? (
+                        <Button variant="primary" size="sm" className="w-fit" onClick={onPlanificar}>
+                            Planificar
+                        </Button>
+                    ) : null}
                 </div>
             </div>
         );

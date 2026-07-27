@@ -35,6 +35,7 @@ import {
     resolveTrainingPlanTemplateLoadError,
     TEMPLATE_PUBLISH_COPY,
     TEMPLATE_STATUS_CHIP_CLASS,
+    TEMPLATE_TEMPORAL_BRIDGE_COPY,
     templatePublishSuccessMessage,
 } from "@nexia/shared";
 import type {
@@ -362,7 +363,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                     </Button>
                     <PageTitle
                         title={displayTrainingPlanTemplateTitle(template.name)}
-                        subtitle="Editor de programa completo"
+                        subtitle="Programa por semanas — publica cuando esté listo para asignar"
                     />
                     <div className="flex flex-wrap gap-2 text-sm">
                         {statusChips.map((chip) => (
@@ -407,17 +408,11 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         >
                             {publishLoadingLabel}
                         </Button>
-                    ) : publicationUi.showPublishedStatus ? (
-                        <span
-                            className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-medium text-success"
-                            aria-live="polite"
-                        >
-                            {publicationUi.publishedStatusLabel}
-                            <Check className="h-4 w-4" aria-hidden />
-                        </span>
                     ) : null}
                 </div>
             </div>
+
+            <Alert variant="info">{TEMPLATE_TEMPORAL_BRIDGE_COPY}</Alert>
 
             {summary?.duration_mismatch_warning ? (
                 <Alert variant="warning">{summary.duration_mismatch_warning}</Alert>
@@ -606,7 +601,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                                                     )
                                                 }
                                             >
-                                                Constructor
+                                                Editar contenido
                                             </Button>
                                             <Button
                                                 variant="outline-destructive"

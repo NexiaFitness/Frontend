@@ -6,33 +6,17 @@
  */
 
 import {
+    TRAINING_GOAL_LABEL_ES,
+    labelTrainingGoal,
+} from "@nexia/shared";
+import {
     TRAINING_PLAN_GOAL,
     type TrainingPlan,
     type TrainingPlanTemplate,
 } from "@nexia/shared/types/training";
 
-/**
- * Labels en español para cada valor de goal (snake_case)
- */
-export const GOAL_LABEL_ES: Record<string, string> = {
-    // snake_case keys (nuevo estándar backend)
-    hypertrophy: "Hipertrofia",
-    strength: "Fuerza",
-    power: "Potencia",
-    endurance: "Resistencia",
-    weight_loss: "Pérdida de peso",
-    general_fitness: "Fitness general",
-    rehabilitation: "Rehabilitación",
-    sport_performance: "Rendimiento deportivo",
-    // Legacy keys (para compatibilidad)
-    "Muscle Gain": "Hipertrofia",
-    Strength: "Fuerza",
-    "Weight Loss": "Pérdida de peso",
-    Endurance: "Resistencia",
-    "General Fitness": "Fitness general",
-    Rehabilitation: "Rehabilitación",
-    Performance: "Rendimiento",
-};
+/** @deprecated Use labelTrainingGoal from @nexia/shared */
+export const GOAL_LABEL_ES: Record<string, string> = TRAINING_GOAL_LABEL_ES;
 
 const CHIP_NEUTRAL = "bg-muted/50 text-muted-foreground";
 
@@ -113,7 +97,7 @@ export function toneFromGoal(goal: string | null | undefined): string {
 export function chipFromGoal(goal: string | null | undefined): TrainingCategoryChip[] {
     const g = goal?.trim() ?? "";
     if (!g) return [];
-    const label = GOAL_LABEL_ES[g] ?? GOAL_LABEL_ES[canonicalGoal(g)] ?? g;
+    const label = labelTrainingGoal(g);
     const toneClass = toneFromGoal(goal);
     return [{ label, toneClass }];
 }

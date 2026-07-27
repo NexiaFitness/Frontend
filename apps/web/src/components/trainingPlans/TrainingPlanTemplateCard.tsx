@@ -2,7 +2,7 @@
  * TrainingPlanTemplateCard — Card de plantilla (biblioteca, greenfield v3).
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
@@ -10,10 +10,12 @@ import type { TrainingPlanTemplate } from "@nexia/shared/types/training";
 import {
     formatTemplateDurationHint,
     formatTemplateProgramWeekCount,
-    labelTemplateLifecycle,
-    labelTemplateValidation,
+    getTemplateLibraryStatusChips,
+    resolveTemplateLibraryCardActions,
+    TEMPLATE_STATUS_CHIP_CLASS,
 } from "@nexia/shared";
 import { categoryChipsFromTemplate, displayTrainingPlanTemplateTitle } from "./goalLabels";
+import { AssignTemplateModal } from "./AssignTemplateModal";
 
 const CARD_BASE =
     "rounded-xl border border-border bg-card p-5 text-card-foreground shadow-lg transition-all duration-200 hover:shadow-xl";
@@ -36,12 +38,31 @@ export interface TrainingPlanTemplateCardProps {
 
 export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> = ({ template }) => {
     const navigate = useNavigate();
+    const [assignOpen, setAssignOpen] = useState(false);
 
     const categoryChips = useMemo(() => categoryChipsFromTemplate(template), [template]);
 
     const displayTitle = useMemo(
         () => displayTrainingPlanTemplateTitle(template.name),
         [template.name],
+    );
+
+    const statusChips = useMemo(
+        () =>
+            getTemplateLibraryStatusChips({
+                lifecycle_status: template.lifecycle_status,
+                validation_status: template.validation_status,
+            }),
+        [template.lifecycle_status, template.validation_status],
+    );
+
+    const cardActions = useMemo(
+        () =>
+            resolveTemplateLibraryCardActions({
+                lifecycle_status: template.lifecycle_status,
+                validation_status: template.validation_status,
+            }),
+        [template.lifecycle_status, template.validation_status],
     );
 
     const descriptionText = template.description?.trim() ?? "";
@@ -55,8 +76,28 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
             ? Math.round(Math.min(100, Math.max(0, template.success_rate)))
             : null;
 
-    const handleViewTemplate = (): void => {
+    const handleOpenDetail = (): void => {
+        navigate(`/dashboard/training-plans/templates/${template.id}`);
+    };
+
+    const handleOpenEditor = (): void => {
         navigate(`/dashboard/training-plans/templates/${template.id}/edit`);
+    };
+
+    const handlePrimary = (): void => {
+        if (cardActions.primaryIntent === "assign") {
+            setAssignOpen(true);
+            return;
+        }
+        handleOpenEditor();
+    };
+
+    const handleSecondary = (): void => {
+        if (cardActions.secondaryLabel === "Ver detalle") {
+            handleOpenDetail();
+            return;
+        }
+        handleOpenEditor();
     };
 
     const levelBadge =
@@ -72,88 +113,117 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
         ) : null;
 
     return (
-        <article className={cn(CARD_BASE, "flex h-full flex-col gap-4")}>
-            <div className="flex min-h-0 flex-1 flex-col gap-4">
-                <div className="min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                        <h3 className="line-clamp-2 min-w-0 flex-1 text-base font-semibold text-foreground">
-                            {displayTitle}
-                        </h3>
-                        {levelBadge}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                        <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            {labelTemplateLifecycle(template.lifecycle_status)}
-                        </span>
-                        <span className="inline-flex rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                            {labelTemplateValidation(template.validation_status)}
-                        </span>
-                    </div>
-                    {categoryChips.length > 0 ? (
+        <>
+            <article className={cn(CARD_BASE, "flex h-full flex-col gap-4")}>
+                <div className="flex min-h-0 flex-1 flex-col gap-4">
+                    <div className="min-w-0">
+                        <div className="flex items-start justify-between gap-2">
+                            <button
+                                type="button"
+                                onClick={handleOpenDetail}
+                                className="line-clamp-2 min-w-0 flex-1 text-left text-base font-semibold text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+                            >
+                                {displayTitle}
+                            </button>
+                            {levelBadge}
+                        </div>
                         <div className="mt-2 flex flex-wrap gap-2">
-                            {categoryChips.map((chip, i) => (
+                            {statusChips.map((chip) => (
                                 <span
-                                    key={`${chip.label}-${i}`}
+                                    key={chip.key}
                                     className={cn(
-                                        "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
-                                        chip.toneClass,
+                                        "inline-flex text-xs font-medium",
+                                        TEMPLATE_STATUS_CHIP_CLASS[chip.tone],
                                     )}
                                 >
                                     {chip.label}
                                 </span>
                             ))}
                         </div>
-                    ) : null}
-                </div>
-
-                {descriptionText ? (
-                    <p className="line-clamp-2 text-sm text-muted-foreground">{descriptionText}</p>
-                ) : null}
-
-                {durationLabel ? (
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                        <li>{durationLabel}</li>
-                    </ul>
-                ) : null}
-
-                <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-muted-foreground">
-                        <span>Veces usada</span>
-                        <span className="tabular-nums text-foreground">{template.usage_count}</span>
+                        {categoryChips.length > 0 ? (
+                            <div className="mt-2 flex flex-wrap gap-2">
+                                {categoryChips.map((chip, i) => (
+                                    <span
+                                        key={`${chip.label}-${i}`}
+                                        className={cn(
+                                            "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                                            chip.toneClass,
+                                        )}
+                                    >
+                                        {chip.label}
+                                    </span>
+                                ))}
+                            </div>
+                        ) : null}
                     </div>
-                    {successPct != null ? (
-                        <>
-                            <div className="flex justify-between text-sm text-muted-foreground">
-                                <span>Tasa de éxito</span>
-                                <span className="tabular-nums text-foreground">{successPct}%</span>
-                            </div>
-                            <div
-                                className="h-2 w-full overflow-hidden rounded-full bg-muted"
-                                role="progressbar"
-                                aria-valuenow={successPct}
-                                aria-valuemin={0}
-                                aria-valuemax={100}
-                            >
-                                <div
-                                    className="h-full rounded-full bg-primary transition-all duration-300"
-                                    style={{ width: `${successPct}%` }}
-                                />
-                            </div>
-                        </>
-                    ) : null}
-                </div>
-            </div>
 
-            <div className="mt-auto shrink-0 border-t border-border pt-4">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full border-primary/30 text-primary hover:bg-primary/10"
-                    onClick={handleViewTemplate}
-                >
-                    Editar programa
-                </Button>
-            </div>
-        </article>
+                    {descriptionText ? (
+                        <p className="line-clamp-2 text-sm text-muted-foreground">{descriptionText}</p>
+                    ) : null}
+
+                    {durationLabel ? (
+                        <ul className="space-y-1 text-sm text-muted-foreground">
+                            <li>{durationLabel}</li>
+                        </ul>
+                    ) : null}
+
+                    <div className="space-y-2">
+                        <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>Veces usada</span>
+                            <span className="tabular-nums text-foreground">{template.usage_count}</span>
+                        </div>
+                        {successPct != null ? (
+                            <>
+                                <div className="flex justify-between text-sm text-muted-foreground">
+                                    <span>Tasa de éxito</span>
+                                    <span className="tabular-nums text-foreground">{successPct}%</span>
+                                </div>
+                                <div
+                                    className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                                    role="progressbar"
+                                    aria-valuenow={successPct}
+                                    aria-valuemin={0}
+                                    aria-valuemax={100}
+                                >
+                                    <div
+                                        className="h-full rounded-full bg-primary transition-all duration-300"
+                                        style={{ width: `${successPct}%` }}
+                                    />
+                                </div>
+                            </>
+                        ) : null}
+                    </div>
+                </div>
+
+                <div className="mt-auto shrink-0 space-y-2 border-t border-border pt-4">
+                    {!cardActions.assignEnabled && cardActions.assignDisabledReason ? (
+                        <p className="text-xs text-muted-foreground">{cardActions.assignDisabledReason}</p>
+                    ) : null}
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-full"
+                        onClick={handlePrimary}
+                    >
+                        {cardActions.primaryLabel}
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                        onClick={handleSecondary}
+                    >
+                        {cardActions.secondaryLabel}
+                    </Button>
+                </div>
+            </article>
+
+            <AssignTemplateModal
+                open={assignOpen}
+                onClose={() => setAssignOpen(false)}
+                templateId={template.id}
+                templateName={template.name}
+            />
+        </>
     );
 };

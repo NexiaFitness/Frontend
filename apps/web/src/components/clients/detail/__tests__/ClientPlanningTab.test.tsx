@@ -47,15 +47,15 @@ describe("ClientPlanningTab", () => {
         });
 
         it(
-            "muestra CTA Crear plan y llama a onOpenCreatePlan al hacer clic",
+            "muestra CTA Planificar y llama a onPlanificar al hacer clic",
             async () => {
-                const onOpenCreatePlan = vi.fn();
+                const onPlanificar = vi.fn();
                 render(
                     <ClientPlanningTab
                         clientId={1}
                         trainingPlans={[]}
                         isLoadingPlans={false}
-                        onOpenCreatePlan={onOpenCreatePlan}
+                        onPlanificar={onPlanificar}
                     />
                 );
 
@@ -66,9 +66,9 @@ describe("ClientPlanningTab", () => {
                     { timeout: 10000 }
                 );
 
-                expect(screen.getByRole("button", { name: /crear plan/i })).toBeInTheDocument();
-                await userEvent.click(screen.getByRole("button", { name: /crear plan/i }));
-                expect(onOpenCreatePlan).toHaveBeenCalledTimes(1);
+                expect(screen.getByRole("button", { name: /planificar/i })).toBeInTheDocument();
+                await userEvent.click(screen.getByRole("button", { name: /planificar/i }));
+                expect(onPlanificar).toHaveBeenCalledTimes(1);
             },
             12000
         );

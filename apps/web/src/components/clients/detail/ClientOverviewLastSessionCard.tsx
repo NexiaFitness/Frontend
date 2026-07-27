@@ -7,6 +7,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { CalendarCheck, ChevronRight } from "lucide-react";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import type { TrainingSession } from "@nexia/shared/types/training";
+import { labelSessionType } from "@nexia/shared";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/buttons";
 import {
@@ -75,7 +76,9 @@ export const ClientOverviewLastSessionCard: React.FC<ClientOverviewLastSessionCa
     }
 
     const sessionLabel =
-        session.session_type || session.session_name || "Sesión";
+        labelSessionType(session.session_type) ||
+        session.session_name ||
+        "Sesión";
 
     return (
         <div

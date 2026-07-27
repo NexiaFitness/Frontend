@@ -37,6 +37,7 @@ import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
+import { PlanificarClientChoiceModal } from "@/components/clients/detail/modals/PlanificarClientChoiceModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
@@ -140,27 +141,29 @@ export const ClientDetail: React.FC = () => {
 
     const location = useLocation();
 
-    const handlePlanificar = useCallback(() => {
-        if (hasActivePlan) {
-            setActiveTab("planning");
-        } else {
-            navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
-                state: { from: location.pathname },
-            });
-        }
-    }, [hasActivePlan, setActiveTab, navigate, clientId, location.pathname]);
-
-    // Modales de planificación: Seleccionar plantilla → Asignar plantilla al cliente
+    const [planificarChoiceOpen, setPlanificarChoiceOpen] = useState(false);
     const [selectTemplateModalOpen, setSelectTemplateModalOpen] = useState(false);
     const [assignTemplateModalOpen, setAssignTemplateModalOpen] = useState(false);
     const [selectedTemplateId, setSelectedTemplateId] = useState<number | null>(null);
     const [selectedTemplateName, setSelectedTemplateName] = useState<string>("");
 
-
+    const handlePlanificar = useCallback(() => {
+        if (hasActivePlan) {
+            setActiveTab("planning");
+        } else {
+            setPlanificarChoiceOpen(true);
+        }
+    }, [hasActivePlan, setActiveTab]);
 
     const handleOpenUseTemplate = useCallback(() => {
         setSelectTemplateModalOpen(true);
     }, []);
+
+    const handleCreateCustomPlan = useCallback(() => {
+        navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
+            state: { from: location.pathname },
+        });
+    }, [navigate, clientId, location.pathname]);
 
     const handleTemplateSelected = useCallback((templateId: number, templateName: string) => {
         setSelectedTemplateId(templateId);
@@ -274,10 +277,7 @@ export const ClientDetail: React.FC = () => {
                         clientId={clientId}
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
-                        onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
-                            state: { from: location.pathname },
-                        })}
-                        onOpenUseTemplate={handleOpenUseTemplate}
+                        onPlanificar={handlePlanificar}
                         onViewPlan={handleViewPlan}
                     />
                 );
@@ -303,10 +303,7 @@ export const ClientDetail: React.FC = () => {
                         trainingPlans={trainingPlans ?? []}
                         isLoadingPlans={isLoadingPlans}
                         focusPlanId={planningFocusPlanId}
-                        onOpenCreatePlan={() => navigate(`/dashboard/training-plans/create?clientId=${clientId}`, {
-                            state: { from: location.pathname },
-                        })}
-                        onOpenUseTemplate={handleOpenUseTemplate}
+                        onPlanificar={handlePlanificar}
                     />
                 );
             case "injuries":
@@ -323,9 +320,7 @@ export const ClientDetail: React.FC = () => {
                 clientId={clientId}
                 onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                 breadcrumbItems={breadcrumbItems}
-                hasActivePlan={hasActivePlan}
                 onPlanificar={handlePlanificar}
-                onOpenUseTemplate={handleOpenUseTemplate}
                 onSaveQuickNote={saveQuickNote}
                 isSavingQuickNote={isSavingQuickNote}
             />
@@ -342,6 +337,14 @@ export const ClientDetail: React.FC = () => {
             <div className="pt-2 pb-8">
                 {renderTabContent()}
             </div>
+
+            <PlanificarClientChoiceModal
+                open={planificarChoiceOpen}
+                onClose={() => setPlanificarChoiceOpen(false)}
+                clientName={clientName}
+                onUseTemplate={handleOpenUseTemplate}
+                onCreateCustomPlan={handleCreateCustomPlan}
+            />
 
             <SelectTemplateModal
                 open={selectTemplateModalOpen}

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
     getTemplateEditorStatusChips,
+    isTemplateAssignable,
+    resolveTemplateLibraryCardActions,
     resolveTemplatePublicationUi,
     TEMPLATE_PUBLISH_COPY,
 } from "./templateProgramPresentation";
@@ -66,5 +68,44 @@ describe("getTemplateEditorStatusChips", () => {
             validation_status: "not_validated",
         });
         expect(chips.some((c) => c.key === "pending-republish")).toBe(true);
+    });
+});
+
+describe("resolveTemplateLibraryCardActions", () => {
+    it("published in sync prioritizes assign", () => {
+        const actions = resolveTemplateLibraryCardActions({
+            lifecycle_status: "published",
+            validation_status: "valid",
+        });
+        expect(actions.primaryIntent).toBe("assign");
+        expect(actions.assignEnabled).toBe(true);
+        expect(actions.primaryLabel).toBe("Asignar a cliente");
+    });
+
+    it("draft shows continue edit with assign disabled", () => {
+        const actions = resolveTemplateLibraryCardActions({
+            lifecycle_status: "draft",
+            validation_status: "not_validated",
+        });
+        expect(actions.primaryIntent).toBe("continue_edit");
+        expect(actions.assignEnabled).toBe(false);
+        expect(actions.assignDisabledReason).toContain("Publica");
+    });
+});
+
+describe("isTemplateAssignable", () => {
+    it("returns true only for published valid", () => {
+        expect(
+            isTemplateAssignable({
+                lifecycle_status: "published",
+                validation_status: "valid",
+            }),
+        ).toBe(true);
+        expect(
+            isTemplateAssignable({
+                lifecycle_status: "draft",
+                validation_status: "valid",
+            }),
+        ).toBe(false);
     });
 });

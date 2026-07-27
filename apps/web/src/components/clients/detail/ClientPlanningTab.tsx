@@ -44,8 +44,7 @@ interface ClientPlanningTabProps {
     trainingPlans?: TrainingPlan[];
     isLoadingPlans?: boolean;
     focusPlanId?: number | null;
-    onOpenCreatePlan?: () => void;
-    onOpenUseTemplate?: () => void;
+    onPlanificar?: () => void;
 }
 
 function toActivePlanShape(plan: TrainingPlan): ActivePlanByClientOut {
@@ -61,7 +60,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     trainingPlans: _trainingPlans = [],
     isLoadingPlans = false,
     focusPlanId = null,
-    onOpenCreatePlan,
+    onPlanificar,
 }) => {
     const navigate = useNavigate();
     const [, setSearchParams] = useSearchParams();
@@ -215,18 +214,18 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                     Sin plan activo
                 </p>
                 <p className="mb-6 text-sm text-muted-foreground">
-                    Este cliente no tiene un plan de entrenamiento activo.
-                    Crea uno para empezar a planificar.
+                    Usa Planificar en la cabecera para asignar una plantilla o crear un plan
+                    personalizado.
                 </p>
-                {onOpenCreatePlan && (
+                {onPlanificar ? (
                     <Button
                         variant="primary"
-                        onClick={onOpenCreatePlan}
-                        aria-label="Crear plan de entrenamiento"
+                        onClick={onPlanificar}
+                        aria-label="Planificar entrenamiento"
                     >
-                        Crear plan
+                        Planificar
                     </Button>
-                )}
+                ) : null}
             </div>
         );
     }

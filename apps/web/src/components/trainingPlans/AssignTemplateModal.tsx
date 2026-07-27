@@ -11,6 +11,10 @@ import { Input, FormSelect } from "@/components/ui/forms";
 import { Alert, useToast } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
 import { getMutationErrorMessage } from "@nexia/shared";
+import {
+    formatTemplateAssignEndDate,
+    TEMPLATE_ASSIGN_MODAL_COPY,
+} from "@nexia/shared";
 import { usePreviewTemplateProgramAssignMutation } from "@nexia/shared/api/templateProgramApi";
 import { useGetTrainerClientsQuery, useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -171,7 +175,6 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                 onClose();
             }
         } catch (err) {
-            console.error("Error assigning template:", err);
             showError(getMutationErrorMessage(err));
         }
     };
@@ -187,12 +190,8 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
         <BaseModal
             isOpen={open}
             onClose={onClose}
-            title="Asignar plantilla a cliente"
-            description={
-                templateName
-                    ? `Asignar "${templateName}" a un cliente`
-                    : "Selecciona cliente e inicio; el fin lo calcula el servidor"
-            }
+            title={TEMPLATE_ASSIGN_MODAL_COPY.title}
+            description={TEMPLATE_ASSIGN_MODAL_COPY.description}
             closeOnBackdrop={!isAssigning}
             closeOnEsc={!isAssigning}
             isLoading={isAssigning}
@@ -302,24 +301,22 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                     </div>
 
                     <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-600">
-                            Fecha de fin (calculada)
+                        <label className="mb-1 block text-sm font-medium text-foreground">
+                            Fecha de fin del plan
                         </label>
-                        <Input
-                            type="date"
-                            value={preview?.end_date ?? ""}
-                            readOnly
-                            disabled
-                            placeholder={isPreviewLoading ? "Calculando…" : "Selecciona inicio"}
-                        />
-                        {preview?.program_week_count ? (
-                            <p className="mt-1 text-xs text-muted-foreground">
-                                {preview.program_week_count} semanas · origen:{" "}
-                                {preview.duration_source === "structure"
-                                    ? "estructura del programa"
-                                    : "metadata declarada"}
-                            </p>
-                        ) : null}
+                        <div
+                            className="rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm font-medium text-foreground"
+                            aria-live="polite"
+                        >
+                            {isPreviewLoading
+                                ? TEMPLATE_ASSIGN_MODAL_COPY.endDateLoading
+                                : preview?.end_date
+                                  ? formatTemplateAssignEndDate(
+                                        preview.end_date,
+                                        preview.program_week_count,
+                                    )
+                                  : TEMPLATE_ASSIGN_MODAL_COPY.endDateHint}
+                        </div>
                     </div>
 
                     {errors.assign ? (

@@ -1,24 +1,13 @@
 /**
- * SelectTemplateModal.tsx — Modal para elegir una plantilla al flujo "Usar plantilla" desde cliente
- *
- * Contexto:
- * - Desde la ficha del cliente, "Usar plantilla" abre este modal para elegir qué plantilla asignar.
- * - Al seleccionar una fila se llama onSelect(templateId, templateName) y el padre abre AssignTemplateModal
- *   con ese template y clientId.
- *
- * Mantenimiento:
- * - Usa useGetTrainingPlanTemplatesQuery; trainerId desde useGetCurrentTrainerProfileQuery.
- * - Tipografía: TYPOGRAPHY (fuente única en @/utils/typography).
- *
- * @author Frontend Team
- * @since v6.4.0 - Fase 1 paso 1.1 (Plan integración flujo planificación UX)
+ * SelectTemplateModal.tsx — Modal para elegir plantilla publicada al flujo desde cliente.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useGetTrainingPlanTemplatesQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
+import { isTemplateAssignable, labelTrainingGoal } from "@nexia/shared";
 import { TYPOGRAPHY } from "@/utils/typography";
 
 export interface SelectTemplateModalProps {
@@ -37,7 +26,18 @@ export const SelectTemplateModal: React.FC<SelectTemplateModalProps> = ({
 
     const { data: templates = [], isLoading } = useGetTrainingPlanTemplatesQuery(
         trainerId ? { trainerId } : { trainerId: 0 },
-        { skip: !trainerId || !open }
+        { skip: !trainerId || !open },
+    );
+
+    const assignableTemplates = useMemo(
+        () =>
+            templates.filter((t) =>
+                isTemplateAssignable({
+                    lifecycle_status: t.lifecycle_status,
+                    validation_status: t.validation_status,
+                }),
+            ),
+        [templates],
     );
 
     const handleChoose = (templateId: number, templateName: string) => {
@@ -49,8 +49,8 @@ export const SelectTemplateModal: React.FC<SelectTemplateModalProps> = ({
         <BaseModal
             isOpen={open}
             onClose={onClose}
-            title="Usar plantilla"
-            description="Elige una plantilla para asignar a este cliente"
+            title="Elegir plantilla"
+            description="Solo se listan plantillas publicadas y listas para asignar"
             closeOnBackdrop
             closeOnEsc
         >
@@ -59,13 +59,14 @@ export const SelectTemplateModal: React.FC<SelectTemplateModalProps> = ({
                     <div className="flex min-h-[120px] items-center justify-center py-6">
                         <LoadingSpinner size="md" />
                     </div>
-                ) : templates.length === 0 ? (
-                    <p className="text-center text-sm text-muted-foreground py-6">
-                        No tienes plantillas. Crea una desde Planes de entrenamiento.
+                ) : assignableTemplates.length === 0 ? (
+                    <p className="py-6 text-center text-sm text-muted-foreground">
+                        No tienes plantillas publicadas. Créala y publícala desde Planes →
+                        Plantillas.
                     </p>
                 ) : (
                     <ul className="max-h-[280px] space-y-1 overflow-y-auto rounded-lg border border-border bg-surface-2 p-2">
-                        {templates.map((t) => (
+                        {assignableTemplates.map((t) => (
                             <li key={t.id}>
                                 <button
                                     type="button"
@@ -76,11 +77,11 @@ export const SelectTemplateModal: React.FC<SelectTemplateModalProps> = ({
                                     <span className={`${TYPOGRAPHY.bodyMedium} text-foreground`}>
                                         {t.name}
                                     </span>
-                                    {t.goal && (
+                                    {t.goal ? (
                                         <span className="mt-0.5 block text-xs text-muted-foreground">
-                                            {t.goal}
+                                            {labelTrainingGoal(t.goal)}
                                         </span>
-                                    )}
+                                    ) : null}
                                 </button>
                             </li>
                         ))}

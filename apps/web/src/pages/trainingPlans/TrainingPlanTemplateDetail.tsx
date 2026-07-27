@@ -4,22 +4,29 @@
 
 import React, { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Copy } from "lucide-react";
+import { ArrowLeft, Check, Copy } from "lucide-react";
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import {
     DUPLICATE_TEMPLATE_ACTION_LABEL,
     formatTemplateDurationHint,
     formatTemplateProgramWeekCount,
+    getTemplateLibraryStatusChips,
+    isTemplateAssignable,
     isTrainingPlanTemplateNotFoundError,
-    labelTemplateLifecycle,
-    labelTemplateValidation,
     resolveTrainingPlanTemplateLoadError,
+    TEMPLATE_STATUS_CHIP_CLASS,
+    TEMPLATE_TEMPORAL_BRIDGE_COPY,
 } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
-import { displayTrainingPlanTemplateTitle } from "@/components/trainingPlans/goalLabels";
+import {
+    categoryChipsFromTemplate,
+    displayTrainingPlanTemplateTitle,
+} from "@/components/trainingPlans/goalLabels";
+import { labelTrainingGoal } from "@nexia/shared";
+import { cn } from "@/lib/utils";
 
 const LEVEL_LABELS: Record<string, string> = {
     beginner: "Principiante",
@@ -46,6 +53,35 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
     } = useGetTrainingPlanTemplateQuery(templateId, {
         skip: templateId <= 0,
     });
+
+    const statusChips = useMemo(
+        () =>
+            template
+                ? getTemplateLibraryStatusChips({
+                      lifecycle_status: template.lifecycle_status,
+                      validation_status: template.validation_status,
+                  })
+                : [],
+        [template],
+    );
+
+    const assignable = useMemo(
+        () =>
+            template
+                ? isTemplateAssignable({
+                      lifecycle_status: template.lifecycle_status,
+                      validation_status: template.validation_status,
+                  })
+                : false,
+        [template],
+    );
+
+    const categoryChips = useMemo(
+        () => (template ? categoryChipsFromTemplate(template) : []),
+        [template],
+    );
+
+    const goalLabel = template?.goal ? labelTrainingGoal(template.goal) : null;
 
     const handleBack = (): void => {
         navigate("/dashboard/training-plans?tab=templates");
@@ -96,7 +132,17 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             <Copy className="mr-2 h-4 w-4" aria-hidden />
                             {DUPLICATE_TEMPLATE_ACTION_LABEL}
                         </Button>
-                        <Button variant="primary" size="sm" onClick={() => setAssignOpen(true)}>
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => setAssignOpen(true)}
+                            disabled={!assignable}
+                            title={
+                                assignable
+                                    ? undefined
+                                    : "Publica la plantilla antes de asignarla a un cliente."
+                            }
+                        >
                             Asignar a cliente
                         </Button>
                     </div>
@@ -109,9 +155,7 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                 </div>
             ) : loadFailed ? (
                 <div className="space-y-4 rounded-xl border border-border bg-card p-8 shadow-lg">
-                    <Alert variant="error">
-                        {resolveTrainingPlanTemplateLoadError(error)}
-                    </Alert>
+                    <Alert variant="error">{resolveTrainingPlanTemplateLoadError(error)}</Alert>
                     <div className="flex flex-wrap gap-2">
                         <Button variant="outline" size="sm" onClick={handleBack}>
                             Volver a biblioteca
@@ -134,26 +178,50 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                     <h1 className="text-2xl font-semibold text-foreground">
                         {displayTrainingPlanTemplateTitle(template.name)}
                     </h1>
-                    <p className="mt-2 text-muted-foreground">
-                        {template.description?.trim() || template.goal}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                        {statusChips.map((chip) => (
+                            <span
+                                key={chip.key}
+                                className={cn(
+                                    "inline-flex text-xs font-medium",
+                                    TEMPLATE_STATUS_CHIP_CLASS[chip.tone],
+                                )}
+                            >
+                                {chip.key === "published" ? (
+                                    <span className="inline-flex items-center gap-1">
+                                        {chip.label}
+                                        <Check className="h-3 w-3" aria-hidden />
+                                    </span>
+                                ) : (
+                                    chip.label
+                                )}
+                            </span>
+                        ))}
+                        {categoryChips.map((chip, i) => (
+                            <span
+                                key={`${chip.label}-${i}`}
+                                className={cn(
+                                    "inline-flex rounded-full px-2.5 py-0.5 text-xs font-medium",
+                                    chip.toneClass,
+                                )}
+                            >
+                                {chip.label}
+                            </span>
+                        ))}
+                    </div>
+                    <p className="mt-4 text-muted-foreground">
+                        {template.description?.trim() || goalLabel || "Sin descripción."}
+                    </p>
+                    <p className="mt-4 text-sm text-muted-foreground">
+                        {TEMPLATE_TEMPORAL_BRIDGE_COPY}
                     </p>
                     <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
-                        <div>
-                            <dt className="font-medium text-muted-foreground">Objetivo</dt>
-                            <dd className="text-foreground">{template.goal}</dd>
-                        </div>
-                        <div>
-                            <dt className="font-medium text-muted-foreground">Ciclo de vida</dt>
-                            <dd className="text-foreground">
-                                {labelTemplateLifecycle(template.lifecycle_status)}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="font-medium text-muted-foreground">Validación</dt>
-                            <dd className="text-foreground">
-                                {labelTemplateValidation(template.validation_status)}
-                            </dd>
-                        </div>
+                        {goalLabel ? (
+                            <div>
+                                <dt className="font-medium text-muted-foreground">Objetivo</dt>
+                                <dd className="text-foreground">{goalLabel}</dd>
+                            </div>
+                        ) : null}
                         {template.level ? (
                             <div>
                                 <dt className="font-medium text-muted-foreground">Nivel</dt>
@@ -172,7 +240,9 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                         ) : null}
                         {formatTemplateDurationHint(template.estimated_duration_weeks) ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">Duración referencia</dt>
+                                <dt className="font-medium text-muted-foreground">
+                                    Duración referencia
+                                </dt>
                                 <dd className="text-foreground">
                                     {formatTemplateDurationHint(template.estimated_duration_weeks)}
                                 </dd>
@@ -184,10 +254,6 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                                 <dd className="text-foreground">{template.folder_name}</dd>
                             </div>
                         ) : null}
-                        <div>
-                            <dt className="font-medium text-muted-foreground">Revisión</dt>
-                            <dd className="text-foreground">{template.template_revision}</dd>
-                        </div>
                         <div>
                             <dt className="font-medium text-muted-foreground">Veces usada</dt>
                             <dd className="text-foreground">{template.usage_count}</dd>

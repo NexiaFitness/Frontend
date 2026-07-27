@@ -26,8 +26,7 @@ interface ClientOverviewTabProps {
     clientId: number;
     trainingPlans?: TrainingPlan[];
     isLoadingPlans?: boolean;
-    onOpenCreatePlan?: () => void;
-    onOpenUseTemplate?: () => void;
+    onPlanificar?: () => void;
     onViewPlan?: (planId: number) => void;
 }
 
@@ -36,8 +35,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
     clientId,
     trainingPlans = [],
     isLoadingPlans = false,
-    onOpenCreatePlan,
-    onOpenUseTemplate,
+    onPlanificar,
     onViewPlan,
 }) => {
     const [searchParams] = useSearchParams();
@@ -110,8 +108,7 @@ export const ClientOverviewTab: React.FC<ClientOverviewTabProps> = ({
                 isLoadingPlans={isLoadingPlans}
                 alertsSectionRef={alertsSectionRef}
                 planAlignedWithObjective={vm.recommendationsMode === "compact_ok"}
-                onOpenCreatePlan={onOpenCreatePlan}
-                onOpenUseTemplate={onOpenUseTemplate}
+                onPlanificar={onPlanificar}
                 onViewPlan={onViewPlan}
             />
 

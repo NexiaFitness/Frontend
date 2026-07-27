@@ -27,7 +27,7 @@ export const OVERVIEW_ZONE_TITLES = {
     relation: "Relación y seguimiento",
     planActive: "Plan activo",
     planEmpty: "Sin plan activo",
-    planEmptyDetail: "Asigna un plan para estructurar el programa del atleta.",
+    planEmptyDetail: "Pulsa Planificar para elegir plantilla o crear un plan personalizado.",
     planAlignedBadge: "Alineado con objetivo",
     trainingProfile: "Perfil de entrenamiento",
     trainingProfileHint:

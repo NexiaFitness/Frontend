@@ -22,6 +22,7 @@
 
 import React from "react";
 import type { Client } from "@nexia/shared/types/client";
+import { labelClientExperience, labelTrainingGoal } from "@nexia/shared";
 
 interface ClientCardProps {
     client: Client;
@@ -39,25 +40,10 @@ const formatDate = (dateString: string): string => {
 };
 
 // Helper para traducir objetivos
-const getObjetivoLabel = (objetivo?: string): string => {
-    const labels: Record<string, string> = {
-        weight_loss: "Pérdida de peso",
-        muscle_gain: "Ganancia muscular",
-        performance: "Rendimiento",
-        health: "Salud general",
-    };
-    return objetivo ? labels[objetivo] || objetivo : "Sin objetivo";
-};
+const getObjetivoLabel = (objetivo?: string): string => labelTrainingGoal(objetivo);
 
 // Helper para traducir nivel de experiencia
-const getExperienciaLabel = (nivel?: string): string => {
-    const labels: Record<string, string> = {
-        beginner: "Principiante",
-        intermediate: "Intermedio",
-        advanced: "Avanzado",
-    };
-    return nivel ? labels[nivel] || nivel : "No especificado";
-};
+const getExperienciaLabel = (nivel?: string): string => labelClientExperience(nivel);
 
 // Helper para color de badge de objetivo (tokens Nexia Sparkle Flow)
 const getObjetivoBadgeColor = (objetivo?: string): string => {

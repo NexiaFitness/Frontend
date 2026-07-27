@@ -19,6 +19,7 @@ import {
     type TemplateLevel,
     type TrainingPlanTemplateCreate,
 } from "@nexia/shared/types/training";
+import { GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
 
 export const CreateTrainingPlanTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -61,7 +62,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
         }
 
         if (!formData.goal || formData.goal === "") {
-            errors.goal = "Debes seleccionar una categoría";
+            errors.goal = "Debes seleccionar un objetivo";
         }
 
         if (!trainerId) {
@@ -116,7 +117,6 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
             showSuccess("Plantilla creada. Abriendo editor…", 2000);
             navigate(`/dashboard/training-plans/templates/${created.id}/edit`);
         } catch (err) {
-            console.error("Error creando template:", err);
             const errorMessage =
                 err && typeof err === "object" && "data" in err
                     ? String((err as { data: unknown }).data || "Error al crear la plantilla")
@@ -125,21 +125,10 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
         }
     };
 
-    const goalOptions = Object.values(TRAINING_PLAN_GOAL).map((goal) => {
-        const goalLabels: Record<string, string> = {
-            "Muscle Gain": "Ganancia de Músculo",
-            "Weight Loss": "Pérdida de Peso",
-            Strength: "Fuerza",
-            Endurance: "Resistencia",
-            "General Fitness": "Fitness General",
-            Rehabilitation: "Rehabilitación",
-            Performance: "Rendimiento",
-        };
-        return {
-            value: goal,
-            label: goalLabels[goal] || goal,
-        };
-    });
+    const goalOptions = Object.values(TRAINING_PLAN_GOAL).map((goal) => ({
+        value: goal,
+        label: GOAL_LABEL_ES[goal] ?? goal,
+    }));
 
     const levelOptions = [
         { value: "", label: "Selecciona un nivel" },
@@ -161,7 +150,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
             <div className="mb-6 px-4 lg:px-8">
                 <PageTitle
                     title="Crear plantilla de plan"
-                    subtitle="Metadata de biblioteca; el programa completo se construye después de crear la plantilla"
+                    subtitle="Nombre y objetivo; después armarás el programa por semanas"
                 />
             </div>
 
@@ -202,7 +191,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                     }
                                     required
                                     options={[
-                                        { value: "", label: "Selecciona una categoría" },
+                                        { value: "", label: "Selecciona un objetivo" },
                                         ...goalOptions,
                                     ]}
                                 />

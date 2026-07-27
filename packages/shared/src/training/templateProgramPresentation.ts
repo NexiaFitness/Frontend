@@ -308,3 +308,82 @@ export function getTemplateValidationIssues(report: Record<string, unknown>): {
         warnings: messagesFromReportSection(report.warnings),
     };
 }
+
+/** Puente semántico plantilla (semanas relativas) → plan cliente (calendario). */
+export const TEMPLATE_TEMPORAL_BRIDGE_COPY =
+    "Las plantillas se organizan por semanas (1, 2, 3…). Al asignarlas a un cliente eliges la fecha de inicio y NEXIA arma el calendario del plan.";
+
+export const TEMPLATE_ASSIGN_MODAL_COPY = {
+    title: "Asignar plantilla a cliente",
+    description:
+        "Elige cliente e inicio. Las semanas de la plantilla se convierten en fechas de calendario para el plan del cliente.",
+    endDateHint: "Se calcula automáticamente al elegir la fecha de inicio.",
+    endDateLoading: "Calculando fecha de fin…",
+    durationWeeks: (weeks: number) => `${weeks} semanas de programa`,
+} as const;
+
+export type TemplateLibraryPrimaryIntent = "assign" | "continue_edit";
+
+export interface TemplateLibraryCardActions {
+    primaryLabel: string;
+    primaryIntent: TemplateLibraryPrimaryIntent;
+    assignEnabled: boolean;
+    assignDisabledReason: string | null;
+    secondaryLabel: string;
+}
+
+export function resolveTemplateLibraryCardActions(input: {
+    lifecycle_status?: string | null;
+    validation_status?: string | null;
+}): TemplateLibraryCardActions {
+    const publication = resolveTemplatePublicationUi(input);
+
+    if (publication.phase === "published_in_sync") {
+        return {
+            primaryLabel: "Asignar a cliente",
+            primaryIntent: "assign",
+            assignEnabled: true,
+            assignDisabledReason: null,
+            secondaryLabel: "Editar programa",
+        };
+    }
+
+    if (publication.phase === "archived") {
+        return {
+            primaryLabel: "Ver plantilla",
+            primaryIntent: "continue_edit",
+            assignEnabled: false,
+            assignDisabledReason: "Las plantillas archivadas no se pueden asignar.",
+            secondaryLabel: "Editar programa",
+        };
+    }
+
+    if (publication.phase === "published_pending_changes") {
+        return {
+            primaryLabel: "Continuar edición",
+            primaryIntent: "continue_edit",
+            assignEnabled: false,
+            assignDisabledReason:
+                "Publica los cambios antes de asignar esta plantilla a un cliente.",
+            secondaryLabel: "Ver detalle",
+        };
+    }
+
+    return {
+        primaryLabel: "Continuar edición",
+        primaryIntent: "continue_edit",
+        assignEnabled: false,
+        assignDisabledReason: "Publica la plantilla antes de asignarla a un cliente.",
+        secondaryLabel: "Ver detalle",
+    };
+}
+
+/** Alias semántico — mismos chips que el editor, orientados a biblioteca. */
+export const getTemplateLibraryStatusChips = getTemplateEditorStatusChips;
+
+export function isTemplateAssignable(input: {
+    lifecycle_status?: string | null;
+    validation_status?: string | null;
+}): boolean {
+    return resolveTemplatePublicationUi(input).phase === "published_in_sync";
+}

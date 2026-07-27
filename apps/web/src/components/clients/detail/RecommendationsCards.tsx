@@ -21,6 +21,7 @@ import type {
     IntensityRecommendation,
     ExerciseSelectionRecommendation,
 } from "@nexia/shared/types/trainingRecommendations";
+import { labelClientProfileFields } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 
 interface RecommendationsCardsProps {
@@ -83,7 +84,7 @@ export const RecommendationsCards: React.FC<RecommendationsCardsProps> = ({
                 <p className="text-sm text-muted-foreground">{response.message}</p>
                 <p className="text-xs text-muted-foreground">
                     Completa en la ficha del cliente:{" "}
-                    {response.missing_fields.join(", ")}.
+                    {labelClientProfileFields(response.missing_fields)}.
                 </p>
             </div>
         );

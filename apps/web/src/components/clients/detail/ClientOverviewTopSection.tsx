@@ -16,8 +16,7 @@ export interface ClientOverviewTopSectionProps {
     isLoadingPlans?: boolean;
     alertsSectionRef?: React.RefObject<HTMLDivElement>;
     planAlignedWithObjective?: boolean;
-    onOpenCreatePlan?: () => void;
-    onOpenUseTemplate?: () => void;
+    onPlanificar?: () => void;
     onViewPlan?: (planId: number) => void;
 }
 
@@ -27,8 +26,7 @@ export const ClientOverviewTopSection: React.FC<ClientOverviewTopSectionProps> =
     isLoadingPlans = false,
     alertsSectionRef,
     planAlignedWithObjective = false,
-    onOpenCreatePlan,
-    onOpenUseTemplate,
+    onPlanificar,
     onViewPlan,
 }) => {
     const internalRef = useRef<HTMLDivElement>(null);
@@ -62,8 +60,7 @@ export const ClientOverviewTopSection: React.FC<ClientOverviewTopSectionProps> =
                         isLoading={isLoadingPlans}
                         embedded
                         planAlignedWithObjective={planAlignedWithObjective}
-                        onOpenCreatePlan={onOpenCreatePlan}
-                        onOpenUseTemplate={onOpenUseTemplate}
+                        onPlanificar={onPlanificar}
                         onViewPlan={onViewPlan}
                     />
                 </div>
