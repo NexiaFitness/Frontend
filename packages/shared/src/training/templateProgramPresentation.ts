@@ -102,13 +102,183 @@ export const DUPLICATE_TEMPLATE_MODAL_COPY = {
     successToast: "Plantilla duplicada",
 } as const;
 
+export const DUPLICATE_TEMPLATE_ACTION_LABEL = "Duplicar plantilla";
+
 export const TEMPLATE_PUBLISH_COPY = {
-    publishing: "Publicando…",
     publish: "Publicar",
+    republish: "Actualizar publicación",
+    publishing: "Publicando…",
+    republishing: "Actualizando…",
+    publishedStatus: "Publicada",
+    pendingRepublish: "Pendiente de publicar",
     validationFailed: "Corrige los errores del programa antes de publicar.",
-    success: (revision: number, hashPrefix: string) =>
+    successFirstPublish: (revision: number, hashPrefix: string) =>
         `Plantilla publicada (rev. ${revision}, hash ${hashPrefix}…).`,
+    successRepublish: (revision: number, hashPrefix: string) =>
+        `Publicación actualizada (rev. ${revision}, hash ${hashPrefix}…).`,
 } as const;
+
+/** Publication UI phases — aligned with BE §09 lifecycle + validation. */
+export type TemplatePublicationUiPhase =
+    | "draft_unpublished"
+    | "published_in_sync"
+    | "published_pending_changes"
+    | "archived";
+
+export interface TemplatePublicationUiModel {
+    phase: TemplatePublicationUiPhase;
+    showPublishAction: boolean;
+    publishActionLabel: string;
+    publishLoadingLabel: string;
+    showPublishedStatus: boolean;
+    publishedStatusLabel: string;
+    isRepublish: boolean;
+}
+
+export interface TemplateStatusChip {
+    key: string;
+    label: string;
+    tone: "muted" | "success" | "warning" | "danger";
+}
+
+export const TEMPLATE_STATUS_CHIP_CLASS: Record<
+    TemplateStatusChip["tone"],
+    string
+> = {
+    muted: "rounded-full bg-muted px-2.5 py-0.5",
+    success: "rounded-full bg-success/10 px-2.5 py-0.5 text-success",
+    warning: "rounded-full bg-warning/10 px-2.5 py-0.5 text-warning",
+    danger: "rounded-full bg-destructive/10 px-2.5 py-0.5 text-destructive",
+};
+
+export function resolveTemplatePublicationUi(input: {
+    lifecycle_status?: string | null;
+    validation_status?: string | null;
+}): TemplatePublicationUiModel {
+    const lifecycle = input.lifecycle_status ?? TEMPLATE_LIFECYCLE_STATUS.DRAFT;
+    const validation = input.validation_status ?? TEMPLATE_VALIDATION_STATUS.NOT_VALIDATED;
+
+    if (lifecycle === TEMPLATE_LIFECYCLE_STATUS.ARCHIVED) {
+        return {
+            phase: "archived",
+            showPublishAction: false,
+            publishActionLabel: TEMPLATE_PUBLISH_COPY.publish,
+            publishLoadingLabel: TEMPLATE_PUBLISH_COPY.publishing,
+            showPublishedStatus: false,
+            publishedStatusLabel: TEMPLATE_PUBLISH_COPY.publishedStatus,
+            isRepublish: false,
+        };
+    }
+
+    if (lifecycle === TEMPLATE_LIFECYCLE_STATUS.PUBLISHED) {
+        if (validation === TEMPLATE_VALIDATION_STATUS.VALID) {
+            return {
+                phase: "published_in_sync",
+                showPublishAction: false,
+                publishActionLabel: TEMPLATE_PUBLISH_COPY.republish,
+                publishLoadingLabel: TEMPLATE_PUBLISH_COPY.republishing,
+                showPublishedStatus: true,
+                publishedStatusLabel: TEMPLATE_PUBLISH_COPY.publishedStatus,
+                isRepublish: true,
+            };
+        }
+
+        return {
+            phase: "published_pending_changes",
+            showPublishAction: true,
+            publishActionLabel: TEMPLATE_PUBLISH_COPY.republish,
+            publishLoadingLabel: TEMPLATE_PUBLISH_COPY.republishing,
+            showPublishedStatus: false,
+            publishedStatusLabel: TEMPLATE_PUBLISH_COPY.publishedStatus,
+            isRepublish: true,
+        };
+    }
+
+    return {
+        phase: "draft_unpublished",
+        showPublishAction: true,
+        publishActionLabel: TEMPLATE_PUBLISH_COPY.publish,
+        publishLoadingLabel: TEMPLATE_PUBLISH_COPY.publishing,
+        showPublishedStatus: false,
+        publishedStatusLabel: TEMPLATE_PUBLISH_COPY.publishedStatus,
+        isRepublish: false,
+    };
+}
+
+/** Status chips for template editor header — publication-first, not raw DB fields. */
+export function getTemplateEditorStatusChips(input: {
+    lifecycle_status?: string | null;
+    validation_status?: string | null;
+}): TemplateStatusChip[] {
+    const publication = resolveTemplatePublicationUi(input);
+    const chips: TemplateStatusChip[] = [];
+
+    if (publication.phase === "archived") {
+        chips.push({
+            key: "lifecycle",
+            label: labelTemplateLifecycle(TEMPLATE_LIFECYCLE_STATUS.ARCHIVED),
+            tone: "muted",
+        });
+        return chips;
+    }
+
+    if (publication.phase === "published_in_sync") {
+        chips.push({
+            key: "published",
+            label: TEMPLATE_PUBLISH_COPY.publishedStatus,
+            tone: "success",
+        });
+        return chips;
+    }
+
+    if (publication.phase === "published_pending_changes") {
+        chips.push({
+            key: "published-base",
+            label: labelTemplateLifecycle(TEMPLATE_LIFECYCLE_STATUS.PUBLISHED),
+            tone: "muted",
+        });
+        chips.push({
+            key: "pending-republish",
+            label: TEMPLATE_PUBLISH_COPY.pendingRepublish,
+            tone: "warning",
+        });
+        const validation = input.validation_status ?? TEMPLATE_VALIDATION_STATUS.NOT_VALIDATED;
+        if (validation === TEMPLATE_VALIDATION_STATUS.INVALID) {
+            chips.push({
+                key: "validation",
+                label: labelTemplateValidation(validation),
+                tone: "danger",
+            });
+        }
+        return chips;
+    }
+
+    chips.push({
+        key: "lifecycle",
+        label: labelTemplateLifecycle(TEMPLATE_LIFECYCLE_STATUS.DRAFT),
+        tone: "muted",
+    });
+    const validation = input.validation_status ?? TEMPLATE_VALIDATION_STATUS.NOT_VALIDATED;
+    if (validation !== TEMPLATE_VALIDATION_STATUS.NOT_VALIDATED) {
+        chips.push({
+            key: "validation",
+            label: labelTemplateValidation(validation),
+            tone:
+                validation === TEMPLATE_VALIDATION_STATUS.VALID ? "success" : "danger",
+        });
+    }
+    return chips;
+}
+
+export function templatePublishSuccessMessage(
+    isRepublish: boolean,
+    revision: number,
+    hashPrefix: string,
+): string {
+    return isRepublish
+        ? TEMPLATE_PUBLISH_COPY.successRepublish(revision, hashPrefix)
+        : TEMPLATE_PUBLISH_COPY.successFirstPublish(revision, hashPrefix);
+}
 
 interface ValidationIssueRow {
     message?: string;

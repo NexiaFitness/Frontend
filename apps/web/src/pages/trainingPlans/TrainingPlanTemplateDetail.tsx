@@ -4,9 +4,10 @@
 
 import React, { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Copy } from "lucide-react";
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import {
+    DUPLICATE_TEMPLATE_ACTION_LABEL,
     formatTemplateDurationHint,
     formatTemplateProgramWeekCount,
     isTrainingPlanTemplateNotFoundError,
@@ -92,7 +93,8 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             size="sm"
                             onClick={() => setDuplicateOpen(true)}
                         >
-                            Duplicar plantilla
+                            <Copy className="mr-2 h-4 w-4" aria-hidden />
+                            {DUPLICATE_TEMPLATE_ACTION_LABEL}
                         </Button>
                         <Button variant="primary" size="sm" onClick={() => setAssignOpen(true)}>
                             Asignar a cliente

@@ -7,7 +7,7 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, CalendarRange, Layers, Plus, Trash2, Pencil } from "lucide-react";
+import { ArrowLeft, CalendarRange, Check, Copy, Layers, Plus, Trash2, Pencil } from "lucide-react";
 
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
@@ -24,14 +24,18 @@ import {
     useValidateTemplateProgramMutation,
 } from "@nexia/shared/api/templateProgramApi";
 import {
+    DUPLICATE_TEMPLATE_ACTION_LABEL,
     formatTemplateProgramWeekCount,
     getMutationErrorMessage,
+    getTemplateEditorStatusChips,
     getTemplateValidationIssues,
     isTrainingPlanTemplateNotFoundError,
-    labelTemplateLifecycle,
     labelTemplateValidation,
+    resolveTemplatePublicationUi,
     resolveTrainingPlanTemplateLoadError,
     TEMPLATE_PUBLISH_COPY,
+    TEMPLATE_STATUS_CHIP_CLASS,
+    templatePublishSuccessMessage,
 } from "@nexia/shared";
 import type {
     TemplateProgramBlock,
@@ -148,6 +152,32 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
         return blocksOverlap(start, end, blocks, editingBlock?.id);
     }, [blockForm.programWeekStart, blockForm.programWeekEnd, blocks, editingBlock?.id]);
 
+    const publicationUi = useMemo(
+        () =>
+            resolveTemplatePublicationUi({
+                lifecycle_status: template?.lifecycle_status,
+                validation_status: template?.validation_status,
+            }),
+        [template?.lifecycle_status, template?.validation_status],
+    );
+
+    const statusChips = useMemo(
+        () =>
+            getTemplateEditorStatusChips({
+                lifecycle_status: template?.lifecycle_status,
+                validation_status: template?.validation_status,
+            }),
+        [template?.lifecycle_status, template?.validation_status],
+    );
+
+    const isPublishingFlow = isValidating || isPublishing;
+    const validationIssues = lastValidationReport
+        ? getTemplateValidationIssues(lastValidationReport.report)
+        : null;
+    const publishLoadingLabel = isPublishingFlow
+        ? publicationUi.publishLoadingLabel
+        : publicationUi.publishActionLabel;
+
     const resetBlockForm = useCallback(() => {
         setBlockForm({
             name: "",
@@ -238,6 +268,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
     };
 
     const handlePublish = async () => {
+        const isRepublish = template?.lifecycle_status === "published";
         try {
             const validation = await validateProgram(templateId).unwrap();
             setLastValidationReport({
@@ -251,8 +282,10 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
             }
 
             const result = await publishProgram(templateId).unwrap();
+            setLastValidationReport(null);
             showSuccess(
-                TEMPLATE_PUBLISH_COPY.success(
+                templatePublishSuccessMessage(
+                    isRepublish,
                     result.template_revision,
                     result.structure_hash.slice(0, 8),
                 ),
@@ -261,11 +294,6 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
             showError(getMutationErrorMessage(err));
         }
     };
-
-    const isPublishingFlow = isValidating || isPublishing;
-    const validationIssues = lastValidationReport
-        ? getTemplateValidationIssues(lastValidationReport.report)
-        : null;
 
     const handleBack = () => {
         navigate("/dashboard/training-plans?tab=templates");
@@ -337,12 +365,21 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         subtitle="Editor de programa completo"
                     />
                     <div className="flex flex-wrap gap-2 text-sm">
-                        <span className="rounded-full bg-muted px-2.5 py-0.5">
-                            {labelTemplateLifecycle(template.lifecycle_status)}
-                        </span>
-                        <span className="rounded-full bg-muted px-2.5 py-0.5">
-                            {labelTemplateValidation(template.validation_status)}
-                        </span>
+                        {statusChips.map((chip) => (
+                            <span
+                                key={chip.key}
+                                className={TEMPLATE_STATUS_CHIP_CLASS[chip.tone]}
+                            >
+                                {chip.key === "published" ? (
+                                    <span className="inline-flex items-center gap-1">
+                                        {chip.label}
+                                        <Check className="h-3.5 w-3.5" aria-hidden />
+                                    </span>
+                                ) : (
+                                    chip.label
+                                )}
+                            </span>
+                        ))}
                         {formatTemplateProgramWeekCount(summary?.program_week_count) ? (
                             <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-primary">
                                 {formatTemplateProgramWeekCount(summary?.program_week_count)}
@@ -350,26 +387,35 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         ) : null}
                     </div>
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => setDuplicateOpen(true)}
                         disabled={isPublishingFlow}
                     >
-                        Duplicar
+                        <Copy className="mr-2 h-4 w-4" aria-hidden />
+                        {DUPLICATE_TEMPLATE_ACTION_LABEL}
                     </Button>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        onClick={() => void handlePublish()}
-                        isLoading={isPublishingFlow}
-                        disabled={isArchived || isPublishingFlow}
-                    >
-                        {isPublishingFlow
-                            ? TEMPLATE_PUBLISH_COPY.publishing
-                            : TEMPLATE_PUBLISH_COPY.publish}
-                    </Button>
+                    {publicationUi.showPublishAction ? (
+                        <Button
+                            variant="primary"
+                            size="sm"
+                            onClick={() => void handlePublish()}
+                            isLoading={isPublishingFlow}
+                            disabled={isArchived || isPublishingFlow}
+                        >
+                            {publishLoadingLabel}
+                        </Button>
+                    ) : publicationUi.showPublishedStatus ? (
+                        <span
+                            className="inline-flex items-center gap-1.5 rounded-full bg-success/10 px-3 py-1.5 text-sm font-medium text-success"
+                            aria-live="polite"
+                        >
+                            {publicationUi.publishedStatusLabel}
+                            <Check className="h-4 w-4" aria-hidden />
+                        </span>
+                    ) : null}
                 </div>
             </div>
 
@@ -389,7 +435,9 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                 >
                     <p className="font-medium">
                         {lastValidationReport.status === "invalid"
-                            ? "No se puede publicar hasta corregir estos problemas"
+                            ? publicationUi.isRepublish
+                                ? "No se puede actualizar la publicación hasta corregir estos problemas"
+                                : "No se puede publicar hasta corregir estos problemas"
                             : `Validación: ${labelTemplateValidation(lastValidationReport.status)}`}
                     </p>
                     {validationIssues.errors.length > 0 ? (
