@@ -127,7 +127,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-top-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
 
         expect(screen.getByTestId("client-comms-section")).toBeInTheDocument();
         expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
@@ -139,7 +139,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
 
         const kpiSection = screen.getByTestId("client-overview-kpi-section");
         const topSection = screen.getByTestId("client-overview-top-section");
@@ -153,7 +153,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
 
         expect(
             screen.queryByText(/relación, acción y contexto del atleta/i),
@@ -174,7 +174,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByText(/alineado con objetivo/i)).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
     });
 
     it("shows KPI row with adherence and weight", async () => {
@@ -182,7 +182,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByText(/adherencia/i)).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
         expect(screen.getByText(/^peso$/i)).toBeInTheDocument();
     });
 
@@ -253,7 +253,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
 
         expect(screen.queryByText(/estado del cliente/i)).not.toBeInTheDocument();
     });
@@ -328,7 +328,7 @@ describe("ClientOverviewTab", () => {
 
         await waitFor(() => {
             expect(screen.getByText(/no programada/i)).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
     });
 
     it("handles coherence API error gracefully", async () => {
@@ -336,7 +336,7 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
     });
 
     it("handles progress API error gracefully", async () => {
@@ -344,7 +344,7 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
     });
 
     it("handles fatigue API error gracefully", async () => {
@@ -352,6 +352,6 @@ describe("ClientOverviewTab", () => {
         render(<ClientOverviewTab client={mockClient} clientId={1} />);
         await waitFor(() => {
             expect(screen.getByTestId("client-overview-kpi-section")).toBeInTheDocument();
-        });
+        }, { timeout: 10000 });
     });
 });

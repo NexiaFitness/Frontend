@@ -32,11 +32,11 @@ export function TestProviders({ children, initialState, initialEntries }: TestPr
     return (
         <Provider store={store}>
             {initialEntries ? (
-                <MemoryRouter initialEntries={initialEntries}>
+                <MemoryRouter initialEntries={initialEntries} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <ToastProvider>{children}</ToastProvider>
                 </MemoryRouter>
             ) : (
-                <BrowserRouter>
+                <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
                     <ToastProvider>{children}</ToastProvider>
                 </BrowserRouter>
             )}

@@ -6,7 +6,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import type { ConstructorValidationField } from "../../constructorTypes";
 import { constructorValidationFieldKey } from "../../constructorTypes";
-import { useConstructorValidationContext } from "../ConstructorValidationContext";
+import { useConstructorValidationContext } from "../useConstructorValidationContext";
 
 export interface ConstructorFieldAnchorProps {
     rowId: string;
@@ -48,29 +48,3 @@ export function ConstructorFieldAnchor({
     );
 }
 
-export function useConstructorFieldValidation(
-    rowId: string,
-    field: ConstructorValidationField,
-    exerciseSlotId?: string
-): {
-    error: string | undefined;
-    errorId: string | undefined;
-    fieldKey: string;
-    clearOnEdit: () => void;
-    inputInvalidProps: { "aria-invalid"?: true; "aria-describedby"?: string };
-} {
-    const { getFieldError, clearFieldError } = useConstructorValidationContext();
-    const error = getFieldError(rowId, field, exerciseSlotId);
-    const fieldKey = constructorValidationFieldKey(rowId, field, exerciseSlotId);
-    const errorId = error ? `${fieldKey}-error` : undefined;
-
-    return {
-        error,
-        errorId,
-        fieldKey,
-        clearOnEdit: () => clearFieldError(rowId, field, exerciseSlotId),
-        inputInvalidProps: error
-            ? { "aria-invalid": true as const, "aria-describedby": errorId }
-            : {},
-    };
-}

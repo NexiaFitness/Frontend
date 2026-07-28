@@ -6,8 +6,11 @@ import React from "react";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
-import { exercisePrimeMoverLabels } from "@/utils/exercises";
-import { getGroupColor, getMuscleLabel } from "@/utils/exercises";
+import {
+    exercisePrimeMoverLabels,
+    getGroupColor,
+    getMuscleLabel,
+} from "@/utils/exercises";
 
 export interface ExercisePrimeMoverBadgesProps {
     exercise: Pick<Exercise, "muscles" | "musculatura_principal">;
@@ -47,9 +50,3 @@ export const ExercisePrimeMoverBadges: React.FC<ExercisePrimeMoverBadgesProps> =
         </>
     );
 };
-
-export function exercisePrimeMoverAriaSuffix(
-    exercise: Pick<Exercise, "muscles" | "musculatura_principal">
-): string {
-    return exercisePrimeMoverLabels(exercise).map(getMuscleLabel).join(", ");
-}

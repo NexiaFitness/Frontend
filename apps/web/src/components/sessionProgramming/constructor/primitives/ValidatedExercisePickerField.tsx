@@ -3,7 +3,8 @@
  */
 
 import React from "react";
-import { ConstructorFieldAnchor, useConstructorFieldValidation } from "./ConstructorFieldAnchor";
+import { ConstructorFieldAnchor } from "./ConstructorFieldAnchor";
+import { useConstructorFieldValidation } from "./useConstructorFieldValidation";
 import { ExercisePickerField } from "./ExercisePickerField";
 
 export interface ValidatedExercisePickerFieldProps {

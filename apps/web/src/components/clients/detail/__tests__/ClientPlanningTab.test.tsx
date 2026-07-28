@@ -12,6 +12,7 @@
 
 import { screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { render } from "@/test-utils/render";
 import { ClientPlanningTab } from "../ClientPlanningTab";
 import { setAuthenticatedUser } from "@/test-utils/mocks";
@@ -20,6 +21,48 @@ import { server } from "@/test-utils/utils/msw";
 import {
     getActivePlanByClientWithPlanHandler,
 } from "@/test-utils/mocks/handlers/planning";
+import { createMockTrainingPlanRecommendationsIncomplete } from "@/test-utils/fixtures/trainingRecommendations";
+import { OVERVIEW_ZONE_TITLES } from "../clientOverviewPresentation";
+
+/**
+ * PlanPeriodizationSection (montada cuando hay plan activo) dispara además
+ * movement-patterns, training-plans/recommendations/:clientId y GET /training-plans/:planId.
+ * Sin estos handlers, MSW registra "unhandled request" y esas ramas renderizan
+ * en estado de error silencioso — sin que el test lo note.
+ */
+function planPeriodizationDependenciesHandlers(planId: number) {
+    return [
+        http.get("*/exercise-catalog/movement-patterns/", () =>
+            HttpResponse.json([], { status: 200 })
+        ),
+        http.get("*/training-plans/recommendations/:clientId", () =>
+            HttpResponse.json(createMockTrainingPlanRecommendationsIncomplete(), {
+                status: 200,
+            })
+        ),
+        http.get("*/training-plans/:planId", ({ params }) => {
+            if (Number(params.planId) !== planId) {
+                return HttpResponse.json({ detail: "Not found" }, { status: 404 });
+            }
+            return HttpResponse.json({
+                id: planId,
+                trainer_id: 1,
+                client_id: 1,
+                name: "Plan Maraton",
+                description: null,
+                start_date: "2026-01-01",
+                end_date: "2026-12-31",
+                goal: "Strength",
+                status: "active",
+                is_active: true,
+                created_at: "2026-01-01T00:00:00.000Z",
+                updated_at: "2026-01-01T00:00:00.000Z",
+                sessions_completed: 0,
+                sessions_total: 0,
+            });
+        }),
+    ];
+}
 
 describe("ClientPlanningTab", () => {
     beforeEach(() => {
@@ -38,11 +81,13 @@ describe("ClientPlanningTab", () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText("Sin plan activo")).toBeInTheDocument();
+                expect(
+                    screen.getByText(OVERVIEW_ZONE_TITLES.planEmpty)
+                ).toBeInTheDocument();
             });
 
             expect(
-                screen.getByText(/Este cliente no tiene un plan de entrenamiento activo/)
+                screen.getByText(OVERVIEW_ZONE_TITLES.planEmptyDetail)
             ).toBeInTheDocument();
         });
 
@@ -61,7 +106,9 @@ describe("ClientPlanningTab", () => {
 
                 await waitFor(
                     () => {
-                        expect(screen.getByText("Sin plan activo")).toBeInTheDocument();
+                        expect(
+                            screen.getByText(OVERVIEW_ZONE_TITLES.planEmpty)
+                        ).toBeInTheDocument();
                     },
                     { timeout: 10000 }
                 );
@@ -77,7 +124,8 @@ describe("ClientPlanningTab", () => {
     describe("Con plan activo (200 active-by-client)", () => {
         it("muestra sección de periodización cuando hay plan activo", async () => {
             server.use(
-                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" })
+                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+                ...planPeriodizationDependenciesHandlers(10)
             );
 
             render(

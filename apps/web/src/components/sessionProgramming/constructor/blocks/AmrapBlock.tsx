@@ -33,10 +33,8 @@ import {
     CONSTRUCTOR_FIELD_LABEL_CLASS,
     CONSTRUCTOR_FOOTER_HINT_CLASS,
 } from "../primitives/constructorCardStyles";
-import {
-    ConstructorFieldAnchor,
-    useConstructorFieldValidation,
-} from "../primitives/ConstructorFieldAnchor";
+import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
+import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 
 const EXERCISE_GRID_CLASS =
     "grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_102px_102px] gap-2 items-center sm:justify-items-stretch [&>*:nth-child(2)]:sm:justify-self-center [&>*:nth-child(3)]:sm:justify-self-center";

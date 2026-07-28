@@ -149,16 +149,16 @@ export const ExercisesPage: React.FC = () => {
 
     const { data, isLoading, isError, isFetching, refetch } = useGetExercisesQuery(queryArgs);
 
-    const apiExercises = data?.exercises ?? [];
     const totalFromApi = data?.total ?? 0;
 
     const exercises = useMemo(() => {
+        const apiExercises = data?.exercises ?? [];
         if (hasServerFilters || localAdditions.length === 0) {
             return apiExercises;
         }
         const localEx = localAdditions.map(localViewToExercise);
         return [...localEx, ...apiExercises];
-    }, [apiExercises, localAdditions, hasServerFilters]);
+    }, [data?.exercises, localAdditions, hasServerFilters]);
 
     const totalFiltered = hasServerFilters ? totalFromApi : totalFromApi + localAdditions.length;
     const totalPages = Math.max(1, Math.ceil(totalFiltered / PAGE_SIZE));

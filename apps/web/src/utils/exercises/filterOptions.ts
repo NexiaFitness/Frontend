@@ -13,7 +13,7 @@ import {
     type ExerciseMuscleFacetInput,
     type MuscleRoleRef,
 } from "@nexia/shared";
-import { formatEquipmentLabelLine } from "./translations";
+import { formatEquipmentLabelLine, getMuscleLabel } from "./translations";
 
 export type { ExerciseMuscleFacetInput, MuscleRoleRef };
 export {
@@ -23,6 +23,13 @@ export {
     exercisePrimeMoverLabels,
     muscleFacetLabel,
 };
+
+/** Sufijo ARIA accesible con los nombres legibles de los prime_mover de un ejercicio. */
+export function exercisePrimeMoverAriaSuffix(
+    exercise: Pick<Exercise, "muscles" | "musculatura_principal">
+): string {
+    return exercisePrimeMoverLabels(exercise).map(getMuscleLabel).join(", ");
+}
 
 function uniqSorted(values: string[]): string[] {
     const set = new Set(values.map((v) => v.trim()).filter(Boolean));

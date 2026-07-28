@@ -1,30 +1,18 @@
 /**
- * ConstructorValidationContext — Errores de validación submit en bloques del constructor.
+ * ConstructorValidationProvider — Provider del contexto de validación del constructor.
+ * Contexto: Provee a los bloques del constructor los errores de validación y la capacidad de limpiarlos.
+ * Notas de mantenimiento: Memoriza el valor para evitar re-renders innecesarios de consumidores.
+ * @author Frontend Team
+ * @since v5.3.0
  */
 
 import React from "react";
-import type {
-    ConstructorValidationField,
-    ConstructorValidationIssue,
-} from "../constructorTypes";
 import { constructorValidationFieldKey } from "../constructorTypes";
-
-export interface ConstructorValidationContextValue {
-    getFieldError: (
-        rowId: string,
-        field: ConstructorValidationField,
-        exerciseSlotId?: string
-    ) => string | undefined;
-    clearFieldError: (
-        rowId: string,
-        field: ConstructorValidationField,
-        exerciseSlotId?: string
-    ) => void;
-}
-
-const ConstructorValidationContext = React.createContext<ConstructorValidationContextValue | null>(
-    null
-);
+import type { ConstructorValidationIssue } from "../constructorTypes";
+import {
+    ConstructorValidationContext,
+    ConstructorValidationContextValue,
+} from "./ConstructorValidationContext";
 
 export interface ConstructorValidationProviderProps {
     issuesByKey: Record<string, ConstructorValidationIssue>;
@@ -55,15 +43,4 @@ export function ConstructorValidationProvider({
             {children}
         </ConstructorValidationContext.Provider>
     );
-}
-
-export function useConstructorValidationContext(): ConstructorValidationContextValue {
-    const ctx = React.useContext(ConstructorValidationContext);
-    if (!ctx) {
-        return {
-            getFieldError: () => undefined,
-            clearFieldError: () => undefined,
-        };
-    }
-    return ctx;
 }

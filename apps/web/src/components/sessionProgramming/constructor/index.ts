@@ -117,12 +117,12 @@ export {
 } from "./utils/validateConstructorRows";
 export {
     ConstructorValidationProvider,
-    useConstructorValidationContext,
-} from "./ConstructorValidationContext";
+} from "./ConstructorValidationProvider";
+export { useConstructorValidationContext } from "./useConstructorValidationContext";
 export {
     ConstructorFieldAnchor,
-    useConstructorFieldValidation,
 } from "./primitives/ConstructorFieldAnchor";
+export { useConstructorFieldValidation } from "./primitives/useConstructorFieldValidation";
 export { ValidatedExercisePickerField } from "./primitives/ValidatedExercisePickerField";
 export {
     formatConstructorValidationToast,

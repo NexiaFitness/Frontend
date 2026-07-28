@@ -24,6 +24,9 @@ import {
     EXERCISES_LIBRARY_CARD_VIDEO,
 } from "./exercisesLibraryPresentation";
 import {
+    ExercisePrimeMoverBadges,
+} from "./ExercisePrimeMoverBadges";
+import {
     getLevelLabel,
     getGroupColor,
     normalizeLevel,
@@ -31,11 +34,8 @@ import {
     equipmentDisplayLine,
     tipoLabelFromBackend,
     isComplexExerciseTipo,
-} from "@/utils/exercises";
-import {
-    ExercisePrimeMoverBadges,
     exercisePrimeMoverAriaSuffix,
-} from "./ExercisePrimeMoverBadges";
+} from "@/utils/exercises";
 
 export interface ExerciseCardProps {
     exercise: Exercise;

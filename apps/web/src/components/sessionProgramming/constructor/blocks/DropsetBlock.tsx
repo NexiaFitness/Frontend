@@ -26,10 +26,8 @@ import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsB
 import { DropStepRow } from "../primitives/DropStepRow";
 import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
 import { ExercisePickerField } from "../primitives/ExercisePickerField";
-import {
-    ConstructorFieldAnchor,
-    useConstructorFieldValidation,
-} from "../primitives/ConstructorFieldAnchor";
+import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
+import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import { isFilledConstructorExercise } from "../utils/supersetRow";

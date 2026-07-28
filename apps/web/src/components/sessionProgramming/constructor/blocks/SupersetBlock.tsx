@@ -21,10 +21,8 @@ import { ConstructorCardHeader } from "../primitives/ConstructorCardHeader";
 import { ConstructorGroupParamsBar } from "../primitives/ConstructorGroupParamsBar";
 import { GroupedExerciseRow } from "../primitives/GroupedExerciseRow";
 import { ValidatedExercisePickerField } from "../primitives/ValidatedExercisePickerField";
-import {
-    ConstructorFieldAnchor,
-    useConstructorFieldValidation,
-} from "../primitives/ConstructorFieldAnchor";
+import { ConstructorFieldAnchor } from "../primitives/ConstructorFieldAnchor";
+import { useConstructorFieldValidation } from "../primitives/useConstructorFieldValidation";
 import { RepsTiempoField } from "../primitives/RepsTiempoField";
 import { CaracterField } from "../primitives/CaracterField";
 import {

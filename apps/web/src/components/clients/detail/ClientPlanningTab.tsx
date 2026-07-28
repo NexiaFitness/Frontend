@@ -32,6 +32,7 @@ import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTraini
 import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { TYPOGRAPHY } from "@/utils/typography";
+import { OVERVIEW_ZONE_TITLES } from "./clientOverviewPresentation";
 
 const ChartsTab = lazy(() =>
     import("@/components/trainingPlans").then((module) => ({
@@ -211,11 +212,10 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         return (
             <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-8 text-center">
                 <p className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
-                    Sin plan activo
+                    {OVERVIEW_ZONE_TITLES.planEmpty}
                 </p>
                 <p className="mb-6 text-sm text-muted-foreground">
-                    Usa Planificar en la cabecera para asignar una plantilla o crear un plan
-                    personalizado.
+                    {OVERVIEW_ZONE_TITLES.planEmptyDetail}
                 </p>
                 {onPlanificar ? (
                     <Button
