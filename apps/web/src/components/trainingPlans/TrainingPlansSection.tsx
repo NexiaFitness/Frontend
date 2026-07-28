@@ -16,10 +16,22 @@ import { Archive, ClipboardList, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
 import { SearchBar } from "@/components/ui/forms";
 import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { TrainingPlanCard } from "./TrainingPlanCard";
 import { TrainingPlanTemplateCard } from "./TrainingPlanTemplateCard";
+import {
+    TEMPLATE_LIBRARY_CARD_GRID,
+    TEMPLATE_LIBRARY_EMPTY_BODY,
+    TEMPLATE_LIBRARY_EMPTY_GLOW,
+    TEMPLATE_LIBRARY_EMPTY_SHELL,
+    TEMPLATE_LIBRARY_EMPTY_TITLE,
+    TEMPLATE_LIBRARY_LOADING_SHELL,
+    TEMPLATE_LIBRARY_PRIMARY_CTA,
+    TEMPLATE_LIBRARY_SECTION_DESC,
+} from "./templateLibraryPresentation";
 import type { TrainingPlan, TrainingPlanTemplate } from "@nexia/shared/types/training";
 import type { Client } from "@nexia/shared/types/client";
+import { cn } from "@/lib/utils";
 
 interface TrainingPlansSectionProps {
     title: string;
@@ -96,11 +108,19 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
                     )}
                 </div>
             ) : description ? (
-                <p className="mb-4 text-xs text-muted-foreground">{description}</p>
+                <p
+                    className={
+                        isTemplate
+                            ? TEMPLATE_LIBRARY_SECTION_DESC
+                            : "mb-4 text-xs text-muted-foreground"
+                    }
+                >
+                    {description}
+                </p>
             ) : null}
 
-            {/* Buscador — estilo ClientList */}
-            {onSearchChange && (
+            {/* Buscador — estilo ClientList (solo planificación; plantillas usan toolbar premium en page) */}
+            {onSearchChange && !isTemplate && (
                 <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <SearchBar
                         value={searchValue}
@@ -113,31 +133,70 @@ export const TrainingPlansSection: React.FC<TrainingPlansSectionProps> = ({
 
             {/* Content */}
             {isLoading ? (
-                <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-border bg-card p-12">
-                    <LoadingSpinner size="lg" />
-                </div>
+                isTemplate ? (
+                    <div className={TEMPLATE_LIBRARY_LOADING_SHELL}>
+                        <NexiaGlassAccentRim />
+                        <LoadingSpinner size="lg" />
+                    </div>
+                ) : (
+                    <div className="flex min-h-[200px] items-center justify-center rounded-lg border border-border bg-card p-12">
+                        <LoadingSpinner size="lg" />
+                    </div>
+                )
             ) : items.length === 0 ? (
-                <div className="rounded-lg border border-dashed border-border/50 bg-muted/10">
-                    <EmptyState
-                        icon={<EmptyIcon aria-hidden />}
-                        title={
-                            emptyTitle ??
-                            `No hay ${isTemplate ? "plantillas" : "planes"} aún`
-                        }
-                        description={emptyDescription}
-                        className="py-16"
-                        action={
-                            emptyShowCreateAction && onCreate ? (
-                                <Button variant="outline" size="sm" onClick={onCreate}>
-                                    <EmptyIcon className="size-4" aria-hidden />
-                                    {isTemplate ? "Crear primera plantilla" : "Crear primera planificación"}
-                                </Button>
-                            ) : undefined
-                        }
-                    />
-                </div>
+                isTemplate ? (
+                    <div className={cn(TEMPLATE_LIBRARY_EMPTY_SHELL, "py-12")}>
+                        <NexiaGlassAccentRim />
+                        <div className={TEMPLATE_LIBRARY_EMPTY_GLOW} aria-hidden />
+                        <p className={TEMPLATE_LIBRARY_EMPTY_TITLE}>
+                            {emptyTitle ?? "No hay plantillas aún"}
+                        </p>
+                        {emptyDescription ? (
+                            <p className={TEMPLATE_LIBRARY_EMPTY_BODY}>{emptyDescription}</p>
+                        ) : null}
+                        {emptyShowCreateAction && onCreate ? (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                className={cn("mt-4", TEMPLATE_LIBRARY_PRIMARY_CTA)}
+                                onClick={onCreate}
+                            >
+                                <FileStack className="mr-2 h-4 w-4" aria-hidden />
+                                Crear primera plantilla
+                            </Button>
+                        ) : null}
+                    </div>
+                ) : (
+                    <div className="rounded-lg border border-dashed border-border/50 bg-muted/10">
+                        <EmptyState
+                            icon={<EmptyIcon aria-hidden />}
+                            title={
+                                emptyTitle ??
+                                `No hay ${isTemplate ? "plantillas" : "planes"} aún`
+                            }
+                            description={emptyDescription}
+                            className="py-16"
+                            action={
+                                emptyShowCreateAction && onCreate ? (
+                                    <Button variant="outline" size="sm" onClick={onCreate}>
+                                        <EmptyIcon className="size-4" aria-hidden />
+                                        {isTemplate
+                                            ? "Crear primera plantilla"
+                                            : "Crear primera planificación"}
+                                    </Button>
+                                ) : undefined
+                            }
+                        />
+                    </div>
+                )
             ) : (
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <div
+                    className={
+                        isTemplate
+                            ? TEMPLATE_LIBRARY_CARD_GRID
+                            : "grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+                    }
+                >
                     {type === "template"
                         ? (items as TrainingPlanTemplate[]).map((template) => (
                               <TrainingPlanTemplateCard key={template.id} template={template} />

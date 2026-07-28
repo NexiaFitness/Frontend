@@ -33,9 +33,25 @@ import {
 
 import { TrainingPlansSection } from "@/components/trainingPlans";
 import { SelectClientModal } from "@/components/trainingPlans/modals/SelectClientModal";
+import {
+    TEMPLATE_LIBRARY_COPY,
+    TEMPLATE_LIBRARY_GLOW,
+    TEMPLATE_LIBRARY_HEADER,
+    TEMPLATE_LIBRARY_PAGE,
+    TEMPLATE_LIBRARY_PRIMARY_CTA,
+    TEMPLATE_LIBRARY_SEARCH_ICON,
+    TEMPLATE_LIBRARY_SEARCH_INPUT,
+    TEMPLATE_LIBRARY_SEARCH_WRAP,
+    TEMPLATE_LIBRARY_STACK,
+    TEMPLATE_LIBRARY_TITLE_WRAP,
+    TEMPLATE_LIBRARY_TOOLBAR,
+    templateLibraryFilterChipClass,
+    templateLibraryFilterCountClass,
+} from "@/components/trainingPlans/templateLibraryPresentation";
 import { Alert } from "@/components/ui/feedback";
 import { PaginationBar } from "@/components/ui/pagination";
 import { Button } from "@/components/ui/buttons";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { TabsBar } from "@/components/ui/tabs/TabsBar";
 import { Input, FormCombobox, DatePickerButton } from "@/components/ui/forms";
 import { cn } from "@/lib/utils";
@@ -515,31 +531,57 @@ export const TrainingPlansPage: React.FC = () => {
 
     const isLoading = isLoadingTemplates || isLoadingPlans;
 
+    const pageShellClass = activeTab === "templates" ? TEMPLATE_LIBRARY_PAGE : "space-y-6";
+
     return (
-        <div className="space-y-6">
+        <div className={cn(pageShellClass, "relative")}>
+            {activeTab === "templates" ? (
+                <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
+            ) : null}
+
             {!trainerId && !isLoading && user?.role === "trainer" && (
                 <Alert variant="error">
                     No se pudo cargar tu perfil de trainer. Por favor, completa tu perfil primero.
                 </Alert>
             )}
 
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <PageTitle
-                    title={activeTab === "planning" ? "Planificación" : "Plantillas"}
-                    subtitle={
-                        activeTab === "planning"
-                            ? `${planStatusCounts.all} planes asignados`
-                            : `${templateLevelCounts.all} plantillas disponibles`
-                    }
-                />
+            <div
+                className={
+                    activeTab === "templates"
+                        ? cn(TEMPLATE_LIBRARY_STACK, "relative space-y-6")
+                        : "space-y-6"
+                }
+            >
+            <div
+                className={
+                    activeTab === "templates"
+                        ? TEMPLATE_LIBRARY_HEADER
+                        : "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
+                }
+            >
+                <div className={activeTab === "templates" ? TEMPLATE_LIBRARY_TITLE_WRAP : undefined}>
+                    <PageTitle
+                        title={activeTab === "planning" ? "Planificación" : "Plantillas"}
+                        subtitle={
+                            activeTab === "planning"
+                                ? `${planStatusCounts.all} planes asignados`
+                                : TEMPLATE_LIBRARY_COPY.pageSubtitle
+                        }
+                    />
+                </div>
                 {activeTab === "planning" ? (
                     <Button size="sm" onClick={handleCreatePlan}>
                         <Plus className="mr-1 h-4 w-4" aria-hidden />
                         Nueva planificación
                     </Button>
                 ) : (
-                    <Button size="sm" onClick={handleCreateTemplate}>
-                        <Plus className="mr-1 h-4 w-4" aria-hidden />
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className={TEMPLATE_LIBRARY_PRIMARY_CTA}
+                        onClick={handleCreateTemplate}
+                    >
+                        <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
                         Nueva plantilla
                     </Button>
                 )}
@@ -668,7 +710,8 @@ export const TrainingPlansPage: React.FC = () => {
 
             {activeTab === "templates" && (
                 <>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className={TEMPLATE_LIBRARY_TOOLBAR}>
+                        <NexiaGlassAccentRim />
                         <div
                             className="flex flex-wrap items-center gap-1.5"
                             role="group"
@@ -688,16 +731,18 @@ export const TrainingPlansPage: React.FC = () => {
                                             setTemplateLevelFilter(value);
                                             resetTemplatesPage();
                                         }}
-                                        className={listFilterChipClass(active)}
+                                        className={templateLibraryFilterChipClass(active)}
                                         aria-pressed={active}
                                     >
                                         <span>{label}</span>
-                                        <span className={listFilterCountClass(active)}>{count}</span>
+                                        <span className={templateLibraryFilterCountClass(active)}>
+                                            {count}
+                                        </span>
                                     </button>
                                 );
                             })}
                         </div>
-                        <div className="h-9 w-44 min-w-[11rem]">
+                        <div className="h-9 w-full min-w-0 sm:w-44 sm:min-w-[11rem]">
                             <FormCombobox
                                 value={templateGoalFilter}
                                 onChange={(v) => {
@@ -711,7 +756,7 @@ export const TrainingPlansPage: React.FC = () => {
                                 ariaLabel="Filtrar por objetivo de plantilla"
                             />
                         </div>
-                        <div className="flex h-9 items-center gap-2">
+                        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                             <DatePickerButton
                                 label="Desde"
                                 value={templateDateFrom}
@@ -721,7 +766,7 @@ export const TrainingPlansPage: React.FC = () => {
                                 }}
                                 aria-label="Plantilla creada desde"
                             />
-                            <span className="text-muted-foreground text-sm">–</span>
+                            <span className="text-sm text-muted-foreground">–</span>
                             <DatePickerButton
                                 label="Hasta"
                                 value={templateDateTo}
@@ -732,11 +777,8 @@ export const TrainingPlansPage: React.FC = () => {
                                 aria-label="Plantilla creada hasta"
                             />
                         </div>
-                        <div className="relative ml-auto h-9 w-full sm:w-56">
-                            <Search
-                                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden
-                            />
+                        <div className={TEMPLATE_LIBRARY_SEARCH_WRAP}>
+                            <Search className={TEMPLATE_LIBRARY_SEARCH_ICON} aria-hidden />
                             <Input
                                 type="text"
                                 size="sm"
@@ -746,7 +788,7 @@ export const TrainingPlansPage: React.FC = () => {
                                     setSearchTemplates(e.target.value);
                                     resetTemplatesPage();
                                 }}
-                                className="h-9 w-full pl-8"
+                                className={TEMPLATE_LIBRARY_SEARCH_INPUT}
                                 aria-label="Buscar plantilla"
                             />
                         </div>
@@ -754,7 +796,6 @@ export const TrainingPlansPage: React.FC = () => {
 
                     <TrainingPlansSection
                         title="Plantillas"
-                        description="Plantillas reutilizables que puedes asignar a múltiples clientes"
                         showHeading={false}
                         items={paginatedTemplates}
                         type="template"
@@ -780,6 +821,7 @@ export const TrainingPlansPage: React.FC = () => {
                 isOpen={isSelectClientModalOpen}
                 onClose={() => setIsSelectClientModalOpen(false)}
             />
+            </div>
         </div>
     );
 };

@@ -1,15 +1,15 @@
 /**
- * CreateTrainingPlanTemplate.tsx — Crear plantilla (metadata biblioteca, greenfield v3).
- *
- * POST crea plantilla en draft/not_validated; el programa estructurado se edita en PR5+.
+ * CreateTrainingPlanTemplate.tsx — Crear plantilla (metadata biblioteca, premium).
  */
 
 import React, { useState, useEffect } from "react";
+import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { PageTitle } from "@/components/dashboard/shared";
 import { useToast, LoadingSpinner } from "@/components/ui/feedback";
 import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { useCreateTrainingPlanTemplateMutation } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useReturnToOrigin } from "@/hooks/useReturnToOrigin";
@@ -20,10 +20,28 @@ import {
     type TrainingPlanTemplateCreate,
 } from "@nexia/shared/types/training";
 import { GOAL_LABEL_ES } from "@/components/trainingPlans/goalLabels";
+import {
+    TEMPLATE_LIBRARY_BACK_BUTTON,
+    TEMPLATE_LIBRARY_COPY,
+    TEMPLATE_LIBRARY_FORM_ACTIONS,
+    TEMPLATE_LIBRARY_FORM_FIELD_ERROR,
+    TEMPLATE_LIBRARY_FORM_FIELD_LABEL,
+    TEMPLATE_LIBRARY_FORM_FOOTER,
+    TEMPLATE_LIBRARY_FORM_PAGE,
+    TEMPLATE_LIBRARY_FORM_SECTION,
+    TEMPLATE_LIBRARY_FORM_SECTION_TITLE,
+    TEMPLATE_LIBRARY_FORM_STACK,
+    TEMPLATE_LIBRARY_FORM_TAG,
+    TEMPLATE_LIBRARY_GLOW,
+    TEMPLATE_LIBRARY_HEADER,
+    TEMPLATE_LIBRARY_LOADING_ROW,
+    TEMPLATE_LIBRARY_PRIMARY_CTA,
+    TEMPLATE_LIBRARY_TITLE_WRAP,
+} from "@/components/trainingPlans/templateLibraryPresentation";
 
 export const CreateTrainingPlanTemplate: React.FC = () => {
     const navigate = useNavigate();
-    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/training-plans" });
+    const { goBack } = useReturnToOrigin({ fallbackPath: "/dashboard/training-plans?tab=templates" });
 
     const { data: trainerProfile, isLoading: isLoadingTrainer } =
         useGetCurrentTrainerProfileQuery();
@@ -137,205 +155,206 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
 
     if (isLoadingTrainer || !trainerId) {
         return (
-            <div className="flex min-h-[40vh] items-center justify-center px-4 lg:px-8">
+            <div className={TEMPLATE_LIBRARY_LOADING_ROW}>
                 <LoadingSpinner size="lg" />
             </div>
         );
     }
 
     return (
-        <>
-            <div className="mb-6 px-4 lg:px-8">
-                <PageTitle
-                    title="Crear plantilla de plan"
-                    subtitle="Nombre y objetivo; después armarás el programa por semanas"
-                />
-            </div>
+        <div className={TEMPLATE_LIBRARY_FORM_PAGE}>
+            <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
+            <header className={TEMPLATE_LIBRARY_HEADER}>
+                <div className={TEMPLATE_LIBRARY_TITLE_WRAP}>
+                    <Button
+                        variant="ghost-primary"
+                        size="sm"
+                        className={TEMPLATE_LIBRARY_BACK_BUTTON}
+                        onClick={() => goBack()}
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                        {TEMPLATE_LIBRARY_COPY.createBack}
+                    </Button>
+                    <PageTitle
+                        title="Crear plantilla de plan"
+                        subtitle={TEMPLATE_LIBRARY_COPY.createSubtitle}
+                    />
+                </div>
+            </header>
 
-            <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="rounded-lg border border-border bg-card p-6 shadow">
-                        <h3 className="mb-6 text-lg font-semibold text-foreground">
-                            Información básica
-                        </h3>
+            <form onSubmit={handleSubmit} className={TEMPLATE_LIBRARY_FORM_STACK}>
+                <section className={TEMPLATE_LIBRARY_FORM_SECTION}>
+                    <NexiaGlassAccentRim />
+                    <h2 className={TEMPLATE_LIBRARY_FORM_SECTION_TITLE}>
+                        {TEMPLATE_LIBRARY_COPY.sectionBasic}
+                    </h2>
+                    <div className="space-y-5">
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>
+                                Nombre de la plantilla *
+                            </label>
+                            <Input
+                                type="text"
+                                value={formData.name || ""}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, name: e.target.value })
+                                }
+                                placeholder="Ej: Hipertrofia 12 semanas"
+                                required
+                            />
+                            {formErrors.name ? (
+                                <p className={TEMPLATE_LIBRARY_FORM_FIELD_ERROR}>{formErrors.name}</p>
+                            ) : null}
+                        </div>
 
-                        <div className="space-y-6">
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Nombre de la plantilla *
-                                </label>
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Objetivo *</label>
+                            <FormSelect
+                                value={formData.goal || ""}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, goal: e.target.value })
+                                }
+                                required
+                                options={[
+                                    { value: "", label: "Selecciona un objetivo" },
+                                    ...goalOptions,
+                                ]}
+                            />
+                            {formErrors.goal ? (
+                                <p className={TEMPLATE_LIBRARY_FORM_FIELD_ERROR}>{formErrors.goal}</p>
+                            ) : null}
+                        </div>
+
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Descripción</label>
+                            <Textarea
+                                value={formData.description || ""}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        description: e.target.value,
+                                    })
+                                }
+                                rows={4}
+                                placeholder="Objetivos y contexto de la plantilla…"
+                            />
+                        </div>
+
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>
+                                Categoría personalizada
+                            </label>
+                            <Input
+                                type="text"
+                                value={formData.category || ""}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, category: e.target.value })
+                                }
+                                placeholder="Ej: Fuerza, Cardio, Hipertrofia"
+                            />
+                        </div>
+
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Etiquetas</label>
+                            <div className="flex gap-2">
                                 <Input
                                     type="text"
-                                    value={formData.name || ""}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, name: e.target.value })
-                                    }
-                                    placeholder="Ej: Hipertrofia 12 semanas"
-                                    required
+                                    value={tagInput}
+                                    onChange={(e) => setTagInput(e.target.value)}
+                                    onKeyPress={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleAddTag();
+                                        }
+                                    }}
+                                    placeholder="Agregar etiquetas (Enter)"
                                 />
-                                {formErrors.name ? (
-                                    <p className="mt-1 text-sm text-destructive">{formErrors.name}</p>
-                                ) : null}
+                                <Button
+                                    type="button"
+                                    variant="outline-primary"
+                                    onClick={handleAddTag}
+                                    disabled={!tagInput.trim()}
+                                >
+                                    +
+                                </Button>
                             </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-slate-700">
-                                    Objetivo *
-                                </label>
-                                <FormSelect
-                                    value={formData.goal || ""}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, goal: e.target.value })
-                                    }
-                                    required
-                                    options={[
-                                        { value: "", label: "Selecciona un objetivo" },
-                                        ...goalOptions,
-                                    ]}
-                                />
-                                {formErrors.goal ? (
-                                    <p className="mt-1 text-sm text-destructive">{formErrors.goal}</p>
-                                ) : null}
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Descripción
-                                </label>
-                                <Textarea
-                                    value={formData.description || ""}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            description: e.target.value,
-                                        })
-                                    }
-                                    rows={4}
-                                    placeholder="Objetivos y contexto de la plantilla…"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Categoría personalizada
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={formData.category || ""}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, category: e.target.value })
-                                    }
-                                    placeholder="Ej: Fuerza, Cardio, Hipertrofia"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Etiquetas
-                                </label>
-                                <div className="flex gap-2">
-                                    <Input
-                                        type="text"
-                                        value={tagInput}
-                                        onChange={(e) => setTagInput(e.target.value)}
-                                        onKeyPress={(e) => {
-                                            if (e.key === "Enter") {
-                                                e.preventDefault();
-                                                handleAddTag();
-                                            }
-                                        }}
-                                        placeholder="Agregar etiquetas (Enter)"
-                                    />
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={handleAddTag}
-                                        disabled={!tagInput.trim()}
-                                    >
-                                        +
-                                    </Button>
-                                </div>
-                                {formData.tags && formData.tags.length > 0 ? (
-                                    <div className="mt-2 flex flex-wrap gap-2">
-                                        {formData.tags.map((tag) => (
-                                            <span
-                                                key={tag}
-                                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-3 py-1 text-sm text-primary"
+                            {formData.tags && formData.tags.length > 0 ? (
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {formData.tags.map((tag) => (
+                                        <span key={tag} className={TEMPLATE_LIBRARY_FORM_TAG}>
+                                            {tag}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveTag(tag)}
+                                                className="hover:opacity-80"
+                                                aria-label={`Quitar etiqueta ${tag}`}
                                             >
-                                                {tag}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => handleRemoveTag(tag)}
-                                                    className="hover:opacity-80"
-                                                >
-                                                    ×
-                                                </button>
-                                            </span>
-                                        ))}
-                                    </div>
-                                ) : null}
-                            </div>
+                                                ×
+                                            </button>
+                                        </span>
+                                    ))}
+                                </div>
+                            ) : null}
                         </div>
                     </div>
+                </section>
 
-                    <div className="rounded-lg border border-border bg-card p-6 shadow">
-                        <h3 className="mb-6 text-lg font-semibold text-foreground">
-                            Biblioteca
-                        </h3>
+                <section className={TEMPLATE_LIBRARY_FORM_SECTION}>
+                    <NexiaGlassAccentRim />
+                    <h2 className={TEMPLATE_LIBRARY_FORM_SECTION_TITLE}>
+                        {TEMPLATE_LIBRARY_COPY.sectionLibrary}
+                    </h2>
+                    <div className="space-y-5">
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Carpeta</label>
+                            <Input
+                                type="text"
+                                value={formData.folder_name || ""}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        folder_name: e.target.value,
+                                    })
+                                }
+                                placeholder="Ej: Fuerza básica"
+                            />
+                        </div>
 
-                        <div className="space-y-6">
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Carpeta
-                                </label>
-                                <Input
-                                    type="text"
-                                    value={formData.folder_name || ""}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            folder_name: e.target.value,
-                                        })
-                                    }
-                                    placeholder="Ej: Fuerza básica"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="mb-2 block text-sm font-semibold text-foreground">
-                                    Nivel
-                                </label>
-                                <FormSelect
-                                    value={formData.level || ""}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            ...formData,
-                                            level: (e.target.value || null) as TemplateLevel | null,
-                                        })
-                                    }
-                                    options={levelOptions}
-                                />
-                            </div>
+                        <div>
+                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Nivel</label>
+                            <FormSelect
+                                value={formData.level || ""}
+                                onChange={(e) =>
+                                    setFormData({
+                                        ...formData,
+                                        level: (e.target.value || null) as TemplateLevel | null,
+                                    })
+                                }
+                                options={levelOptions}
+                            />
                         </div>
                     </div>
+                </section>
 
-                    <div className="rounded-lg border border-border bg-card p-6 shadow">
-                        <h3 className="mb-6 text-lg font-semibold text-foreground">
-                            Visibilidad
-                        </h3>
-                        <Checkbox
-                            checked={formData.is_public || false}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    is_public: e.target.checked,
-                                })
-                            }
-                            label="Plantilla pública (visible para otros entrenadores)"
-                        />
-                    </div>
+                <section className={TEMPLATE_LIBRARY_FORM_SECTION}>
+                    <NexiaGlassAccentRim />
+                    <h2 className={TEMPLATE_LIBRARY_FORM_SECTION_TITLE}>
+                        {TEMPLATE_LIBRARY_COPY.sectionVisibility}
+                    </h2>
+                    <Checkbox
+                        checked={formData.is_public || false}
+                        onChange={(e) =>
+                            setFormData({
+                                ...formData,
+                                is_public: e.target.checked,
+                            })
+                        }
+                        label="Plantilla pública (visible para otros entrenadores)"
+                    />
+                </section>
 
-                    <div className="flex flex-col gap-3 pt-4 sm:flex-row">
+                <div className={TEMPLATE_LIBRARY_FORM_FOOTER}>
+                    <div className={TEMPLATE_LIBRARY_FORM_ACTIONS}>
                         <Button
                             type="button"
                             variant="outline"
@@ -351,13 +370,13 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                             size="lg"
                             disabled={isCreatingTemplate || !trainerId}
                             isLoading={isCreatingTemplate}
-                            className="w-full sm:ml-auto sm:w-auto"
+                            className={TEMPLATE_LIBRARY_PRIMARY_CTA}
                         >
                             {isCreatingTemplate ? "Creando…" : "Crear plantilla"}
                         </Button>
                     </div>
-                </form>
-            </div>
-        </>
+                </div>
+            </form>
+        </div>
     );
 };

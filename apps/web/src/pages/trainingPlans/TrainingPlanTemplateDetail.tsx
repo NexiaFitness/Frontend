@@ -1,5 +1,5 @@
 /**
- * TrainingPlanTemplateDetail.tsx — Detalle de plantilla (metadata + assign).
+ * TrainingPlanTemplateDetail.tsx — Detalle de plantilla (metadata + assign, premium).
  */
 
 import React, { useState, useMemo } from "react";
@@ -15,16 +15,34 @@ import {
     isTrainingPlanTemplateNotFoundError,
     resolveTrainingPlanTemplateLoadError,
     TEMPLATE_STATUS_CHIP_CLASS,
-    TEMPLATE_TEMPORAL_BRIDGE_COPY,
 } from "@nexia/shared";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
 import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
 import {
     categoryChipsFromTemplate,
     displayTrainingPlanTemplateTitle,
 } from "@/components/trainingPlans/goalLabels";
+import {
+    TEMPLATE_LIBRARY_BACK_BUTTON,
+    TEMPLATE_LIBRARY_COPY,
+    TEMPLATE_LIBRARY_DETAIL_ACTIONS,
+    TEMPLATE_LIBRARY_DETAIL_DESCRIPTION,
+    TEMPLATE_LIBRARY_DETAIL_HINT,
+    TEMPLATE_LIBRARY_DETAIL_META_GRID,
+    TEMPLATE_LIBRARY_DETAIL_META_LABEL,
+    TEMPLATE_LIBRARY_DETAIL_META_VALUE,
+    TEMPLATE_LIBRARY_DETAIL_PAGE,
+    TEMPLATE_LIBRARY_DETAIL_SHELL,
+    TEMPLATE_LIBRARY_DETAIL_TITLE,
+    TEMPLATE_LIBRARY_GLOW,
+    TEMPLATE_LIBRARY_HEADER,
+    TEMPLATE_LIBRARY_LOADING_SHELL,
+    TEMPLATE_LIBRARY_PRIMARY_CTA,
+    TEMPLATE_LIBRARY_TITLE_WRAP,
+} from "@/components/trainingPlans/templateLibraryPresentation";
 import { labelTrainingGoal } from "@nexia/shared";
 import { cn } from "@/lib/utils";
 
@@ -89,9 +107,9 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
 
     if (templateId <= 0) {
         return (
-            <div className="px-4 py-8 lg:px-8">
+            <div className={cn(TEMPLATE_LIBRARY_DETAIL_PAGE, "py-8")}>
                 <Alert variant="error">Identificador de plantilla no válido.</Alert>
-                <Button variant="outline" className="mt-4" onClick={handleBack}>
+                <Button variant="outline-primary" className="mt-4" onClick={handleBack}>
                     Volver a biblioteca
                 </Button>
             </div>
@@ -102,21 +120,24 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
     const loadFailed = isError || (!isLoading && !template);
 
     return (
-        <div className="space-y-6 px-4 py-6 lg:px-8">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-fit text-muted-foreground hover:text-foreground"
-                    onClick={handleBack}
-                >
-                    <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
-                    Volver a biblioteca
-                </Button>
+        <div className={TEMPLATE_LIBRARY_DETAIL_PAGE}>
+            <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
+            <header className={cn(TEMPLATE_LIBRARY_HEADER, "relative")}>
+                <div className={TEMPLATE_LIBRARY_TITLE_WRAP}>
+                    <Button
+                        variant="ghost-primary"
+                        size="sm"
+                        className={TEMPLATE_LIBRARY_BACK_BUTTON}
+                        onClick={handleBack}
+                    >
+                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                        {TEMPLATE_LIBRARY_COPY.detailBack}
+                    </Button>
+                </div>
                 {template ? (
-                    <div className="flex flex-wrap gap-2">
+                    <div className={TEMPLATE_LIBRARY_DETAIL_ACTIONS}>
                         <Button
-                            variant="outline"
+                            variant="outline-primary"
                             size="sm"
                             onClick={() =>
                                 navigate(`/dashboard/training-plans/templates/${templateId}/edit`)
@@ -125,7 +146,7 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             Editar programa
                         </Button>
                         <Button
-                            variant="outline"
+                            variant="outline-primary"
                             size="sm"
                             onClick={() => setDuplicateOpen(true)}
                         >
@@ -135,6 +156,7 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                         <Button
                             variant="primary"
                             size="sm"
+                            className={TEMPLATE_LIBRARY_PRIMARY_CTA}
                             onClick={() => setAssignOpen(true)}
                             disabled={!assignable}
                             title={
@@ -147,17 +169,19 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                         </Button>
                     </div>
                 ) : null}
-            </div>
+            </header>
 
             {isLoading ? (
-                <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-border bg-card p-12 shadow-lg">
+                <div className={TEMPLATE_LIBRARY_LOADING_SHELL}>
+                    <NexiaGlassAccentRim />
                     <LoadingSpinner size="lg" />
                 </div>
             ) : loadFailed ? (
-                <div className="space-y-4 rounded-xl border border-border bg-card p-8 shadow-lg">
+                <div className={cn(TEMPLATE_LIBRARY_DETAIL_SHELL, "space-y-4")}>
+                    <NexiaGlassAccentRim />
                     <Alert variant="error">{resolveTrainingPlanTemplateLoadError(error)}</Alert>
                     <div className="flex flex-wrap gap-2">
-                        <Button variant="outline" size="sm" onClick={handleBack}>
+                        <Button variant="outline-primary" size="sm" onClick={handleBack}>
                             Volver a biblioteca
                         </Button>
                         {isNotFound ? (
@@ -174,8 +198,9 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                     </div>
                 </div>
             ) : (
-                <article className="rounded-xl border border-border border-l-2 border-l-primary bg-card p-6 text-card-foreground shadow-lg">
-                    <h1 className="text-2xl font-semibold text-foreground">
+                <article className={TEMPLATE_LIBRARY_DETAIL_SHELL}>
+                    <NexiaGlassAccentRim />
+                    <h1 className={TEMPLATE_LIBRARY_DETAIL_TITLE}>
                         {displayTrainingPlanTemplateTitle(template.name)}
                     </h1>
                     <div className="mt-3 flex flex-wrap gap-2">
@@ -209,54 +234,58 @@ export const TrainingPlanTemplateDetail: React.FC = () => {
                             </span>
                         ))}
                     </div>
-                    <p className="mt-4 text-muted-foreground">
-                        {template.description?.trim() || goalLabel || "Sin descripción."}
+                    <p className={cn(TEMPLATE_LIBRARY_DETAIL_DESCRIPTION, "mt-4")}>
+                        {template.description?.trim() || "Sin descripción."}
                     </p>
-                    <p className="mt-4 text-sm text-muted-foreground">
-                        {TEMPLATE_TEMPORAL_BRIDGE_COPY}
+                    <p className={cn(TEMPLATE_LIBRARY_DETAIL_HINT, "mt-4")}>
+                        {TEMPLATE_LIBRARY_COPY.libraryHint}
                     </p>
-                    <dl className="mt-6 grid gap-3 text-sm sm:grid-cols-2">
+                    <dl className={cn(TEMPLATE_LIBRARY_DETAIL_META_GRID, "mt-6")}>
                         {goalLabel ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">Objetivo</dt>
-                                <dd className="text-foreground">{goalLabel}</dd>
+                                <dt className={TEMPLATE_LIBRARY_DETAIL_META_LABEL}>Objetivo</dt>
+                                <dd className={TEMPLATE_LIBRARY_DETAIL_META_VALUE}>{goalLabel}</dd>
                             </div>
                         ) : null}
                         {template.level ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">Nivel</dt>
-                                <dd className="text-foreground">
+                                <dt className={TEMPLATE_LIBRARY_DETAIL_META_LABEL}>Nivel</dt>
+                                <dd className={TEMPLATE_LIBRARY_DETAIL_META_VALUE}>
                                     {LEVEL_LABELS[template.level] ?? template.level}
                                 </dd>
                             </div>
                         ) : null}
                         {formatTemplateProgramWeekCount(template.program_week_count) ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">Programa</dt>
-                                <dd className="text-foreground">
+                                <dt className={TEMPLATE_LIBRARY_DETAIL_META_LABEL}>Programa</dt>
+                                <dd className={TEMPLATE_LIBRARY_DETAIL_META_VALUE}>
                                     {formatTemplateProgramWeekCount(template.program_week_count)}
                                 </dd>
                             </div>
                         ) : null}
                         {formatTemplateDurationHint(template.estimated_duration_weeks) ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">
+                                <dt className={TEMPLATE_LIBRARY_DETAIL_META_LABEL}>
                                     Duración referencia
                                 </dt>
-                                <dd className="text-foreground">
+                                <dd className={TEMPLATE_LIBRARY_DETAIL_META_VALUE}>
                                     {formatTemplateDurationHint(template.estimated_duration_weeks)}
                                 </dd>
                             </div>
                         ) : null}
                         {template.folder_name ? (
                             <div>
-                                <dt className="font-medium text-muted-foreground">Carpeta</dt>
-                                <dd className="text-foreground">{template.folder_name}</dd>
+                                <dt className={TEMPLATE_LIBRARY_DETAIL_META_LABEL}>Carpeta</dt>
+                                <dd className={TEMPLATE_LIBRARY_DETAIL_META_VALUE}>
+                                    {template.folder_name}
+                                </dd>
                             </div>
                         ) : null}
                         <div>
-                            <dt className="font-medium text-muted-foreground">Veces usada</dt>
-                            <dd className="text-foreground">{template.usage_count}</dd>
+                            <dt className={TEMPLATE_LIBRARY_DETAIL_META_LABEL}>Veces usada</dt>
+                            <dd className={TEMPLATE_LIBRARY_DETAIL_META_VALUE}>
+                                {template.usage_count}
+                            </dd>
                         </div>
                     </dl>
                 </article>

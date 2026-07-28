@@ -1,11 +1,12 @@
 /**
- * TrainingPlanTemplateCard — Card de plantilla (biblioteca, greenfield v3).
+ * TrainingPlanTemplateCard — Card de plantilla (biblioteca premium).
  */
 
 import React, { useMemo, useState } from "react";
 import { Copy } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import type { TrainingPlanTemplate } from "@nexia/shared/types/training";
 import {
@@ -19,20 +20,27 @@ import {
 import { categoryChipsFromTemplate, displayTrainingPlanTemplateTitle } from "./goalLabels";
 import { AssignTemplateModal } from "./AssignTemplateModal";
 import { DuplicateTemplateModal } from "./DuplicateTemplateModal";
-
-const CARD_BASE =
-    "rounded-xl border border-border bg-card p-5 text-card-foreground shadow-lg transition-all duration-200 hover:shadow-xl";
+import {
+    TEMPLATE_LIBRARY_CARD,
+    TEMPLATE_LIBRARY_CARD_ACTIONS,
+    TEMPLATE_LIBRARY_CARD_BADGE_ROW,
+    TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN,
+    TEMPLATE_LIBRARY_CARD_HINT,
+    TEMPLATE_LIBRARY_CARD_META,
+    TEMPLATE_LIBRARY_CARD_PROGRESS,
+    TEMPLATE_LIBRARY_CARD_PROGRESS_FILL,
+    TEMPLATE_LIBRARY_CARD_SECONDARY_BTN,
+    TEMPLATE_LIBRARY_CARD_STAT_ROW,
+    TEMPLATE_LIBRARY_CARD_STAT_VALUE,
+    TEMPLATE_LIBRARY_CARD_STATS,
+    TEMPLATE_LIBRARY_CARD_TITLE_BTN,
+    TEMPLATE_LIBRARY_LEVEL_BADGE,
+} from "./templateLibraryPresentation";
 
 const LEVEL_LABELS: Record<string, string> = {
     beginner: "Principiante",
     intermediate: "Intermedio",
     advanced: "Avanzado",
-};
-
-const LEVEL_BADGE_CLASS: Record<string, string> = {
-    beginner: "bg-success/10 text-success",
-    intermediate: "bg-warning/10 text-warning",
-    advanced: "bg-primary/10 text-primary",
 };
 
 export interface TrainingPlanTemplateCardProps {
@@ -109,7 +117,7 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
             <span
                 className={cn(
                     "inline-flex shrink-0 items-center text-xs font-medium",
-                    LEVEL_BADGE_CLASS[template.level] ?? "text-muted-foreground",
+                    TEMPLATE_LIBRARY_LEVEL_BADGE[template.level] ?? "text-muted-foreground",
                 )}
             >
                 {LEVEL_LABELS[template.level] ?? template.level}
@@ -118,20 +126,21 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
 
     return (
         <>
-            <article className={cn(CARD_BASE, "flex h-full flex-col gap-4")}>
+            <article className={TEMPLATE_LIBRARY_CARD}>
+                <NexiaGlassAccentRim />
                 <div className="flex min-h-0 flex-1 flex-col gap-4">
                     <div className="min-w-0">
                         <div className="flex items-start justify-between gap-2">
                             <button
                                 type="button"
                                 onClick={handleOpenDetail}
-                                className="line-clamp-2 min-w-0 flex-1 text-left text-base font-semibold text-foreground hover:text-primary focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 rounded-sm"
+                                className={TEMPLATE_LIBRARY_CARD_TITLE_BTN}
                             >
                                 {displayTitle}
                             </button>
                             {levelBadge}
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
+                        <div className={TEMPLATE_LIBRARY_CARD_BADGE_ROW}>
                             {statusChips.map((chip) => (
                                 <span
                                     key={chip.key}
@@ -162,35 +171,39 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                     </div>
 
                     {descriptionText ? (
-                        <p className="line-clamp-2 text-sm text-muted-foreground">{descriptionText}</p>
+                        <p className={cn(TEMPLATE_LIBRARY_CARD_META, "line-clamp-2")}>
+                            {descriptionText}
+                        </p>
                     ) : null}
 
                     {durationLabel ? (
-                        <ul className="space-y-1 text-sm text-muted-foreground">
-                            <li>{durationLabel}</li>
-                        </ul>
+                        <p className={TEMPLATE_LIBRARY_CARD_META}>{durationLabel}</p>
                     ) : null}
 
-                    <div className="space-y-2">
-                        <div className="flex justify-between text-sm text-muted-foreground">
+                    <div className={TEMPLATE_LIBRARY_CARD_STATS}>
+                        <div className={TEMPLATE_LIBRARY_CARD_STAT_ROW}>
                             <span>Veces usada</span>
-                            <span className="tabular-nums text-foreground">{template.usage_count}</span>
+                            <span className={TEMPLATE_LIBRARY_CARD_STAT_VALUE}>
+                                {template.usage_count}
+                            </span>
                         </div>
                         {successPct != null ? (
                             <>
-                                <div className="flex justify-between text-sm text-muted-foreground">
+                                <div className={TEMPLATE_LIBRARY_CARD_STAT_ROW}>
                                     <span>Tasa de éxito</span>
-                                    <span className="tabular-nums text-foreground">{successPct}%</span>
+                                    <span className={TEMPLATE_LIBRARY_CARD_STAT_VALUE}>
+                                        {successPct}%
+                                    </span>
                                 </div>
                                 <div
-                                    className="h-2 w-full overflow-hidden rounded-full bg-muted"
+                                    className={TEMPLATE_LIBRARY_CARD_PROGRESS}
                                     role="progressbar"
                                     aria-valuenow={successPct}
                                     aria-valuemin={0}
                                     aria-valuemax={100}
                                 >
                                     <div
-                                        className="h-full rounded-full bg-primary transition-all duration-300"
+                                        className={TEMPLATE_LIBRARY_CARD_PROGRESS_FILL}
                                         style={{ width: `${successPct}%` }}
                                     />
                                 </div>
@@ -199,31 +212,28 @@ export const TrainingPlanTemplateCard: React.FC<TrainingPlanTemplateCardProps> =
                     </div>
                 </div>
 
-                <div className="mt-auto shrink-0 space-y-2 border-t border-border pt-4">
+                <div className={TEMPLATE_LIBRARY_CARD_ACTIONS}>
                     {!cardActions.assignEnabled && cardActions.assignDisabledReason ? (
-                        <p className="text-xs text-muted-foreground">{cardActions.assignDisabledReason}</p>
+                        <p className={TEMPLATE_LIBRARY_CARD_HINT}>
+                            {cardActions.assignDisabledReason}
+                        </p>
                     ) : null}
                     <Button
-                        variant="ghost"
+                        variant="ghost-primary"
                         size="sm"
-                        className="w-full text-muted-foreground hover:text-foreground"
+                        className={TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN}
                         onClick={() => setDuplicateOpen(true)}
                     >
                         <Copy className="mr-2 h-4 w-4" aria-hidden />
                         {DUPLICATE_TEMPLATE_ACTION_LABEL}
                     </Button>
-                    <Button
-                        variant="primary"
-                        size="sm"
-                        className="w-full"
-                        onClick={handlePrimary}
-                    >
+                    <Button variant="primary" size="sm" className="w-full min-h-touch" onClick={handlePrimary}>
                         {cardActions.primaryLabel}
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="outline-primary"
                         size="sm"
-                        className="w-full border-primary/30 text-primary hover:bg-primary/10"
+                        className={cn("w-full min-h-touch", TEMPLATE_LIBRARY_CARD_SECONDARY_BTN)}
                         onClick={handleSecondary}
                     >
                         {cardActions.secondaryLabel}

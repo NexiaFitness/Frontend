@@ -18,13 +18,22 @@ const baseSession = (
     overrides: Partial<TemplateProgramSessionListItem> = {},
 ): TemplateProgramSessionListItem => ({
     id: 1,
+    template_id: 1,
     template_program_block_id: 10,
     session_name: "Empuje superior",
     session_type: "training",
     program_week: 1,
     day_of_week: 1,
     slot_order: 0,
+    notes: null,
+    planned_duration: null,
+    planned_intensity: null,
+    planned_volume: null,
+    block_count: 0,
     exercise_count: 3,
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:00Z",
+    is_active: true,
     ...overrides,
 });
 
