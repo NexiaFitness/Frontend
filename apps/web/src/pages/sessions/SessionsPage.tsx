@@ -7,7 +7,7 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { Plus, Search, Pencil, CalendarDays } from "lucide-react";
+import { Plus, Pencil, CalendarDays } from "lucide-react";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetSessionsQuery } from "@nexia/shared/api/sessionsApi";
 import { useGetSessionTemplatesQuery } from "@nexia/shared/api/sessionProgrammingApi";
@@ -16,7 +16,7 @@ import type { RootState } from "@nexia/shared/store";
 import type { SessionOut } from "@nexia/shared/types/sessions";
 import type { SessionTemplate } from "@nexia/shared/types/sessionProgramming";
 import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
-import { Input, FormCombobox, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, DatePickerButton, SearchBar } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { PaginationBar } from "@/components/ui/pagination";
@@ -438,24 +438,15 @@ export const SessionsPage: React.FC = () => {
                                 aria-label="Hasta"
                             />
                         </div>
-                        <div className="relative ml-auto h-9 w-full sm:w-56">
-                            <Search
-                                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden
-                            />
-                            <Input
-                                type="text"
-                                size="sm"
-                                placeholder="Buscar sesión o cliente..."
-                                value={search}
-                                onChange={(e) => {
-                                    setSearch(e.target.value);
-                                    setPage(1);
-                                }}
-                                className="h-9 w-full pl-8"
-                                aria-label="Buscar sesión o cliente"
-                            />
-                        </div>
+                        <SearchBar
+                            value={search}
+                            onChange={(value) => {
+                                setSearch(value);
+                                setPage(1);
+                            }}
+                            placeholder="Buscar sesión o cliente..."
+                            ariaLabel="Buscar sesión o cliente"
+                        />
                     </div>
 
                     {/* Lista o estado vacío (EmptyState reutilizable) */}
@@ -578,24 +569,16 @@ export const SessionsPage: React.FC = () => {
             {activeTab === "templates" && (
                 <>
                     <div className="flex flex-wrap items-center gap-3">
-                        <div className="relative ml-auto w-full sm:w-80">
-                            <Search
-                                className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden
-                            />
-                            <Input
-                                type="text"
-                                size="sm"
-                                placeholder="Buscar plantilla por nombre o descripción..."
-                                value={templatesSearch}
-                                onChange={(e) => {
-                                    setTemplatesSearch(e.target.value);
-                                    setTemplatesPage(1);
-                                }}
-                                className="w-full pl-8"
-                                aria-label="Buscar plantillas"
-                            />
-                        </div>
+                        <SearchBar
+                            value={templatesSearch}
+                            onChange={(value) => {
+                                setTemplatesSearch(value);
+                                setTemplatesPage(1);
+                            }}
+                            placeholder="Buscar plantilla por nombre o descripción..."
+                            ariaLabel="Buscar plantillas"
+                            className="sm:max-w-sm"
+                        />
                     </div>
                     {isLoadingTemplates ? (
                         <div className="flex items-center justify-center min-h-[160px]">

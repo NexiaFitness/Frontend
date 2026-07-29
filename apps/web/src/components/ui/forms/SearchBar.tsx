@@ -1,16 +1,13 @@
 /**
- * SearchBar.tsx — Input de búsqueda reutilizable (estilo ClientList)
+ * SearchBar.tsx — Input de búsqueda reutilizable
  *
- * Contexto:
- * - Diseño consistente con ClientList: icono Search, tokens (border-border, bg-surface, text-foreground).
- * - Usado en vistas con listas: Clientes, Planes, Templates, etc.
- *
- * @author Frontend Team
- * @since v6.x
+ * Usa tokens NEXIA_FORM_CONTROL_* para tipografía y altura consistentes en toda la app.
  */
 
 import React from "react";
 import { Search } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { NEXIA_FORM_CONTROL_SEARCH, NEXIA_FORM_CONTROL_SEARCH_ICON, NEXIA_FORM_CONTROL_SEARCH_WRAP } from "./formControlPresentation";
 
 export interface SearchBarProps {
     value: string;
@@ -27,17 +24,14 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     ariaLabel = "Buscar",
     className = "",
 }) => (
-    <div className={`relative w-full min-w-0 flex-1 sm:max-w-md ${className}`.trim()}>
-        <Search
-            className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 shrink-0 text-muted-foreground"
-            aria-hidden
-        />
+    <div className={cn(NEXIA_FORM_CONTROL_SEARCH_WRAP, className)}>
+        <Search className={NEXIA_FORM_CONTROL_SEARCH_ICON} aria-hidden />
         <input
             type="search"
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder}
-            className="h-9 w-full rounded-md border border-border bg-surface py-1.5 pl-9 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
+            className={NEXIA_FORM_CONTROL_SEARCH}
             aria-label={ariaLabel}
         />
     </div>

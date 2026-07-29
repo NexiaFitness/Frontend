@@ -13,14 +13,23 @@
  * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn()
  * @updated v6.4.0 - size "compact" para paneles estrechos (ExercisePickerPanel)
  * @updated v8.1.0 - Botones custom Up/Down para type="number" con tokens primary, ocultando spinners nativos
+ * @updated v8.3.0 - Tokens formControlPresentation (text-sm leading-none, py-0)
  */
 
 import React, { forwardRef, useId, useRef, useState, useImperativeHandle } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    NEXIA_FORM_CONTROL_BASE,
+    NEXIA_FORM_CONTROL_ERROR,
+    NEXIA_FORM_CONTROL_HELPER,
+    NEXIA_FORM_CONTROL_LABEL,
+    NEXIA_FORM_CONTROL_SIZE,
+    type NexiaFormControlSize,
+} from "./formControlPresentation";
 
 export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
-export type InputSize = "xs" | "compact" | "sm" | "md" | "lg";
+export type InputSize = NexiaFormControlSize;
 
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
     type?: InputType;
@@ -31,38 +40,22 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "
     helperText?: string;
 }
 
-const baseStyles =
-    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:cursor-not-allowed disabled:opacity-50";
-
-// compact = paneles estrechos (ExercisePickerPanel); xs = chips; sm/md/lg = todos h-9 (slim unificado)
-const sizeStyles: Record<InputSize, string> = {
-    compact:
-        "h-7 min-w-0 px-2 py-1 text-[11px] rounded-md border border-border/60 bg-surface",
-    xs: "h-8 px-2.5 py-1.5 text-xs rounded-md border border-border/60 bg-surface",
-    sm: "h-9 px-3 py-1.5 text-sm",
-    md: "h-9 px-4 py-1.5 text-sm",
-    lg: "h-9 px-5 py-1.5 text-sm",
+const passwordPadStyles: Record<InputSize, string> = {
+    compact: "pr-9",
+    xs: "pr-9",
+    sm: "pr-10",
+    md: "pr-12",
+    lg: "pr-14",
 };
 
-// Para inputs password con icono → padding derecho extra
-const passwordSizeStyles: Record<InputSize, string> = {
-    compact: "h-7 px-2 py-1 pr-9 text-[11px]",
-    xs: "h-8 px-2.5 py-1.5 pr-9 text-xs",
-    sm: "h-9 px-3 py-1.5 pr-10 text-sm",
-    md: "h-9 px-4 py-1.5 pr-12 text-sm",
-    lg: "h-9 px-5 py-1.5 pr-14 text-sm",
+const numberPadStyles: Record<InputSize, string> = {
+    compact: "pr-3",
+    xs: "pr-3.5",
+    sm: "pr-4",
+    md: "pr-5",
+    lg: "pr-6",
 };
 
-// Para inputs number con botones custom → padding derecho extra
-const numberSizeStyles: Record<InputSize, string> = {
-    compact: "h-7 px-2 py-1 pr-3 text-[11px]",
-    xs: "h-8 px-2 py-1.5 pr-3.5 text-xs",
-    sm: "h-9 px-3 py-1.5 pr-4 text-sm",
-    md: "h-9 px-4 py-1.5 pr-5 text-sm",
-    lg: "h-9 px-5 py-1.5 pr-6 text-sm",
-};
-
-// Ancho del contenedor de botones Up/Down según tamaño (mimético a spinners nativos)
 const numberBtnSizeStyles: Record<InputSize, string> = {
     compact: "w-3.5",
     xs: "w-3.5",
@@ -71,7 +64,6 @@ const numberBtnSizeStyles: Record<InputSize, string> = {
     lg: "w-5",
 };
 
-// Tamaño del icono de flecha según tamaño del input
 const numberIconSizeStyles: Record<InputSize, string> = {
     compact: "h-2.5 w-2.5",
     xs: "h-2.5 w-2.5",
@@ -85,10 +77,6 @@ const stateStyles = {
     defaultXs: "border-border/60 bg-surface focus:border-primary",
     error: "border-destructive focus:border-destructive",
 };
-
-const labelStyles = "block text-sm font-medium text-foreground mb-1";
-const errorStyles = "mt-1 text-sm text-destructive";
-const helperStyles = "mt-1 text-sm text-muted-foreground";
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
     (
@@ -120,16 +108,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         const handleStepUp = () => innerRef.current?.stepUp();
         const handleStepDown = () => innerRef.current?.stepDown();
 
-        const inputSizeStyles = isPasswordType
-            ? passwordSizeStyles[size]
-            : isNumberType
-            ? numberSizeStyles[size]
-            : sizeStyles[size];
-
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={inputId} className={labelStyles}>
+                    <label htmlFor={inputId} className={NEXIA_FORM_CONTROL_LABEL}>
                         {label}
                         {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
@@ -141,13 +123,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         id={inputId}
                         type={currentInputType}
                         className={cn(
-                            baseStyles,
-                            inputSizeStyles,
+                            NEXIA_FORM_CONTROL_BASE,
+                            NEXIA_FORM_CONTROL_SIZE[size],
+                            isPasswordType && passwordPadStyles[size],
+                            isNumberType && numberPadStyles[size],
                             error
                                 ? stateStyles.error
                                 : size === "xs" || size === "compact"
-                                ? stateStyles.defaultXs
-                                : stateStyles.default,
+                                  ? stateStyles.defaultXs
+                                  : stateStyles.default,
                             isNumberType && "nexia-no-native-spinners",
                             className
                         )}
@@ -155,10 +139,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                     />
 
                     {isNumberType && (
-                        <div className={cn(
-                            "absolute inset-y-0 right-0 flex flex-col overflow-hidden rounded-r-md border-l border-border/40",
-                            numberBtnSizeStyles[size]
-                        )}>
+                        <div
+                            className={cn(
+                                "absolute inset-y-0 right-0 flex flex-col overflow-hidden rounded-r-md border-l border-border/40",
+                                numberBtnSizeStyles[size]
+                            )}
+                        >
                             <button
                                 type="button"
                                 onClick={handleStepUp}
@@ -230,11 +216,11 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                 </div>
 
                 {error ? (
-                    <p className={errorStyles} data-testid="input-error">
+                    <p className={NEXIA_FORM_CONTROL_ERROR} data-testid="input-error">
                         {error}
                     </p>
                 ) : (
-                    helperText && <p className={helperStyles}>{helperText}</p>
+                    helperText && <p className={NEXIA_FORM_CONTROL_HELPER}>{helperText}</p>
                 )}
             </div>
         );

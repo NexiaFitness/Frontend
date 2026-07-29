@@ -33,3 +33,22 @@ export type { SliderProps } from "./Slider";
 export type { LabelProps } from "./Label";
 export type { FormSectionProps } from "./FormSection";
 export type { CollapsibleFormGroupProps } from "./CollapsibleFormGroup";
+
+export {
+    NEXIA_FORM_CONTROL_BASE,
+    NEXIA_FORM_CONTROL_ERROR,
+    NEXIA_FORM_CONTROL_FOCUS,
+    NEXIA_FORM_CONTROL_HELPER,
+    NEXIA_FORM_CONTROL_INPUT,
+    NEXIA_FORM_CONTROL_LABEL,
+    NEXIA_FORM_CONTROL_SEARCH,
+    NEXIA_FORM_CONTROL_SEARCH_ICON,
+    NEXIA_FORM_CONTROL_SEARCH_WRAP,
+    NEXIA_FORM_CONTROL_SIZE,
+    NEXIA_FORM_CONTROL_TEXT,
+    NEXIA_FORM_CONTROL_TEXTAREA,
+    NEXIA_FORM_CONTROL_TEXTAREA_BASE,
+    NEXIA_FORM_CONTROL_TEXTAREA_TEXT,
+    nexiaFormControlInputClass,
+} from "./formControlPresentation";
+export type { NexiaFormControlSize } from "./formControlPresentation";

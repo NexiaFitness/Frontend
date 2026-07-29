@@ -51,8 +51,9 @@ export const TYPOGRAPHY = {
     modalTitle: "text-lg font-semibold leading-none tracking-tight",
     modalDescription: "text-sm",
 
-    // Formularios (labels, errores, helpers)
+    // Formularios (labels, errores, helpers) — campos: NEXIA_FORM_CONTROL_* en formControlPresentation.ts
     inputLabel: "text-sm font-medium",
+    formControl: "text-sm leading-none",
     formSectionTitle: "text-xl lg:text-2xl font-bold",
     formSectionSubtitle: "text-sm lg:text-base",
     errorText: "text-sm",

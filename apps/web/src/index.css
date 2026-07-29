@@ -95,6 +95,16 @@
   .nexia-no-native-spinners[type="number"] {
     -moz-appearance: textfield;
   }
+
+  /* Tipografía uniforme en campos nativos (@tailwindcss/forms usa 1rem por defecto). */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]):not([type="hidden"]):not([type="color"]),
+  select {
+    @apply text-sm leading-none;
+  }
+
+  textarea {
+    @apply text-sm leading-normal;
+  }
 }
 
 /* Scrollbar premium Nexia — cyan eléctrico, reutilizable (sheets, atleta móvil, modales). */

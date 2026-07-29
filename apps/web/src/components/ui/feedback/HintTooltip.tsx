@@ -35,8 +35,14 @@ export const HintTooltip: React.FC<HintTooltipProps> = ({
         <span
             className={cn("relative inline-flex max-w-full overflow-visible", className)}
             aria-label={label}
-            onMouseEnter={() => setOpen(true)}
-            onMouseLeave={() => setOpen(false)}
+            onMouseEnter={(e) => {
+                e.stopPropagation();
+                setOpen(true);
+            }}
+            onMouseLeave={(e) => {
+                e.stopPropagation();
+                setOpen(false);
+            }}
             onFocus={() => setOpen(true)}
             onBlur={() => setOpen(false)}
         >

@@ -8,6 +8,12 @@
 
 import React, { forwardRef, useId } from "react";
 import clsx from "clsx";
+import {
+    NEXIA_FORM_CONTROL_ERROR,
+    NEXIA_FORM_CONTROL_HELPER,
+    NEXIA_FORM_CONTROL_LABEL,
+    NEXIA_FORM_CONTROL_TEXTAREA_BASE,
+} from "./formControlPresentation";
 
 export type TextareaSize = "sm" | "md" | "lg";
 
@@ -19,13 +25,12 @@ interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaEl
     helperText?: string;
 }
 
-const baseStyles =
-    "block w-full rounded-md border border-input bg-background text-foreground transition-colors placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed resize-y";
+const baseStyles = NEXIA_FORM_CONTROL_TEXTAREA_BASE;
 
 const sizeStyles: Record<TextareaSize, string> = {
-    sm: "px-3 py-1.5 text-sm",
-    md: "px-4 py-2 text-sm",
-    lg: "px-5 py-2.5 text-sm",
+    sm: "min-h-[4rem] px-3 py-1.5",
+    md: "min-h-[5rem] px-4 py-2",
+    lg: "min-h-[6rem] px-5 py-2.5",
 };
 
 const stateStyles = {
@@ -33,9 +38,9 @@ const stateStyles = {
     error: "border-destructive focus:border-destructive",
 };
 
-const labelStyles = "block text-sm font-medium text-foreground mb-1";
-const errorStyles = "mt-1 text-sm text-destructive";
-const helperStyles = "mt-1 text-sm text-muted-foreground";
+const labelStyles = NEXIA_FORM_CONTROL_LABEL;
+const errorStyles = NEXIA_FORM_CONTROL_ERROR;
+const helperStyles = NEXIA_FORM_CONTROL_HELPER;
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     (

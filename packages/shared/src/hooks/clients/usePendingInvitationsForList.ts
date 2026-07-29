@@ -1,14 +1,20 @@
 /**
- * usePendingInvitationsForList — invitaciones pending/expired para merge en ClientList.
+ * usePendingInvitationsForList — invitaciones pending para merge en ClientList.
+ *
+ * Spec §5.5: solo leads sin vínculo activo. Las expiradas no se listan aquí
+ * (reenvío vía fila pending o «Nuevo cliente»); canceladas/aceptadas ocultas en BE.
  */
 
 import { useMemo } from "react";
 import { useListInvitationsQuery } from "../../api/invitationsApi";
 import type { Invitation } from "../../types/invitation";
+import { mergeInvitationsForClientList } from "../../utils/invitationListMerge";
 
 export interface UsePendingInvitationsForListParams {
     skip?: boolean;
     search?: string | null;
+    /** Emails del roster activo — defensa FE si BE desactualizado. */
+    rosterEmails?: Iterable<string>;
 }
 
 export interface UsePendingInvitationsForListResult {
@@ -28,34 +34,29 @@ function matchesSearch(invitation: Invitation, search: string): boolean {
 export function usePendingInvitationsForList({
     skip = false,
     search,
+    rosterEmails,
 }: UsePendingInvitationsForListParams): UsePendingInvitationsForListResult {
-    const { data: pendingData, isLoading: pendingLoading, isError: pendingError, refetch: refetchPending } =
-        useListInvitationsQuery({ status: "pending", page_size: 50 }, { skip });
-
-    const { data: expiredData, isLoading: expiredLoading, isError: expiredError, refetch: refetchExpired } =
-        useListInvitationsQuery({ status: "expired", page_size: 50 }, { skip });
+    const { data: pendingData, isLoading, isError, refetch } = useListInvitationsQuery(
+        { status: "pending", page_size: 50 },
+        { skip },
+    );
 
     const items = useMemo(() => {
-        const merged = [
-            ...(pendingData?.items ?? []),
-            ...(expiredData?.items ?? []),
-        ];
+        const merged = mergeInvitationsForClientList(
+            pendingData?.items ?? [],
+            rosterEmails ?? [],
+        );
         const trimmed = search?.trim();
         if (!trimmed) {
             return merged;
         }
         return merged.filter((inv) => matchesSearch(inv, trimmed));
-    }, [expiredData?.items, pendingData?.items, search]);
-
-    const refetch = () => {
-        refetchPending();
-        refetchExpired();
-    };
+    }, [pendingData?.items, rosterEmails, search]);
 
     return {
         items,
-        isLoading: pendingLoading || expiredLoading,
-        isError: pendingError || expiredError,
+        isLoading,
+        isError,
         refetch,
     };
 }

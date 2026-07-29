@@ -23,7 +23,7 @@ describe("Input", () => {
             expect(input).toBeInTheDocument()
             expect(input).toHaveAttribute("type", "text") // default type
             // Default size = sm: h-9 px-3 py-1.5 text-sm
-            expect(input).toHaveClass("h-9", "px-3", "py-1.5", "text-sm")
+            expect(input).toHaveClass("h-9", "px-3", "py-0", "text-sm", "leading-none")
         })
 
         it("renders with custom placeholder", () => {
@@ -72,7 +72,7 @@ describe("Input", () => {
             
             const input = screen.getByPlaceholderText("Small input")
             // sm = h-9 px-3 py-1.5 text-sm
-            expect(input).toHaveClass("h-9", "px-3", "py-1.5", "text-sm")
+            expect(input).toHaveClass("h-9", "px-3", "py-0", "text-sm", "leading-none")
         })
 
         it("renders medium size correctly", () => {
@@ -80,7 +80,7 @@ describe("Input", () => {
             
             const input = screen.getByPlaceholderText("Medium input")
             // md = h-9 px-4 py-1.5 text-sm
-            expect(input).toHaveClass("h-9", "px-4", "py-1.5", "text-sm")
+            expect(input).toHaveClass("h-9", "px-4", "py-0", "text-sm", "leading-none")
         })
 
         it("renders large size correctly", () => {
@@ -88,7 +88,7 @@ describe("Input", () => {
             
             const input = screen.getByPlaceholderText("Large input")
             // lg = h-9 px-5 py-1.5 text-sm
-            expect(input).toHaveClass("h-9", "px-5", "py-1.5", "text-sm")
+            expect(input).toHaveClass("h-9", "px-5", "py-0", "text-sm", "leading-none")
         })
     })
 
@@ -308,7 +308,7 @@ describe("Input", () => {
             
             expect(input).toHaveAttribute("type", "email")
             // lg size classes
-            expect(input).toHaveClass("h-9", "px-5", "py-1.5", "text-sm")
+            expect(input).toHaveClass("h-9", "px-5", "py-0", "text-sm", "leading-none")
             expect(input).toHaveClass("border-destructive")
             expect(input).toHaveClass("custom-class")
             expect(input).toBeDisabled()

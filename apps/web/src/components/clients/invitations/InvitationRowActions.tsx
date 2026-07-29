@@ -1,16 +1,16 @@
 /**
- * InvitationRowActions — reenviar / cancelar invitación desde la lista de clientes.
+ * InvitationRowActions — reenviar invitación desde la lista de clientes.
  */
 
 import React, { useState } from "react";
-import { Mail, X } from "lucide-react";
+import { Mail } from "lucide-react";
 import {
-    useCancelInvitationMutation,
     useResendInvitationMutation,
 } from "@nexia/shared/api/invitationsApi";
 import type { Invitation } from "@nexia/shared/types/invitation";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
+import { CLIENT_LIST_INVITATION_RESEND } from "@/components/clients/clientListPresentation";
 
 interface InvitationRowActionsProps {
     invitation: Invitation;
@@ -22,10 +22,7 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
     layout = "grid",
 }) => {
     const [resendInvitation, { isLoading: isResending }] = useResendInvitationMutation();
-    const [cancelInvitation, { isLoading: isCancelling }] = useCancelInvitationMutation();
     const [actionError, setActionError] = useState<string | null>(null);
-
-    const isBusy = isResending || isCancelling;
 
     const handleResend = async (event: React.MouseEvent) => {
         event.stopPropagation();
@@ -37,48 +34,50 @@ export const InvitationRowActions: React.FC<InvitationRowActionsProps> = ({
         }
     };
 
-    const handleCancel = async (event: React.MouseEvent) => {
-        event.stopPropagation();
-        setActionError(null);
-        try {
-            await cancelInvitation(invitation.id).unwrap();
-        } catch {
-            setActionError("No se pudo cancelar la invitación.");
-        }
-    };
-
-    return (
-        <div
-            className={layout === "list" ? "flex flex-col items-end gap-2" : "mt-3 space-y-2"}
-            onClick={(event) => event.stopPropagation()}
-            onKeyDown={(event) => event.stopPropagation()}
-        >
-            <div className={layout === "list" ? "flex flex-wrap justify-end gap-2" : "flex flex-wrap gap-2"}>
+    if (layout === "list") {
+        return (
+            <div
+                className="flex flex-col items-end gap-2"
+                onClick={(event) => event.stopPropagation()}
+                onKeyDown={(event) => event.stopPropagation()}
+            >
                 <Button
                     type="button"
-                    variant="outline"
+                    variant="ghost-primary"
                     size="sm"
                     onClick={handleResend}
-                    disabled={isBusy}
-                    className="min-h-touch sm:min-h-0"
+                    disabled={isResending}
+                    className={CLIENT_LIST_INVITATION_RESEND}
                 >
                     <Mail className="mr-1.5 h-3.5 w-3.5" aria-hidden />
                     Reenviar
                 </Button>
-                {invitation.status === "pending" ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleCancel}
-                        disabled={isBusy}
-                        className="min-h-touch text-destructive hover:text-destructive sm:min-h-0"
-                    >
-                        <X className="mr-1.5 h-3.5 w-3.5" aria-hidden />
-                        Cancelar
-                    </Button>
+                {actionError ? (
+                    <Alert variant="error" className="text-xs">
+                        {actionError}
+                    </Alert>
                 ) : null}
             </div>
+        );
+    }
+
+    return (
+        <div
+            className="mt-3 space-y-2"
+            onClick={(event) => event.stopPropagation()}
+            onKeyDown={(event) => event.stopPropagation()}
+        >
+            <Button
+                type="button"
+                variant="ghost-primary"
+                size="sm"
+                onClick={handleResend}
+                disabled={isResending}
+                className="min-h-touch sm:min-h-0"
+            >
+                <Mail className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                Reenviar
+            </Button>
             {actionError ? (
                 <Alert variant="error" className="text-xs">
                     {actionError}
