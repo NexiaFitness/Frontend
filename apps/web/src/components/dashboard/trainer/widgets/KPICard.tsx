@@ -1,16 +1,25 @@
 /**
- * KPICard — Card de KPI para dashboards (StatCard design según DASHBOARD_LAYOUT_SPEC)
+ * KPICard — KPI premium dashboard entrenador (glass + rim).
  *
- * Diseño spec: rounded-lg bg-surface p-5, title text-sm, value text-3xl font-bold,
- * subtitle text-xs, icono en rounded-lg bg-surface-2 p-2.5, hover -translate-y-0.5 + glow.
- *
- * @author Frontend Team
- * @updated v5.x - DASHBOARD_LAYOUT_SPEC: layout profesional de raíz
+ * Tokens: trainerDashboardPresentation.ts
  */
+
 import React from "react";
 import type { LucideIcon } from "lucide-react";
 import { ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
+import {
+    TRAINER_DASHBOARD_KPI_CARD,
+    TRAINER_DASHBOARD_KPI_COLOR,
+    TRAINER_DASHBOARD_KPI_DESCRIPTION,
+    TRAINER_DASHBOARD_KPI_ICON_WRAP,
+    TRAINER_DASHBOARD_KPI_LABEL,
+    TRAINER_DASHBOARD_KPI_TREND_DOWN,
+    TRAINER_DASHBOARD_KPI_TREND_NEUTRAL,
+    TRAINER_DASHBOARD_KPI_TREND_UP,
+    TRAINER_DASHBOARD_KPI_VALUE,
+} from "@/components/dashboard/trainer/trainerDashboardPresentation";
 
 export type KPICardColor = "primary" | "success" | "warning" | "destructive" | "info";
 
@@ -25,21 +34,9 @@ interface KPICardProps {
     className?: string;
 }
 
-const colorMap: Record<KPICardColor, string> = {
-    primary: "text-primary",
-    success: "text-success",
-    warning: "text-warning",
-    destructive: "text-destructive",
-    info: "text-info",
-};
-
-const glowMap: Record<KPICardColor, string> = {
-    primary: "hover:shadow-[0_0_20px_hsl(var(--primary)/0.15)]",
-    success: "hover:shadow-[0_0_20px_hsl(var(--success)/0.15)]",
-    warning: "hover:shadow-[0_0_20px_hsl(var(--warning)/0.15)]",
-    destructive: "hover:shadow-[0_0_20px_hsl(var(--destructive)/0.15)]",
-    info: "hover:shadow-[0_0_20px_hsl(var(--info)/0.15)]",
-};
+function parseTrend(trend: string): number {
+    return parseFloat(String(trend).replace(/[^0-9.-]/g, "")) || 0;
+}
 
 export const KPICard: React.FC<KPICardProps> = ({
     value,
@@ -53,61 +50,53 @@ export const KPICard: React.FC<KPICardProps> = ({
 }) => {
     if (isLoading) {
         return (
-            <div
-                className={cn(
-                    "rounded-lg bg-surface p-5 transition-all duration-150 ease-out",
-                    className
-                )}
-            >
-                <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                        <div className="h-4 bg-surface-2 rounded animate-pulse w-24 mb-2" />
-                        <div className="h-8 bg-surface-2 rounded animate-pulse w-16 mb-1" />
-                        <div className="h-3 bg-surface-2 rounded animate-pulse w-32" />
+            <div className={cn(TRAINER_DASHBOARD_KPI_CARD, "animate-pulse", className)}>
+                <NexiaGlassAccentRim />
+                <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 space-y-2">
+                        <div className="h-3 w-20 rounded bg-muted/50" />
+                        <div className="h-8 w-14 rounded bg-muted/50" />
+                        <div className="h-3 w-24 rounded bg-muted/40" />
                     </div>
-                    <div className="h-9 w-9 shrink-0 rounded-lg bg-surface-2 animate-pulse" />
+                    <div className={cn(TRAINER_DASHBOARD_KPI_ICON_WRAP, "size-10 animate-pulse bg-muted/40")} />
                 </div>
             </div>
         );
     }
 
+    const trendNum = parseTrend(trend);
+    const trendClass =
+        trendNum > 0
+            ? TRAINER_DASHBOARD_KPI_TREND_UP
+            : trendNum < 0
+              ? TRAINER_DASHBOARD_KPI_TREND_DOWN
+              : TRAINER_DASHBOARD_KPI_TREND_NEUTRAL;
+
     return (
-        <div
-            className={cn(
-                "rounded-lg bg-surface p-5 transition-all duration-150 ease-out",
-                "hover:-translate-y-0.5",
-                glowMap[color],
-                className
-            )}
-        >
-            <div className="flex items-start justify-between">
+        <article className={cn(TRAINER_DASHBOARD_KPI_CARD, className)}>
+            <NexiaGlassAccentRim />
+            <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="mt-1 text-3xl font-bold text-foreground">{value}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">{description}</p>
-                    {trend && (
+                    <p className={TRAINER_DASHBOARD_KPI_LABEL}>{label}</p>
+                    <p className={TRAINER_DASHBOARD_KPI_VALUE}>{value}</p>
+                    <p className={TRAINER_DASHBOARD_KPI_DESCRIPTION}>{description}</p>
+                    {trend ? (
                         <span className="mt-1 inline-flex items-center gap-1 text-xs font-semibold">
-                            {(() => {
-                                const num = parseFloat(String(trend).replace(/[^0-9.-]/g, "")) || 0;
-                                if (num > 0) return <ArrowUpRight className="h-3.5 w-3.5 text-success" aria-hidden />;
-                                if (num < 0) return <ArrowDownRight className="h-3.5 w-3.5 text-destructive" aria-hidden />;
-                                return <Minus className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />;
-                            })()}
-                            <span className={(() => {
-                                const num = parseFloat(String(trend).replace(/[^0-9.-]/g, "")) || 0;
-                                if (num > 0) return "text-success";
-                                if (num < 0) return "text-destructive";
-                                return "text-muted-foreground";
-                            })()}>
-                                {trend}
-                            </span>
+                            {trendNum > 0 ? (
+                                <ArrowUpRight className={cn("h-3.5 w-3.5", trendClass)} aria-hidden />
+                            ) : trendNum < 0 ? (
+                                <ArrowDownRight className={cn("h-3.5 w-3.5", trendClass)} aria-hidden />
+                            ) : (
+                                <Minus className={cn("h-3.5 w-3.5", trendClass)} aria-hidden />
+                            )}
+                            <span className={trendClass}>{trend}</span>
                         </span>
-                    )}
+                    ) : null}
                 </div>
-                <div className={cn("shrink-0 rounded-lg bg-surface-2 p-2.5", colorMap[color])}>
-                    <Icon className="h-5 w-5" />
+                <div className={cn(TRAINER_DASHBOARD_KPI_ICON_WRAP, TRAINER_DASHBOARD_KPI_COLOR[color])}>
+                    <Icon className="h-5 w-5" aria-hidden />
                 </div>
             </div>
-        </div>
+        </article>
     );
 };

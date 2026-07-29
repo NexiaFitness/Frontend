@@ -12,7 +12,13 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertTriangle, X } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { useCompleteProfile } from "@nexia/shared";
+import {
+    TRAINER_DASHBOARD_BANNER,
+    TRAINER_DASHBOARD_BANNER_ACTIONS,
+    TRAINER_DASHBOARD_BANNER_TEXT,
+} from "@/components/dashboard/trainer/trainerDashboardPresentation";
 import type { User } from "@nexia/shared/types/auth";
 
 interface Props {
@@ -37,26 +43,27 @@ const CompleteProfileBannerComponent: React.FC<Props> = ({
     }
 
     return (
-        <div className="flex items-center justify-between rounded-lg bg-warning/10 border border-warning/20 px-5 py-3">
-            <div className="flex items-center gap-3">
-                <AlertTriangle className="h-5 w-5 shrink-0 text-warning" />
-                <p className="text-sm text-warning">
+        <div className={TRAINER_DASHBOARD_BANNER}>
+            <NexiaGlassAccentRim />
+            <div className="flex items-start gap-3 sm:items-center">
+                <AlertTriangle className="h-5 w-5 shrink-0 text-warning" aria-hidden />
+                <p className={TRAINER_DASHBOARD_BANNER_TEXT}>
                     Completa tu perfil profesional para gestionar clientes y entrenamientos.
                 </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={TRAINER_DASHBOARD_BANNER_ACTIONS}>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate(redirectTo, { replace: true })}
-                    className="text-warning hover:text-warning hover:bg-warning/10"
+                    className="min-h-touch w-full text-warning hover:bg-warning/10 hover:text-warning sm:min-h-0 sm:w-auto"
                 >
                     Completar ahora
                 </Button>
                 <button
                     type="button"
                     onClick={() => setVisible(false)}
-                    className="text-warning/60 hover:text-warning transition-colors"
+                    className="min-h-touch px-2 text-warning/60 transition-colors hover:text-warning sm:min-h-0"
                     aria-label="Cerrar aviso"
                 >
                     <X className="h-4 w-4" />

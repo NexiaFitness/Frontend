@@ -1,18 +1,28 @@
 /**
- * RecentActivityWidget.tsx — Actividad reciente atletas (F2-FE-02).
+ * RecentActivityWidget — Actividad reciente atletas (dashboard premium).
  */
 
 import React, { useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import {
-    useGetCurrentTrainerProfileQuery,
-} from "@nexia/shared/api/trainerApi";
+import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import { useGetRecentActivityQuery } from "@nexia/shared/api/clientsApi";
 import type { RecentActivityItem } from "@nexia/shared/types/client";
 import type { RootState } from "@nexia/shared/store";
 import { LoadingSpinner } from "@/components/ui/feedback";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { getTrainerActivityIcon } from "@/lib/trainerActivityIcons";
+import { cn } from "@/lib/utils";
+import {
+    TRAINER_DASHBOARD_ACTIVITY_ICON,
+    TRAINER_DASHBOARD_COPY,
+    TRAINER_DASHBOARD_EMPTY_TITLE,
+    TRAINER_DASHBOARD_LIST,
+    TRAINER_DASHBOARD_LIST_ITEM,
+    TRAINER_DASHBOARD_LIST_ITEM_META,
+    TRAINER_DASHBOARD_WIDGET,
+    TRAINER_DASHBOARD_WIDGET_EYEBROW,
+} from "@/components/dashboard/trainer/trainerDashboardPresentation";
 
 function formatTimeAgo(timestamp: string): string {
     const diffMs = Date.now() - new Date(timestamp).getTime();
@@ -47,7 +57,7 @@ export const RecentActivityWidget: React.FC = () => {
         {
             skip: !trainerProfile?.id,
             pollingInterval: 60_000,
-        }
+        },
     );
 
     const items = useMemo(() => data?.items ?? [], [data?.items]);
@@ -57,37 +67,37 @@ export const RecentActivityWidget: React.FC = () => {
             const href = activityHref(item);
             if (href) navigate(href);
         },
-        [navigate]
+        [navigate],
     );
 
     return (
-        <section className="rounded-lg border border-border bg-card p-4 shadow-sm">
-            <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                Actividad reciente
-            </h2>
+        <section className={TRAINER_DASHBOARD_WIDGET}>
+            <NexiaGlassAccentRim />
+            <h2 className={TRAINER_DASHBOARD_WIDGET_EYEBROW}>{TRAINER_DASHBOARD_COPY.activityTitle}</h2>
+
             {isLoading ? (
-                <div className="flex justify-center py-6">
+                <div className="flex justify-center py-8">
                     <LoadingSpinner size="md" />
                 </div>
             ) : items.length === 0 ? (
-                <p className="py-4 text-center text-sm text-muted-foreground">
-                    Sin actividad de clientes esta semana
+                <p className={cn(TRAINER_DASHBOARD_EMPTY_TITLE, "py-4 text-center text-muted-foreground")}>
+                    {TRAINER_DASHBOARD_COPY.noActivity}
                 </p>
             ) : (
-                <ul className="space-y-3">
+                <ul className={TRAINER_DASHBOARD_LIST}>
                     {items.map((item) => {
                         const href = activityHref(item);
                         const content = (
                             <>
-                                <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                                <div className={TRAINER_DASHBOARD_ACTIVITY_ICON}>
                                     {getTrainerActivityIcon(item.type)}
                                 </div>
-                                <div className="min-w-0 flex-1">
+                                <div className="min-w-0 flex-1 text-left">
                                     <p className="line-clamp-2 text-sm text-foreground">
                                         <span className="font-medium">{item.actor_name}</span>{" "}
                                         {item.description}
                                     </p>
-                                    <p className="mt-0.5 text-xs text-muted-foreground">
+                                    <p className={TRAINER_DASHBOARD_LIST_ITEM_META}>
                                         {formatTimeAgo(item.timestamp)}
                                     </p>
                                 </div>
@@ -96,7 +106,7 @@ export const RecentActivityWidget: React.FC = () => {
 
                         if (!href) {
                             return (
-                                <li key={item.id} className="flex gap-3">
+                                <li key={item.id} className="flex gap-3 px-1">
                                     {content}
                                 </li>
                             );
@@ -106,7 +116,7 @@ export const RecentActivityWidget: React.FC = () => {
                             <li key={item.id}>
                                 <button
                                     type="button"
-                                    className="flex w-full gap-3 rounded-md text-left transition-colors hover:bg-muted/50"
+                                    className={TRAINER_DASHBOARD_LIST_ITEM}
                                     onClick={() => handleClick(item)}
                                 >
                                     {content}

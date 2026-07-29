@@ -11,7 +11,13 @@
 import React, { useState } from "react";
 import { Mail, X } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { useResendVerificationMutation } from "@nexia/shared";
+import {
+    TRAINER_DASHBOARD_BANNER_ACTIONS,
+    TRAINER_DASHBOARD_BANNER_SUCCESS,
+    TRAINER_DASHBOARD_BANNER_SUCCESS_TEXT,
+} from "@/components/dashboard/trainer/trainerDashboardPresentation";
 import type { User } from "@nexia/shared/types/auth";
 
 interface Props {
@@ -36,29 +42,30 @@ const EmailVerificationBannerComponent: React.FC<Props> = ({ user }) => {
     };
 
     return (
-        <div className="flex items-center justify-between rounded-lg bg-success/10 border border-success/20 px-5 py-3">
-            <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 shrink-0 text-success" />
-                <p className="text-sm text-success">
+        <div className={TRAINER_DASHBOARD_BANNER_SUCCESS}>
+            <NexiaGlassAccentRim />
+            <div className="flex items-start gap-3 sm:items-center">
+                <Mail className="h-5 w-5 shrink-0 text-success" aria-hidden />
+                <p className={TRAINER_DASHBOARD_BANNER_SUCCESS_TEXT}>
                     Para crear clientes y acceder a todas las funciones, verifica tu email:{" "}
                     <strong>{user?.email}</strong>
                 </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className={TRAINER_DASHBOARD_BANNER_ACTIONS}>
                 <Button
                     variant="ghost"
                     size="sm"
                     onClick={handleResend}
                     isLoading={isLoading}
                     disabled={isLoading || isSuccess}
-                    className="text-success hover:text-success hover:bg-success/10"
+                    className="min-h-touch w-full text-success hover:bg-success/10 hover:text-success sm:min-h-0 sm:w-auto"
                 >
                     {isLoading ? "Enviando..." : isSuccess ? "Email enviado" : "Reenviar verificación"}
                 </Button>
                 <button
                     type="button"
                     onClick={() => setVisible(false)}
-                    className="text-success/60 hover:text-success transition-colors"
+                    className="min-h-touch px-2 text-success/60 transition-colors hover:text-success sm:min-h-0"
                     aria-label="Cerrar aviso"
                 >
                     <X className="h-4 w-4" />

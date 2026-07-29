@@ -1,16 +1,18 @@
 /**
- * GreetingHeader — Saludo dinámico + fecha según DASHBOARD_LAYOUT_SPEC
+ * GreetingHeader — Saludo premium + fecha (dashboard entrenador).
  *
- * Usa PageTitle para mismo patrón que el resto de vistas.
- * getGreeting(): Buenos días (h < 12), Buenas tardes (h < 20), Buenas noches (resto)
- * Fecha: Intl.DateTimeFormat es-ES (weekday, day, month, year)
- *
- * @author Frontend Team
- * @since v5.x - DASHBOARD_LAYOUT_SPEC
+ * Tokens: trainerDashboardPresentation.ts · NEXIA_PORTAL_GREETING_*
+ * Doc: DESIGN_PREMIUM.md
  */
 
 import React from "react";
-import { PageTitle } from "./PageTitle";
+import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import {
+    NEXIA_PORTAL_GREETING_H1,
+    NEXIA_PORTAL_GREETING_NAME,
+    NEXIA_PORTAL_GREETING_SUBTITLE,
+    TRAINER_DASHBOARD_GREETING_WRAP,
+} from "@/components/dashboard/trainer/trainerDashboardPresentation";
 
 function getGreeting(): string {
     const h = new Date().getHours();
@@ -28,17 +30,29 @@ function formatToday(): string {
     });
 }
 
+function displayFirstName(fullName: string): string {
+    const trimmed = fullName.trim();
+    if (!trimmed) return "Entrenador";
+    return trimmed.split(/\s+/)[0] ?? trimmed;
+}
+
 interface GreetingHeaderProps {
     userName?: string | null;
 }
 
 export const GreetingHeader: React.FC<GreetingHeaderProps> = ({ userName }) => {
-    const name = userName?.trim() || "Entrenador";
+    const firstName = displayFirstName(userName ?? "");
+
     return (
-        <PageTitle
-            title={`${getGreeting()}, ${name}.`}
-            subtitle={formatToday()}
-            subtitleClassName="capitalize"
-        />
+        <header className={TRAINER_DASHBOARD_GREETING_WRAP}>
+            <div className="min-w-0 space-y-1.5">
+                <h1 className={NEXIA_PORTAL_GREETING_H1}>
+                    {getGreeting()},{" "}
+                    <span className={NEXIA_PORTAL_GREETING_NAME}>{firstName}</span>
+                </h1>
+                <p className={`${NEXIA_PORTAL_GREETING_SUBTITLE} capitalize`}>{formatToday()}</p>
+            </div>
+            <NexiaPremiumDivider className="w-full" />
+        </header>
     );
 };

@@ -1,12 +1,5 @@
 /**
- * ClientListWidget — Mis clientes con AdherenceBar según DASHBOARD_LAYOUT_SPEC
- *
- * Lista clientes con avatar, nombre, barra de adherencia, %, iconos tendencia (flechas) y
- * satisfacción (Smile/Meh/Frown). Card según spec: 3 bloques, iconos a la derecha.
- * Link "Ver todos" a /dashboard/clients.
- *
- * @author Frontend Team
- * @since v5.x - DASHBOARD_LAYOUT_SPEC
+ * ClientListWidget — Mis clientes (dashboard premium).
  */
 
 import React, { useMemo } from "react";
@@ -19,7 +12,19 @@ import {
 import { useSelector } from "react-redux";
 import type { RootState } from "@nexia/shared/store";
 import type { ClientListItem } from "@nexia/shared/types/client";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import { ClientListCard } from "./ClientListCard";
+import {
+    TRAINER_DASHBOARD_COPY,
+    TRAINER_DASHBOARD_EMPTY_TITLE,
+    TRAINER_DASHBOARD_LINK,
+    TRAINER_DASHBOARD_LIST,
+    TRAINER_DASHBOARD_LOADING_BLOCK,
+    TRAINER_DASHBOARD_WIDGET,
+    TRAINER_DASHBOARD_WIDGET_HINT,
+    TRAINER_DASHBOARD_WIDGET_TITLE,
+} from "@/components/dashboard/trainer/trainerDashboardPresentation";
 
 export const ClientListWidget: React.FC = () => {
     const navigate = useNavigate();
@@ -34,12 +39,12 @@ export const ClientListWidget: React.FC = () => {
             page: 1,
             page_size: 6,
         },
-        { skip: !trainerProfile?.id }
+        { skip: !trainerProfile?.id },
     );
 
     const { data: activityData } = useGetRecentActivityQuery(
         { limit: 30, trainer_id: trainerProfile?.id },
-        { skip: !trainerProfile?.id, pollingInterval: 60_000 }
+        { skip: !trainerProfile?.id, pollingInterval: 60_000 },
     );
 
     const activeClientIds = useMemo(() => {
@@ -57,49 +62,43 @@ export const ClientListWidget: React.FC = () => {
 
     if (isLoading) {
         return (
-            <div>
-                <h2 className="mb-4 text-lg font-semibold text-foreground">Mis clientes</h2>
-                <div className="space-y-2">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex h-14 items-center gap-3 rounded-lg bg-surface p-3">
-                            <div className="h-8 w-8 shrink-0 rounded-full bg-surface-2 animate-pulse" />
-                            <div className="h-4 flex-1 rounded bg-surface-2 animate-pulse" />
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <section className={TRAINER_DASHBOARD_WIDGET}>
+                <NexiaGlassAccentRim />
+                <div className={TRAINER_DASHBOARD_LOADING_BLOCK} />
+            </section>
         );
     }
 
     return (
-        <div className="overflow-visible">
-            <h2 className="mb-1 text-lg font-semibold text-foreground">Mis clientes</h2>
-            <p className="mb-4 text-[10px] font-medium uppercase tracking-wide text-muted-foreground/60">
-                Barra = adherencia al plan · Cara = satisfacción post-sesión
-            </p>
-            <div className="space-y-2 overflow-visible">
-                {items.length === 0 ? (
-                    <p className="rounded-lg bg-surface p-4 text-center text-sm text-muted-foreground">
-                        No tienes clientes aún
-                    </p>
-                ) : (
-                    items.map((client) => (
+        <section className={cn(TRAINER_DASHBOARD_WIDGET, "overflow-visible")}>
+            <NexiaGlassAccentRim />
+            <h2 className={TRAINER_DASHBOARD_WIDGET_TITLE}>{TRAINER_DASHBOARD_COPY.clientsTitle}</h2>
+            <p className={TRAINER_DASHBOARD_WIDGET_HINT}>{TRAINER_DASHBOARD_COPY.clientsHint}</p>
+
+            {items.length === 0 ? (
+                <p className={cn(TRAINER_DASHBOARD_EMPTY_TITLE, "py-4 text-center text-muted-foreground")}>
+                    {TRAINER_DASHBOARD_COPY.noClients}
+                </p>
+            ) : (
+                <div className={TRAINER_DASHBOARD_LIST}>
+                    {items.map((client) => (
                         <ClientListCard
                             key={client.id}
                             client={client}
                             hasRecentActivity={activeClientIds.has(client.id)}
                             onClick={() => navigate(`/dashboard/clients/${client.id}`)}
                         />
-                    ))
-                )}
-            </div>
+                    ))}
+                </div>
+            )}
+
             <button
                 type="button"
                 onClick={() => navigate("/dashboard/clients")}
-                className="mt-3 text-sm text-primary hover:underline"
+                className={cn(TRAINER_DASHBOARD_LINK, "mt-3")}
             >
-                Ver todos
+                {TRAINER_DASHBOARD_COPY.viewAllClients}
             </button>
-        </div>
+        </section>
     );
 };
