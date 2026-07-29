@@ -24,7 +24,7 @@ import {
     TRAINER_DASHBOARD_LOADING_BLOCK,
     TRAINER_DASHBOARD_SEVERITY_BADGE,
     TRAINER_DASHBOARD_WIDGET_BODY,
-    TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER,
+    TRAINER_DASHBOARD_WIDGET_EMPTY_INLINE,
     TRAINER_DASHBOARD_WIDGET_HEADER,
     TRAINER_DASHBOARD_WIDGET_STRETCH,
     TRAINER_DASHBOARD_WIDGET_TITLE,
@@ -127,9 +127,7 @@ export const PriorityAlertsWidget: React.FC = () => {
             </div>
 
             {validAlerts.length === 0 ? (
-                <div className={TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER}>
-                    <p>{TRAINER_DASHBOARD_COPY.noAlerts}</p>
-                </div>
+                <p className={TRAINER_DASHBOARD_WIDGET_EMPTY_INLINE}>{TRAINER_DASHBOARD_COPY.noAlerts}</p>
             ) : (
                 <div className={TRAINER_DASHBOARD_WIDGET_BODY}>
                     <div className={TRAINER_DASHBOARD_LIST}>

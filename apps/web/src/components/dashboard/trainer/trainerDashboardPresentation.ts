@@ -81,8 +81,11 @@ export const TRAINER_DASHBOARD_WIDGET = cn(
     "relative overflow-hidden p-4 pt-5 sm:p-5",
 );
 
-/** Widget en fila emparejada: estira al alto del vecino. */
-export const TRAINER_DASHBOARD_WIDGET_STRETCH = cn(TRAINER_DASHBOARD_WIDGET, "flex h-full min-h-0 flex-col");
+/** Widget en fila emparejada: igualar alto solo cuando hay contenido en el vecino (lg+). */
+export const TRAINER_DASHBOARD_WIDGET_STRETCH = cn(
+    TRAINER_DASHBOARD_WIDGET,
+    "flex min-h-0 flex-col lg:h-full",
+);
 
 export const TRAINER_DASHBOARD_WIDGET_BODY = "flex min-h-0 flex-1 flex-col";
 
@@ -90,13 +93,13 @@ export const TRAINER_DASHBOARD_EMPTY_TITLE = ATHLETE_EMPTY_STATE_TITLE;
 
 export const TRAINER_DASHBOARD_EMPTY_BODY = ATHLETE_EMPTY_STATE_DESCRIPTION;
 
-export const TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER = cn(
-    TRAINER_DASHBOARD_WIDGET_BODY,
+/** Vacío compacto (1–2 líneas) — sin min-height ni flex-1 que infle la card. */
+export const TRAINER_DASHBOARD_WIDGET_EMPTY_INLINE = cn(
     TRAINER_DASHBOARD_EMPTY_BODY,
-    "items-center justify-center py-6 text-center sm:min-h-[7.5rem]",
+    "mt-0 py-2 text-center sm:py-3",
 );
 
-export const TRAINER_DASHBOARD_WIDGET_HEADER = "mb-4 flex min-h-10 items-center justify-between gap-3";
+export const TRAINER_DASHBOARD_WIDGET_HEADER = "mb-3 flex min-h-10 items-center justify-between gap-3";
 
 export const TRAINER_DASHBOARD_WIDGET_TITLE_ROW = "flex min-w-0 items-center gap-2";
 

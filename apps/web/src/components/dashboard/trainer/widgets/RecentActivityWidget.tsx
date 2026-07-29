@@ -19,7 +19,7 @@ import {
     TRAINER_DASHBOARD_LIST_ITEM,
     TRAINER_DASHBOARD_LIST_ITEM_META,
     TRAINER_DASHBOARD_WIDGET_BODY,
-    TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER,
+    TRAINER_DASHBOARD_WIDGET_EMPTY_INLINE,
     TRAINER_DASHBOARD_WIDGET_HEADER,
     TRAINER_DASHBOARD_WIDGET_STRETCH,
     TRAINER_DASHBOARD_WIDGET_TITLE,
@@ -85,9 +85,7 @@ export const RecentActivityWidget: React.FC = () => {
                     </div>
                 </div>
             ) : items.length === 0 ? (
-                <div className={TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER}>
-                    <p>{TRAINER_DASHBOARD_COPY.noActivity}</p>
-                </div>
+                <p className={TRAINER_DASHBOARD_WIDGET_EMPTY_INLINE}>{TRAINER_DASHBOARD_COPY.noActivity}</p>
             ) : (
                 <div className={TRAINER_DASHBOARD_WIDGET_BODY}>
                     <ul className={TRAINER_DASHBOARD_LIST}>
