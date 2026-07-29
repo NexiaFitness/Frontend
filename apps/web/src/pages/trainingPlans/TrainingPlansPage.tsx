@@ -9,6 +9,7 @@
  * @since v3.2.0
  * @updated v6.x - TabsBar, URL sync, CTA "Nueva planificación"
  * @updated v6.5.0 - Modal SelectClientModal para flujo unificado de creación de planes
+ * @updated v7.x - Premium compartido Planificación | Plantillas (templateLibraryPresentation.ts)
  */
 
 import React, { useState, useMemo, useEffect, useCallback } from "react";
@@ -34,6 +35,7 @@ import {
 import { TrainingPlansSection } from "@/components/trainingPlans";
 import { SelectClientModal } from "@/components/trainingPlans/modals/SelectClientModal";
 import {
+    PLANNING_LIBRARY_COPY,
     TEMPLATE_LIBRARY_COPY,
     TEMPLATE_LIBRARY_GLOW,
     TEMPLATE_LIBRARY_HEADER,
@@ -114,23 +116,6 @@ const TEMPLATE_LEVEL_FILTER_OPTIONS = [
     { value: TEMPLATE_LEVEL.INTERMEDIATE, label: "Intermedio" },
     { value: TEMPLATE_LEVEL.ADVANCED, label: "Avanzado" },
 ] as const;
-
-/** DESIGN.md §5.4 Filter Chips — rectangulares, h-9, rounded-md. */
-function listFilterChipClass(active: boolean): string {
-    return cn(
-        "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
-        active
-            ? "border-primary bg-primary/10 text-primary"
-            : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-    );
-}
-
-function listFilterCountClass(active: boolean): string {
-    return cn(
-        "tabular-nums font-normal",
-        active ? "text-primary/60" : "text-muted-foreground/50"
-    );
-}
 
 function applyPlanSecondaryFilters(
     plans: TrainingPlan[],
@@ -531,13 +516,14 @@ export const TrainingPlansPage: React.FC = () => {
 
     const isLoading = isLoadingTemplates || isLoadingPlans;
 
-    const pageShellClass = activeTab === "templates" ? TEMPLATE_LIBRARY_PAGE : "space-y-6";
+    const pageSubtitle =
+        activeTab === "planning"
+            ? `${planStatusCounts.all} planes asignados`
+            : TEMPLATE_LIBRARY_COPY.pageSubtitle;
 
     return (
-        <div className={cn(pageShellClass, "relative")}>
-            {activeTab === "templates" ? (
-                <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
-            ) : null}
+        <div className={cn(TEMPLATE_LIBRARY_PAGE, "relative")}>
+            <div className={TEMPLATE_LIBRARY_GLOW} aria-hidden />
 
             {!trainerId && !isLoading && user?.role === "trainer" && (
                 <Alert variant="error">
@@ -545,33 +531,22 @@ export const TrainingPlansPage: React.FC = () => {
                 </Alert>
             )}
 
-            <div
-                className={
-                    activeTab === "templates"
-                        ? cn(TEMPLATE_LIBRARY_STACK, "relative space-y-6")
-                        : "space-y-6"
-                }
-            >
-            <div
-                className={
-                    activeTab === "templates"
-                        ? TEMPLATE_LIBRARY_HEADER
-                        : "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"
-                }
-            >
-                <div className={activeTab === "templates" ? TEMPLATE_LIBRARY_TITLE_WRAP : undefined}>
+            <div className={cn(TEMPLATE_LIBRARY_STACK, "relative space-y-6")}>
+            <div className={TEMPLATE_LIBRARY_HEADER}>
+                <div className={TEMPLATE_LIBRARY_TITLE_WRAP}>
                     <PageTitle
                         title={activeTab === "planning" ? "Planificación" : "Plantillas"}
-                        subtitle={
-                            activeTab === "planning"
-                                ? `${planStatusCounts.all} planes asignados`
-                                : TEMPLATE_LIBRARY_COPY.pageSubtitle
-                        }
+                        subtitle={pageSubtitle}
                     />
                 </div>
                 {activeTab === "planning" ? (
-                    <Button size="sm" onClick={handleCreatePlan}>
-                        <Plus className="mr-1 h-4 w-4" aria-hidden />
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className={TEMPLATE_LIBRARY_PRIMARY_CTA}
+                        onClick={handleCreatePlan}
+                    >
+                        <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
                         Nueva planificación
                     </Button>
                 ) : (
@@ -600,7 +575,8 @@ export const TrainingPlansPage: React.FC = () => {
 
             {activeTab === "planning" && (
                 <>
-                    <div className="flex flex-wrap items-center gap-2">
+                    <div className={TEMPLATE_LIBRARY_TOOLBAR}>
+                        <NexiaGlassAccentRim />
                         <div
                             className="flex flex-wrap items-center gap-1.5"
                             role="group"
@@ -616,18 +592,18 @@ export const TrainingPlansPage: React.FC = () => {
                                             setPlanStatusFilter(value);
                                             resetPlanningPage();
                                         }}
-                                        className={listFilterChipClass(active)}
+                                        className={templateLibraryFilterChipClass(active)}
                                         aria-pressed={active}
                                     >
                                         <span>{label}</span>
-                                        <span className={listFilterCountClass(active)}>
+                                        <span className={templateLibraryFilterCountClass(active)}>
                                             {planStatusCounts[value]}
                                         </span>
                                     </button>
                                 );
                             })}
                         </div>
-                        <div className="h-9 w-44 min-w-[11rem]">
+                        <div className="h-9 w-full min-w-0 sm:w-44 sm:min-w-[11rem]">
                             <FormCombobox
                                 value={planGoalFilter}
                                 onChange={(v) => {
@@ -641,7 +617,7 @@ export const TrainingPlansPage: React.FC = () => {
                                 ariaLabel="Filtrar por objetivo del plan"
                             />
                         </div>
-                        <div className="flex h-9 items-center gap-2">
+                        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
                             <DatePickerButton
                                 label="Desde"
                                 value={planDateFrom}
@@ -649,9 +625,9 @@ export const TrainingPlansPage: React.FC = () => {
                                     setPlanDateFrom(v);
                                     resetPlanningPage();
                                 }}
-                                aria-label="Desde"
+                                aria-label="Plan vigente desde"
                             />
-                            <span className="text-muted-foreground text-sm">–</span>
+                            <span className="text-sm text-muted-foreground">–</span>
                             <DatePickerButton
                                 label="Hasta"
                                 value={planDateTo}
@@ -659,24 +635,21 @@ export const TrainingPlansPage: React.FC = () => {
                                     setPlanDateTo(v);
                                     resetPlanningPage();
                                 }}
-                                aria-label="Hasta"
+                                aria-label="Plan vigente hasta"
                             />
                         </div>
-                        <div className="relative ml-auto h-9 w-full sm:w-56">
-                            <Search
-                                className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                                aria-hidden
-                            />
+                        <div className={TEMPLATE_LIBRARY_SEARCH_WRAP}>
+                            <Search className={TEMPLATE_LIBRARY_SEARCH_ICON} aria-hidden />
                             <Input
                                 type="text"
                                 size="sm"
-                                placeholder="Buscar plan o cliente..."
+                                placeholder={PLANNING_LIBRARY_COPY.searchPlaceholder}
                                 value={searchPlans}
                                 onChange={(e) => {
                                     setSearchPlans(e.target.value);
                                     resetPlanningPage();
                                 }}
-                                className="h-9 w-full pl-8"
+                                className={TEMPLATE_LIBRARY_SEARCH_INPUT}
                                 aria-label="Buscar plan o cliente"
                             />
                         </div>
@@ -684,7 +657,7 @@ export const TrainingPlansPage: React.FC = () => {
 
                     <TrainingPlansSection
                         title="Planificación"
-                        description="Programas de entrenamiento asignados a clientes actualmente"
+                        description={PLANNING_LIBRARY_COPY.sectionDescription}
                         showHeading={false}
                         items={paginatedActivePlans}
                         type="active"

@@ -1,5 +1,8 @@
 /**
- * templateLibraryPresentation.ts — Biblioteca, create y detalle de plantillas (premium).
+ * templateLibraryPresentation.ts — Planificación y plantillas (premium compartido).
+ *
+ * Tabs Planificación | Plantillas en TrainingPlansPage comparten shell, toolbar, filtros,
+ * grid, empty y loading. Create/detalle plantilla reutilizan la misma capa.
  *
  * Doc: DESIGN_PREMIUM.md (raíz)
  * Patrón: exercisesLibraryPresentation.ts · templateEditorPresentation.ts
@@ -37,6 +40,78 @@ export {
     PLATFORM_LOADING_ROW as TEMPLATE_LIBRARY_LOADING_ROW,
 } from "@/components/ui/surface/platformPremiumPresentation";
 
+/** Shell compartido — ambos tabs de /dashboard/training-plans. */
+export const TRAINING_PLANS_TABS_PAGE = cn(
+    PLATFORM_PAGE_SHELL,
+    ATHLETE_PAGE_X,
+    "relative pb-10 lg:pb-12",
+);
+
+export const TRAINING_PLANS_TABS_GLOW =
+    "pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_72%)]";
+
+export const TRAINING_PLANS_TABS_STACK = "relative space-y-5 sm:space-y-6";
+
+export const TRAINING_PLANS_TABS_PRIMARY_CTA = cn(
+    ATHLETE_PRIMARY_CTA,
+    "w-full min-h-touch sm:w-auto sm:min-h-0 sm:px-5",
+);
+
+export const TRAINING_PLANS_TABS_TOOLBAR = cn(
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative flex flex-wrap items-center gap-2 p-3 sm:p-4",
+);
+
+export function trainingPlansTabsFilterChipClass(active: boolean): string {
+    return cn(
+        "inline-flex h-9 min-h-touch shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors sm:min-h-0",
+        active
+            ? "border-primary bg-primary/10 text-primary"
+            : "border-border/80 text-muted-foreground hover:border-input hover:text-foreground",
+    );
+}
+
+export function trainingPlansTabsFilterCountClass(active: boolean): string {
+    return cn("tabular-nums font-normal", active ? "text-primary/60" : "text-muted-foreground/50");
+}
+
+export const TRAINING_PLANS_TABS_SEARCH_WRAP = "relative ml-auto h-9 w-full min-w-0 sm:w-56";
+
+export const TRAINING_PLANS_TABS_SEARCH_ICON =
+    "pointer-events-none absolute left-2.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-primary";
+
+export const TRAINING_PLANS_TABS_SEARCH_INPUT = "h-9 w-full bg-surface/80 pl-8";
+
+export const TRAINING_PLANS_TABS_CARD_GRID = cn(
+    "grid grid-cols-1 gap-4",
+    "sm:grid-cols-2 sm:gap-5",
+    "lg:grid-cols-3 lg:gap-6",
+);
+
+export const TRAINING_PLANS_TABS_LOADING_SHELL = cn(
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative flex min-h-[200px] items-center justify-center p-12",
+);
+
+export const TRAINING_PLANS_TABS_EMPTY_SHELL = cn(ATHLETE_EMPTY_STATE_CARD, "relative border-dashed");
+
+export const TRAINING_PLANS_TABS_EMPTY_GLOW = ATHLETE_EMPTY_STATE_GLOW;
+
+export const TRAINING_PLANS_TABS_EMPTY_TITLE = ATHLETE_EMPTY_STATE_TITLE;
+
+export const TRAINING_PLANS_TABS_EMPTY_BODY = ATHLETE_EMPTY_STATE_DESCRIPTION;
+
+export const TRAINING_PLANS_TABS_SECTION_DESC = cn(NEXIA_PORTAL_PAGE_EYEBROW, "mb-4 block");
+
+export const PLANNING_LIBRARY_COPY = {
+    pageSubtitle: "Programas de entrenamiento asignados a clientes",
+    sectionDescription: "Programas de entrenamiento asignados a clientes actualmente",
+    createFirst: "Crear primera planificación",
+    searchPlaceholder: "Buscar plan o cliente...",
+} as const;
+
 export const TEMPLATE_LIBRARY_COPY = {
     pageSubtitle: "Programas reutilizables que puedes asignar a varios clientes",
     createSubtitle: "Nombre y objetivo; después armarás el programa por semanas",
@@ -49,53 +124,27 @@ export const TEMPLATE_LIBRARY_COPY = {
         "Las plantillas usan semanas 1, 2, 3… Al asignar, eliges la fecha de inicio y NEXIA arma el calendario.",
 } as const;
 
-export const TEMPLATE_LIBRARY_PAGE = cn(
-    PLATFORM_PAGE_SHELL,
-    ATHLETE_PAGE_X,
-    "relative pb-10 lg:pb-12",
-);
+export const TEMPLATE_LIBRARY_PAGE = TRAINING_PLANS_TABS_PAGE;
 
-export const TEMPLATE_LIBRARY_GLOW =
-    "pointer-events-none absolute inset-x-0 top-0 h-48 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_72%)]";
+export const TEMPLATE_LIBRARY_GLOW = TRAINING_PLANS_TABS_GLOW;
 
-export const TEMPLATE_LIBRARY_STACK = "relative space-y-5 sm:space-y-6";
+export const TEMPLATE_LIBRARY_STACK = TRAINING_PLANS_TABS_STACK;
 
-export const TEMPLATE_LIBRARY_PRIMARY_CTA = cn(
-    ATHLETE_PRIMARY_CTA,
-    "w-full min-h-touch sm:w-auto sm:min-h-0 sm:px-5",
-);
+export const TEMPLATE_LIBRARY_PRIMARY_CTA = TRAINING_PLANS_TABS_PRIMARY_CTA;
 
-export const TEMPLATE_LIBRARY_TOOLBAR = cn(
-    NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative flex flex-wrap items-center gap-2 p-3 sm:p-4",
-);
+export const TEMPLATE_LIBRARY_TOOLBAR = TRAINING_PLANS_TABS_TOOLBAR;
 
-export function templateLibraryFilterChipClass(active: boolean): string {
-    return cn(
-        "inline-flex h-9 min-h-touch shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors sm:min-h-0",
-        active
-            ? "border-primary bg-primary/10 text-primary"
-            : "border-border/80 text-muted-foreground hover:border-input hover:text-foreground",
-    );
-}
+export const templateLibraryFilterChipClass = trainingPlansTabsFilterChipClass;
 
-export function templateLibraryFilterCountClass(active: boolean): string {
-    return cn("tabular-nums font-normal", active ? "text-primary/60" : "text-muted-foreground/50");
-}
+export const templateLibraryFilterCountClass = trainingPlansTabsFilterCountClass;
 
-export const TEMPLATE_LIBRARY_SEARCH_WRAP = "relative ml-auto h-9 w-full min-w-0 sm:w-56";
+export const TEMPLATE_LIBRARY_SEARCH_WRAP = TRAINING_PLANS_TABS_SEARCH_WRAP;
 
-export const TEMPLATE_LIBRARY_SEARCH_ICON =
-    "pointer-events-none absolute left-2.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-primary";
+export const TEMPLATE_LIBRARY_SEARCH_ICON = TRAINING_PLANS_TABS_SEARCH_ICON;
 
-export const TEMPLATE_LIBRARY_SEARCH_INPUT = "h-9 w-full bg-surface/80 pl-8";
+export const TEMPLATE_LIBRARY_SEARCH_INPUT = TRAINING_PLANS_TABS_SEARCH_INPUT;
 
-export const TEMPLATE_LIBRARY_CARD_GRID = cn(
-    "grid grid-cols-1 gap-4",
-    "sm:grid-cols-2 sm:gap-5",
-    "lg:grid-cols-3 lg:gap-6",
-);
+export const TEMPLATE_LIBRARY_CARD_GRID = TRAINING_PLANS_TABS_CARD_GRID;
 
 export const TEMPLATE_LIBRARY_CARD = cn(
     NEXIA_GLASS_CARD,
@@ -135,19 +184,15 @@ export const TEMPLATE_LIBRARY_CARD_SECONDARY_BTN =
 
 export const TEMPLATE_LIBRARY_CARD_DUPLICATE_BTN = "w-full text-muted-foreground hover:text-primary";
 
-export const TEMPLATE_LIBRARY_LOADING_SHELL = cn(
-    NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative flex min-h-[200px] items-center justify-center p-12",
-);
+export const TEMPLATE_LIBRARY_LOADING_SHELL = TRAINING_PLANS_TABS_LOADING_SHELL;
 
-export const TEMPLATE_LIBRARY_EMPTY_SHELL = cn(ATHLETE_EMPTY_STATE_CARD, "relative border-dashed");
+export const TEMPLATE_LIBRARY_EMPTY_SHELL = TRAINING_PLANS_TABS_EMPTY_SHELL;
 
-export const TEMPLATE_LIBRARY_EMPTY_GLOW = ATHLETE_EMPTY_STATE_GLOW;
+export const TEMPLATE_LIBRARY_EMPTY_GLOW = TRAINING_PLANS_TABS_EMPTY_GLOW;
 
-export const TEMPLATE_LIBRARY_EMPTY_TITLE = ATHLETE_EMPTY_STATE_TITLE;
+export const TEMPLATE_LIBRARY_EMPTY_TITLE = TRAINING_PLANS_TABS_EMPTY_TITLE;
 
-export const TEMPLATE_LIBRARY_EMPTY_BODY = ATHLETE_EMPTY_STATE_DESCRIPTION;
+export const TEMPLATE_LIBRARY_EMPTY_BODY = TRAINING_PLANS_TABS_EMPTY_BODY;
 
 export const TEMPLATE_LIBRARY_FORM_PAGE = cn(TEMPLATE_LIBRARY_PAGE, PLATFORM_PAGE_WITH_FIXED_FOOTER);
 
@@ -209,4 +254,37 @@ export const TEMPLATE_LIBRARY_LEVEL_BADGE: Record<string, string> = {
     advanced: "text-primary",
 };
 
-export const TEMPLATE_LIBRARY_SECTION_DESC = cn(NEXIA_PORTAL_PAGE_EYEBROW, "mb-4 block");
+export const TEMPLATE_LIBRARY_SECTION_DESC = TRAINING_PLANS_TABS_SECTION_DESC;
+
+/** Card plan asignado (tab Planificación) — misma receta glass que plantilla. */
+export const PLANNING_LIBRARY_CARD = TEMPLATE_LIBRARY_CARD;
+
+export const PLANNING_LIBRARY_CARD_CLIENT_NAME = cn(NEXIA_PORTAL_CARD_TITLE, "truncate text-left");
+
+export const PLANNING_LIBRARY_CARD_BADGE_ROW = TEMPLATE_LIBRARY_CARD_BADGE_ROW;
+
+export const PLANNING_LIBRARY_CARD_STATS = TEMPLATE_LIBRARY_CARD_STATS;
+
+export const PLANNING_LIBRARY_CARD_STAT_ROW = TEMPLATE_LIBRARY_CARD_STAT_ROW;
+
+export const PLANNING_LIBRARY_CARD_STAT_VALUE = TEMPLATE_LIBRARY_CARD_STAT_VALUE;
+
+export const PLANNING_LIBRARY_CARD_PROGRESS = TEMPLATE_LIBRARY_CARD_PROGRESS;
+
+export const PLANNING_LIBRARY_CARD_PROGRESS_FILL = TEMPLATE_LIBRARY_CARD_PROGRESS_FILL;
+
+export const PLANNING_LIBRARY_CARD_ACTIONS = TEMPLATE_LIBRARY_CARD_ACTIONS;
+
+export const PLANNING_LIBRARY_CARD_ACTION_BTN = cn(
+    "w-full min-h-touch border-primary/30 text-primary hover:bg-primary/10 sm:min-h-0",
+);
+
+export const PLANNING_LIBRARY_STATUS_BADGE: Record<string, string> = {
+    active: "text-success",
+    completed: "text-primary",
+    paused: "text-warning",
+    cancelled: "text-destructive",
+    expired: "text-destructive",
+    complete: "text-success",
+    no_sessions: "text-muted-foreground",
+};
