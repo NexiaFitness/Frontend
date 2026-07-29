@@ -16,7 +16,7 @@ import type { RootState } from "@nexia/shared/store";
 import type { SessionOut } from "@nexia/shared/types/sessions";
 import type { SessionTemplate } from "@nexia/shared/types/sessionProgramming";
 import { LoadingSpinner, EmptyState } from "@/components/ui/feedback";
-import { Input, FormCombobox, DatePickerButton, SearchBar } from "@/components/ui/forms";
+import { FormCombobox, DatePickerButton, SearchBar } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { PaginationBar } from "@/components/ui/pagination";
