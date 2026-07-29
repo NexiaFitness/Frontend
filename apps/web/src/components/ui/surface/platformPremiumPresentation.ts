@@ -13,8 +13,8 @@ import { cn } from "@/lib/utils";
 
 export { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "./glassSurfacePresentation";
 
-/** Contenedor página detalle / formulario ancho completo. */
-export const PLATFORM_PAGE_SHELL = "w-full pb-10";
+/** Contenedor página premium — todo el ancho del `<main>`; sin max-width ni mx-auto. */
+export const PLATFORM_PAGE_SHELL = "w-full min-w-0 pb-10";
 
 /**
  * Reserva inferior cuando la vista usa `<DashboardFixedFooter />`.

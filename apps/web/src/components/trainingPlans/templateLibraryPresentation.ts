@@ -22,7 +22,6 @@ import {
     ATHLETE_EMPTY_STATE_GLOW,
     ATHLETE_EMPTY_STATE_TITLE,
 } from "@/components/athlete/empty/athleteEmptyStatePresentation";
-import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
 import {
     PLATFORM_BADGE_ROW,
@@ -40,10 +39,9 @@ export {
     PLATFORM_LOADING_ROW as TEMPLATE_LIBRARY_LOADING_ROW,
 } from "@/components/ui/surface/platformPremiumPresentation";
 
-/** Shell compartido — ambos tabs de /dashboard/training-plans. */
+/** Shell compartido — ambos tabs de /dashboard/training-plans (ancho completo del main). */
 export const TRAINING_PLANS_TABS_PAGE = cn(
     PLATFORM_PAGE_SHELL,
-    ATHLETE_PAGE_X,
     "relative pb-10 lg:pb-12",
 );
 
@@ -219,7 +217,7 @@ export const TEMPLATE_LIBRARY_FORM_FOOTER = cn(
     "sm:static sm:z-auto sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none",
 );
 
-export const TEMPLATE_LIBRARY_FORM_ACTIONS = "mx-auto flex max-w-3xl flex-col gap-3 sm:max-w-none sm:flex-row sm:justify-end";
+export const TEMPLATE_LIBRARY_FORM_ACTIONS = "flex w-full flex-col gap-3 sm:flex-row sm:justify-end";
 
 export const TEMPLATE_LIBRARY_DETAIL_PAGE = TEMPLATE_LIBRARY_PAGE;
 

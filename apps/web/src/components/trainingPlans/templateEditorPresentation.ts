@@ -20,7 +20,6 @@ import {
     ATHLETE_EMPTY_STATE_GLOW,
     ATHLETE_EMPTY_STATE_TITLE,
 } from "@/components/athlete/empty/athleteEmptyStatePresentation";
-import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 import { ATHLETE_PLAN_QUALITY_ROW } from "@/components/athlete/plan/athletePlanPresentation";
 import {
     ATHLETE_SESSION_EXERCISE_NAME,
@@ -78,7 +77,7 @@ export const TEMPLATE_EDITOR_COPY = {
         "Si tu programa es lineal, basta con añadir sesiones arriba. Usa fases solo si cambias volumen o intensidad entre tramos de semanas.",
 } as const;
 
-export const TEMPLATE_EDITOR_PAGE = cn(PLATFORM_PAGE_SHELL, ATHLETE_PAGE_X, "space-y-6 py-5 lg:py-6");
+export const TEMPLATE_EDITOR_PAGE = cn(PLATFORM_PAGE_SHELL, "relative space-y-6 py-5 lg:py-6");
 
 export const TEMPLATE_EDITOR_HINT = cn(
     "border-l-2 border-primary/30 pl-3",

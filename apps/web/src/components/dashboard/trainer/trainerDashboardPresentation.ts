@@ -20,7 +20,6 @@ import {
     ATHLETE_EMPTY_STATE_DESCRIPTION,
     ATHLETE_EMPTY_STATE_TITLE,
 } from "@/components/athlete/empty/athleteEmptyStatePresentation";
-import { ATHLETE_PAGE_X } from "@/components/athlete/layout/athleteLayoutClasses";
 import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
 import {
     PLATFORM_PAGE_SHELL,
@@ -48,8 +47,7 @@ export const TRAINER_DASHBOARD_COPY = {
 
 export const TRAINER_DASHBOARD_PAGE = cn(
     PLATFORM_PAGE_SHELL,
-    ATHLETE_PAGE_X,
-    "relative mx-auto max-w-[1400px] pb-10 lg:pb-12",
+    "relative pb-10 lg:pb-12",
 );
 
 export const TRAINER_DASHBOARD_GLOW =
