@@ -27,6 +27,7 @@ import {
     TRAINER_DASHBOARD_LAYOUT,
     TRAINER_DASHBOARD_MAIN,
     TRAINER_DASHBOARD_PAGE,
+    TRAINER_DASHBOARD_PAIR_ROW,
     TRAINER_DASHBOARD_STACK,
 } from "@/components/dashboard/trainer/trainerDashboardPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
@@ -124,14 +125,17 @@ export const TrainerDashboard: React.FC = () => {
                     </div>
                 ) : null}
 
+                <div className={TRAINER_DASHBOARD_PAIR_ROW}>
+                    <PriorityAlertsWidget />
+                    <RecentActivityWidget />
+                </div>
+
                 <div className={TRAINER_DASHBOARD_LAYOUT}>
                     <div className={TRAINER_DASHBOARD_MAIN}>
-                        <PriorityAlertsWidget />
                         <TodaySessionsWidget />
                     </div>
 
                     <aside className={TRAINER_DASHBOARD_ASIDE}>
-                        <RecentActivityWidget />
                         <ClientListWidget />
                         <BillingWidget />
                     </aside>

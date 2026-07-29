@@ -16,7 +16,6 @@ import { cn } from "@/lib/utils";
 import {
     TRAINER_DASHBOARD_ALERT_COUNT_BADGE,
     TRAINER_DASHBOARD_COPY,
-    TRAINER_DASHBOARD_EMPTY_BODY,
     TRAINER_DASHBOARD_LINK,
     TRAINER_DASHBOARD_LIST,
     TRAINER_DASHBOARD_LIST_ITEM_ALERT,
@@ -24,8 +23,10 @@ import {
     TRAINER_DASHBOARD_LIST_ITEM_NAME,
     TRAINER_DASHBOARD_LOADING_BLOCK,
     TRAINER_DASHBOARD_SEVERITY_BADGE,
-    TRAINER_DASHBOARD_WIDGET,
+    TRAINER_DASHBOARD_WIDGET_BODY,
+    TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER,
     TRAINER_DASHBOARD_WIDGET_HEADER,
+    TRAINER_DASHBOARD_WIDGET_STRETCH,
     TRAINER_DASHBOARD_WIDGET_TITLE,
     TRAINER_DASHBOARD_WIDGET_TITLE_ROW,
 } from "@/components/dashboard/trainer/trainerDashboardPresentation";
@@ -85,7 +86,7 @@ export const PriorityAlertsWidget: React.FC = () => {
 
     if (isLoadingAlerts) {
         return (
-            <section className={TRAINER_DASHBOARD_WIDGET}>
+            <section className={TRAINER_DASHBOARD_WIDGET_STRETCH}>
                 <NexiaGlassAccentRim />
                 <div className={TRAINER_DASHBOARD_LOADING_BLOCK} />
             </section>
@@ -115,7 +116,7 @@ export const PriorityAlertsWidget: React.FC = () => {
     };
 
     return (
-        <section className={TRAINER_DASHBOARD_WIDGET}>
+        <section className={TRAINER_DASHBOARD_WIDGET_STRETCH}>
             <NexiaGlassAccentRim />
             <div className={TRAINER_DASHBOARD_WIDGET_HEADER}>
                 <div className={TRAINER_DASHBOARD_WIDGET_TITLE_ROW}>
@@ -126,11 +127,11 @@ export const PriorityAlertsWidget: React.FC = () => {
             </div>
 
             {validAlerts.length === 0 ? (
-                <p className={cn(TRAINER_DASHBOARD_EMPTY_BODY, "py-4 text-center")}>
-                    {TRAINER_DASHBOARD_COPY.noAlerts}
-                </p>
+                <div className={TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER}>
+                    <p>{TRAINER_DASHBOARD_COPY.noAlerts}</p>
+                </div>
             ) : (
-                <>
+                <div className={TRAINER_DASHBOARD_WIDGET_BODY}>
                     <div className={TRAINER_DASHBOARD_LIST}>
                         {validAlerts.slice(0, 3).map((alert) => {
                             const client = clientMap.get(alert.client_id);
@@ -167,12 +168,12 @@ export const PriorityAlertsWidget: React.FC = () => {
                     <button
                         type="button"
                         onClick={() => navigate("/dashboard/clients")}
-                        className={cn(TRAINER_DASHBOARD_LINK, "mt-3")}
+                        className={cn(TRAINER_DASHBOARD_LINK, "mt-3 shrink-0")}
                     >
                         {TRAINER_DASHBOARD_COPY.viewAll}
                         <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
                     </button>
-                </>
+                </div>
             )}
         </section>
     );

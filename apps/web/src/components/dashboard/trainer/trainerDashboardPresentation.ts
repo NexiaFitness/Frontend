@@ -69,13 +69,30 @@ export const TRAINER_DASHBOARD_MAIN = "flex min-w-0 flex-1 flex-col gap-5 lg:w-[
 
 export const TRAINER_DASHBOARD_ASIDE = "flex min-w-0 flex-col gap-5 lg:w-[32%] lg:gap-8";
 
+/** Fila emparejada alertas + actividad — misma altura en desktop (lg+). */
+export const TRAINER_DASHBOARD_PAIR_ROW = cn(
+    "grid grid-cols-1 gap-5",
+    "lg:grid-cols-[68fr_32fr] lg:items-stretch lg:gap-8",
+);
+
 export const TRAINER_DASHBOARD_WIDGET = cn(
     NEXIA_GLASS_CARD,
     NEXIA_GLASS_CARD_DESKTOP,
     "relative overflow-hidden p-4 pt-5 sm:p-5",
 );
 
-export const TRAINER_DASHBOARD_WIDGET_HEADER = "mb-4 flex items-center justify-between gap-3";
+/** Widget en fila emparejada: estira al alto del vecino. */
+export const TRAINER_DASHBOARD_WIDGET_STRETCH = cn(TRAINER_DASHBOARD_WIDGET, "flex h-full min-h-0 flex-col");
+
+export const TRAINER_DASHBOARD_WIDGET_BODY = "flex min-h-0 flex-1 flex-col";
+
+export const TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER = cn(
+    TRAINER_DASHBOARD_WIDGET_BODY,
+    TRAINER_DASHBOARD_EMPTY_BODY,
+    "items-center justify-center py-6 text-center sm:min-h-[7.5rem]",
+);
+
+export const TRAINER_DASHBOARD_WIDGET_HEADER = "mb-4 flex min-h-10 items-center justify-between gap-3";
 
 export const TRAINER_DASHBOARD_WIDGET_TITLE_ROW = "flex min-w-0 items-center gap-2";
 

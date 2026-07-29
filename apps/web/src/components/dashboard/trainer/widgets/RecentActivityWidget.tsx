@@ -12,16 +12,17 @@ import type { RootState } from "@nexia/shared/store";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { getTrainerActivityIcon } from "@/lib/trainerActivityIcons";
-import { cn } from "@/lib/utils";
 import {
     TRAINER_DASHBOARD_ACTIVITY_ICON,
     TRAINER_DASHBOARD_COPY,
-    TRAINER_DASHBOARD_EMPTY_TITLE,
     TRAINER_DASHBOARD_LIST,
     TRAINER_DASHBOARD_LIST_ITEM,
     TRAINER_DASHBOARD_LIST_ITEM_META,
-    TRAINER_DASHBOARD_WIDGET,
-    TRAINER_DASHBOARD_WIDGET_EYEBROW,
+    TRAINER_DASHBOARD_WIDGET_BODY,
+    TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER,
+    TRAINER_DASHBOARD_WIDGET_HEADER,
+    TRAINER_DASHBOARD_WIDGET_STRETCH,
+    TRAINER_DASHBOARD_WIDGET_TITLE,
 } from "@/components/dashboard/trainer/trainerDashboardPresentation";
 
 function formatTimeAgo(timestamp: string): string {
@@ -71,60 +72,66 @@ export const RecentActivityWidget: React.FC = () => {
     );
 
     return (
-        <section className={TRAINER_DASHBOARD_WIDGET}>
+        <section className={TRAINER_DASHBOARD_WIDGET_STRETCH}>
             <NexiaGlassAccentRim />
-            <h2 className={TRAINER_DASHBOARD_WIDGET_EYEBROW}>{TRAINER_DASHBOARD_COPY.activityTitle}</h2>
+            <div className={TRAINER_DASHBOARD_WIDGET_HEADER}>
+                <h2 className={TRAINER_DASHBOARD_WIDGET_TITLE}>{TRAINER_DASHBOARD_COPY.activityTitle}</h2>
+            </div>
 
             {isLoading ? (
-                <div className="flex justify-center py-8">
-                    <LoadingSpinner size="md" />
+                <div className={TRAINER_DASHBOARD_WIDGET_BODY}>
+                    <div className="flex flex-1 items-center justify-center py-8">
+                        <LoadingSpinner size="md" />
+                    </div>
                 </div>
             ) : items.length === 0 ? (
-                <p className={cn(TRAINER_DASHBOARD_EMPTY_TITLE, "py-4 text-center text-muted-foreground")}>
-                    {TRAINER_DASHBOARD_COPY.noActivity}
-                </p>
+                <div className={TRAINER_DASHBOARD_WIDGET_EMPTY_CENTER}>
+                    <p>{TRAINER_DASHBOARD_COPY.noActivity}</p>
+                </div>
             ) : (
-                <ul className={TRAINER_DASHBOARD_LIST}>
-                    {items.map((item) => {
-                        const href = activityHref(item);
-                        const content = (
-                            <>
-                                <div className={TRAINER_DASHBOARD_ACTIVITY_ICON}>
-                                    {getTrainerActivityIcon(item.type)}
-                                </div>
-                                <div className="min-w-0 flex-1 text-left">
-                                    <p className="line-clamp-2 text-sm text-foreground">
-                                        <span className="font-medium">{item.actor_name}</span>{" "}
-                                        {item.description}
-                                    </p>
-                                    <p className={TRAINER_DASHBOARD_LIST_ITEM_META}>
-                                        {formatTimeAgo(item.timestamp)}
-                                    </p>
-                                </div>
-                            </>
-                        );
+                <div className={TRAINER_DASHBOARD_WIDGET_BODY}>
+                    <ul className={TRAINER_DASHBOARD_LIST}>
+                        {items.map((item) => {
+                            const href = activityHref(item);
+                            const content = (
+                                <>
+                                    <div className={TRAINER_DASHBOARD_ACTIVITY_ICON}>
+                                        {getTrainerActivityIcon(item.type)}
+                                    </div>
+                                    <div className="min-w-0 flex-1 text-left">
+                                        <p className="line-clamp-2 text-sm text-foreground">
+                                            <span className="font-medium">{item.actor_name}</span>{" "}
+                                            {item.description}
+                                        </p>
+                                        <p className={TRAINER_DASHBOARD_LIST_ITEM_META}>
+                                            {formatTimeAgo(item.timestamp)}
+                                        </p>
+                                    </div>
+                                </>
+                            );
 
-                        if (!href) {
+                            if (!href) {
+                                return (
+                                    <li key={item.id} className="flex gap-3 px-1">
+                                        {content}
+                                    </li>
+                                );
+                            }
+
                             return (
-                                <li key={item.id} className="flex gap-3 px-1">
-                                    {content}
+                                <li key={item.id}>
+                                    <button
+                                        type="button"
+                                        className={TRAINER_DASHBOARD_LIST_ITEM}
+                                        onClick={() => handleClick(item)}
+                                    >
+                                        {content}
+                                    </button>
                                 </li>
                             );
-                        }
-
-                        return (
-                            <li key={item.id}>
-                                <button
-                                    type="button"
-                                    className={TRAINER_DASHBOARD_LIST_ITEM}
-                                    onClick={() => handleClick(item)}
-                                >
-                                    {content}
-                                </button>
-                            </li>
-                        );
-                    })}
-                </ul>
+                        })}
+                    </ul>
+                </div>
             )}
         </section>
     );
