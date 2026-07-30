@@ -1,17 +1,20 @@
 /**
  * clientHeaderPresentation.ts — Tokens premium header ficha cliente (trainer).
  *
- * Tipografía alineada con portal atleta (NEXIA_PORTAL_*); superficies trainer sin glass.
+ * Tipografía NEXIA_PORTAL_*; glass en Observaciones (paridad dashboard widgets).
  * Doc: design/entrenador/UX-OVERVIEW-COCKPIT.md · design/platform/04_REGISTRY_CODIGO_FUENTE.md §11
  */
 
 import { cn } from "@/lib/utils";
 import {
+    ATHLETE_SECTION_LABEL,
+    NEXIA_PORTAL_CARD_TITLE,
     NEXIA_PORTAL_GREETING_H1,
     NEXIA_PORTAL_GREETING_NAME,
     NEXIA_PORTAL_GREETING_SUBTITLE,
     NEXIA_PORTAL_PAGE_EYEBROW,
 } from "@/components/athlete/account/athleteSettingsPresentation";
+import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
 
 /** Ocultar CTA hasta que el flujo de reportes esté listo en producto. */
 export const CLIENT_HEADER_SHOW_GENERATE_REPORT = false;
@@ -79,35 +82,52 @@ export const CLIENT_HEADER_AVATAR_BUTTON = cn(
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
 );
 
-export const CLIENT_HEADER_PREF_GRID_SHELL = cn(
-    "rounded-xl border border-border/70 bg-surface p-4 sm:p-5",
-    "shadow-[inset_0_1px_0] shadow-primary/5",
+export const CLIENT_HEADER_PREF_GRID = cn(
+    "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5",
 );
 
-export const CLIENT_HEADER_PREF_GRID =
-    "grid grid-cols-2 gap-3 sm:grid-cols-2 lg:grid-cols-4";
-
+/** Tile preferencia — provisional; estilo definitivo pendiente de producto. */
 export const CLIENT_HEADER_PREF_CELL = cn(
-    "min-w-0 rounded-lg border border-border/50 bg-surface-2/50 px-3 py-3 text-center",
-    "transition-colors hover:border-primary/20 hover:bg-surface-2/80",
+    "min-w-0 rounded-xl border border-border/55 px-4 py-3.5 text-center",
+    "transition-colors hover:border-border/80",
 );
 
 export const CLIENT_HEADER_PREF_LABEL = cn(
-    NEXIA_PORTAL_PAGE_EYEBROW,
+    ATHLETE_SECTION_LABEL,
     "block text-[10px] leading-tight sm:text-[11px]",
-    "whitespace-normal sm:whitespace-nowrap",
 );
 
-export const CLIENT_HEADER_PREF_VALUE =
-    "mt-1.5 text-sm font-semibold leading-snug text-foreground break-words";
+export const CLIENT_HEADER_PREF_VALUE = cn(
+    "mt-1.5 text-sm font-semibold leading-snug text-foreground sm:text-base",
+    "break-words text-center",
+);
 
+/** Bloque observaciones — glass dashboard + rim cyan. */
 export const CLIENT_HEADER_OBS_SHELL = cn(
-    "rounded-xl border border-border/70 bg-surface/90 p-4 sm:p-5",
+    NEXIA_GLASS_CARD,
+    NEXIA_GLASS_CARD_DESKTOP,
+    "relative overflow-hidden p-4 pt-5 sm:p-5 sm:pt-6",
 );
+
+export const CLIENT_HEADER_OBS_HEADER =
+    "mb-4 flex flex-wrap items-center justify-between gap-2";
+
+export const CLIENT_HEADER_OBS_TITLE = NEXIA_PORTAL_CARD_TITLE;
 
 export const CLIENT_HEADER_OBS_QUICK_NOTE = cn(
-    "mb-4 space-y-2 rounded-lg border border-border/70 bg-surface-2/50 p-3",
+    "mb-4 space-y-3 rounded-lg border border-primary/20 bg-primary/[0.04] p-3 sm:p-4",
 );
+
+export const CLIENT_HEADER_OBS_NOTE_LIST = "space-y-3";
+
+export const CLIENT_HEADER_OBS_NOTE_ITEM = cn(
+    "rounded-lg border border-border/45 bg-background/25 px-3 py-2.5 sm:px-4 sm:py-3",
+);
+
+export const CLIENT_HEADER_OBS_NOTE_LABEL = cn(ATHLETE_SECTION_LABEL, "mb-1 block");
+
+export const CLIENT_HEADER_OBS_EMPTY =
+    "text-sm leading-relaxed text-muted-foreground/85";
 
 export const CLIENT_HEADER_NOTE_BODY =
     "whitespace-pre-wrap text-sm font-medium leading-relaxed text-foreground";

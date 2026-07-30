@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { ClientProfileSidePanel } from "./ClientProfileSidePanel";
 import { ClientInboxBell } from "./ClientInboxBell";
 import { cn } from "@/lib/utils";
@@ -34,17 +35,21 @@ import {
     CLIENT_HEADER_TITLE_ROW,
     CLIENT_HEADER_NOTE_BODY,
     CLIENT_HEADER_OBS_QUICK_NOTE,
+    CLIENT_HEADER_OBS_HEADER,
+    CLIENT_HEADER_OBS_NOTE_ITEM,
+    CLIENT_HEADER_OBS_NOTE_LABEL,
+    CLIENT_HEADER_OBS_NOTE_LIST,
+    CLIENT_HEADER_OBS_EMPTY,
     CLIENT_HEADER_OBS_SHELL,
+    CLIENT_HEADER_OBS_TITLE,
     CLIENT_HEADER_PREF_CELL,
     CLIENT_HEADER_PREF_GRID,
-    CLIENT_HEADER_PREF_GRID_SHELL,
     CLIENT_HEADER_PREF_LABEL,
     CLIENT_HEADER_PREF_VALUE,
     CLIENT_HEADER_QUICK_NOTE_TRIGGER,
     CLIENT_HEADER_SHELL,
     CLIENT_HEADER_SHOW_GENERATE_REPORT,
     NEXIA_PORTAL_GREETING_NAME,
-    NEXIA_PORTAL_PAGE_EYEBROW,
 } from "./clientHeaderPresentation";
 
 interface ClientHeaderProps {
@@ -211,21 +216,19 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
 
             <NexiaPremiumDivider className="w-full" />
 
-            <div className={CLIENT_HEADER_PREF_GRID_SHELL}>
-                <p className={`${NEXIA_PORTAL_PAGE_EYEBROW} mb-3`}>Preferencias de entrenamiento</p>
-                <div className={CLIENT_HEADER_PREF_GRID}>
-                    {preferences.map((pref) => (
-                        <div key={pref.label} className={CLIENT_HEADER_PREF_CELL}>
-                            <span className={CLIENT_HEADER_PREF_LABEL}>{pref.label}</span>
-                            <p className={CLIENT_HEADER_PREF_VALUE}>{pref.value}</p>
-                        </div>
-                    ))}
-                </div>
+            <div className={CLIENT_HEADER_PREF_GRID}>
+                {preferences.map((pref) => (
+                    <div key={pref.label} className={CLIENT_HEADER_PREF_CELL}>
+                        <span className={CLIENT_HEADER_PREF_LABEL}>{pref.label}</span>
+                        <p className={CLIENT_HEADER_PREF_VALUE}>{pref.value}</p>
+                    </div>
+                ))}
             </div>
 
             <div className={CLIENT_HEADER_OBS_SHELL}>
-                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <span className={NEXIA_PORTAL_PAGE_EYEBROW}>Observaciones</span>
+                <NexiaGlassAccentRim />
+                <div className={CLIENT_HEADER_OBS_HEADER}>
+                    <h2 className={CLIENT_HEADER_OBS_TITLE}>Observaciones</h2>
                     {onSaveQuickNote && (
                         <button
                             type="button"
@@ -277,33 +280,31 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                     </div>
                 )}
 
-                <div className="space-y-3">
+                <div className={CLIENT_HEADER_OBS_NOTE_LIST}>
                     {!hasAnyNote && (
-                        <p className="text-sm text-muted-foreground">Sin observaciones.</p>
+                        <p className={CLIENT_HEADER_OBS_EMPTY}>Sin observaciones.</p>
                     )}
                     {client.notes_1?.trim() && (
-                        <div>
-                            <span className={`${NEXIA_PORTAL_PAGE_EYEBROW} mb-1 block`}>Nota 1</span>
+                        <div className={CLIENT_HEADER_OBS_NOTE_ITEM}>
+                            <span className={CLIENT_HEADER_OBS_NOTE_LABEL}>Nota 1</span>
                             <p className={CLIENT_HEADER_NOTE_BODY}>{client.notes_1}</p>
                         </div>
                     )}
                     {client.notes_2?.trim() && (
-                        <div>
-                            <span className={`${NEXIA_PORTAL_PAGE_EYEBROW} mb-1 block`}>Nota 2</span>
+                        <div className={CLIENT_HEADER_OBS_NOTE_ITEM}>
+                            <span className={CLIENT_HEADER_OBS_NOTE_LABEL}>Nota 2</span>
                             <p className={CLIENT_HEADER_NOTE_BODY}>{client.notes_2}</p>
                         </div>
                     )}
                     {client.notes_3?.trim() && (
-                        <div>
-                            <span className={`${NEXIA_PORTAL_PAGE_EYEBROW} mb-1 block`}>Nota 3</span>
+                        <div className={CLIENT_HEADER_OBS_NOTE_ITEM}>
+                            <span className={CLIENT_HEADER_OBS_NOTE_LABEL}>Nota 3</span>
                             <p className={CLIENT_HEADER_NOTE_BODY}>{client.notes_3}</p>
                         </div>
                     )}
                     {client.observaciones?.trim() && (
-                        <div>
-                            <span className={`${NEXIA_PORTAL_PAGE_EYEBROW} mb-1 block`}>
-                                Nota libre
-                            </span>
+                        <div className={CLIENT_HEADER_OBS_NOTE_ITEM}>
+                            <span className={CLIENT_HEADER_OBS_NOTE_LABEL}>Nota libre</span>
                             <p className={CLIENT_HEADER_NOTE_BODY}>{client.observaciones}</p>
                         </div>
                     )}
