@@ -10,7 +10,7 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-import { getTrainingDatesInRange, type TrainingDateInfo } from "@nexia/shared";
+import { getTrainingDatesInRange, type TrainingDateInfo, type WeekStructureKind } from "@nexia/shared";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type {
     WeeklyStructureDayPatternInput,
@@ -21,11 +21,18 @@ import { cn } from "@/lib/utils";
 
 import { DayCell } from "./DayCell";
 import {
+    countConfiguredTrainableDays,
     formatBlockWeekRange,
     formatRangeShort,
     parsePickerDayId,
     toPickerDayId,
 } from "./periodizationWeeklyStructureUtils";
+import {
+    WEEK_KIND_BADGE_CLASS,
+    WEEK_KIND_LABEL_ES,
+} from "./phaseConstructorPresentation";
+
+export type WeeklyStructureEditorMode = "template" | "all";
 
 export interface PeriodizationWeeklyStructureEditorProps {
     startDate: string;
@@ -43,6 +50,10 @@ export interface PeriodizationWeeklyStructureEditorProps {
     /** Ocupa el alto disponible del panel (scroll interno). */
     fillContainer?: boolean;
     className?: string;
+    weekKindByOrdinal?: Record<number, WeekStructureKind>;
+    /** template = solo semana 1 (semana tipo); all = todas las semanas. */
+    mode?: WeeklyStructureEditorMode;
+    onRestoreWeek?: (weekOrdinal: number) => void;
 }
 
 export const PeriodizationWeeklyStructureEditor: React.FC<
@@ -60,6 +71,9 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
     compact = false,
     fillContainer = false,
     className,
+    weekKindByOrdinal,
+    mode = "all",
+    onRestoreWeek,
 }) => {
     const [activePickerDayId, setActivePickerDayId] = useState<string | null>(
         null,
@@ -81,13 +95,14 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
         const ordered: { weekOrdinal: number; days: TrainingDateInfo[] }[] = [];
         const sortedWeeks = Array.from(map.keys()).sort((a, b) => a - b);
         for (const w of sortedWeeks) {
+            if (mode === "template" && w !== 1) continue;
             ordered.push({
                 weekOrdinal: w,
                 days: map.get(w)!.sort((a, b) => a.dayOfWeek - b.dayOfWeek),
             });
         }
         return ordered;
-    }, [trainingDates]);
+    }, [trainingDates, mode]);
 
     const [expandedWeek, setExpandedWeek] = useState<number | null>(() =>
         groupedByWeek.length > 0 ? groupedByWeek[0].weekOrdinal : null,
@@ -172,15 +187,15 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
         [value, onChange],
     );
 
-    const totalTrainable = trainingDates.length;
-    const withPatterns = useMemo(
+    const { totalTrainable, withPatterns } = useMemo(
         () =>
-            value.reduce(
-                (acc, w) =>
-                    acc + w.days.filter((d) => d.patterns.length > 0).length,
-                0,
+            countConfiguredTrainableDays(
+                startDate,
+                endDate,
+                trainingDays,
+                value,
             ),
-        [value],
+        [startDate, endDate, trainingDays, value],
     );
 
     const weekStats = useCallback(
@@ -230,7 +245,9 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
         >
             {showRangeHeader && (
                 <p className="text-center text-sm font-semibold text-primary">
-                    {formatRangeShort(startDate, endDate)}
+                    {mode === "template"
+                        ? "Semana tipo (Semana 1)"
+                        : formatRangeShort(startDate, endDate)}
                 </p>
             )}
 
@@ -272,6 +289,7 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                 weekGroup.weekOrdinal,
                                 endDate,
                             );
+                            const weekKind = weekKindByOrdinal?.[weekGroup.weekOrdinal];
                             return (
                                 <div
                                     key={weekGroup.weekOrdinal}
@@ -300,9 +318,37 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                             S{weekGroup.weekOrdinal}
                                         </span>
                                         <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-foreground">
-                                                Semana {weekGroup.weekOrdinal}
-                                            </p>
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                                <p className="text-sm font-semibold text-foreground">
+                                                    Semana {weekGroup.weekOrdinal}
+                                                </p>
+                                                {weekKind && weekGroup.weekOrdinal !== 1 && (
+                                                    <span
+                                                        className={cn(
+                                                            "inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium border",
+                                                            WEEK_KIND_BADGE_CLASS[weekKind],
+                                                        )}
+                                                    >
+                                                        {WEEK_KIND_LABEL_ES[weekKind]}
+                                                    </span>
+                                                )}
+                                                {mode === "all" &&
+                                                    weekKind === "personalizada" &&
+                                                    onRestoreWeek && (
+                                                        <button
+                                                            type="button"
+                                                            className="text-[10px] font-medium text-primary hover:underline"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                onRestoreWeek(
+                                                                    weekGroup.weekOrdinal,
+                                                                );
+                                                            }}
+                                                        >
+                                                            Restaurar semana tipo
+                                                        </button>
+                                                    )}
+                                            </div>
                                             <p className="text-xs text-muted-foreground">
                                                 {weekRange}
                                                 {" · "}

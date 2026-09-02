@@ -59,7 +59,7 @@ function stepDone(
     current: PeriodBlockConstructorStep,
 ): boolean {
     if (completed.includes(step)) return true;
-    const order = ["range", "qualities", "weeklyStructure", "volumeIntensity"];
+    const order = ["range", "qualities", "volumeIntensity", "weeklyStructure", "summary"];
     return order.indexOf(current) > order.indexOf(step);
 }
 

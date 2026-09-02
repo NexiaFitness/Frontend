@@ -3,6 +3,8 @@ import type {
   PlanPeriodBlock,
   PlanPeriodBlockCreate,
   PlanPeriodBlockUpdate,
+  PlanPeriodBlockWithStructureCreate,
+  PlanPeriodBlockWithStructureOut,
 } from "../types/planningCargas";
 
 export const periodBlocksApi = baseApi.injectEndpoints({
@@ -52,6 +54,30 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       ],
     }),
 
+    createPeriodBlockWithStructure: builder.mutation<
+      PlanPeriodBlockWithStructureOut,
+      { planId: number; data: PlanPeriodBlockWithStructureCreate }
+    >({
+      query: ({ planId, data }) => ({
+        url: `/training-plans/${planId}/period-blocks/with-recurring-structure`,
+        method: "POST",
+        body: data,
+        headers: { "Content-Type": "application/json" },
+      }),
+      invalidatesTags: (result, _error, { planId }) => {
+        const tags: Array<
+          | { type: "PlanPeriodBlock"; id: number | string }
+          | { type: "WeeklyStructure"; id: number | string }
+        > = [{ type: "PlanPeriodBlock", id: `LIST-${planId}` }];
+        const blockId = result?.block?.id;
+        if (blockId != null) {
+          tags.push({ type: "PlanPeriodBlock", id: blockId });
+          tags.push({ type: "WeeklyStructure", id: blockId });
+        }
+        return tags;
+      },
+    }),
+
     updatePeriodBlock: builder.mutation<
       PlanPeriodBlock,
       { planId: number; blockId: number; data: PlanPeriodBlockUpdate }
@@ -89,6 +115,7 @@ export const {
   useGetPeriodBlocksQuery,
   useGetPeriodBlockQuery,
   useCreatePeriodBlockMutation,
+  useCreatePeriodBlockWithStructureMutation,
   useUpdatePeriodBlockMutation,
   useDeletePeriodBlockMutation,
 } = periodBlocksApi;

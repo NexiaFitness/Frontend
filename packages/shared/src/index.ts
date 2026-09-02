@@ -391,6 +391,22 @@ export {
     type TrainingDateInfo,
 } from "./utils/weeklyStructure";
 export {
+    weeksStructureEqual,
+    classifyWeeksByTemplate,
+    findTemplateWeek,
+    type WeekStructureKind,
+} from "./utils/weekStructureDiff";
+export {
+    buildPhaseReadinessChecklist,
+    canPersistBlock,
+    canActivatePhase,
+    derivePhaseUxLabel,
+    phaseReadinessFromBlock,
+    type PhaseUxLabel,
+    type PhaseReadinessInput,
+    type PhaseReadinessChecklist,
+} from "./utils/phaseReadiness";
+export {
     getMondayOfWeekLocal,
     getBlockCalendarWeekOrdinal,
     getBlockCalendarWeekCount,

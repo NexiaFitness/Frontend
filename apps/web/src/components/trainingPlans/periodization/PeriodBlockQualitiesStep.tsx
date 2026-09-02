@@ -35,6 +35,8 @@ export interface PeriodBlockQualitiesStepProps {
     onUpdateQualityPct: (qualityId: number, percentage: number) => void;
     onContinue: () => void;
     continueLabel?: string;
+    /** Ocultar CTA interno cuando el footer de la superficie D-PAP gestiona navegación. */
+    hideFooter?: boolean;
     className?: string;
 }
 
@@ -49,6 +51,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
     onUpdateQualityPct,
     onContinue,
     continueLabel = "Continuar a estructura semanal",
+    hideFooter = false,
     className,
 }) => {
     const { showError, showWarning } = useToast();
@@ -202,6 +205,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                 </section>
             )}
 
+            {!hideFooter && (
             <footer className="pt-4 border-t border-border/50">
                 <Button
                     type="button"
@@ -213,6 +217,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                     {continueLabel}
                 </Button>
             </footer>
+            )}
         </div>
     );
 };

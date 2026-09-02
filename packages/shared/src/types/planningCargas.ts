@@ -99,3 +99,15 @@ export interface PlanPeriodBlockUpdate {
   sort_order?: number | null;
   qualities?: PeriodBlockQualityInput[];
 }
+
+/** Atomic create: block + template week + apply-template (D-PAP §8.4.5). */
+export interface PlanPeriodBlockWithStructureCreate extends PlanPeriodBlockCreate {
+  template_week?: import("./weeklyStructure").WeeklyStructureWeekCreate | null;
+  apply_template_to_remaining_weeks?: boolean;
+}
+
+export interface PlanPeriodBlockWithStructureOut {
+  block: PlanPeriodBlock;
+  template_week_ordinal: number | null;
+  applied_week_ordinals: number[];
+}

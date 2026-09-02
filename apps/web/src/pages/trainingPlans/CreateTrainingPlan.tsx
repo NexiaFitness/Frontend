@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/feedback";
 import { RecommendationsCards } from "@/components/clients/detail/RecommendationsCards";
 import { Input, Textarea, DatePickerButton, Label, FormCombobox } from "@/components/ui/forms";
 import { ClientAvatar } from "@/components/ui/avatar";
-import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS } from "@/components/dashboard/shared";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { PlanOverlapModal } from "@/components/trainingPlans/modals";
 import {
     useCreateTrainingPlanMutation,
@@ -586,10 +586,7 @@ export const CreateTrainingPlan: React.FC = () => {
             )}
 
             {/* Footer fijo con botones de acción */}
-            <div
-                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
-                style={{ left: "var(--sidebar-width, 0)" }}
-            >
+            <DashboardFixedFooter>
                 <div className="flex items-center justify-end gap-3">
                     <Button
                         type="button"
@@ -610,7 +607,7 @@ export const CreateTrainingPlan: React.FC = () => {
                         Crear planificación
                     </Button>
                 </div>
-            </div>
+            </DashboardFixedFooter>
 
             {/* Modal de confirmación: sustituye el plan activo actual */}
             <PlanOverlapModal

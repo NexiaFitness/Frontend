@@ -36,6 +36,7 @@ import { ClientTestingTab } from "@/components/clients/detail/ClientTestingTab";
 import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab";
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
+import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { PlanificarClientChoiceModal } from "@/components/clients/detail/modals/PlanificarClientChoiceModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
@@ -95,6 +96,10 @@ export const ClientDetail: React.FC = () => {
         const n = parseInt(raw, 10);
         return Number.isFinite(n) && n > 0 ? n : null;
     }, [searchParams]);
+
+    const hideClientTabsBar =
+        activeTab === "planning" &&
+        isBlockAuthoringActive(parseBlockAuthorParams(searchParams));
     React.useEffect(() => {
         const tab = searchParams.get("tab");
         if (tab === "workouts" || tab === "session-programming") {
@@ -326,12 +331,14 @@ export const ClientDetail: React.FC = () => {
             />
 
             {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}
+            {!hideClientTabsBar && (
             <TabsBar
                 items={TABS}
                 value={activeTab}
                 onChange={(id) => setActiveTab(id as TabId)}
                 ariaLabel="Tabs del cliente"
             />
+            )}
 
             {/* Tab Content — espacio vertical según spec (pb-8 ya en main) */}
             <div className="pt-2 pb-8">

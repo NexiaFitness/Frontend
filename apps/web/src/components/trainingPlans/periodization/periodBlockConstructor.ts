@@ -1,28 +1,31 @@
 /**
  * periodBlockConstructor.ts — Pasos del constructor de bloque en ClientPlanningTab.
  *
- * Flujo: rango (calendario) → cualidades → estructura semanal → volumen/intensidad.
+ * Flujo F1: rango (calendario) → cualidades → carga → semana tipo / semanas → resumen.
  * La columna derecha muestra un solo paso; la card bajo el calendario acumula lo completado.
  */
 
 export type PeriodBlockConstructorStep =
     | "range"
     | "qualities"
+    | "volumeIntensity"
     | "weeklyStructure"
-    | "volumeIntensity";
+    | "summary";
 
 export const CONSTRUCTOR_STEP_ORDER: PeriodBlockConstructorStep[] = [
     "range",
     "qualities",
-    "weeklyStructure",
     "volumeIntensity",
+    "weeklyStructure",
+    "summary",
 ];
 
 export const CONSTRUCTOR_STEP_LABELS: Record<PeriodBlockConstructorStep, string> = {
     range: "Rango",
     qualities: "Cualidades físicas",
-    weeklyStructure: "Estructura semanal",
     volumeIntensity: "Volumen e intensidad",
+    weeklyStructure: "Estructura semanal",
+    summary: "Resumen",
 };
 
 export function nextConstructorStep(

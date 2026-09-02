@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo, useEffect, useLayoutEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { CalendarDays, Target } from "lucide-react";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
@@ -13,8 +13,10 @@ import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
 import {
   useGetWeeklyStructureQuery,
   useCreateWeeklyStructureWeekMutation,
-  useDeleteWeeklyStructureWeekMutation,
+  useUpdateWeeklyStructureWeekMutation,
+  useApplyWeeklyStructureTemplateMutation,
 } from "@nexia/shared/api/weeklyStructureApi";
+import { classifyWeeksByTemplate, getBlockCalendarWeekCount } from "@nexia/shared";
 import {
   useGetDayExceptionsQuery,
   useCreateDayExceptionMutation,
@@ -41,6 +43,31 @@ import { PeriodizationCharts } from "./PeriodizationCharts";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
+import { PhaseAuthoringShell } from "./PhaseAuthoringShell";
+import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
+import { BlockCalendarRangeHint } from "./BlockCalendarRangeHint";
+import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
+import {
+  clearBlockAuthorParams,
+  isBlockAuthoringActive,
+  parseBlockAuthorParams,
+} from "@/utils/blockAuthoringUrl";
+import { PhaseSummaryPanel } from "./PhaseSummaryPanel";
+import { PhaseSectionNav } from "./PhaseSectionNav";
+import {
+  constructorStepToSection,
+  sectionToConstructorStep,
+  sectionToWeeklyStructureMode,
+  type PhaseSectionId,
+} from "./phaseSectionNavModel";
+import {
+  blockFieldsChanged,
+  persistWeeklyStructureIncremental,
+  resolveCreateStructurePlan,
+  toBlockPersistPayload,
+} from "./periodBlockPersistence";
+import { restoreWeekFromTemplate } from "./periodizationWeeklyStructureUtils";
+import { PHASE_UX_CHIP_CLASS, PHASE_UX_LABEL_ES } from "./phaseConstructorPresentation";
 
 // ---------------------------------------------------------------------------
 // Helpers — plan summary card
@@ -102,6 +129,8 @@ interface Props {
    * (p. ej. edición de plan desde detalle). Debe coincidir con el plan en pantalla.
    */
   planGoalForRecommendations?: string;
+  /** Notifica al padre cuando entra/sale del modo autoría (p. ej. ocultar footer fijo). */
+  onAuthoringChange?: (active: boolean) => void;
 }
 
 export const PlanPeriodizationSection: React.FC<Props> = ({
@@ -111,8 +140,15 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   planEndDate,
   activePlan,
   planGoalForRecommendations,
+  onAuthoringChange,
 }) => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const blockAuthorParams = useMemo(
+    () => parseBlockAuthorParams(searchParams),
+    [searchParams],
+  );
+  const isDapAuthoring = isBlockAuthoringActive(blockAuthorParams);
   const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
@@ -174,6 +210,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const [calendarColumnHeight, setCalendarColumnHeight] = useState<number | null>(
     null,
   );
+  const createRangeNavigateKeyRef = useRef<string | null>(null);
+  const overlapRangeWarnedRef = useRef(false);
 
   const {
     data: patternsCatalog,
@@ -195,7 +233,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     setVolumeLevel,
     setIntensityLevel,
     setWeeklyStructure,
-    loadBlock,
+    setStructureBaseline,
+    markPersisted,
     reset,
     advanceConstructorStep,
     setConstructorStep,
@@ -203,6 +242,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     overlapDetected,
     outsidePlanBounds,
     canSubmit,
+    canPersistBlock,
+    canAdvanceStep,
+    phaseUxLabel,
+    isDirty,
+    readinessInput,
   } = usePeriodBlockForm(blocks, editingBlockId, planStartDate, planEndDate);
 
   useLayoutEffect(() => {
@@ -216,7 +260,163 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   }, [calMonth, form.phase, form.constructorStep, blocks.length]);
 
   const [createWeek] = useCreateWeeklyStructureWeekMutation();
-  const [deleteWeek] = useDeleteWeeklyStructureWeekMutation();
+  const [updateWeek] = useUpdateWeeklyStructureWeekMutation();
+  const [applyTemplate, { isLoading: isApplyingTemplate }] =
+    useApplyWeeklyStructureTemplateMutation();
+
+  /** Legacy shell solo si edit in-place (hoy edit va por D-PAP). */
+  const isAuthoring =
+    !isDapAuthoring && editingBlockId != null && form.phase !== "idle";
+  const isSelectingCreateRange =
+    !isDapAuthoring && editingBlockId == null && form.phase !== "idle";
+  const [phaseNavSection, setPhaseNavSection] = useState<PhaseSectionId>("qualities");
+
+  useEffect(() => {
+    if (form.constructorStep !== "weeklyStructure") {
+      setPhaseNavSection(constructorStepToSection(form.constructorStep));
+    } else if (phaseNavSection !== "weekType" && phaseNavSection !== "weeks") {
+      setPhaseNavSection("weekType");
+    }
+  }, [form.constructorStep, phaseNavSection]);
+
+  useEffect(() => {
+    if (!isAuthoring) {
+      setPhaseNavSection("qualities");
+    }
+  }, [isAuthoring]);
+
+  const weeklyStructureMode = sectionToWeeklyStructureMode(phaseNavSection);
+
+  useLayoutEffect(() => {
+    onAuthoringChange?.(isDapAuthoring || isAuthoring);
+  }, [isDapAuthoring, isAuthoring, onAuthoringChange]);
+
+  const navigateToCreateAuthoring = useCallback(
+    (startDate: string, endDate: string) => {
+      if (clientId == null || clientId <= 0) return;
+      navigate(
+        buildBlockAuthorPath({
+          clientId,
+          planId,
+          mode: "create",
+          blockStart: startDate,
+          blockEnd: endDate,
+          blockStep: "qualities",
+        }),
+      );
+    },
+    [clientId, planId, navigate],
+  );
+
+  useEffect(() => {
+    if (form.phase !== "rangeComplete") {
+      overlapRangeWarnedRef.current = false;
+      createRangeNavigateKeyRef.current = null;
+      return;
+    }
+    if (isDapAuthoring || editingBlockId != null) return;
+    if (!form.startDate || !form.endDate) return;
+    if (outsidePlanBounds) {
+      showWarning("El rango debe estar dentro de la vigencia del plan.");
+      reset();
+      return;
+    }
+    if (overlapDetected) {
+      if (!overlapRangeWarnedRef.current) {
+        overlapRangeWarnedRef.current = true;
+        showWarning(
+          "El rango se solapa con otro bloque. Ajusta las fechas en el calendario.",
+        );
+      }
+      return;
+    }
+    const navigateKey = `${form.startDate}:${form.endDate}`;
+    if (createRangeNavigateKeyRef.current === navigateKey) return;
+    createRangeNavigateKeyRef.current = navigateKey;
+    navigateToCreateAuthoring(form.startDate, form.endDate);
+  }, [
+    isDapAuthoring,
+    editingBlockId,
+    form.phase,
+    form.startDate,
+    form.endDate,
+    outsidePlanBounds,
+    overlapDetected,
+    showWarning,
+    reset,
+    navigateToCreateAuthoring,
+  ]);
+
+  const handleCancelCreateRange = useCallback(() => {
+    reset();
+  }, [reset]);
+
+  const handleEditBlockNavigate = useCallback(
+    (block: PlanPeriodBlock) => {
+      if (clientId == null || clientId <= 0) return;
+      navigate(
+        buildBlockAuthorPath({
+          clientId,
+          planId,
+          mode: "edit",
+          blockId: block.id,
+          blockStep: "summary",
+        }),
+      );
+    },
+    [clientId, planId, navigate],
+  );
+
+  const handleExitBlockAuthoring = useCallback(() => {
+    if (clientId == null || clientId <= 0) return;
+    reset();
+    const next = clearBlockAuthorParams(searchParams);
+    navigate(`/dashboard/clients/${clientId}?${next.toString()}`, { replace: true });
+  }, [clientId, searchParams, navigate, reset]);
+
+  const handleSectionChange = useCallback(
+    (section: PhaseSectionId) => {
+      setPhaseNavSection(section);
+      setConstructorStep(sectionToConstructorStep(section));
+    },
+    [setConstructorStep],
+  );
+
+  const handleAdvanceStep = useCallback(() => {
+    if (
+      form.constructorStep === "weeklyStructure" &&
+      weeklyStructureMode === "template"
+    ) {
+      handleSectionChange("weeks");
+      return;
+    }
+    if (
+      form.constructorStep === "weeklyStructure" &&
+      weeklyStructureMode === "all"
+    ) {
+      handleSectionChange("summary");
+      return;
+    }
+    advanceConstructorStep();
+  }, [
+    form.constructorStep,
+    weeklyStructureMode,
+    handleSectionChange,
+    advanceConstructorStep,
+  ]);
+
+  const handleRestoreWeek = useCallback(
+    (weekOrdinal: number) => {
+      const next = restoreWeekFromTemplate(form.weeklyStructure, weekOrdinal);
+      setWeeklyStructure(next);
+    },
+    [form.weeklyStructure, setWeeklyStructure],
+  );
+
+  const weekKindByOrdinal = useMemo(
+    () => classifyWeeksByTemplate(form.weeklyStructure, 1),
+    [form.weeklyStructure],
+  );
 
   // Cargar estructura semanal existente al entrar en modo edición (solo una vez)
   useEffect(() => {
@@ -232,9 +432,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         })),
       })),
     }));
-    setWeeklyStructure(draft);
+    setStructureBaseline(draft);
     setHasLoadedWeeklyStructure(true);
-  }, [editingBlockId, existingStructure, hasLoadedWeeklyStructure, setWeeklyStructure]);
+  }, [editingBlockId, existingStructure, hasLoadedWeeklyStructure, setStructureBaseline]);
 
   const planGoalResolved =
     activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
@@ -269,75 +469,113 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         return;
       }
 
-      // Aviso anticipado si el inicio de un nuevo rango cae dentro de un bloque existente.
-      const isStartingNewRange = form.phase === "idle" || form.phase === "rangeComplete";
+      const isStartingNewRange =
+        !editingBlockId &&
+        (form.phase === "idle" || form.phase === "rangeComplete");
       if (isStartingNewRange) {
-        const hint = getBlockOverlapHint(dateStr, blocks, editingBlockId ?? undefined);
+        const hint = getBlockOverlapHint(dateStr, blocks);
         if (hint) {
           const blockName = hint.block.name?.trim() || "Otro bloque";
           showWarning(
-            `El ${formatDateFriendly(dateStr)} está dentro del bloque '${blockName}'. El siguiente día libre es el ${formatDateFriendly(hint.nextFreeDate)}.`
+            `El ${formatDateFriendly(dateStr)} está dentro del bloque «${blockName}». El siguiente día libre es el ${formatDateFriendly(hint.nextFreeDate)}.`,
           );
         }
       }
 
       handleDayClick(dateStr);
     },
-    [planStartDate, planEndDate, handleDayClick, showWarning, form.phase, blocks, editingBlockId],
+    [
+      editingBlockId,
+      planStartDate,
+      planEndDate,
+      handleDayClick,
+      showWarning,
+      form.phase,
+      blocks,
+    ],
   );
 
   const handleSubmitBlock = useCallback(async () => {
     if (!form.startDate || !form.endDate) return;
-    const payload = {
-      start_date: form.startDate,
-      end_date: form.endDate,
-      volume_level: form.volumeLevel,
-      intensity_level: form.intensityLevel,
+    const payload = toBlockPersistPayload({
+      startDate: form.startDate,
+      endDate: form.endDate,
+      volumeLevel: form.volumeLevel,
+      intensityLevel: form.intensityLevel,
       qualities: form.qualities,
-    };
+    });
     try {
       if (editingBlockId) {
-        await updateBlock({ planId, blockId: editingBlockId, data: payload }).unwrap();
-        // Recrear estructura semanal: eliminar semanas existentes y crear las del draft
-        if (form.weeklyStructure.length > 0 && existingStructure) {
-          const existingWeekIds = existingStructure.weeks
-            .map((w) => w.id)
-            .filter((id): id is number => id != null);
-          await Promise.all(
-            existingWeekIds.map((weekId) =>
-              deleteWeek({ planId, blockId: editingBlockId, weekId }).unwrap().catch(() => {})
-            )
-          );
-          await Promise.all(
-            form.weeklyStructure.map((week) =>
-              createWeek({ planId, blockId: editingBlockId, body: week }).unwrap()
-            )
-          );
+        const persistedBlock = blocks.find((b) => b.id === editingBlockId);
+        let updatedBlock = persistedBlock;
+        let didPersist = false;
+
+        if (persistedBlock && blockFieldsChanged(payload, persistedBlock)) {
+          updatedBlock = await updateBlock({
+            planId,
+            blockId: editingBlockId,
+            data: payload,
+          }).unwrap();
+          didPersist = true;
         }
-        setEditingBlockId(null);
-        setHasLoadedWeeklyStructure(false);
-        showSuccess("Bloque de periodización actualizado correctamente.");
+        if (form.weeklyStructure.length > 0 && hasLoadedWeeklyStructure) {
+          const structureSaved = await persistWeeklyStructureIncremental(
+            planId,
+            editingBlockId,
+            form.weeklyStructure,
+            existingStructure,
+            updateWeek,
+            createWeek,
+          );
+          if (structureSaved) didPersist = true;
+        }
+        if (didPersist && updatedBlock) {
+          markPersisted(updatedBlock, form.weeklyStructure);
+          showSuccess("Fase guardada correctamente.");
+        } else if (!didPersist) {
+          showWarning("No hay cambios que guardar.");
+        }
       } else {
         const created = await createBlock({ planId, data: payload }).unwrap();
-        if (form.weeklyStructure.length > 0 && created?.id) {
-          try {
-            await Promise.all(
-              form.weeklyStructure.map((week) =>
-                createWeek({ planId, blockId: created.id, body: week }).unwrap()
-              )
-            );
-          } catch {
-            showError(
-              "Bloque creado, pero la estructura semanal no se pudo guardar. " +
-                "Puedes configurarla desde la tarjeta del bloque."
-            );
-            reset();
-            return;
+        if (created?.id && form.startDate && form.endDate) {
+          const { templateWeek, shouldApplyTemplate } = resolveCreateStructurePlan(
+            form.startDate,
+            form.endDate,
+            form.weeklyStructure,
+          );
+
+          if (templateWeek && templateWeek.days.length > 0) {
+            try {
+              await createWeek({
+                planId,
+                blockId: created.id,
+                body: templateWeek,
+              }).unwrap();
+              if (shouldApplyTemplate) {
+                await applyTemplate({
+                  planId,
+                  blockId: created.id,
+                  body: {
+                    source_week_ordinal: 1,
+                    respect_exceptions: true,
+                  },
+                }).unwrap();
+              }
+            } catch {
+              showError(
+                "Bloque creado, pero la estructura semanal no se pudo guardar. " +
+                  "Puedes configurarla desde la tarjeta del bloque.",
+              );
+              reset();
+              return;
+            }
           }
         }
         showSuccess("Bloque de periodización creado correctamente.");
+        reset();
+        setEditingBlockId(null);
+        setHasLoadedWeeklyStructure(false);
       }
-      reset();
     } catch (err) {
       showError(getMutationErrorMessage(err));
     }
@@ -345,21 +583,81 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     form,
     planId,
     editingBlockId,
+    blocks,
     existingStructure,
+    hasLoadedWeeklyStructure,
     createBlock,
     updateBlock,
     createWeek,
-    deleteWeek,
+    updateWeek,
+    applyTemplate,
+    markPersisted,
     reset,
     showSuccess,
+    showWarning,
     showError,
   ]);
 
-  const handleEditBlock = useCallback((block: PlanPeriodBlock) => {
-    setEditingBlockId(block.id);
-    setHasLoadedWeeklyStructure(false);
-    loadBlock(block);
-  }, [loadBlock]);
+  const handleApplyTemplate = useCallback(async () => {
+    if (!editingBlockId || !form.startDate || !form.endDate) {
+      showWarning("Guarda la fase antes de aplicar la semana tipo.");
+      return;
+    }
+    const weekCount = getBlockCalendarWeekCount(form.startDate, form.endDate);
+    if (weekCount <= 1) {
+      showWarning("Esta fase solo tiene una semana; no hay destino para aplicar.");
+      return;
+    }
+    try {
+      if (hasLoadedWeeklyStructure && form.weeklyStructure.length > 0) {
+        const structureSaved = await persistWeeklyStructureIncremental(
+          planId,
+          editingBlockId,
+          form.weeklyStructure,
+          existingStructure,
+          updateWeek,
+          createWeek,
+        );
+        if (structureSaved) {
+          const block = blocks.find((b) => b.id === editingBlockId);
+          if (block) markPersisted(block, form.weeklyStructure);
+        }
+      }
+      const result = await applyTemplate({
+        planId,
+        blockId: editingBlockId,
+        body: {
+          source_week_ordinal: 1,
+          respect_exceptions: true,
+        },
+      }).unwrap();
+      setHasLoadedWeeklyStructure(false);
+      showSuccess(
+        `Estructura aplicada a ${result.applied_week_ordinals.length} semana(s)` +
+          (result.skipped_week_ordinals.length > 0
+            ? `; ${result.skipped_week_ordinals.length} personalizada(s) preservada(s).`
+            : "."),
+      );
+    } catch (err) {
+      showError(getMutationErrorMessage(err));
+    }
+  }, [
+    editingBlockId,
+    form.startDate,
+    form.endDate,
+    form.weeklyStructure,
+    hasLoadedWeeklyStructure,
+    existingStructure,
+    blocks,
+    applyTemplate,
+    planId,
+    updateWeek,
+    createWeek,
+    markPersisted,
+    showSuccess,
+    showWarning,
+    showError,
+  ]);
 
   const handleCancelEdit = useCallback(() => {
     setEditingBlockId(null);
@@ -438,13 +736,188 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     );
   }
 
+  if (isDapAuthoring && blockAuthorParams.mode) {
+    if (
+      blockAuthorParams.mode === "create" &&
+      (!blockAuthorParams.blockStart || !blockAuthorParams.blockEnd)
+    ) {
+      return (
+        <Alert variant="warning">
+          Faltan fechas del bloque en la URL.{" "}
+          <button
+            type="button"
+            className="font-medium underline"
+            onClick={handleExitBlockAuthoring}
+          >
+            Volver a planificación
+          </button>
+        </Alert>
+      );
+    }
+    if (blockAuthorParams.mode === "edit" && blockAuthorParams.blockId == null) {
+      return (
+        <Alert variant="warning">
+          Falta el identificador del bloque.{" "}
+          <button
+            type="button"
+            className="font-medium underline"
+            onClick={handleExitBlockAuthoring}
+          >
+            Volver a planificación
+          </button>
+        </Alert>
+      );
+    }
+
+    return (
+      <PlanBlockAuthoringSurface
+        mode={blockAuthorParams.mode}
+        planId={planId}
+        blockId={blockAuthorParams.blockId}
+        blockStart={blockAuthorParams.blockStart}
+        blockEnd={blockAuthorParams.blockEnd}
+        blocks={blocks}
+        catalog={catalog}
+        planStartDate={planStartDate}
+        planEndDate={planEndDate}
+        clientProfile={clientProfile}
+        activePlan={activePlan}
+        planGoalForRecommendations={planGoalForRecommendations}
+        onAuthoringChange={onAuthoringChange}
+        onExit={handleExitBlockAuthoring}
+      />
+    );
+  }
+
   return (
     <section className="space-y-6">
       {/* Header */}
-      <PageTitle titleAs="h3" title="Editor de periodización del plan" />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <PageTitle titleAs="h3" title="Editor de periodización del plan" />
+      </div>
 
-      {/* Calendario + constructor (misma altura); resumen a ancho completo debajo */}
+      {/* Calendario + constructor */}
       <div className="flex flex-col gap-4">
+        {isAuthoring ? (
+          <PhaseAuthoringShell
+            master={
+              <>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Fases
+                  </p>
+                  <span
+                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${PHASE_UX_CHIP_CLASS[phaseUxLabel]}`}
+                  >
+                    {editingBlockId && !isDirty
+                      ? PHASE_UX_LABEL_ES[phaseUxLabel]
+                      : "Sin guardar"}
+                  </span>
+                </div>
+                <div className="space-y-2 max-h-[min(40vh,20rem)] overflow-y-auto scrollbar-primary">
+                  {blocks.map((block) => (
+                    <PeriodBlockCard
+                      key={block.id}
+                      block={block}
+                      catalog={catalog}
+                      sessions={sessionsByBlock.get(block.id) ?? []}
+                      onEdit={handleEditBlockNavigate}
+                      onDelete={(id, label) => setDeleteTarget({ id, label })}
+                      onCreateSessionForBlock={handleCreateSessionForBlock}
+                      volumeIntensityContext={volumeNominal.buildContext(
+                        block.volume_level,
+                        block.intensity_level,
+                      )}
+                      volumeIntensityPhase={volumeNominal.phase}
+                    />
+                  ))}
+                </div>
+                {form.phase === "rangeStart" && (
+                  <div ref={calendarColumnRef} className="min-w-0">
+                    <PeriodizationCalendar
+                      currentMonth={calMonth}
+                      onMonthChange={setCalMonth}
+                      blocks={blocks}
+                      planStartDate={planStartDate}
+                      planEndDate={planEndDate}
+                      sessionDates={sessionDates}
+                      exceptionDates={exceptionDates}
+                      formState={form}
+                      onDayClick={guardedDayClick}
+                      onDayRightClick={handleDayContextMenu}
+                      habitualTrainingDays={clientProfile?.training_days ?? null}
+                    />
+                  </div>
+                )}
+                {form.phase === "rangeComplete" &&
+                  form.startDate &&
+                  form.endDate && (
+                    <p className="text-xs text-muted-foreground rounded-md border border-border bg-surface-2/50 px-3 py-2">
+                      Rango: {formatDateFriendly(form.startDate)} –{" "}
+                      {formatDateFriendly(form.endDate)}
+                    </p>
+                  )}
+              </>
+            }
+            detail={
+              <>
+                <PhaseSectionNav
+                  activeSection={phaseNavSection}
+                  onSectionChange={handleSectionChange}
+                />
+                <PeriodizationPanel
+                  formState={form}
+                  catalog={catalog}
+                  qualitiesSum={qualitiesSum}
+                  overlapDetected={overlapDetected}
+                  outsidePlanBounds={outsidePlanBounds}
+                  canSubmit={canSubmit}
+                  canPersistBlock={canPersistBlock}
+                  canAdvanceStep={canAdvanceStep}
+                  onAddQuality={addQuality}
+                  onRemoveQuality={removeQuality}
+                  onUpdateQualityPct={updateQualityPct}
+                  onVolumeChange={setVolumeLevel}
+                  onIntensityChange={setIntensityLevel}
+                  isEditing={!!editingBlockId}
+                  isSubmitting={isCreating || isUpdating}
+                  onSubmit={handleSubmitBlock}
+                  onReset={handleCancelEdit}
+                  onAdvanceStep={handleAdvanceStep}
+                  onSetConstructorStep={setConstructorStep}
+                  volumeIntensityContext={formVolumeContext}
+                  volumeIntensityPhase={volumeNominal.phase}
+                  volumeIntensityHint={volumeNominal.auxiliaryHint}
+                  trainingDays={clientProfile?.training_days ?? null}
+                  patternsCatalog={patternsCatalog ?? []}
+                  patternsLoading={isLoadingPatterns}
+                  patternsError={isErrorPatterns}
+                  onWeeklyStructureChange={setWeeklyStructure}
+                  weekKindByOrdinal={weekKindByOrdinal}
+                  onApplyTemplate={
+                    editingBlockId ? handleApplyTemplate : undefined
+                  }
+                  applyTemplateLoading={isApplyingTemplate}
+                  weeklyStructureMode={weeklyStructureMode}
+                  onRestoreWeek={handleRestoreWeek}
+                  readinessInput={{
+                    ...readinessInput,
+                    trainingDays: clientProfile?.training_days ?? null,
+                  }}
+                  fillHeight
+                />
+              </>
+            }
+            footer={
+              <PhaseSummaryPanel
+                readinessInput={{
+                  ...readinessInput,
+                  trainingDays: clientProfile?.training_days ?? null,
+                }}
+              />
+            }
+          />
+        ) : (
         <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
           <div ref={calendarColumnRef} className="w-full lg:w-[60%] min-w-0 shrink-0">
             <PeriodizationCalendar
@@ -469,6 +942,15 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                 : undefined
             }
           >
+          {clientId != null && clientId > 0 && !isAuthoring && (
+            <BlockCalendarRangeHint
+              formPhase={form.phase}
+              startDate={form.startDate}
+              onCancel={
+                form.phase === "rangeStart" ? handleCancelCreateRange : undefined
+              }
+            />
+          )}
           {activePlan && (
             <div className="shrink-0 rounded-lg border border-border bg-surface p-5 space-y-2">
               <div className="flex items-start justify-between gap-2">
@@ -509,46 +991,20 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
               </div>
             </div>
           )}
-          <div className="flex-1 min-h-0 min-w-0 flex flex-col overflow-hidden">
-          <PeriodizationPanel
-            formState={form}
-            catalog={catalog}
-            qualitiesSum={qualitiesSum}
-            overlapDetected={overlapDetected}
-            outsidePlanBounds={outsidePlanBounds}
-            canSubmit={canSubmit}
-            onAddQuality={addQuality}
-            onRemoveQuality={removeQuality}
-            onUpdateQualityPct={updateQualityPct}
-            onVolumeChange={setVolumeLevel}
-            onIntensityChange={setIntensityLevel}
-            isEditing={!!editingBlockId}
-            isSubmitting={isCreating || isUpdating}
-            onSubmit={handleSubmitBlock}
-            onReset={handleCancelEdit}
-            onAdvanceStep={advanceConstructorStep}
-            onSetConstructorStep={setConstructorStep}
-            volumeIntensityContext={formVolumeContext}
-            volumeIntensityPhase={volumeNominal.phase}
-            volumeIntensityHint={volumeNominal.auxiliaryHint}
-            trainingDays={clientProfile?.training_days ?? null}
-            patternsCatalog={patternsCatalog ?? []}
-            patternsLoading={isLoadingPatterns}
-            patternsError={isErrorPatterns}
-            onWeeklyStructureChange={setWeeklyStructure}
-            fillHeight
-          />
-          </div>
           </div>
         </div>
-        <PeriodBlockConstructorSummaryStrip
-          formState={form}
-          catalog={catalog}
-          trainingDays={clientProfile?.training_days ?? null}
-        />
+        )}
+        {(isSelectingCreateRange || (!isAuthoring && form.phase !== "idle")) && (
+          <PeriodBlockConstructorSummaryStrip
+            formState={form}
+            catalog={catalog}
+            trainingDays={clientProfile?.training_days ?? null}
+          />
+        )}
       </div>
 
-      {/* Configured blocks */}
+      {/* Configured blocks — oculto en modo autoría (lista en master) */}
+      {!isAuthoring && (
       <div>
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
           Bloques configurados
@@ -561,7 +1017,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                 block={block}
                 catalog={catalog}
                 sessions={sessionsByBlock.get(block.id) ?? []}
-                onEdit={handleEditBlock}
+                onEdit={handleEditBlockNavigate}
                 onDelete={(id, label) => setDeleteTarget({ id, label })}
                 onCreateSessionForBlock={handleCreateSessionForBlock}
                 volumeIntensityContext={volumeNominal.buildContext(
@@ -575,13 +1031,14 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         ) : (
           <PeriodBlockEmptyCallout
             primaryText="No hay bloques de periodización configurados."
-            secondaryText="Selecciona un rango de fechas en el calendario para crear el primer bloque."
+            secondaryText="Haz clic en el calendario para elegir inicio y fin del bloque."
           />
         )}
       </div>
+      )}
 
-      {/* Progression charts */}
-      {blocks.length > 0 && (
+      {/* Progression charts — oculto durante autoría (evita solapamiento con footer) */}
+      {!isAuthoring && blocks.length > 0 && (
         <PeriodizationCharts blocks={blocks} catalog={catalog} />
       )}
 

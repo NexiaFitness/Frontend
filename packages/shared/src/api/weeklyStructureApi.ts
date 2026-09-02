@@ -21,6 +21,8 @@ import type {
     WeeklyStructureWeekCreate,
     WeeklyStructureWeekRepeatIn,
     WeeklyStructureWeekRepeatOut,
+    WeeklyStructureApplyTemplateIn,
+    WeeklyStructureApplyTemplateOut,
 } from "../types/weeklyStructure";
 
 export const weeklyStructureApi = baseApi.injectEndpoints({
@@ -111,6 +113,25 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 { type: "TrainingSession", id: "LIST" },
             ],
         }),
+
+        /** Aplicar semana tipo a otras semanas (solo estructura, una transacción). */
+        applyWeeklyStructureTemplate: builder.mutation<
+            WeeklyStructureApplyTemplateOut,
+            {
+                planId: number;
+                blockId: number;
+                body: WeeklyStructureApplyTemplateIn;
+            }
+        >({
+            query: ({ planId, blockId, body }) => ({
+                url: `/training-plans/${planId}/period-blocks/${blockId}/weekly-structure/apply-template`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, arg) => [
+                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -121,4 +142,5 @@ export const {
     useUpdateWeeklyStructureWeekMutation,
     useDeleteWeeklyStructureWeekMutation,
     useRepeatWeeklyStructureWeekMutation,
+    useApplyWeeklyStructureTemplateMutation,
 } = weeklyStructureApi;

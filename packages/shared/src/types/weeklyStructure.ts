@@ -84,3 +84,18 @@ export interface WeeklyStructureWeekRepeatOut {
     sessions_copied: number;
     sessions_skipped: number;
 }
+
+// ---------------------------------------------------------------------------
+// Apply template (structure-only)
+// ---------------------------------------------------------------------------
+
+export interface WeeklyStructureApplyTemplateIn {
+    source_week_ordinal?: number;
+    target_week_ordinals?: number[] | null;
+    respect_exceptions?: boolean;
+}
+
+export interface WeeklyStructureApplyTemplateOut {
+    applied_week_ordinals: number[];
+    skipped_week_ordinals: number[];
+}

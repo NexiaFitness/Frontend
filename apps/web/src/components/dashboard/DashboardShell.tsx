@@ -14,7 +14,10 @@
 import React, { useCallback, useState } from "react";
 import { Outlet } from "react-router-dom";
 import { useDashboardScrollOnNavigation } from "@/hooks/useDashboardScrollOnNavigation";
-import { DASHBOARD_MAIN_SCROLL_ID } from "@/lib/dashboardScroll";
+import {
+  DASHBOARD_MAIN_SCROLL_ID,
+  DASHBOARD_MAIN_SCROLL_PADDING_CLASS,
+} from "@/lib/dashboardScroll";
 import { useSelector } from "react-redux";
 import { DashboardSidebar } from "./DashboardSidebar";
 import { AppNavbar } from "@/components/ui/layout/navbar/AppNavbar";
@@ -101,6 +104,7 @@ export const DashboardShell: React.FC = () => {
                 id={DASHBOARD_MAIN_SCROLL_ID}
                 className={cn(
                     "min-h-0 min-w-0 overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
+                    DASHBOARD_MAIN_SCROLL_PADDING_CLASS,
                     "h-[calc(100vh-theme(space.navbar-dashboard-mobile))] lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]",
                     sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded",
                     user?.role === USER_ROLES.ATHLETE && "lg:px-8"
