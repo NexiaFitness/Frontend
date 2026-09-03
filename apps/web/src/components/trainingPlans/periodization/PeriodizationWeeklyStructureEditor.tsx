@@ -36,6 +36,8 @@ import {
     WEEK_ACCORDION_DAYS_INSET_CLASS,
     WEEK_ACCORDION_EXPANDED_CLASS,
     WEEK_ACCORDION_HEADER_COLLAPSED_CLASS,
+    WEEK_ACCORDION_HEADER_DIVIDER_LINE,
+    WEEK_ACCORDION_HEADER_DIVIDER_WRAP,
     WEEK_ACCORDION_HEADER_EXPANDED_CLASS,
 } from "./phaseConstructorPresentation";
 
@@ -376,7 +378,24 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                         </div>
                                     </button>
                                     {isExpanded && (
-                                        <div className={WEEK_ACCORDION_DAYS_INSET_CLASS}>
+                                        <>
+                                            <div
+                                                className={
+                                                    WEEK_ACCORDION_HEADER_DIVIDER_WRAP
+                                                }
+                                                aria-hidden
+                                            >
+                                                <div
+                                                    className={
+                                                        WEEK_ACCORDION_HEADER_DIVIDER_LINE
+                                                    }
+                                                />
+                                            </div>
+                                            <div
+                                                className={
+                                                    WEEK_ACCORDION_DAYS_INSET_CLASS
+                                                }
+                                            >
                                             {weekGroup.days.map((dayInfo) => {
                                                 const pickerDayId =
                                                     toPickerDayId(
@@ -446,7 +465,8 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                                     />
                                                 );
                                             })}
-                                        </div>
+                                            </div>
+                                        </>
                                     )}
                                 </div>
                             );

@@ -13,6 +13,9 @@
 import { cn } from "@/lib/utils";
 import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
 import {
+    NEXIA_DIVIDER_GLOW,
+} from "@/components/ui/surface/nexiaDividerPresentation";
+import {
     PLATFORM_SECTION_LABEL,
     NEXIA_SEGMENTED_SHELL,
     NEXIA_SEGMENTED_SCROLL,
@@ -90,10 +93,20 @@ export const WEEK_ACCORDION_EXPANDED_CLASS = cn(
 export const WEEK_ACCORDION_HEADER_COLLAPSED_CLASS =
     "hover:bg-surface-2/40";
 
-export const WEEK_ACCORDION_HEADER_EXPANDED_CLASS = "bg-surface-2/25";
+export const WEEK_ACCORDION_HEADER_EXPANDED_CLASS = cn(
+    "bg-surface-2/60 bg-gradient-to-b from-primary/[0.08] to-surface-2/45",
+    "border-b border-border/80",
+);
+
+/** Separador cabecera semana → días (divider glow canónico, inset). */
+export const WEEK_ACCORDION_HEADER_DIVIDER_WRAP = cn(
+    "relative bg-surface-2/35 px-3 py-1",
+);
+
+export const WEEK_ACCORDION_HEADER_DIVIDER_LINE = NEXIA_DIVIDER_GLOW;
 
 export const WEEK_ACCORDION_DAYS_INSET_CLASS = cn(
-    "border-t border-border/50 px-2 py-2 space-y-1.5",
+    "px-2 py-2.5 space-y-1.5 bg-card/10",
     "ml-2 pl-3 border-l-2 border-l-primary/35",
 );
 
