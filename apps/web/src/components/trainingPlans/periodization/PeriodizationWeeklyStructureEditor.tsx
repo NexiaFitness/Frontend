@@ -18,6 +18,7 @@ import type {
 } from "@nexia/shared/types/weeklyStructure";
 
 import { cn } from "@/lib/utils";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 
 import { DayCell } from "./DayCell";
 import {
@@ -30,6 +31,12 @@ import {
 import {
     WEEK_KIND_BADGE_CLASS,
     WEEK_KIND_LABEL_ES,
+    WEEK_ACCORDION_COLLAPSED_CLASS,
+    WEEK_ACCORDION_DAY_CELL_CLASS,
+    WEEK_ACCORDION_DAYS_INSET_CLASS,
+    WEEK_ACCORDION_EXPANDED_CLASS,
+    WEEK_ACCORDION_HEADER_COLLAPSED_CLASS,
+    WEEK_ACCORDION_HEADER_EXPANDED_CLASS,
 } from "./phaseConstructorPresentation";
 
 export type WeeklyStructureEditorMode = "template" | "all";
@@ -293,8 +300,13 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                             return (
                                 <div
                                     key={weekGroup.weekOrdinal}
-                                    className="rounded-lg border border-border bg-surface-2/30 overflow-hidden"
+                                    className={cn(
+                                        isExpanded
+                                            ? WEEK_ACCORDION_EXPANDED_CLASS
+                                            : WEEK_ACCORDION_COLLAPSED_CLASS,
+                                    )}
                                 >
+                                    {isExpanded && <NexiaGlassAccentRim />}
                                     <button
                                         type="button"
                                         onClick={() =>
@@ -304,7 +316,12 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                                     : weekGroup.weekOrdinal,
                                             )
                                         }
-                                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-surface-2/60 transition-colors text-left"
+                                        className={cn(
+                                            "relative w-full flex items-center gap-3 px-3 py-2.5 transition-colors text-left",
+                                            isExpanded
+                                                ? WEEK_ACCORDION_HEADER_EXPANDED_CLASS
+                                                : WEEK_ACCORDION_HEADER_COLLAPSED_CLASS,
+                                        )}
                                         aria-expanded={isExpanded}
                                     >
                                         <ChevronDown
@@ -359,7 +376,7 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                         </div>
                                     </button>
                                     {isExpanded && (
-                                        <div className="border-t border-border/60 px-1.5 py-1.5 space-y-0.5">
+                                        <div className={WEEK_ACCORDION_DAYS_INSET_CLASS}>
                                             {weekGroup.days.map((dayInfo) => {
                                                 const pickerDayId =
                                                     toPickerDayId(
@@ -372,6 +389,9 @@ export const PeriodizationWeeklyStructureEditor: React.FC<
                                                 return (
                                                     <DayCell
                                                         key={pickerDayId}
+                                                        className={
+                                                            WEEK_ACCORDION_DAY_CELL_CLASS
+                                                        }
                                                         layout="row"
                                                         pickerPlacement={
                                                             inlinePicker

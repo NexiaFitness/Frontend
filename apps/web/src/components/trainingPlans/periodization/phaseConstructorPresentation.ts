@@ -75,3 +75,26 @@ export const WEEK_KIND_LABEL_ES = {
     heredada: "Heredada",
     personalizada: "Personalizada",
 } as const;
+
+/** Acordeón semanas — colapsada: fila lista; expandida: sub-card con rim cyan. */
+export const WEEK_ACCORDION_COLLAPSED_CLASS = cn(
+    "overflow-hidden border-b border-border/50 last:border-b-0",
+);
+
+export const WEEK_ACCORDION_EXPANDED_CLASS = cn(
+    "relative rounded-lg border border-primary/25 bg-card/35 overflow-hidden",
+    "shadow-[0_4px_24px_-10px] shadow-black/45",
+    "mb-3 last:mb-0",
+);
+
+export const WEEK_ACCORDION_HEADER_COLLAPSED_CLASS =
+    "hover:bg-surface-2/40";
+
+export const WEEK_ACCORDION_HEADER_EXPANDED_CLASS = "bg-surface-2/25";
+
+export const WEEK_ACCORDION_DAYS_INSET_CLASS = cn(
+    "border-t border-border/50 px-2 py-2 space-y-1.5",
+    "ml-2 pl-3 border-l-2 border-l-primary/35",
+);
+
+export const WEEK_ACCORDION_DAY_CELL_CLASS = "bg-surface-2/25 border-border/50";

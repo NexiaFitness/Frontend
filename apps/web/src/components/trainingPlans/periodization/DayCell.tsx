@@ -31,6 +31,7 @@ interface Props {
     onOpenPopover: () => void;
     onClosePopover: () => void;
     onToggle: (patternId: number) => void;
+    className?: string;
 }
 
 function patternDisplayName(pattern: MovementPattern): string {
@@ -49,6 +50,7 @@ export const DayCell: React.FC<Props> = ({
     onOpenPopover,
     onClosePopover,
     onToggle,
+    className,
 }) => {
     const editRef = useRef<HTMLButtonElement>(null);
     const catalogById = useMemo(
@@ -58,7 +60,13 @@ export const DayCell: React.FC<Props> = ({
     const selectedIds = assignedPatterns.map((p) => p.movement_pattern_id);
 
     return (
-        <div className={cn(PLATFORM_ALT_ITEM, "flex flex-col gap-2 sm:flex-row sm:items-start")}>
+        <div
+            className={cn(
+                PLATFORM_ALT_ITEM,
+                "flex flex-col gap-2 sm:flex-row sm:items-start",
+                className,
+            )}
+        >
             <div className="min-w-0 flex-1">
                 <p className="text-sm font-medium text-foreground">
                     {dayName}
