@@ -50,6 +50,15 @@ function isLoadValid(volumeLevel: number, intensityLevel: number): boolean {
     );
 }
 
+/** Semana plantilla (week 1) con patrón en cada día activo — regla recurrente D-PAP. */
+function isTemplateWeekStructureComplete(
+    weeklyStructure: readonly WeeklyStructureWeekCreate[],
+): boolean {
+    const week1 = weeklyStructure.find((week) => week.week_ordinal === 1);
+    if (!week1 || week1.days.length === 0) return false;
+    return week1.days.every((day) => day.patterns.length > 0);
+}
+
 function isStructureComplete(
     startDate: string,
     endDate: string,
@@ -61,7 +70,9 @@ function isStructureComplete(
         endDate,
         trainingDays,
     );
-    if (trainingDates.length === 0) return true;
+    if (trainingDates.length === 0) {
+        return isTemplateWeekStructureComplete(weeklyStructure);
+    }
 
     const daysWithPatterns = new Set<string>();
     for (const week of weeklyStructure) {
@@ -72,9 +83,13 @@ function isStructureComplete(
         }
     }
 
-    return trainingDates.every((d) =>
+    const fullCalendarCoverage = trainingDates.every((d) =>
         daysWithPatterns.has(`${d.weekOrdinal}-${d.dayOfWeek}`),
     );
+    if (fullCalendarCoverage) return true;
+
+    // Quick Program / autoría: week 1 es plantilla para todas las semanas del bloque.
+    return isTemplateWeekStructureComplete(weeklyStructure);
 }
 
 /** Checklist items for Resumen / gates. */

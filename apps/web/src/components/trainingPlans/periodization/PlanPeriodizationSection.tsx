@@ -16,7 +16,7 @@ import {
   useUpdateWeeklyStructureWeekMutation,
   useApplyWeeklyStructureTemplateMutation,
 } from "@nexia/shared/api/weeklyStructureApi";
-import { classifyWeeksByTemplate, getBlockCalendarWeekCount } from "@nexia/shared";
+import { classifyWeeksByTemplate, getBlockCalendarWeekCount, resolveQuickProgramStartDate } from "@nexia/shared";
 import {
   useGetDayExceptionsQuery,
   useCreateDayExceptionMutation,
@@ -45,6 +45,7 @@ import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 import { PhaseAuthoringShell } from "./PhaseAuthoringShell";
 import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
+import { QuickProgramDraftShell } from "./QuickProgramDraftShell";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { BlockCalendarRangeHint } from "./BlockCalendarRangeHint";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
@@ -56,6 +57,11 @@ import {
   parseBlockWeeksId,
   setBlockWeeksParam,
 } from "@/utils/blockAuthoringUrl";
+import {
+  applyQuickProgramParam,
+  clearQuickProgramParam,
+  isQuickProgramActive,
+} from "@/utils/quickProgramUrl";
 import { PhaseSummaryPanel } from "./PhaseSummaryPanel";
 import { PhaseSectionNav } from "./PhaseSectionNav";
 import {
@@ -157,6 +163,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     [searchParams],
   );
   const isDapAuthoring = isBlockAuthoringActive(blockAuthorParams);
+  const isQuickProgram = isQuickProgramActive(searchParams);
   const isBlockWeeksManage = blockWeeksId != null;
   const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
@@ -298,8 +305,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const weeklyStructureMode = sectionToWeeklyStructureMode(phaseNavSection);
 
   useLayoutEffect(() => {
-    onAuthoringChange?.(isDapAuthoring || isAuthoring || isBlockWeeksManage);
-  }, [isDapAuthoring, isAuthoring, isBlockWeeksManage, onAuthoringChange]);
+    onAuthoringChange?.(isDapAuthoring || isQuickProgram || isAuthoring || isBlockWeeksManage);
+  }, [isDapAuthoring, isQuickProgram, isAuthoring, isBlockWeeksManage, onAuthoringChange]);
 
   const navigateToCreateAuthoring = useCallback(
     (startDate: string, endDate: string) => {
@@ -383,6 +390,23 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     const next = clearBlockAuthorParams(searchParams);
     navigate(`/dashboard/clients/${clientId}?${next.toString()}`, { replace: true });
   }, [clientId, searchParams, navigate, reset]);
+
+  const handleStartQuickProgram = useCallback(() => {
+    if (clientId == null || clientId <= 0) return;
+    const next = applyQuickProgramParam(searchParams);
+    navigate(`/dashboard/clients/${clientId}?${next.toString()}`, { replace: true });
+  }, [clientId, searchParams, navigate]);
+
+  const handleExitQuickProgram = useCallback(() => {
+    if (clientId == null || clientId <= 0) return;
+    const next = clearQuickProgramParam(searchParams);
+    navigate(`/dashboard/clients/${clientId}?${next.toString()}`, { replace: true });
+  }, [clientId, searchParams, navigate]);
+
+  const handleQuickProgramMaterialized = useCallback(() => {
+    showSuccess("Programación creada correctamente.");
+    handleExitQuickProgram();
+  }, [handleExitQuickProgram, showSuccess]);
 
   const handleViewWeeks = useCallback(
     (block: PlanPeriodBlock) => {
@@ -795,6 +819,38 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     );
   }
 
+  if (isQuickProgram) {
+    const planStart =
+      planStartDate && /^\d{4}-\d{2}-\d{2}$/.test(planStartDate)
+        ? planStartDate
+        : new Date().toISOString().slice(0, 10);
+    const qpStart = resolveQuickProgramStartDate(
+      planStart,
+      blocks.map((b) => ({
+        id: b.id,
+        start_date: b.start_date,
+        end_date: b.end_date,
+      })),
+    );
+
+    return (
+      <QuickProgramDraftShell
+        planId={planId}
+        programStartDate={qpStart}
+        blocks={blocks}
+        catalog={catalog}
+        planStartDate={planStartDate}
+        planEndDate={planEndDate}
+        clientProfile={clientProfile}
+        activePlan={activePlan}
+        planGoalForRecommendations={planGoalForRecommendations}
+        onAuthoringChange={onAuthoringChange}
+        onExit={handleExitQuickProgram}
+        onMaterializeSuccess={handleQuickProgramMaterialized}
+      />
+    );
+  }
+
   if (isDapAuthoring && blockAuthorParams.mode) {
     if (
       blockAuthorParams.mode === "create" &&
@@ -1093,6 +1149,17 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           <PeriodBlockEmptyCallout
             primaryText="No hay bloques de periodización configurados."
             secondaryText="Haz clic en el calendario para elegir inicio y fin del bloque."
+            action={
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                data-testid="qp-entry-empty"
+                onClick={handleStartQuickProgram}
+              >
+                Programación rápida (varias fases)
+              </Button>
+            }
           />
         )}
       </div>

@@ -420,6 +420,59 @@ export {
     getBlockCalendarWeekCount,
     formatCalendarWeekRange,
 } from "./utils/calendarWeekForBlock";
+export {
+    addDaysLocal,
+    dayAfterLocal,
+    deriveBlockEndFromWeekCount,
+    isWeekCountCoherentWithRange,
+    recalculatePhaseDates,
+    sumPhaseWeekCounts,
+    resolveQuickProgramStartDate,
+    type PhaseDateRange,
+} from "./utils/quickProgramDates";
+export {
+    createLocalId,
+    createMaterializationClientRequestId,
+    cloneQualities,
+    cloneWeeklyStructure,
+    clonePhaseDraft,
+    createQuickProgramDraft,
+    createEmptyPhaseDraft,
+    applyDerivedPhaseDates,
+    addPhaseToDraft,
+    removePhaseFromDraft,
+    reorderPhaseInDraft,
+    setPhaseWeekCountInDraft,
+    setProgramStartDateInDraft,
+    setActivePhaseInDraft,
+    updatePhaseInDraft,
+    copyStructureFromPreviousPhase,
+    draftToMaterializePayload,
+    detectDraftPhaseScheduleIssues,
+    type CreateQuickProgramDraftOptions,
+    type AddPhaseOptions,
+    type PhaseScheduleIssue,
+    type PhaseScheduleIssueKind,
+} from "./utils/quickProgramDraft";
+export {
+    isPhaseDraftReady,
+    canMaterializeProgram,
+    phaseDraftHasOverlap,
+    expectedPhaseStartDate,
+    type PhaseDraftReadinessOptions,
+    type CanMaterializeProgramInput,
+} from "./utils/quickProgramReadiness";
+export type {
+    BlockAuthorStep,
+    PhaseLocalId,
+    PhaseDraft,
+    QuickProgramDraft,
+    MaterializationClientRequestId,
+} from "./types/quickProgramDraft";
+export type {
+    QuickProgramMaterializeCreate,
+    QuickProgramMaterializeOut,
+} from "./types/planningCargas";
 export { getPhysicalQualityColor, resetFallbackCache, type PhysicalQualityColor } from "./utils/physicalQualityColors";
 export {
   hasOverlap,

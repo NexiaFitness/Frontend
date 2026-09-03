@@ -276,7 +276,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 onAuthoringChange={setIsPhaseAuthoring}
             />
 
-            {!blockAuthorActive && (
+            {!blockAuthorActive && !isPhaseAuthoring && (
             <CollapsibleFormGroup title="Ejecución del plan" defaultOpen={false}>
                 <div className="space-y-4" data-testid="plan-execution-section">
                     <p className="text-sm text-muted-foreground">
@@ -343,7 +343,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
             </CollapsibleFormGroup>
             )}
 
-            {!blockAuthorActive && (
+            {!blockAuthorActive && !isPhaseAuthoring && (
             <CollapsibleFormGroup title="Hitos del plan" defaultOpen={false}>
                 <MilestonesTab planId={plan.id} />
             </CollapsibleFormGroup>

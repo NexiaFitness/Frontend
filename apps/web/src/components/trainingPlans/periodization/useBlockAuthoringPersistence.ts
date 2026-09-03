@@ -68,6 +68,8 @@ export interface UseBlockAuthoringPersistenceArgs {
     ) => void;
     onCreateSuccess: () => void;
     refetchWeeklyStructure?: () => Promise<{ data?: WeeklyStructureOut }>;
+    /** false = Quick Program local draft (sin mutations). */
+    enabled?: boolean;
 }
 
 export function useBlockAuthoringPersistence({
@@ -79,13 +81,14 @@ export function useBlockAuthoringPersistence({
     existingStructure,
     structureBaseline,
     structureReady,
-    isStructureDirty,
+    isStructureDirty: _isStructureDirty,
     canPersist,
     activeDayCount,
     patternsComplete,
     markPersisted,
     onCreateSuccess,
     refetchWeeklyStructure,
+    enabled = true,
 }: UseBlockAuthoringPersistenceArgs) {
     const { showSuccess, showWarning, showError } = useToast();
     const [createWithStructure, { isLoading: isCreating }] =
@@ -324,12 +327,13 @@ export function useBlockAuthoringPersistence({
     ]);
 
     const save = useCallback(async () => {
+        if (!enabled) return;
         if (mode === "create") {
             await saveCreate();
         } else {
             await saveEdit();
         }
-    }, [mode, saveCreate, saveEdit]);
+    }, [enabled, mode, saveCreate, saveEdit]);
 
-    return { save, isSaving };
+    return { save, isSaving: enabled ? isSaving : false };
 }

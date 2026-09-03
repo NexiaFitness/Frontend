@@ -1,6 +1,9 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { PlanPeriodBlock, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
+import type { PhaseDraft } from "@nexia/shared/types/quickProgramDraft";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
+import { cloneQualities, cloneWeeklyStructure, weeksStructureEqual } from "@nexia/shared";
+import { hasOverlap, isWithinPlanBounds } from "@nexia/shared/utils/periodBlockOverlap";
 import {
   canPersistBlock,
   canActivatePhase,
@@ -9,8 +12,6 @@ import {
   type PhaseReadinessInput,
   type PhaseUxLabel,
 } from "@nexia/shared";
-import { weeksStructureEqual } from "@nexia/shared";
-import { hasOverlap, isWithinPlanBounds } from "@nexia/shared/utils/periodBlockOverlap";
 import type { PeriodBlockConstructorStep } from "./periodBlockConstructor";
 import { nextConstructorStep } from "./periodBlockConstructor";
 import { blockFieldsChanged, toBlockPersistPayload } from "./periodBlockPersistence";
@@ -257,6 +258,25 @@ export function usePeriodBlockForm(
     });
   }, []);
 
+  /** Hidrata formulario desde PhaseDraft local (Quick Program, sin API). */
+  const hydrateFromPhaseDraft = useCallback((phase: PhaseDraft) => {
+    loadedBlockRef.current = null;
+    const structure = cloneWeeklyStructure(phase.weeklyStructure);
+    structureBaselineRef.current = structure;
+    setStructureBaselineState(structure);
+    setForm({
+      phase: "rangeComplete",
+      startDate: phase.startDate,
+      endDate: phase.endDate,
+      qualities: cloneQualities(phase.qualities),
+      volumeLevel: phase.volumeLevel,
+      intensityLevel: phase.intensityLevel,
+      weeklyStructure: structure,
+      constructorStep: "qualities",
+      completedSteps: ["range"],
+    });
+  }, []);
+
   const qualitiesSum = useMemo(
     () => form.qualities.reduce((acc, q) => acc + q.percentage, 0),
     [form.qualities]
@@ -402,6 +422,7 @@ export function usePeriodBlockForm(
     markPersisted,
     reset,
     initCreateRange,
+    hydrateFromPhaseDraft,
     structureBaseline,
     isStructureDirty,
     advanceConstructorStep,

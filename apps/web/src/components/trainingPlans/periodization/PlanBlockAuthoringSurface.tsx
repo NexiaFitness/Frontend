@@ -5,6 +5,7 @@
 import React, {
     useCallback,
     useEffect,
+    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -14,7 +15,8 @@ import { useDispatch } from "react-redux";
 
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
-import { resolveClientTrainingFrequency, weeklyStructureDraftsEqual } from "@nexia/shared";
+import type { PhaseDraft } from "@nexia/shared/types/quickProgramDraft";
+import { resolveClientTrainingFrequency } from "@nexia/shared";
 import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
 import { useGetWeeklyStructureQuery, weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
 import type { AppDispatch } from "@nexia/shared/store";
@@ -31,6 +33,8 @@ import { validateQualitiesStepAdvance } from "./periodBlockQualitiesValidation";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { useBlockAuthoringPersistence } from "./useBlockAuthoringPersistence";
 import { useBlockAuthoringNavigation } from "./useBlockAuthoringNavigation";
+import { useLocalBlockAuthoringNavigation } from "./useLocalBlockAuthoringNavigation";
+import { mergeFormIntoPhaseDraft } from "./phaseDraftFormBridge";
 import {
     blockAuthorStepIndex,
     nextBlockAuthorStep,
@@ -61,6 +65,8 @@ import {
     AUTHORING_TITLE_CLASS,
 } from "./phaseAuthoringPresentation";
 
+export type BlockAuthoringPersistMode = "api" | "local";
+
 interface Props {
     mode: BlockAuthorMode;
     planId: number;
@@ -76,6 +82,15 @@ interface Props {
     planGoalForRecommendations?: string;
     onAuthoringChange?: (active: boolean) => void;
     onExit: () => void;
+    /** api = F2 persist; local = Quick Program draft (sin POST/PUT). */
+    persistMode?: BlockAuthoringPersistMode;
+    /** Obligatorio en persistMode local — borrador de la fase activa. */
+    phaseDraft?: PhaseDraft;
+    onPhaseDraftChange?: (phase: PhaseDraft) => void;
+    authoringStep?: BlockAuthorStep;
+    onAuthoringStepChange?: (step: BlockAuthorStep) => void;
+    /** Overlap inter-fase + bloques persistidos (QP). */
+    overlapDetectedOverride?: boolean;
 }
 
 export const PlanBlockAuthoringSurface: React.FC<Props> = ({
@@ -93,7 +108,14 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     planGoalForRecommendations,
     onAuthoringChange,
     onExit,
+    persistMode = "api",
+    phaseDraft,
+    onPhaseDraftChange,
+    authoringStep = "qualities",
+    onAuthoringStepChange,
+    overlapDetectedOverride,
 }) => {
+    const isLocalDraft = persistMode === "local";
     const { showWarning } = useToast();
     const dispatch = useDispatch<AppDispatch>();
     const {
@@ -102,7 +124,11 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         isError: patternsError,
     } = useGetMovementPatternsQuery({ limit: 100, is_active: true });
     const [maxReachedStep, setMaxReachedStep] = useState<BlockAuthorStep>(
-        mode === "edit" ? "summary" : "qualities",
+        isLocalDraft
+            ? (phaseDraft?.maxReachedStep ?? "qualities")
+            : mode === "edit"
+              ? "summary"
+              : "qualities",
     );
     const [structureLoaded, setStructureLoaded] = useState(false);
     const createInitializedRef = useRef(false);
@@ -112,10 +138,20 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         useGetWeeklyStructureQuery(
         { planId, blockId: blockId! },
         {
-            skip: mode !== "edit" || blockId == null,
+            skip: isLocalDraft || mode !== "edit" || blockId == null,
             refetchOnMountOrArgChange: true,
         },
     );
+
+    const urlNavigation = useBlockAuthoringNavigation(maxReachedStep);
+    const localNavigation = useLocalBlockAuthoringNavigation({
+        mode: "create",
+        step: authoringStep,
+        maxReachedStep,
+        onStepChange: (next) => onAuthoringStepChange?.(next),
+    });
+    const navigation = isLocalDraft ? localNavigation : urlNavigation;
+    const step = navigation.step;
 
     const confirmWeeklyStructureFromServer = useCallback(async () => {
         if (blockId == null) {
@@ -129,9 +165,6 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         ).unwrap();
         return { data };
     }, [dispatch, planId, blockId]);
-
-    const navigation = useBlockAuthoringNavigation(maxReachedStep);
-    const step = navigation.step;
 
     const formApi = usePeriodBlockForm(
         blocks,
@@ -150,6 +183,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         setWeeklyStructure,
         loadBlock,
         initCreateRange,
+        hydrateFromPhaseDraft,
         hydrateWeeklyStructure,
         markPersisted,
         structureBaseline,
@@ -168,6 +202,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
     useEffect(() => {
         if (createInitializedRef.current) return;
+        if (isLocalDraft) return;
         if (mode === "create" && blockStart && blockEnd) {
             createInitializedRef.current = true;
             initCreateRange(blockStart, blockEnd);
@@ -180,6 +215,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             }
         }
     }, [
+        isLocalDraft,
         mode,
         blockStart,
         blockEnd,
@@ -188,8 +224,89 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         setWeeklyStructure,
     ]);
 
+    const localHydratedRef = useRef(false);
+    const editingPhaseRef = useRef<PhaseDraft | null>(null);
+    const formRef = useRef(form);
+    formRef.current = form;
+    const maxReachedStepRef = useRef(maxReachedStep);
+    maxReachedStepRef.current = maxReachedStep;
+    const onPhaseDraftChangeRef = useRef(onPhaseDraftChange);
+    onPhaseDraftChangeRef.current = onPhaseDraftChange;
+
+    const flushEditingPhaseToDraft = useCallback(() => {
+        if (
+            !isLocalDraft ||
+            !onPhaseDraftChangeRef.current ||
+            !localHydratedRef.current
+        ) {
+            return;
+        }
+        const current = editingPhaseRef.current;
+        if (current == null) return;
+        const merged = mergeFormIntoPhaseDraft(
+            current,
+            formRef.current,
+            maxReachedStepRef.current,
+        );
+        editingPhaseRef.current = merged;
+        onPhaseDraftChangeRef.current(merged);
+    }, [isLocalDraft]);
+
+    useLayoutEffect(() => {
+        if (!isLocalDraft || phaseDraft == null) return;
+
+        const prev = editingPhaseRef.current;
+        const localIdChanged =
+            prev != null && prev.localId !== phaseDraft.localId;
+
+        if (localIdChanged && localHydratedRef.current) {
+            flushEditingPhaseToDraft();
+        }
+
+        if (localIdChanged || prev == null) {
+            editingPhaseRef.current = phaseDraft;
+            hydrateFromPhaseDraft(phaseDraft);
+            setMaxReachedStep(phaseDraft.maxReachedStep);
+            localHydratedRef.current = true;
+            return;
+        }
+
+        if (!localHydratedRef.current) return;
+
+        if (prev.copiedFromPhaseId !== phaseDraft.copiedFromPhaseId) {
+            editingPhaseRef.current = phaseDraft;
+            hydrateFromPhaseDraft(phaseDraft);
+            setMaxReachedStep(phaseDraft.maxReachedStep);
+        }
+    }, [
+        isLocalDraft,
+        phaseDraft,
+        flushEditingPhaseToDraft,
+        hydrateFromPhaseDraft,
+    ]);
+
     useEffect(() => {
-        if (mode !== "edit" || blockId == null) return;
+        if (!isLocalDraft || !onPhaseDraftChange || !localHydratedRef.current) {
+            return;
+        }
+        const current = editingPhaseRef.current;
+        if (current == null || current.localId !== phaseDraft?.localId) {
+            return;
+        }
+        const merged = mergeFormIntoPhaseDraft(current, form, maxReachedStep);
+        editingPhaseRef.current = merged;
+        onPhaseDraftChange(merged);
+    }, [isLocalDraft, form, maxReachedStep, onPhaseDraftChange, phaseDraft?.localId]);
+
+    useEffect(() => {
+        if (!isLocalDraft) return;
+        return () => {
+            flushEditingPhaseToDraft();
+        };
+    }, [isLocalDraft, flushEditingPhaseToDraft]);
+
+    useEffect(() => {
+        if (mode !== "edit" || blockId == null || isLocalDraft) return;
         if (editBlockIdRef.current === blockId) return;
         editBlockIdRef.current = blockId;
         const block = blocks.find((b) => b.id === blockId);
@@ -200,7 +317,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     }, [mode, blockId, blocks, loadBlock]);
 
     useEffect(() => {
-        if (mode !== "edit" || blockId == null || structureLoaded) {
+        if (isLocalDraft || mode !== "edit" || blockId == null || structureLoaded) {
             return;
         }
 
@@ -251,7 +368,11 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         markPersisted,
         onCreateSuccess: onExit,
         refetchWeeklyStructure: confirmWeeklyStructureFromServer,
+        enabled: !isLocalDraft,
     });
+
+    const overlapEffective =
+        overlapDetectedOverride ?? overlapDetected;
 
     const planGoalResolved =
         activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
@@ -287,7 +408,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 return validateQualitiesStepAdvance({
                     qualitiesCount: form.qualities.length,
                     qualitiesSum,
-                    overlapDetected,
+                    overlapDetected: overlapEffective,
                     outsidePlanBounds,
                 }).ok;
             case "volumeIntensity":
@@ -307,7 +428,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         form.volumeLevel,
         form.intensityLevel,
         qualitiesSum,
-        overlapDetected,
+        overlapEffective,
         outsidePlanBounds,
         activeDays,
         form.weeklyStructure,
@@ -318,7 +439,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             const result = validateQualitiesStepAdvance({
                 qualitiesCount: form.qualities.length,
                 qualitiesSum,
-                overlapDetected,
+                overlapDetected: overlapEffective,
                 outsidePlanBounds,
             });
             if (!result.ok && result.message) {
@@ -351,7 +472,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         step,
         form.qualities.length,
         qualitiesSum,
-        overlapDetected,
+        overlapEffective,
         outsidePlanBounds,
         activeDays,
         form.weeklyStructure,
@@ -360,21 +481,25 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     ]);
 
     const handleExit = useCallback(() => {
-        if (isDirty) {
+        if (!isLocalDraft && isDirty) {
             const ok = window.confirm(
                 "Tienes cambios sin guardar. ¿Salir y descartarlos?",
             );
             if (!ok) return;
         }
         onExit();
-    }, [isDirty, onExit]);
+    }, [isLocalDraft, isDirty, onExit]);
 
-    const title =
-        mode === "create" ? "Bloque en creación" : "Editar bloque de periodización";
-    const subtitle =
-        mode === "create"
-            ? "Configura el bloque paso a paso antes de guardarlo."
-            : "Revisa o ajusta cualquier sección del bloque.";
+    const title = isLocalDraft
+        ? "Configurar fase"
+        : mode === "create"
+          ? "Bloque en creación"
+          : "Editar bloque de periodización";
+    const subtitle = isLocalDraft
+        ? "Los cambios se guardan en borrador hasta crear la programación completa."
+        : mode === "create"
+          ? "Configura el bloque paso a paso antes de guardarlo."
+          : "Revisa o ajusta cualquier sección del bloque.";
 
     const structureHydrating =
         mode === "edit" && blockId != null && !structureLoaded;
@@ -382,14 +507,73 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         step === "days" || step === "patterns" || step === "summary";
 
     const isSummary = step === "summary";
-    const primaryLabel =
-        mode === "create"
-            ? isSummary
-                ? "Crear bloque"
-                : "Siguiente"
-            : isSummary
-              ? "Guardar bloque"
-              : "Siguiente";
+    const primaryLabel = isLocalDraft
+        ? isSummary
+            ? "Fase en borrador"
+            : "Siguiente"
+        : mode === "create"
+          ? isSummary
+              ? "Crear bloque"
+              : "Siguiente"
+          : isSummary
+            ? "Guardar bloque"
+            : "Siguiente";
+
+    const stepFooter = (
+        <>
+            {!canAdvanceCurrentStep &&
+            overlapEffective &&
+            step !== "summary" ? (
+                <p
+                    className="mb-3 text-sm text-warning"
+                    data-testid="authoring-overlap-hint"
+                >
+                    El rango se solapa con otro bloque. Ajusta las fechas antes de
+                    continuar.
+                </p>
+            ) : null}
+            <div className={AUTHORING_FOOTER_INNER_CLASS}>
+                <Button
+                    type="button"
+                    variant="outline"
+                    disabled={!navigation.canGoBack}
+                    onClick={navigation.goBack}
+                >
+                    Atrás
+                </Button>
+                <Button
+                    type="button"
+                    variant="primary"
+                    isLoading={isSummary && isSaving}
+                    disabled={
+                        isSaving ||
+                        (structureHydrating && stepNeedsStructure) ||
+                        (isLocalDraft && isSummary) ||
+                        (isSummary
+                            ? isLocalDraft
+                                ? true
+                                : mode === "create"
+                                  ? !canPersistBlock ||
+                                    activeDays.length === 0 ||
+                                    !allActiveDaysHavePatterns(
+                                        form.weeklyStructure,
+                                        activeDays,
+                                    )
+                                  : !isDirty || !structureLoaded
+                            : !canAdvanceCurrentStep ||
+                              (structureHydrating && stepNeedsStructure))
+                    }
+                    onClick={
+                        isLocalDraft || !isSummary
+                            ? handleNext
+                            : () => void save()
+                    }
+                >
+                    {primaryLabel}
+                </Button>
+            </div>
+        </>
+    );
 
     return (
         <div
@@ -405,16 +589,18 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         <h3 className={AUTHORING_TITLE_CLASS}>{title}</h3>
                         <p className={AUTHORING_SUBTITLE_CLASS}>{subtitle}</p>
                     </div>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Cerrar autoría"
-                        onClick={handleExit}
-                        className="shrink-0"
-                    >
-                        <X className="h-5 w-5" />
-                    </Button>
+                    {!isLocalDraft ? (
+                        <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Cerrar autoría"
+                            onClick={handleExit}
+                            className="shrink-0"
+                        >
+                            <X className="h-5 w-5" />
+                        </Button>
+                    ) : null}
                 </div>
                 <BlockAuthoringStepper
                     activeStep={step}
@@ -435,7 +621,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         qualities={form.qualities}
                         qualitiesSum={qualitiesSum}
                         catalog={catalog}
-                        overlapDetected={overlapDetected}
+                        overlapDetected={overlapEffective}
                         outsidePlanBounds={outsidePlanBounds}
                         onAddQuality={addQuality}
                         onRemoveQuality={removeQuality}
@@ -484,41 +670,13 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 ) : null}
             </div>
 
-            <DashboardFixedFooter>
-                <div className={AUTHORING_FOOTER_INNER_CLASS}>
-                    <Button
-                        type="button"
-                        variant="outline"
-                        disabled={!navigation.canGoBack}
-                        onClick={navigation.goBack}
-                    >
-                        Atrás
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        isLoading={isSummary && isSaving}
-                        disabled={
-                            isSaving ||
-                            (structureHydrating && stepNeedsStructure) ||
-                            (isSummary
-                                ? mode === "create"
-                                    ? !canPersistBlock ||
-                                      activeDays.length === 0 ||
-                                      !allActiveDaysHavePatterns(
-                                          form.weeklyStructure,
-                                          activeDays,
-                                      )
-                                    : !isDirty || !structureLoaded
-                                : !canAdvanceCurrentStep ||
-                                  (structureHydrating && stepNeedsStructure))
-                        }
-                        onClick={isSummary ? () => void save() : handleNext}
-                    >
-                        {primaryLabel}
-                    </Button>
+            {isLocalDraft ? (
+                <div className="mt-4 border-t border-border/60 pt-4">
+                    {stepFooter}
                 </div>
-            </DashboardFixedFooter>
+            ) : (
+                <DashboardFixedFooter>{stepFooter}</DashboardFixedFooter>
+            )}
         </div>
     );
 };
