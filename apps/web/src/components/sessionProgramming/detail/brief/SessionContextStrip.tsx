@@ -342,7 +342,6 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
                         {movementPatterns.map((p) => (
                             <PatternBadge
                                 key={p.id}
-                                as="span"
                                 name={p.name_es}
                                 uiBucket={p.ui_bucket}
                             />

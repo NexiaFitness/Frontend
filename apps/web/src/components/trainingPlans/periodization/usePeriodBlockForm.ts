@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import type { PlanPeriodBlock, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 import {
@@ -56,7 +56,11 @@ export function usePeriodBlockForm(
   const loadedBlockRef = useRef<PlanPeriodBlock | null>(null);
   const structureBaselineRef = useRef<WeeklyStructureWeekCreate[]>([]);
 
-  const handleDayClick = useCallback((dateStr: string) => {
+    const [structureBaseline, setStructureBaselineState] = useState<
+        WeeklyStructureWeekCreate[]
+    >([]);
+
+    const handleDayClick = useCallback((dateStr: string) => {
     setForm((prev) => {
       if (prev.phase === "idle" || prev.phase === "rangeComplete") {
         return {
@@ -133,6 +137,7 @@ export function usePeriodBlockForm(
   const loadBlock = useCallback((block: PlanPeriodBlock) => {
     loadedBlockRef.current = block;
     structureBaselineRef.current = [];
+    setStructureBaselineState([]);
     setForm({
       phase: "rangeComplete",
       startDate: block.start_date,
@@ -152,7 +157,7 @@ export function usePeriodBlockForm(
   const markPersisted = useCallback(
     (block: PlanPeriodBlock, structure: WeeklyStructureWeekCreate[]) => {
       loadedBlockRef.current = block;
-      structureBaselineRef.current = structure.map((w) => ({
+      const snapshot = structure.map((w) => ({
         week_ordinal: w.week_ordinal,
         label: w.label ?? null,
         days: w.days.map((d) => ({
@@ -163,12 +168,16 @@ export function usePeriodBlockForm(
           })),
         })),
       }));
+      structureBaselineRef.current = snapshot;
+      setStructureBaselineState(snapshot);
+      setForm((prev) => ({ ...prev, weeklyStructure: snapshot }));
     },
     [],
   );
 
+  /** Solo baseline persistido; no toca el draft editable (D-PRES). */
   const setStructureBaseline = useCallback((draft: WeeklyStructureWeekCreate[]) => {
-    structureBaselineRef.current = draft.map((w) => ({
+    const snapshot = draft.map((w) => ({
       week_ordinal: w.week_ordinal,
       label: w.label ?? null,
       days: w.days.map((d) => ({
@@ -179,8 +188,30 @@ export function usePeriodBlockForm(
         })),
       })),
     }));
-    setForm((prev) => ({ ...prev, weeklyStructure: structureBaselineRef.current }));
+    structureBaselineRef.current = snapshot;
+    setStructureBaselineState(snapshot);
   }, []);
+
+  /** Hidratación inicial: siembra draft + baseline desde servidor (una sola vez por carga). */
+  const hydrateWeeklyStructure = useCallback(
+    (draft: WeeklyStructureWeekCreate[]) => {
+      const snapshot = draft.map((w) => ({
+        week_ordinal: w.week_ordinal,
+        label: w.label ?? null,
+        days: w.days.map((d) => ({
+          day_of_week: d.day_of_week,
+          patterns: d.patterns.map((p) => ({
+            movement_pattern_id: p.movement_pattern_id,
+            sub_pattern: p.sub_pattern ?? null,
+          })),
+        })),
+      }));
+      structureBaselineRef.current = snapshot;
+      setStructureBaselineState(snapshot);
+      setForm((prev) => ({ ...prev, weeklyStructure: snapshot }));
+    },
+    [],
+  );
 
   const advanceConstructorStep = useCallback(() => {
     setForm((prev) => {
@@ -204,6 +235,7 @@ export function usePeriodBlockForm(
   const reset = useCallback(() => {
     loadedBlockRef.current = null;
     structureBaselineRef.current = [];
+    setStructureBaselineState([]);
     setForm(IDLE_PERIOD_BLOCK_FORM_STATE);
   }, []);
 
@@ -211,6 +243,7 @@ export function usePeriodBlockForm(
   const initCreateRange = useCallback((startDate: string, endDate: string) => {
     loadedBlockRef.current = null;
     structureBaselineRef.current = [];
+    setStructureBaselineState([]);
     setForm({
       phase: "rangeComplete",
       startDate,
@@ -252,21 +285,21 @@ export function usePeriodBlockForm(
     form.qualities.length > 0 && qualitiesSum === 100;
 
   const isStructureDirty = useMemo(() => {
-    if (structureBaselineRef.current.length === 0 && form.weeklyStructure.length === 0) {
+    if (structureBaseline.length === 0 && form.weeklyStructure.length === 0) {
       return false;
     }
-    if (structureBaselineRef.current.length !== form.weeklyStructure.length) {
+    if (structureBaseline.length !== form.weeklyStructure.length) {
       return true;
     }
     const baselineByOrdinal = new Map(
-      structureBaselineRef.current.map((w) => [w.week_ordinal, w]),
+      structureBaseline.map((w) => [w.week_ordinal, w]),
     );
     return form.weeklyStructure.some((w) => {
       const base = baselineByOrdinal.get(w.week_ordinal);
       if (!base) return true;
       return !weeksStructureEqual(w, base);
     });
-  }, [form.weeklyStructure]);
+  }, [form.weeklyStructure, structureBaseline]);
 
   const isBlockFieldsDirty = useMemo(() => {
     const loaded = loadedBlockRef.current;
@@ -284,6 +317,14 @@ export function usePeriodBlockForm(
   }, [form]);
 
   const isDirty = isBlockFieldsDirty || isStructureDirty;
+
+  useEffect(() => {
+    if (excludeBlockId == null) return;
+    const fresh = existingBlocks.find((b) => b.id === excludeBlockId);
+    if (fresh != null) {
+      loadedBlockRef.current = fresh;
+    }
+  }, [existingBlocks, excludeBlockId]);
 
   const readinessInput: PhaseReadinessInput = useMemo(
     () => ({
@@ -357,9 +398,12 @@ export function usePeriodBlockForm(
     setWeeklyStructure,
     loadBlock,
     setStructureBaseline,
+    hydrateWeeklyStructure,
     markPersisted,
     reset,
     initCreateRange,
+    structureBaseline,
+    isStructureDirty,
     advanceConstructorStep,
     setConstructorStep,
     qualitiesSum,

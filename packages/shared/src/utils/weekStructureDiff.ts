@@ -38,6 +38,19 @@ export function weeksStructureEqual(
     return normalizeWeek(left) === normalizeWeek(right);
 }
 
+/** True when two multi-week drafts are structurally identical (D-PRES dirty gate). */
+export function weeklyStructureDraftsEqual(
+    left: readonly WeeklyStructureWeekCreate[],
+    right: readonly WeeklyStructureWeekCreate[],
+): boolean {
+    if (left.length !== right.length) return false;
+    const rightByOrdinal = new Map(right.map((w) => [w.week_ordinal, w]));
+    return left.every((week) => {
+        const other = rightByOrdinal.get(week.week_ordinal);
+        return other != null && weeksStructureEqual(week, other);
+    });
+}
+
 /** Resolve template week (default: week_ordinal = 1). */
 export function findTemplateWeek(
     weeks: readonly WeekLike[],

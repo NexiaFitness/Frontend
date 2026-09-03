@@ -185,7 +185,7 @@ const PatternsSection: React.FC<{
                                 </p>
                                 <div className="flex flex-wrap gap-1">
                                     {data.missing.map((p) => (
-                                        <PatternBadge key={p} as="span" name={p} />
+                                        <PatternBadge key={p} name={p} uiBucket="accessory" />
                                     ))}
                                 </div>
                             </div>
@@ -197,7 +197,7 @@ const PatternsSection: React.FC<{
                                 </p>
                                 <div className="flex flex-wrap gap-1">
                                     {data.extra.map((p) => (
-                                        <PatternBadge key={p} as="span" name={p} />
+                                        <PatternBadge key={p} name={p} uiBucket="accessory" />
                                     ))}
                                 </div>
                             </div>
@@ -234,7 +234,7 @@ const PatternsSection: React.FC<{
                     <p className="text-xs font-medium text-muted-foreground mb-1">Patrones faltantes</p>
                     <div className="flex flex-wrap gap-1.5">
                         {data.missing.map((p) => (
-                            <PatternBadge key={p} as="span" name={p} />
+                            <PatternBadge key={p} name={p} uiBucket="accessory" />
                         ))}
                     </div>
                 </div>
@@ -244,7 +244,7 @@ const PatternsSection: React.FC<{
                     <p className="text-xs font-medium text-muted-foreground mb-1">Patrones extra</p>
                     <div className="flex flex-wrap gap-1.5">
                         {data.extra.map((p) => (
-                            <PatternBadge key={p} as="span" name={p} />
+                            <PatternBadge key={p} name={p} uiBucket="accessory" />
                         ))}
                     </div>
                 </div>

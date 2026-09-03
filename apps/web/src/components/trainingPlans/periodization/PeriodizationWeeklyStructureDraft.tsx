@@ -167,6 +167,8 @@ export const PeriodizationWeeklyStructureDraft: React.FC<
                             return (
                                 <DayCell
                                     key={popoverKey}
+                                    layout="row"
+                                    pickerPlacement="portal"
                                     weekOrdinal={weekGroup.weekOrdinal}
                                     dayOfWeek={dayInfo.dayOfWeek}
                                     dateISO={dayInfo.dateISO}

@@ -10,11 +10,14 @@ import React, {
     useState,
 } from "react";
 import { X } from "lucide-react";
+import { useDispatch } from "react-redux";
 
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
-import { resolveClientTrainingFrequency } from "@nexia/shared";
-import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
+import { resolveClientTrainingFrequency, weeklyStructureDraftsEqual } from "@nexia/shared";
+import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
+import { useGetWeeklyStructureQuery, weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
+import type { AppDispatch } from "@nexia/shared/store";
 import type { Client } from "@nexia/shared/types/client";
 
 import { Button } from "@/components/ui/buttons";
@@ -45,6 +48,10 @@ import {
     setActiveDaysOnWeek1,
 } from "./blockAuthoringDaysUtils";
 import {
+    allActiveDaysHavePatterns,
+} from "./blockAuthoringPatternsUtils";
+import { weeklyStructureToDraft } from "./periodBlockPersistence";
+import {
     AUTHORING_FOOTER_INNER_CLASS,
     AUTHORING_HEADER_CLASS,
     AUTHORING_STEP_CARD_CLASS,
@@ -71,14 +78,6 @@ interface Props {
     onExit: () => void;
 }
 
-function countPatternDays(
-    weeklyStructure: ReturnType<typeof usePeriodBlockForm>["form"]["weeklyStructure"],
-): number {
-    const week1 = weeklyStructure.find((w) => w.week_ordinal === 1);
-    if (!week1) return 0;
-    return week1.days.filter((d) => d.patterns.length > 0).length;
-}
-
 export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     mode,
     planId,
@@ -96,6 +95,12 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     onExit,
 }) => {
     const { showWarning } = useToast();
+    const dispatch = useDispatch<AppDispatch>();
+    const {
+        data: patternsCatalog = [],
+        isLoading: patternsLoading,
+        isError: patternsError,
+    } = useGetMovementPatternsQuery({ limit: 100, is_active: true });
     const [maxReachedStep, setMaxReachedStep] = useState<BlockAuthorStep>(
         mode === "edit" ? "summary" : "qualities",
     );
@@ -103,10 +108,27 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     const createInitializedRef = useRef(false);
     const editBlockIdRef = useRef<number | null>(null);
 
-    const { data: existingStructure } = useGetWeeklyStructureQuery(
+    const { data: existingStructure } =
+        useGetWeeklyStructureQuery(
         { planId, blockId: blockId! },
-        { skip: mode !== "edit" || blockId == null },
+        {
+            skip: mode !== "edit" || blockId == null,
+            refetchOnMountOrArgChange: true,
+        },
     );
+
+    const confirmWeeklyStructureFromServer = useCallback(async () => {
+        if (blockId == null) {
+            return { data: undefined };
+        }
+        const data = await dispatch(
+            weeklyStructureApi.endpoints.getWeeklyStructure.initiate(
+                { planId, blockId },
+                { forceRefetch: true, subscribe: false },
+            ),
+        ).unwrap();
+        return { data };
+    }, [dispatch, planId, blockId]);
 
     const navigation = useBlockAuthoringNavigation(maxReachedStep);
     const step = navigation.step;
@@ -128,8 +150,10 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         setWeeklyStructure,
         loadBlock,
         initCreateRange,
-        setStructureBaseline,
+        hydrateWeeklyStructure,
         markPersisted,
+        structureBaseline,
+        isStructureDirty,
         qualitiesSum,
         overlapDetected,
         outsidePlanBounds,
@@ -176,28 +200,31 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     }, [mode, blockId, blocks, loadBlock]);
 
     useEffect(() => {
-        if (mode !== "edit" || blockId == null || !existingStructure || structureLoaded) {
+        if (mode !== "edit" || blockId == null || structureLoaded) {
             return;
         }
-        const draft = existingStructure.weeks.map((w) => ({
-            week_ordinal: w.week_ordinal,
-            label: w.label ?? null,
-            days: w.days.map((d) => ({
-                day_of_week: d.day_of_week,
-                patterns: d.patterns.map((p) => ({
-                    movement_pattern_id: p.movement_pattern_id,
-                    sub_pattern: p.sub_pattern ?? null,
-                })),
-            })),
-        }));
-        setStructureBaseline(draft);
-        setStructureLoaded(true);
+
+        let cancelled = false;
+
+        void (async () => {
+            const result = await confirmWeeklyStructureFromServer();
+            if (cancelled || !result.data?.weeks) {
+                return;
+            }
+
+            hydrateWeeklyStructure(weeklyStructureToDraft(result.data.weeks));
+            setStructureLoaded(true);
+        })();
+
+        return () => {
+            cancelled = true;
+        };
     }, [
         mode,
         blockId,
-        existingStructure,
         structureLoaded,
-        setStructureBaseline,
+        confirmWeeklyStructureFromServer,
+        hydrateWeeklyStructure,
     ]);
 
     const activeDays = useMemo(
@@ -212,11 +239,18 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         form,
         blocks,
         existingStructure,
+        structureBaseline,
         structureReady: structureLoaded,
+        isStructureDirty,
         canPersist: canPersistBlock,
         activeDayCount: activeDays.length,
+        patternsComplete: allActiveDaysHavePatterns(
+            form.weeklyStructure,
+            activeDays,
+        ),
         markPersisted,
         onCreateSuccess: onExit,
+        refetchWeeklyStructure: confirmWeeklyStructureFromServer,
     });
 
     const planGoalResolved =
@@ -261,7 +295,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             case "days":
                 return activeDays.length > 0;
             case "patterns":
-                return activeDays.length > 0;
+                return allActiveDaysHavePatterns(form.weeklyStructure, activeDays);
             case "summary":
                 return false;
             default:
@@ -275,7 +309,8 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         qualitiesSum,
         overlapDetected,
         outsidePlanBounds,
-        activeDays.length,
+        activeDays,
+        form.weeklyStructure,
     ]);
 
     const handleNext = useCallback(() => {
@@ -295,6 +330,15 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             showWarning("Selecciona al menos un día de entrenamiento.");
             return;
         }
+        if (
+            step === "patterns" &&
+            !allActiveDaysHavePatterns(form.weeklyStructure, activeDays)
+        ) {
+            showWarning(
+                "Asigna al menos un patrón a cada día de entrenamiento.",
+            );
+            return;
+        }
         const next = nextBlockAuthorStep(step);
         if (next == null) return;
         setMaxReachedStep((prev) =>
@@ -309,7 +353,8 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         qualitiesSum,
         overlapDetected,
         outsidePlanBounds,
-        activeDays.length,
+        activeDays,
+        form.weeklyStructure,
         showWarning,
         navigation,
     ]);
@@ -330,6 +375,11 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         mode === "create"
             ? "Configura el bloque paso a paso antes de guardarlo."
             : "Revisa o ajusta cualquier sección del bloque.";
+
+    const structureHydrating =
+        mode === "edit" && blockId != null && !structureLoaded;
+    const stepNeedsStructure =
+        step === "days" || step === "patterns" || step === "summary";
 
     const isSummary = step === "summary";
     const primaryLabel =
@@ -376,7 +426,11 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
             <div className={AUTHORING_STEP_CARD_CLASS}>
                 <NexiaGlassAccentRim />
-                {step === "qualities" && (
+                {structureHydrating && stepNeedsStructure ? (
+                    <p className="text-sm text-muted-foreground py-8 text-center">
+                        Cargando estructura semanal…
+                    </p>
+                ) : step === "qualities" ? (
                     <PeriodBlockQualitiesStep
                         qualities={form.qualities}
                         qualitiesSum={qualitiesSum}
@@ -389,8 +443,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         onContinue={handleNext}
                         hideFooter
                     />
-                )}
-                {step === "volumeIntensity" && (
+                ) : step === "volumeIntensity" ? (
                     <BlockAuthoringStepLoad
                         volumeLevel={form.volumeLevel}
                         intensityLevel={form.intensityLevel}
@@ -400,20 +453,21 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         volumeIntensityPhase={volumeNominal.phase}
                         volumeIntensityHint={volumeNominal.auxiliaryHint}
                     />
-                )}
-                {step === "days" && (
+                ) : step === "days" ? (
                     <BlockAuthoringStepDays
                         activeDays={activeDays}
                         onToggleDay={handleToggleDay}
                     />
-                )}
-                {step === "patterns" && (
+                ) : step === "patterns" ? (
                     <BlockAuthoringStepPatterns
-                        activeDayCount={activeDays.length}
-                        configuredPatternDays={countPatternDays(form.weeklyStructure)}
+                        activeDays={activeDays}
+                        weeklyStructure={form.weeklyStructure}
+                        onWeeklyStructureChange={setWeeklyStructure}
+                        catalog={patternsCatalog}
+                        catalogLoading={patternsLoading}
+                        catalogError={patternsError}
                     />
-                )}
-                {step === "summary" && (
+                ) : step === "summary" ? (
                     <BlockAuthoringStepSummary
                         startDate={form.startDate}
                         endDate={form.endDate}
@@ -422,10 +476,12 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         volumeLevel={form.volumeLevel}
                         intensityLevel={form.intensityLevel}
                         activeDays={activeDays}
+                        weeklyStructure={form.weeklyStructure}
                         catalog={catalog}
+                        patternsCatalog={patternsCatalog}
                         onEditStep={navigation.goToStep}
                     />
-                )}
+                ) : null}
             </div>
 
             <DashboardFixedFooter>
@@ -444,11 +500,18 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         isLoading={isSummary && isSaving}
                         disabled={
                             isSaving ||
+                            (structureHydrating && stepNeedsStructure) ||
                             (isSummary
                                 ? mode === "create"
-                                    ? !canPersistBlock || activeDays.length === 0
-                                    : !isDirty
-                                : !canAdvanceCurrentStep)
+                                    ? !canPersistBlock ||
+                                      activeDays.length === 0 ||
+                                      !allActiveDaysHavePatterns(
+                                          form.weeklyStructure,
+                                          activeDays,
+                                      )
+                                    : !isDirty || !structureLoaded
+                                : !canAdvanceCurrentStep ||
+                                  (structureHydrating && stepNeedsStructure))
                         }
                         onClick={isSummary ? () => void save() : handleNext}
                     >

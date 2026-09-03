@@ -272,6 +272,11 @@ const baseQueryWithReauth: BaseQueryFn<
 
             if (!token || !isAuthenticated) {
                 restoreConsole();
+                // Mutations must reject on 401 so unwrap() fails and UI cannot fake persistence.
+                // Queries stay silent during logout/session-expiry to avoid error banners fleet-wide.
+                if (api.type === "mutation") {
+                    return result;
+                }
                 return { data: undefined };
             }
 

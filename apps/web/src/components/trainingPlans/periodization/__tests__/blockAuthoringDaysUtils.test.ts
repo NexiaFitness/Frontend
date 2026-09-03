@@ -34,4 +34,29 @@ describe("blockAuthoringDaysUtils", () => {
         expect(next[0].days.find((d) => d.day_of_week === 1)?.patterns[0]
             .movement_pattern_id).toBe(9);
     });
+
+    it("setActiveDaysOnWeek1 propagates day rule to every week", () => {
+        const next = setActiveDaysOnWeek1([1, 2, 4], [
+            {
+                week_ordinal: 1,
+                days: [
+                    { day_of_week: 2, patterns: [] },
+                    { day_of_week: 4, patterns: [] },
+                    { day_of_week: 6, patterns: [] },
+                ],
+            },
+            {
+                week_ordinal: 2,
+                days: [
+                    { day_of_week: 2, patterns: [] },
+                    { day_of_week: 4, patterns: [] },
+                    { day_of_week: 6, patterns: [] },
+                ],
+            },
+        ]);
+        expect(next).toHaveLength(2);
+        for (const week of next) {
+            expect(week.days.map((d) => d.day_of_week)).toEqual([1, 2, 4]);
+        }
+    });
 });

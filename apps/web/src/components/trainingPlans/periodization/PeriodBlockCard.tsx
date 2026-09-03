@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { Layers, Pencil, Trash2 } from "lucide-react";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -18,6 +17,7 @@ interface Props {
   catalog: PhysicalQuality[];
   sessions?: TrainingSession[];
   onEdit?: (block: PlanPeriodBlock) => void;
+  onViewWeeks?: (block: PlanPeriodBlock) => void;
   onDelete: (id: number, label: string) => void;
   /** Alta de sesión enlazada al plan/bloque (navegación la define el contenedor). */
   onCreateSessionForBlock?: (block: PlanPeriodBlock) => void;
@@ -44,12 +44,12 @@ export const PeriodBlockCard: React.FC<Props> = ({
   catalog,
   sessions = [],
   onEdit,
+  onViewWeeks,
   onDelete,
   onCreateSessionForBlock,
   volumeIntensityContext,
   volumeIntensityPhase,
 }) => {
-  const navigate = useNavigate();
   const [showSessions, setShowSessions] = useState(false);
   const label = `${formatDateShort(block.start_date)} — ${formatDateShort(block.end_date)}`;
   const days = daysBetween(block.start_date, block.end_date);
@@ -157,20 +157,18 @@ export const PeriodBlockCard: React.FC<Props> = ({
           </div>
         </div>
         <div className="flex flex-col gap-2 w-full shrink-0 sm:w-auto sm:flex-row">
-          <Button
-            type="button"
-            variant="outline-primary"
-            size="sm"
-            className="w-full sm:w-auto"
-            onClick={() =>
-              navigate(
-                `/dashboard/training-plans/${block.training_plan_id}/period-blocks/${block.id}/weekly-structure`,
-              )
-            }
-          >
-            <Layers className="mr-1 h-4 w-4" aria-hidden />
-            Estructura
-          </Button>
+          {onViewWeeks != null && (
+            <Button
+              type="button"
+              variant="outline-primary"
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => onViewWeeks(block)}
+            >
+              <Layers className="mr-1 h-4 w-4" aria-hidden />
+              Ver semanas
+            </Button>
+          )}
           {onCreateSessionForBlock != null && (
             <Button
               type="button"

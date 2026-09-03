@@ -392,10 +392,18 @@ export {
 } from "./utils/weeklyStructure";
 export {
     weeksStructureEqual,
+    weeklyStructureDraftsEqual,
     classifyWeeksByTemplate,
     findTemplateWeek,
     type WeekStructureKind,
 } from "./utils/weekStructureDiff";
+export {
+    UI_BUCKET_ORDER,
+    UI_BUCKET_LABELS,
+    uiBucketToTailwindKey,
+    uiBucketLabel,
+    type UiBucketTailwindKey,
+} from "./utils/exerciseUiBucket";
 export {
     buildPhaseReadinessChecklist,
     canPersistBlock,

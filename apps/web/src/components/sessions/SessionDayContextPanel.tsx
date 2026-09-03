@@ -291,7 +291,6 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                                 {patterns.map((p) => (
                                     <PatternBadge
                                         key={p.id}
-                                        as="span"
                                         name={
                                             p.sub_pattern
                                                 ? `${p.name_es} — ${p.sub_pattern}`

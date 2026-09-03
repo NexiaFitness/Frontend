@@ -105,3 +105,32 @@ export function applyBlockAuthorParams(
 export function clearBlockAuthorParams(prev: URLSearchParams): URLSearchParams {
     return applyBlockAuthorParams(prev, { mode: null });
 }
+
+export function parseBlockWeeksId(
+    searchParams: URLSearchParams,
+): number | null {
+    const raw = searchParams.get("blockWeeks");
+    if (raw == null || !/^\d+$/.test(raw)) return null;
+    return Number(raw);
+}
+
+export function clearBlockWeeksParam(prev: URLSearchParams): URLSearchParams {
+    const next = new URLSearchParams(prev);
+    next.delete("blockWeeks");
+    return next;
+}
+
+export function setBlockWeeksParam(
+    prev: URLSearchParams,
+    blockId: number,
+): URLSearchParams {
+    const next = new URLSearchParams(prev);
+    next.set("tab", "planning");
+    next.set("blockWeeks", String(blockId));
+    next.delete("blockAuthor");
+    next.delete("blockId");
+    next.delete("blockStart");
+    next.delete("blockEnd");
+    next.delete("blockStep");
+    return next;
+}

@@ -45,12 +45,16 @@ import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 import { PhaseAuthoringShell } from "./PhaseAuthoringShell";
 import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
+import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { BlockCalendarRangeHint } from "./BlockCalendarRangeHint";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
 import {
   clearBlockAuthorParams,
+  clearBlockWeeksParam,
   isBlockAuthoringActive,
   parseBlockAuthorParams,
+  parseBlockWeeksId,
+  setBlockWeeksParam,
 } from "@/utils/blockAuthoringUrl";
 import { PhaseSummaryPanel } from "./PhaseSummaryPanel";
 import { PhaseSectionNav } from "./PhaseSectionNav";
@@ -148,7 +152,12 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     () => parseBlockAuthorParams(searchParams),
     [searchParams],
   );
+  const blockWeeksId = useMemo(
+    () => parseBlockWeeksId(searchParams),
+    [searchParams],
+  );
   const isDapAuthoring = isBlockAuthoringActive(blockAuthorParams);
+  const isBlockWeeksManage = blockWeeksId != null;
   const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
@@ -235,6 +244,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     setWeeklyStructure,
     setStructureBaseline,
     markPersisted,
+    structureBaseline,
     reset,
     advanceConstructorStep,
     setConstructorStep,
@@ -288,8 +298,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const weeklyStructureMode = sectionToWeeklyStructureMode(phaseNavSection);
 
   useLayoutEffect(() => {
-    onAuthoringChange?.(isDapAuthoring || isAuthoring);
-  }, [isDapAuthoring, isAuthoring, onAuthoringChange]);
+    onAuthoringChange?.(isDapAuthoring || isAuthoring || isBlockWeeksManage);
+  }, [isDapAuthoring, isAuthoring, isBlockWeeksManage, onAuthoringChange]);
 
   const navigateToCreateAuthoring = useCallback(
     (startDate: string, endDate: string) => {
@@ -374,6 +384,21 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     navigate(`/dashboard/clients/${clientId}?${next.toString()}`, { replace: true });
   }, [clientId, searchParams, navigate, reset]);
 
+  const handleViewWeeks = useCallback(
+    (block: PlanPeriodBlock) => {
+      if (clientId == null || clientId <= 0) return;
+      const next = setBlockWeeksParam(searchParams, block.id);
+      navigate(`/dashboard/clients/${clientId}?${next.toString()}`);
+    },
+    [clientId, searchParams, navigate],
+  );
+
+  const handleExitBlockWeeks = useCallback(() => {
+    if (clientId == null || clientId <= 0) return;
+    const next = clearBlockWeeksParam(searchParams);
+    navigate(`/dashboard/clients/${clientId}?${next.toString()}`, { replace: true });
+  }, [clientId, searchParams, navigate]);
+
   const handleSectionChange = useCallback(
     (section: PhaseSectionId) => {
       setPhaseNavSection(section);
@@ -433,8 +458,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       })),
     }));
     setStructureBaseline(draft);
+    setWeeklyStructure(draft);
     setHasLoadedWeeklyStructure(true);
-  }, [editingBlockId, existingStructure, hasLoadedWeeklyStructure, setStructureBaseline]);
+  }, [editingBlockId, existingStructure, hasLoadedWeeklyStructure, setStructureBaseline, setWeeklyStructure]);
 
   const planGoalResolved =
     activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
@@ -526,6 +552,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
             existingStructure,
             updateWeek,
             createWeek,
+            structureBaseline,
           );
           if (structureSaved) didPersist = true;
         }
@@ -585,6 +612,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     editingBlockId,
     blocks,
     existingStructure,
+    structureBaseline,
     hasLoadedWeeklyStructure,
     createBlock,
     updateBlock,
@@ -617,6 +645,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           existingStructure,
           updateWeek,
           createWeek,
+          structureBaseline,
         );
         if (structureSaved) {
           const block = blocks.find((b) => b.id === editingBlockId);
@@ -648,6 +677,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     form.weeklyStructure,
     hasLoadedWeeklyStructure,
     existingStructure,
+    structureBaseline,
     blocks,
     applyTemplate,
     planId,
@@ -733,6 +763,35 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           ? "El plan de entrenamiento no existe o ha sido eliminado."
           : `Error al cargar los bloques de periodización: ${getMutationErrorMessage(error)}`}
       </Alert>
+    );
+  }
+
+  if (isBlockWeeksManage && blockWeeksId != null) {
+    const weeksBlock = blocks.find((b) => b.id === blockWeeksId);
+    if (!weeksBlock) {
+      return (
+        <Alert variant="warning">
+          No se encontró el bloque solicitado.{" "}
+          <button
+            type="button"
+            className="font-medium underline"
+            onClick={handleExitBlockWeeks}
+          >
+            Volver a planificación
+          </button>
+        </Alert>
+      );
+    }
+    return (
+      <BlockWeeksManageSurface
+        planId={planId}
+        block={weeksBlock}
+        clientProfile={clientProfile ?? null}
+        patternsCatalog={patternsCatalog ?? []}
+        patternsLoading={isLoadingPatterns}
+        patternsError={isErrorPatterns}
+        onExit={handleExitBlockWeeks}
+      />
     );
   }
 
@@ -822,6 +881,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                       catalog={catalog}
                       sessions={sessionsByBlock.get(block.id) ?? []}
                       onEdit={handleEditBlockNavigate}
+                      onViewWeeks={handleViewWeeks}
                       onDelete={(id, label) => setDeleteTarget({ id, label })}
                       onCreateSessionForBlock={handleCreateSessionForBlock}
                       volumeIntensityContext={volumeNominal.buildContext(
@@ -1018,6 +1078,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
                 catalog={catalog}
                 sessions={sessionsByBlock.get(block.id) ?? []}
                 onEdit={handleEditBlockNavigate}
+                onViewWeeks={handleViewWeeks}
                 onDelete={(id, label) => setDeleteTarget({ id, label })}
                 onCreateSessionForBlock={handleCreateSessionForBlock}
                 volumeIntensityContext={volumeNominal.buildContext(
