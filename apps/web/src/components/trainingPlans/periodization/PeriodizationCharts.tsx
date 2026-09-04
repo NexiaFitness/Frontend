@@ -13,6 +13,7 @@ import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/plann
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { SegmentButton } from "@/components/ui/buttons";
 import { FormCombobox } from "@/components/ui/forms";
+import { PHYSICAL_QUALITY_MIX_COPY } from "./periodizationQualitiesPresentation";
 
 interface Props {
   blocks: PlanPeriodBlock[];
@@ -264,8 +265,11 @@ export const PeriodizationCharts: React.FC<Props> = ({ blocks, catalog }) => {
         </div>
 
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
             Cualidades físicas
+          </p>
+          <p className="text-[10px] leading-relaxed text-muted-foreground/80 mb-3">
+            {PHYSICAL_QUALITY_MIX_COPY.chartsIntentLabel}
           </p>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={qualData}>

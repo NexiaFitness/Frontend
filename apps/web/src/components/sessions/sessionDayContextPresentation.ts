@@ -12,7 +12,7 @@ export const SESSION_DAY_CONTEXT_COPY = {
     subtitle: "Contexto de planificación para esta sesión",
     patternsLabel: "Patrones de movimiento",
     musclesLabel: "Músculos objetivo",
-    qualityLabel: "Cualidad",
+    qualityLabel: "Prioridad de intención",
     volumeLabel: "Volumen",
     intensityLabel: "Intensidad",
     noPlanTitle: "Sin plan activo",
@@ -72,6 +72,25 @@ export function resolveQualityLabel(
     const found = catalog.find((q) => q.slug === slug);
     if (found?.name) return found.name;
     return slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+export function resolveQualityLabelsFromRecommendation(
+    rec: SessionDayRecommendations,
+    catalog: { slug: string; name: string }[],
+): string {
+    const slugs =
+        rec.primary_qualities && rec.primary_qualities.length > 0
+            ? rec.primary_qualities
+            : [rec.physical_quality];
+    return slugs.map((slug) => resolveQualityLabel(slug, catalog)).join(" · ");
+}
+
+export function isCoPrimaryRecommendation(rec: SessionDayRecommendations): boolean {
+    return (
+        rec.primary_qualities != null &&
+        rec.primary_qualities.length > 1 &&
+        rec.primary_quality == null
+    );
 }
 
 export function buildBlockContextLine(rec: SessionDayRecommendations): string | null {

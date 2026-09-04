@@ -11,6 +11,12 @@ import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColo
 
 import { Button } from "@/components/ui/buttons";
 
+import {
+    getCoPrimarySlugs,
+    isCoPrimaryMix,
+    formatCoPrimaryLabels,
+    PHYSICAL_QUALITY_MIX_COPY,
+} from "./periodizationQualitiesPresentation";
 import { getPatternsForDayFromWeek1 } from "./blockAuthoringPatternsUtils";
 import { PatternBadge } from "./PatternBadge";
 import {
@@ -93,6 +99,9 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
         },
     );
 
+    const coPrimarySlugs = getCoPrimarySlugs(qualities, catalog);
+    const showCoPrimary = isCoPrimaryMix(qualities, catalog);
+
     return (
         <div className="space-y-6">
             <p className={AUTHORING_STEP_META_CLASS}>Resumen del bloque</p>
@@ -154,6 +163,14 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
                         );
                     })}
                 </ul>
+                {showCoPrimary ? (
+                    <p className="text-[10px] leading-relaxed text-muted-foreground pt-1">
+                        {PHYSICAL_QUALITY_MIX_COPY.coPrimaryBody}{" "}
+                        <span className="font-medium text-foreground">
+                            ({formatCoPrimaryLabels(coPrimarySlugs, catalog)})
+                        </span>
+                    </p>
+                ) : null}
             </section>
 
             <section className="space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4">
