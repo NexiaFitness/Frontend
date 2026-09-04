@@ -39,6 +39,7 @@ import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodizationPanel } from "./PeriodizationPanel";
 import { PeriodBlockConstructorSummaryStrip } from "./PeriodBlockConstructorSummaryStrip";
 import { PeriodBlockCard } from "./PeriodBlockCard";
+import { PERIOD_BLOCK_CARD_LIST_GRID_CLASS } from "./periodBlockCardPresentation";
 import { PeriodizationCharts } from "./PeriodizationCharts";
 import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
@@ -1126,7 +1127,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           Bloques configurados
         </h4>
         {blocks.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className={PERIOD_BLOCK_CARD_LIST_GRID_CLASS}>
             {blocks.map((block) => (
               <PeriodBlockCard
                 key={block.id}
