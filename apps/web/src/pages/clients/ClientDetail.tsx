@@ -37,6 +37,7 @@ import { ClientSessionsTab } from "@/components/clients/detail/ClientSessionsTab
 import { ClientInjuriesTab } from "@/components/clients/detail/ClientInjuriesTab/ClientInjuriesTab";
 import { ClientPlanningTab } from "@/components/clients/detail/ClientPlanningTab";
 import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
+import { resetPlanningSubJourneyParams } from "@/utils/planningHubUrl";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { PlanificarClientChoiceModal } from "@/components/clients/detail/modals/PlanificarClientChoiceModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
@@ -154,11 +155,14 @@ export const ClientDetail: React.FC = () => {
 
     const handlePlanificar = useCallback(() => {
         if (hasActivePlan) {
-            setActiveTab("planning");
+            setSearchParams(
+                (prev) => resetPlanningSubJourneyParams(prev),
+                { replace: true },
+            );
         } else {
             setPlanificarChoiceOpen(true);
         }
-    }, [hasActivePlan, setActiveTab]);
+    }, [hasActivePlan, setSearchParams]);
 
     const handleOpenUseTemplate = useCallback(() => {
         setSelectTemplateModalOpen(true);
