@@ -11,6 +11,9 @@ import {
     setPhaseWeekCountInDraft,
     updatePhaseInDraft,
 } from "./quickProgramDraft";
+import {
+    alignDraftMaterializationIntent,
+} from "./quickProgramMaterializeIntent";
 import { dayAfterLocal, deriveBlockEndFromWeekCount } from "./quickProgramDates";
 import { canMaterializeProgram } from "./quickProgramReadiness";
 
@@ -65,21 +68,33 @@ function twoPhaseContiguousDraft(): QuickProgramDraft {
 }
 
 describe("quickProgramDraft operations", () => {
-    it("clientRequestId stays stable across draft mutations", () => {
+    it("draftToMaterializePayload usa clientRequestId del borrador", () => {
+        const draft = createQuickProgramDraft(526, {
+            programStartDate: "2026-01-06",
+            clientRequestId: "req-1",
+        });
+        const payload = draftToMaterializePayload(draft);
+        expect(payload.client_request_id).toBe("req-1");
+    });
+
+    it("alignDraftMaterializationIntent rota id tras mutaciones de payload", () => {
         let draft = createQuickProgramDraft(526, {
             programStartDate: "2026-01-06",
             clientRequestId: "stable-req-id",
         });
-        const original = draft.clientRequestId;
+        const bound = alignDraftMaterializationIntent(draft, null);
+        draft = bound.draft;
 
-        draft = addPhaseToDraft(draft);
-        draft = setPhaseWeekCountInDraft(draft, draft.phases[0].localId, 5);
         draft = updatePhaseInDraft(draft, draft.phases[0].localId, {
             volumeLevel: 8,
         });
+        const rotated = alignDraftMaterializationIntent(draft, bound.binding);
 
-        expect(draft.clientRequestId).toBe(original);
-        expect(draftToMaterializePayload(draft).client_request_id).toBe(original);
+        expect(rotated.rotated).toBe(true);
+        expect(rotated.draft.clientRequestId).not.toBe("stable-req-id");
+        expect(
+            draftToMaterializePayload(rotated.draft).client_request_id,
+        ).toBe(rotated.draft.clientRequestId);
     });
 
     it("addPhase inserts contiguous phase inheriting weekCount", () => {

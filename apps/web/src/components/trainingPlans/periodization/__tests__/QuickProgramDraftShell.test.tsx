@@ -167,7 +167,8 @@ describe("QuickProgramDraftShell", () => {
         mockUseQuickProgramMaterialize.mockReturnValue({
             materializeProgram: mockMaterializeProgram,
             isMaterializing: false,
-            materializeError: "Conflicto de idempotencia",
+            materializeError:
+                "El borrador cambió respecto a un intento anterior de crear la programación.",
             clearMaterializeError: vi.fn(),
         });
 
@@ -183,7 +184,7 @@ describe("QuickProgramDraftShell", () => {
         );
 
         expect(screen.getByTestId("qp-materialize-error")).toHaveTextContent(
-            /conflicto/i,
+            /borrador cambió/i,
         );
         expect(
             screen.getByTestId("quick-program-draft-shell"),

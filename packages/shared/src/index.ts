@@ -455,6 +455,18 @@ export {
     type PhaseScheduleIssueKind,
 } from "./utils/quickProgramDraft";
 export {
+    alignDraftMaterializationIntent,
+    canonicalJson,
+    computeMaterializePayloadFingerprint,
+    type AlignDraftMaterializationIntentResult,
+    type MaterializationIntentBinding,
+} from "./utils/quickProgramMaterializeIntent";
+export {
+    getQuickProgramMaterializeErrorMessage,
+    QP_MATERIALIZE_ERROR_CODE,
+    type QuickProgramMaterializeErrorCode,
+} from "./utils/quickProgramMaterializeErrors";
+export {
     isPhaseDraftReady,
     canMaterializeProgram,
     phaseDraftHasOverlap,

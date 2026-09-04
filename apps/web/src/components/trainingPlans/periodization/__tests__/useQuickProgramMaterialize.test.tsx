@@ -9,6 +9,7 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import {
     applyDerivedPhaseDates,
     draftToMaterializePayload,
+    QP_MATERIALIZE_ERROR_CODE,
 } from "@nexia/shared";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 
@@ -229,8 +230,11 @@ describe("useQuickProgramMaterialize", () => {
             http.post("*/training-plans/:planId/quick-program/materialize", () =>
                 HttpResponse.json(
                     {
-                        detail:
-                            "client_request_id already used with a different payload",
+                        detail: {
+                            code: QP_MATERIALIZE_ERROR_CODE.IDEMPOTENCY_PAYLOAD_MISMATCH,
+                            message:
+                                "client_request_id already used with a different payload",
+                        },
                     },
                     { status: 409 },
                 ),
@@ -254,7 +258,7 @@ describe("useQuickProgramMaterialize", () => {
         });
 
         expect(onSuccess).not.toHaveBeenCalled();
-        expect(result.current.materializeError).toMatch(/different payload/i);
+        expect(result.current.materializeError).toMatch(/borrador cambió/i);
     });
 
     it("fallo de red → error y onSuccess no llamado", async () => {

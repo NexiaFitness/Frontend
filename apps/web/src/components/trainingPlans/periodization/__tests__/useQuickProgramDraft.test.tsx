@@ -9,7 +9,7 @@ import { dayAfterLocal } from "@nexia/shared";
 import { useQuickProgramDraft } from "../useQuickProgramDraft";
 
 describe("useQuickProgramDraft", () => {
-    it("creates draft with one phase and stable clientRequestId", () => {
+    it("creates draft with one phase and rotates clientRequestId when payload changes", () => {
         const { result } = renderHook(() =>
             useQuickProgramDraft({
                 planId: 526,
@@ -28,7 +28,7 @@ describe("useQuickProgramDraft", () => {
         });
 
         expect(result.current.draft.phases).toHaveLength(2);
-        expect(result.current.clientRequestId).toBe(reqId);
+        expect(result.current.clientRequestId).not.toBe(reqId);
         expect(result.current.draft.phases[1].startDate).toBe(
             dayAfterLocal(result.current.draft.phases[0].endDate),
         );

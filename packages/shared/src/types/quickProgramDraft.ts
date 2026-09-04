@@ -6,8 +6,8 @@
  * - **Payload materializable** — `QuickProgramMaterializeCreate` (planningCargas.ts).
  * - **Respuesta persistida** — `QuickProgramMaterializeOut` → `PlanPeriodBlock.id` en servidor.
  *
- * `clientRequestId` pertenece al intento lógico de materialización: se fija al abrir QP
- * y no debe regenerarse en renders ni en el click del CTA (idempotencia O9).
+ * `clientRequestId` identifica un intento concreto de materialize (payload O9 congelado).
+ * Se rota automáticamente cuando el payload materializable cambia; ver `alignDraftMaterializationIntent`.
  */
 
 import type { PeriodBlockQualityInput } from "./planningCargas";
@@ -50,6 +50,6 @@ export interface QuickProgramDraft {
     phases: PhaseDraft[];
     activePhaseId: PhaseLocalId;
     createdAt: number;
-    /** Estable desde createQuickProgramDraft; no regenerar en submit. */
+    /** Estable para reintentos del mismo payload; rota si el payload O9 cambia. */
     clientRequestId: MaterializationClientRequestId;
 }

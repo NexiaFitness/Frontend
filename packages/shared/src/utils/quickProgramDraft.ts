@@ -43,7 +43,7 @@ export function createLocalId(): string {
     return `local-${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
 }
 
-/** Genera client_request_id para un intento de materialize (una vez al abrir QP). */
+/** Genera client_request_id para un nuevo intento de materialize. */
 export function createMaterializationClientRequestId(): MaterializationClientRequestId {
     return createLocalId();
 }

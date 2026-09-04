@@ -6,6 +6,7 @@ import { useCallback, useMemo, useRef, useState } from "react";
 
 import {
     addPhaseToDraft,
+    alignDraftMaterializationIntent,
     applyDerivedPhaseDates,
     canMaterializeProgram,
     copyStructureFromPreviousPhase,
@@ -16,6 +17,7 @@ import {
     setActivePhaseInDraft,
     updatePhaseInDraft,
     type DateRange,
+    type MaterializationIntentBinding,
 } from "@nexia/shared";
 import type { PhaseDraft, QuickProgramDraft } from "@nexia/shared/types/quickProgramDraft";
 
@@ -38,18 +40,37 @@ export function useQuickProgramDraft({
     planStartDate,
     planEndDate,
 }: UseQuickProgramDraftOptions) {
-    const clientRequestIdRef = useRef<string | null>(null);
-    const [draft, setDraft] = useState<QuickProgramDraft>(() => {
+    const intentBindingRef = useRef<MaterializationIntentBinding | null>(null);
+    const [draft, setDraftState] = useState<QuickProgramDraft>(() => {
         const initial = createQuickProgramDraft(planId, {
             programStartDate,
             trainingDays,
         });
-        clientRequestIdRef.current = initial.clientRequestId;
-        return initial;
+        const aligned = alignDraftMaterializationIntent(
+            initial,
+            intentBindingRef.current,
+        );
+        intentBindingRef.current = aligned.binding;
+        return aligned.draft;
     });
     const [phaseSteps, setPhaseSteps] = useState<
         Record<string, BlockAuthorStep>
     >({});
+
+    const setDraft = useCallback(
+        (updater: (current: QuickProgramDraft) => QuickProgramDraft) => {
+            setDraftState((current) => {
+                const next = updater(current);
+                const aligned = alignDraftMaterializationIntent(
+                    next,
+                    intentBindingRef.current,
+                );
+                intentBindingRef.current = aligned.binding;
+                return aligned.draft;
+            });
+        },
+        [],
+    );
 
     const sortedPhases = useMemo(
         () => [...draft.phases].sort((a, b) => a.sortOrder - b.sortOrder),
@@ -75,34 +96,46 @@ export function useQuickProgramDraft({
         [draft.activePhaseId],
     );
 
-    const replacePhase = useCallback((updated: PhaseDraft) => {
-        const { localId, sortOrder, ...patch } = updated;
-        void sortOrder;
-        setDraft((current) => updatePhaseInDraft(current, localId, patch));
-    }, []);
+    const replacePhase = useCallback(
+        (updated: PhaseDraft) => {
+            const { localId, sortOrder, ...patch } = updated;
+            void sortOrder;
+            setDraft((current) => updatePhaseInDraft(current, localId, patch));
+        },
+        [setDraft],
+    );
 
-    const selectPhase = useCallback((phaseLocalId: string) => {
-        setDraft((current) => setActivePhaseInDraft(current, phaseLocalId));
-    }, []);
+    const selectPhase = useCallback(
+        (phaseLocalId: string) => {
+            setDraft((current) => setActivePhaseInDraft(current, phaseLocalId));
+        },
+        [setDraft],
+    );
 
     const addPhase = useCallback(() => {
         setDraft((current) => addPhaseToDraft(current, { trainingDays }));
-    }, [trainingDays]);
+    }, [setDraft, trainingDays]);
 
-    const removePhase = useCallback((phaseLocalId: string) => {
-        setDraft((current) => removePhaseFromDraft(current, phaseLocalId));
-        setPhaseSteps((prev) => {
-            const next = { ...prev };
-            delete next[phaseLocalId];
-            return next;
-        });
-    }, []);
+    const removePhase = useCallback(
+        (phaseLocalId: string) => {
+            setDraft((current) => removePhaseFromDraft(current, phaseLocalId));
+            setPhaseSteps((prev) => {
+                const next = { ...prev };
+                delete next[phaseLocalId];
+                return next;
+            });
+        },
+        [setDraft],
+    );
 
-    const copyStructureFromPrevious = useCallback((phaseLocalId: string) => {
-        setDraft((current) =>
-            copyStructureFromPreviousPhase(current, phaseLocalId),
-        );
-    }, []);
+    const copyStructureFromPrevious = useCallback(
+        (phaseLocalId: string) => {
+            setDraft((current) =>
+                copyStructureFromPreviousPhase(current, phaseLocalId),
+            );
+        },
+        [setDraft],
+    );
 
     const phaseReadiness = useCallback(
         (phase: PhaseDraft) =>
@@ -143,6 +176,6 @@ export function useQuickProgramDraft({
         copyStructureFromPrevious,
         phaseReadiness,
         canMaterialize,
-        clientRequestId: clientRequestIdRef.current ?? draft.clientRequestId,
+        clientRequestId: draft.clientRequestId,
     };
 }

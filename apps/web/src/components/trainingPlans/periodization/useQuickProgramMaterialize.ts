@@ -10,7 +10,7 @@ import { useDispatch } from "react-redux";
 import {
     applyDerivedPhaseDates,
     draftToMaterializePayload,
-    getMutationErrorMessage,
+    getQuickProgramMaterializeErrorMessage,
 } from "@nexia/shared";
 import {
     periodBlocksApi,
@@ -119,7 +119,7 @@ export function useQuickProgramMaterialize({
             const message =
                 unknownError instanceof QuickProgramMaterializeVerificationError
                     ? unknownError.message
-                    : getMutationErrorMessage(unknownError);
+                    : getQuickProgramMaterializeErrorMessage(unknownError);
 
             setError(message);
             return undefined;
