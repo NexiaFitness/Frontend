@@ -48,6 +48,12 @@ export interface SessionDayTargetMuscleGroup {
 /** Detalle de recomendaciones para el día */
 export interface SessionDayRecommendations {
     physical_quality: string;
+    /** Unique primary slug when one quality wins max %; null on co-primary tie (F4.0). */
+    primary_quality?: string | null;
+    /** All slugs tied at max percentage (doc 14 D3). */
+    primary_qualities?: string[];
+    /** Trace: unique_max | co_primary_tie_break_display_order | empty */
+    primary_resolution?: string;
     modality: string;
     client_experience: string;
     planned_volume_scale: number;

@@ -65,6 +65,19 @@ function resolveQualityLabel(
     return slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+function resolveQualityLabels(
+    rec: SessionDayRecommendations,
+    catalog: { slug: string; name: string }[]
+): string {
+    const slugs =
+        rec.primary_qualities && rec.primary_qualities.length > 0
+            ? rec.primary_qualities
+            : [rec.physical_quality];
+    return slugs
+        .map((slug) => resolveQualityLabel(slug, catalog))
+        .join(" · ");
+}
+
 function toVolumeContext(dto: VolumeIntensityContextDto): VolumeIntensityContext {
     return dto as unknown as VolumeIntensityContext;
 }
@@ -91,7 +104,7 @@ function DayPlanBody({
     volumeContext?: VolumeIntensityContextDto | null;
 }) {
     const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
-    const qualityLabel = resolveQualityLabel(rec.physical_quality, catalog);
+    const qualityLabel = resolveQualityLabels(rec, catalog);
     const dateRange = formatBlockDateRange(
         rec.period_block_start_date,
         rec.period_block_end_date
