@@ -38,6 +38,7 @@ export * from "./clientStats";
 
 // Coherence types
 export * from "./coherence";
+export * from "./coherenceReport";
 
 // Dashboard types
 export * from "./dashboard";

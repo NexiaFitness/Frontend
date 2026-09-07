@@ -68,7 +68,7 @@ import { SaveAsTemplateModal } from "@/components/sessionProgramming/SaveAsTempl
 import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { EmptyStateCard } from "@/components/ui/cards";
-import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS, PageTitle } from "@/components/dashboard/shared";
+import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
@@ -985,11 +985,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                 </form>
             </div>
 
-            {/* Barra inferior fija — pegada al bottom, respeta sidebar vía --sidebar-width */}
-            <div
-                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
-                style={{ left: "var(--sidebar-width, 0)" }}
-            >
+            <DashboardFixedFooter>
                 <div className="flex items-center justify-between gap-3">
                     <Button
                         type="button"
@@ -1054,7 +1050,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         </Button>
                     </div>
                 </div>
-            </div>
+            </DashboardFixedFooter>
 
             <SaveAsTemplateModal
                 isOpen={showSaveTemplateModal}
