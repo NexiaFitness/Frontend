@@ -49,12 +49,53 @@ export type QualitiesPayload = QualityConfig | NestedQualitiesConfig;
 // Contrato: SPEC_BACKEND_TrainingBlocks.md
 // ---------------------------------------------------------------------------
 
+export type EvaluationSufficiency = "NOT_DECLARED" | "INSUFFICIENT" | "SUFFICIENT";
+
+export type TaskKind =
+  | "physical_test"
+  | "loaded_exercise_task"
+  | "field_task"
+  | "unspecified";
+
+export interface PeriodBlockQualityEvaluationBinding {
+  id: number;
+  physical_test_id: number | null;
+  primary_exercise_id: number | null;
+  task_kind: TaskKind;
+  task_descriptor: Record<string, unknown> | null;
+  notes: string | null;
+  sufficiency: EvaluationSufficiency;
+}
+
+export interface PeriodBlockQualityEvaluationBindingInput {
+  physical_test_id?: number | null;
+  primary_exercise_id?: number | null;
+  task_kind?: TaskKind;
+  task_descriptor?: Record<string, unknown> | null;
+  notes?: string | null;
+}
+
+export interface PhaseEvaluationContext {
+  physical_quality_id: number;
+  physical_quality_slug: string;
+  binding: PeriodBlockQualityEvaluationBinding | null;
+  sufficiency: EvaluationSufficiency;
+  missing_inputs: string[];
+  latest_client_result: import("./testing").PhysicalTestResultOut | null;
+}
+
+export interface PhaseEvaluationContextList {
+  block_id: number;
+  contexts: PhaseEvaluationContext[];
+}
+
 export interface PeriodBlockQuality {
   id: number;
   physical_quality_id: number;
   percentage: number;
   physical_quality_name: string | null;
   physical_quality_slug: string | null;
+  evaluation_binding: PeriodBlockQualityEvaluationBinding | null;
 }
 
 export interface PlanPeriodBlock {
@@ -76,6 +117,7 @@ export interface PlanPeriodBlock {
 export interface PeriodBlockQualityInput {
   physical_quality_id: number;
   percentage: number;
+  evaluation_binding?: PeriodBlockQualityEvaluationBindingInput | null;
 }
 
 export interface PlanPeriodBlockCreate {

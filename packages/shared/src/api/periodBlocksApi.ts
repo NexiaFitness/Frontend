@@ -5,6 +5,7 @@ import type {
   PlanPeriodBlockUpdate,
   PlanPeriodBlockWithStructureCreate,
   PlanPeriodBlockWithStructureOut,
+  PhaseEvaluationContextList,
   QuickProgramMaterializeCreate,
   QuickProgramMaterializeOut,
 } from "../types/planningCargas";
@@ -38,6 +39,20 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       }),
       providesTags: (_result, _error, { blockId }) => [
         { type: "PlanPeriodBlock", id: blockId },
+      ],
+    }),
+
+    getPeriodBlockEvaluationContext: builder.query<
+      PhaseEvaluationContextList,
+      { planId: number; blockId: number; clientId?: number }
+    >({
+      query: ({ planId, blockId, clientId }) => ({
+        url: `/training-plans/${planId}/period-blocks/${blockId}/evaluation-context`,
+        method: "GET",
+        params: clientId != null ? { client_id: clientId } : undefined,
+      }),
+      providesTags: (_result, _error, { blockId }) => [
+        { type: "PlanPeriodBlock", id: `EVAL-CTX-${blockId}` },
       ],
     }),
 
@@ -142,6 +157,7 @@ export const periodBlocksApi = baseApi.injectEndpoints({
 export const {
   useGetPeriodBlocksQuery,
   useGetPeriodBlockQuery,
+  useGetPeriodBlockEvaluationContextQuery,
   useCreatePeriodBlockMutation,
   useCreatePeriodBlockWithStructureMutation,
   useUpdatePeriodBlockMutation,
