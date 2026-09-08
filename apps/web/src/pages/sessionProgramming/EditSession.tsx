@@ -882,6 +882,13 @@ export const EditSession: React.FC = () => {
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                     unmappedExercises={weeklyVolumePanel.unmappedExercises}
+                                    coverageStatus={weeklyVolumePanel.coverageStatus}
+                                    sessionsInWeek={weeklyVolumePanel.sessionsInWeek}
+                                    expectedTrainingDays={weeklyVolumePanel.expectedTrainingDays}
+                                    sessionSlices={weeklyVolumePanel.sessionSlices}
+                                    priorWeekRows={weeklyVolumePanel.priorWeekRows}
+                                    priorWeekLabel={weeklyVolumePanel.priorWeekLabel}
+                                    showWeeklyConsultExtras={weeklyVolumePanel.showWeeklyConsultExtras}
                                 />
                             </>
                         ) : null}

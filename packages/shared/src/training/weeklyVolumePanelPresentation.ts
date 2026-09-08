@@ -24,3 +24,18 @@ export const VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE =
 
 export const VOLUME_WEEKLY_SAVED_SUBTITLE =
     "Acumulado semanal programado según sesiones guardadas y objetivos del plan";
+
+/** Nota de método de conteo — solo volumen planificado (D1/D1b). */
+export const VOLUME_COUNTING_METHOD_NOTE =
+    "Series equivalentes programadas por grupo muscular: prime_mover cuenta directo (entero); synergist indirecto (×0,5, sin truncar) salvo D1b en el mismo grupo. Estabilizadores no suman. Solo prescripción planificada guardada con mapeo en catálogo — no ejecutado.";
+
+export const VOLUME_COVERAGE_EMPTY_WEEK =
+    "Semana vacía: no hay sesiones programadas guardadas en este rango.";
+
+export const VOLUME_COVERAGE_NO_EVALUABLE =
+    "Sin datos evaluables: hay sesiones pero ningún ejercicio aporta volumen muscular (revisa mapeo en catálogo).";
+
+export const VOLUME_COVERAGE_PARTIAL_WEEK =
+    "Semana incompleta: hay volumen evaluable pero menos sesiones guardadas que la frecuencia del cliente.";
+
+export const VOLUME_PRIOR_WEEK_NONE = "Sin semana anterior comparable";

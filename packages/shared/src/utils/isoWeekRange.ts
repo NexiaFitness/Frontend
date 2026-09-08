@@ -87,3 +87,16 @@ export function formatWeekRangeLabelEs(weekStartYmd: string | null, weekEndYmd: 
     }
     return `${d1} ${MONTH_SHORT_ES[m1]}—${d2} ${MONTH_SHORT_ES[m2]}`;
 }
+
+/** Suma o resta días a un YYYY-MM-DD en hora local. */
+export function addDaysToYmd(ymd: string, deltaDays: number): string | null {
+    const d = parseLocalYmd(ymd);
+    if (!d) {
+        return null;
+    }
+    d.setDate(d.getDate() + deltaDays);
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${yy}-${mm}-${dd}`;
+}

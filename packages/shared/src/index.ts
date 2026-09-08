@@ -162,6 +162,7 @@ export * from "./training/trainingPlanLifecycle";
 export * from "./training/weeklyVolumeTarget";
 export * from "./training/volumeIntensityContext";
 export * from "./training/sessionVolumeIntensityPrefill";
+export * from "./training/volumeDisplay";
 export * from "./training/weeklyVolumePanelModel";
 export * from "./training/weeklyVolumePanelPresentation";
 export * from "./training/templateProgramPresentation";

@@ -115,15 +115,21 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
                 <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80 pt-0.5">
                     <span className="tabular-nums">
                         Directo:{" "}
-                        <span className="font-medium text-foreground/70">{row.directSets ?? 0}</span>
+                        <span className="font-medium text-foreground/70">
+                            {formatHalfSetVolume(row.directSets ?? 0)}
+                        </span>
                     </span>
                     <span className="tabular-nums">
                         Indirecto:{" "}
-                        <span className="font-medium text-foreground/70">{row.indirectSets ?? 0}</span>
+                        <span className="font-medium text-foreground/70">
+                            {formatHalfSetVolume(row.indirectSets ?? 0)}
+                        </span>
                     </span>
                     <span className="tabular-nums">
                         Total:{" "}
-                        <span className="font-medium text-foreground/70">{totalSets}</span>
+                        <span className="font-medium text-foreground/70">
+                            {formatHalfSetVolume(totalSets)}
+                        </span>
                     </span>
                 </div>
             ) : null}
