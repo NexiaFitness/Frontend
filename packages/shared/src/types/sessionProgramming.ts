@@ -113,6 +113,7 @@ export interface SessionTemplateExerciseCreate {
     planned_sets?: number | null;
     planned_reps?: string | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
@@ -233,6 +234,7 @@ export interface SessionBlockExercise {
     planned_sets: number | null;
     planned_reps: string | null;
     planned_weight: number | null;
+    planned_assistance_kg: number | null;
     planned_duration: number | null; // in seconds
     planned_distance: number | null;
     planned_rest: number | null; // in seconds
@@ -260,6 +262,7 @@ export interface SessionBlockExerciseCreate {
     planned_sets?: number | null;
     planned_reps?: string | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
@@ -272,6 +275,7 @@ export interface SessionBlockExerciseUpdate {
     planned_sets?: number | null;
     planned_reps?: string | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
@@ -304,6 +308,7 @@ export interface SessionBlockExerciseFullUpdate {
     planned_sets?: number | null;
     planned_reps?: string | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;

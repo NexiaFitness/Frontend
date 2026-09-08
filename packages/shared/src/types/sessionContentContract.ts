@@ -16,6 +16,7 @@ export interface SessionBlockExerciseContract {
     planned_sets?: number | null;
     planned_reps?: string | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;

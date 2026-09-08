@@ -32,6 +32,7 @@ type ApiExerciseLine = {
     exercise_id: number;
     planned_reps: string | null;
     planned_weight: number | null;
+    planned_assistance_kg?: number | null;
     planned_rest: number | null;
     planned_sets: number | null;
     effort_character: unknown;
@@ -59,6 +60,7 @@ function mapExerciseLine(ex: ApiExerciseLine, index: number): ConstructorExercis
         exerciseName: `Ejercicio #${ex.exercise_id}`,
         plannedReps: ex.planned_reps,
         plannedWeight: ex.planned_weight,
+        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
         plannedDuration: ex.planned_duration,
         effortCharacter: ex.effort_character as ConstructorExercise["effortCharacter"],
         effortValue: ex.effort_value,
@@ -74,6 +76,7 @@ function blockToConstructorRow(block: TemplateProgramSessionBlock, index: number
             exercise_id: ex.exercise_id,
             planned_reps: ex.planned_reps ?? null,
             planned_weight: ex.planned_weight ?? null,
+            planned_assistance_kg: ex.planned_assistance_kg ?? null,
             planned_rest: ex.planned_rest ?? null,
             planned_sets: ex.planned_sets ?? null,
             effort_character: ex.effort_character,

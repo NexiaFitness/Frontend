@@ -96,6 +96,7 @@ function legacyExercisesToBlock(exercises: SessionExercise[]): {
         planned_sets: ex.planned_sets ?? 1,
         planned_reps: ex.planned_reps != null ? String(ex.planned_reps) : null,
         planned_weight: ex.planned_weight ?? null,
+        planned_assistance_kg: ex.planned_assistance_kg ?? null,
         planned_duration: ex.planned_duration ?? null,
         planned_distance: null,
         planned_rest: ex.planned_rest ?? null,

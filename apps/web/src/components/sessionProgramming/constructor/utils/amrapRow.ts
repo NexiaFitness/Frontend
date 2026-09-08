@@ -26,6 +26,7 @@ export function createAmrapExerciseSlot(index: number, rowId?: string): Construc
         exerciseName: "",
         plannedReps: "8",
         plannedWeight: null,
+        plannedAssistanceKg: null,
         plannedDuration: null,
         effortCharacter: null,
         effortValue: null,

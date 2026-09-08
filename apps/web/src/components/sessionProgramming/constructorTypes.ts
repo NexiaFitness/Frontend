@@ -14,6 +14,7 @@ export interface ConstructorExercise {
     exerciseName: string;
     plannedReps: string | null;
     plannedWeight: number | null;
+    plannedAssistanceKg: number | null;
     plannedDuration: number | null;
     effortCharacter: EffortCharacter | null;
     effortValue: number | null;
@@ -36,6 +37,7 @@ export interface ConstructorSetData {
     id: string;
     plannedReps: string | null;
     plannedWeight: number | null;
+    plannedAssistanceKg: number | null;
     plannedDuration: number | null;
     effortCharacter: EffortCharacter | null;
     effortValue: number | null;

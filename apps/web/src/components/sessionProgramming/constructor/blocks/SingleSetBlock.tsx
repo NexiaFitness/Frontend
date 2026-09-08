@@ -88,6 +88,7 @@ export const SingleSetBlock: React.FC<SingleSetBlockProps> = ({
         exerciseName: "",
         plannedReps: null,
         plannedWeight: null,
+        plannedAssistanceKg: null,
         plannedDuration: null,
         effortCharacter: null,
         effortValue: null,

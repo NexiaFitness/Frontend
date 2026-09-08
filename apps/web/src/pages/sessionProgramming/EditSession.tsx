@@ -405,6 +405,7 @@ export const EditSession: React.FC = () => {
                         exerciseName: `Ejercicio #${ex.exercise_id}`,
                         plannedReps: ex.planned_reps,
                         plannedWeight: ex.planned_weight,
+        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
                         plannedDuration: ex.planned_duration,
                         effortCharacter:
                             ex.effort_character as ConstructorExercise["effortCharacter"],

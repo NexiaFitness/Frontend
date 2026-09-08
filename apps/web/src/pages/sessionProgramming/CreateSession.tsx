@@ -476,6 +476,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         planned_sets: getPersistLinePlannedSets(r, line),
                         planned_reps: convertPlannedReps(line.exercise.plannedReps ?? ""),
                         planned_weight: line.exercise.plannedWeight,
+                        planned_assistance_kg: line.exercise.plannedAssistanceKg ?? null,
                         planned_rest: r.rest,
                         notes: line.exercise.notes,
                     }))

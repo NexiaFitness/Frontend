@@ -27,6 +27,7 @@ function generateId(): string {
 const LOAD_FIELDS: (keyof ConstructorSetData)[] = [
     "plannedReps",
     "plannedWeight",
+    "plannedAssistanceKg",
     "plannedDuration",
     "effortCharacter",
     "effortValue",
@@ -38,6 +39,7 @@ export function createDefaultSetData(restFallback = 60): ConstructorSetData {
         id: `set-${generateId()}`,
         plannedReps: "10",
         plannedWeight: null,
+        plannedAssistanceKg: null,
         plannedDuration: null,
         effortCharacter: null,
         effortValue: null,
@@ -161,6 +163,7 @@ export function setDataToExerciseView(
     ConstructorExercise,
     | "plannedReps"
     | "plannedWeight"
+    | "plannedAssistanceKg"
     | "plannedDuration"
     | "effortCharacter"
     | "effortValue"
@@ -168,6 +171,7 @@ export function setDataToExerciseView(
     return {
         plannedReps: entry.plannedReps,
         plannedWeight: entry.plannedWeight,
+        plannedAssistanceKg: entry.plannedAssistanceKg,
         plannedDuration: entry.plannedDuration,
         effortCharacter: entry.effortCharacter,
         effortValue: entry.effortValue,
@@ -272,6 +276,7 @@ function setDataFromApiLine(
         id: `set-${ex.id}-${generateId()}`,
         plannedReps: ex.planned_reps,
         plannedWeight: ex.planned_weight,
+        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
         plannedDuration: ex.planned_duration,
         effortCharacter: ex.effort_character as ConstructorSetData["effortCharacter"],
         effortValue: ex.effort_value,
@@ -293,6 +298,7 @@ export function hydrateSingleSetConstructorRow(
         exerciseName: `Ejercicio #${first.exercise_id}`,
         plannedReps: first.planned_reps,
         plannedWeight: first.planned_weight,
+        plannedAssistanceKg: first.planned_assistance_kg ?? null,
         plannedDuration: first.planned_duration,
         effortCharacter: first.effort_character as ConstructorExercise["effortCharacter"],
         effortValue: first.effort_value,

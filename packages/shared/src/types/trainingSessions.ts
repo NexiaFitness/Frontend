@@ -265,6 +265,7 @@ export interface SessionExercise {
     planned_sets: number | null;
     planned_reps: number | null;  // Backend usa int, no string
     planned_weight: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration: number | null;
     planned_distance: number | null;
     planned_rest: number | null;
@@ -340,6 +341,7 @@ export interface SessionExerciseCreate {
     planned_sets?: number | null;
     planned_reps?: number | null;  // Backend espera int, convertir de string
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
@@ -352,6 +354,7 @@ export interface SessionExerciseUpdate {
     planned_sets?: number | null;
     planned_reps?: number | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
