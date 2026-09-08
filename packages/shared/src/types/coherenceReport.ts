@@ -3,7 +3,7 @@
  * Backend field: coherence.coherence_report
  */
 
-export type CriterionStatus = "PASS" | "PARTIAL" | "FAIL" | "UNKNOWN";
+export type CriterionStatus = "PASS" | "PARTIAL" | "FAIL" | "NOT_MET" | "UNKNOWN";
 export type EvidenceLevel = "HIGH" | "MODERATE" | "LOW" | "INSUFFICIENT";
 export type Evaluability = "FULL" | "PARTIAL" | "UNKNOWN";
 export type SupportLevel = "UNKNOWN" | "PARTIALLY_EVALUABLE" | "DO_NOT_AUTOMATE";
