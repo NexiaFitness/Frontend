@@ -1,19 +1,12 @@
 /**
  * DatePickerButton — Botón desplegable para selección de fecha
  *
- * Diseño: outline transparente, borde cyan neón, hover con glow.
- * Al hacer clic abre un popover con calendario (react-day-picker v9).
- * Reutilizable en filtros, dashboards, formularios.
- *
- * @example
- * <DatePickerButton
- *   label="Desde"
- *   value={dateFrom}
- *   onChange={setDateFrom}
- * />
+ * Popover con portal + position fixed (paridad FormCombobox) para no quedar
+ * recortado por ancestros overflow-hidden (glass cards del constructor).
  */
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import { DayPicker } from "react-day-picker";
 import { es } from "react-day-picker/locale";
@@ -33,9 +26,11 @@ export interface DatePickerButtonProps {
     className?: string;
     /** aria-label para accesibilidad */
     "aria-label"?: string;
-    /** Variante form: w-full, bg-surface, estilo de input (spec CREATE_EDIT_SESSION) */
+    /** Variante form: w-full, estilo trigger FormCombobox */
     variant?: "default" | "form";
 }
+
+type PopoverCoords = { top: number; left: number; width: number };
 
 function formatDisplayDate(value: string): string {
     if (!value) return "";
@@ -56,6 +51,9 @@ function toYYYYMMDD(d: Date): string {
     return `${year}-${month}-${day}`;
 }
 
+const CALENDAR_MIN_WIDTH = 280;
+const CALENDAR_ESTIMATED_HEIGHT = 320;
+
 export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
     label,
     value,
@@ -67,23 +65,56 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
 }) => {
     const [open, setOpen] = useState(false);
     const [month, setMonth] = useState<Date>(toDate(value) ?? new Date());
+    const [coords, setCoords] = useState<PopoverCoords>({ top: 0, left: 0, width: CALENDAR_MIN_WIDTH });
     const containerRef = useRef<HTMLDivElement>(null);
+    const popoverRef = useRef<HTMLDivElement>(null);
 
     const selectedDate = toDate(value);
     const displayText = value ? formatDisplayDate(value) : label;
 
+    const updatePopoverPosition = useCallback(() => {
+        const el = containerRef.current;
+        if (!el) return;
+        const r = el.getBoundingClientRect();
+        const gap = 4;
+        const viewportPad = 8;
+        const popoverWidth = Math.max(CALENDAR_MIN_WIDTH, r.width);
+        const belowTop = r.bottom + gap;
+        const spaceBelow = window.innerHeight - belowTop - viewportPad;
+        const spaceAbove = r.top - viewportPad;
+        const preferBelow = spaceBelow >= Math.min(CALENDAR_ESTIMATED_HEIGHT, spaceAbove);
+        let top = preferBelow ? belowTop : Math.max(viewportPad, r.top - gap - CALENDAR_ESTIMATED_HEIGHT);
+        let left = r.left;
+        if (left + popoverWidth > window.innerWidth - viewportPad) {
+            left = Math.max(viewportPad, window.innerWidth - viewportPad - popoverWidth);
+        }
+        setCoords({ top, left, width: popoverWidth });
+    }, []);
+
+    useLayoutEffect(() => {
+        if (!open) return;
+        updatePopoverPosition();
+        const onReposition = () => updatePopoverPosition();
+        window.addEventListener("resize", onReposition);
+        window.addEventListener("scroll", onReposition, true);
+        return () => {
+            window.removeEventListener("resize", onReposition);
+            window.removeEventListener("scroll", onReposition, true);
+        };
+    }, [open, updatePopoverPosition]);
+
     useEffect(() => {
         if (!open) return;
-        const handleClickOutside = (e: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-                setOpen(false);
-            }
+        const handlePointerDown = (e: PointerEvent) => {
+            const t = e.target as Node;
+            if (containerRef.current?.contains(t)) return;
+            if (popoverRef.current?.contains(t)) return;
+            setOpen(false);
         };
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
+        document.addEventListener("pointerdown", handlePointerDown);
+        return () => document.removeEventListener("pointerdown", handlePointerDown);
     }, [open]);
 
-    // Sincronizar mes mostrado con el valor seleccionado
     useEffect(() => {
         const date = toDate(value);
         if (date) {
@@ -100,9 +131,8 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
 
     const isFormVariant = variant === "form";
 
-    // Navegación manual para el caption personalizado
     const handlePreviousMonth = () => {
-        setMonth(prev => {
+        setMonth((prev) => {
             const newMonth = new Date(prev);
             newMonth.setMonth(newMonth.getMonth() - 1);
             return newMonth;
@@ -110,15 +140,17 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
     };
 
     const handleNextMonth = () => {
-        setMonth(prev => {
+        setMonth((prev) => {
             const newMonth = new Date(prev);
             newMonth.setMonth(newMonth.getMonth() + 1);
             return newMonth;
         });
     };
 
-    // Formato del mes en español (ej: "marzo 2026")
-    const monthLabel = month.toLocaleDateString("es-ES", { month: "long", year: "numeric" }).replace(/\bde\b/gi, "").trim();
+    const monthLabel = month
+        .toLocaleDateString("es-ES", { month: "long", year: "numeric" })
+        .replace(/\bde\b/gi, "")
+        .trim();
 
     return (
         <div ref={containerRef} className={cn("relative", isFormVariant ? "w-full" : "inline-flex")}>
@@ -130,87 +162,103 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
                 aria-haspopup="dialog"
                 aria-expanded={open}
                 className={cn(
-                    "inline-flex items-center gap-1.5",
-                    "px-3 text-xs font-medium",
-                    "h-9",
-                    "rounded-md",
-                    "transition-all duration-200 ease-out",
-                    "focus:outline-none focus:ring-0",
+                    "inline-flex items-center gap-1.5 rounded-md text-sm font-medium transition-all duration-200",
+                    "focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]",
                     "disabled:opacity-50 disabled:pointer-events-none",
                     isFormVariant
                         ? cn(
-                            "w-full justify-start border border-border bg-surface hover:bg-surface-2 focus:border-primary",
-                            value ? "text-foreground" : "text-muted-foreground"
+                              "h-9 w-full justify-start border border-border bg-surface-2 px-3",
+                              value ? "text-foreground" : "text-muted-foreground",
                           )
-                        : "border border-primary/30 text-muted-foreground bg-transparent hover:bg-primary/10 hover:border-primary/50 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)]",
-                    className
+                        : cn(
+                              "h-9 border border-primary/30 bg-transparent px-3 text-muted-foreground",
+                              "hover:border-primary/50 hover:bg-primary/10 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)]",
+                          ),
+                    className,
                 )}
             >
-                <Calendar className="w-3.5 h-3.5 shrink-0" aria-hidden />
-                {displayText}
+                <Calendar className="h-3.5 w-3.5 shrink-0 text-primary/80" aria-hidden />
+                <span className="truncate">{displayText}</span>
             </button>
 
-            {open && (
-                <div
-                    className="absolute left-0 top-full z-50 mt-1 max-h-[70vh] overflow-auto rounded-md border border-border bg-popover p-3 shadow-lg scrollbar-primary"
-                    role="dialog"
-                    aria-label="Seleccionar fecha"
-                >
-                    {/* Header personalizado: flecha izq, mes/año, flecha der */}
-                    <div className="flex items-center justify-between gap-2 px-2 py-1 mb-2">
-                        <button
-                            type="button"
-                            onClick={handlePreviousMonth}
-                            aria-label="Mes anterior"
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50 border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)] bg-transparent p-0 opacity-50 hover:opacity-100 h-7 w-7"
-                        >
-                            <ChevronLeft className="h-4 w-4" />
-                        </button>
-                        <span className="flex-1 text-center text-sm font-medium capitalize select-none">
-                            {monthLabel}
-                        </span>
-                        <button
-                            type="button"
-                            onClick={handleNextMonth}
-                            aria-label="Mes siguiente"
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 disabled:pointer-events-none disabled:opacity-50 border border-primary/30 text-primary hover:bg-primary/10 hover:border-primary/50 hover:shadow-[0_0_16px_-4px_hsl(var(--primary)/0.25)] bg-transparent p-0 opacity-50 hover:opacity-100 h-7 w-7"
-                        >
-                            <ChevronRight className="h-4 w-4" />
-                        </button>
-                    </div>
-
-                    <DayPicker
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={handleSelect}
-                        month={month}
-                        onMonthChange={setMonth}
-                        locale={es}
-                        showOutsideDays={false}
-                        classNames={{
-                            root: "rdp p-0",
-                            months: "flex flex-col",
-                            month: "",
-                            caption: "hidden",
-                            caption_label: "hidden",
-                            nav: "hidden",
-                            month_caption: "hidden",
-                            month_grid: "w-full border-collapse space-y-1",
-                            weekdays: "flex",
-                            weekday: "text-muted-foreground rounded-md w-9 font-normal text-[0.8rem]",
-                            week: "flex w-full mt-2",
-                            day: "h-9 w-9 text-center text-sm p-0 relative",
-                            day_button:
-                                "inline-flex items-center justify-center h-9 w-9 p-0 font-normal rounded-md hover:bg-accent hover:text-accent-foreground transition-colors aria-selected:bg-accent aria-selected:text-accent-foreground",
-                            day_outside: "text-muted-foreground opacity-50",
-                            day_today: "font-semibold",
-                            day_selected: "bg-accent text-accent-foreground",
-                            day_disabled: "opacity-50",
-                            day_hidden: "invisible",
+            {open &&
+                typeof document !== "undefined" &&
+                createPortal(
+                    <div
+                        ref={popoverRef}
+                        role="dialog"
+                        aria-label="Seleccionar fecha"
+                        className={cn(
+                            "fixed z-[200] rounded-lg border border-border/80 bg-popover p-3 shadow-xl",
+                            "backdrop-blur-md",
+                        )}
+                        style={{
+                            top: coords.top,
+                            left: coords.left,
+                            minWidth: coords.width,
+                            width: coords.width,
                         }}
-                    />
-                </div>
-            )}
+                    >
+                        <div className="mb-2 flex items-center justify-between gap-2 px-1">
+                            <button
+                                type="button"
+                                onClick={handlePreviousMonth}
+                                aria-label="Mes anterior"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-primary/30 bg-transparent text-primary opacity-80 transition-all hover:border-primary/50 hover:bg-primary/10 hover:opacity-100"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </button>
+                            <span className="flex-1 select-none text-center text-sm font-medium capitalize text-foreground">
+                                {monthLabel}
+                            </span>
+                            <button
+                                type="button"
+                                onClick={handleNextMonth}
+                                aria-label="Mes siguiente"
+                                className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-primary/30 bg-transparent text-primary opacity-80 transition-all hover:border-primary/50 hover:bg-primary/10 hover:opacity-100"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </button>
+                        </div>
+
+                        <DayPicker
+                            mode="single"
+                            selected={selectedDate}
+                            onSelect={handleSelect}
+                            month={month}
+                            onMonthChange={setMonth}
+                            locale={es}
+                            showOutsideDays={false}
+                            classNames={{
+                                root: "rdp w-full p-0",
+                                months: "flex w-full flex-col",
+                                month: "w-full",
+                                caption: "hidden",
+                                caption_label: "hidden",
+                                nav: "hidden",
+                                month_caption: "hidden",
+                                month_grid: "w-full border-collapse",
+                                weekdays: "flex w-full",
+                                weekday:
+                                    "flex h-9 w-9 flex-1 items-center justify-center text-[0.7rem] font-medium uppercase tracking-wide text-muted-foreground",
+                                week: "mt-1 flex w-full",
+                                day: "relative flex h-9 w-9 flex-1 items-center justify-center p-0 text-sm",
+                                day_button: cn(
+                                    "inline-flex h-9 w-9 items-center justify-center rounded-md p-0 font-normal",
+                                    "transition-colors hover:bg-primary/10 hover:text-primary",
+                                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                                    "aria-selected:bg-primary aria-selected:text-primary-foreground",
+                                ),
+                                day_outside: "text-muted-foreground opacity-40",
+                                day_today: "font-semibold text-primary",
+                                day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground",
+                                day_disabled: "opacity-40",
+                                day_hidden: "invisible",
+                            }}
+                        />
+                    </div>,
+                    document.body,
+                )}
         </div>
     );
 };

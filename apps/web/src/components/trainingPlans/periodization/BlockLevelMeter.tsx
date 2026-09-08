@@ -1,5 +1,6 @@
 /**
- * BlockLevelMeter.tsx — Volumen o intensidad del bloque con barra premium 1–10.
+ * BlockLevelMeter.tsx — Volumen o intensidad (1–10) con barra premium glass.
+ * Solo lectura por defecto; editable si se pasa `onChange`.
  */
 
 import React from "react";
@@ -12,28 +13,54 @@ import {
     BLOCK_LEVEL_METER_FILL_CLASS,
     BLOCK_LEVEL_METER_PREFIX_CLASS,
     BLOCK_LEVEL_METER_QUALITATIVE_CLASS,
+    BLOCK_LEVEL_METER_RANGE_WRAP,
     BLOCK_LEVEL_METER_TRACK_CLASS,
     BLOCK_LEVEL_METER_VALUE_CLASS,
+    blockLevelMeterRangeClass,
     type BlockLevelMeterTone,
 } from "./blockLevelMeterPresentation";
 
-interface Props {
+export interface BlockLevelMeterProps {
     tone: BlockLevelMeterTone;
     level: number;
     prefix: string;
     hint?: string | null;
     className?: string;
+    /** Si se pasa, la barra es editable (range input). */
+    onChange?: (value: number) => void;
+    disabled?: boolean;
+    id?: string;
+    min?: number;
+    max?: number;
 }
 
-export const BlockLevelMeter: React.FC<Props> = ({
+export const BlockLevelMeter: React.FC<BlockLevelMeterProps> = ({
     tone,
     level,
     prefix,
     hint,
     className,
+    onChange,
+    disabled = false,
+    id,
+    min = 1,
+    max = 10,
 }) => {
-    const clamped = Math.max(1, Math.min(10, Math.round(level)));
-    const widthPct = clamped * 10;
+    const clamped = Math.max(min, Math.min(max, Math.round(level)));
+    const widthPct = ((clamped - min) / (max - min)) * 100;
+    const editable = onChange != null;
+
+    const track = (
+        <div className={BLOCK_LEVEL_METER_TRACK_CLASS} aria-hidden={editable}>
+            <div
+                className={cn(
+                    "h-full rounded-full transition-[width] duration-300 ease-out",
+                    BLOCK_LEVEL_METER_FILL_CLASS[tone],
+                )}
+                style={{ width: `${widthPct}%` }}
+            />
+        </div>
+    );
 
     return (
         <div className={cn("space-y-1.5", className)}>
@@ -50,25 +77,41 @@ export const BlockLevelMeter: React.FC<Props> = ({
                         BLOCK_LEVEL_METER_VALUE_CLASS[tone],
                     )}
                 >
-                    {clamped}/10
+                    {clamped}/{max}
                 </span>
             </div>
-            <div
-                className={BLOCK_LEVEL_METER_TRACK_CLASS}
-                role="meter"
-                aria-valuemin={1}
-                aria-valuemax={10}
-                aria-valuenow={clamped}
-                aria-label={`${prefix} ${clamped} de 10`}
-            >
+
+            {editable ? (
+                <div className={BLOCK_LEVEL_METER_RANGE_WRAP}>
+                    {track}
+                    <input
+                        id={id}
+                        type="range"
+                        min={min}
+                        max={max}
+                        step={1}
+                        value={clamped}
+                        disabled={disabled}
+                        onChange={(e) => onChange(Number(e.target.value))}
+                        className={blockLevelMeterRangeClass(tone)}
+                        aria-label={`${prefix}: ${clamped} de ${max}`}
+                        aria-valuemin={min}
+                        aria-valuemax={max}
+                        aria-valuenow={clamped}
+                    />
+                </div>
+            ) : (
                 <div
-                    className={cn(
-                        "h-full rounded-full transition-[width] duration-300 ease-out",
-                        BLOCK_LEVEL_METER_FILL_CLASS[tone],
-                    )}
-                    style={{ width: `${widthPct}%` }}
-                />
-            </div>
+                    role="meter"
+                    aria-valuemin={min}
+                    aria-valuemax={max}
+                    aria-valuenow={clamped}
+                    aria-label={`${prefix} ${clamped} de ${max}`}
+                >
+                    {track}
+                </div>
+            )}
+
             {hint ? (
                 <p className="text-[10px] leading-tight text-muted-foreground">
                     {hint}

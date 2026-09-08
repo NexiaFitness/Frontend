@@ -28,6 +28,13 @@ import {
     priorWeekTotalByMuscle,
 } from "@nexia/shared/training/weeklyVolumePanelModel";
 import { MuscleVolumeRow } from "./MuscleVolumeRow";
+import {
+    SESSION_PROGRAMMING_PANEL,
+    SESSION_PROGRAMMING_PANEL_BODY,
+    SESSION_PROGRAMMING_PANEL_SUBTITLE,
+    SESSION_PROGRAMMING_PANEL_TITLE,
+    SESSION_PROGRAMMING_PANEL_TOGGLE,
+} from "./sessionProgrammingPresentation";
 
 export interface WeeklyClientVolumePanelProps {
     weekLabel: string;
@@ -152,19 +159,16 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
     }
 
     return (
-        <section
-            className="rounded-xl border border-border bg-card text-card-foreground shadow-sm overflow-hidden"
-            aria-label="Volumen semanal del cliente"
-        >
+        <section className={SESSION_PROGRAMMING_PANEL} aria-label="Volumen semanal del cliente">
             <button
                 type="button"
-                className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-muted/30 transition-colors"
+                className={SESSION_PROGRAMMING_PANEL_TOGGLE}
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
             >
                 <div className="min-w-0 space-y-0.5">
-                    <h3 className="text-sm font-semibold text-foreground truncate">{panelTitle}</h3>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <h3 className={cn(SESSION_PROGRAMMING_PANEL_TITLE, "truncate")}>{panelTitle}</h3>
+                    <p className={cn(SESSION_PROGRAMMING_PANEL_SUBTITLE, "truncate")}>
                         {panelSubtitle}
                         {weekLabel ? ` · Semana del ${weekLabel}` : ""}
                     </p>
@@ -179,7 +183,7 @@ export const WeeklyClientVolumePanel: React.FC<WeeklyClientVolumePanelProps> = (
             </button>
 
             {open ? (
-                <div className="border-t border-border px-4 pb-4 pt-2 space-y-3">
+                <div className={cn(SESSION_PROGRAMMING_PANEL_BODY, "space-y-3 !pt-2")}>
                     {isLoading ? (
                         <div className="flex min-h-[120px] items-center justify-center py-6">
                             <LoadingSpinner size="md" />

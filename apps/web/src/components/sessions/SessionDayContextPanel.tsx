@@ -33,6 +33,13 @@ import {
     resolveQualityLabel,
 } from "./sessionDayContextPresentation";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import {
+    SESSION_PROGRAMMING_DAY_HERO_HEADER,
+    SESSION_PROGRAMMING_DAY_METRICS_BOX,
+    SESSION_PROGRAMMING_PANEL_ACCENT,
+    SESSION_PROGRAMMING_PANEL_BODY,
+    SESSION_PROGRAMMING_PANEL_TITLE,
+} from "@/components/sessionProgramming/sessionProgrammingPresentation";
 
 interface SessionDayContextPanelProps {
     clientId: number | null;
@@ -43,9 +50,7 @@ interface SessionDayContextPanelProps {
     className?: string;
 }
 
-const panelShell = cn(
-    "rounded-lg border border-border border-l-2 border-l-primary bg-card text-card-foreground shadow-sm",
-);
+const panelShell = SESSION_PROGRAMMING_PANEL_ACCENT;
 
 function MetricCell({
     label,
@@ -88,7 +93,7 @@ function EmptyStatePanel({
 }) {
     return (
         <div className={cn(panelShell, "p-5", className)}>
-            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+            <h3 className={SESSION_PROGRAMMING_PANEL_TITLE}>{title}</h3>
             <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{body}</p>
         </div>
     );
@@ -220,12 +225,12 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
 
     return (
         <div className={cn(panelShell, "overflow-hidden", className)}>
-            <div className="border-b border-border/60 bg-muted/30 px-5 py-4">
+            <div className={SESSION_PROGRAMMING_DAY_HERO_HEADER}>
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">
                         <div className="flex items-center gap-2">
                             <CalendarDays className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                            <h2 className="text-base font-semibold text-foreground">
+                            <h2 className={SESSION_PROGRAMMING_PANEL_TITLE}>
                                 {SESSION_DAY_CONTEXT_COPY.title}
                             </h2>
                         </div>
@@ -237,7 +242,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                             {SESSION_DAY_CONTEXT_COPY.subtitle}
                         </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-4 rounded-lg border border-border bg-card px-4 py-2">
+                    <div className={SESSION_PROGRAMMING_DAY_METRICS_BOX}>
                         <div className="text-center">
                             <p className={METRIC_LABEL_CLASS}>{SESSION_DAY_CONTEXT_COPY.volumeLabel}</p>
                             <p className="text-xl font-bold tabular-nums text-primary">
@@ -255,7 +260,7 @@ export const SessionDayContextPanel: React.FC<SessionDayContextPanelProps> = ({
                 </div>
             </div>
 
-            <div className="space-y-4 p-5">
+            <div className={cn(SESSION_PROGRAMMING_PANEL_BODY, "space-y-4")}>
                 {structureGap?.show ? (
                     <div className="rounded-lg border border-warning/30 bg-warning/10 p-4">
                         <p className="text-sm text-warning">{structureGap.message}</p>

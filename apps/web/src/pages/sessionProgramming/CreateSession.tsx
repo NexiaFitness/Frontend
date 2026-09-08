@@ -28,7 +28,7 @@ import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { useSelector } from "react-redux";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Input, FormSelect, FormCombobox, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery, useGetClientTrainingPlansQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanQuery, useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -65,10 +65,54 @@ import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstruc
 import { getPersistLinePlannedSets } from "@/components/sessionProgramming/constructor/utils/volumeEquivalentSets";
 import { buildTemplatePayloadFromConstructorRows } from "./buildTemplatePayload";
 import { SaveAsTemplateModal } from "@/components/sessionProgramming/SaveAsTemplateModal";
-import { ArrowLeft, ClipboardList, Flame, Gauge } from "lucide-react";
+import { ArrowLeft, ClipboardList } from "lucide-react";
+import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import { ClientAvatar } from "@/components/ui/avatar";
-import { EmptyStateCard } from "@/components/ui/cards";
-import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import {
+    SESSION_PROGRAMMING_BACK_BUTTON,
+    SESSION_PROGRAMMING_CLIENT_BANNER,
+    SESSION_PROGRAMMING_CLIENT_BANNER_SUBTITLE,
+    SESSION_PROGRAMMING_CLIENT_BANNER_TEXT,
+    SESSION_PROGRAMMING_CLIENT_SELECTOR,
+    SESSION_PROGRAMMING_COPY,
+    SESSION_PROGRAMMING_EMPTY_ACTION,
+    SESSION_PROGRAMMING_EMPTY_DESCRIPTION,
+    SESSION_PROGRAMMING_EMPTY_FOOTER,
+    SESSION_PROGRAMMING_EMPTY_GLOW,
+    SESSION_PROGRAMMING_EMPTY_SIDEBAR,
+    SESSION_PROGRAMMING_EMPTY_TITLE,
+    SESSION_PROGRAMMING_FIELD_CONTROL,
+    SESSION_PROGRAMMING_FIELD_COMPACT,
+    SESSION_PROGRAMMING_FIELD_ERROR,
+    SESSION_PROGRAMMING_FIELD_HINT,
+    SESSION_PROGRAMMING_FIELD_LABEL,
+    SESSION_PROGRAMMING_FIELD_METER,
+    SESSION_PROGRAMMING_FIELD_NAME,
+    SESSION_PROGRAMMING_FIELD_NAME_SOLO,
+    SESSION_PROGRAMMING_FIELD_PLAN,
+    SESSION_PROGRAMMING_SESSION_FIELDS_GRID,
+    SESSION_PROGRAMMING_FOOTER_ACTIONS,
+    SESSION_PROGRAMMING_FOOTER_CANCEL,
+    SESSION_PROGRAMMING_FOOTER_PRIMARY,
+    SESSION_PROGRAMMING_FOOTER_ROW,
+    SESSION_PROGRAMMING_FOOTER_SECONDARY,
+    SESSION_PROGRAMMING_FOOTER_SHELL,
+    SESSION_PROGRAMMING_FORM_SECTION,
+    SESSION_PROGRAMMING_GLOW,
+    SESSION_PROGRAMMING_HEADER,
+    SESSION_PROGRAMMING_LOADING_ROW,
+    SESSION_PROGRAMMING_LOWER_STACK,
+    SESSION_PROGRAMMING_MAIN_GRID,
+    SESSION_PROGRAMMING_MAIN_GRID_WITH_SIDEBAR,
+    SESSION_PROGRAMMING_NOTES_SECTION,
+    SESSION_PROGRAMMING_PAGE,
+    SESSION_PROGRAMMING_SECTION_TITLE,
+    SESSION_PROGRAMMING_SIDEBAR,
+    SESSION_PROGRAMMING_FORM_STACK,
+    SESSION_PROGRAMMING_STACK,
+} from "@/components/sessionProgramming/sessionProgrammingPresentation";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { AxialLoadBar } from "@/components/sessionProgramming/AxialLoadBar";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
@@ -611,9 +655,22 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
         }
     };
 
+    const handleGoBack = () => {
+        if (backPath) {
+            navigate(backPath);
+        } else {
+            const state = location.state as LocationStateReturnTo | null;
+            if (state?.from) {
+                navigate(state.from);
+            } else {
+                navigate(-1);
+            }
+        }
+    };
+
     if (isLoadingClient || isLoadingPlan || isLoadingPlans) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className={SESSION_PROGRAMMING_LOADING_ROW}>
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -621,34 +678,24 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 
     return (
         <>
-            <div className="space-y-6 pb-24">
-                {/* Header + Volver — mismo patrón que dashboard */}
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <PageTitle title="Nueva Sesión" />
+            <div className={SESSION_PROGRAMMING_PAGE}>
+                <div className={SESSION_PROGRAMMING_GLOW} aria-hidden />
+                <div className={SESSION_PROGRAMMING_STACK}>
+                <header className={SESSION_PROGRAMMING_HEADER}>
                     <Button
-                        variant="outline"
+                        variant="ghost-primary"
                         size="sm"
-                        onClick={() => {
-                            if (backPath) {
-                                navigate(backPath);
-                            } else {
-                                const state = location.state as LocationStateReturnTo | null;
-                                if (state?.from) {
-                                    navigate(state.from);
-                                } else {
-                                    navigate(-1);
-                                }
-                            }
-                        }}
+                        className={SESSION_PROGRAMMING_BACK_BUTTON}
+                        onClick={handleGoBack}
                     >
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                        <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
                         Volver
                     </Button>
-                </div>
+                </header>
 
-                {/* Tarjeta contexto cliente: combobox (diseño Lovable) o avatar */}
                 {!resolvedClientId && !planId ? (
-                    <div className="rounded-lg border border-border bg-card p-4 text-card-foreground shadow-sm space-y-3">
+                    <div className={SESSION_PROGRAMMING_CLIENT_SELECTOR}>
+                        <NexiaGlassAccentRim />
                         <FormCombobox
                             value={selectedClientIdFromSelector?.toString() || ""}
                             onChange={(v) => setSelectedClientIdFromSelector(v ? Number(v) : null)}
@@ -664,34 +711,42 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                         />
                     </div>
                 ) : displayClient && effectiveClientId ? (
-                    <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-4">
+                    <div className={SESSION_PROGRAMMING_CLIENT_BANNER}>
+                        <NexiaGlassAccentRim />
                         <ClientAvatar
                             clientId={effectiveClientId}
                             nombre={displayClient.nombre}
                             apellidos={displayClient.apellidos}
                             size="sm"
                         />
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">
-                                Creando sesión para {displayClient.nombre} {displayClient.apellidos}
+                        <div className="min-w-0">
+                            <p className={SESSION_PROGRAMMING_CLIENT_BANNER_TEXT}>
+                                {SESSION_PROGRAMMING_COPY.clientBannerPrefix}{" "}
+                                {displayClient.nombre} {displayClient.apellidos}
+                            </p>
+                            <p className={SESSION_PROGRAMMING_CLIENT_BANNER_SUBTITLE}>
+                                {SESSION_PROGRAMMING_COPY.createSubtitle}
                             </p>
                         </div>
                     </div>
                 ) : null}
 
-                <form id="create-session-form" onSubmit={handleSubmit}>
-                {/* Grid: 3 primeras filas (nombre, fecha, duración) + columna derecha con plan — solo cuando hay cliente */}
+                <form id="create-session-form" onSubmit={handleSubmit} className={SESSION_PROGRAMMING_FORM_STACK}>
                 <div
-                    className={cn(
-                        "grid grid-cols-1 items-stretch gap-6",
-                        effectiveClientId ? "lg:grid-cols-[1fr_420px]" : "",
-                    )}
+                    className={
+                        effectiveClientId && useStandaloneSession
+                            ? SESSION_PROGRAMMING_MAIN_GRID_WITH_SIDEBAR
+                            : SESSION_PROGRAMMING_MAIN_GRID
+                    }
                 >
-                    <div className="min-h-0 space-y-5">
-                            {/* Nombre de la Sesión + Plan de Entrenamiento (misma línea cuando hay cliente) */}
-                            <div className={`grid gap-4 ${resolvedClientId ? "grid-cols-1 md:grid-cols-2" : ""}`}>
-                                <div>
-                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                    <section className={SESSION_PROGRAMMING_FORM_SECTION}>
+                        <NexiaGlassAccentRim />
+                        <h2 className={SESSION_PROGRAMMING_SECTION_TITLE}>
+                            {SESSION_PROGRAMMING_COPY.sectionSessionData}
+                        </h2>
+                        <div className={SESSION_PROGRAMMING_SESSION_FIELDS_GRID}>
+                                <div className={resolvedClientId ? SESSION_PROGRAMMING_FIELD_NAME : SESSION_PROGRAMMING_FIELD_NAME_SOLO}>
+                                    <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
                                         Nombre de la sesión
                                     </label>
                                     <Input
@@ -702,18 +757,21 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                             setFormData((prev) => ({ ...prev, sessionName: e.target.value }));
                                         }}
                                         placeholder="Ej: Fuerza — Tren superior A"
-                                        className="bg-surface"
+                                        className={cn(SESSION_PROGRAMMING_FIELD_CONTROL, "bg-surface")}
                                     />
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Se genera automáticamente; puedes cambiarlo
+                                    <p className={SESSION_PROGRAMMING_FIELD_HINT}>
+                                        {SESSION_PROGRAMMING_COPY.nameHint}
                                     </p>
-                                    {formErrors.sessionName && <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>}
+                                    {formErrors.sessionName ? (
+                                        <p className={SESSION_PROGRAMMING_FIELD_ERROR}>{formErrors.sessionName}</p>
+                                    ) : null}
                                 </div>
-                                {resolvedClientId && (
-                                <div>
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                {resolvedClientId ? (
+                                <div className={SESSION_PROGRAMMING_FIELD_PLAN}>
+                                <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
                                     Plan de Entrenamiento {!useStandaloneSession && "*"}
                                 </label>
+                                <div className={SESSION_PROGRAMMING_FIELD_CONTROL}>
                                 {useStandaloneSession ? (
                                         <Input
                                             type="text"
@@ -730,66 +788,65 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         />
                                     ) : (
                                         <>
-                                            <FormSelect
+                                            <FormCombobox
                                                 value={selectedPlanId?.toString() || ""}
-                                                onChange={(e) => setSelectedPlanId(e.target.value ? Number(e.target.value) : null)}
-                                                required={!!resolvedClientId && !useStandaloneSession}
+                                                onChange={(v) => setSelectedPlanId(v ? Number(v) : null)}
                                                 options={[
                                                     { value: "", label: "Selecciona un plan" },
-                                                    // Usar source_plan_id como value para crear sesiones correctamente
                                                     ...(clientPlans || []).map((p: TrainingPlanInstance) => ({
                                                         value: (p.source_plan_id ?? p.id).toString(),
                                                         label: `${p.name} (${p.status === "active" ? "Activo" : "Inactivo"})`,
                                                     })),
                                                 ]}
+                                                placeholder="Selecciona un plan"
+                                                ariaLabel="Plan de entrenamiento"
                                             />
-                                            {(clientPlans || []).length === 0 && resolvedClientId && (
-                                                <p className="text-xs text-destructive mt-2">
+                                            {(clientPlans || []).length === 0 && resolvedClientId ? (
+                                                <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
                                                     Este cliente no tiene planes disponibles. Crea un plan para poder programar sesiones.
                                                 </p>
-                                            )}
+                                            ) : null}
                                         </>
                                     )}
-                                    {!useStandaloneSession && (
-                                        <p className="text-xs text-muted-foreground mt-1">
-                                            La sesión debe estar vinculada a un plan para el seguimiento de carga.
+                                </div>
+                                    {!useStandaloneSession ? (
+                                        <p className={SESSION_PROGRAMMING_FIELD_HINT}>
+                                            {SESSION_PROGRAMMING_COPY.planHint}
                                         </p>
-                                    )}
+                                    ) : null}
                                 </div>
-                                )}
-                            </div>
+                                ) : null}
 
-                            {/* Fecha y Tipo */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label htmlFor="create-session-date" className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Fecha de la Sesión *
+                                <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                    <label htmlFor="create-session-date" className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                        Fecha *
                                     </label>
-                                    <DatePickerButton
-                                        label="Seleccionar fecha"
-                                        value={formData.sessionDate}
-                                        onChange={(v) => setFormData({ ...formData, sessionDate: v })}
-                                        variant="form"
-                                    />
+                                    <div className={SESSION_PROGRAMMING_FIELD_CONTROL}>
+                                        <DatePickerButton
+                                            label="Seleccionar fecha"
+                                            value={formData.sessionDate}
+                                            onChange={(v) => setFormData({ ...formData, sessionDate: v })}
+                                            variant="form"
+                                        />
+                                    </div>
                                 </div>
-                                <div>
-                                    <label htmlFor="create-session-type" className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Tipo de Sesión *
+                                <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                    <label htmlFor="create-session-type" className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                        Tipo *
                                     </label>
-                                    <FormSelect
-                                        id="create-session-type"
-                                        value={formData.sessionType}
-                                        onChange={(e) => setFormData((prev) => ({ ...prev, sessionType: e.target.value }))}
-                                        required
-                                        options={SESSION_TYPES}
-                                    />
+                                    <div className={SESSION_PROGRAMMING_FIELD_CONTROL}>
+                                        <FormCombobox
+                                            id="create-session-type"
+                                            value={formData.sessionType}
+                                            onChange={(v) => setFormData((prev) => ({ ...prev, sessionType: v }))}
+                                            options={SESSION_TYPES}
+                                            placeholder="Selecciona tipo"
+                                            ariaLabel="Tipo de sesión"
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-
-                            {/* Fila Duración + Volumen + Intensidad (grid 3 cols, spec 4.1.3) */}
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                                <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                    <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
                                         Duración (min)
                                     </label>
                                     <Input
@@ -797,90 +854,78 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                         value={formData.plannedDuration}
                                         onChange={(e) => setFormData({ ...formData, plannedDuration: e.target.value })}
                                         placeholder="60"
-                                        className="bg-surface"
+                                        className={cn(SESSION_PROGRAMMING_FIELD_CONTROL, "max-w-[7rem] bg-surface lg:max-w-none")}
                                     />
                                 </div>
-                                <div className="mt-3 md:mt-0">
-                                    <Slider
-                                        label="Volumen"
-                                        labelIcon={<Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />}
-                                        value={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
-                                        min={1}
-                                        max={10}
-                                        color="primary"
-                                        valueNote={sliderValueNote}
+
+                                <div className={SESSION_PROGRAMMING_FIELD_METER}>
+                                    <BlockLevelMeter
+                                        id="create-session-volume"
+                                        tone="volume"
+                                        prefix="Volumen"
+                                        level={formData.plannedVolume ? Number(formData.plannedVolume) : 5}
+                                        hint={sliderValueNote}
                                         onChange={(v) => {
                                             setVolumeIntensityTouched(true);
                                             setFormData({ ...formData, plannedVolume: String(v) });
                                         }}
                                     />
                                 </div>
-                                <div className="mt-3 md:mt-0">
-                                    <Slider
-                                        label="Intensidad"
-                                        labelIcon={<Flame className="h-3.5 w-3.5 text-warning" aria-hidden />}
-                                        value={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
-                                        min={1}
-                                        max={10}
-                                        color="warning"
-                                        valueNote={sliderValueNote}
+                                <div className={SESSION_PROGRAMMING_FIELD_METER}>
+                                    <BlockLevelMeter
+                                        id="create-session-intensity"
+                                        tone="intensity"
+                                        prefix="Intensidad"
+                                        level={formData.plannedIntensity ? Number(formData.plannedIntensity) : 5}
+                                        hint={sliderValueNote}
                                         onChange={(v) => {
                                             setVolumeIntensityTouched(true);
                                             setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
                                         }}
                                     />
                                 </div>
-                            </div>
-                    </div>
+                        </div>
+                    </section>
 
-                    {/* Columna derecha: Plan del día — solo cuando hay cliente seleccionado */}
-                    {effectiveClientId != null && effectiveClientId > 0 && (
-                    <div className="flex h-full min-h-0 flex-col lg:self-stretch">
-                        {useStandaloneSession ? (
-                                <EmptyStateCard
-                                    className="h-full min-h-0 flex-1"
-                                    icon={<ClipboardList aria-hidden />}
-                                    title="Sin plan asignado"
-                                    description="Este cliente no tiene un plan de entrenamiento activo."
-                                    action={
-                                        <Button
-                                            type="button"
-                                            variant="outline"
-                                            size="sm"
-                                            className="w-full border-primary/30 bg-transparent text-primary hover:bg-primary/10 hover:border-primary/50"
-                                            onClick={() =>
-                                                navigate(
-                                                    `/dashboard/training-plans/create?clientId=${effectiveClientId}`,
-                                                    {
-                                                        state: { from: location.pathname },
-                                                    }
-                                                )
-                                            }
-                                        >
-                                            <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
-                                            Crear plan
-                                        </Button>
-                                    }
-                                    footer={
-                                        <p className="text-[11px] text-muted-foreground">
+                    {effectiveClientId != null && effectiveClientId > 0 && useStandaloneSession ? (
+                    <aside className={SESSION_PROGRAMMING_SIDEBAR}>
+                                <div className={SESSION_PROGRAMMING_EMPTY_SIDEBAR}>
+                                    <div className={SESSION_PROGRAMMING_EMPTY_GLOW} aria-hidden />
+                                    <div className="relative z-[1] py-2 text-center">
+                                        <div className="mx-auto mb-3 text-muted-foreground/50 [&>svg]:h-8 [&>svg]:w-8">
+                                            <ClipboardList aria-hidden />
+                                        </div>
+                                        <p className={SESSION_PROGRAMMING_EMPTY_TITLE}>Sin plan asignado</p>
+                                        <p className={SESSION_PROGRAMMING_EMPTY_DESCRIPTION}>
+                                            Este cliente no tiene un plan de entrenamiento activo.
+                                        </p>
+                                        <div className={SESSION_PROGRAMMING_EMPTY_ACTION}>
+                                            <Button
+                                                type="button"
+                                                variant="outline-primary"
+                                                size="sm"
+                                                className="w-full"
+                                                onClick={() =>
+                                                    navigate(
+                                                        `/dashboard/training-plans/create?clientId=${effectiveClientId}`,
+                                                        { state: { from: location.pathname } },
+                                                    )
+                                                }
+                                            >
+                                                <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                                Crear plan
+                                            </Button>
+                                        </div>
+                                        <p className={cn(SESSION_PROGRAMMING_EMPTY_FOOTER, "mt-3")}>
                                             Puedes continuar sin plan y crear la sesión libremente.
                                         </p>
-                                    }
-                                />
-                            ) : (
-                                <SessionDayContextPanel
-                                    layout="sidebar"
-                                    clientId={effectiveClientId}
-                                    sessionDate={formData.sessionDate}
-                                    trainerId={trainerId}
-                                />
-                            )}
-                    </div>
-                    )}
+                                    </div>
+                                </div>
+                    </aside>
+                    ) : null}
                 </div>
 
-                {/* A partir de aquí todo ancho: banner lesiones, recomendaciones, bloques, constructor, notas */}
-                <div className="mt-6 space-y-5 w-full">
+                <div className={SESSION_PROGRAMMING_LOWER_STACK}>
                             {effectiveClientId && !useStandaloneSession ? (
                                 <SessionDayContextPanel
                                     layout="hero"
@@ -970,50 +1015,46 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                                 </ConstructorValidationProvider>
                             </div>
 
-                            {/* Notas — al final del formulario */}
-                            <div className="pt-6 border-t border-border">
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                            <section className={SESSION_PROGRAMMING_NOTES_SECTION}>
+                                <NexiaGlassAccentRim />
+                                <h2 className={SESSION_PROGRAMMING_SECTION_TITLE}>
+                                    {SESSION_PROGRAMMING_COPY.sectionNotes}
+                                </h2>
+                                <label className={cn(SESSION_PROGRAMMING_FIELD_LABEL, "sr-only")}>
                                     Notas de la Sesión
                                 </label>
                                 <Textarea
                                     value={formData.notes}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, notes: e.target.value }))}
                                     rows={3}
+                                    className="mt-1.5"
                                     placeholder="Instrucciones generales para la sesión..."
                                 />
-                            </div>
+                            </section>
                 </div>
                 </form>
+                </div>
             </div>
 
-            <DashboardFixedFooter>
-                <div className="flex items-center justify-between gap-3">
+            <DashboardFixedFooter className={SESSION_PROGRAMMING_FOOTER_SHELL}>
+                <div className={SESSION_PROGRAMMING_FOOTER_ROW}>
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="outline-primary"
                         size="sm"
+                        className={SESSION_PROGRAMMING_FOOTER_SECONDARY}
                         onClick={() => setShowSaveTemplateModal(true)}
                         disabled={isSavingTemplate}
                     >
                         Guardar como Plantilla
                     </Button>
-                    <div className="flex gap-3">
+                    <div className={SESSION_PROGRAMMING_FOOTER_ACTIONS}>
                         <Button
                             type="button"
                             variant="outline-destructive"
                             size="sm"
-                            onClick={() => {
-                                if (backPath) {
-                                    navigate(backPath);
-                                } else {
-                                    const state = location.state as LocationStateReturnTo | null;
-                                    if (state?.from) {
-                                        navigate(state.from);
-                                    } else {
-                                        navigate(-1);
-                                    }
-                                }
-                            }}
+                            className={SESSION_PROGRAMMING_FOOTER_CANCEL}
+                            onClick={handleGoBack}
                         >
                             Cancelar
                         </Button>
@@ -1022,6 +1063,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                             form="create-session-form"
                             variant="primary"
                             size="sm"
+                            className={SESSION_PROGRAMMING_FOOTER_PRIMARY}
                             disabled={
                                 isCreatingSession ||
                                 isCreatingStandalone ||
