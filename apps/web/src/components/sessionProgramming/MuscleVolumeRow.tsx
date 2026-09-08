@@ -7,6 +7,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import type { WeeklyVolumePanelRowModel, VolumeRatioHoyStyle } from "@nexia/shared";
 import {
+    formatHalfSetVolume,
     formatVolumeRatioHoy,
     volumeBarWidthPct,
     volumeStatusBarColorClass,
