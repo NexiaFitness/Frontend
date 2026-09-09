@@ -53,7 +53,6 @@ import {
 } from "./blockAuthoringDaysUtils";
 import { allActiveDaysHavePatterns } from "./blockAuthoringPatternsUtils";
 import { weeklyStructureToDraft } from "./periodBlockPersistence";
-import { cn } from "@/lib/utils";
 import {
     AUTHORING_HEADER_CLASS,
     AUTHORING_STEP_CARD_CLASS,
