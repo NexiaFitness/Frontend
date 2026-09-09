@@ -10,18 +10,23 @@ import {
     WEEKDAY_ISO_ORDER,
     WEEKDAY_LABELS_ES,
     authoringDayToggleClass,
+    periodUnitPhrase,
 } from "./phaseAuthoringPresentation";
 
 interface Props {
     activeDays: readonly number[];
     onToggleDay: (dayOfWeek: number) => void;
+    /** En QP / programación rápida usar «fase»; en D-PAP persistido «bloque». */
+    periodUnit?: "fase" | "bloque";
 }
 
 export const BlockAuthoringStepDays: React.FC<Props> = ({
     activeDays,
     onToggleDay,
+    periodUnit = "fase",
 }) => {
     const activeSet = new Set(activeDays);
+    const periodLabel = periodUnitPhrase(periodUnit);
 
     const handleKey = useCallback(
         (dayOfWeek: number) => () => onToggleDay(dayOfWeek),
@@ -31,10 +36,10 @@ export const BlockAuthoringStepDays: React.FC<Props> = ({
     return (
         <div className="space-y-4">
             <p className={AUTHORING_STEP_META_CLASS}>
-                Días de entrenamiento en el bloque
+                Días de entrenamiento en {periodLabel}
             </p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-                Regla recurrente para todas las semanas del bloque. No modifica el
+                Regla recurrente para todas las semanas de {periodLabel}. No modifica el
                 perfil del cliente.
             </p>
             <div

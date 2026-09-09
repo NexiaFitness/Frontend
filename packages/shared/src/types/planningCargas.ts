@@ -153,16 +153,3 @@ export interface PlanPeriodBlockWithStructureOut {
   template_week_ordinal: number | null;
   applied_week_ordinals: number[];
 }
-
-/** Quick Program materialize (O9, F3). */
-export interface QuickProgramMaterializeCreate {
-  client_request_id: string;
-  program_start_date: string;
-  phases: PlanPeriodBlockWithStructureCreate[];
-}
-
-export interface QuickProgramMaterializeOut {
-  client_request_id: string;
-  blocks: PlanPeriodBlockWithStructureOut[];
-  total_blocks_created: number;
-}

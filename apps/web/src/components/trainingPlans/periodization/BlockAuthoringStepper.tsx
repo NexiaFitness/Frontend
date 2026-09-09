@@ -37,7 +37,7 @@ export const BlockAuthoringStepper: React.FC<Props> = ({
 
     return (
         <nav
-            aria-label="Pasos del bloque"
+            aria-label="Pasos de la fase"
             className={AUTHORING_STEPPER_SHELL_CLASS}
         >
             <div className={AUTHORING_STEPPER_SCROLL_CLASS}>

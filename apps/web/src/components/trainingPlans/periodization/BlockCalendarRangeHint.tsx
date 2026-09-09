@@ -27,12 +27,16 @@ function formatDateShort(dateStr: string): string {
 interface Props {
     formPhase: PeriodBlockFormState["phase"];
     startDate: string | null;
+    endDate?: string | null;
+    weekCount?: number | null;
     onCancel?: () => void;
 }
 
 export const BlockCalendarRangeHint: React.FC<Props> = ({
     formPhase,
     startDate,
+    endDate = null,
+    weekCount = null,
     onCancel,
 }) => (
     <div
@@ -76,10 +80,43 @@ export const BlockCalendarRangeHint: React.FC<Props> = ({
                             size="sm"
                             onClick={onCancel}
                         >
-                            Cancelar
+                            Cancelar selección
                         </Button>
                     </div>
                 )}
+            </>
+        )}
+
+        {formPhase === "rangeComplete" && startDate && endDate && (
+            <>
+                <p className="text-sm font-semibold text-foreground">
+                    Rango seleccionado
+                </p>
+                <dl className="mt-3 space-y-2 text-sm">
+                    <div className="flex justify-between gap-3 rounded-md bg-primary/10 px-3 py-2">
+                        <dt className="text-muted-foreground">Inicio</dt>
+                        <dd className="font-medium text-foreground">
+                            {formatDateShort(startDate)}
+                        </dd>
+                    </div>
+                    <div className="flex justify-between gap-3 rounded-md bg-primary/10 px-3 py-2">
+                        <dt className="text-muted-foreground">Fin</dt>
+                        <dd className="font-medium text-foreground">
+                            {formatDateShort(endDate)}
+                        </dd>
+                    </div>
+                    {weekCount != null && weekCount > 0 ? (
+                        <div className="flex justify-between gap-3 rounded-md border border-border/60 px-3 py-2">
+                            <dt className="text-muted-foreground">Duración</dt>
+                            <dd className="font-medium text-foreground">
+                                {weekCount} semana{weekCount === 1 ? "" : "s"}
+                            </dd>
+                        </div>
+                    ) : null}
+                </dl>
+                <p className="mt-3 text-xs text-muted-foreground">
+                    Abriendo el diseñador de fase…
+                </p>
             </>
         )}
     </div>

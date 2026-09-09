@@ -215,24 +215,25 @@ export const SESSION_PROGRAMMING_FOOTER_SHELL = cn(
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ROW = cn(
-    "pointer-events-auto flex w-full flex-col gap-3 sm:flex-row sm:items-center sm:justify-between",
+    "pointer-events-auto flex w-full min-w-0 max-w-full flex-col gap-3 md:flex-row md:flex-wrap md:items-center md:justify-between",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_ACTIONS = cn(
-    "flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:gap-3",
+    "flex w-full min-w-0 flex-col-reverse gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3 md:w-auto md:shrink-0",
+    "[&_button]:w-full sm:[&_button]:w-auto",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_PRIMARY = cn(
     ATHLETE_PRIMARY_CTA,
-    "sm:min-h-0 sm:w-auto sm:px-5 sm:text-sm sm:font-medium sm:shadow-none",
+    "xl:min-h-0 xl:w-auto xl:px-5 xl:text-sm xl:font-medium xl:shadow-none",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_SECONDARY = cn(
-    "w-full min-h-touch sm:min-h-0 sm:w-auto",
+    "w-full min-h-touch xl:min-h-0 xl:w-auto",
 );
 
 export const SESSION_PROGRAMMING_FOOTER_CANCEL = cn(
-    "w-full min-h-touch sm:min-h-0 sm:w-auto",
+    "w-full min-h-touch xl:min-h-0 xl:w-auto",
 );
 
 /** Hero «Hoy toca» — cabecera métricas. */

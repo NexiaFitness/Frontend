@@ -1,58 +1,40 @@
 /**
- * blockAuthoringModel.test.ts — Reglas de navegación D-PAP (5 pasos).
+ * blockAuthoringModel.test.ts — Reglas de navegación D-PAP / QP.
  */
 
 import { describe, expect, it } from "vitest";
 
 import {
-    BLOCK_AUTHOR_STEP_ORDER,
     canNavigateToBlockAuthorStep,
     nextBlockAuthorStep,
-    prevBlockAuthorStep,
 } from "../blockAuthoringModel";
 
-describe("blockAuthoringModel", () => {
-    it("orders five D-PAP steps", () => {
-        expect(BLOCK_AUTHOR_STEP_ORDER).toEqual([
-            "qualities",
-            "volumeIntensity",
-            "days",
-            "patterns",
-            "summary",
-        ]);
+describe("canNavigateToBlockAuthorStep", () => {
+    it("permite avanzar al paso inmediato aunque maxReachedStep esté desfasado", () => {
+        const next = nextBlockAuthorStep("volumeIntensity");
+        expect(next).toBe("days");
+        expect(
+            canNavigateToBlockAuthorStep(
+                "create",
+                "days",
+                "volumeIntensity",
+                "qualities",
+            ),
+        ).toBe(true);
     });
 
-    it("nextBlockAuthorStep walks forward until summary", () => {
-        expect(nextBlockAuthorStep("qualities")).toBe("volumeIntensity");
-        expect(nextBlockAuthorStep("patterns")).toBe("summary");
-        expect(nextBlockAuthorStep("summary")).toBeNull();
-    });
-
-    it("prevBlockAuthorStep walks backward until qualities", () => {
-        expect(prevBlockAuthorStep("days")).toBe("volumeIntensity");
-        expect(prevBlockAuthorStep("qualities")).toBeNull();
-    });
-
-    it("create mode blocks forward jumps beyond maxReached + 1", () => {
+    it("bloquea saltos de más de un paso hacia delante en create", () => {
         expect(
             canNavigateToBlockAuthorStep(
                 "create",
                 "patterns",
                 "qualities",
-                "volumeIntensity",
+                "qualities",
             ),
         ).toBe(false);
-        expect(
-            canNavigateToBlockAuthorStep(
-                "create",
-                "days",
-                "qualities",
-                "volumeIntensity",
-            ),
-        ).toBe(true);
     });
 
-    it("edit mode allows jumping to any step", () => {
+    it("permite saltos libres en edit", () => {
         expect(
             canNavigateToBlockAuthorStep(
                 "edit",

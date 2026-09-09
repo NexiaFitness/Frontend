@@ -248,7 +248,10 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         <div
             className={cn(
                 "space-y-8",
-                isPhaseAuthoring || blockAuthorActive ? "min-w-0" : PLATFORM_PAGE_WITH_FIXED_FOOTER,
+                cn(
+                    "min-w-0 overflow-x-hidden",
+                    !(isPhaseAuthoring || blockAuthorActive) && PLATFORM_PAGE_WITH_FIXED_FOOTER,
+                ),
             )}
             data-testid="client-planning-tab"
         >

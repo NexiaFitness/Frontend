@@ -56,7 +56,12 @@ export const AUTHORING_STEP_CARD_CLASS = cn(
 export const AUTHORING_STEP_META_CLASS = PLATFORM_SECTION_LABEL;
 
 export const AUTHORING_FOOTER_INNER_CLASS =
-    "mx-auto flex w-full max-w-3xl items-center justify-between gap-3";
+    "mx-auto flex w-full min-w-0 max-w-full flex-col-reverse gap-3 sm:max-w-3xl sm:flex-row sm:items-center sm:justify-between sm:gap-3";
+
+/** Artículo + sustantivo para copy de periodización (concordancia ES). */
+export function periodUnitPhrase(unit: "fase" | "bloque"): string {
+    return unit === "fase" ? "la fase" : "el bloque";
+}
 
 export const AUTHORING_DAY_TOGGLE_TRACK_CLASS =
     "flex flex-wrap justify-center gap-2 sm:gap-3";

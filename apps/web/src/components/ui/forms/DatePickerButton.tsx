@@ -83,7 +83,7 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
         const spaceBelow = window.innerHeight - belowTop - viewportPad;
         const spaceAbove = r.top - viewportPad;
         const preferBelow = spaceBelow >= Math.min(CALENDAR_ESTIMATED_HEIGHT, spaceAbove);
-        let top = preferBelow ? belowTop : Math.max(viewportPad, r.top - gap - CALENDAR_ESTIMATED_HEIGHT);
+        const top = preferBelow ? belowTop : Math.max(viewportPad, r.top - gap - CALENDAR_ESTIMATED_HEIGHT);
         let left = r.left;
         if (left + popoverWidth > window.innerWidth - viewportPad) {
             left = Math.max(viewportPad, window.innerWidth - viewportPad - popoverWidth);

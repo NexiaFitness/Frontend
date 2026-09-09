@@ -103,7 +103,7 @@ export const DashboardShell: React.FC = () => {
             <main
                 id={DASHBOARD_MAIN_SCROLL_ID}
                 className={cn(
-                    "min-h-0 min-w-0 overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
+                    "min-h-0 min-w-0 overflow-x-hidden overflow-y-auto overflow-anchor-none px-6 pb-8 pt-7 transition-all duration-200 ease-in-out",
                     DASHBOARD_MAIN_SCROLL_PADDING_CLASS,
                     "h-[calc(100vh-theme(space.navbar-dashboard-mobile))] lg:h-[calc(100vh-theme(space.navbar-dashboard-desktop))]",
                     sidebarCollapsed ? "lg:ml-sidebar-collapsed" : "lg:ml-sidebar-expanded",

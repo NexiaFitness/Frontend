@@ -71,7 +71,6 @@ export * from "./navigation";
 
 // Planning cargas (period-based) — Plan de cargas Fase 0
 export * from "./planningCargas";
-export * from "./quickProgramDraft";
 
 // Progress types
 export * from "./progress";

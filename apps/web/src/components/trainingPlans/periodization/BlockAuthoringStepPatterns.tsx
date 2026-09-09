@@ -10,6 +10,7 @@ import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStruct
 
 import { Button } from "@/components/ui/buttons";
 import { PLATFORM_ALT_ITEM } from "@/components/ui/surface/platformPremiumPresentation";
+import { cn } from "@/lib/utils";
 
 import { BlockPatternPickerSheet } from "./BlockPatternPickerSheet";
 import { PatternBadge } from "./PatternBadge";
@@ -20,6 +21,7 @@ import {
 import {
     AUTHORING_STEP_META_CLASS,
     WEEKDAY_LABELS_ES,
+    periodUnitPhrase,
 } from "./phaseAuthoringPresentation";
 
 interface Props {
@@ -29,6 +31,7 @@ interface Props {
     catalog: MovementPattern[];
     catalogLoading?: boolean;
     catalogError?: boolean;
+    periodUnit?: "fase" | "bloque";
 }
 
 function patternDisplayName(pattern: MovementPattern): string {
@@ -52,8 +55,10 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
     catalog,
     catalogLoading,
     catalogError,
+    periodUnit = "fase",
 }) => {
     const [pickerDay, setPickerDay] = useState<number | null>(null);
+    const periodLabel = periodUnitPhrase(periodUnit);
 
     const catalogById = useMemo(
         () => new Map(catalog.map((p) => [p.id, p])),
@@ -100,8 +105,8 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
             <p className={AUTHORING_STEP_META_CLASS}>Patrones por día</p>
             <p className="text-sm text-muted-foreground">
                 Asigna manualmente los patrones de movimiento a cada día de
-                entrenamiento. La configuración se aplicará a todas las semanas
-                del bloque.
+                entrenamiento. La configuración se aplicará a todas las semanas de{" "}
+                {periodLabel}.
             </p>
 
             <ul className="space-y-2">
@@ -111,8 +116,16 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                         dayOfWeek,
                     );
                     const shortLabel = WEEKDAY_LABELS_ES[dayOfWeek - 1];
+                    const missingPatterns = patterns.length === 0;
                     return (
-                        <li key={dayOfWeek} className={PLATFORM_ALT_ITEM}>
+                        <li
+                            key={dayOfWeek}
+                            className={cn(
+                                PLATFORM_ALT_ITEM,
+                                missingPatterns &&
+                                    "border-warning/50 bg-warning/5 ring-1 ring-warning/30",
+                            )}
+                        >
                             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="min-w-0 flex-1 space-y-2">
                                     <p className="text-sm font-semibold text-foreground">

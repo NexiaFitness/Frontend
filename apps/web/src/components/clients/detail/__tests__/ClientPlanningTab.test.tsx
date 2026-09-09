@@ -139,8 +139,15 @@ describe("ClientPlanningTab", () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText("Bloques configurados")).toBeInTheDocument();
+                expect(
+                    screen.getByTestId("planning-explore-shell"),
+                ).toBeInTheDocument();
             });
+
+            expect(screen.getByText("Planificación")).toBeInTheDocument();
+            expect(
+                screen.queryByText("Bloques configurados"),
+            ).not.toBeInTheDocument();
         });
 
         it("muestra superficie focal D-PAP cuando blockAuthor=create en URL", async () => {

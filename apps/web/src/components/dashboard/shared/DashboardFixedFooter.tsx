@@ -16,11 +16,11 @@ import { cn } from "@/lib/utils";
 
 /** Shell compartido — misma altura que el bloque usuario del sidebar (py-4). */
 export const DASHBOARD_FIXED_FOOTER_SHELL_CLASS =
-  "fixed bottom-0 right-0 z-30 border-t border-border bg-background px-6 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] pointer-events-none";
+  "fixed bottom-0 right-0 z-30 box-border max-w-[100vw] overflow-x-hidden border-t border-border bg-background px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] pointer-events-none sm:px-6";
 
 /** Contenedor de acciones: no captura clics fuera de hijos interactivos. */
 export const DASHBOARD_FIXED_FOOTER_ACTIONS_CLASS =
-  "pointer-events-none [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_[role=button]]:pointer-events-auto [&_[role=link]]:pointer-events-auto";
+  "pointer-events-none min-w-0 max-w-full [&_a]:pointer-events-auto [&_button]:pointer-events-auto [&_[role=button]]:pointer-events-auto [&_[role=link]]:pointer-events-auto";
 
 export interface DashboardFixedFooterProps {
   children: React.ReactNode;

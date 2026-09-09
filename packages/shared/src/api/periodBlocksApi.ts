@@ -6,8 +6,6 @@ import type {
   PlanPeriodBlockWithStructureCreate,
   PlanPeriodBlockWithStructureOut,
   PhaseEvaluationContextList,
-  QuickProgramMaterializeCreate,
-  QuickProgramMaterializeOut,
 } from "../types/planningCargas";
 
 export const periodBlocksApi = baseApi.injectEndpoints({
@@ -124,32 +122,6 @@ export const periodBlocksApi = baseApi.injectEndpoints({
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
       ],
     }),
-
-    materializeQuickProgram: builder.mutation<
-      QuickProgramMaterializeOut,
-      { planId: number; data: QuickProgramMaterializeCreate }
-    >({
-      query: ({ planId, data }) => ({
-        url: `/training-plans/${planId}/quick-program/materialize`,
-        method: "POST",
-        body: data,
-        headers: { "Content-Type": "application/json" },
-      }),
-      invalidatesTags: (result, _error, { planId }) => {
-        const tags: Array<
-          | { type: "PlanPeriodBlock"; id: number | string }
-          | { type: "WeeklyStructure"; id: number | string }
-        > = [{ type: "PlanPeriodBlock", id: `LIST-${planId}` }];
-        for (const item of result?.blocks ?? []) {
-          const blockId = item.block?.id;
-          if (blockId != null) {
-            tags.push({ type: "PlanPeriodBlock", id: blockId });
-            tags.push({ type: "WeeklyStructure", id: blockId });
-          }
-        }
-        return tags;
-      },
-    }),
   }),
   overrideExisting: false,
 });
@@ -162,5 +134,4 @@ export const {
   useCreatePeriodBlockWithStructureMutation,
   useUpdatePeriodBlockMutation,
   useDeletePeriodBlockMutation,
-  useMaterializeQuickProgramMutation,
 } = periodBlocksApi;

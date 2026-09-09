@@ -102,9 +102,7 @@ export function buildDefaultSessionName(input: BuildDefaultSessionNameInput): st
         return joinSegments(["Sesión libre", dateShort]);
     }
 
-    const quality =
-        qualityLabel?.trim() ||
-        null;
+    const quality = qualityLabel?.trim() || null;
 
     return joinSegments([
         quality,

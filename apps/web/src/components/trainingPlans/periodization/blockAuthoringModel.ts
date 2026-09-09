@@ -71,6 +71,8 @@ export function canNavigateToBlockAuthorStep(
     const maxIdx = blockAuthorStepIndex(maxReachedStep);
     if (targetIdx <= currentIdx) return true;
     if (mode === "edit") return true;
+    const immediateNext = nextBlockAuthorStep(current);
+    if (immediateNext === target) return true;
     return targetIdx <= maxIdx + 1;
 }
 

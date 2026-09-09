@@ -5,7 +5,6 @@
 import React, {
     useCallback,
     useEffect,
-    useLayoutEffect,
     useMemo,
     useRef,
     useState,
@@ -15,7 +14,6 @@ import { useDispatch } from "react-redux";
 
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
-import type { PhaseDraft } from "@nexia/shared/types/quickProgramDraft";
 import { resolveClientTrainingFrequency } from "@nexia/shared";
 import { useGetMovementPatternsQuery } from "@nexia/shared/api/exercisesApi";
 import { useGetWeeklyStructureQuery, weeklyStructureApi } from "@nexia/shared/api/weeklyStructureApi";
@@ -33,8 +31,6 @@ import { validateQualitiesStepAdvance } from "./periodBlockQualitiesValidation";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { useBlockAuthoringPersistence } from "./useBlockAuthoringPersistence";
 import { useBlockAuthoringNavigation } from "./useBlockAuthoringNavigation";
-import { useLocalBlockAuthoringNavigation } from "./useLocalBlockAuthoringNavigation";
-import { mergeFormIntoPhaseDraft } from "./phaseDraftFormBridge";
 import {
     blockAuthorStepIndex,
     nextBlockAuthorStep,
@@ -51,9 +47,7 @@ import {
     getActiveDaysFromWeek1,
     setActiveDaysOnWeek1,
 } from "./blockAuthoringDaysUtils";
-import {
-    allActiveDaysHavePatterns,
-} from "./blockAuthoringPatternsUtils";
+import { allActiveDaysHavePatterns } from "./blockAuthoringPatternsUtils";
 import { weeklyStructureToDraft } from "./periodBlockPersistence";
 import {
     AUTHORING_FOOTER_INNER_CLASS,
@@ -64,8 +58,6 @@ import {
     AUTHORING_SURFACE_CLASS,
     AUTHORING_TITLE_CLASS,
 } from "./phaseAuthoringPresentation";
-
-export type BlockAuthoringPersistMode = "api" | "local";
 
 interface Props {
     mode: BlockAuthorMode;
@@ -82,15 +74,6 @@ interface Props {
     planGoalForRecommendations?: string;
     onAuthoringChange?: (active: boolean) => void;
     onExit: () => void;
-    /** api = F2 persist; local = Quick Program draft (sin POST/PUT). */
-    persistMode?: BlockAuthoringPersistMode;
-    /** Obligatorio en persistMode local — borrador de la fase activa. */
-    phaseDraft?: PhaseDraft;
-    onPhaseDraftChange?: (phase: PhaseDraft) => void;
-    authoringStep?: BlockAuthorStep;
-    onAuthoringStepChange?: (step: BlockAuthorStep) => void;
-    /** Overlap inter-fase + bloques persistidos (QP). */
-    overlapDetectedOverride?: boolean;
 }
 
 export const PlanBlockAuthoringSurface: React.FC<Props> = ({
@@ -108,14 +91,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     planGoalForRecommendations,
     onAuthoringChange,
     onExit,
-    persistMode = "api",
-    phaseDraft,
-    onPhaseDraftChange,
-    authoringStep = "qualities",
-    onAuthoringStepChange,
-    overlapDetectedOverride,
 }) => {
-    const isLocalDraft = persistMode === "local";
     const { showWarning } = useToast();
     const dispatch = useDispatch<AppDispatch>();
     const {
@@ -124,33 +100,21 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         isError: patternsError,
     } = useGetMovementPatternsQuery({ limit: 100, is_active: true });
     const [maxReachedStep, setMaxReachedStep] = useState<BlockAuthorStep>(
-        isLocalDraft
-            ? (phaseDraft?.maxReachedStep ?? "qualities")
-            : mode === "edit"
-              ? "summary"
-              : "qualities",
+        mode === "edit" ? "summary" : "qualities",
     );
     const [structureLoaded, setStructureLoaded] = useState(false);
     const createInitializedRef = useRef(false);
     const editBlockIdRef = useRef<number | null>(null);
 
-    const { data: existingStructure } =
-        useGetWeeklyStructureQuery(
+    const { data: existingStructure } = useGetWeeklyStructureQuery(
         { planId, blockId: blockId! },
         {
-            skip: isLocalDraft || mode !== "edit" || blockId == null,
+            skip: mode !== "edit" || blockId == null,
             refetchOnMountOrArgChange: true,
         },
     );
 
-    const urlNavigation = useBlockAuthoringNavigation(maxReachedStep);
-    const localNavigation = useLocalBlockAuthoringNavigation({
-        mode: "create",
-        step: authoringStep,
-        maxReachedStep,
-        onStepChange: (next) => onAuthoringStepChange?.(next),
-    });
-    const navigation = isLocalDraft ? localNavigation : urlNavigation;
+    const navigation = useBlockAuthoringNavigation(maxReachedStep);
     const step = navigation.step;
 
     const confirmWeeklyStructureFromServer = useCallback(async () => {
@@ -183,7 +147,6 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         setWeeklyStructure,
         loadBlock,
         initCreateRange,
-        hydrateFromPhaseDraft,
         hydrateWeeklyStructure,
         markPersisted,
         structureBaseline,
@@ -202,7 +165,6 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
     useEffect(() => {
         if (createInitializedRef.current) return;
-        if (isLocalDraft) return;
         if (mode === "create" && blockStart && blockEnd) {
             createInitializedRef.current = true;
             initCreateRange(blockStart, blockEnd);
@@ -215,7 +177,6 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             }
         }
     }, [
-        isLocalDraft,
         mode,
         blockStart,
         blockEnd,
@@ -224,89 +185,8 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         setWeeklyStructure,
     ]);
 
-    const localHydratedRef = useRef(false);
-    const editingPhaseRef = useRef<PhaseDraft | null>(null);
-    const formRef = useRef(form);
-    formRef.current = form;
-    const maxReachedStepRef = useRef(maxReachedStep);
-    maxReachedStepRef.current = maxReachedStep;
-    const onPhaseDraftChangeRef = useRef(onPhaseDraftChange);
-    onPhaseDraftChangeRef.current = onPhaseDraftChange;
-
-    const flushEditingPhaseToDraft = useCallback(() => {
-        if (
-            !isLocalDraft ||
-            !onPhaseDraftChangeRef.current ||
-            !localHydratedRef.current
-        ) {
-            return;
-        }
-        const current = editingPhaseRef.current;
-        if (current == null) return;
-        const merged = mergeFormIntoPhaseDraft(
-            current,
-            formRef.current,
-            maxReachedStepRef.current,
-        );
-        editingPhaseRef.current = merged;
-        onPhaseDraftChangeRef.current(merged);
-    }, [isLocalDraft]);
-
-    useLayoutEffect(() => {
-        if (!isLocalDraft || phaseDraft == null) return;
-
-        const prev = editingPhaseRef.current;
-        const localIdChanged =
-            prev != null && prev.localId !== phaseDraft.localId;
-
-        if (localIdChanged && localHydratedRef.current) {
-            flushEditingPhaseToDraft();
-        }
-
-        if (localIdChanged || prev == null) {
-            editingPhaseRef.current = phaseDraft;
-            hydrateFromPhaseDraft(phaseDraft);
-            setMaxReachedStep(phaseDraft.maxReachedStep);
-            localHydratedRef.current = true;
-            return;
-        }
-
-        if (!localHydratedRef.current) return;
-
-        if (prev.copiedFromPhaseId !== phaseDraft.copiedFromPhaseId) {
-            editingPhaseRef.current = phaseDraft;
-            hydrateFromPhaseDraft(phaseDraft);
-            setMaxReachedStep(phaseDraft.maxReachedStep);
-        }
-    }, [
-        isLocalDraft,
-        phaseDraft,
-        flushEditingPhaseToDraft,
-        hydrateFromPhaseDraft,
-    ]);
-
     useEffect(() => {
-        if (!isLocalDraft || !onPhaseDraftChange || !localHydratedRef.current) {
-            return;
-        }
-        const current = editingPhaseRef.current;
-        if (current == null || current.localId !== phaseDraft?.localId) {
-            return;
-        }
-        const merged = mergeFormIntoPhaseDraft(current, form, maxReachedStep);
-        editingPhaseRef.current = merged;
-        onPhaseDraftChange(merged);
-    }, [isLocalDraft, form, maxReachedStep, onPhaseDraftChange, phaseDraft?.localId]);
-
-    useEffect(() => {
-        if (!isLocalDraft) return;
-        return () => {
-            flushEditingPhaseToDraft();
-        };
-    }, [isLocalDraft, flushEditingPhaseToDraft]);
-
-    useEffect(() => {
-        if (mode !== "edit" || blockId == null || isLocalDraft) return;
+        if (mode !== "edit" || blockId == null) return;
         if (editBlockIdRef.current === blockId) return;
         editBlockIdRef.current = blockId;
         const block = blocks.find((b) => b.id === blockId);
@@ -317,7 +197,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     }, [mode, blockId, blocks, loadBlock]);
 
     useEffect(() => {
-        if (isLocalDraft || mode !== "edit" || blockId == null || structureLoaded) {
+        if (mode !== "edit" || blockId == null || structureLoaded) {
             return;
         }
 
@@ -368,11 +248,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         markPersisted,
         onCreateSuccess: onExit,
         refetchWeeklyStructure: confirmWeeklyStructureFromServer,
-        enabled: !isLocalDraft,
     });
-
-    const overlapEffective =
-        overlapDetectedOverride ?? overlapDetected;
 
     const planGoalResolved =
         activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
@@ -408,7 +284,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 return validateQualitiesStepAdvance({
                     qualitiesCount: form.qualities.length,
                     qualitiesSum,
-                    overlapDetected: overlapEffective,
+                    overlapDetected,
                     outsidePlanBounds,
                 }).ok;
             case "volumeIntensity":
@@ -428,7 +304,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         form.volumeLevel,
         form.intensityLevel,
         qualitiesSum,
-        overlapEffective,
+        overlapDetected,
         outsidePlanBounds,
         activeDays,
         form.weeklyStructure,
@@ -439,7 +315,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             const result = validateQualitiesStepAdvance({
                 qualitiesCount: form.qualities.length,
                 qualitiesSum,
-                overlapDetected: overlapEffective,
+                overlapDetected,
                 outsidePlanBounds,
             });
             if (!result.ok && result.message) {
@@ -462,17 +338,18 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         }
         const next = nextBlockAuthorStep(step);
         if (next == null) return;
-        setMaxReachedStep((prev) =>
-            blockAuthorStepIndex(next) > blockAuthorStepIndex(prev)
+        const advancedMax =
+            blockAuthorStepIndex(next) > blockAuthorStepIndex(maxReachedStep)
                 ? next
-                : prev,
-        );
+                : maxReachedStep;
+        setMaxReachedStep(advancedMax);
         navigation.goToStep(next);
     }, [
         step,
+        maxReachedStep,
         form.qualities.length,
         qualitiesSum,
-        overlapEffective,
+        overlapDetected,
         outsidePlanBounds,
         activeDays,
         form.weeklyStructure,
@@ -481,25 +358,24 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     ]);
 
     const handleExit = useCallback(() => {
-        if (!isLocalDraft && isDirty) {
+        if (isDirty) {
             const ok = window.confirm(
                 "Tienes cambios sin guardar. ¿Salir y descartarlos?",
             );
             if (!ok) return;
         }
         onExit();
-    }, [isLocalDraft, isDirty, onExit]);
+    }, [isDirty, onExit]);
 
-    const title = isLocalDraft
-        ? "Configurar fase"
-        : mode === "create"
-          ? "Bloque en creación"
-          : "Editar bloque de periodización";
-    const subtitle = isLocalDraft
-        ? "Los cambios se guardan en borrador hasta crear la programación completa."
-        : mode === "create"
-          ? "Configura el bloque paso a paso antes de guardarlo."
-          : "Revisa o ajusta cualquier sección del bloque.";
+    const title =
+        mode === "create"
+            ? "Bloque en creación"
+            : "Editar bloque de periodización";
+    const periodUnit = "fase";
+    const subtitle =
+        mode === "create"
+            ? "Configura el bloque paso a paso antes de guardarlo."
+            : "Revisa o ajusta cualquier sección del bloque.";
 
     const structureHydrating =
         mode === "edit" && blockId != null && !structureLoaded;
@@ -507,29 +383,37 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         step === "days" || step === "patterns" || step === "summary";
 
     const isSummary = step === "summary";
-    const primaryLabel = isLocalDraft
+    const primaryLabel = mode === "create"
         ? isSummary
-            ? "Fase en borrador"
+            ? "Crear bloque"
             : "Siguiente"
-        : mode === "create"
-          ? isSummary
-              ? "Crear bloque"
-              : "Siguiente"
-          : isSummary
-            ? "Guardar bloque"
-            : "Siguiente";
+        : isSummary
+          ? "Guardar bloque"
+          : "Siguiente";
+
+    const patternsIncomplete =
+        step === "patterns" &&
+        activeDays.length > 0 &&
+        !allActiveDaysHavePatterns(form.weeklyStructure, activeDays);
 
     const stepFooter = (
         <>
-            {!canAdvanceCurrentStep &&
-            overlapEffective &&
-            step !== "summary" ? (
+            {!canAdvanceCurrentStep && overlapDetected && step !== "summary" ? (
                 <p
                     className="mb-3 text-sm text-warning"
                     data-testid="authoring-overlap-hint"
                 >
                     El rango se solapa con otro bloque. Ajusta las fechas antes de
                     continuar.
+                </p>
+            ) : null}
+            {patternsIncomplete ? (
+                <p
+                    className="mb-3 text-sm text-warning"
+                    data-testid="authoring-patterns-hint"
+                >
+                    Asigna al menos un patrón de movimiento a cada día de entrenamiento
+                    antes de continuar.
                 </p>
             ) : null}
             <div className={AUTHORING_FOOTER_INNER_CLASS}>
@@ -548,26 +432,19 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                     disabled={
                         isSaving ||
                         (structureHydrating && stepNeedsStructure) ||
-                        (isLocalDraft && isSummary) ||
                         (isSummary
-                            ? isLocalDraft
-                                ? true
-                                : mode === "create"
-                                  ? !canPersistBlock ||
-                                    activeDays.length === 0 ||
-                                    !allActiveDaysHavePatterns(
-                                        form.weeklyStructure,
-                                        activeDays,
-                                    )
-                                  : !isDirty || !structureLoaded
+                            ? mode === "create"
+                                ? !canPersistBlock ||
+                                  activeDays.length === 0 ||
+                                  !allActiveDaysHavePatterns(
+                                      form.weeklyStructure,
+                                      activeDays,
+                                  )
+                                : !isDirty || !structureLoaded
                             : !canAdvanceCurrentStep ||
                               (structureHydrating && stepNeedsStructure))
                     }
-                    onClick={
-                        isLocalDraft || !isSummary
-                            ? handleNext
-                            : () => void save()
-                    }
+                    onClick={isSummary ? () => void save() : handleNext}
                 >
                     {primaryLabel}
                 </Button>
@@ -589,18 +466,16 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                         <h3 className={AUTHORING_TITLE_CLASS}>{title}</h3>
                         <p className={AUTHORING_SUBTITLE_CLASS}>{subtitle}</p>
                     </div>
-                    {!isLocalDraft ? (
-                        <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            aria-label="Cerrar autoría"
-                            onClick={handleExit}
-                            className="shrink-0"
-                        >
-                            <X className="h-5 w-5" />
-                        </Button>
-                    ) : null}
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Cerrar autoría"
+                        onClick={handleExit}
+                        className="shrink-0"
+                    >
+                        <X className="h-5 w-5" />
+                    </Button>
                 </div>
                 <BlockAuthoringStepper
                     activeStep={step}
@@ -612,71 +487,69 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
             <div className={AUTHORING_STEP_CARD_CLASS}>
                 <NexiaGlassAccentRim />
-                {structureHydrating && stepNeedsStructure ? (
-                    <p className="text-sm text-muted-foreground py-8 text-center">
-                        Cargando estructura semanal…
-                    </p>
-                ) : step === "qualities" ? (
-                    <PeriodBlockQualitiesStep
-                        qualities={form.qualities}
-                        qualitiesSum={qualitiesSum}
-                        catalog={catalog}
-                        overlapDetected={overlapEffective}
-                        outsidePlanBounds={outsidePlanBounds}
-                        onAddQuality={addQuality}
-                        onRemoveQuality={removeQuality}
-                        onUpdateQualityPct={updateQualityPct}
-                        onContinue={handleNext}
-                        hideFooter
-                    />
-                ) : step === "volumeIntensity" ? (
-                    <BlockAuthoringStepLoad
-                        volumeLevel={form.volumeLevel}
-                        intensityLevel={form.intensityLevel}
-                        onVolumeChange={setVolumeLevel}
-                        onIntensityChange={setIntensityLevel}
-                        volumeIntensityContext={formVolumeContext}
-                        volumeIntensityPhase={volumeNominal.phase}
-                        volumeIntensityHint={volumeNominal.auxiliaryHint}
-                    />
-                ) : step === "days" ? (
-                    <BlockAuthoringStepDays
-                        activeDays={activeDays}
-                        onToggleDay={handleToggleDay}
-                    />
-                ) : step === "patterns" ? (
-                    <BlockAuthoringStepPatterns
-                        activeDays={activeDays}
-                        weeklyStructure={form.weeklyStructure}
-                        onWeeklyStructureChange={setWeeklyStructure}
-                        catalog={patternsCatalog}
-                        catalogLoading={patternsLoading}
-                        catalogError={patternsError}
-                    />
-                ) : step === "summary" ? (
-                    <BlockAuthoringStepSummary
-                        startDate={form.startDate}
-                        endDate={form.endDate}
-                        qualities={form.qualities}
-                        qualitiesSum={qualitiesSum}
-                        volumeLevel={form.volumeLevel}
-                        intensityLevel={form.intensityLevel}
-                        activeDays={activeDays}
-                        weeklyStructure={form.weeklyStructure}
-                        catalog={catalog}
-                        patternsCatalog={patternsCatalog}
-                        onEditStep={navigation.goToStep}
-                    />
-                ) : null}
+                <div className="relative z-[1]">
+                    {structureHydrating && stepNeedsStructure ? (
+                        <p className="text-sm text-muted-foreground py-8 text-center">
+                            Cargando estructura semanal…
+                        </p>
+                    ) : step === "qualities" ? (
+                        <PeriodBlockQualitiesStep
+                            qualities={form.qualities}
+                            qualitiesSum={qualitiesSum}
+                            catalog={catalog}
+                            overlapDetected={overlapDetected}
+                            outsidePlanBounds={outsidePlanBounds}
+                            onAddQuality={addQuality}
+                            onRemoveQuality={removeQuality}
+                            onUpdateQualityPct={updateQualityPct}
+                            onContinue={handleNext}
+                            hideFooter
+                        />
+                    ) : step === "volumeIntensity" ? (
+                        <BlockAuthoringStepLoad
+                            volumeLevel={form.volumeLevel}
+                            intensityLevel={form.intensityLevel}
+                            onVolumeChange={setVolumeLevel}
+                            onIntensityChange={setIntensityLevel}
+                            volumeIntensityContext={formVolumeContext}
+                            volumeIntensityPhase={volumeNominal.phase}
+                            volumeIntensityHint={volumeNominal.auxiliaryHint}
+                        />
+                    ) : step === "days" ? (
+                        <BlockAuthoringStepDays
+                            activeDays={activeDays}
+                            onToggleDay={handleToggleDay}
+                            periodUnit={periodUnit}
+                        />
+                    ) : step === "patterns" ? (
+                        <BlockAuthoringStepPatterns
+                            activeDays={activeDays}
+                            weeklyStructure={form.weeklyStructure}
+                            onWeeklyStructureChange={setWeeklyStructure}
+                            catalog={patternsCatalog}
+                            catalogLoading={patternsLoading}
+                            catalogError={patternsError}
+                            periodUnit={periodUnit}
+                        />
+                    ) : step === "summary" ? (
+                        <BlockAuthoringStepSummary
+                            startDate={form.startDate}
+                            endDate={form.endDate}
+                            qualities={form.qualities}
+                            qualitiesSum={qualitiesSum}
+                            volumeLevel={form.volumeLevel}
+                            intensityLevel={form.intensityLevel}
+                            activeDays={activeDays}
+                            weeklyStructure={form.weeklyStructure}
+                            catalog={catalog}
+                            patternsCatalog={patternsCatalog}
+                            onEditStep={navigation.goToStep}
+                        />
+                    ) : null}
+                </div>
             </div>
 
-            {isLocalDraft ? (
-                <div className="mt-4 border-t border-border/60 pt-4">
-                    {stepFooter}
-                </div>
-            ) : (
-                <DashboardFixedFooter>{stepFooter}</DashboardFixedFooter>
-            )}
+            <DashboardFixedFooter>{stepFooter}</DashboardFixedFooter>
         </div>
     );
 };

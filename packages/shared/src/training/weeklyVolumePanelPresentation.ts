@@ -25,9 +25,9 @@ export const VOLUME_CONSTRUCTOR_DRAFT_SUBTITLE =
 export const VOLUME_WEEKLY_SAVED_SUBTITLE =
     "Acumulado semanal programado según sesiones guardadas y objetivos del plan";
 
-/** Nota de método de conteo — solo volumen planificado (D1/D1b). */
+/** Nota de método de conteo — copy para entrenador (sin jerga interna D1/D1b). */
 export const VOLUME_COUNTING_METHOD_NOTE =
-    "Series equivalentes programadas por grupo muscular: prime_mover cuenta directo (entero); synergist indirecto (×0,5, sin truncar) salvo D1b en el mismo grupo. Estabilizadores no suman. Solo prescripción planificada guardada con mapeo en catálogo — no ejecutado.";
+    "Series programadas por grupo muscular según el catálogo. Las series directas cuentan enteras; las de apoyo, la mitad. Solo refleja lo prescrito en esta sesión, no lo ejecutado por el atleta.";
 
 export const VOLUME_COVERAGE_EMPTY_WEEK =
     "Semana vacía: no hay sesiones programadas guardadas en este rango.";
