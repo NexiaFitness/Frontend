@@ -180,6 +180,7 @@ export function setDataToExerciseView(
     ConstructorExercise,
     | "plannedReps"
     | "plannedWeight"
+    | "plannedAssistanceKg"
     | "plannedDuration"
     | "effortCharacter"
     | "effortValue"
@@ -240,9 +241,7 @@ export function hydrateDropsetConstructorRow(
     });
 }
 
-export interface DropsetApiExerciseLine extends ApiExerciseLine {
-    dropset_sequence?: number | null;
-}
+export type DropsetApiExerciseLine = ApiExerciseLine;
 
 /** Hidrata dropset si hay al menos una línea del mismo ejercicio (colapsada o expandida). */
 export function canHydrateDropsetApiLines(exs: DropsetApiExerciseLine[]): boolean {

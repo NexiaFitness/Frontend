@@ -7,7 +7,10 @@
  */
 
 import { markDistinctStepsFromMaster } from "@nexia/shared";
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import {
+    SET_TYPE,
+    type SessionBlockExerciseHydrationLine,
+} from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
     ConstructorRow,
@@ -244,19 +247,8 @@ export function getConstructorPersistLines(row: ConstructorRow): PersistExercise
         }));
 }
 
-export interface ApiExerciseLine {
-    id: number;
-    exercise_id: number;
-    planned_reps: string | null;
-    planned_weight: number | null;
-    planned_rest: number | null;
-    planned_sets: number | null;
-    planned_duration: number | null;
-    effort_character: unknown;
-    effort_value: number | null;
-    notes: string | null;
-    order_in_block: number;
-}
+/** Alias del contrato compartido SessionBlockExerciseHydrationLine (constructor). */
+export type ApiExerciseLine = SessionBlockExerciseHydrationLine;
 
 export function isCollapsedSingleSetApiLines(exs: ApiExerciseLine[]): boolean {
     if (exs.length === 0) return false;
