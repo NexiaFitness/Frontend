@@ -1,32 +1,46 @@
 /**
- * BlockAuthoringStepSummary.tsx — Resumen profesional del borrador (D-PAP + D-RES Q8).
+ * BlockAuthoringStepSummary.tsx — Resumen compacto del borrador (D-PAP + D-RES Q8).
  */
 
 import React, { useMemo } from "react";
+import { Pencil } from "lucide-react";
 
 import type { PhysicalQuality, PeriodBlockQualityInput } from "@nexia/shared/types/planningCargas";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
-import { Button } from "@/components/ui/buttons";
 import { cn } from "@/lib/utils";
 
-import {
-    getCoPrimarySlugs,
-    isCoPrimaryMix,
-    formatCoPrimaryLabels,
-    PHYSICAL_QUALITY_MIX_COPY,
-} from "./periodizationQualitiesPresentation";
 import { getPatternsForDayFromWeek1 } from "./blockAuthoringPatternsUtils";
 import { PatternBadge } from "./PatternBadge";
+import { BlockLevelMeter } from "./BlockLevelMeter";
+import { QualityShareBar } from "./QualityShareBar";
+import { PlanningDateRangeMeta } from "./PlanningDateRangeMeta";
+import { PeriodBlockIconButton } from "./PeriodBlockIconButton";
 import {
-    AUTHORING_STEP_INNER_PANEL_CLASS,
-    AUTHORING_STEP_META_CLASS,
     WEEKDAY_ISO_ORDER,
     WEEKDAY_LABELS_ES,
 } from "./phaseAuthoringPresentation";
 import type { BlockAuthorStep } from "./blockAuthoringModel";
+import {
+    BLOCK_AUTHORING_SUMMARY_DAY_CHIP_CLASS,
+    BLOCK_AUTHORING_SUMMARY_DAYS_ROW_CLASS,
+    BLOCK_AUTHORING_SUMMARY_HERO_CLASS,
+    BLOCK_AUTHORING_SUMMARY_INTRO_CLASS,
+    BLOCK_AUTHORING_SUMMARY_LOAD_STACK_CLASS,
+    BLOCK_AUTHORING_SUMMARY_MAIN_GRID_CLASS,
+    BLOCK_AUTHORING_SUMMARY_PATTERN_BADGES_CLASS,
+    BLOCK_AUTHORING_SUMMARY_PATTERN_DAY_CLASS,
+    BLOCK_AUTHORING_SUMMARY_PATTERN_DAY_TITLE_CLASS,
+    BLOCK_AUTHORING_SUMMARY_PATTERN_EMPTY_CLASS,
+    BLOCK_AUTHORING_SUMMARY_PATTERN_GRID_CLASS,
+    BLOCK_AUTHORING_SUMMARY_QUALITIES_STACK_CLASS,
+    BLOCK_AUTHORING_SUMMARY_SECTION_CLASS,
+    BLOCK_AUTHORING_SUMMARY_SECTION_HEADER_CLASS,
+    BLOCK_AUTHORING_SUMMARY_SECTION_LABEL_CLASS,
+    BLOCK_AUTHORING_SUMMARY_STACK_CLASS,
+} from "./blockAuthoringSummaryPresentation";
 
 interface Props {
     startDate: string | null;
@@ -41,23 +55,8 @@ interface Props {
     patternsCatalog: MovementPattern[];
     onEditStep: (step: BlockAuthorStep) => void;
     hideIntro?: boolean;
+    /** @deprecated Siempre layout compacto premium; se mantiene por compatibilidad. */
     premiumLayout?: boolean;
-}
-
-function formatRange(start: string, end: string): string {
-    const fmt = (iso: string) => {
-        const [y, m, d] = iso.split("-").map(Number);
-        return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
-            day: "numeric",
-            month: "short",
-            year: "numeric",
-        });
-    };
-    return `${fmt(start)} – ${fmt(end)}`;
-}
-
-function patternDisplayName(pattern: MovementPattern): string {
-    return pattern.name_es?.trim() || pattern.name_en;
 }
 
 const WEEKDAY_FULL_ES = [
@@ -68,7 +67,47 @@ const WEEKDAY_FULL_ES = [
     "Viernes",
     "Sábado",
     "Domingo",
-];
+] as const;
+
+function patternDisplayName(pattern: MovementPattern): string {
+    return pattern.name_es?.trim() || pattern.name_en;
+}
+
+interface SummarySectionProps {
+    label: string;
+    editLabel: string;
+    onEdit?: () => void;
+    className?: string;
+    children: React.ReactNode;
+}
+
+function SummarySection({
+    label,
+    editLabel,
+    onEdit,
+    className,
+    children,
+}: SummarySectionProps) {
+    return (
+        <section className={cn(BLOCK_AUTHORING_SUMMARY_SECTION_CLASS, className)}>
+            <div className={BLOCK_AUTHORING_SUMMARY_SECTION_HEADER_CLASS}>
+                <p className={BLOCK_AUTHORING_SUMMARY_SECTION_LABEL_CLASS}>
+                    {label}
+                </p>
+                {onEdit ? (
+                    <PeriodBlockIconButton
+                        variant="edit"
+                        onClick={onEdit}
+                        aria-label={editLabel}
+                    >
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    </PeriodBlockIconButton>
+                ) : null}
+            </div>
+            {children}
+        </section>
+    );
+}
 
 export const BlockAuthoringStepSummary: React.FC<Props> = ({
     startDate,
@@ -83,15 +122,8 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
     patternsCatalog,
     onEditStep,
     hideIntro = false,
-    premiumLayout = false,
 }) => {
-    const sectionClass = premiumLayout
-        ? cn(AUTHORING_STEP_INNER_PANEL_CLASS, "space-y-2 md:space-y-3")
-        : "space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4";
     const activeSet = new Set(activeDays);
-    const dayLabels = WEEKDAY_ISO_ORDER.filter((d) => activeSet.has(d)).map(
-        (d) => WEEKDAY_LABELS_ES[d - 1],
-    );
 
     const patternsById = useMemo(
         () => new Map(patternsCatalog.map((p) => [p.id, p])),
@@ -108,151 +140,142 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
         },
     );
 
-    const coPrimarySlugs = getCoPrimarySlugs(qualities, catalog);
-    const showCoPrimary = isCoPrimaryMix(qualities, catalog);
+    const activeDayChips = WEEKDAY_ISO_ORDER.filter((d) => activeSet.has(d));
 
     return (
-        <div className={cn("space-y-6", premiumLayout && "md:space-y-8")}>
+        <div className={BLOCK_AUTHORING_SUMMARY_STACK_CLASS}>
             {!hideIntro ? (
-                <p className={AUTHORING_STEP_META_CLASS}>Resumen del bloque</p>
+                <p className={BLOCK_AUTHORING_SUMMARY_INTRO_CLASS}>
+                    Resumen del bloque
+                </p>
             ) : null}
 
-            <section className={sectionClass}>
-                <div className="flex items-start justify-between gap-2">
-                    <div>
-                        <p className="text-xs text-muted-foreground">Vigencia</p>
-                        <p className="text-sm font-medium text-foreground">
-                            {startDate && endDate
-                                ? formatRange(startDate, endDate)
-                                : "—"}
+            <div className={BLOCK_AUTHORING_SUMMARY_HERO_CLASS}>
+                {startDate && endDate ? (
+                    <PlanningDateRangeMeta
+                        startDate={startDate}
+                        endDate={endDate}
+                        testId="block-authoring-summary-date-range"
+                    />
+                ) : (
+                    <p className="text-xs text-muted-foreground">Sin fechas definidas</p>
+                )}
+            </div>
+
+            <div className={BLOCK_AUTHORING_SUMMARY_MAIN_GRID_CLASS}>
+                <SummarySection
+                    label={`Cualidades · ${qualitiesSum}%`}
+                    editLabel="Editar cualidades"
+                    onEdit={() => onEditStep("qualities")}
+                >
+                    {qualities.length === 0 ? (
+                        <p className="text-[11px] text-muted-foreground">
+                            Sin cualidades
                         </p>
-                    </div>
-                </div>
-            </section>
+                    ) : (
+                        <div className={BLOCK_AUTHORING_SUMMARY_QUALITIES_STACK_CLASS}>
+                            {qualities.map((q) => {
+                                const catItem = catalog.find(
+                                    (c) => c.id === q.physical_quality_id,
+                                );
+                                const slug = catItem?.slug ?? "unknown";
+                                const name =
+                                    catItem?.name ??
+                                    `#${q.physical_quality_id}`;
+                                const color = getPhysicalQualityColor(slug);
 
-            <section className={sectionClass}>
-                <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">
-                        Cualidades ({qualitiesSum}%)
-                    </p>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => onEditStep("qualities")}
-                    >
-                        Editar
-                    </Button>
-                </div>
-                <ul className="space-y-1">
-                    {qualities.map((q) => {
-                        const catItem = catalog.find(
-                            (c) => c.id === q.physical_quality_id,
-                        );
-                        const slug = catItem?.slug ?? "unknown";
-                        const name =
-                            catItem?.name ??
-                            `#${q.physical_quality_id}`;
-                        const color = getPhysicalQualityColor(slug);
-                        return (
-                            <li
-                                key={q.physical_quality_id}
-                                className="flex items-center justify-between text-sm"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <span
-                                        className="h-2 w-2 rounded-full"
-                                        style={{ backgroundColor: color.hex }}
+                                return (
+                                    <QualityShareBar
+                                        key={q.physical_quality_id}
+                                        name={name}
+                                        percentage={q.percentage}
+                                        colorHex={color.hex}
                                     />
-                                    {name}
-                                </span>
-                                <span className="tabular-nums font-medium">
-                                    {q.percentage}%
-                                </span>
-                            </li>
-                        );
-                    })}
-                </ul>
-                {showCoPrimary ? (
-                    <p className="text-[10px] leading-relaxed text-muted-foreground pt-1">
-                        {PHYSICAL_QUALITY_MIX_COPY.coPrimaryBody}{" "}
-                        <span className="font-medium text-foreground">
-                            ({formatCoPrimaryLabels(coPrimarySlugs, catalog)})
-                        </span>
-                    </p>
-                ) : null}
-            </section>
+                                );
+                            })}
+                        </div>
+                    )}
+                </SummarySection>
 
-            <section className={sectionClass}>
-                <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">
-                        Volumen e intensidad
-                    </p>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => onEditStep("volumeIntensity")}
-                    >
-                        Editar
-                    </Button>
-                </div>
-                <p className="text-sm text-foreground">
-                    Vol {volumeLevel}/10 · Int {intensityLevel}/10
-                </p>
-            </section>
+                <SummarySection
+                    label="Carga"
+                    editLabel="Editar volumen e intensidad"
+                    onEdit={() => onEditStep("volumeIntensity")}
+                >
+                    <div className={BLOCK_AUTHORING_SUMMARY_LOAD_STACK_CLASS}>
+                        <BlockLevelMeter
+                            tone="volume"
+                            level={volumeLevel}
+                            prefix="Volumen"
+                        />
+                        <BlockLevelMeter
+                            tone="intensity"
+                            level={intensityLevel}
+                            prefix="Intensidad"
+                        />
+                    </div>
+                </SummarySection>
+            </div>
 
-            <section className={sectionClass}>
-                <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">Días</p>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => onEditStep("days")}
-                    >
-                        Editar
-                    </Button>
-                </div>
-                <p className="text-sm text-foreground">
-                    {dayLabels.length > 0 ? dayLabels.join(" · ") : "Ningún día seleccionado"}
-                </p>
-            </section>
-
-            <section className={cn(sectionClass, premiumLayout && "space-y-3")}>
-                <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-muted-foreground">Patrones</p>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 text-xs"
-                        onClick={() => onEditStep("patterns")}
-                    >
-                        Editar
-                    </Button>
-                </div>
-                {patternRows.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">
-                        Ningún día seleccionado.
+            <SummarySection
+                label="Días"
+                editLabel="Editar días de entrenamiento"
+                onEdit={() => onEditStep("days")}
+            >
+                {activeDayChips.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">
+                        Ningún día seleccionado
                     </p>
                 ) : (
-                    <ul className="space-y-2">
-                        {patternRows.map(({ dayOfWeek, patterns }) => (
-                            <li
-                                key={dayOfWeek}
-                                className="flex flex-col gap-1.5 sm:flex-row sm:items-start sm:gap-3"
+                    <div className={BLOCK_AUTHORING_SUMMARY_DAYS_ROW_CLASS}>
+                        {activeDayChips.map((day) => (
+                            <span
+                                key={day}
+                                className={BLOCK_AUTHORING_SUMMARY_DAY_CHIP_CLASS}
+                                title={WEEKDAY_FULL_ES[day - 1]}
                             >
-                                <span className="text-sm font-medium text-foreground shrink-0 sm:w-24">
+                                {WEEKDAY_LABELS_ES[day - 1]}
+                            </span>
+                        ))}
+                    </div>
+                )}
+            </SummarySection>
+
+            <SummarySection
+                label="Patrones"
+                editLabel="Editar patrones de movimiento"
+                onEdit={() => onEditStep("patterns")}
+            >
+                {patternRows.length === 0 ? (
+                    <p className="text-[11px] text-muted-foreground">
+                        Ningún día seleccionado
+                    </p>
+                ) : (
+                    <div className={BLOCK_AUTHORING_SUMMARY_PATTERN_GRID_CLASS}>
+                        {patternRows.map(({ dayOfWeek, patterns }) => (
+                            <div
+                                key={dayOfWeek}
+                                className={BLOCK_AUTHORING_SUMMARY_PATTERN_DAY_CLASS}
+                            >
+                                <p
+                                    className={
+                                        BLOCK_AUTHORING_SUMMARY_PATTERN_DAY_TITLE_CLASS
+                                    }
+                                >
                                     {WEEKDAY_FULL_ES[dayOfWeek - 1] ??
                                         WEEKDAY_LABELS_ES[dayOfWeek - 1]}
-                                </span>
-                                <div className="flex flex-wrap gap-1 min-w-0">
+                                </p>
+                                <div
+                                    className={
+                                        BLOCK_AUTHORING_SUMMARY_PATTERN_BADGES_CLASS
+                                    }
+                                >
                                     {patterns.length === 0 ? (
-                                        <span className="text-xs text-muted-foreground">
+                                        <span
+                                            className={
+                                                BLOCK_AUTHORING_SUMMARY_PATTERN_EMPTY_CLASS
+                                            }
+                                        >
                                             Sin patrones
                                         </span>
                                     ) : (
@@ -277,11 +300,11 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
                                         })
                                     )}
                                 </div>
-                            </li>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 )}
-            </section>
+            </SummarySection>
         </div>
     );
 };
