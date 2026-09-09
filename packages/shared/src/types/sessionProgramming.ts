@@ -253,6 +253,28 @@ export interface SessionBlockExercise {
     is_active: boolean;
 }
 
+/**
+ * Subconjunto de SessionBlockExercise para hidratar el constructor de sesión.
+ * Fuente única: evita interfaces locales divergentes en apps/web.
+ */
+export type SessionBlockExerciseHydrationLine = Pick<
+    SessionBlockExercise,
+    | "id"
+    | "exercise_id"
+    | "order_in_block"
+    | "superset_group_id"
+    | "dropset_sequence"
+    | "planned_sets"
+    | "planned_reps"
+    | "planned_weight"
+    | "planned_assistance_kg"
+    | "planned_duration"
+    | "planned_rest"
+    | "effort_character"
+    | "effort_value"
+    | "notes"
+>;
+
 export interface SessionBlockExerciseCreate {
     exercise_id: number;
     order_in_block: number;

@@ -29,6 +29,7 @@ const BASE_BLOCK: PlanPeriodBlock = {
             percentage: 100,
             physical_quality_name: "Fuerza",
             physical_quality_slug: "strength",
+            evaluation_binding: null,
         },
     ],
     created_at: "2026-01-01T00:00:00Z",

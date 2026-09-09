@@ -180,9 +180,7 @@ export function emomGroupLabels(rows: ConstructorRow[]): Map<string, string> {
     return map;
 }
 
-export interface EmomApiExerciseLine extends ApiExerciseLine {
-    superset_group_id?: number | null;
-}
+export type EmomApiExerciseLine = ApiExerciseLine;
 
 export function hydrateEmomConstructorRow(
     base: ConstructorRow,

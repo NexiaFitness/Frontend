@@ -76,7 +76,10 @@ import {
 } from "@/components/sessionProgramming/constructor";
 import { aggregateConstructorRowsForSessionLoadDraft } from "./aggregateConstructorForSessionLoadDraft";
 import type { Exercise } from "@nexia/shared/hooks/exercises";
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import {
+    SET_TYPE,
+    type SessionBlockExercise,
+} from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
@@ -311,23 +314,7 @@ export const EditSession: React.FC = () => {
         let cancelled = false;
 
         const load = async () => {
-            const exercisesByBlock: Record<
-                number,
-                {
-                    id: number;
-                    exercise_id: number;
-                    planned_reps: string | null;
-                    planned_weight: number | null;
-                    planned_rest: number | null;
-                    planned_sets: number | null;
-                    effort_character: unknown;
-                    effort_value: number | null;
-                    notes: string | null;
-                    planned_duration: number | null;
-                    order_in_block: number;
-                    superset_group_id: number | null;
-                }[]
-            > = {};
+            const exercisesByBlock: Record<number, SessionBlockExercise[]> = {};
 
             for (const b of sortedBlocks) {
                 const result = await dispatch(

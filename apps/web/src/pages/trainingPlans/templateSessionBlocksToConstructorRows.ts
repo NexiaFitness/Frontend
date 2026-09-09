@@ -2,7 +2,10 @@
  * Hydrates TemplateProgramSession blocks → ConstructorRow[] (same path as EditSession).
  */
 
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import {
+    SET_TYPE,
+    type SessionBlockExerciseHydrationLine,
+} from "@nexia/shared/types/sessionProgramming";
 import type { TemplateProgramSessionBlock } from "@nexia/shared/types/templateProgram";
 import type {
     ConstructorExercise,
@@ -27,23 +30,6 @@ import {
     normalizeSupersetRow,
 } from "@/components/sessionProgramming/constructor";
 
-type ApiExerciseLine = {
-    id: number;
-    exercise_id: number;
-    planned_reps: string | null;
-    planned_weight: number | null;
-    planned_assistance_kg?: number | null;
-    planned_rest: number | null;
-    planned_sets: number | null;
-    effort_character: unknown;
-    effort_value: number | null;
-    notes: string | null;
-    planned_duration: number | null;
-    order_in_block: number;
-    superset_group_id: number | null;
-    dropset_sequence?: number | null;
-};
-
 function inferRepsTipo(ex: {
     planned_reps: string | null;
     planned_duration: number | null;
@@ -52,7 +38,10 @@ function inferRepsTipo(ex: {
     return "reps";
 }
 
-function mapExerciseLine(ex: ApiExerciseLine, index: number): ConstructorExercise {
+function mapExerciseLine(
+    ex: SessionBlockExerciseHydrationLine,
+    index: number,
+): ConstructorExercise {
     return {
         id: `ex-${ex.id}-${index}`,
         serverExerciseId: ex.id,
@@ -69,7 +58,7 @@ function mapExerciseLine(ex: ApiExerciseLine, index: number): ConstructorExercis
 }
 
 function blockToConstructorRow(block: TemplateProgramSessionBlock, index: number): ConstructorRow {
-    const exs: ApiExerciseLine[] = [...(block.exercises ?? [])]
+    const exs: SessionBlockExerciseHydrationLine[] = [...(block.exercises ?? [])]
         .sort((a, b) => a.order_in_block - b.order_in_block)
         .map((ex) => ({
             id: ex.id,
@@ -79,7 +68,7 @@ function blockToConstructorRow(block: TemplateProgramSessionBlock, index: number
             planned_assistance_kg: ex.planned_assistance_kg ?? null,
             planned_rest: ex.planned_rest ?? null,
             planned_sets: ex.planned_sets ?? null,
-            effort_character: ex.effort_character,
+            effort_character: ex.effort_character ?? null,
             effort_value: ex.effort_value ?? null,
             notes: ex.notes ?? null,
             planned_duration: ex.planned_duration ?? null,

@@ -11,7 +11,10 @@ import {
     groupParallelConstructorApiLines,
     isParallelConstructorExpandedLines,
 } from "@nexia/shared";
-import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
+import {
+    SET_TYPE,
+    type SessionBlockExerciseHydrationLine,
+} from "@nexia/shared/types/sessionProgramming";
 import type {
     ConstructorExercise,
     ConstructorRow,
@@ -234,26 +237,14 @@ export function getSupersetPersistLines(row: ConstructorRow): PersistExerciseLin
 /*  Hidratación desde API                                             */
 /* ------------------------------------------------------------------ */
 
-interface ApiExerciseLine {
-    id: number;
-    exercise_id: number;
-    planned_reps: string | null;
-    planned_weight: number | null;
-    planned_rest: number | null;
-    planned_sets: number | null;
-    planned_duration: number | null;
-    effort_character: unknown;
-    effort_value: number | null;
-    notes: string | null;
-    order_in_block: number;
-}
-
-export function isExpandedSupersetApiLines(exs: ApiExerciseLine[]): boolean {
+export function isExpandedSupersetApiLines(
+    exs: SessionBlockExerciseHydrationLine[],
+): boolean {
     return isParallelConstructorExpandedLines(exs, SUPERSET_SLOT_COUNT);
 }
 
 function setDataFromApiLine(
-    ex: ApiExerciseLine,
+    ex: SessionBlockExerciseHydrationLine,
     isManuallyEdited: boolean
 ): ConstructorSetData {
     return {
@@ -271,7 +262,7 @@ function setDataFromApiLine(
 }
 
 function buildSupersetSlotFromApiLines(
-    slotLines: ApiExerciseLine[],
+    slotLines: SessionBlockExerciseHydrationLine[],
     slotIndex: number,
     baseId: string,
     slotKey: "a1" | "a2"
@@ -320,7 +311,7 @@ function buildSupersetSlotFromApiLines(
 
 export function hydrateSupersetConstructorRow(
     base: ConstructorRow,
-    exs: ApiExerciseLine[]
+    exs: SessionBlockExerciseHydrationLine[],
 ): ConstructorRow {
     const { rounds, slotLines } = groupParallelConstructorApiLines(
         exs,
