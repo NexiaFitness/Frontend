@@ -48,6 +48,10 @@ export const PERIOD_BLOCK_CARD_ICON_BTN_DELETE_CLASS = cn(
     "hover:border-destructive/40 hover:bg-destructive/15",
 );
 
+/** Descartar borrador en wizard — misma receta primary que editar (no destructive). */
+export const PERIOD_BLOCK_CARD_ICON_BTN_DISCARD_CLASS =
+    PERIOD_BLOCK_CARD_ICON_BTN_EDIT_CLASS;
+
 export const PERIOD_BLOCK_CARD_BODY_CLASS =
     "relative z-[1] grid grid-cols-2 gap-3 px-4 py-3.5";
 

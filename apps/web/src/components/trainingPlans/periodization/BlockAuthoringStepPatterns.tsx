@@ -8,16 +8,23 @@ import { Pencil } from "lucide-react";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
-import { Button } from "@/components/ui/buttons";
-import { PLATFORM_ALT_ITEM } from "@/components/ui/surface/platformPremiumPresentation";
-import { cn } from "@/lib/utils";
-
+import {
+    AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS,
+    AUTHORING_PATTERN_DAY_CARD_EDIT_ICON_WRAP_CLASS,
+    AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS,
+    AUTHORING_PATTERN_DAY_LIST_CLASS,
+    authoringPatternDayCardClass,
+} from "./blockAuthoringPatternsPresentation";
 import { BlockPatternPickerSheet } from "./BlockPatternPickerSheet";
 import { PatternBadge } from "./PatternBadge";
+import { PeriodBlockIconButton } from "./PeriodBlockIconButton";
 import {
+    copyPatternsFromDayToDay,
+    getCopyablePatternSourceDays,
     getPatternsForDayFromWeek1,
     togglePatternOnRecurringDay,
 } from "./blockAuthoringPatternsUtils";
+import type { PatternPickerCopySource } from "./PatternPickerDescription";
 import {
     AUTHORING_STEP_META_CLASS,
     WEEKDAY_LABELS_ES,
@@ -91,6 +98,34 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
     const pickerLabel =
         pickerDay != null ? WEEKDAY_FULL_ES[pickerDay - 1] ?? `Día ${pickerDay}` : "";
 
+    const pickerCopySources = useMemo((): PatternPickerCopySource[] => {
+        if (pickerDay == null) return [];
+        return getCopyablePatternSourceDays(
+            weeklyStructure,
+            activeDays,
+            pickerDay,
+        ).map((source) => ({
+            dayOfWeek: source.dayOfWeek,
+            dayLabel:
+                WEEKDAY_FULL_ES[source.dayOfWeek - 1] ??
+                `Día ${source.dayOfWeek}`,
+        }));
+    }, [pickerDay, weeklyStructure, activeDays]);
+
+    const handleCopyFromDay = useCallback(
+        (fromDayOfWeek: number) => {
+            if (pickerDay == null) return;
+            onWeeklyStructureChange(
+                copyPatternsFromDayToDay(
+                    weeklyStructure,
+                    fromDayOfWeek,
+                    pickerDay,
+                ),
+            );
+        },
+        [pickerDay, weeklyStructure, onWeeklyStructureChange],
+    );
+
     if (activeDays.length === 0) {
         return (
             <p className="text-sm leading-relaxed text-muted-foreground">
@@ -112,32 +147,47 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                 </>
             ) : null}
 
-            <ul className="space-y-2 md:space-y-3">
+            <ul className={AUTHORING_PATTERN_DAY_LIST_CLASS}>
                 {sortedDays.map((dayOfWeek) => {
                     const patterns = getPatternsForDayFromWeek1(
                         weeklyStructure,
                         dayOfWeek,
                     );
                     const shortLabel = WEEKDAY_LABELS_ES[dayOfWeek - 1];
-                    const missingPatterns = patterns.length === 0;
+                    const dayName =
+                        WEEKDAY_FULL_ES[dayOfWeek - 1] ?? shortLabel ?? `Día ${dayOfWeek}`;
+                    const isEditing = pickerDay === dayOfWeek;
+                    const hasPatterns = patterns.length > 0;
+
                     return (
-                        <li
-                            key={dayOfWeek}
-                            className={cn(
-                                PLATFORM_ALT_ITEM,
-                                missingPatterns &&
-                                    "border-warning/50 bg-warning/5 ring-1 ring-warning/30",
-                            )}
-                        >
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                                <div className="min-w-0 flex-1 space-y-2">
-                                    <p className="text-sm font-semibold text-foreground">
-                                        {WEEKDAY_FULL_ES[dayOfWeek - 1] ?? shortLabel}
+                        <li key={dayOfWeek}>
+                            <button
+                                type="button"
+                                className={authoringPatternDayCardClass({
+                                    hasPatterns,
+                                    isEditing,
+                                })}
+                                onClick={() => setPickerDay(dayOfWeek)}
+                                aria-expanded={isEditing}
+                                aria-label={
+                                    hasPatterns
+                                        ? `${dayName}: ${patterns.length} patrones asignados. Pulsa para editar.`
+                                        : `${dayName}: sin patrones. Pulsa para asignar.`
+                                }
+                                data-testid={`authoring-pattern-day-${dayOfWeek}`}
+                            >
+                                <div className="min-w-0 space-y-2 pr-8">
+                                    <p className={AUTHORING_PATTERN_DAY_CARD_TITLE_CLASS}>
+                                        {dayName}
                                     </p>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {patterns.length === 0 ? (
-                                            <span className="text-xs text-muted-foreground">
-                                                Sin patrones — pulsa Editar
+                                        {!hasPatterns ? (
+                                            <span
+                                                className={
+                                                    AUTHORING_PATTERN_DAY_CARD_EMPTY_CLASS
+                                                }
+                                            >
+                                                Pulsa para asignar patrones
                                             </span>
                                         ) : (
                                             patterns.map((assignment) => {
@@ -162,17 +212,22 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                                         )}
                                     </div>
                                 </div>
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="shrink-0 gap-1.5"
-                                    onClick={() => setPickerDay(dayOfWeek)}
-                                >
-                                    <Pencil className="h-3.5 w-3.5" aria-hidden />
-                                    Editar
-                                </Button>
-                            </div>
+                                {isEditing ? (
+                                    <span
+                                        className={
+                                            AUTHORING_PATTERN_DAY_CARD_EDIT_ICON_WRAP_CLASS
+                                        }
+                                        aria-hidden
+                                    >
+                                        <PeriodBlockIconButton
+                                            variant="edit"
+                                            tabIndex={-1}
+                                        >
+                                            <Pencil className="h-3.5 w-3.5" />
+                                        </PeriodBlockIconButton>
+                                    </span>
+                                ) : null}
+                            </button>
                         </li>
                     );
                 })}
@@ -188,6 +243,8 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
                 selectedPatternIds={pickerPatterns.map(
                     (p) => p.movement_pattern_id,
                 )}
+                copySources={pickerCopySources}
+                onCopyFromDay={handleCopyFromDay}
                 onToggle={(patternId) => {
                     if (pickerDay == null) return;
                     handleToggle(pickerDay, patternId);
