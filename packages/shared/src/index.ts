@@ -321,7 +321,6 @@ export * from "./hooks/clients/useClientFatigue";
 export * from "./hooks/clients/useClientsListWithMetrics";
 export * from "./hooks/clients/useFatigueAlerts";
 export * from "./hooks/clients/useClientForm";
-export * from "./hooks/clients/useClientOnboarding";
 export * from "./hooks/clients/useClientInvite";
 export * from "./hooks/clients/usePendingInvitationsForList";
 export * from "./hooks/clients/useInvitationAccept";

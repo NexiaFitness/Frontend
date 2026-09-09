@@ -28,6 +28,7 @@ import type { Client, TrainingDayValue } from "@nexia/shared/types/client";
 
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
+import { DiscardUnsavedChangesModal } from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 
@@ -105,6 +106,7 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
     const [createWeek] = useCreateWeeklyStructureWeekMutation();
     const [updateWeek] = useUpdateWeeklyStructureWeekMutation();
     const [isSaving, setIsSaving] = useState(false);
+    const [discardModalOpen, setDiscardModalOpen] = useState(false);
 
     const setDraftSynced = useCallback(
         (
@@ -187,13 +189,16 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
 
     const handleExit = useCallback(() => {
         if (isDirty) {
-            const ok = window.confirm(
-                "Tienes cambios sin guardar. ¿Salir y descartarlos?",
-            );
-            if (!ok) return;
+            setDiscardModalOpen(true);
+            return;
         }
         onExit();
     }, [isDirty, onExit]);
+
+    const handleConfirmDiscard = useCallback(() => {
+        setDiscardModalOpen(false);
+        onExit();
+    }, [onExit]);
 
     const handleSave = useCallback(async () => {
         if (!loaded || draft.length === 0) {
@@ -343,6 +348,12 @@ export const BlockWeeksManageSurface: React.FC<Props> = ({
                     </Button>
                 </div>
             </DashboardFixedFooter>
+
+            <DiscardUnsavedChangesModal
+                isOpen={discardModalOpen}
+                onConfirm={handleConfirmDiscard}
+                onCancel={() => setDiscardModalOpen(false)}
+            />
         </div>
     );
 };

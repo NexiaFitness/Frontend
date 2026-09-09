@@ -12,7 +12,6 @@ export * from "./clients/useClientDetail";
 export * from "./clients/useClientFatigue";
 export * from "./clients/useFatigueAlerts";
 export * from "./clients/useClientForm";
-export * from "./clients/useClientOnboarding";
 export * from "./clients/useClientPreview";
 export * from "./clients/useClientProgress";
 export * from "./clients/useClientStats";

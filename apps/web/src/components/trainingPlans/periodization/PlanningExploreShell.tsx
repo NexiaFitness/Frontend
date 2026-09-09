@@ -3,13 +3,11 @@
  */
 
 import React from "react";
-import { ArrowRight } from "lucide-react";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
-import { Button } from "@/components/ui/buttons";
 import { PageTitle } from "@/components/dashboard/shared";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodBlockCard } from "./PeriodBlockCard";
@@ -20,7 +18,7 @@ import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 import { formatProgramDurationLabel } from "./planningShellUtils";
 import {
     PLANNING_EXPLORE_GRID_CLASS,
-    PLANNING_FOOTER_ACTIONS_CLASS,
+    PLANNING_PROGRAM_EYEBROW,
     PLANNING_PROGRAM_SUMMARY_CLASS,
     PLANNING_SHELL_SECTION_CLASS,
 } from "./planningShellPresentation";
@@ -48,7 +46,6 @@ interface Props {
     onViewWeeks: (block: PlanPeriodBlock) => void;
     onDeleteBlock: (id: number, label: string) => void;
     onCreateSessionForBlock: (block: PlanPeriodBlock) => void;
-    onViewAnalytics: () => void;
     buildVolumeContext: (
         volumeLevel: number | null | undefined,
         intensityLevel: number | null | undefined,
@@ -79,7 +76,6 @@ export const PlanningExploreShell: React.FC<Props> = ({
     onViewWeeks,
     onDeleteBlock,
     onCreateSessionForBlock,
-    onViewAnalytics,
     buildVolumeContext,
     volumeIntensityPhase,
 }) => {
@@ -101,16 +97,20 @@ export const PlanningExploreShell: React.FC<Props> = ({
             <div className="space-y-3">
                 <PageTitle titleAs="h3" title="Planificación" />
                 {(programDuration || blocks.length > 0 || trainingFrequencyLabel) && (
-                    <p className={PLANNING_PROGRAM_SUMMARY_CLASS}>
-                        Programa actual
-                        {programDuration ? ` · ${programDuration}` : ""}
-                        {blocks.length > 0
-                            ? ` · ${blocks.length} fase${blocks.length === 1 ? "" : "s"}`
-                            : ""}
-                        {trainingFrequencyLabel
-                            ? ` · ${trainingFrequencyLabel}`
-                            : ""}
-                    </p>
+                    <div className="space-y-1">
+                        <p className={PLANNING_PROGRAM_EYEBROW}>Programa actual</p>
+                        <p className={PLANNING_PROGRAM_SUMMARY_CLASS}>
+                            {[
+                                programDuration,
+                                blocks.length > 0
+                                    ? `${blocks.length} fase${blocks.length === 1 ? "" : "s"}`
+                                    : null,
+                                trainingFrequencyLabel,
+                            ]
+                                .filter(Boolean)
+                                .join(" · ")}
+                        </p>
+                    </div>
                 )}
                 {blocks.length > 0 ? (
                     <PlanningPhaseChipStrip
@@ -159,22 +159,6 @@ export const PlanningExploreShell: React.FC<Props> = ({
                             )}
                             volumeIntensityPhase={volumeIntensityPhase}
                         />
-                    ) : blocks.length === 0 ? (
-                        <PeriodBlockEmptyCallout
-                            primaryText="No hay bloques de periodización configurados."
-                            secondaryText="Añade una fase con el calendario para empezar a planificar."
-                            action={
-                                <Button
-                                    type="button"
-                                    variant="primary"
-                                    size="sm"
-                                    data-testid="planning-add-phase-empty"
-                                    onClick={onAddPhase}
-                                >
-                                    Añadir fase
-                                </Button>
-                            }
-                        />
                     ) : (
                         <PeriodBlockEmptyCallout
                             primaryText="Selecciona una fase"
@@ -182,21 +166,6 @@ export const PlanningExploreShell: React.FC<Props> = ({
                         />
                     )}
                 </div>
-            </div>
-
-            <div className={PLANNING_FOOTER_ACTIONS_CLASS}>
-                {blocks.length > 0 ? (
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        data-testid="planning-view-analytics"
-                        onClick={onViewAnalytics}
-                    >
-                        Ver análisis
-                        <ArrowRight className="ml-1 size-4" aria-hidden />
-                    </Button>
-                ) : null}
             </div>
         </section>
     );

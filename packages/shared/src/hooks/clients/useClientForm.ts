@@ -2,7 +2,7 @@
  * useClientForm.ts — Hook unificado para formularios de cliente (crear/editar)
  *
  * Contexto:
- * - Unifica lógica de useClientOnboarding (crear) y useUpdateClient (editar)
+ * - Unifica lógica de alta (crear) y useUpdateClient (editar)
  * - Gestiona datos de formulario, validaciones y envío
  * - Compatible Web + React Native (sin dependencias DOM)
  * - Conecta con RTK Query (clientsApi) para crear/actualizar clientes

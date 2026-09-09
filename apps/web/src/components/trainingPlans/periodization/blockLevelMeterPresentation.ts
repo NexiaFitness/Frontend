@@ -35,21 +35,46 @@ export const BLOCK_LEVEL_METER_QUALITATIVE_CLASS =
 
 export const BLOCK_LEVEL_METER_RANGE_WRAP = "relative h-2 w-full";
 
+export const BLOCK_LEVEL_METER_RANGE_BASE_CLASS = cn(
+    "absolute inset-0 z-[1] h-2 w-full cursor-pointer appearance-none bg-transparent",
+    "[&::-webkit-slider-runnable-track]:bg-transparent",
+    "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5",
+    "[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background/80",
+    "[&::-moz-range-track]:bg-transparent",
+    "[&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0",
+    "disabled:cursor-not-allowed disabled:opacity-60",
+);
+
 export function blockLevelMeterRangeClass(tone: BlockLevelMeterTone): string {
     const thumb =
         tone === "volume"
             ? "[&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary"
             : "[&::-webkit-slider-thumb]:bg-warning [&::-moz-range-thumb]:bg-warning";
 
+    const thumbGlow =
+        tone === "volume"
+            ? "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_hsl(var(--primary)/0.45)]"
+            : "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_hsl(var(--warning)/0.45)]";
+
+    return cn(BLOCK_LEVEL_METER_RANGE_BASE_CLASS, thumbGlow, thumb);
+}
+
+/** Range transparente sobre track glass — acento dinámico (cualidades físicas). */
+export function blockLevelMeterAccentRangeClass(): string {
     return cn(
-        "absolute inset-0 z-[1] h-2 w-full cursor-pointer appearance-none bg-transparent",
-        "[&::-webkit-slider-runnable-track]:bg-transparent",
-        "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5",
-        "[&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-background/80",
-        "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_hsl(var(--primary)/0.45)]",
-        thumb,
-        "[&::-moz-range-track]:bg-transparent",
-        "[&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0",
-        "disabled:cursor-not-allowed disabled:opacity-60",
+        BLOCK_LEVEL_METER_RANGE_BASE_CLASS,
+        "[&::-webkit-slider-thumb]:bg-[--meter-accent] [&::-moz-range-thumb]:bg-[--meter-accent]",
+        "[&::-webkit-slider-thumb]:shadow-[0_0_10px_-2px_color-mix(in_srgb,var(--meter-accent)_55%,transparent)]",
     );
+}
+
+export function blockLevelMeterAccentFillStyle(
+    accentHex: string,
+    widthPct: number,
+): { width: string; background: string; boxShadow: string } {
+    return {
+        width: `${widthPct}%`,
+        background: `linear-gradient(to right, ${accentHex}40, ${accentHex}99)`,
+        boxShadow: `inset 0 1px 0 ${accentHex}40`,
+    };
 }

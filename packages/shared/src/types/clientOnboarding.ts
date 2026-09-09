@@ -4,7 +4,7 @@
  * Contexto:
  * - Define props de los componentes <Step /> del flujo de Onboarding.
  * - Extiende los tipos base de cliente (ClientFormData, ClientFormErrors).
- * - Alineado con useClientOnboarding hook (formData, updateField).
+ * - Alineado con useClientForm (formData, updateField).
  *
  * Arquitectura:
  * - BaseStepProps → Props comunes para la mayoría de steps.

@@ -3,7 +3,7 @@
  *
  * Contenido por plan (activo o ?plan=):
  * - Periodización (PlanPeriodizationSection)
- * - Progresión planificada (PeriodizationCharts, dentro de la sección anterior)
+ * - Análisis de periodización (PeriodizationCharts, sección colapsable)
  * - Ejecución del plan (colapsable): ChartsTab si hay sesiones; EmptyState si no
  * - Hitos (MilestonesTab, sección colapsable)
  * - Acciones en barra fija inferior (DashboardFixedFooter): Editar plan, Eliminar plan
@@ -11,7 +11,7 @@
  * @see docs/specs/CONSOLIDACION_VISTA_PLAN_EN_CLIENTE.md
  */
 
-import React, { useMemo, useCallback, Suspense, lazy, useState } from "react";
+import React, { useMemo, useCallback, Suspense, lazy, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BarChart3, Plus } from "lucide-react";
 import type { ActivePlanByClientOut, TrainingPlan } from "@nexia/shared/types/training";
@@ -22,14 +22,24 @@ import {
     useGetTrainingPlanQuery,
     useDeleteTrainingPlanMutation,
 } from "@nexia/shared/api/trainingPlansApi";
+import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
+import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { LoadingSpinner, Alert, EmptyState, useToast } from "@/components/ui/feedback";
 import { Button } from "@/components/ui/buttons";
-import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { PLATFORM_PAGE_WITH_FIXED_FOOTER } from "@/components/ui/surface/platformPremiumPresentation";
 import { cn } from "@/lib/utils";
-import { PlanPeriodizationSection } from "@/components/trainingPlans/periodization";
+import {
+    PlanPeriodizationSection,
+    PeriodizationCharts,
+} from "@/components/trainingPlans/periodization";
+import { PlanningExploreSectionCard } from "@/components/trainingPlans/periodization/PlanningExploreSectionCard";
+import { PLANNING_EXPLORE_SECTIONS_STACK } from "@/components/trainingPlans/periodization/planningShellPresentation";
 import { MilestonesTab } from "@/components/trainingPlans";
+import {
+    clearPlanningView,
+    isPlanningAnalyticsView,
+} from "@/utils/planningHubUrl";
 import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
 import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
@@ -166,6 +176,28 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const { sessions, isLoading: executionDataLoading } =
         usePlanBlockAnalytics(planIdForAnalytics);
 
+    const { data: periodBlocks = [] } = useGetPeriodBlocksQuery(planIdForAnalytics ?? 0, {
+        skip: planIdForAnalytics == null,
+    });
+    const { data: physicalQualities = [] } = useGetPhysicalQualitiesQuery();
+
+    const [analyticsOpen, setAnalyticsOpen] = useState(false);
+
+    const showExploreSections = !blockAuthorActive && !isPhaseAuthoring;
+
+    useEffect(() => {
+        if (!isPlanningAnalyticsView(searchParams)) {
+            return;
+        }
+        setAnalyticsOpen(true);
+        setSearchParams((prev) => clearPlanningView(prev), { replace: true });
+        requestAnimationFrame(() => {
+            document
+                .getElementById("planning-analytics-section")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }, [searchParams, setSearchParams]);
+
     const isLoading =
         isLoadingPlans ||
         isLoadingActive ||
@@ -279,78 +311,99 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 onAuthoringChange={setIsPhaseAuthoring}
             />
 
-            {!blockAuthorActive && !isPhaseAuthoring && (
-            <CollapsibleFormGroup title="Ejecución del plan" defaultOpen={false}>
-                <div className="space-y-4" data-testid="plan-execution-section">
-                    <p className="text-sm text-muted-foreground">
-                        Cumplimiento de la carga planificada: coherencia por bloques, desviación y plan vs real.
-                    </p>
-                    {executionDataLoading ? (
-                        <div className="flex items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/10 py-16">
-                            <LoadingSpinner size="lg" />
-                        </div>
-                    ) : hasExecutionData ? (
-                        <Suspense fallback={<LoadingSpinner size="lg" />}>
-                            <ChartsTab
-                                planId={plan.id}
-                                planStartDate={plan.start_date}
-                                planEndDate={plan.end_date}
-                            />
-                        </Suspense>
-                    ) : (
-                        <div
-                            className="rounded-lg border border-dashed border-border/50 bg-muted/10"
-                            data-testid="plan-execution-empty"
+            {showExploreSections ? (
+                <div className={PLANNING_EXPLORE_SECTIONS_STACK}>
+                    {periodBlocks.length > 0 ? (
+                        <PlanningExploreSectionCard
+                            id="planning-analytics-section"
+                            title="Análisis de periodización"
+                            description="Progresión planificada por fases, volumen e intensidad."
+                            testId="planning-view-analytics"
+                            open={analyticsOpen}
+                            onOpenChange={setAnalyticsOpen}
                         >
-                            <EmptyState
-                                icon={<BarChart3 />}
-                                title="Sin datos de ejecución"
-                                description="Programa y completa sesiones en los bloques del plan para ver coherencia, desviación y plan vs real."
-                                action={
-                                    <div className="flex flex-wrap items-center justify-center gap-2">
-                                        <Button
-                                            variant="primary"
-                                            size="sm"
-                                            onClick={() =>
-                                                navigate(
-                                                    buildClientTabPath(clientId, {
-                                                        tab: "sessions",
-                                                    }),
-                                                )
-                                            }
-                                        >
-                                            Ir a sesiones
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => {
-                                                const qs = new URLSearchParams({
-                                                    clientId: String(clientId),
-                                                    planId: String(plan.id),
-                                                });
-                                                navigate(
-                                                    `/dashboard/session-programming/create-session?${qs.toString()}`,
-                                                );
-                                            }}
-                                        >
-                                            <Plus className="size-4" aria-hidden />
-                                            Crear sesión
-                                        </Button>
-                                    </div>
-                                }
+                            <PeriodizationCharts
+                                blocks={periodBlocks}
+                                catalog={physicalQualities}
                             />
-                        </div>
-                    )}
-                </div>
-            </CollapsibleFormGroup>
-            )}
+                        </PlanningExploreSectionCard>
+                    ) : null}
 
-            {!blockAuthorActive && !isPhaseAuthoring && (
-            <CollapsibleFormGroup title="Hitos del plan" defaultOpen={false}>
-                <MilestonesTab planId={plan.id} />
-            </CollapsibleFormGroup>
-            )}
+                    <PlanningExploreSectionCard
+                        title="Ejecución del plan"
+                        description="Cumplimiento de la carga planificada: coherencia, desviación y plan vs real."
+                        defaultOpen={false}
+                    >
+                        <div className="space-y-4" data-testid="plan-execution-section">
+                            {executionDataLoading ? (
+                                <div className="flex items-center justify-center rounded-lg border border-dashed border-border/50 bg-muted/10 py-16">
+                                    <LoadingSpinner size="lg" />
+                                </div>
+                            ) : hasExecutionData ? (
+                                <Suspense fallback={<LoadingSpinner size="lg" />}>
+                                    <ChartsTab
+                                        planId={plan.id}
+                                        planStartDate={plan.start_date}
+                                        planEndDate={plan.end_date}
+                                    />
+                                </Suspense>
+                            ) : (
+                                <div
+                                    className="rounded-lg border border-dashed border-border/50 bg-muted/10"
+                                    data-testid="plan-execution-empty"
+                                >
+                                    <EmptyState
+                                        icon={<BarChart3 />}
+                                        title="Sin datos de ejecución"
+                                        description="Programa y completa sesiones en los bloques del plan para ver coherencia, desviación y plan vs real."
+                                        action={
+                                            <div className="flex flex-wrap items-center justify-center gap-2">
+                                                <Button
+                                                    variant="primary"
+                                                    size="sm"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            buildClientTabPath(clientId, {
+                                                                tab: "sessions",
+                                                            }),
+                                                        )
+                                                    }
+                                                >
+                                                    Ir a sesiones
+                                                </Button>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => {
+                                                        const qs = new URLSearchParams({
+                                                            clientId: String(clientId),
+                                                            planId: String(plan.id),
+                                                        });
+                                                        navigate(
+                                                            `/dashboard/session-programming/create-session?${qs.toString()}`,
+                                                        );
+                                                    }}
+                                                >
+                                                    <Plus className="size-4" aria-hidden />
+                                                    Crear sesión
+                                                </Button>
+                                            </div>
+                                        }
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </PlanningExploreSectionCard>
+
+                    <PlanningExploreSectionCard
+                        title="Hitos del plan"
+                        description="Objetivos intermedios y seguimiento de logros del programa."
+                        defaultOpen={false}
+                    >
+                        <MilestonesTab planId={plan.id} />
+                    </PlanningExploreSectionCard>
+                </div>
+            ) : null}
 
             {!isPhaseAuthoring && !blockAuthorActive && (
                 <DashboardFixedFooter>

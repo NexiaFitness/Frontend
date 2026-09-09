@@ -18,12 +18,14 @@ interface Props {
     onToggleDay: (dayOfWeek: number) => void;
     /** En QP / programación rápida usar «fase»; en D-PAP persistido «bloque». */
     periodUnit?: "fase" | "bloque";
+    hideIntro?: boolean;
 }
 
 export const BlockAuthoringStepDays: React.FC<Props> = ({
     activeDays,
     onToggleDay,
     periodUnit = "fase",
+    hideIntro = false,
 }) => {
     const activeSet = new Set(activeDays);
     const periodLabel = periodUnitPhrase(periodUnit);
@@ -34,14 +36,18 @@ export const BlockAuthoringStepDays: React.FC<Props> = ({
     );
 
     return (
-        <div className="space-y-4">
-            <p className={AUTHORING_STEP_META_CLASS}>
-                Días de entrenamiento en {periodLabel}
-            </p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-                Regla recurrente para todas las semanas de {periodLabel}. No modifica el
-                perfil del cliente.
-            </p>
+        <div className="space-y-4 md:space-y-6">
+            {!hideIntro ? (
+                <>
+                    <p className={AUTHORING_STEP_META_CLASS}>
+                        Días de entrenamiento en {periodLabel}
+                    </p>
+                    <p className="text-sm leading-relaxed text-muted-foreground">
+                        Regla recurrente para todas las semanas de {periodLabel}. No modifica el
+                        perfil del cliente.
+                    </p>
+                </>
+            ) : null}
             <div
                 className={AUTHORING_DAY_TOGGLE_TRACK_CLASS}
                 role="group"

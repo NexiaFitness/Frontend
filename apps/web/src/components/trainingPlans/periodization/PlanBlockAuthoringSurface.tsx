@@ -9,7 +9,7 @@ import React, {
     useRef,
     useState,
 } from "react";
-import { X } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { useDispatch } from "react-redux";
 
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
@@ -22,6 +22,7 @@ import type { Client } from "@nexia/shared/types/client";
 
 import { Button } from "@/components/ui/buttons";
 import { useToast } from "@/components/ui/feedback";
+import { DiscardUnsavedChangesModal } from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
@@ -37,6 +38,9 @@ import {
     type BlockAuthorMode,
     type BlockAuthorStep,
 } from "./blockAuthoringModel";
+import { BlockAuthoringFocusHeader } from "./BlockAuthoringFocusHeader";
+import { BlockAuthoringStepBody } from "./BlockAuthoringStepBody";
+import { getBlockAuthoringStepCopy } from "./blockAuthoringStepCopy";
 import { BlockAuthoringStepper } from "./BlockAuthoringStepper";
 import { BlockAuthoringStepLoad } from "./BlockAuthoringStepLoad";
 import { BlockAuthoringStepDays } from "./BlockAuthoringStepDays";
@@ -49,18 +53,18 @@ import {
 } from "./blockAuthoringDaysUtils";
 import { allActiveDaysHavePatterns } from "./blockAuthoringPatternsUtils";
 import { weeklyStructureToDraft } from "./periodBlockPersistence";
+import { cn } from "@/lib/utils";
 import {
-    AUTHORING_FOOTER_INNER_CLASS,
     AUTHORING_HEADER_CLASS,
     AUTHORING_STEP_CARD_CLASS,
-    AUTHORING_STEP_META_CLASS,
-    AUTHORING_SUBTITLE_CLASS,
     AUTHORING_SURFACE_CLASS,
-    AUTHORING_TITLE_CLASS,
+    AUTHORING_WIZARD_FOOTER_ROW_CLASS,
+    AUTHORING_WIZARD_FOOTER_STACK_CLASS,
 } from "./phaseAuthoringPresentation";
 
 interface Props {
     mode: BlockAuthorMode;
+    clientId: number;
     planId: number;
     blockId: number | null;
     blockStart: string | null;
@@ -78,6 +82,7 @@ interface Props {
 
 export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     mode,
+    clientId,
     planId,
     blockId,
     blockStart,
@@ -103,6 +108,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         mode === "edit" ? "summary" : "qualities",
     );
     const [structureLoaded, setStructureLoaded] = useState(false);
+    const [discardModalOpen, setDiscardModalOpen] = useState(false);
     const createInitializedRef = useRef(false);
     const editBlockIdRef = useRef<number | null>(null);
 
@@ -359,18 +365,25 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
 
     const handleExit = useCallback(() => {
         if (isDirty) {
-            const ok = window.confirm(
-                "Tienes cambios sin guardar. ¿Salir y descartarlos?",
-            );
-            if (!ok) return;
+            setDiscardModalOpen(true);
+            return;
         }
         onExit();
     }, [isDirty, onExit]);
 
-    const title =
-        mode === "create"
-            ? "Bloque en creación"
-            : "Editar bloque de periodización";
+    const handleConfirmDiscard = useCallback(() => {
+        setDiscardModalOpen(false);
+        onExit();
+    }, [onExit]);
+
+    const handleBack = useCallback(() => {
+        if (navigation.canGoBack) {
+            navigation.goBack();
+            return;
+        }
+        handleExit();
+    }, [navigation, handleExit]);
+
     const periodUnit = "fase";
     const subtitle =
         mode === "create"
@@ -396,11 +409,16 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         activeDays.length > 0 &&
         !allActiveDaysHavePatterns(form.weeklyStructure, activeDays);
 
+    const stepCopy = useMemo(
+        () => getBlockAuthoringStepCopy(step, periodUnit),
+        [step, periodUnit],
+    );
+
     const stepFooter = (
-        <>
+        <div className={AUTHORING_WIZARD_FOOTER_STACK_CLASS}>
             {!canAdvanceCurrentStep && overlapDetected && step !== "summary" ? (
                 <p
-                    className="mb-3 text-sm text-warning"
+                    className="text-sm text-warning"
                     data-testid="authoring-overlap-hint"
                 >
                     El rango se solapa con otro bloque. Ajusta las fechas antes de
@@ -409,20 +427,20 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             ) : null}
             {patternsIncomplete ? (
                 <p
-                    className="mb-3 text-sm text-warning"
+                    className="text-sm text-warning"
                     data-testid="authoring-patterns-hint"
                 >
                     Asigna al menos un patrón de movimiento a cada día de entrenamiento
                     antes de continuar.
                 </p>
             ) : null}
-            <div className={AUTHORING_FOOTER_INNER_CLASS}>
+            <div className={AUTHORING_WIZARD_FOOTER_ROW_CLASS}>
                 <Button
                     type="button"
                     variant="outline"
-                    disabled={!navigation.canGoBack}
-                    onClick={navigation.goBack}
+                    onClick={handleBack}
                 >
+                    <ChevronLeft className="size-4 shrink-0" aria-hidden />
                     Atrás
                 </Button>
                 <Button
@@ -449,7 +467,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                     {primaryLabel}
                 </Button>
             </div>
-        </>
+        </div>
     );
 
     return (
@@ -457,99 +475,113 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             className={AUTHORING_SURFACE_CLASS}
             data-testid="plan-block-authoring-surface"
         >
-            <header className={AUTHORING_HEADER_CLASS}>
-                <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                        <p className={AUTHORING_STEP_META_CLASS}>
-                            Paso {navigation.stepIndex + 1} de 5
-                        </p>
-                        <h3 className={AUTHORING_TITLE_CLASS}>{title}</h3>
-                        <p className={AUTHORING_SUBTITLE_CLASS}>{subtitle}</p>
-                    </div>
-                    <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        aria-label="Cerrar autoría"
-                        onClick={handleExit}
-                        className="shrink-0"
-                    >
-                        <X className="h-5 w-5" />
-                    </Button>
-                </div>
-                <BlockAuthoringStepper
-                    activeStep={step}
-                    maxReachedStep={maxReachedStep}
-                    onStepClick={navigation.goToStep}
-                    isStepReachable={navigation.isStepReachable}
+            <div className={AUTHORING_HEADER_CLASS}>
+                <BlockAuthoringFocusHeader
+                    clientId={clientId}
+                    planId={planId}
+                    clientProfile={clientProfile}
+                    mode={mode}
+                    taskSubtitle={subtitle}
+                    onExit={handleExit}
+                    stepper={
+                        <BlockAuthoringStepper
+                            activeStep={step}
+                            maxReachedStep={maxReachedStep}
+                            onStepClick={navigation.goToStep}
+                            isStepReachable={navigation.isStepReachable}
+                        />
+                    }
                 />
-            </header>
+            </div>
 
             <div className={AUTHORING_STEP_CARD_CLASS}>
                 <NexiaGlassAccentRim />
                 <div className="relative z-[1]">
-                    {structureHydrating && stepNeedsStructure ? (
-                        <p className="text-sm text-muted-foreground py-8 text-center">
-                            Cargando estructura semanal…
-                        </p>
-                    ) : step === "qualities" ? (
-                        <PeriodBlockQualitiesStep
-                            qualities={form.qualities}
-                            qualitiesSum={qualitiesSum}
-                            catalog={catalog}
-                            overlapDetected={overlapDetected}
-                            outsidePlanBounds={outsidePlanBounds}
-                            onAddQuality={addQuality}
-                            onRemoveQuality={removeQuality}
-                            onUpdateQualityPct={updateQualityPct}
-                            onContinue={handleNext}
-                            hideFooter
-                        />
-                    ) : step === "volumeIntensity" ? (
-                        <BlockAuthoringStepLoad
-                            volumeLevel={form.volumeLevel}
-                            intensityLevel={form.intensityLevel}
-                            onVolumeChange={setVolumeLevel}
-                            onIntensityChange={setIntensityLevel}
-                            volumeIntensityContext={formVolumeContext}
-                            volumeIntensityPhase={volumeNominal.phase}
-                            volumeIntensityHint={volumeNominal.auxiliaryHint}
-                        />
-                    ) : step === "days" ? (
-                        <BlockAuthoringStepDays
-                            activeDays={activeDays}
-                            onToggleDay={handleToggleDay}
-                            periodUnit={periodUnit}
-                        />
-                    ) : step === "patterns" ? (
-                        <BlockAuthoringStepPatterns
-                            activeDays={activeDays}
-                            weeklyStructure={form.weeklyStructure}
-                            onWeeklyStructureChange={setWeeklyStructure}
-                            catalog={patternsCatalog}
-                            catalogLoading={patternsLoading}
-                            catalogError={patternsError}
-                            periodUnit={periodUnit}
-                        />
-                    ) : step === "summary" ? (
-                        <BlockAuthoringStepSummary
-                            startDate={form.startDate}
-                            endDate={form.endDate}
-                            qualities={form.qualities}
-                            qualitiesSum={qualitiesSum}
-                            volumeLevel={form.volumeLevel}
-                            intensityLevel={form.intensityLevel}
-                            activeDays={activeDays}
-                            weeklyStructure={form.weeklyStructure}
-                            catalog={catalog}
-                            patternsCatalog={patternsCatalog}
-                            onEditStep={navigation.goToStep}
-                        />
-                    ) : null}
+                    <BlockAuthoringStepBody
+                        title={stepCopy.title}
+                        hint={stepCopy.hint}
+                        statusHint={
+                            step === "qualities" && form.qualities.length === 0
+                                ? "Añade al menos una cualidad física para continuar"
+                                : undefined
+                        }
+                    >
+                        {structureHydrating && stepNeedsStructure ? (
+                            <p className="py-12 text-center text-sm text-muted-foreground">
+                                Cargando estructura semanal…
+                            </p>
+                        ) : step === "qualities" ? (
+                            <PeriodBlockQualitiesStep
+                                qualities={form.qualities}
+                                qualitiesSum={qualitiesSum}
+                                catalog={catalog}
+                                overlapDetected={overlapDetected}
+                                outsidePlanBounds={outsidePlanBounds}
+                                onAddQuality={addQuality}
+                                onRemoveQuality={removeQuality}
+                                onUpdateQualityPct={updateQualityPct}
+                                onContinue={handleNext}
+                                hideFooter
+                                hideHeader
+                                premiumLayout
+                            />
+                        ) : step === "volumeIntensity" ? (
+                            <BlockAuthoringStepLoad
+                                volumeLevel={form.volumeLevel}
+                                intensityLevel={form.intensityLevel}
+                                onVolumeChange={setVolumeLevel}
+                                onIntensityChange={setIntensityLevel}
+                                volumeIntensityContext={formVolumeContext}
+                                volumeIntensityPhase={volumeNominal.phase}
+                                volumeIntensityHint={volumeNominal.auxiliaryHint}
+                                premiumLayout
+                            />
+                        ) : step === "days" ? (
+                            <BlockAuthoringStepDays
+                                activeDays={activeDays}
+                                onToggleDay={handleToggleDay}
+                                periodUnit={periodUnit}
+                                hideIntro
+                            />
+                        ) : step === "patterns" ? (
+                            <BlockAuthoringStepPatterns
+                                activeDays={activeDays}
+                                weeklyStructure={form.weeklyStructure}
+                                onWeeklyStructureChange={setWeeklyStructure}
+                                catalog={patternsCatalog}
+                                catalogLoading={patternsLoading}
+                                catalogError={patternsError}
+                                periodUnit={periodUnit}
+                                hideIntro
+                            />
+                        ) : step === "summary" ? (
+                            <BlockAuthoringStepSummary
+                                startDate={form.startDate}
+                                endDate={form.endDate}
+                                qualities={form.qualities}
+                                qualitiesSum={qualitiesSum}
+                                volumeLevel={form.volumeLevel}
+                                intensityLevel={form.intensityLevel}
+                                activeDays={activeDays}
+                                weeklyStructure={form.weeklyStructure}
+                                catalog={catalog}
+                                patternsCatalog={patternsCatalog}
+                                onEditStep={navigation.goToStep}
+                                hideIntro
+                                premiumLayout
+                            />
+                        ) : null}
+                    </BlockAuthoringStepBody>
                 </div>
             </div>
 
             <DashboardFixedFooter>{stepFooter}</DashboardFixedFooter>
+
+            <DiscardUnsavedChangesModal
+                isOpen={discardModalOpen}
+                onConfirm={handleConfirmDiscard}
+                onCancel={() => setDiscardModalOpen(false)}
+            />
         </div>
     );
 };

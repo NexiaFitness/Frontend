@@ -1,10 +1,11 @@
 /**
- * BlockAuthoringStepper.tsx — Stepper premium 5 pasos (D-PAP).
+ * BlockAuthoringStepper.tsx — Stepper wizard D-PAP (5 pasos).
+ * Delega render en TabsBar; lógica de dominio en blockAuthoringModel.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
 
-import { cn } from "@/lib/utils";
+import { TabsBar } from "@/components/ui/tabs";
 
 import {
     BLOCK_AUTHOR_STEP_LABELS,
@@ -12,12 +13,6 @@ import {
     blockAuthorStepIndex,
     type BlockAuthorStep,
 } from "./blockAuthoringModel";
-import {
-    AUTHORING_STEPPER_SCROLL_CLASS,
-    AUTHORING_STEPPER_SHELL_CLASS,
-    AUTHORING_STEPPER_TRACK_CLASS,
-    authoringStepperItemClass,
-} from "./phaseAuthoringPresentation";
 
 interface Props {
     activeStep: BlockAuthorStep;
@@ -35,41 +30,25 @@ export const BlockAuthoringStepper: React.FC<Props> = ({
     const activeIdx = blockAuthorStepIndex(activeStep);
     const maxIdx = blockAuthorStepIndex(maxReachedStep);
 
+    const items = useMemo(
+        () =>
+            BLOCK_AUTHOR_STEP_ORDER.map((step, index) => ({
+                id: step,
+                label: `${index + 1}. ${BLOCK_AUTHOR_STEP_LABELS[step]}`,
+                disabled: !isStepReachable(step),
+                completed: index < activeIdx || index <= maxIdx,
+            })),
+        [activeIdx, maxIdx, isStepReachable],
+    );
+
     return (
-        <nav
-            aria-label="Pasos de la fase"
-            className={AUTHORING_STEPPER_SHELL_CLASS}
-        >
-            <div className={AUTHORING_STEPPER_SCROLL_CLASS}>
-                <div
-                    className={cn(AUTHORING_STEPPER_TRACK_CLASS, "min-w-max")}
-                    role="tablist"
-                >
-                    {BLOCK_AUTHOR_STEP_ORDER.map((step, index) => {
-                        const reachable = isStepReachable(step);
-                        const isActive = step === activeStep;
-                        const isCompleted = index < activeIdx || index <= maxIdx;
-                        return (
-                            <button
-                                key={step}
-                                type="button"
-                                role="tab"
-                                aria-selected={isActive}
-                                aria-current={isActive ? "step" : undefined}
-                                disabled={!reachable}
-                                onClick={() => reachable && onStepClick(step)}
-                                className={cn(
-                                    authoringStepperItemClass(isActive, isCompleted),
-                                    !reachable && "pointer-events-none opacity-45",
-                                )}
-                            >
-                                <span className="tabular-nums">{index + 1}.</span>{" "}
-                                {BLOCK_AUTHOR_STEP_LABELS[step]}
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-        </nav>
+        <TabsBar
+            items={items}
+            value={activeStep}
+            onChange={(stepId) => onStepClick(stepId as BlockAuthorStep)}
+            ariaLabel="Pasos de la fase"
+            distribute="content"
+            activeAriaCurrent="step"
+        />
     );
 };
