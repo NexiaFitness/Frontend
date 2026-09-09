@@ -113,25 +113,6 @@ export const AUTHORING_WIZARD_FOOTER_STACK_CLASS = cn(
 export const AUTHORING_FOOTER_INNER_CLASS =
     "mx-auto flex w-full min-w-0 max-w-full flex-col-reverse gap-3 sm:max-w-3xl sm:flex-row sm:items-center sm:justify-between sm:gap-3";
 
-/** Pills de añadir cualidad / acciones secundarias del paso. */
-export const AUTHORING_STEP_ADD_PILL_CLASS = cn(
-    "rounded-full border border-dashed border-primary/25 bg-primary/5 px-3.5 py-2",
-    "text-xs font-medium text-muted-foreground transition-colors",
-    "hover:border-primary/45 hover:bg-primary/10 hover:text-primary",
-    "md:text-sm",
-);
-
-/** Grid ancho completo — pills reparten el espacio de la columna del wizard. */
-export const AUTHORING_STEP_ADD_PILLS_GRID_CLASS = cn(
-    "grid w-full grid-cols-2 gap-2 sm:grid-cols-3 md:gap-2.5",
-);
-
-export const AUTHORING_STEP_ADD_PILL_GRID_ITEM_CLASS = cn(
-    AUTHORING_STEP_ADD_PILL_CLASS,
-    "inline-flex w-full min-w-0 items-center justify-center px-2.5 py-2.5",
-    "whitespace-normal text-center leading-snug",
-);
-
 /** Artículo + sustantivo para copy de periodización (concordancia ES). */
 export function periodUnitPhrase(unit: "fase" | "bloque"): string {
     return unit === "fase" ? "la fase" : "el bloque";

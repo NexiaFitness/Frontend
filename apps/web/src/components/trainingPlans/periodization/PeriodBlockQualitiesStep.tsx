@@ -15,6 +15,12 @@ import type {
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import { Button } from "@/components/ui/buttons";
+import {
+    AddPill,
+    AddPillGrid,
+    ADD_PILL_SECTION_HINT_CLASS,
+    ADD_PILL_SECTION_LABEL_CLASS,
+} from "@/components/ui/chips";
 import { HintTooltip } from "@/components/ui/feedback";
 import { BlockLevelMeter } from "./BlockLevelMeter";
 import { useToast } from "@/components/ui/feedback";
@@ -30,10 +36,7 @@ import {
 } from "./periodizationQualitiesPresentation";
 import { QualityMixInfoBanner } from "./QualityMixInfoBanner";
 import {
-    AUTHORING_STEP_ADD_PILL_GRID_ITEM_CLASS,
-    AUTHORING_STEP_ADD_PILLS_GRID_CLASS,
     AUTHORING_STEP_INNER_PANEL_CLASS,
-    AUTHORING_STEP_SECTION_LABEL_CLASS,
 } from "./phaseAuthoringPresentation";
 
 import {
@@ -256,40 +259,23 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                     className={cn("space-y-3", premiumLayout && "md:space-y-4")}
                     aria-label="Añadir cualidades"
                 >
-                    <p
-                        className={
-                            premiumLayout
-                                ? AUTHORING_STEP_SECTION_LABEL_CLASS
-                                : "text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
-                        }
-                    >
+                    <p className={ADD_PILL_SECTION_LABEL_CLASS}>
                         Añadir cualidad
-                        <span className="ml-1.5 font-normal normal-case text-muted-foreground/80">
+                        <span className={ADD_PILL_SECTION_HINT_CLASS}>
                             (máx. {MAX_PERIOD_BLOCK_QUALITIES})
                         </span>
                     </p>
-                    <div
-                        className={
-                            premiumLayout
-                                ? AUTHORING_STEP_ADD_PILLS_GRID_CLASS
-                                : "flex flex-wrap gap-2 md:gap-2.5"
-                        }
-                    >
+                    <AddPillGrid variant={premiumLayout ? "premium" : "compact"}>
                         {available.map((c) => (
-                            <button
+                            <AddPill
                                 key={c.id}
-                                type="button"
+                                label={c.name}
+                                variant={premiumLayout ? "premium" : "compact"}
+                                fullWidth={premiumLayout}
                                 onClick={() => handleAddQuality(c.id)}
-                                className={
-                                    premiumLayout
-                                        ? AUTHORING_STEP_ADD_PILL_GRID_ITEM_CLASS
-                                        : "rounded-full border border-dashed border-border px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary hover:bg-primary/5"
-                                }
-                            >
-                                + {c.name}
-                            </button>
+                            />
                         ))}
-                    </div>
+                    </AddPillGrid>
                 </section>
             )}
 
