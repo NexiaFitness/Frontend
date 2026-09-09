@@ -140,11 +140,12 @@ describe("ClientPlanningTab", () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByTestId("planning-explore-shell"),
+                    screen.getByTestId("planning-create-when-shell"),
                 ).toBeInTheDocument();
             });
 
             expect(screen.getByText("Planificación")).toBeInTheDocument();
+            expect(screen.getByText("Selecciona un rango")).toBeInTheDocument();
             expect(
                 screen.queryByText("Bloques configurados"),
             ).not.toBeInTheDocument();

@@ -10,6 +10,7 @@ import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStruct
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
 
 import {
     getCoPrimarySlugs,
@@ -20,6 +21,7 @@ import {
 import { getPatternsForDayFromWeek1 } from "./blockAuthoringPatternsUtils";
 import { PatternBadge } from "./PatternBadge";
 import {
+    AUTHORING_STEP_INNER_PANEL_CLASS,
     AUTHORING_STEP_META_CLASS,
     WEEKDAY_ISO_ORDER,
     WEEKDAY_LABELS_ES,
@@ -38,6 +40,8 @@ interface Props {
     catalog: PhysicalQuality[];
     patternsCatalog: MovementPattern[];
     onEditStep: (step: BlockAuthorStep) => void;
+    hideIntro?: boolean;
+    premiumLayout?: boolean;
 }
 
 function formatRange(start: string, end: string): string {
@@ -78,7 +82,12 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
     catalog,
     patternsCatalog,
     onEditStep,
+    hideIntro = false,
+    premiumLayout = false,
 }) => {
+    const sectionClass = premiumLayout
+        ? cn(AUTHORING_STEP_INNER_PANEL_CLASS, "space-y-2 md:space-y-3")
+        : "space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4";
     const activeSet = new Set(activeDays);
     const dayLabels = WEEKDAY_ISO_ORDER.filter((d) => activeSet.has(d)).map(
         (d) => WEEKDAY_LABELS_ES[d - 1],
@@ -103,10 +112,12 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
     const showCoPrimary = isCoPrimaryMix(qualities, catalog);
 
     return (
-        <div className="space-y-6">
-            <p className={AUTHORING_STEP_META_CLASS}>Resumen del bloque</p>
+        <div className={cn("space-y-6", premiumLayout && "md:space-y-8")}>
+            {!hideIntro ? (
+                <p className={AUTHORING_STEP_META_CLASS}>Resumen del bloque</p>
+            ) : null}
 
-            <section className="space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4">
+            <section className={sectionClass}>
                 <div className="flex items-start justify-between gap-2">
                     <div>
                         <p className="text-xs text-muted-foreground">Vigencia</p>
@@ -119,7 +130,7 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
                 </div>
             </section>
 
-            <section className="space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4">
+            <section className={sectionClass}>
                 <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
                         Cualidades ({qualitiesSum}%)
@@ -173,7 +184,7 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
                 ) : null}
             </section>
 
-            <section className="space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4">
+            <section className={sectionClass}>
                 <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">
                         Volumen e intensidad
@@ -193,7 +204,7 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
                 </p>
             </section>
 
-            <section className="space-y-2 rounded-lg border border-border/50 bg-surface-2/30 p-4">
+            <section className={sectionClass}>
                 <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">Días</p>
                     <Button
@@ -211,7 +222,7 @@ export const BlockAuthoringStepSummary: React.FC<Props> = ({
                 </p>
             </section>
 
-            <section className="space-y-3 rounded-lg border border-border/50 bg-surface-2/30 p-4">
+            <section className={cn(sectionClass, premiumLayout && "space-y-3")}>
                 <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-muted-foreground">Patrones</p>
                     <Button

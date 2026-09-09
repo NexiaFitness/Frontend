@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
+import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
@@ -32,7 +32,6 @@ import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { PlanningExploreShell } from "./PlanningExploreShell";
 import { PlanningCreateWhenShell } from "./PlanningCreateWhenShell";
-import { PlanningAnalyticsShell } from "./PlanningAnalyticsShell";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
 import {
   clearBlockAuthorParams,
@@ -44,10 +43,7 @@ import {
 } from "@/utils/blockAuthoringUrl";
 import {
   applyPlanningModeCreateBlock,
-  applyPlanningViewAnalytics,
   clearPlanningMode,
-  clearPlanningView,
-  isPlanningAnalyticsView,
   isPlanningCreateWhenMode,
 } from "@/utils/planningHubUrl";
 import {
@@ -94,8 +90,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   );
   const isDapAuthoring = isBlockAuthoringActive(blockAuthorParams);
   const isBlockWeeksManage = blockWeeksId != null;
-  const isCreateWhen = isPlanningCreateWhenMode(searchParams);
-  const isAnalytics = isPlanningAnalyticsView(searchParams);
+  const isExplicitCreateWhen = isPlanningCreateWhenMode(searchParams);
 
   const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
@@ -103,9 +98,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
-  const createRangeNavigateKeyRef = useRef<string | null>(null);
-  const overlapRangeWarnedRef = useRef(false);
-
   const { data: clientProfile } = useGetClientQuery(clientId!, { skip: !clientId });
 
   const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
@@ -115,6 +107,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     isError,
     error,
   } = useGetPeriodBlocksQuery(planId);
+  const isFirstBlockFlow = blocks.length === 0;
+  const isCreateWhen = isExplicitCreateWhen || isFirstBlockFlow;
   const { data: sessions = [] } = useGetTrainingSessionsQuery(planId);
 
   const sessionDates = useMemo(() => {
@@ -234,47 +228,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     [clientId, planId, navigate],
   );
 
-  useEffect(() => {
-    if (!isCreateWhen || form.phase !== "rangeComplete") {
-      overlapRangeWarnedRef.current = false;
-      createRangeNavigateKeyRef.current = null;
-      return;
-    }
-    if (!form.startDate || !form.endDate) {
-      return;
-    }
-    if (outsidePlanBounds) {
-      showWarning("El rango debe estar dentro de la vigencia del plan.");
-      reset();
-      return;
-    }
-    if (overlapDetected) {
-      if (!overlapRangeWarnedRef.current) {
-        overlapRangeWarnedRef.current = true;
-        showWarning(
-          "El rango se solapa con otro bloque. Ajusta las fechas en el calendario.",
-        );
-      }
-      return;
-    }
-    const navigateKey = `${form.startDate}:${form.endDate}`;
-    if (createRangeNavigateKeyRef.current === navigateKey) {
-      return;
-    }
-    createRangeNavigateKeyRef.current = navigateKey;
-    navigateToCreateAuthoring(form.startDate, form.endDate);
-  }, [
-    isCreateWhen,
-    form.phase,
-    form.startDate,
-    form.endDate,
-    outsidePlanBounds,
-    overlapDetected,
-    showWarning,
-    reset,
-    navigateToCreateAuthoring,
-  ]);
-
   const handleEditBlockNavigate = useCallback(
     (block: PlanPeriodBlock) => {
       if (clientId == null || clientId <= 0) {
@@ -327,19 +280,43 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     navigateToClientPlanning(next);
   }, [reset, searchParams, navigateToClientPlanning]);
 
-  const handleCancelCreateRange = useCallback(() => {
-    reset();
-  }, [reset]);
+  const continueRangeDisabledReason = useMemo(() => {
+    if (form.phase !== "rangeComplete") {
+      return null;
+    }
+    if (outsidePlanBounds) {
+      return "El rango debe estar dentro de la vigencia del plan.";
+    }
+    if (overlapDetected) {
+      return "El rango se solapa con otro bloque. Ajusta las fechas en el calendario.";
+    }
+    return null;
+  }, [form.phase, outsidePlanBounds, overlapDetected]);
 
-  const handleViewAnalytics = useCallback(() => {
-    const next = applyPlanningViewAnalytics(searchParams);
-    navigateToClientPlanning(next);
-  }, [searchParams, navigateToClientPlanning]);
-
-  const handleExitAnalytics = useCallback(() => {
-    const next = clearPlanningView(searchParams);
-    navigateToClientPlanning(next);
-  }, [searchParams, navigateToClientPlanning]);
+  const handleContinueCreateRange = useCallback(() => {
+    if (form.phase !== "rangeComplete" || !form.startDate || !form.endDate) {
+      return;
+    }
+    if (outsidePlanBounds) {
+      showWarning("El rango debe estar dentro de la vigencia del plan.");
+      return;
+    }
+    if (overlapDetected) {
+      showWarning(
+        "El rango se solapa con otro bloque. Ajusta las fechas en el calendario.",
+      );
+      return;
+    }
+    navigateToCreateAuthoring(form.startDate, form.endDate);
+  }, [
+    form.phase,
+    form.startDate,
+    form.endDate,
+    outsidePlanBounds,
+    overlapDetected,
+    showWarning,
+    navigateToCreateAuthoring,
+  ]);
 
   const planGoalResolved =
     activePlan?.display_goal ?? activePlan?.goal ?? planGoalForRecommendations;
@@ -470,16 +447,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     if (!deleteTarget) {
       return;
     }
+    const blockId = deleteTarget.id;
     try {
-      await deleteBlock({ planId, blockId: deleteTarget.id }).unwrap();
-      showSuccess("Bloque de periodización eliminado.");
-      if (selectedBlockId === deleteTarget.id) {
+      await deleteBlock({ planId, blockId }).unwrap();
+      setDeleteTarget(null);
+      if (selectedBlockId === blockId) {
         setSelectedBlockId(null);
       }
+      showSuccess("Bloque de periodización eliminado.");
     } catch (err) {
       showError(getMutationErrorMessage(err));
-    } finally {
-      setDeleteTarget(null);
     }
   }, [deleteTarget, planId, deleteBlock, selectedBlockId, showSuccess, showError]);
 
@@ -586,6 +563,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     return (
       <PlanBlockAuthoringSurface
         mode={blockAuthorParams.mode}
+        clientId={clientId!}
         planId={planId}
         blockId={blockAuthorParams.blockId}
         blockStart={blockAuthorParams.blockStart}
@@ -605,21 +583,15 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
 
   let shellContent: React.ReactNode;
 
-  if (isAnalytics) {
-    shellContent = (
-      <PlanningAnalyticsShell
-        blocks={blocks}
-        catalog={catalog}
-        onBack={handleExitAnalytics}
-      />
-    );
-  } else if (isCreateWhen) {
+  if (isCreateWhen) {
     shellContent = (
       <PlanningCreateWhenShell
+        variant={isFirstBlockFlow ? "firstBlock" : "addPhase"}
         blocks={blocks}
         activePlan={activePlan}
         planStartDate={planStartDate}
         planEndDate={planEndDate}
+        trainingFrequencyLabel={trainingFrequencyLabel}
         calMonth={calMonth}
         onMonthChange={setCalMonth}
         sessionDates={sessionDates}
@@ -629,7 +601,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         habitualTrainingDays={clientProfile?.training_days ?? null}
         onDayClick={handleCreateWhenDayClick}
         onCancel={handleCancelCreateWhen}
-        onCancelRange={handleCancelCreateRange}
+        onContinueRange={handleContinueCreateRange}
+        canContinueRange={continueRangeDisabledReason == null}
+        continueRangeDisabledReason={continueRangeDisabledReason}
       />
     );
   } else {
@@ -657,7 +631,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         onViewWeeks={handleViewWeeks}
         onDeleteBlock={(id, label) => setDeleteTarget({ id, label })}
         onCreateSessionForBlock={handleCreateSessionForBlock}
-        onViewAnalytics={handleViewAnalytics}
         buildVolumeContext={(volumeLevel, intensityLevel) =>
           volumeNominal.buildContext(
             volumeLevel ?? 5,

@@ -5,21 +5,24 @@
 import React from "react";
 import { CalendarDays, Target } from "lucide-react";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import { GOAL_LABEL_ES, toneFromGoal } from "@/components/trainingPlans/goalLabels";
 import { formatProgramDurationLabel } from "./planningShellUtils";
+import {
+    PLANNING_ACTIVE_PLAN_CARD_CLASS,
+    PLANNING_ACTIVE_PLAN_LABEL,
+    PLANNING_ACTIVE_PLAN_META,
+    PLANNING_ACTIVE_PLAN_TITLE,
+    PLANNING_PLAN_STATUS_BADGE,
+    PLANNING_PLAN_STATUS_BADGE_BASE,
+} from "./planningShellPresentation";
 
 const STATUS_LABELS: Record<string, string> = {
     active: "Activo",
     completed: "Completado",
     paused: "Pausado",
     cancelled: "Cancelado",
-};
-
-const STATUS_STYLES: Record<string, string> = {
-    active: "bg-success/10 text-success border-success/30",
-    completed: "bg-primary/10 text-primary border-primary/30",
-    paused: "bg-warning/10 text-warning border-warning/30",
-    cancelled: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 function formatDateShort(dateStr: string): string {
@@ -41,21 +44,25 @@ export const PlanningActivePlanCard: React.FC<Props> = ({ activePlan }) => {
     const goalTone = toneFromGoal(goalKey);
 
     return (
-        <div
-            className="shrink-0 rounded-lg border border-border bg-surface p-5 space-y-2"
+        <article
+            className={PLANNING_ACTIVE_PLAN_CARD_CLASS}
             data-testid="planning-active-plan-card"
         >
-            <div className="flex items-start justify-between gap-2">
+            <NexiaGlassAccentRim />
+
+            <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                    <p className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Plan activo
-                    </p>
-                    <h4 className="text-sm font-bold text-foreground mt-0.5 truncate">
+                    <p className={PLANNING_ACTIVE_PLAN_LABEL}>Plan activo</p>
+                    <h4 className={cn(PLANNING_ACTIVE_PLAN_TITLE, "mt-1 truncate")}>
                         {activePlan.display_name || activePlan.name}
                     </h4>
                 </div>
                 <span
-                    className={`flex-shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold border ${STATUS_STYLES[activePlan.status] ?? "bg-muted text-muted-foreground border-border"}`}
+                    className={cn(
+                        PLANNING_PLAN_STATUS_BADGE_BASE,
+                        PLANNING_PLAN_STATUS_BADGE[activePlan.status] ??
+                            "border-border bg-muted/50 text-muted-foreground",
+                    )}
                 >
                     {STATUS_LABELS[activePlan.status] ?? activePlan.status}
                 </span>
@@ -63,15 +70,18 @@ export const PlanningActivePlanCard: React.FC<Props> = ({ activePlan }) => {
 
             {goalLabel ? (
                 <span
-                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium ${goalTone}`}
+                    className={cn(
+                        "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium",
+                        goalTone,
+                    )}
                 >
-                    <Target className="h-3 w-3 shrink-0" aria-hidden />
+                    <Target className="size-3 shrink-0" aria-hidden />
                     {goalLabel}
                 </span>
             ) : null}
 
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <CalendarDays className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            <div className={PLANNING_ACTIVE_PLAN_META}>
+                <CalendarDays className="size-3.5 shrink-0" aria-hidden />
                 <span>
                     {formatDateShort(activePlan.start_date)} –{" "}
                     {formatDateShort(activePlan.end_date)}
@@ -84,6 +94,6 @@ export const PlanningActivePlanCard: React.FC<Props> = ({ activePlan }) => {
                     )}
                 </span>
             </div>
-        </div>
+        </article>
     );
 };

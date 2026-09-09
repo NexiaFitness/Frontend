@@ -4,6 +4,7 @@
  */
 
 import { cn } from "@/lib/utils";
+import { PLANNING_EMPTY_CALLOUT_CLASS } from "./planningShellPresentation";
 
 /** Mismo aspecto que el enlace «Ir a planificación» para botones u otros CTAs en el callout. */
 export const periodBlockEmptyCalloutOutlineCtaClassName = cn(
@@ -13,7 +14,5 @@ export const periodBlockEmptyCalloutOutlineCtaClassName = cn(
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
 );
 
-/** Marco discontinuo reutilizable (mismo patrón visual que estados vacíos). */
-export const periodBlockDashedShellClassName = cn(
-    "rounded-lg border-2 border-dashed border-border/60 p-8"
-);
+/** Marco glass premium reutilizable (estados vacíos periodización). */
+export const periodBlockDashedShellClassName = PLANNING_EMPTY_CALLOUT_CLASS;

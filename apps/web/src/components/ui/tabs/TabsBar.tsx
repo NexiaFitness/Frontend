@@ -29,6 +29,8 @@ export interface TabsBarItem {
     label: string;
     icon?: React.ReactNode;
     disabled?: boolean;
+    /** Wizard: paso ya visitado (estilo secundario cuando no está activo). */
+    completed?: boolean;
 }
 
 export interface TabsBarProps {
@@ -39,6 +41,8 @@ export interface TabsBarProps {
     className?: string;
     /** equal = reparto en fila; content = ancho por label + scroll horizontal */
     distribute?: NexiaSegmentedDistribute;
+    /** Valor ARIA del ítem activo — `step` en wizards multi-paso. */
+    activeAriaCurrent?: "page" | "step";
 }
 
 export const TabsBar: React.FC<TabsBarProps> = ({
@@ -48,6 +52,7 @@ export const TabsBar: React.FC<TabsBarProps> = ({
     ariaLabel = "Tabs",
     className,
     distribute = "content",
+    activeAriaCurrent = "page",
 }) => {
     return (
         <nav className={cn(NEXIA_SEGMENTED_SHELL, className)} aria-label={ariaLabel}>
@@ -55,7 +60,11 @@ export const TabsBar: React.FC<TabsBarProps> = ({
                 className={NEXIA_SEGMENTED_SCROLL}
                 style={{ WebkitOverflowScrolling: "touch" }}
             >
-                <div className={nexiaSegmentedTrackClass(distribute)} role="tablist">
+                <div
+                    className={nexiaSegmentedTrackClass(distribute)}
+                    role="tablist"
+                    aria-label={ariaLabel}
+                >
                     {items.map((tab) => {
                         const isActive = value === tab.id;
                         const isDisabled = tab.disabled;
@@ -68,10 +77,16 @@ export const TabsBar: React.FC<TabsBarProps> = ({
                                 onClick={() => !isDisabled && onChange(tab.id)}
                                 disabled={isDisabled}
                                 aria-selected={isActive}
-                                aria-current={isActive ? "page" : undefined}
+                                aria-current={
+                                    isActive ? activeAriaCurrent : undefined
+                                }
                                 className={cn(
                                     nexiaSegmentedItemClass(isActive, distribute),
-                                    isDisabled && "cursor-not-allowed opacity-50"
+                                    !isActive &&
+                                        tab.completed &&
+                                        "text-foreground/80",
+                                    isDisabled &&
+                                        "pointer-events-none cursor-not-allowed opacity-45",
                                 )}
                             >
                                 {tab.icon ? (

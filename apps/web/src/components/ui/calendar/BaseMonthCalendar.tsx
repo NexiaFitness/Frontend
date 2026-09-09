@@ -16,6 +16,7 @@
  */
 
 import React, { useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 const WEEKDAYS = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"] as const;
 
@@ -89,7 +90,7 @@ export const BaseMonthCalendar: React.FC<BaseMonthCalendarProps> = ({
     const monthLabel = `${MONTHS[month]} ${year}`;
 
     return (
-        <div className={`rounded-lg bg-surface p-5 space-y-3 ${className}`}>
+        <div className={cn("rounded-lg bg-surface p-5 space-y-3", className)}>
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

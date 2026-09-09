@@ -32,6 +32,7 @@ interface Props {
     catalogLoading?: boolean;
     catalogError?: boolean;
     periodUnit?: "fase" | "bloque";
+    hideIntro?: boolean;
 }
 
 function patternDisplayName(pattern: MovementPattern): string {
@@ -56,6 +57,7 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
     catalogLoading,
     catalogError,
     periodUnit = "fase",
+    hideIntro = false,
 }) => {
     const [pickerDay, setPickerDay] = useState<number | null>(null);
     const periodLabel = periodUnitPhrase(periodUnit);
@@ -91,25 +93,26 @@ export const BlockAuthoringStepPatterns: React.FC<Props> = ({
 
     if (activeDays.length === 0) {
         return (
-            <div className="space-y-4">
-                <p className={AUTHORING_STEP_META_CLASS}>Patrones por día</p>
-                <p className="text-sm text-muted-foreground">
-                    Selecciona al menos un día en el paso anterior.
-                </p>
-            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+                Selecciona al menos un día en el paso anterior.
+            </p>
         );
     }
 
     return (
-        <div className="space-y-4">
-            <p className={AUTHORING_STEP_META_CLASS}>Patrones por día</p>
-            <p className="text-sm text-muted-foreground">
-                Asigna manualmente los patrones de movimiento a cada día de
-                entrenamiento. La configuración se aplicará a todas las semanas de{" "}
-                {periodLabel}.
-            </p>
+        <div className="space-y-4 md:space-y-6">
+            {!hideIntro ? (
+                <>
+                    <p className={AUTHORING_STEP_META_CLASS}>Patrones por día</p>
+                    <p className="text-sm text-muted-foreground">
+                        Asigna manualmente los patrones de movimiento a cada día de
+                        entrenamiento. La configuración se aplicará a todas las semanas de{" "}
+                        {periodLabel}.
+                    </p>
+                </>
+            ) : null}
 
-            <ul className="space-y-2">
+            <ul className="space-y-2 md:space-y-3">
                 {sortedDays.map((dayOfWeek) => {
                     const patterns = getPatternsForDayFromWeek1(
                         weeklyStructure,

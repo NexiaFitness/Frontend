@@ -3,7 +3,7 @@
  *
  * Contexto:
  * - Alineado con backend FastAPI (restricciones actualizadas según Sosina).
- * - Usado por el hook useClientOnboarding y cualquier formulario de cliente.
+ * - Usado por useClientForm y cualquier formulario de cliente.
  * - Compatible con Web y React Native (sin dependencias DOM).
  *
  * Reglas principales:

@@ -7,9 +7,11 @@ import { Plus } from "lucide-react";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import { formatPhaseChipLabel } from "./planningShellUtils";
 import {
-    PLANNING_ADD_PHASE_CHIP_CLASS,
-    PLANNING_CHIP_STRIP_CLASS,
-    planningPhaseChipClass,
+    PLANNING_ADD_PHASE_NAV_ITEM,
+    PLANNING_PHASE_NAV_SCROLL,
+    PLANNING_PHASE_NAV_SHELL,
+    PLANNING_PHASE_NAV_TRACK,
+    planningPhaseNavItemClass,
 } from "./planningShellPresentation";
 
 interface Props {
@@ -25,35 +27,38 @@ export const PlanningPhaseChipStrip: React.FC<Props> = ({
     onSelectBlock,
     onAddPhase,
 }) => (
-    <div
-        className={PLANNING_CHIP_STRIP_CLASS}
-        data-testid="planning-phase-chip-strip"
-        role="tablist"
-        aria-label="Fases del programa"
-    >
-        {blocks.map((block, index) => {
-            const selected = block.id === selectedBlockId;
-            return (
+    <div className={PLANNING_PHASE_NAV_SHELL} data-testid="planning-phase-chip-strip">
+        <div className={PLANNING_PHASE_NAV_SCROLL}>
+            <div
+                className={PLANNING_PHASE_NAV_TRACK}
+                role="tablist"
+                aria-label="Fases del programa"
+            >
+                {blocks.map((block, index) => {
+                    const selected = block.id === selectedBlockId;
+                    return (
+                        <button
+                            key={block.id}
+                            type="button"
+                            role="tab"
+                            aria-selected={selected}
+                            className={planningPhaseNavItemClass(selected)}
+                            onClick={() => onSelectBlock(block.id)}
+                        >
+                            {formatPhaseChipLabel(block, index)}
+                        </button>
+                    );
+                })}
                 <button
-                    key={block.id}
                     type="button"
-                    role="tab"
-                    aria-selected={selected}
-                    className={planningPhaseChipClass(selected)}
-                    onClick={() => onSelectBlock(block.id)}
+                    className={PLANNING_ADD_PHASE_NAV_ITEM}
+                    data-testid="planning-add-phase"
+                    onClick={onAddPhase}
                 >
-                    {formatPhaseChipLabel(block, index)}
+                    <Plus className="mr-1 inline size-3.5" aria-hidden />
+                    Añadir fase
                 </button>
-            );
-        })}
-        <button
-            type="button"
-            className={PLANNING_ADD_PHASE_CHIP_CLASS}
-            data-testid="planning-add-phase"
-            onClick={onAddPhase}
-        >
-            <Plus className="mr-1 inline size-3.5" aria-hidden />
-            Añadir fase
-        </button>
+            </div>
+        </div>
     </div>
 );

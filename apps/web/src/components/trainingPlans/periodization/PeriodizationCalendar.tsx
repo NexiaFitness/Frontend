@@ -20,7 +20,12 @@ import {
   parseHabitualTrainingDaySet,
 } from "@nexia/shared/utils/clientTrainingDays";
 import { BaseMonthCalendar, type CalendarDayInfo } from "@/components/ui/calendar/BaseMonthCalendar";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
+import {
+  PLANNING_CALENDAR_SHELL_CLASS,
+  PLANNING_CALENDAR_WRAP_CLASS,
+} from "./planningShellPresentation";
 
 interface Props {
   currentMonth: Date;
@@ -303,13 +308,17 @@ export const PeriodizationCalendar: React.FC<Props> = ({
   );
 
   return (
-    <BaseMonthCalendar
-      currentMonth={currentMonth}
-      onMonthChange={onMonthChange}
-      renderCell={renderCell}
-      subtitle={subtitle}
-      footer={footer}
-      compactCells
-    />
+    <div className={PLANNING_CALENDAR_WRAP_CLASS}>
+      <NexiaGlassAccentRim />
+      <BaseMonthCalendar
+        currentMonth={currentMonth}
+        onMonthChange={onMonthChange}
+        renderCell={renderCell}
+        subtitle={subtitle}
+        footer={footer}
+        compactCells
+        className={PLANNING_CALENDAR_SHELL_CLASS}
+      />
+    </div>
   );
 };

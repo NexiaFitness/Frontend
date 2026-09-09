@@ -16,6 +16,7 @@ import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColo
 
 import { Button } from "@/components/ui/buttons";
 import { HintTooltip } from "@/components/ui/feedback";
+import { BlockLevelMeter } from "./BlockLevelMeter";
 import { useToast } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 
@@ -28,6 +29,12 @@ import {
     formatCoPrimaryLabels,
 } from "./periodizationQualitiesPresentation";
 import { QualityMixInfoBanner } from "./QualityMixInfoBanner";
+import {
+    AUTHORING_STEP_ADD_PILL_GRID_ITEM_CLASS,
+    AUTHORING_STEP_ADD_PILLS_GRID_CLASS,
+    AUTHORING_STEP_INNER_PANEL_CLASS,
+    AUTHORING_STEP_SECTION_LABEL_CLASS,
+} from "./phaseAuthoringPresentation";
 
 import {
     MAX_PERIOD_BLOCK_QUALITIES,
@@ -48,6 +55,10 @@ export interface PeriodBlockQualitiesStepProps {
     continueLabel?: string;
     /** Ocultar CTA interno cuando el footer de la superficie D-PAP gestiona navegación. */
     hideFooter?: boolean;
+    /** Título e hint los provee BlockAuthoringStepBody (wizard D-PAP). */
+    hideHeader?: boolean;
+    /** Tokens premium del wizard (paneles glass, pills, espaciado). */
+    premiumLayout?: boolean;
     className?: string;
 }
 
@@ -63,6 +74,8 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
     onContinue,
     continueLabel = "Continuar a estructura semanal",
     hideFooter = false,
+    hideHeader = false,
+    premiumLayout = false,
     className,
 }) => {
     const { showError, showWarning } = useToast();
@@ -117,27 +130,39 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
         showWarning,
     ]);
 
-    return (
-        <div className={cn("flex flex-col gap-5", className)}>
-            <header className="space-y-1.5">
-                <h3 className="text-xs font-semibold text-foreground">
-                    {PHYSICAL_QUALITY_MIX_COPY.stepTitle}
-                </h3>
-                <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    {PHYSICAL_QUALITY_MIX_COPY.helpParagraph}
-                </p>
-            </header>
+    const assignedPanelClass = premiumLayout
+        ? cn(AUTHORING_STEP_INNER_PANEL_CLASS, "space-y-4 md:space-y-5")
+        : "space-y-4 rounded-md border border-border/60 bg-surface-2/30 p-4";
 
-            {qualities.length === 0 && (
+    return (
+        <div
+            className={cn(
+                "flex flex-col",
+                premiumLayout ? "gap-6 md:gap-8" : "gap-5",
+                className,
+            )}
+        >
+            {!hideHeader ? (
+                <header className="space-y-1.5">
+                    <h3 className="text-xs font-semibold text-foreground">
+                        {PHYSICAL_QUALITY_MIX_COPY.stepTitle}
+                    </h3>
+                    <p className="text-[11px] leading-relaxed text-muted-foreground">
+                        {PHYSICAL_QUALITY_MIX_COPY.helpParagraph}
+                    </p>
+                </header>
+            ) : null}
+
+            {!hideHeader && qualities.length === 0 ? (
                 <p className="text-[11px] text-primary animate-pulse leading-relaxed">
                     Añade al menos una cualidad física para continuar
                 </p>
-            )}
+            ) : null}
 
             {qualities.length > 0 && (
                 <section
                     aria-label="Cualidades asignadas"
-                    className="space-y-4 rounded-md border border-border/60 bg-surface-2/30 p-4"
+                    className={assignedPanelClass}
                 >
                     {qualities.map((q) => {
                         const catItem = catalog.find(
@@ -149,78 +174,66 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                             `Cualidad #${q.physical_quality_id}`;
                         const qColor = getPhysicalQualityColor(slug);
 
+                        const qualityTooltip = getQualityTooltip(slug);
+
                         return (
                             <div
                                 key={q.physical_quality_id}
-                                className="space-y-2.5"
+                                className="relative pr-9"
                             >
-                                <div className="flex items-center justify-between gap-2">
-                                    <div className="flex items-center gap-2 min-w-0">
-                                        <span
-                                            className="h-2 w-2 rounded-full shrink-0"
-                                            style={{
-                                                backgroundColor: qColor.hex,
-                                            }}
-                                            aria-hidden
-                                        />
-                                        <span className="text-xs font-medium text-foreground truncate">
-                                            {name}
-                                        </span>
-                                        {getQualityTooltip(slug) ? (
-                                            <HintTooltip
-                                                label={getQualityTooltip(slug)!}
-                                                align="start"
-                                            >
-                                                <span
-                                                    className="inline-flex text-muted-foreground/70 hover:text-primary"
-                                                    tabIndex={0}
-                                                >
-                                                    <HelpCircle
-                                                        className="h-3.5 w-3.5"
-                                                        aria-hidden
-                                                    />
-                                                </span>
-                                            </HintTooltip>
-                                        ) : null}
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <span className="text-xs font-bold tabular-nums text-foreground">
-                                            {q.percentage}%
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() =>
-                                                onRemoveQuality(
-                                                    q.physical_quality_id,
-                                                )
-                                            }
-                                            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-destructive transition-colors"
-                                            aria-label={`Quitar ${name}`}
-                                        >
-                                            <X className="h-3.5 w-3.5" />
-                                        </button>
-                                    </div>
-                                </div>
-                                <input
-                                    type="range"
+                                <BlockLevelMeter
+                                    accentHex={qColor.hex}
+                                    prefix={name}
+                                    level={q.percentage}
                                     min={0}
                                     max={100}
                                     step={5}
-                                    value={q.percentage}
-                                    onChange={(e) =>
+                                    qualitativeLabel={false}
+                                    valueFormat="percent"
+                                    headerLeading={
+                                        <>
+                                            <span
+                                                className="h-2 w-2 shrink-0 rounded-full"
+                                                style={{
+                                                    backgroundColor: qColor.hex,
+                                                }}
+                                                aria-hidden
+                                            />
+                                            {qualityTooltip ? (
+                                                <HintTooltip
+                                                    label={qualityTooltip}
+                                                    align="start"
+                                                >
+                                                    <span
+                                                        className="inline-flex text-muted-foreground/70 hover:text-primary"
+                                                        tabIndex={0}
+                                                    >
+                                                        <HelpCircle
+                                                            className="h-3.5 w-3.5"
+                                                            aria-hidden
+                                                        />
+                                                    </span>
+                                                </HintTooltip>
+                                            ) : null}
+                                        </>
+                                    }
+                                    onChange={(value) =>
                                         onUpdateQualityPct(
                                             q.physical_quality_id,
-                                            Number(e.target.value),
+                                            value,
                                         )
                                     }
-                                    className="w-full h-1.5 rounded-full appearance-none bg-surface-2 cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:shadow-md [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:bg-[--thumb-color] [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:bg-[--thumb-color]"
-                                    style={
-                                        {
-                                            "--thumb-color": qColor.hex,
-                                        } as React.CSSProperties
-                                    }
-                                    aria-label={`${name} porcentaje — ${PHYSICAL_QUALITY_MIX_COPY.percentageSuffix}`}
                                 />
+                                <button
+                                    type="button"
+                                    onClick={() =>
+                                        onRemoveQuality(q.physical_quality_id)
+                                    }
+                                    className="absolute right-0 top-0 inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-destructive"
+                                    aria-label={`Quitar ${name}`}
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
                             </div>
                         );
                     })}
@@ -239,20 +252,39 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
             ))}
 
             {!atQualityLimit && available.length > 0 && (
-                <section className="space-y-2.5" aria-label="Añadir cualidades">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <section
+                    className={cn("space-y-3", premiumLayout && "md:space-y-4")}
+                    aria-label="Añadir cualidades"
+                >
+                    <p
+                        className={
+                            premiumLayout
+                                ? AUTHORING_STEP_SECTION_LABEL_CLASS
+                                : "text-[10px] font-semibold uppercase tracking-wider text-muted-foreground"
+                        }
+                    >
                         Añadir cualidad
                         <span className="ml-1.5 font-normal normal-case text-muted-foreground/80">
                             (máx. {MAX_PERIOD_BLOCK_QUALITIES})
                         </span>
                     </p>
-                    <div className="flex flex-wrap gap-2">
+                    <div
+                        className={
+                            premiumLayout
+                                ? AUTHORING_STEP_ADD_PILLS_GRID_CLASS
+                                : "flex flex-wrap gap-2 md:gap-2.5"
+                        }
+                    >
                         {available.map((c) => (
                             <button
                                 key={c.id}
                                 type="button"
                                 onClick={() => handleAddQuality(c.id)}
-                                className="rounded-full border border-dashed border-border px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary hover:bg-primary/5"
+                                className={
+                                    premiumLayout
+                                        ? AUTHORING_STEP_ADD_PILL_GRID_ITEM_CLASS
+                                        : "rounded-full border border-dashed border-border px-3 py-1.5 text-[11px] text-muted-foreground transition-colors hover:border-primary hover:text-primary hover:bg-primary/5"
+                                }
                             >
                                 + {c.name}
                             </button>

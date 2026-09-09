@@ -5,7 +5,7 @@
  * - Flujo de 7 pasos para crear clientes con datos completos (básicos + antropométricos).
  * - Integrado en dashboard de trainer con layout consistente.
  * - Progress bar visual, navegación step-by-step, validaciones por paso.
- * - Conecta con useClientOnboarding hook (shared, cross-platform).
+ * - Conecta con ClientOnboardingForm y useClientForm (shared).
  *
  * Arquitectura:
  * - DashboardLayout + TrainerSideMenu + navbar (AppNavbar) desde DashboardShell (consistencia visual).

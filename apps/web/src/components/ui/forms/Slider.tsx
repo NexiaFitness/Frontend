@@ -32,6 +32,12 @@ export interface SliderProps {
     readOnly?: boolean;
     /** Texto suave antes del valor (p. ej. «Del bloque», «Del perfil»). No es el valor numérico. */
     valueNote?: string;
+    /** Oculta fila label/valor — útil cuando el caller renderiza cabecera custom. */
+    hideLabel?: boolean;
+    /** Color de track/thumb (hex). Si se omite, usa `color` primary/warning. */
+    accentHex?: string;
+    /** Formato del valor mostrado junto al label. */
+    valueDisplay?: "ratio" | "percent";
     onChange?: (value: number) => void;
 }
 
@@ -46,6 +52,9 @@ export const Slider: React.FC<SliderProps> = ({
     color = "primary",
     readOnly = false,
     valueNote,
+    hideLabel = false,
+    accentHex,
+    valueDisplay = "ratio",
     onChange,
 }) => {
     const selectedColor = color || "primary";
@@ -59,32 +68,51 @@ export const Slider: React.FC<SliderProps> = ({
 
     const trackFillPercent = ((value - min) / (max - min)) * 100;
     const trackColor =
-        selectedColor === "primary"
+        accentHex ??
+        (selectedColor === "primary"
             ? "hsl(var(--primary))"
-            : "hsl(var(--warning))";
-    const thumbClass =
-        selectedColor === "primary"
-            ? "[&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary"
-            : "[&::-webkit-slider-thumb]:bg-warning [&::-moz-range-thumb]:bg-warning";
+            : "hsl(var(--warning))");
+    const thumbClass = accentHex
+        ? "[&::-webkit-slider-thumb]:bg-[--slider-accent] [&::-moz-range-thumb]:bg-[--slider-accent]"
+        : selectedColor === "primary"
+          ? "[&::-webkit-slider-thumb]:bg-primary [&::-moz-range-thumb]:bg-primary"
+          : "[&::-webkit-slider-thumb]:bg-warning [&::-moz-range-thumb]:bg-warning";
+
+    const sliderStyle = accentHex
+        ? ({
+              "--slider-accent": accentHex,
+              background: readOnly
+                  ? undefined
+                  : `linear-gradient(to right, ${trackColor} 0%, ${trackColor} ${trackFillPercent}%, hsl(var(--input)) ${trackFillPercent}%, hsl(var(--input)) 100%)`,
+          } as React.CSSProperties)
+        : {
+              background: readOnly
+                  ? undefined
+                  : `linear-gradient(to right, ${trackColor} 0%, ${trackColor} ${trackFillPercent}%, hsl(var(--input)) ${trackFillPercent}%, hsl(var(--input)) 100%)`,
+          };
 
     return (
         <div className="w-full">
-            <div className="flex items-center justify-between mb-2">
-                <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
-                    {labelIcon}
-                    <span>{label}</span>
-                </label>
-                <span className="flex items-baseline gap-1 tabular-nums">
-                    {valueNote ? (
-                        <span className="text-[10px] font-normal text-muted-foreground/55">
-                            {valueNote}
+            {!hideLabel ? (
+                <div className="mb-2 flex items-center justify-between">
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        {labelIcon}
+                        <span>{label}</span>
+                    </label>
+                    <span className="flex items-baseline gap-1 tabular-nums">
+                        {valueNote ? (
+                            <span className="text-[10px] font-normal text-muted-foreground/55">
+                                {valueNote}
+                            </span>
+                        ) : null}
+                        <span className="text-sm font-medium text-foreground">
+                            {valueDisplay === "percent"
+                                ? `${value}%`
+                                : `${value}/${max}`}
                         </span>
-                    ) : null}
-                    <span className="text-sm font-medium text-foreground">
-                        {value}/{max}
                     </span>
-                </span>
-            </div>
+                </div>
+            ) : null}
             <input
                 type="range"
                 min={min}
@@ -110,11 +138,7 @@ export const Slider: React.FC<SliderProps> = ({
                     [&::-moz-range-thumb]:border-0
                     [&::-moz-range-thumb]:shadow-md
                 `}
-                style={{
-                    background: readOnly
-                        ? undefined
-                        : `linear-gradient(to right, ${trackColor} 0%, ${trackColor} ${trackFillPercent}%, hsl(var(--input)) ${trackFillPercent}%, hsl(var(--input)) 100%)`,
-                }}
+                style={sliderStyle}
             />
         </div>
     );

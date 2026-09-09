@@ -41,6 +41,7 @@ import { resetPlanningSubJourneyParams } from "@/utils/planningHubUrl";
 import { SelectTemplateModal } from "@/components/clients/detail/modals/SelectTemplateModal";
 import { PlanificarClientChoiceModal } from "@/components/clients/detail/modals/PlanificarClientChoiceModal";
 import { AssignTemplateModal } from "@/components/trainingPlans/AssignTemplateModal";
+import { cn } from "@/lib/utils";
 
 // Lazy loading para tabs pesados que usan Recharts (carga bajo demanda)
 const ClientProgressTab = lazy(() => 
@@ -98,9 +99,11 @@ export const ClientDetail: React.FC = () => {
         return Number.isFinite(n) && n > 0 ? n : null;
     }, [searchParams]);
 
-    const hideClientTabsBar =
+    const isPlanningBlockAuthorFocus =
         activeTab === "planning" &&
         isBlockAuthoringActive(parseBlockAuthorParams(searchParams));
+    const hideClientTabsBar = isPlanningBlockAuthorFocus;
+    const hideClientHeader = isPlanningBlockAuthorFocus;
     React.useEffect(() => {
         const tab = searchParams.get("tab");
         if (tab === "workouts" || tab === "session-programming") {
@@ -323,16 +326,18 @@ export const ClientDetail: React.FC = () => {
     };
 
     return (
-        <div className="space-y-8">
-            <ClientHeader
-                client={client}
-                clientId={clientId}
-                onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
-                breadcrumbItems={breadcrumbItems}
-                onPlanificar={handlePlanificar}
-                onSaveQuickNote={saveQuickNote}
-                isSavingQuickNote={isSavingQuickNote}
-            />
+        <div className={cn("space-y-8", hideClientHeader && "space-y-0")}>
+            {!hideClientHeader ? (
+                <ClientHeader
+                    client={client}
+                    clientId={clientId}
+                    onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
+                    breadcrumbItems={breadcrumbItems}
+                    onPlanificar={handlePlanificar}
+                    onSaveQuickNote={saveQuickNote}
+                    isSavingQuickNote={isSavingQuickNote}
+                />
+            ) : null}
 
             {/* Tabs — barra de pestañas según spec (TabsBar reutilizable) */}
             {!hideClientTabsBar && (
@@ -345,7 +350,7 @@ export const ClientDetail: React.FC = () => {
             )}
 
             {/* Tab Content — espacio vertical según spec (pb-8 ya en main) */}
-            <div className="pt-2 pb-8">
+            <div className={cn("pb-8", !hideClientHeader && "pt-2")}>
                 {renderTabContent()}
             </div>
 
