@@ -1,0 +1,113 @@
+/**
+ * phaseConstructorPresentation.ts — Tokens visuales del shell de autoría de fase (F2).
+ *
+ * Contexto: clases Tailwind y helpers de estilo para PhaseAuthoringShell,
+ * PhaseSectionNav y chips de estado UX de fase.
+ *
+ * Notas de mantenimiento: sin lógica de negocio; ver design/platform/02_PRESENTATION_LAYER.md.
+ *
+ * @author Frontend Team
+ * @since v9.0.0
+ */
+
+import { cn } from "@/lib/utils";
+import { NEXIA_GLASS_CARD } from "@/components/ui/surface/glassSurfacePresentation";
+import {
+    NEXIA_DIVIDER_GLOW,
+} from "@/components/ui/surface/nexiaDividerPresentation";
+import {
+    PLATFORM_SECTION_LABEL,
+    NEXIA_SEGMENTED_SHELL,
+    NEXIA_SEGMENTED_SCROLL,
+    NEXIA_SEGMENTED_TRACK_CONTENT,
+    nexiaSegmentedItemClass,
+} from "@/components/ui/surface/platformPremiumPresentation";
+import type { PhaseUxLabel } from "@nexia/shared";
+
+export const PHASE_UX_LABEL_ES: Record<PhaseUxLabel, string> = {
+    borrador: "Borrador",
+    incompleta: "Incompleta",
+    lista: "Lista",
+};
+
+export const PHASE_UX_CHIP_CLASS: Record<PhaseUxLabel, string> = {
+    borrador: "bg-muted/60 text-muted-foreground border-border",
+    incompleta: "bg-warning/10 text-warning border-warning/30",
+    lista: "bg-success/10 text-success border-success/30",
+};
+
+export const PHASE_SHELL_LAYOUT_CLASS =
+    "flex flex-col gap-4 lg:flex-row lg:items-start";
+
+export const PHASE_SHELL_MASTER_CLASS =
+    "w-full lg:w-[28%] min-w-0 shrink-0 flex flex-col gap-3";
+
+export const PHASE_SHELL_DETAIL_CLASS =
+    "w-full lg:flex-1 min-w-0 flex flex-col gap-4";
+
+export const PHASE_SECTION_NAV_CLASS = cn(
+    NEXIA_SEGMENTED_SHELL,
+    "border-b-0 pb-0",
+);
+
+export const PHASE_SECTION_NAV_SCROLL_CLASS = NEXIA_SEGMENTED_SCROLL;
+
+export const PHASE_SECTION_NAV_TRACK_CLASS = NEXIA_SEGMENTED_TRACK_CONTENT;
+
+export const phaseSectionNavItemClass = (active: boolean): string =>
+    nexiaSegmentedItemClass(active, "content");
+
+export const PHASE_SUMMARY_PANEL_CLASS = cn(
+    NEXIA_GLASS_CARD,
+    "relative space-y-3 p-4",
+);
+
+export const PHASE_SUMMARY_TITLE_CLASS = PLATFORM_SECTION_LABEL;
+
+export const PHASE_CONSTRUCTOR_PANEL_CLASS = cn(
+    NEXIA_GLASS_CARD,
+    "relative min-w-0 p-5",
+);
+
+export const WEEK_KIND_BADGE_CLASS = {
+    heredada: "bg-primary/10 text-primary border-primary/25",
+    personalizada: "bg-warning/10 text-warning border-warning/25",
+} as const;
+
+export const WEEK_KIND_LABEL_ES = {
+    heredada: "Heredada",
+    personalizada: "Personalizada",
+} as const;
+
+/** Acordeón semanas — colapsada: fila lista; expandida: sub-card con rim cyan. */
+export const WEEK_ACCORDION_COLLAPSED_CLASS = cn(
+    "overflow-hidden border-b border-border/50 last:border-b-0",
+);
+
+export const WEEK_ACCORDION_EXPANDED_CLASS = cn(
+    "relative rounded-lg border border-primary/25 bg-card/35 overflow-hidden",
+    "shadow-[0_4px_24px_-10px] shadow-black/45",
+    "mb-3 last:mb-0",
+);
+
+export const WEEK_ACCORDION_HEADER_COLLAPSED_CLASS =
+    "hover:bg-surface-2/40";
+
+export const WEEK_ACCORDION_HEADER_EXPANDED_CLASS = cn(
+    "bg-surface-2/60 bg-gradient-to-b from-primary/[0.08] to-surface-2/45",
+    "border-b border-border/80",
+);
+
+/** Separador cabecera semana → días (divider glow canónico, inset). */
+export const WEEK_ACCORDION_HEADER_DIVIDER_WRAP = cn(
+    "relative bg-surface-2/35 px-3 py-1",
+);
+
+export const WEEK_ACCORDION_HEADER_DIVIDER_LINE = NEXIA_DIVIDER_GLOW;
+
+export const WEEK_ACCORDION_DAYS_INSET_CLASS = cn(
+    "px-2 py-2.5 space-y-1.5 bg-card/10",
+    "ml-2 pl-3 border-l-2 border-l-primary/35",
+);
+
+export const WEEK_ACCORDION_DAY_CELL_CLASS = "bg-surface-2/25 border-border/50";

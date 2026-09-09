@@ -45,6 +45,7 @@ function buildTemplateExercisePayload(
         planned_reps: mapped.planned_reps,
         planned_duration: mapped.planned_duration,
         planned_weight: ex.plannedWeight,
+        planned_assistance_kg: ex.plannedAssistanceKg ?? null,
         planned_rest: plannedRest,
         effort_character: mapped.effort_character,
         effort_value: mapped.effort_value,
@@ -76,6 +77,7 @@ export function buildTemplatePayloadFromConstructorRows(
                     ? {
                           plannedReps: line.setDataEntry.plannedReps,
                           plannedWeight: line.setDataEntry.plannedWeight,
+                          plannedAssistanceKg: line.setDataEntry.plannedAssistanceKg,
                           plannedDuration: line.setDataEntry.plannedDuration,
                           effortCharacter: line.setDataEntry.effortCharacter,
                           effortValue: line.setDataEntry.effortValue,

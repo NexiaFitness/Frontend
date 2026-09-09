@@ -5,8 +5,8 @@
  * Spec: docs/constructor-periodizacion/
  */
 
-import React, { useCallback } from "react";
-import { X } from "lucide-react";
+import React, { useCallback, useMemo } from "react";
+import { HelpCircle, X } from "lucide-react";
 
 import type {
     PhysicalQuality,
@@ -15,8 +15,19 @@ import type {
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 
 import { Button } from "@/components/ui/buttons";
+import { HintTooltip } from "@/components/ui/feedback";
 import { useToast } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
+
+import {
+    detectAmbiguousMixWarnings,
+    getCoPrimarySlugs,
+    getQualityTooltip,
+    isCoPrimaryMix,
+    PHYSICAL_QUALITY_MIX_COPY,
+    formatCoPrimaryLabels,
+} from "./periodizationQualitiesPresentation";
+import { QualityMixInfoBanner } from "./QualityMixInfoBanner";
 
 import {
     MAX_PERIOD_BLOCK_QUALITIES,
@@ -35,6 +46,8 @@ export interface PeriodBlockQualitiesStepProps {
     onUpdateQualityPct: (qualityId: number, percentage: number) => void;
     onContinue: () => void;
     continueLabel?: string;
+    /** Ocultar CTA interno cuando el footer de la superficie D-PAP gestiona navegación. */
+    hideFooter?: boolean;
     className?: string;
 }
 
@@ -49,12 +62,22 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
     onUpdateQualityPct,
     onContinue,
     continueLabel = "Continuar a estructura semanal",
+    hideFooter = false,
     className,
 }) => {
     const { showError, showWarning } = useToast();
     const assignedIds = qualities.map((q) => q.physical_quality_id);
     const available = catalog.filter((c) => !assignedIds.includes(c.id));
     const atQualityLimit = qualities.length >= MAX_PERIOD_BLOCK_QUALITIES;
+
+    const coPrimarySlugs = useMemo(
+        () => getCoPrimarySlugs(qualities, catalog),
+        [qualities, catalog],
+    );
+    const ambiguousWarnings = useMemo(
+        () => detectAmbiguousMixWarnings(qualities, catalog),
+        [qualities, catalog],
+    );
 
     const handleAddQuality = useCallback(
         (qualityId: number) => {
@@ -96,6 +119,15 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
 
     return (
         <div className={cn("flex flex-col gap-5", className)}>
+            <header className="space-y-1.5">
+                <h3 className="text-xs font-semibold text-foreground">
+                    {PHYSICAL_QUALITY_MIX_COPY.stepTitle}
+                </h3>
+                <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    {PHYSICAL_QUALITY_MIX_COPY.helpParagraph}
+                </p>
+            </header>
+
             {qualities.length === 0 && (
                 <p className="text-[11px] text-primary animate-pulse leading-relaxed">
                     Añade al menos una cualidad física para continuar
@@ -134,6 +166,22 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                                         <span className="text-xs font-medium text-foreground truncate">
                                             {name}
                                         </span>
+                                        {getQualityTooltip(slug) ? (
+                                            <HintTooltip
+                                                label={getQualityTooltip(slug)!}
+                                                align="start"
+                                            >
+                                                <span
+                                                    className="inline-flex text-muted-foreground/70 hover:text-primary"
+                                                    tabIndex={0}
+                                                >
+                                                    <HelpCircle
+                                                        className="h-3.5 w-3.5"
+                                                        aria-hidden
+                                                    />
+                                                </span>
+                                            </HintTooltip>
+                                        ) : null}
                                     </div>
                                     <div className="flex items-center gap-2 shrink-0">
                                         <span className="text-xs font-bold tabular-nums text-foreground">
@@ -171,13 +219,24 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                                             "--thumb-color": qColor.hex,
                                         } as React.CSSProperties
                                     }
-                                    aria-label={`${name} porcentaje`}
+                                    aria-label={`${name} porcentaje — ${PHYSICAL_QUALITY_MIX_COPY.percentageSuffix}`}
                                 />
                             </div>
                         );
                     })}
                 </section>
             )}
+
+            {isCoPrimaryMix(qualities, catalog) && (
+                <QualityMixInfoBanner
+                    title={PHYSICAL_QUALITY_MIX_COPY.coPrimaryTitle}
+                    body={`${PHYSICAL_QUALITY_MIX_COPY.coPrimaryBody} (${formatCoPrimaryLabels(coPrimarySlugs, catalog)}).`}
+                />
+            )}
+
+            {ambiguousWarnings.map((w) => (
+                <QualityMixInfoBanner key={w.id} title={w.title} body={w.body} />
+            ))}
 
             {!atQualityLimit && available.length > 0 && (
                 <section className="space-y-2.5" aria-label="Añadir cualidades">
@@ -202,6 +261,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                 </section>
             )}
 
+            {!hideFooter && (
             <footer className="pt-4 border-t border-border/50">
                 <Button
                     type="button"
@@ -213,6 +273,7 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                     {continueLabel}
                 </Button>
             </footer>
+            )}
         </div>
     );
 };

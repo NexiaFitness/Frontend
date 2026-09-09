@@ -3,6 +3,8 @@
  * Sin React. Umbrales alineados con SPEC tracking carga semanal (Fase A / Fase B).
  */
 
+import { formatHalfSetVolume } from "./volumeDisplay";
+
 export type WeeklyVolumeRowStatus = "deficit" | "on_target" | "excess" | "no_target";
 
 /** Banda ±10 % sobre el objetivo diario (constructor y validación de sesión). */
@@ -113,16 +115,16 @@ export function formatVolumeRatioHoy(
     _style: VolumeRatioHoyStyle = "constructor"
 ): string {
     if (row.targetToday != null && row.targetToday > 0) {
-        const base = `${row.draftSets} / ${row.targetToday}`;
+        const base = `${formatHalfSetVolume(row.draftSets)} / ${row.targetToday}`;
         return `${base} programadas · hoy`;
     }
     if (row.rangeMax != null && row.rangeMax > 0 && row.targetCenter != null) {
         const numerator = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
         const unit = row.dataScope === "session_draft" ? "esta sesión" : "semana";
-        return `${numerator} / ${row.targetCenter} programadas · ${unit}`;
+        return `${formatHalfSetVolume(numerator)} / ${row.targetCenter} programadas · ${unit}`;
     }
     const fallbackTotal = row.dataScope === "session_draft" ? row.draftSets : row.accumulated;
-    return `${fallbackTotal} programadas`;
+    return `${formatHalfSetVolume(fallbackTotal)} programadas`;
 }
 
 /** Mapea fila validate-draft a input del panel: solo volumen de esta sesión. */
@@ -331,4 +333,31 @@ export function summarizeVolumeRowStatuses(rows: WeeklyVolumePanelRowModel[]): W
         excess: rows.filter((r) => r.status === "excess").length,
         no_target: rows.filter((r) => r.status === "no_target").length,
     };
+}
+
+/** Delta vs semana anterior (solo volumen planificado acumulado). */
+export function formatPriorWeekDelta(
+    currentTotal: number,
+    priorTotal: number | null | undefined
+): string | null {
+    if (priorTotal == null) {
+        return null;
+    }
+    const delta = currentTotal - priorTotal;
+    if (delta === 0) {
+        return "= sem. ant.";
+    }
+    const sign = delta > 0 ? "+" : "";
+    return `${sign}${formatHalfSetVolume(delta)} vs sem. ant.`;
+}
+
+export function priorWeekTotalByMuscle(
+    priorRows: Array<{ muscle_group_id: number; planned_sets_sum: number }> | undefined,
+    muscleGroupId: number
+): number | null {
+    if (!priorRows?.length) {
+        return null;
+    }
+    const row = priorRows.find((r) => r.muscle_group_id === muscleGroupId);
+    return row ? row.planned_sets_sum : 0;
 }

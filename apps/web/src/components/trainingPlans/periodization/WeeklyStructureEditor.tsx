@@ -266,8 +266,7 @@ const DayEditor: React.FC<DayEditorProps> = ({
                                         key={pattern.id}
                                         name={pattern.name_es || pattern.name_en}
                                         uiBucket={pattern.ui_bucket}
-                                        active={isSelected(pattern.id)}
-                                        as={readOnly ? "span" : "button"}
+                                        selected={isSelected(pattern.id)}
                                         onClick={
                                             readOnly
                                                 ? undefined

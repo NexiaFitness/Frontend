@@ -49,12 +49,53 @@ export type QualitiesPayload = QualityConfig | NestedQualitiesConfig;
 // Contrato: SPEC_BACKEND_TrainingBlocks.md
 // ---------------------------------------------------------------------------
 
+export type EvaluationSufficiency = "NOT_DECLARED" | "INSUFFICIENT" | "SUFFICIENT";
+
+export type TaskKind =
+  | "physical_test"
+  | "loaded_exercise_task"
+  | "field_task"
+  | "unspecified";
+
+export interface PeriodBlockQualityEvaluationBinding {
+  id: number;
+  physical_test_id: number | null;
+  primary_exercise_id: number | null;
+  task_kind: TaskKind;
+  task_descriptor: Record<string, unknown> | null;
+  notes: string | null;
+  sufficiency: EvaluationSufficiency;
+}
+
+export interface PeriodBlockQualityEvaluationBindingInput {
+  physical_test_id?: number | null;
+  primary_exercise_id?: number | null;
+  task_kind?: TaskKind;
+  task_descriptor?: Record<string, unknown> | null;
+  notes?: string | null;
+}
+
+export interface PhaseEvaluationContext {
+  physical_quality_id: number;
+  physical_quality_slug: string;
+  binding: PeriodBlockQualityEvaluationBinding | null;
+  sufficiency: EvaluationSufficiency;
+  missing_inputs: string[];
+  latest_client_result: import("./testing").PhysicalTestResultOut | null;
+}
+
+export interface PhaseEvaluationContextList {
+  block_id: number;
+  contexts: PhaseEvaluationContext[];
+}
+
 export interface PeriodBlockQuality {
   id: number;
   physical_quality_id: number;
   percentage: number;
   physical_quality_name: string | null;
   physical_quality_slug: string | null;
+  evaluation_binding: PeriodBlockQualityEvaluationBinding | null;
 }
 
 export interface PlanPeriodBlock {
@@ -76,6 +117,7 @@ export interface PlanPeriodBlock {
 export interface PeriodBlockQualityInput {
   physical_quality_id: number;
   percentage: number;
+  evaluation_binding?: PeriodBlockQualityEvaluationBindingInput | null;
 }
 
 export interface PlanPeriodBlockCreate {
@@ -98,4 +140,16 @@ export interface PlanPeriodBlockUpdate {
   intensity_level?: number;
   sort_order?: number | null;
   qualities?: PeriodBlockQualityInput[];
+}
+
+/** Atomic create: block + template week + apply-template (D-PAP §8.4.5). */
+export interface PlanPeriodBlockWithStructureCreate extends PlanPeriodBlockCreate {
+  template_week?: import("./weeklyStructure").WeeklyStructureWeekCreate | null;
+  apply_template_to_remaining_weeks?: boolean;
+}
+
+export interface PlanPeriodBlockWithStructureOut {
+  block: PlanPeriodBlock;
+  template_week_ordinal: number | null;
+  applied_week_ordinals: number[];
 }

@@ -58,6 +58,7 @@ function getExerciseSetView(
         ...exercise,
         plannedReps: entry.plannedReps,
         plannedWeight: entry.plannedWeight,
+        plannedAssistanceKg: entry.plannedAssistanceKg,
         plannedDuration: entry.plannedDuration,
         effortCharacter: entry.effortCharacter,
         effortValue: entry.effortValue,

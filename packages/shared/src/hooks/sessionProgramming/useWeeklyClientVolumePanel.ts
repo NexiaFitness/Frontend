@@ -15,8 +15,8 @@ import {
     type WeeklyVolumePanelApiRowInput,
     type WeeklyVolumePanelRowModel,
 } from "../../training/weeklyVolumePanelModel";
-import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut } from "../../types/sessionLoad";
-import { formatWeekRangeLabelEs, mondayOfIsoWeekContaining, sundayOfWeekFromMondayYmd } from "../../utils/isoWeekRange";
+import type { SessionLoadDraftExerciseIn, SessionLoadDraftValidateOut, WeeklyLoadCoverageStatus, WeeklySessionPlannedLoadSliceOut } from "../../types/sessionLoad";
+import { addDaysToYmd, formatWeekRangeLabelEs, mondayOfIsoWeekContaining, sundayOfWeekFromMondayYmd } from "../../utils/isoWeekRange";
 
 function serializeDraftExercises(draft: SessionLoadDraftExerciseIn[] | undefined): string {
     return JSON.stringify(draft ?? []);
@@ -80,6 +80,13 @@ export interface UseWeeklyClientVolumePanelResult {
     weeklyTarget: number | null;
     /** Ejercicios del borrador sin mapeo muscular (B6). */
     unmappedExercises: import("../../types/sessionLoad").SessionLoadUnmappedExerciseOut[];
+    coverageStatus: WeeklyLoadCoverageStatus | null;
+    sessionsInWeek: number | null;
+    expectedTrainingDays: number | null;
+    sessionSlices: WeeklySessionPlannedLoadSliceOut[];
+    priorWeekRows: import("../../types/sessionLoad").WeeklyMusclePlannedLoadRowOut[];
+    priorWeekLabel: string;
+    showWeeklyConsultExtras: boolean;
 }
 
 export function useWeeklyClientVolumePanel(
@@ -106,6 +113,9 @@ export function useWeeklyClientVolumePanel(
     ]);
 
     const clientId = params.clientId ?? null;
+    const liveDraft = params.draftExercises ?? [];
+    const hasLiveDraft = liveDraft.length > 0;
+
     const skipWeeklyQuery =
         !clientId ||
         clientId <= 0 ||
@@ -119,12 +129,28 @@ export function useWeeklyClientVolumePanel(
             excludeTrainingSessionId: params.excludeTrainingSessionId ?? undefined,
             excludeStandaloneSessionId: params.excludeStandaloneSessionId ?? undefined,
             includeStandalone: params.includeStandalone,
+            includeSessionBreakdown: intent === "edit_session" && !hasLiveDraft,
         },
         { skip: skipWeeklyQuery }
     );
 
-    const liveDraft = params.draftExercises ?? [];
-    const hasLiveDraft = liveDraft.length > 0;
+    const priorWeekStart = useMemo(
+        () => (weekStart ? addDaysToYmd(weekStart, -7) : null),
+        [weekStart]
+    );
+
+    const skipPriorWeekQuery =
+        skipWeeklyQuery || !priorWeekStart || hasLiveDraft || intent !== "edit_session";
+
+    const priorQ = useGetWeeklySessionLoadByMuscleQuery(
+        {
+            clientId: clientId!,
+            weekStart: priorWeekStart!,
+            includeStandalone: params.includeStandalone,
+        },
+        { skip: skipPriorWeekQuery }
+    );
+
     const liveDraftKey = serializeDraftExercises(liveDraft);
 
     const debounceMs = params.draftDebounceMs ?? 400;
@@ -263,14 +289,23 @@ export function useWeeklyClientVolumePanel(
 
     const showDraftSafety = hasLiveDraft && draftProjection != null && !debouncePending;
 
+    const showWeeklyConsultExtras =
+        intent === "edit_session" && !hasLiveDraft && !debouncePending;
+
+    const priorWeekLabel = useMemo(() => {
+        if (!priorWeekStart) return "";
+        const priorEnd = sundayOfWeekFromMondayYmd(priorWeekStart);
+        return formatWeekRangeLabelEs(priorWeekStart, priorEnd);
+    }, [priorWeekStart]);
+
     return {
         weekStart,
         weekEnd,
         weekLabel,
         rows,
         isLoading,
-        isFetching: q.isFetching || (hasLiveDraft && isValidatingDraft),
-        isError: q.isError || draftError,
+        isFetching: q.isFetching || priorQ.isFetching || (hasLiveDraft && isValidatingDraft),
+        isError: hasLiveDraft ? draftError : q.isError,
         hasClient: !!clientId && clientId > 0,
         intent,
         usesDraftProjection,
@@ -278,5 +313,14 @@ export function useWeeklyClientVolumePanel(
         safetyFlags: showDraftSafety ? draftProjection?.safety_flags ?? [] : [],
         weeklyTarget: effectiveTargetCenter,
         unmappedExercises: showDraftSafety ? draftProjection?.unmapped_exercises ?? [] : [],
+        coverageStatus: showWeeklyConsultExtras ? q.data?.coverage_status ?? null : null,
+        sessionsInWeek: showWeeklyConsultExtras ? q.data?.sessions_in_week ?? null : null,
+        expectedTrainingDays: showWeeklyConsultExtras
+            ? q.data?.expected_training_days ?? null
+            : null,
+        sessionSlices: showWeeklyConsultExtras ? q.data?.session_slices ?? [] : [],
+        priorWeekRows: showWeeklyConsultExtras ? priorQ.data?.rows ?? [] : [],
+        priorWeekLabel,
+        showWeeklyConsultExtras,
     };
 }

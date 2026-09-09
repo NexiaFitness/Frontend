@@ -58,10 +58,10 @@ describe("B6 — volumeEquivalentSets", () => {
             sets: 4,
             exercises: [press],
             setData: [
-                { id: "s1", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
-                { id: "s2", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
-                { id: "s3", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
-                { id: "s4", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s1", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s2", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s3", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s4", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
             ],
         });
         expect(getRowVolumeSetsPerExercise(r)).toBe(4);
@@ -144,9 +144,9 @@ describe("B6 — volumeEquivalentSets", () => {
             repsTipo: "tiempo",
             exercises: [{ ...press, repsTipo: "tiempo", plannedDuration: 45 }],
             setData: [
-                { id: "s1", plannedReps: null, plannedWeight: null, plannedDuration: 45, effortCharacter: null, effortValue: null, rest: 60, isManuallyEdited: false },
-                { id: "s2", plannedReps: null, plannedWeight: null, plannedDuration: 45, effortCharacter: null, effortValue: null, rest: 60, isManuallyEdited: false },
-                { id: "s3", plannedReps: null, plannedWeight: null, plannedDuration: 45, effortCharacter: null, effortValue: null, rest: 60, isManuallyEdited: false },
+                { id: "s1", plannedReps: null, plannedWeight: null, plannedAssistanceKg: null, plannedDuration: 45, effortCharacter: null, effortValue: null, rest: 60, isManuallyEdited: false },
+                { id: "s2", plannedReps: null, plannedWeight: null, plannedAssistanceKg: null, plannedDuration: 45, effortCharacter: null, effortValue: null, rest: 60, isManuallyEdited: false },
+                { id: "s3", plannedReps: null, plannedWeight: null, plannedAssistanceKg: null, plannedDuration: 45, effortCharacter: null, effortValue: null, rest: 60, isManuallyEdited: false },
             ],
         });
         expect(getRowVolumeSetsPerExercise(r)).toBe(3);

@@ -72,7 +72,7 @@ export const PatternSelectorPanelBody: React.FC<PatternSelectorPanelBodyProps> =
                                         key={p.id}
                                         name={p.name_es || p.name_en}
                                         uiBucket={p.ui_bucket}
-                                        active={active}
+                                        selected={active}
                                         onClick={() => onToggle(p.id)}
                                         className={
                                             isCompact

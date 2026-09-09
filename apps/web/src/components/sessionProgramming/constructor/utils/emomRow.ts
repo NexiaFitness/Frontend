@@ -35,6 +35,7 @@ export function createEmomExerciseSlot(windowIndex: number, windowId: string): C
         exerciseName: "",
         plannedReps: "8",
         plannedWeight: null,
+        plannedAssistanceKg: null,
         plannedDuration: null,
         effortCharacter: null,
         effortValue: null,
@@ -214,6 +215,7 @@ export function hydrateEmomConstructorRow(
                     exerciseName: `Ejercicio #${ex.exercise_id}`,
                     plannedReps: ex.planned_reps,
                     plannedWeight: ex.planned_weight,
+        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
                     plannedDuration: ex.planned_duration,
                     effortCharacter:
                         ex.effort_character as ConstructorExercise["effortCharacter"],
@@ -239,6 +241,7 @@ export function hydrateEmomConstructorRow(
                         exerciseName: `Ejercicio #${ex.exercise_id}`,
                         plannedReps: ex.planned_reps,
                         plannedWeight: ex.planned_weight,
+        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
                         plannedDuration: ex.planned_duration,
                         effortCharacter:
                             ex.effort_character as ConstructorExercise["effortCharacter"],

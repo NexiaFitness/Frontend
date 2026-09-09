@@ -1,65 +1,58 @@
 /**
- * PatternBadge.tsx — Chip/badge reutilizable para patrones de movimiento.
- *
- * Estilo unificado en azul primary (HSL 190 100% 50%), independiente del
- * `ui_bucket`. La diferenciacion ahora es solo por estado:
- * - active:   azul solido (bg-primary + texto sobre primary).
- * - inactive: azul outline (bg-primary/10 + texto primary + ring primary).
- *
- * La prop `uiBucket` se conserva por compatibilidad de la API con los
- * callers existentes, pero no afecta a la apariencia.
- *
- * @author Frontend Team
- * @since Fase C — FEATURE_UX_MEJORA_ESTRUCTURA_SEMANAL
+ * PatternBadge.tsx — Chip de patrón de movimiento por ui_bucket (tokens bucket-*).
  */
 
 import React from "react";
-import { cn } from "@/lib/utils";
-import type { MovementPatternUiBucket } from "@nexia/shared/types/exercise";
 
-export interface PatternBadgeProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+import { uiBucketToTailwindKey } from "@nexia/shared";
+
+import { cn } from "@/lib/utils";
+
+import {
+    PATTERN_BADGE_BASE_CLASS,
+    PATTERN_BADGE_IDLE_CLASS,
+    PATTERN_BADGE_IDLE_HOVER_CLASS,
+    PATTERN_BADGE_SELECTED_BUCKET_CLASS,
+    patternBadgeSizeClass,
+} from "./patternBadgePresentation";
+
+interface Props {
     name: string;
-    /** Conservado por compatibilidad; no se usa para color (estilo unico azul primary). */
-    uiBucket?: MovementPatternUiBucket | string;
-    active?: boolean;
-    /** Renderizar como span (no interactivo) en lugar de button. Default: button. */
-    as?: "button" | "span";
+    uiBucket: string;
+    selected?: boolean;
+    onClick?: () => void;
+    size?: "sm" | "md";
+    className?: string;
 }
 
-const ACTIVE_CLASS =
-    "bg-primary text-primary-foreground ring-1 ring-primary";
-const INACTIVE_CLASS =
-    "bg-primary/10 text-primary ring-1 ring-primary/40 hover:bg-primary/20";
+export const PatternBadge: React.FC<Props> = ({
+    name,
+    uiBucket,
+    selected = false,
+    onClick,
+    size = "sm",
+    className,
+}) => {
+    const bucketKey = uiBucketToTailwindKey(uiBucket);
+    const Component = onClick ? "button" : "span";
 
-export const PatternBadge = React.forwardRef<HTMLButtonElement | HTMLSpanElement, PatternBadgeProps>(
-    ({ name, active = false, uiBucket: _uiBucket, as = "button", className, ...props }, ref) => {
-        const baseClasses = cn(
-            "inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors",
-            as === "button" && "cursor-pointer",
-            active ? ACTIVE_CLASS : INACTIVE_CLASS,
-            className
-        );
-
-        if (as === "span") {
-            return (
-                <span ref={ref as React.Ref<HTMLSpanElement>} className={baseClasses} {...props}>
-                    {name}
-                </span>
-            );
-        }
-
-        return (
-            <button
-                ref={ref as React.Ref<HTMLButtonElement>}
-                type="button"
-                className={baseClasses}
-                aria-pressed={active}
-                {...props}
-            >
-                {name}
-            </button>
-        );
-    }
-);
-
-PatternBadge.displayName = "PatternBadge";
+    return (
+        <Component
+            type={onClick ? "button" : undefined}
+            onClick={onClick}
+            className={cn(
+                PATTERN_BADGE_BASE_CLASS,
+                patternBadgeSizeClass(size),
+                selected
+                    ? PATTERN_BADGE_SELECTED_BUCKET_CLASS[bucketKey]
+                    : cn(
+                          PATTERN_BADGE_IDLE_CLASS,
+                          onClick && PATTERN_BADGE_IDLE_HOVER_CLASS,
+                      ),
+                className,
+            )}
+        >
+            {name}
+        </Component>
+    );
+};

@@ -13,6 +13,16 @@ export interface ClientTabPathOptions {
     planId?: number | null;
 }
 
+export interface BlockAuthorPathOptions {
+    clientId: number;
+    planId: number;
+    mode: "create" | "edit";
+    blockId?: number;
+    blockStart?: string;
+    blockEnd?: string;
+    blockStep?: string;
+}
+
 /**
  * Ruta canónica del perfil de cliente con tab (y plan opcional en planificación).
  */
@@ -23,6 +33,25 @@ export function buildClientTabPath(clientId: number, options?: ClientTabPathOpti
         params.set("plan", String(options.planId));
     }
     return `/dashboard/clients/${clientId}?${params.toString()}`;
+}
+
+/** Entrada al journey D-PAP (create/edit bloque) sobre la ruta canónica de planificación. */
+export function buildBlockAuthorPath(options: BlockAuthorPathOptions): string {
+    const params = new URLSearchParams();
+    params.set("tab", "planning");
+    params.set("plan", String(options.planId));
+    params.set("blockAuthor", options.mode);
+    if (options.blockId != null) {
+        params.set("blockId", String(options.blockId));
+    }
+    if (options.blockStart) {
+        params.set("blockStart", options.blockStart);
+    }
+    if (options.blockEnd) {
+        params.set("blockEnd", options.blockEnd);
+    }
+    params.set("blockStep", options.blockStep ?? (options.mode === "edit" ? "summary" : "qualities"));
+    return `/dashboard/clients/${options.clientId}?${params.toString()}`;
 }
 
 /**

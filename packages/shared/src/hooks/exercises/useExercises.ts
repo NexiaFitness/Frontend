@@ -49,6 +49,9 @@ export interface ExercisePhysicalQualityRef {
     id: number;
     name: string;
     slug: string;
+    /** Independent affinity strength 0–1 (F4.1 Model A). */
+    weight?: number;
+    is_primary?: boolean;
 }
 
 /** Catálogo Excel / Tablas: músculos con rol (prime_mover, synergist, stabilizer). */

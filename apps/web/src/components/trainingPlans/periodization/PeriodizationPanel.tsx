@@ -11,6 +11,7 @@ import React, { useMemo, useState } from "react";
 import type { PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
+import type { WeekStructureKind } from "@nexia/shared";
 
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
@@ -26,7 +27,12 @@ import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/useP
 import { VolumeIntensityExplainer } from "./VolumeIntensityExplainer";
 import { SliderLevelBadge } from "./SliderLevelBadge";
 import { PeriodizationWeeklyStructureEditor } from "./PeriodizationWeeklyStructureEditor";
+import type { WeeklyStructureEditorMode } from "./PeriodizationWeeklyStructureEditor";
 import { formatRangeShort, computeWeeklyStructureMetrics } from "./periodizationWeeklyStructureUtils";
+import { PhaseSaveBar } from "./PhaseSaveBar";
+import { PhaseSummaryPanel } from "./PhaseSummaryPanel";
+import { PHASE_CONSTRUCTOR_PANEL_CLASS } from "./phaseConstructorPresentation";
+import type { PhaseReadinessInput } from "@nexia/shared";
 
 interface Props {
     formState: PeriodBlockFormState;
@@ -35,6 +41,8 @@ interface Props {
     overlapDetected: boolean;
     outsidePlanBounds?: boolean;
     canSubmit: boolean;
+    canPersistBlock?: boolean;
+    canAdvanceStep?: boolean;
     isEditing?: boolean;
     isSubmitting?: boolean;
     onAddQuality: (id: number) => void;
@@ -54,6 +62,12 @@ interface Props {
     patternsLoading?: boolean;
     patternsError?: boolean;
     onWeeklyStructureChange?: (draft: WeeklyStructureWeekCreate[]) => void;
+    weekKindByOrdinal?: Record<number, WeekStructureKind>;
+    onApplyTemplate?: () => void;
+    applyTemplateLoading?: boolean;
+    weeklyStructureMode?: WeeklyStructureEditorMode;
+    onRestoreWeek?: (weekOrdinal: number) => void;
+    readinessInput?: PhaseReadinessInput;
     /** Igualar altura al calendario: scroll interno sin crecer la columna. */
     fillHeight?: boolean;
 }
@@ -73,6 +87,8 @@ export const PeriodizationPanel: React.FC<Props> = ({
     qualitiesSum,
     overlapDetected,
     canSubmit,
+    canPersistBlock,
+    canAdvanceStep = true,
     outsidePlanBounds = false,
     isEditing = false,
     isSubmitting = false,
@@ -93,10 +109,21 @@ export const PeriodizationPanel: React.FC<Props> = ({
     patternsLoading,
     patternsError,
     onWeeklyStructureChange,
+    weekKindByOrdinal,
+    onApplyTemplate,
+    applyTemplateLoading = false,
+    weeklyStructureMode = "template",
+    onRestoreWeek,
+    readinessInput,
     fillHeight = false,
 }) => {
     const step = formState.constructorStep;
-    const stepTitle = CONSTRUCTOR_STEP_LABELS[step];
+    const stepTitle =
+        step === "weeklyStructure"
+            ? weeklyStructureMode === "template"
+                ? "Semana tipo"
+                : "Semanas de la fase"
+            : CONSTRUCTOR_STEP_LABELS[step];
 
     const previousStep = useMemo<PeriodBlockConstructorStep | null>(() => {
         const idx = CONSTRUCTOR_STEP_ORDER.indexOf(step);
@@ -125,13 +152,30 @@ export const PeriodizationPanel: React.FC<Props> = ({
         );
     }, [step, formState.startDate, formState.endDate, trainingDays, formState.weeklyStructure]);
 
+    const canSave = canPersistBlock ?? canSubmit;
+
+    const continueLabel = useMemo(() => {
+        switch (step) {
+            case "qualities":
+                return "Continuar a carga";
+            case "volumeIntensity":
+                return "Continuar a semana tipo";
+            case "weeklyStructure":
+                return weeklyStructureMode === "template"
+                    ? "Continuar a semanas"
+                    : "Continuar a resumen";
+            default:
+                return "Continuar";
+        }
+    }, [step, weeklyStructureMode]);
+
     const missingPatternDays = weeklyStructureMetrics
         ? weeklyStructureMetrics.totalTrainable - weeklyStructureMetrics.withPatterns
         : 0;
 
     const [isMissingDaysBannerDismissed, setIsMissingDaysBannerDismissed] = useState(false);
     const shellClass = cn(
-        "rounded-lg bg-surface p-5 min-w-0",
+        PHASE_CONSTRUCTOR_PANEL_CLASS,
         fillHeight
             ? "flex flex-col min-h-0 flex-1 overflow-hidden"
             : "sticky top-4 space-y-5 max-h-[calc(100vh-6rem)] overflow-y-auto scrollbar-primary",
@@ -242,6 +286,7 @@ export const PeriodizationPanel: React.FC<Props> = ({
                     onRemoveQuality={onRemoveQuality}
                     onUpdateQualityPct={onUpdateQualityPct}
                     onContinue={onAdvanceStep}
+                    continueLabel="Continuar a carga"
                 />
             )}
 
@@ -270,17 +315,48 @@ export const PeriodizationPanel: React.FC<Props> = ({
                             showRangeHeader={false}
                             fillContainer={fillHeight}
                             compact={!fillHeight}
+                            weekKindByOrdinal={weekKindByOrdinal}
+                            mode={weeklyStructureMode}
+                            onRestoreWeek={onRestoreWeek}
                         />
+                        {weeklyStructureMode === "template" && onApplyTemplate && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="w-full shrink-0"
+                                disabled={applyTemplateLoading}
+                                onClick={onApplyTemplate}
+                            >
+                                {applyTemplateLoading
+                                    ? "Aplicando…"
+                                    : "Aplicar semana tipo al resto de semanas"}
+                            </Button>
+                        )}
                         <Button
                             variant="primary"
                             size="sm"
                             className="w-full shrink-0"
                             onClick={onAdvanceStep}
+                            disabled={!canAdvanceStep}
                         >
-                            Continuar a volumen e intensidad
+                            {continueLabel}
                         </Button>
                     </div>
                 )}
+
+            {step === "summary" && readinessInput && (
+                <div className="space-y-4">
+                    <PhaseSummaryPanel readinessInput={readinessInput} />
+                    <PhaseSaveBar
+                        isEditing={isEditing}
+                        isSubmitting={isSubmitting}
+                        canSave={canSave}
+                        onSubmit={onSubmit}
+                        onCancel={onReset}
+                    />
+                </div>
+            )}
 
             {step === "volumeIntensity" && (
                 <div className="space-y-5">
@@ -348,46 +424,29 @@ export const PeriodizationPanel: React.FC<Props> = ({
                         />
                     )}
 
-                    <div className="flex gap-2 pt-1">
-                        <button
-                            type="button"
-                            onClick={onSubmit}
-                            disabled={!canSubmit || isSubmitting}
-                            className="flex-1 inline-flex items-center justify-center rounded-md text-sm font-medium h-10 px-4 py-2 bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 transition-all duration-200 disabled:pointer-events-none disabled:opacity-50"
-                        >
-                            {isSubmitting
-                                ? isEditing
-                                    ? "Guardando…"
-                                    : "Creando…"
-                                : isEditing
-                                  ? "Guardar bloque"
-                                  : "Crear bloque"}
-                        </button>
-                        <button
-                            type="button"
-                            onClick={onReset}
-                            className="inline-flex items-center justify-center h-10 w-10 rounded-md text-muted-foreground hover:bg-accent hover:text-destructive transition-colors"
-                            aria-label="Cancelar"
-                        >
-                            <svg
-                                className="h-4 w-4"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                stroke="currentColor"
-                                strokeWidth={2}
-                            >
-                                <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M18 6L6 18M6 6l12 12"
-                                />
-                            </svg>
-                        </button>
-                    </div>
+                    <Button
+                        variant="primary"
+                        size="sm"
+                        className="w-full shrink-0"
+                        onClick={onAdvanceStep}
+                        disabled={!canAdvanceStep}
+                    >
+                        {continueLabel}
+                    </Button>
                 </div>
             )}
 
             </div>
+
+            {step !== "range" && step !== "summary" && (
+                <PhaseSaveBar
+                    isEditing={isEditing}
+                    isSubmitting={isSubmitting}
+                    canSave={canSave}
+                    onSubmit={onSubmit}
+                    onCancel={onReset}
+                />
+            )}
 
             {step !== "range" && (
                 <div className="flex items-center justify-between shrink-0">

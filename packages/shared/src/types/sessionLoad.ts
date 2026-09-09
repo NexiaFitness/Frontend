@@ -12,11 +12,30 @@ export interface WeeklyMusclePlannedLoadRowOut {
     total_sets?: number;
 }
 
+export type WeeklyLoadCoverageStatus =
+    | "empty_week"
+    | "no_evaluable"
+    | "partial_week"
+    | "evaluable";
+
+export interface WeeklySessionPlannedLoadSliceOut {
+    session_kind: "training" | "standalone";
+    session_id: number;
+    session_date: string;
+    session_name: string;
+    planned_sets_sum: number;
+    rows: WeeklyMusclePlannedLoadRowOut[];
+}
+
 export interface WeeklyMusclePlannedLoadOut {
     client_id: number;
     week_start: string;
     week_end: string;
     rows: WeeklyMusclePlannedLoadRowOut[];
+    coverage_status: WeeklyLoadCoverageStatus;
+    sessions_in_week: number;
+    expected_training_days?: number | null;
+    session_slices?: WeeklySessionPlannedLoadSliceOut[] | null;
 }
 
 export interface GetWeeklySessionLoadByMuscleArg {
@@ -26,6 +45,8 @@ export interface GetWeeklySessionLoadByMuscleArg {
     excludeStandaloneSessionId?: number;
     /** Default true — alineado con backend D2 */
     includeStandalone?: boolean;
+    /** Per-session muscle distribution (same D1/D1b rules) */
+    includeSessionBreakdown?: boolean;
 }
 
 /** POST /session-load/validate-draft (Fase B) — cuerpo JSON (snake_case). */

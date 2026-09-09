@@ -79,7 +79,7 @@ import type { Exercise } from "@nexia/shared/hooks/exercises";
 import { SET_TYPE } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
-import { DASHBOARD_FIXED_FOOTER_SHELL_CLASS, PageTitle } from "@/components/dashboard/shared";
+import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
@@ -405,6 +405,7 @@ export const EditSession: React.FC = () => {
                         exerciseName: `Ejercicio #${ex.exercise_id}`,
                         plannedReps: ex.planned_reps,
                         plannedWeight: ex.planned_weight,
+        plannedAssistanceKg: ex.planned_assistance_kg ?? null,
                         plannedDuration: ex.planned_duration,
                         effortCharacter:
                             ex.effort_character as ConstructorExercise["effortCharacter"],
@@ -882,6 +883,13 @@ export const EditSession: React.FC = () => {
                                     usesDraftProjection={weeklyVolumePanel.usesDraftProjection}
                                     weeklyTarget={weeklyVolumePanel.weeklyTarget}
                                     unmappedExercises={weeklyVolumePanel.unmappedExercises}
+                                    coverageStatus={weeklyVolumePanel.coverageStatus}
+                                    sessionsInWeek={weeklyVolumePanel.sessionsInWeek}
+                                    expectedTrainingDays={weeklyVolumePanel.expectedTrainingDays}
+                                    sessionSlices={weeklyVolumePanel.sessionSlices}
+                                    priorWeekRows={weeklyVolumePanel.priorWeekRows}
+                                    priorWeekLabel={weeklyVolumePanel.priorWeekLabel}
+                                    showWeeklyConsultExtras={weeklyVolumePanel.showWeeklyConsultExtras}
                                 />
                             </>
                         ) : null}
@@ -960,10 +968,7 @@ export const EditSession: React.FC = () => {
                 </form>
             </div>
 
-            <div
-                className={DASHBOARD_FIXED_FOOTER_SHELL_CLASS}
-                style={{ left: "var(--sidebar-width, 0)" }}
-            >
+            <DashboardFixedFooter>
                 <div className="flex items-center justify-between gap-3">
                     {canReviewAlignment ? (
                         <Button
@@ -1000,7 +1005,7 @@ export const EditSession: React.FC = () => {
                         </Button>
                     </div>
                 </div>
-            </div>
+            </DashboardFixedFooter>
 
         </>
     );

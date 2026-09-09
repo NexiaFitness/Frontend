@@ -21,6 +21,8 @@ import { server } from "@/test-utils/utils/msw";
 import {
     getActivePlanByClientWithPlanHandler,
 } from "@/test-utils/mocks/handlers/planning";
+import { getPhysicalQualitiesHandler } from "@/test-utils/mocks/handlers/catalogs";
+import { setMockSearchParams } from "@/test-utils/mocks/reactRouterMocks";
 import { createMockTrainingPlanRecommendationsIncomplete } from "@/test-utils/fixtures/trainingRecommendations";
 import { OVERVIEW_ZONE_TITLES } from "../clientOverviewPresentation";
 
@@ -137,8 +139,53 @@ describe("ClientPlanningTab", () => {
             );
 
             await waitFor(() => {
-                expect(screen.getByText("Bloques configurados")).toBeInTheDocument();
+                expect(
+                    screen.getByTestId("planning-explore-shell"),
+                ).toBeInTheDocument();
             });
+
+            expect(screen.getByText("Planificación")).toBeInTheDocument();
+            expect(
+                screen.queryByText("Bloques configurados"),
+            ).not.toBeInTheDocument();
+        });
+
+        it("muestra superficie focal D-PAP cuando blockAuthor=create en URL", async () => {
+            setMockSearchParams({
+                tab: "planning",
+                blockAuthor: "create",
+                blockStart: "2026-03-01",
+                blockEnd: "2026-03-31",
+                blockStep: "qualities",
+            });
+
+            server.use(
+                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+                getPhysicalQualitiesHandler,
+                ...planPeriodizationDependenciesHandlers(10),
+            );
+
+            render(
+                <ClientPlanningTab
+                    clientId={1}
+                    trainingPlans={[]}
+                    isLoadingPlans={false}
+                />,
+                {
+                    initialEntries: [
+                        "/dashboard/clients/1?tab=planning&blockAuthor=create&blockStart=2026-03-01&blockEnd=2026-03-31&blockStep=qualities",
+                    ],
+                },
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByTestId("plan-block-authoring-surface"),
+                ).toBeInTheDocument();
+            });
+
+            expect(screen.getByText("Bloque en creación")).toBeInTheDocument();
+            expect(screen.queryByText("Bloques configurados")).not.toBeInTheDocument();
         });
     });
 

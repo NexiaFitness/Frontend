@@ -24,6 +24,13 @@ import type {
 import type { VolumeIntensityContext } from "@nexia/shared";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { VolumeIntensityExplainer } from "@/components/trainingPlans/periodization/VolumeIntensityExplainer";
+import { QualityMixInfoBanner } from "@/components/trainingPlans/periodization/QualityMixInfoBanner";
+import { PHYSICAL_QUALITY_MIX_COPY } from "@/components/trainingPlans/periodization/periodizationQualitiesPresentation";
+import {
+    isCoPrimaryRecommendation,
+    resolveQualityLabelsFromRecommendation,
+    SESSION_DAY_CONTEXT_COPY,
+} from "@/components/sessions/sessionDayContextPresentation";
 import { cn } from "@/lib/utils";
 
 /** Alineado con EmptyStateCard: borde, barra primary, sombra, ocupa altura de la columna. */
@@ -56,15 +63,6 @@ function formatBlockDateRange(start?: string | null, end?: string | null): strin
     return `${fmt(start)} – ${fmt(end)}`;
 }
 
-function resolveQualityLabel(
-    slug: string,
-    catalog: { slug: string; name: string }[]
-): string {
-    const found = catalog.find((q) => q.slug === slug);
-    if (found?.name) return found.name;
-    return slug.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-}
-
 function toVolumeContext(dto: VolumeIntensityContextDto): VolumeIntensityContext {
     return dto as unknown as VolumeIntensityContext;
 }
@@ -91,7 +89,8 @@ function DayPlanBody({
     volumeContext?: VolumeIntensityContextDto | null;
 }) {
     const { data: catalog = [] } = useGetPhysicalQualitiesQuery();
-    const qualityLabel = resolveQualityLabel(rec.physical_quality, catalog);
+    const qualityLabel = resolveQualityLabelsFromRecommendation(rec, catalog);
+    const coPrimary = isCoPrimaryRecommendation(rec);
     const dateRange = formatBlockDateRange(
         rec.period_block_start_date,
         rec.period_block_end_date
@@ -116,11 +115,21 @@ function DayPlanBody({
             ) : null}
 
             <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                <span className={METRIC_LABEL_CLASS}>Cualidad</span>
+                <span className={METRIC_LABEL_CLASS}>
+                    {SESSION_DAY_CONTEXT_COPY.qualityLabel}
+                </span>
                 <p className="inline-flex max-w-full shrink-0 rounded border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium leading-tight text-primary">
                     {qualityLabel}
                 </p>
             </div>
+
+            {coPrimary ? (
+                <QualityMixInfoBanner
+                    title={PHYSICAL_QUALITY_MIX_COPY.coPrimaryTitle}
+                    body={PHYSICAL_QUALITY_MIX_COPY.sessionCoPrimaryHint}
+                    className="mt-1"
+                />
+            ) : null}
 
             {volumeContext?.client_capacity ? (
                 <VolumeIntensityExplainer

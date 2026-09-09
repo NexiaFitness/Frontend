@@ -109,12 +109,9 @@ describe("PeriodizationWeeklyStructureModal", () => {
         // El modal es un acordeon exclusivo: solo la primera semana esta
         // expandida por defecto, asi que solo hay un boton "Añadir patrones a
         // Lunes" visible (el de la semana 1, que es la unica del rango aqui).
-        const addButton = screen.getByRole("button", {
-            name: /añadir patrones a lunes/i,
-        });
-        await user.click(addButton);
+        const editButton = screen.getByRole("button", { name: /^editar$/i });
+        await user.click(editButton);
 
-        // El popover renderiza el catalogo entero como botones PatternBadge.
         const empujeButton = await screen.findByRole("button", { name: /empuje/i });
         await user.click(empujeButton);
 

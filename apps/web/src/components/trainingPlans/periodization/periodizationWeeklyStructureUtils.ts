@@ -52,6 +52,35 @@ export interface WeeklyStructureMetrics {
     weekCount: number;
 }
 
+/** Cuenta días entrenables con patrón (clave weekOrdinal-dayOfWeek, sin duplicar). */
+export function countConfiguredTrainableDays(
+    startDate: string,
+    endDate: string,
+    trainingDays: readonly string[] | null | undefined,
+    value: readonly WeeklyStructureWeekCreate[],
+): { totalTrainable: number; withPatterns: number } {
+    const trainingDates = getTrainingDatesInRange(
+        startDate,
+        endDate,
+        trainingDays,
+    );
+    const configured = new Set<string>();
+    for (const week of value) {
+        for (const day of week.days) {
+            if (day.patterns.length > 0) {
+                configured.add(`${week.week_ordinal}-${day.day_of_week}`);
+            }
+        }
+    }
+    let withPatterns = 0;
+    for (const d of trainingDates) {
+        if (configured.has(`${d.weekOrdinal}-${d.dayOfWeek}`)) {
+            withPatterns += 1;
+        }
+    }
+    return { totalTrainable: trainingDates.length, withPatterns };
+}
+
 export function computeWeeklyStructureMetrics(
     startDate: string,
     endDate: string,
@@ -64,13 +93,48 @@ export function computeWeeklyStructureMetrics(
         trainingDays,
     );
     const weekOrdinals = new Set(trainingDates.map((d) => d.weekOrdinal));
-    const withPatterns = value.reduce(
-        (acc, w) => acc + w.days.filter((d) => d.patterns.length > 0).length,
-        0,
+    const { withPatterns } = countConfiguredTrainableDays(
+        startDate,
+        endDate,
+        trainingDays,
+        value,
     );
     return {
         totalTrainable: trainingDates.length,
         withPatterns,
         weekCount: weekOrdinals.size,
     };
+}
+
+/** Copia la estructura de la semana plantilla sobre otra semana del draft. */
+export function restoreWeekFromTemplate(
+    draft: readonly WeeklyStructureWeekCreate[],
+    targetWeekOrdinal: number,
+    templateOrdinal = 1,
+): WeeklyStructureWeekCreate[] {
+    const template = draft.find((w) => w.week_ordinal === templateOrdinal);
+    if (!template || targetWeekOrdinal === templateOrdinal) {
+        return draft.map((w) => ({
+            ...w,
+            days: w.days.map((d) => ({
+                ...d,
+                patterns: d.patterns.map((p) => ({ ...p })),
+            })),
+        }));
+    }
+    const restored: WeeklyStructureWeekCreate = {
+        week_ordinal: targetWeekOrdinal,
+        label: template.label ?? null,
+        days: template.days.map((d) => ({
+            day_of_week: d.day_of_week,
+            patterns: d.patterns.map((p) => ({
+                movement_pattern_id: p.movement_pattern_id,
+                sub_pattern: p.sub_pattern ?? null,
+            })),
+        })),
+    };
+    const withoutTarget = draft.filter((w) => w.week_ordinal !== targetWeekOrdinal);
+    return [...withoutTarget, restored].sort(
+        (a, b) => a.week_ordinal - b.week_ordinal,
+    );
 }

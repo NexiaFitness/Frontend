@@ -26,6 +26,7 @@ export interface ClientSetExecutionRow {
     slot_label: string | null;
     group_kind: string | null;
     weight_kg: number | null;
+    assistance_kg: number | null;
     reps: number | null;
     rpe: number | null;
     prescribed_rpe: number | null;

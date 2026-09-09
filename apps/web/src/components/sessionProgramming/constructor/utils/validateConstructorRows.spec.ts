@@ -57,9 +57,9 @@ describe("validateConstructorRows", () => {
             sets: 3,
             exercises: [press],
             setData: [
-                { id: "s1", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
-                { id: "s2", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
-                { id: "s3", plannedReps: "8", plannedWeight: 60, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s1", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s2", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s3", plannedReps: "8", plannedWeight: 60, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
             ],
         });
         expect(validateConstructorRows([r]).valid).toBe(true);
@@ -71,7 +71,7 @@ describe("validateConstructorRows", () => {
             sets: 3,
             exercises: [],
             setData: [
-                { id: "s1", plannedReps: "8", plannedWeight: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
+                { id: "s1", plannedReps: "8", plannedWeight: null, plannedAssistanceKg: null, plannedDuration: null, effortCharacter: null, effortValue: null, rest: 90, isManuallyEdited: false },
             ],
         });
         const result = validateConstructorRows([r]);

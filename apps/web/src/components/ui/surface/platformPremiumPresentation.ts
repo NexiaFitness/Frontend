@@ -22,7 +22,8 @@ export const PLATFORM_PAGE_SHELL = "w-full min-w-0 pb-10";
  * Doc: design/platform/specs-vista/DASHBOARD_CONTENT_SPACING_SPEC.md §11
  * Código: frontend/apps/web/src/lib/dashboardScroll.ts (`DASHBOARD_FIXED_FOOTER_PADDING_CLASS`)
  */
-export const PLATFORM_PAGE_FOOTER_CLEARANCE = "pb-24";
+export const PLATFORM_PAGE_FOOTER_CLEARANCE =
+  "pb-[max(6rem,var(--dashboard-fixed-footer-height,6rem))]";
 
 /** Shell ancho completo + clearance footer fijo (sustituye `pb-10` de PLATFORM_PAGE_SHELL). */
 export const PLATFORM_PAGE_WITH_FIXED_FOOTER = cn("w-full", PLATFORM_PAGE_FOOTER_CLEARANCE);

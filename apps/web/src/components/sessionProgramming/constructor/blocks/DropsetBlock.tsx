@@ -106,6 +106,7 @@ export const DropsetBlock: React.FC<DropsetBlockProps> = ({
         exerciseName: "",
         plannedReps: null,
         plannedWeight: null,
+        plannedAssistanceKg: null,
         plannedDuration: null,
         effortCharacter: null,
         effortValue: null,

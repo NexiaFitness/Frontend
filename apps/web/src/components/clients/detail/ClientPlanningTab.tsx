@@ -26,11 +26,14 @@ import { LoadingSpinner, Alert, EmptyState, useToast } from "@/components/ui/fee
 import { Button } from "@/components/ui/buttons";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { PLATFORM_PAGE_WITH_FIXED_FOOTER } from "@/components/ui/surface/platformPremiumPresentation";
+import { cn } from "@/lib/utils";
 import { PlanPeriodizationSection } from "@/components/trainingPlans/periodization";
 import { MilestonesTab } from "@/components/trainingPlans";
 import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
 import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
+import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
 import { TYPOGRAPHY } from "@/utils/typography";
 import { OVERVIEW_ZONE_TITLES } from "./clientOverviewPresentation";
 
@@ -64,10 +67,14 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     onPlanificar,
 }) => {
     const navigate = useNavigate();
-    const [, setSearchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const blockAuthorActive = isBlockAuthoringActive(
+        parseBlockAuthorParams(searchParams),
+    );
     const { showError } = useToast();
     const [deleteModalOpen, setDeleteModalOpen] = useState(false);
     const [convertModalOpen, setConvertModalOpen] = useState(false);
+    const [isPhaseAuthoring, setIsPhaseAuthoring] = useState(false);
     const [deletePlan, { isLoading: isDeletingPlan }] = useDeleteTrainingPlanMutation();
 
     const clearPlanQuery = useCallback(() => {
@@ -238,7 +245,16 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         (plan.sessions_total ?? 0) > 0 || sessions.length > 0;
 
     return (
-        <div className="space-y-8 pb-24" data-testid="client-planning-tab">
+        <div
+            className={cn(
+                "space-y-8",
+                cn(
+                    "min-w-0 overflow-x-hidden",
+                    !(isPhaseAuthoring || blockAuthorActive) && PLATFORM_PAGE_WITH_FIXED_FOOTER,
+                ),
+            )}
+            data-testid="client-planning-tab"
+        >
             {showNonActiveBanner && (
                 <Alert variant="warning" className="text-sm">
                     Estás viendo la periodización de un plan concreto (enlace o pestaña).{" "}
@@ -260,8 +276,10 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 planEndDate={plan.end_date}
                 activePlan={source === "active" ? plan : undefined}
                 planGoalForRecommendations={plan.goal}
+                onAuthoringChange={setIsPhaseAuthoring}
             />
 
+            {!blockAuthorActive && !isPhaseAuthoring && (
             <CollapsibleFormGroup title="Ejecución del plan" defaultOpen={false}>
                 <div className="space-y-4" data-testid="plan-execution-section">
                     <p className="text-sm text-muted-foreground">
@@ -326,41 +344,46 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                     )}
                 </div>
             </CollapsibleFormGroup>
+            )}
 
+            {!blockAuthorActive && !isPhaseAuthoring && (
             <CollapsibleFormGroup title="Hitos del plan" defaultOpen={false}>
                 <MilestonesTab planId={plan.id} />
             </CollapsibleFormGroup>
+            )}
 
-            <DashboardFixedFooter>
-                <div className="flex flex-wrap items-center justify-end gap-3">
-                    {!plan.was_converted_to_template ? (
+            {!isPhaseAuthoring && !blockAuthorActive && (
+                <DashboardFixedFooter>
+                    <div className="flex flex-wrap items-center justify-end gap-3">
+                        {!plan.was_converted_to_template ? (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setConvertModalOpen(true)}
+                            >
+                                Convertir en plantilla
+                            </Button>
+                        ) : null}
                         <Button
                             type="button"
                             variant="outline"
                             size="sm"
-                            onClick={() => setConvertModalOpen(true)}
+                            onClick={() => navigate(`/dashboard/training-plans/${plan.id}/edit`)}
                         >
-                            Convertir en plantilla
+                            Editar plan
                         </Button>
-                    ) : null}
-                    <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/dashboard/training-plans/${plan.id}/edit`)}
-                    >
-                        Editar plan
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="outline-destructive"
-                        size="sm"
-                        onClick={() => setDeleteModalOpen(true)}
-                    >
-                        Eliminar plan
-                    </Button>
-                </div>
-            </DashboardFixedFooter>
+                        <Button
+                            type="button"
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={() => setDeleteModalOpen(true)}
+                        >
+                            Eliminar plan
+                        </Button>
+                    </div>
+                </DashboardFixedFooter>
+            )}
 
             <DeleteTrainingPlanModal
                 isOpen={deleteModalOpen}

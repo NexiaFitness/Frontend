@@ -162,6 +162,7 @@ export * from "./training/trainingPlanLifecycle";
 export * from "./training/weeklyVolumeTarget";
 export * from "./training/volumeIntensityContext";
 export * from "./training/sessionVolumeIntensityPrefill";
+export * from "./training/volumeDisplay";
 export * from "./training/weeklyVolumePanelModel";
 export * from "./training/weeklyVolumePanelPresentation";
 export * from "./training/templateProgramPresentation";
@@ -390,6 +391,30 @@ export {
     getTrainingDatesInRange,
     type TrainingDateInfo,
 } from "./utils/weeklyStructure";
+export {
+    weeksStructureEqual,
+    weeklyStructureDraftsEqual,
+    classifyWeeksByTemplate,
+    findTemplateWeek,
+    type WeekStructureKind,
+} from "./utils/weekStructureDiff";
+export {
+    UI_BUCKET_ORDER,
+    UI_BUCKET_LABELS,
+    uiBucketToTailwindKey,
+    uiBucketLabel,
+    type UiBucketTailwindKey,
+} from "./utils/exerciseUiBucket";
+export {
+    buildPhaseReadinessChecklist,
+    canPersistBlock,
+    canActivatePhase,
+    derivePhaseUxLabel,
+    phaseReadinessFromBlock,
+    type PhaseUxLabel,
+    type PhaseReadinessInput,
+    type PhaseReadinessChecklist,
+} from "./utils/phaseReadiness";
 export {
     getMondayOfWeekLocal,
     getBlockCalendarWeekOrdinal,

@@ -60,6 +60,7 @@ export interface StandaloneSessionExerciseOut {
     planned_sets: number | null;
     planned_reps: number | null;
     planned_weight: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration: number | null;
     planned_distance: number | null;
     planned_rest: number | null;
@@ -83,6 +84,7 @@ export interface StandaloneSessionExerciseCreate {
     planned_sets?: number | null;
     planned_reps?: number | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;

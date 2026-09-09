@@ -7,10 +7,16 @@ export const DASHBOARD_MAIN_SCROLL_ID = "dashboard-main-scroll";
 
 /**
  * Padding inferior obligatorio en páginas con `<DashboardFixedFooter />`.
+ * Usa la altura medida del footer cuando está montado; fallback 6rem (pb-24).
  * Alias canónico premium: `PLATFORM_PAGE_FOOTER_CLEARANCE` (platformPremiumPresentation.ts).
  * Doc: design/platform/specs-vista/DASHBOARD_CONTENT_SPACING_SPEC.md §11
  */
-export const DASHBOARD_FIXED_FOOTER_PADDING_CLASS = "pb-24";
+export const DASHBOARD_FIXED_FOOTER_PADDING_CLASS =
+  "pb-[max(6rem,var(--dashboard-fixed-footer-height,6rem))]";
+
+/** Reserva inferior del contenedor scroll al anclar/focalizar elementos. */
+export const DASHBOARD_MAIN_SCROLL_PADDING_CLASS =
+  "scroll-pb-[max(6rem,var(--dashboard-fixed-footer-height,6rem))]";
 
 export function getDashboardMainScrollElement(): HTMLElement | null {
     return document.getElementById(DASHBOARD_MAIN_SCROLL_ID);

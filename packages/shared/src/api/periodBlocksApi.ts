@@ -3,6 +3,9 @@ import type {
   PlanPeriodBlock,
   PlanPeriodBlockCreate,
   PlanPeriodBlockUpdate,
+  PlanPeriodBlockWithStructureCreate,
+  PlanPeriodBlockWithStructureOut,
+  PhaseEvaluationContextList,
 } from "../types/planningCargas";
 
 export const periodBlocksApi = baseApi.injectEndpoints({
@@ -37,6 +40,20 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       ],
     }),
 
+    getPeriodBlockEvaluationContext: builder.query<
+      PhaseEvaluationContextList,
+      { planId: number; blockId: number; clientId?: number }
+    >({
+      query: ({ planId, blockId, clientId }) => ({
+        url: `/training-plans/${planId}/period-blocks/${blockId}/evaluation-context`,
+        method: "GET",
+        params: clientId != null ? { client_id: clientId } : undefined,
+      }),
+      providesTags: (_result, _error, { blockId }) => [
+        { type: "PlanPeriodBlock", id: `EVAL-CTX-${blockId}` },
+      ],
+    }),
+
     createPeriodBlock: builder.mutation<
       PlanPeriodBlock,
       { planId: number; data: PlanPeriodBlockCreate }
@@ -50,6 +67,30 @@ export const periodBlocksApi = baseApi.injectEndpoints({
       invalidatesTags: (_result, _error, { planId }) => [
         { type: "PlanPeriodBlock", id: `LIST-${planId}` },
       ],
+    }),
+
+    createPeriodBlockWithStructure: builder.mutation<
+      PlanPeriodBlockWithStructureOut,
+      { planId: number; data: PlanPeriodBlockWithStructureCreate }
+    >({
+      query: ({ planId, data }) => ({
+        url: `/training-plans/${planId}/period-blocks/with-recurring-structure`,
+        method: "POST",
+        body: data,
+        headers: { "Content-Type": "application/json" },
+      }),
+      invalidatesTags: (result, _error, { planId }) => {
+        const tags: Array<
+          | { type: "PlanPeriodBlock"; id: number | string }
+          | { type: "WeeklyStructure"; id: number | string }
+        > = [{ type: "PlanPeriodBlock", id: `LIST-${planId}` }];
+        const blockId = result?.block?.id;
+        if (blockId != null) {
+          tags.push({ type: "PlanPeriodBlock", id: blockId });
+          tags.push({ type: "WeeklyStructure", id: blockId });
+        }
+        return tags;
+      },
     }),
 
     updatePeriodBlock: builder.mutation<
@@ -88,7 +129,9 @@ export const periodBlocksApi = baseApi.injectEndpoints({
 export const {
   useGetPeriodBlocksQuery,
   useGetPeriodBlockQuery,
+  useGetPeriodBlockEvaluationContextQuery,
   useCreatePeriodBlockMutation,
+  useCreatePeriodBlockWithStructureMutation,
   useUpdatePeriodBlockMutation,
   useDeletePeriodBlockMutation,
 } = periodBlocksApi;

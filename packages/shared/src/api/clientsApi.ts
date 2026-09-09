@@ -1063,6 +1063,7 @@ export const clientsApi = baseApi.injectEndpoints({
                 excludeTrainingSessionId,
                 excludeStandaloneSessionId,
                 includeStandalone,
+                includeSessionBreakdown,
             }) => {
                 const params = new URLSearchParams();
                 params.append("week_start", weekStart);
@@ -1080,6 +1081,9 @@ export const clientsApi = baseApi.injectEndpoints({
                 }
                 if (includeStandalone === false) {
                     params.append("include_standalone", "false");
+                }
+                if (includeSessionBreakdown) {
+                    params.append("include_session_breakdown", "true");
                 }
                 return {
                     url: `/clients/${clientId}/session-load/weekly-by-muscle?${params.toString()}`,

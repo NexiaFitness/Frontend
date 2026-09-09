@@ -9,6 +9,8 @@
  * @since v6.0.0
  */
 
+import type { CoherenceReport } from "./coherenceReport";
+
 /** Aviso de coherencia (backend: coherence.coherence_warnings[].message) */
 export interface SessionCoherenceWarning {
     type?: string;
@@ -31,6 +33,8 @@ export interface SessionCoherence {
     intensity_deviation?: number;
     coherence_percentage?: number;
     coherence_warnings: SessionCoherenceWarning[];
+    /** F4.3 beta — ASP contract with criterion traces */
+    coherence_report?: CoherenceReport;
 }
 
 /** Item de sugerencia de ejercicio (GET /training-sessions/exercise-selection/suggestions) */
@@ -261,6 +265,7 @@ export interface SessionExercise {
     planned_sets: number | null;
     planned_reps: number | null;  // Backend usa int, no string
     planned_weight: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration: number | null;
     planned_distance: number | null;
     planned_rest: number | null;
@@ -336,6 +341,7 @@ export interface SessionExerciseCreate {
     planned_sets?: number | null;
     planned_reps?: number | null;  // Backend espera int, convertir de string
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
@@ -348,6 +354,7 @@ export interface SessionExerciseUpdate {
     planned_sets?: number | null;
     planned_reps?: number | null;
     planned_weight?: number | null;
+    planned_assistance_kg?: number | null;
     planned_duration?: number | null;
     planned_distance?: number | null;
     planned_rest?: number | null;
