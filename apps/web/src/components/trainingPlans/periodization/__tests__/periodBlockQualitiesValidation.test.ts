@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
     MAX_PERIOD_BLOCK_QUALITIES,
+    getQualitiesSumStatusMessage,
+    getQualitiesSumStatusParts,
     validateCanAddQuality,
     validateQualitiesStepAdvance,
 } from "../periodBlockQualitiesValidation";
@@ -62,5 +64,28 @@ describe("validateQualitiesStepAdvance", () => {
             qualitiesSum: 100,
         });
         expect(r.ok).toBe(true);
+    });
+});
+
+describe("getQualitiesSumStatusMessage", () => {
+    it("devuelve null cuando la suma es 100", () => {
+        expect(getQualitiesSumStatusMessage(100)).toBeNull();
+    });
+
+    it("avisa cuando la suma supera 100", () => {
+        expect(getQualitiesSumStatusMessage(135)).toMatch(/135/);
+    });
+
+    it("avisa cuando la suma es menor que 100", () => {
+        expect(getQualitiesSumStatusMessage(85)).toMatch(/exactamente 100/i);
+    });
+});
+
+describe("getQualitiesSumStatusParts", () => {
+    it("separa el total actual para resaltarlo en UI", () => {
+        expect(getQualitiesSumStatusParts(150)).toEqual({
+            prefix: "La suma no puede superar el 100 %. Ahora tienes ",
+            sumLabel: "150 %.",
+        });
     });
 });

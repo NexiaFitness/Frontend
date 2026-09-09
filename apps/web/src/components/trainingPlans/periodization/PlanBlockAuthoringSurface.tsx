@@ -28,7 +28,10 @@ import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim
 import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
 
 import { PeriodBlockQualitiesStep } from "./PeriodBlockQualitiesStep";
-import { validateQualitiesStepAdvance } from "./periodBlockQualitiesValidation";
+import {
+    getQualitiesSumStatusParts,
+    validateQualitiesStepAdvance,
+} from "./periodBlockQualitiesValidation";
 import { usePeriodBlockForm } from "./usePeriodBlockForm";
 import { useBlockAuthoringPersistence } from "./useBlockAuthoringPersistence";
 import { useBlockAuthoringNavigation } from "./useBlockAuthoringNavigation";
@@ -45,6 +48,7 @@ import { BlockAuthoringStepper } from "./BlockAuthoringStepper";
 import { BlockAuthoringStepLoad } from "./BlockAuthoringStepLoad";
 import { BlockAuthoringStepDays } from "./BlockAuthoringStepDays";
 import { BlockAuthoringStepPatterns } from "./BlockAuthoringStepPatterns";
+import { AUTHORING_PATTERNS_INCOMPLETE_STATUS_HINT } from "./blockAuthoringPatternsPresentation";
 import { BlockAuthoringStepSummary } from "./BlockAuthoringStepSummary";
 import {
     ensureWeek1FromTrainingDays,
@@ -96,7 +100,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     onAuthoringChange,
     onExit,
 }) => {
-    const { showWarning } = useToast();
+    const { showWarning, showError } = useToast();
     const dispatch = useDispatch<AppDispatch>();
     const {
         data: patternsCatalog = [],
@@ -324,7 +328,11 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 outsidePlanBounds,
             });
             if (!result.ok && result.message) {
-                showWarning(result.message);
+                if (result.severity === "warning") {
+                    showWarning(result.message);
+                } else {
+                    showError(result.message);
+                }
                 return;
             }
         }
@@ -336,9 +344,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             step === "patterns" &&
             !allActiveDaysHavePatterns(form.weeklyStructure, activeDays)
         ) {
-            showWarning(
-                "Asigna al menos un patrón a cada día de entrenamiento.",
-            );
+            showWarning(AUTHORING_PATTERNS_INCOMPLETE_STATUS_HINT);
             return;
         }
         const next = nextBlockAuthorStep(step);
@@ -359,6 +365,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         activeDays,
         form.weeklyStructure,
         showWarning,
+        showError,
         navigation,
     ]);
 
@@ -413,6 +420,34 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         [step, periodUnit],
     );
 
+    const stepStatusHint = useMemo(() => {
+        if (step === "qualities") {
+            if (form.qualities.length === 0) {
+                return "Añade al menos una cualidad física para continuar";
+            }
+            const parts = getQualitiesSumStatusParts(qualitiesSum);
+            if (!parts) return undefined;
+            if (!parts.sumLabel) return parts.prefix;
+            return (
+                <>
+                    {parts.prefix}
+                    <span className="font-semibold text-[hsl(var(--warning))]">
+                        {parts.sumLabel}
+                    </span>
+                </>
+            );
+        }
+        if (step === "patterns" && patternsIncomplete) {
+            return AUTHORING_PATTERNS_INCOMPLETE_STATUS_HINT;
+        }
+        return undefined;
+    }, [
+        step,
+        form.qualities.length,
+        qualitiesSum,
+        patternsIncomplete,
+    ]);
+
     const stepFooter = (
         <div className={AUTHORING_WIZARD_FOOTER_STACK_CLASS}>
             {!canAdvanceCurrentStep && overlapDetected && step !== "summary" ? (
@@ -422,15 +457,6 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 >
                     El rango se solapa con otro bloque. Ajusta las fechas antes de
                     continuar.
-                </p>
-            ) : null}
-            {patternsIncomplete ? (
-                <p
-                    className="text-sm text-warning"
-                    data-testid="authoring-patterns-hint"
-                >
-                    Asigna al menos un patrón de movimiento a cada día de entrenamiento
-                    antes de continuar.
                 </p>
             ) : null}
             <div className={AUTHORING_WIZARD_FOOTER_ROW_CLASS}>
@@ -458,8 +484,10 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                                       activeDays,
                                   )
                                 : !isDirty || !structureLoaded
-                            : !canAdvanceCurrentStep ||
-                              (structureHydrating && stepNeedsStructure))
+                            : step === "qualities" || step === "patterns"
+                              ? false
+                              : !canAdvanceCurrentStep ||
+                                (structureHydrating && stepNeedsStructure))
                     }
                     onClick={isSummary ? () => void save() : handleNext}
                 >
@@ -480,6 +508,8 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                     planId={planId}
                     clientProfile={clientProfile}
                     mode={mode}
+                    blockStartDate={form.startDate}
+                    blockEndDate={form.endDate}
                     taskSubtitle={subtitle}
                     onExit={handleExit}
                     stepper={
@@ -499,11 +529,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                     <BlockAuthoringStepBody
                         title={stepCopy.title}
                         hint={stepCopy.hint}
-                        statusHint={
-                            step === "qualities" && form.qualities.length === 0
-                                ? "Añade al menos una cualidad física para continuar"
-                                : undefined
-                        }
+                        statusHint={stepStatusHint}
                     >
                         {structureHydrating && stepNeedsStructure ? (
                             <p className="py-12 text-center text-sm text-muted-foreground">

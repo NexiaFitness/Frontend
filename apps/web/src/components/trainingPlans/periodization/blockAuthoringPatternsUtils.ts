@@ -132,3 +132,71 @@ export function allActiveDaysHavePatterns(
         activeDays.length
     );
 }
+
+export type PatternCopySourceDay = {
+    dayOfWeek: number;
+    patterns: WeeklyStructureDayPatternInput[];
+};
+
+/** Días activos (≠ destino) con al menos un patrón en semana 1 — fuentes para copiar. */
+export function getCopyablePatternSourceDays(
+    weeklyStructure: readonly WeeklyStructureWeekCreate[],
+    activeDays: readonly number[],
+    excludeDayOfWeek: number,
+): PatternCopySourceDay[] {
+    return [...activeDays]
+        .filter((dayOfWeek) => dayOfWeek !== excludeDayOfWeek)
+        .sort((a, b) => a - b)
+        .map((dayOfWeek) => ({
+            dayOfWeek,
+            patterns: getPatternsForDayFromWeek1(weeklyStructure, dayOfWeek),
+        }))
+        .filter((entry) => entry.patterns.length > 0);
+}
+
+function clonePatternInputs(
+    patterns: readonly WeeklyStructureDayPatternInput[],
+): WeeklyStructureDayPatternInput[] {
+    return patterns.map((p) => ({
+        movement_pattern_id: p.movement_pattern_id,
+        sub_pattern: p.sub_pattern ?? null,
+    }));
+}
+
+/** Sustituye patrones del día destino por los del origen; propaga como toggle recurrente. */
+export function copyPatternsFromDayToDay(
+    weeklyStructure: readonly WeeklyStructureWeekCreate[],
+    fromDayOfWeek: number,
+    toDayOfWeek: number,
+): WeeklyStructureWeekCreate[] {
+    if (fromDayOfWeek === toDayOfWeek) {
+        return weeklyStructure.map(cloneWeek);
+    }
+
+    const sourcePatterns = getPatternsForDayFromWeek1(
+        weeklyStructure,
+        fromDayOfWeek,
+    );
+    if (sourcePatterns.length === 0) {
+        return weeklyStructure.map(cloneWeek);
+    }
+
+    const week1 = weeklyStructure.find((w) => w.week_ordinal === 1);
+    const targetDay = week1?.days.find((d) => d.day_of_week === toDayOfWeek);
+    if (!targetDay) {
+        return weeklyStructure.map(cloneWeek);
+    }
+
+    const nextPatterns = clonePatternInputs(sourcePatterns);
+    const kinds = classifyWeeksByTemplate(weeklyStructure, 1);
+
+    return weeklyStructure.map((week) => {
+        if (
+            week.week_ordinal !== 1 &&
+            kinds[week.week_ordinal] === "personalizada"
+        ) {
+            return cloneWeek(week);
+        }
+        return updateWeekDayPatterns(week, toDayOfWeek, nextPatterns);
+    });
+}

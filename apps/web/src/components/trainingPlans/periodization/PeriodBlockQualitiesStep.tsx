@@ -5,7 +5,7 @@
  * Spec: docs/constructor-periodizacion/
  */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback } from "react";
 import { HelpCircle, X } from "lucide-react";
 
 import type {
@@ -27,14 +27,9 @@ import { useToast } from "@/components/ui/feedback";
 import { cn } from "@/lib/utils";
 
 import {
-    detectAmbiguousMixWarnings,
-    getCoPrimarySlugs,
     getQualityTooltip,
-    isCoPrimaryMix,
     PHYSICAL_QUALITY_MIX_COPY,
-    formatCoPrimaryLabels,
 } from "./periodizationQualitiesPresentation";
-import { QualityMixInfoBanner } from "./QualityMixInfoBanner";
 import {
     AUTHORING_STEP_INNER_PANEL_CLASS,
 } from "./phaseAuthoringPresentation";
@@ -85,15 +80,6 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
     const assignedIds = qualities.map((q) => q.physical_quality_id);
     const available = catalog.filter((c) => !assignedIds.includes(c.id));
     const atQualityLimit = qualities.length >= MAX_PERIOD_BLOCK_QUALITIES;
-
-    const coPrimarySlugs = useMemo(
-        () => getCoPrimarySlugs(qualities, catalog),
-        [qualities, catalog],
-    );
-    const ambiguousWarnings = useMemo(
-        () => detectAmbiguousMixWarnings(qualities, catalog),
-        [qualities, catalog],
-    );
 
     const handleAddQuality = useCallback(
         (qualityId: number) => {
@@ -242,17 +228,6 @@ export const PeriodBlockQualitiesStep: React.FC<PeriodBlockQualitiesStepProps> =
                     })}
                 </section>
             )}
-
-            {isCoPrimaryMix(qualities, catalog) && (
-                <QualityMixInfoBanner
-                    title={PHYSICAL_QUALITY_MIX_COPY.coPrimaryTitle}
-                    body={`${PHYSICAL_QUALITY_MIX_COPY.coPrimaryBody} (${formatCoPrimaryLabels(coPrimarySlugs, catalog)}).`}
-                />
-            )}
-
-            {ambiguousWarnings.map((w) => (
-                <QualityMixInfoBanner key={w.id} title={w.title} body={w.body} />
-            ))}
 
             {!atQualityLimit && available.length > 0 && (
                 <section

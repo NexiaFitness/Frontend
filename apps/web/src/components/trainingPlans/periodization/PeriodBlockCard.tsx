@@ -5,6 +5,7 @@ import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { Button } from "@/components/ui/buttons";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { PeriodBlockIconButton } from "./PeriodBlockIconButton";
 import { cn } from "@/lib/utils";
 import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
@@ -21,9 +22,6 @@ import {
     PERIOD_BLOCK_CARD_DURATION_BADGE_CLASS,
     PERIOD_BLOCK_CARD_FOOTER_CLASS,
     PERIOD_BLOCK_CARD_HEADER_CLASS,
-    PERIOD_BLOCK_CARD_ICON_BTN_CLASS,
-    PERIOD_BLOCK_CARD_ICON_BTN_DELETE_CLASS,
-    PERIOD_BLOCK_CARD_ICON_BTN_EDIT_CLASS,
     PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS,
     PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS,
     PERIOD_BLOCK_CARD_SESSIONS_CLASS,
@@ -107,29 +105,21 @@ export const PeriodBlockCard: React.FC<Props> = ({
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                     {onEdit && (
-                        <button
-                            type="button"
+                        <PeriodBlockIconButton
+                            variant="edit"
                             onClick={() => onEdit(block)}
-                            className={cn(
-                                PERIOD_BLOCK_CARD_ICON_BTN_CLASS,
-                                PERIOD_BLOCK_CARD_ICON_BTN_EDIT_CLASS,
-                            )}
                             aria-label={`Editar bloque ${label}`}
                         >
                             <Pencil className="h-3.5 w-3.5" aria-hidden />
-                        </button>
+                        </PeriodBlockIconButton>
                     )}
-                    <button
-                        type="button"
+                    <PeriodBlockIconButton
+                        variant="delete"
                         onClick={() => onDelete(block.id, label)}
-                        className={cn(
-                            PERIOD_BLOCK_CARD_ICON_BTN_CLASS,
-                            PERIOD_BLOCK_CARD_ICON_BTN_DELETE_CLASS,
-                        )}
                         aria-label={`Eliminar bloque ${label}`}
                     >
                         <Trash2 className="h-3.5 w-3.5" aria-hidden />
-                    </button>
+                    </PeriodBlockIconButton>
                 </div>
             </header>
 

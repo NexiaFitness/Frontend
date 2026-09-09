@@ -92,11 +92,17 @@ describe("PlanBlockAuthoringSurface", () => {
             }),
         ).toBeInTheDocument();
         expect(screen.getByTestId("block-authoring-focus-header")).toBeInTheDocument();
+        expect(
+            screen.getByTestId("block-authoring-period-meta"),
+        ).toBeInTheDocument();
         expect(screen.getByRole("heading", { name: /carlos medina vega/i })).toBeInTheDocument();
         expect(screen.getByText(/nuevo bloque/i)).toBeInTheDocument();
         expect(screen.queryByText(/paso 1 de 5/i)).not.toBeInTheDocument();
         expect(screen.getByRole("button", { name: /siguiente/i })).toBeInTheDocument();
         expect(screen.getByRole("button", { name: /atrás/i })).toBeEnabled();
+        expect(
+            screen.getByTestId("block-authoring-discard-btn"),
+        ).toBeInTheDocument();
     });
 
     it("en paso 1, Atrás sale al calendario", async () => {

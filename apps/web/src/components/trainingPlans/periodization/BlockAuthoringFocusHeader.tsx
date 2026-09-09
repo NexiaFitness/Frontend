@@ -4,9 +4,8 @@
  */
 
 import React, { useMemo } from "react";
-import { X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import type { Client } from "@nexia/shared/types/client";
-import { Button } from "@/components/ui/buttons";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { BlockAuthorMode } from "./blockAuthoringModel";
 import {
@@ -14,12 +13,16 @@ import {
     buildClientAuthoringMetaItems,
     formatClientDisplayName,
 } from "./blockAuthoringFocusContext";
+import { PeriodBlockIconButton } from "./PeriodBlockIconButton";
+import { PlanningDateRangeMeta } from "./PlanningDateRangeMeta";
 import {
+    AUTHORING_FOCUS_BLOCK_PERIOD_CLASS,
     AUTHORING_FOCUS_IDENTITY_ROW_CLASS,
     AUTHORING_FOCUS_META_CLASS,
     AUTHORING_FOCUS_NAME_CLASS,
     AUTHORING_FOCUS_NAME_GRADIENT_CLASS,
     AUTHORING_FOCUS_SHELL_CLASS,
+    AUTHORING_FOCUS_STEPPER_ROW_CLASS,
     AUTHORING_FOCUS_TASK_SUBTITLE_CLASS,
     AUTHORING_FOCUS_TASK_TITLE_SPACER_CLASS,
     AUTHORING_FOCUS_TOP_ROW_CLASS,
@@ -30,6 +33,8 @@ interface Props {
     planId: number;
     clientProfile?: Client | null;
     mode: BlockAuthorMode;
+    blockStartDate?: string | null;
+    blockEndDate?: string | null;
     taskSubtitle: string;
     onExit: () => void;
     stepper: React.ReactNode;
@@ -40,10 +45,13 @@ export const BlockAuthoringFocusHeader: React.FC<Props> = ({
     planId,
     clientProfile,
     mode,
+    blockStartDate = null,
+    blockEndDate = null,
     taskSubtitle,
     onExit,
     stepper,
 }) => {
+    const showBlockPeriod = Boolean(blockStartDate && blockEndDate);
     const clientName = clientProfile
         ? formatClientDisplayName(clientProfile)
         : "Cliente";
@@ -112,21 +120,29 @@ export const BlockAuthoringFocusHeader: React.FC<Props> = ({
                     <p className={AUTHORING_FOCUS_TASK_SUBTITLE_CLASS}>
                         {taskSubtitle}
                     </p>
+                    {showBlockPeriod ? (
+                        <PlanningDateRangeMeta
+                            startDate={blockStartDate!}
+                            endDate={blockEndDate!}
+                            className={AUTHORING_FOCUS_BLOCK_PERIOD_CLASS}
+                            testId="block-authoring-period-meta"
+                        />
+                    ) : null}
                 </div>
-
-                <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Cerrar autoría"
-                    onClick={onExit}
-                    className="shrink-0 text-muted-foreground hover:text-foreground"
-                >
-                    <X className="h-5 w-5" />
-                </Button>
             </div>
 
-            {stepper}
+            <div className={AUTHORING_FOCUS_STEPPER_ROW_CLASS}>
+                <div className="min-w-0 flex-1">{stepper}</div>
+                <PeriodBlockIconButton
+                    variant="discard"
+                    aria-label="Descartar borrador del bloque"
+                    title="Descartar borrador"
+                    data-testid="block-authoring-discard-btn"
+                    onClick={onExit}
+                >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                </PeriodBlockIconButton>
+            </div>
         </header>
     );
 };

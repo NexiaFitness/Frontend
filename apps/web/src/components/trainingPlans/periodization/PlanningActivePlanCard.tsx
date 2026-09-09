@@ -3,16 +3,15 @@
  */
 
 import React from "react";
-import { CalendarDays, Target } from "lucide-react";
+import { Target } from "lucide-react";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import { GOAL_LABEL_ES, toneFromGoal } from "@/components/trainingPlans/goalLabels";
-import { formatProgramDurationLabel } from "./planningShellUtils";
+import { PlanningDateRangeMeta } from "./PlanningDateRangeMeta";
 import {
     PLANNING_ACTIVE_PLAN_CARD_CLASS,
     PLANNING_ACTIVE_PLAN_LABEL,
-    PLANNING_ACTIVE_PLAN_META,
     PLANNING_ACTIVE_PLAN_TITLE,
     PLANNING_PLAN_STATUS_BADGE,
     PLANNING_PLAN_STATUS_BADGE_BASE,
@@ -24,15 +23,6 @@ const STATUS_LABELS: Record<string, string> = {
     paused: "Pausado",
     cancelled: "Cancelado",
 };
-
-function formatDateShort(dateStr: string): string {
-    const [y, m, d] = dateStr.split("-").map(Number);
-    return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-    });
-}
 
 interface Props {
     activePlan: ActivePlanByClientOut;
@@ -80,20 +70,10 @@ export const PlanningActivePlanCard: React.FC<Props> = ({ activePlan }) => {
                 </span>
             ) : null}
 
-            <div className={PLANNING_ACTIVE_PLAN_META}>
-                <CalendarDays className="size-3.5 shrink-0" aria-hidden />
-                <span>
-                    {formatDateShort(activePlan.start_date)} –{" "}
-                    {formatDateShort(activePlan.end_date)}
-                </span>
-                <span className="text-muted-foreground/60">·</span>
-                <span>
-                    {formatProgramDurationLabel(
-                        activePlan.start_date,
-                        activePlan.end_date,
-                    )}
-                </span>
-            </div>
+            <PlanningDateRangeMeta
+                startDate={activePlan.start_date}
+                endDate={activePlan.end_date}
+            />
         </article>
     );
 };

@@ -10,7 +10,7 @@ import type { PeriodBlockQualityInput, PhysicalQuality } from "@nexia/shared/typ
 export const PHYSICAL_QUALITY_MIX_COPY = {
     stepTitle: "Prioridad de cualidades en esta fase",
     helpParagraph:
-        "Los porcentajes expresan qué cualidades quieres enfatizar en esta fase, no cuántas series, minutos o ejercicios dedicas a cada una. NEXIA no reparte automáticamente el trabajo de entrenamiento según estos números.",
+        "Selecciona las cualidades que deseas trabajar y ajusta su prioridad. NEXIA las utiliza para orientar tus sesiones y señalar posibles desajustes respecto a la intención de esta fase.",
     percentageSuffix: "prioridad de intención",
     chartsIntentLabel:
         "Tendencia de intención relativa por fase — no volumen ni tiempo de entrenamiento.",

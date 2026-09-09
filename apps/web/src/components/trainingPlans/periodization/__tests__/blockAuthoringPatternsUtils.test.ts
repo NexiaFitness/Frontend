@@ -6,7 +6,9 @@ import { describe, expect, it } from "vitest";
 
 import {
     allActiveDaysHavePatterns,
+    copyPatternsFromDayToDay,
     countConfiguredPatternDays,
+    getCopyablePatternSourceDays,
     getPatternsForDayFromWeek1,
     togglePatternOnRecurringDay,
 } from "../blockAuthoringPatternsUtils";
@@ -84,5 +86,72 @@ describe("blockAuthoringPatternsUtils", () => {
         const complete = togglePatternOnRecurringDay(partial, 3, 7);
         expect(allActiveDaysHavePatterns(complete, [1, 3])).toBe(true);
         expect(countConfiguredPatternDays(complete, [1, 3])).toBe(2);
+    });
+
+    it("getCopyablePatternSourceDays excluye el día destino y los vacíos", () => {
+        const withMonday = togglePatternOnRecurringDay(baseStructure, 1, 5);
+        const sources = getCopyablePatternSourceDays(withMonday, [1, 3, 5], 3);
+        expect(sources).toEqual([
+            {
+                dayOfWeek: 1,
+                patterns: [{ movement_pattern_id: 5, sub_pattern: null }],
+            },
+        ]);
+    });
+
+    it("copyPatternsFromDayToDay sustituye patrones y propaga a semanas heredadas", () => {
+        const mondayConfigured = togglePatternOnRecurringDay(
+            togglePatternOnRecurringDay(baseStructure, 1, 5),
+            1,
+            9,
+        );
+        const next = copyPatternsFromDayToDay(mondayConfigured, 1, 3);
+        expect(getPatternsForDayFromWeek1(next, 3)).toEqual([
+            { movement_pattern_id: 5, sub_pattern: null },
+            { movement_pattern_id: 9, sub_pattern: null },
+        ]);
+        const week2 = next.find((w) => w.week_ordinal === 2);
+        expect(week2?.days.find((d) => d.day_of_week === 3)?.patterns).toEqual([
+            { movement_pattern_id: 5, sub_pattern: null },
+            { movement_pattern_id: 9, sub_pattern: null },
+        ]);
+    });
+
+    it("copyPatternsFromDayToDay respeta semana personalizada", () => {
+        const personalized: WeeklyStructureWeekCreate[] = [
+            {
+                week_ordinal: 1,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 1,
+                        patterns: [{ movement_pattern_id: 2, sub_pattern: null }],
+                    },
+                    { day_of_week: 3, patterns: [] },
+                ],
+            },
+            {
+                week_ordinal: 2,
+                label: null,
+                days: [
+                    {
+                        day_of_week: 1,
+                        patterns: [{ movement_pattern_id: 2, sub_pattern: null }],
+                    },
+                    {
+                        day_of_week: 3,
+                        patterns: [{ movement_pattern_id: 99, sub_pattern: null }],
+                    },
+                ],
+            },
+        ];
+        const next = copyPatternsFromDayToDay(personalized, 1, 3);
+        expect(getPatternsForDayFromWeek1(next, 3)).toEqual([
+            { movement_pattern_id: 2, sub_pattern: null },
+        ]);
+        const week2 = next.find((w) => w.week_ordinal === 2);
+        expect(week2?.days.find((d) => d.day_of_week === 3)?.patterns).toEqual([
+            { movement_pattern_id: 99, sub_pattern: null },
+        ]);
     });
 });

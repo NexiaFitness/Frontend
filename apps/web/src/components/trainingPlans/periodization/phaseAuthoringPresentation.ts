@@ -58,6 +58,14 @@ export const AUTHORING_FOCUS_TASK_SUBTITLE_CLASS = cn(
     "text-xs leading-relaxed text-foreground/90 sm:text-sm",
 );
 
+/** Periodo del bloque en cabecera focal — ancla entre subtítulo y stepper. */
+export const AUTHORING_FOCUS_BLOCK_PERIOD_CLASS =
+    "text-xs text-muted-foreground sm:text-sm";
+
+/** Stepper + acción descartar (papelera) alineados en fila. */
+export const AUTHORING_FOCUS_STEPPER_ROW_CLASS =
+    "flex items-center gap-2 sm:gap-3";
+
 export const AUTHORING_TITLE_CLASS = NEXIA_PORTAL_CARD_TITLE;
 
 export const AUTHORING_SUBTITLE_CLASS = NEXIA_PORTAL_GREETING_SUBTITLE;

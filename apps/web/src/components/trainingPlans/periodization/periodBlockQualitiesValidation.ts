@@ -95,6 +95,34 @@ export function validateQualitiesStepAdvance(
     return { ok: true };
 }
 
+/** Mensaje inline cuando la suma de prioridades no es 100 % (wizard / panel). */
+export function getQualitiesSumStatusMessage(qualitiesSum: number): string | null {
+    if (qualitiesSum > 100) {
+        return `La suma no puede superar el 100 %. Ahora tienes ${qualitiesSum} %.`;
+    }
+    if (qualitiesSum < 100) {
+        return `La suma debe ser exactamente 100 %. Ahora tienes ${qualitiesSum} %.`;
+    }
+    return null;
+}
+
+/** Texto del aviso partido para resaltar solo el total actual (p. ej. «150 %.»). */
+export function getQualitiesSumStatusParts(
+    qualitiesSum: number,
+): { prefix: string; sumLabel: string } | null {
+    const message = getQualitiesSumStatusMessage(qualitiesSum);
+    if (!message) return null;
+    const sumToken = `${qualitiesSum} %`;
+    const idx = message.lastIndexOf(sumToken);
+    if (idx === -1) {
+        return { prefix: message, sumLabel: "" };
+    }
+    return {
+        prefix: message.slice(0, idx),
+        sumLabel: message.slice(idx),
+    };
+}
+
 export function qualitiesSumBadgeClass(sum: number): string {
     if (sum === 100) return "bg-success/20 text-success";
     return "bg-destructive/20 text-destructive";
