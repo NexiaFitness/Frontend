@@ -185,7 +185,17 @@ describe("ClientPlanningTab", () => {
                 ).toBeInTheDocument();
             });
 
-            expect(screen.getByText("Bloque en creación")).toBeInTheDocument();
+            expect(
+                screen.getByTestId("block-authoring-focus-header"),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByText(/configura el bloque paso a paso antes de guardarlo/i),
+            ).toBeInTheDocument();
+            expect(
+                screen.getByRole("heading", {
+                    name: /qué cualidades físicas trabajará este bloque/i,
+                }),
+            ).toBeInTheDocument();
             expect(screen.queryByText("Bloques configurados")).not.toBeInTheDocument();
         });
     });
