@@ -5,12 +5,23 @@
  * borde izquierdo semántico, cabecera con acento, métricas en franja surface-2.
  */
 
-import React, { useId } from "react";
-import { AlertTriangle, Calendar, ChevronRight, Copy, Pencil, Timer, Trash2, Zap } from "lucide-react";
+import React, { useId, useMemo } from "react";
+import { Calendar, ChevronRight, Copy, Pencil, Timer, Trash2, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import type { PlanTrainingSession } from "@nexia/shared";
-import { useGetSessionRecommendationsQuery } from "@nexia/shared/api/trainingSessionsApi";
+import {
+    useGetSessionCoherenceQuery,
+    useGetSessionRecommendationsQuery,
+} from "@nexia/shared/api/trainingSessionsApi";
 import { isSessionDeletable, SESSION_TYPE_LABELS } from "@nexia/shared";
+import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
+import {
+    buildCoherencePhaseChipViewModel,
+    COHERENCE_STRIP_COPY,
+    heroStatusBadgeClasses,
+    stripLegacyCoherenceFromNotes,
+} from "@/components/sessionProgramming/coherenceConclusionsPresentation";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
@@ -27,8 +38,6 @@ interface SessionCardProps {
     onViewDetail?: (session: SessionCardSession) => void;
     onReplicate?: (session: SessionCardSession) => void;
 }
-
-const COHERENCE_NOTE_PREFIXES = ["[Avisos de coherencia:", "[Coherence Warnings:"] as const;
 
 const blockIconBtn =
     "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors";
@@ -102,37 +111,77 @@ const STATUS_ACCENT: Record<string, StatusAccent> = {
 
 const DEFAULT_ACCENT = STATUS_ACCENT.planned;
 
-function findCoherenceNotesPrefix(notes: string): (typeof COHERENCE_NOTE_PREFIXES)[number] | null {
-    for (const prefix of COHERENCE_NOTE_PREFIXES) {
-        if (notes.startsWith(prefix)) {
-            return prefix;
-        }
+function sessionCoherenceFromSession(
+    session: SessionCardSession,
+): SessionCoherence | null | undefined {
+    if ("session_kind" in session && session.session_kind === "standalone") {
+        return null;
     }
-    return null;
+    if ("coherence" in session) {
+        return (session as PlanTrainingSession).coherence;
+    }
+    return undefined;
 }
 
-function parseSessionNotes(notes: string | null | undefined): {
-    coherenceBody: string | null;
-    trainerNotes: string | null;
-} {
-    if (!notes?.trim()) {
-        return { coherenceBody: null, trainerNotes: null };
-    }
-    const t = notes.trim();
-    const prefix = findCoherenceNotesPrefix(t);
-    if (!prefix) {
-        return { coherenceBody: null, trainerNotes: t };
-    }
-    const closeIdx = t.indexOf("]", prefix.length);
-    if (closeIdx === -1) {
-        return {
-            coherenceBody: t.slice(prefix.length).trim() || null,
-            trainerNotes: null,
-        };
-    }
-    const coherenceBody = t.slice(prefix.length, closeIdx).trim() || null;
-    const after = t.slice(closeIdx + 1).trim();
-    return { coherenceBody, trainerNotes: after || null };
+function SessionCardPhaseChip({
+    sessionId,
+    inlineCoherence,
+}: {
+    sessionId: number;
+    inlineCoherence?: SessionCoherence | null;
+}) {
+    const navigate = useNavigate();
+    const hasUsableInlineCoherence = Boolean(
+        inlineCoherence?.coherence_report ||
+            (inlineCoherence?.coherence_warnings?.length ?? 0) > 0,
+    );
+    const { data: fetchedCoherence } = useGetSessionCoherenceQuery(sessionId, {
+        skip: hasUsableInlineCoherence,
+    });
+    const coherence = hasUsableInlineCoherence ? inlineCoherence : fetchedCoherence;
+    const chip = useMemo(
+        () => buildCoherencePhaseChipViewModel(coherence ?? null),
+        [coherence],
+    );
+
+    if (!chip) return null;
+
+    const handleOpenReview = () => {
+        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleOpenReview}
+            className={cn(
+                "inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-0.5",
+                "text-[10px] font-semibold transition-colors",
+                "hover:border-primary/45 hover:bg-primary/5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                heroStatusBadgeClasses(chip.heroStatus),
+            )}
+            aria-label={COHERENCE_STRIP_COPY.listChipAria(chip.heroLabel, chip.warningCount)}
+        >
+            <span
+                className={cn(
+                    "h-1.5 w-1.5 shrink-0 rounded-full",
+                    chip.heroStatus === "ok"
+                        ? "bg-success"
+                        : chip.heroStatus === "review"
+                          ? "bg-warning"
+                          : "bg-primary",
+                )}
+                aria-hidden
+            />
+            <span className="whitespace-nowrap">{COHERENCE_STRIP_COPY.phaseAlignmentShort}</span>
+            {chip.warningCount > 0 ? (
+                <span className="whitespace-nowrap font-medium opacity-90">
+                    · {COHERENCE_STRIP_COPY.warningsCount(chip.warningCount)}
+                </span>
+            ) : null}
+        </button>
+    );
 }
 
 function sessionTypeLabel(sessionType: string): string {
@@ -270,9 +319,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     onReplicate,
 }) => {
     const titleId = useId();
-    const { coherenceBody, trainerNotes } = parseSessionNotes(
-        "notes" in session ? session.notes : undefined
+    const trainerNotes = stripLegacyCoherenceFromNotes(
+        "notes" in session ? session.notes : undefined,
     );
+    const isStandalone = "session_kind" in session && session.session_kind === "standalone";
+    const inlineCoherence = sessionCoherenceFromSession(session);
+    const showPhaseChip = !isStandalone && session.id > 0;
 
     const accent = STATUS_ACCENT[session.status] ?? DEFAULT_ACCENT;
 
@@ -285,7 +337,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
         : "Sin fecha";
 
     const typeLabel = sessionTypeLabel(session.session_type);
-    const isStandalone = "session_kind" in session && session.session_kind === "standalone";
     const planningCtx = sessionPlanningContext(session);
 
     const plannedIntensity =
@@ -364,6 +415,12 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                                 <span className="inline-flex shrink-0 items-center rounded-md border border-border/60 bg-surface/80 px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
                                     Sesión libre
                                 </span>
+                            ) : null}
+                            {showPhaseChip ? (
+                                <SessionCardPhaseChip
+                                    sessionId={session.id}
+                                    inlineCoherence={inlineCoherence}
+                                />
                             ) : null}
                         </div>
                         <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
@@ -483,25 +540,6 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                                 compact
                             />
                         ) : null}
-                    </div>
-                ) : null}
-
-                {coherenceBody ? (
-                    <div
-                        className="w-full rounded-lg border border-warning/30 bg-warning/[0.06] p-3.5"
-                        role="status"
-                    >
-                        <div className="flex gap-3">
-                            <AlertTriangle className="size-4 shrink-0 text-warning" aria-hidden />
-                            <div className="min-w-0 space-y-1">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-warning">
-                                    Coherencia con el plan del día
-                                </p>
-                                <p className="text-sm leading-relaxed text-foreground">
-                                    {coherenceBody}
-                                </p>
-                            </div>
-                        </div>
                     </div>
                 ) : null}
 

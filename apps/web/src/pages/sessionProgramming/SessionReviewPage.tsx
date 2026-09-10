@@ -11,6 +11,9 @@
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import type { AppDispatch } from "@nexia/shared/store";
+import { trainingSessionsApi } from "@nexia/shared/api/trainingSessionsApi";
 import {
     ChevronRight,
     ArrowLeft,
@@ -29,6 +32,7 @@ import {
     useDeleteTrainingSessionMutation,
     useGetTrainingSessionsQuery,
 } from "@nexia/shared/api/trainingSessionsApi";
+import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import { useGetPeriodBlocksQuery } from "@nexia/shared/api/periodBlocksApi";
 import { useGetWeeklyStructureQuery } from "@nexia/shared/api/weeklyStructureApi";
 import { suggestNextSessionDateAfter } from "@nexia/shared";
@@ -43,13 +47,19 @@ import type { TrainingSessionStatus } from "@nexia/shared/types/trainingSessions
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { CoherenceConclusionsPanel } from "@/components/sessionProgramming/CoherenceConclusionsPanel";
+import { stripLegacyCoherenceFromNotes } from "@/components/sessionProgramming/coherenceConclusionsPresentation";
 import { SessionValidationContent } from "@/components/sessionProgramming/SessionValidationContent";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
-import { readReviewBackTarget, returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import {
+    readReviewBackTarget,
+    readReviewCoherenceFromState,
+    returnToStateFromView,
+} from "@/lib/sessionDetailNavigation";
 import { cn } from "@/lib/utils";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -94,32 +104,6 @@ function addOneLocalDay(dateISO: string): string | null {
     return `${ny}-${nm}-${nd}`;
 }
 
-const COHERENCE_NOTE_PREFIXES = ["[Avisos de coherencia:", "[Coherence Warnings:"] as const;
-
-function parseSessionNotes(notes: string | null | undefined): {
-    coherenceBody: string | null;
-    trainerNotes: string | null;
-} {
-    if (!notes?.trim()) {
-        return { coherenceBody: null, trainerNotes: null };
-    }
-    const t = notes.trim();
-    for (const prefix of COHERENCE_NOTE_PREFIXES) {
-        if (t.startsWith(prefix)) {
-            const closeIdx = t.indexOf("]", prefix.length);
-            if (closeIdx === -1) {
-                return {
-                    coherenceBody: t.slice(prefix.length).trim() || null,
-                    trainerNotes: null,
-                };
-            }
-            const body = t.slice(prefix.length, closeIdx).trim() || null;
-            const rest = t.slice(closeIdx + 1).trim();
-            return { coherenceBody: body, trainerNotes: rest || null };
-        }
-    }
-    return { coherenceBody: null, trainerNotes: t };
-}
 
 function PlanActualMetric({
     label,
@@ -287,7 +271,7 @@ const SessionPlanSummaryCard: React.FC<{
     const typeLabel =
         SESSION_TYPE_LABELS[session.session_type as keyof typeof SESSION_TYPE_LABELS] ??
         session.session_type;
-    const { trainerNotes } = parseSessionNotes(session.notes);
+    const trainerNotes = stripLegacyCoherenceFromNotes(session.notes);
 
     return (
         <section className={SUMMARY_SHELL} aria-label="Resumen de sesión">
@@ -354,8 +338,13 @@ export const SessionReviewPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch<AppDispatch>();
     const { showSuccess, showError } = useToast();
     const sessionId = id ? Number(id) : 0;
+    const seededCoherence = useMemo(
+        () => readReviewCoherenceFromState(location.state),
+        [location.state],
+    );
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteSession, { isLoading: isDeleting }] = useDeleteTrainingSessionMutation();
 
@@ -369,9 +358,29 @@ export const SessionReviewPage: React.FC = () => {
         skip: !sessionId || isNaN(sessionId),
     });
 
-    const { data: coherence } = useGetSessionCoherenceQuery(sessionId, {
+    useEffect(() => {
+        if (seededCoherence && sessionId > 0) {
+            dispatch(
+                trainingSessionsApi.util.upsertQueryData(
+                    "getSessionCoherence",
+                    sessionId,
+                    seededCoherence,
+                ),
+            );
+        }
+    }, [dispatch, seededCoherence, sessionId]);
+
+    const {
+        data: coherence,
+        isLoading: isLoadingCoherence,
+    } = useGetSessionCoherenceQuery(sessionId, {
         skip: !sessionId || isNaN(sessionId),
     });
+
+    const effectiveCoherence = coherence ?? seededCoherence;
+    const showCoherenceLoading = isLoadingCoherence && !effectiveCoherence;
+
+    const { data: physicalQualities } = useGetPhysicalQualitiesQuery();
 
     const planId = session?.training_plan_id ?? null;
     const { data: periodBlocks } = useGetPeriodBlocksQuery(planId!, {
@@ -477,12 +486,12 @@ export const SessionReviewPage: React.FC = () => {
                   session_name: session.session_name,
                   session_date: session.session_date,
                   training_plan_id: session.training_plan_id ?? null,
-                  period_block_id: session.period_block_id ?? null,
+                  period_block_id: resolvedBlockId ?? session.period_block_id ?? null,
               }
             : { id: 0, session_name: "", session_date: null, training_plan_id: null, period_block_id: null }
     );
 
-    const canReplicate = !!session?.period_block_id && !!session?.session_date;
+    const canReplicate = !!resolvedBlockId && !!session?.session_date;
 
     const handleConfirmDelete = useCallback(async () => {
         if (!session) return;
@@ -531,7 +540,7 @@ export const SessionReviewPage: React.FC = () => {
         );
     }
 
-    const coherenceWarnings = coherence?.coherence_warnings ?? [];
+    const coherenceWarnings = effectiveCoherence?.coherence_warnings ?? [];
 
     return (
         <>
@@ -545,6 +554,12 @@ export const SessionReviewPage: React.FC = () => {
                 <CoherenceAlertsPanel warnings={coherenceWarnings} />
 
                 <SessionPlanSummaryCard session={session} />
+
+                <CoherenceConclusionsPanel
+                    report={effectiveCoherence?.coherence_report}
+                    isLoading={showCoherenceLoading}
+                    qualityCatalog={physicalQualities}
+                />
 
                 <SessionValidationContent
                     data={validationData ?? null}

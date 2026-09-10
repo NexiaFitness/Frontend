@@ -1,94 +1,85 @@
-/**
- * dashboardScroll.test.ts — Scroll del main del dashboard (portal atleta + trainer).
- */
+import { describe, expect, it } from "vitest";
 
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
-    DASHBOARD_MAIN_SCROLL_ID,
     dashboardRouteDefersScrollReset,
-    scrollDashboardMainToElement,
+    hasPlanningSubJourneyParams,
+    isClientPlanningIntraTabSearchChange,
+    shouldResetDashboardScrollOnNavigation,
 } from "../dashboardScroll";
 
-function mockRect(top: number, height: number): DOMRect {
-    return {
-        top,
-        bottom: top + height,
-        left: 0,
-        right: 100,
-        width: 100,
-        height,
-        x: 0,
-        y: top,
-        toJSON: () => ({}),
-    } as DOMRect;
-}
+const CLIENT_PLANNING = "/dashboard/clients/345";
 
-describe("dashboardScroll", () => {
-    describe("dashboardRouteDefersScrollReset", () => {
-        it("aplaza reset cuando hay ?focus=", () => {
-            expect(dashboardRouteDefersScrollReset("?focus=pain")).toBe(true);
-            expect(dashboardRouteDefersScrollReset("?focus=notes")).toBe(true);
-        });
-
-        it("no aplaza reset sin focus", () => {
-            expect(dashboardRouteDefersScrollReset("")).toBe(false);
-            expect(dashboardRouteDefersScrollReset("?tab=sessions")).toBe(false);
-        });
+describe("dashboardScroll — planificación intra-tab", () => {
+    it("hasPlanningSubJourneyParams detecta modos F5/F2", () => {
+        expect(
+            hasPlanningSubJourneyParams("tab=planning&planningMode=createBlock"),
+        ).toBe(true);
+        expect(
+            hasPlanningSubJourneyParams("tab=planning&blockAuthor=create"),
+        ).toBe(true);
+        expect(hasPlanningSubJourneyParams("tab=planning")).toBe(false);
     });
 
-    describe("scrollDashboardMainToElement", () => {
-        let main: HTMLDivElement;
-        let target: HTMLTextAreaElement;
+    it("dashboardRouteDefersScrollReset incluye sub-journeys de planificación", () => {
+        expect(
+            dashboardRouteDefersScrollReset("tab=planning&planningMode=createBlock"),
+        ).toBe(true);
+        expect(dashboardRouteDefersScrollReset("tab=planning&focus=alerts")).toBe(
+            true,
+        );
+        expect(dashboardRouteDefersScrollReset("tab=planning")).toBe(false);
+    });
 
-        beforeEach(() => {
-            main = document.createElement("div");
-            main.id = DASHBOARD_MAIN_SCROLL_ID;
-            main.scrollBy = vi.fn();
-            vi.spyOn(main, "getBoundingClientRect").mockReturnValue(mockRect(0, 800));
+    it("isClientPlanningIntraTabSearchChange solo en tab=planning del cliente", () => {
+        expect(
+            isClientPlanningIntraTabSearchChange(
+                "tab=overview",
+                "tab=planning",
+                CLIENT_PLANNING,
+            ),
+        ).toBe(false);
+        expect(
+            isClientPlanningIntraTabSearchChange(
+                "tab=planning",
+                "tab=planning&planningMode=createBlock",
+                CLIENT_PLANNING,
+            ),
+        ).toBe(true);
+    });
 
-            target = document.createElement("textarea");
-            target.id = "athlete-feedback-pain";
-            target.focus = vi.fn();
+    it("shouldResetDashboardScrollOnNavigation — no reset al añadir fase", () => {
+        const prev = {
+            pathname: CLIENT_PLANNING,
+            search: "tab=planning",
+        };
+        const next = {
+            pathname: CLIENT_PLANNING,
+            search: "tab=planning&planningMode=createBlock",
+        };
+        expect(shouldResetDashboardScrollOnNavigation(prev, next)).toBe(false);
+    });
 
-            document.body.appendChild(main);
-            document.body.appendChild(target);
-        });
+    it("shouldResetDashboardScrollOnNavigation — no reset al cancelar createWhen", () => {
+        const prev = {
+            pathname: CLIENT_PLANNING,
+            search: "tab=planning&planningMode=createBlock",
+        };
+        const next = {
+            pathname: CLIENT_PLANNING,
+            search: "tab=planning",
+        };
+        expect(shouldResetDashboardScrollOnNavigation(prev, next)).toBe(false);
+    });
 
-        afterEach(() => {
-            document.body.innerHTML = "";
-            vi.restoreAllMocks();
-        });
-
-        it("align start desplaza el target al borde superior visible", () => {
-            vi.spyOn(target, "getBoundingClientRect").mockReturnValue(mockRect(600, 60));
-
-            scrollDashboardMainToElement(target, { align: "start", offsetTop: 8 });
-
-            expect(main.scrollBy).toHaveBeenCalledWith({
-                top: 592,
-                behavior: "auto",
-            });
-            expect(target.focus).toHaveBeenCalledWith({ preventScroll: true });
-        });
-
-        it("align contain solo desplaza lo mínimo cuando sobresale abajo", () => {
-            vi.spyOn(target, "getBoundingClientRect").mockReturnValue(mockRect(600, 70));
-
-            scrollDashboardMainToElement(target, { align: "contain", offsetBottom: 160 });
-
-            expect(main.scrollBy).toHaveBeenCalledWith({
-                top: 30,
-                behavior: "auto",
-            });
-        });
-
-        it("align contain no desplaza si el target ya cabe", () => {
-            vi.spyOn(target, "getBoundingClientRect").mockReturnValue(mockRect(100, 60));
-
-            scrollDashboardMainToElement(target, { align: "contain", offsetBottom: 160 });
-
-            expect(main.scrollBy).not.toHaveBeenCalled();
-            expect(target.focus).toHaveBeenCalledWith({ preventScroll: true });
-        });
+    it("shouldResetDashboardScrollOnNavigation — sí reset al cambiar de tab", () => {
+        const prev = {
+            pathname: CLIENT_PLANNING,
+            search: "tab=planning",
+        };
+        const next = {
+            pathname: CLIENT_PLANNING,
+            search: "tab=sessions",
+        };
+        expect(shouldResetDashboardScrollOnNavigation(prev, next)).toBe(true);
     });
 });

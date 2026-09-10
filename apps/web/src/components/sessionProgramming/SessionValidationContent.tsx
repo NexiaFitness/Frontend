@@ -17,10 +17,15 @@
 import React, { useMemo } from "react";
 import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
 
-import type { SessionValidationOut, ValidationStatus } from "@nexia/shared/types/sessionValidation";
+import { getNotApplicableCopy } from "./sessionValidationPresentation";
+
+import type {
+    SessionValidationOut,
+    SessionValidationOverallStatus,
+    ValidationStatus,
+} from "@nexia/shared/types/sessionValidation";
 import type { AxialScoreResponse, SessionSafetySummaryOut, ExerciseSafetyResponse } from "@nexia/shared/types/engineSafety";
 import {
-    getMutationErrorMessage,
     summarizeVolumeRowStatuses,
     volumeMuscleValidationToPanelRow,
     type WeeklyVolumePanelRowModel,
@@ -44,7 +49,9 @@ import { cn } from "@/lib/utils";
 // Helpers
 // ---------------------------------------------------------------------------
 
-const STATUS_CONFIG: Record<ValidationStatus | "partially_aligned" | "null", {
+const STATUS_CONFIG: Record<
+    ValidationStatus | "partially_aligned" | "not_applicable" | "null",
+    {
     label: string;
     icon: React.ReactNode;
     container: string;
@@ -74,6 +81,12 @@ const STATUS_CONFIG: Record<ValidationStatus | "partially_aligned" | "null", {
         container: "bg-primary/10 border-primary/30",
         text: "text-primary",
     },
+    not_applicable: {
+        label: "No aplicable",
+        icon: <Info className="h-4 w-4" />,
+        container: "bg-muted border-border/50",
+        text: "text-muted-foreground",
+    },
     null: {
         label: "No disponible",
         icon: <Info className="h-4 w-4" />,
@@ -82,11 +95,17 @@ const STATUS_CONFIG: Record<ValidationStatus | "partially_aligned" | "null", {
     },
 };
 
-function getValidationStatusLabel(status: ValidationStatus | "partially_aligned" | null): string {
+function getValidationStatusLabel(
+    status: SessionValidationOverallStatus | null
+): string {
     return STATUS_CONFIG[status ?? "null"].label;
 }
 
-export function StatusBadge({ status }: { status: ValidationStatus | "partially_aligned" | null }) {
+export function StatusBadge({
+    status,
+}: {
+    status: SessionValidationOverallStatus | null;
+}) {
     const config = STATUS_CONFIG[status ?? "null"];
     return (
         <span
@@ -572,16 +591,42 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                 <Alert variant="error">
                     <p className="font-medium">No se pudo validar la alineación con el plan</p>
                     <p className="text-sm opacity-90">
-                        {getMutationErrorMessage(error)}
-                    </p>
-                    <p className="text-xs opacity-80 mt-1">
-                        El resumen de sesión sigue disponible arriba. Si el problema persiste,
-                        revisa la conexión o vuelve a guardar la sesión.
+                        Ha ocurrido un error al consultar la validación. Inténtalo de nuevo
+                        en unos instantes.
                     </p>
                 </Alert>
             ) : null}
 
-            {data ? (
+            {data?.overall_status === "not_applicable" ? (
+                <section
+                    className="rounded-lg border border-border/60 border-l-[3px] border-l-muted-foreground/40 bg-muted/20 px-4 py-4"
+                    aria-label="Alineación con el plan no aplicable"
+                >
+                    {(() => {
+                        const copy = getNotApplicableCopy(data.block_resolution_reason);
+                        return (
+                            <>
+                                <div className="flex items-start gap-2">
+                                    <Info
+                                        className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                                        aria-hidden
+                                    />
+                                    <div className="min-w-0 space-y-1">
+                                        <p className="text-sm font-semibold text-foreground">
+                                            {copy.title}
+                                        </p>
+                                        <p className="text-sm leading-relaxed text-muted-foreground">
+                                            {copy.body}
+                                        </p>
+                                    </div>
+                                </div>
+                            </>
+                        );
+                    })()}
+                </section>
+            ) : null}
+
+            {data && data.overall_status !== "not_applicable" ? (
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
                         <ValidationInsightCard
@@ -678,16 +723,40 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                 <Alert variant="error">
                     <p className="font-medium">No se pudo validar la alineación con el plan</p>
                     <p className="text-sm opacity-90">
-                        {getMutationErrorMessage(error)}
-                    </p>
-                    <p className="text-xs opacity-80 mt-1">
-                        El resumen de sesión sigue disponible arriba. Si el problema persiste,
-                        revisa la conexión o vuelve a guardar la sesión.
+                        Ha ocurrido un error al consultar la validación. Inténtalo de nuevo
+                        en unos instantes.
                     </p>
                 </Alert>
             )}
 
-            {data && layout === "stack" && (
+            {data?.overall_status === "not_applicable" && layout === "stack" ? (
+                <section
+                    className="rounded-lg border border-border/60 bg-muted/20 px-4 py-4"
+                    aria-label="Alineación con el plan no aplicable"
+                >
+                    {(() => {
+                        const copy = getNotApplicableCopy(data.block_resolution_reason);
+                        return (
+                            <div className="flex items-start gap-2">
+                                <Info
+                                    className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                                    aria-hidden
+                                />
+                                <div className="min-w-0 space-y-1">
+                                    <p className="text-sm font-semibold text-foreground">
+                                        {copy.title}
+                                    </p>
+                                    <p className="text-sm leading-relaxed text-muted-foreground">
+                                        {copy.body}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </section>
+            ) : null}
+
+            {data && data.overall_status !== "not_applicable" && layout === "stack" && (
                 <>
                     <CollapsibleFormGroup
                         title="Patrones de movimiento"

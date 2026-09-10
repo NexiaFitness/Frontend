@@ -5,11 +5,39 @@
  */
 
 import type { Location } from "react-router-dom";
-import type { LocationStateReturnTo } from "@nexia/shared";
+import type { LocationStateReturnTo, SessionReviewLocationState } from "@nexia/shared";
+import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 
 /** Estado a pasar al abrir el detalle desde otra ruta bajo /dashboard. */
 export function returnToStateFromView(location: Location): LocationStateReturnTo {
     return { from: `${location.pathname}${location.search}${location.hash}` };
+}
+
+/** Estado de navegacion post-guardado hacia review (from + coherence opcional). */
+export function buildReviewNavigationState(
+    location: Location,
+    coherence?: SessionCoherence | null,
+): SessionReviewLocationState {
+    return {
+        ...returnToStateFromView(location),
+        ...(coherence !== undefined ? { coherence } : {}),
+    };
+}
+
+function isSessionCoherence(value: unknown): value is SessionCoherence {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        typeof (value as SessionCoherence).session_id === "number" &&
+        Array.isArray((value as SessionCoherence).coherence_warnings)
+    );
+}
+
+/** Coherencia sembrada en location.state tras create/update; undefined si no viene. */
+export function readReviewCoherenceFromState(state: unknown): SessionCoherence | undefined {
+    const coherence = (state as SessionReviewLocationState | null)?.coherence;
+    if (coherence == null) return undefined;
+    return isSessionCoherence(coherence) ? coherence : undefined;
 }
 
 function isSafeDashboardPath(path: string): boolean {

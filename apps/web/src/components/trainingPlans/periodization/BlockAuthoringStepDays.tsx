@@ -16,7 +16,7 @@ import {
 interface Props {
     activeDays: readonly number[];
     onToggleDay: (dayOfWeek: number) => void;
-    /** En QP / programación rápida usar «fase»; en D-PAP persistido «bloque». */
+    /** Unidad de copy en toggles: «fase» (autoría local) o «bloque» (D-PAP persistido). */
     periodUnit?: "fase" | "bloque";
     hideIntro?: boolean;
 }
