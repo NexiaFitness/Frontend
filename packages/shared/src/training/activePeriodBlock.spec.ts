@@ -18,21 +18,22 @@ import type { TrainingPlanInstance } from "../types/training";
 
 function block(
     partial: Pick<PlanPeriodBlock, "id" | "start_date" | "end_date"> &
-        Partial<PlanPeriodBlock>
+        Partial<PlanPeriodBlock>,
 ): PlanPeriodBlock {
+    const now = new Date().toISOString();
     return {
         training_plan_id: 1,
         name: null,
         goal: null,
         volume_level: 5,
         intensity_level: 5,
-        sort_order: partial.sort_order ?? 0,
+        sort_order: partial.sort_order ?? partial.id,
         qualities: [],
-        created_at: "",
-        updated_at: "",
-        is_active: partial.is_active ?? true,
+        created_at: now,
+        updated_at: now,
+        is_active: true,
         ...partial,
-    } as PlanPeriodBlock;
+    };
 }
 
 function instance(
