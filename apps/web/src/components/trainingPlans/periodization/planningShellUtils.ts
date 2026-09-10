@@ -4,7 +4,10 @@
 
 import { getBlockCalendarWeekCount } from "@nexia/shared";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
-import { isDateInRange } from "@nexia/shared/utils/periodBlockOverlap";
+import {
+    findNextFreeDate,
+    isDateInRange,
+} from "@nexia/shared/utils/periodBlockOverlap";
 
 export function findBlockContainingDate(
     blocks: PlanPeriodBlock[],
@@ -40,6 +43,26 @@ export function formatProgramDurationLabel(start: string, end: string): string {
     }
     const months = Math.floor(weeks / 4);
     return `${months} ${months === 1 ? "mes" : "meses"}`;
+}
+
+/** Primer día libre para añadir fase tras el bloque más tardío (F5 addPhase). */
+export function resolveNextPhaseStartDate(
+    blocks: PlanPeriodBlock[],
+    planStartDate?: string | null,
+): string | null {
+    if (blocks.length === 0) {
+        return planStartDate ?? null;
+    }
+    const latestEnd = blocks.reduce(
+        (max, block) => (block.end_date > max ? block.end_date : max),
+        blocks[0].end_date,
+    );
+    return findNextFreeDate(latestEnd, blocks);
+}
+
+export function resolveCalendarMonthForDate(dateStr: string): Date {
+    const [y, m] = dateStr.split("-").map(Number);
+    return new Date(y, m - 1, 1);
 }
 
 export function resolveInitialSelectedBlockId(

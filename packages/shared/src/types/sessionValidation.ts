@@ -71,10 +71,21 @@ export interface IntensityValidation {
 // Top-level response
 // ---------------------------------------------------------------------------
 
+export type SessionValidationOverallStatus =
+    | ValidationStatus
+    | "partially_aligned"
+    | "not_applicable";
+
+export type BlockResolutionReason =
+    | "missing_session_date"
+    | "missing_plan"
+    | "no_block_for_date";
+
 export interface SessionValidationOut {
     training_session_id: number;
-    period_block_id: number;
-    overall_status: ValidationStatus | "partially_aligned";
+    period_block_id: number | null;
+    overall_status: SessionValidationOverallStatus;
+    block_resolution_reason?: BlockResolutionReason | string | null;
     version: string;
     disclaimers: string[];
     patterns: PatternsValidation | null;

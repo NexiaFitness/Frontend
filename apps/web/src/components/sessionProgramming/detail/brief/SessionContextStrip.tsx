@@ -5,7 +5,7 @@
  * sin sombras ni bordes de color, dividido en 3 zonas lógicas:
  *   1. Posición en el plan (bloque · semana · sesión)
  *   2. Plan del día (cualidad + vol/int del motor real)
- *   3. Estado del cliente (riesgo de fatiga + coherencia con el plan)
+ *   3. Estado del cliente (fatiga · vol/int día legacy · chip L2 alineación fase → review)
  *
  * Sin badges-pill en esquinas, sin chips de colores sueltos. La tipografía,
  * la jerarquía y un dot semántico de 6px hacen el trabajo. Esto deja a las
@@ -16,9 +16,11 @@
  */
 
 import React, { useMemo } from "react";
-import { Layers, Target, Activity, Repeat } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Layers, Target, Activity, Repeat, ChevronRight } from "lucide-react";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetPeriodBlockQuery } from "@nexia/shared/api/periodBlocksApi";
+import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
     useGetTrainingSessionsQuery,
     useGetSessionRecommendationsQuery,
@@ -35,6 +37,12 @@ import type { SessionRecommendationsResponse } from "@nexia/shared/types/session
 import type { RiskLevel } from "@nexia/shared/types/training";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
+import {
+    buildCoherencePhaseChipViewModel,
+    COHERENCE_STRIP_COPY,
+    heroStatusBadgeClasses,
+} from "@/components/sessionProgramming/coherenceConclusionsPresentation";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -142,6 +150,66 @@ function coherenceTone(pct: number | null): Tone {
     return "neutral";
 }
 
+function PhaseAlignmentChip({
+    sessionId,
+    coherence,
+    qualityCatalog,
+}: {
+    sessionId: number;
+    coherence: SessionCoherence | null;
+    qualityCatalog?: ReadonlyArray<{ slug: string; name: string }>;
+}) {
+    const navigate = useNavigate();
+    const location = useLocation();
+    const chip = useMemo(
+        () => buildCoherencePhaseChipViewModel(coherence, qualityCatalog),
+        [coherence, qualityCatalog],
+    );
+
+    if (!chip) return null;
+
+    const handleOpenReview = () => {
+        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
+            state: returnToStateFromView(location),
+        });
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={handleOpenReview}
+            className={cn(
+                "mt-1 flex w-full min-w-0 items-center gap-2 rounded-md border border-border/60",
+                "bg-surface/40 px-2.5 py-1.5 text-left transition-colors",
+                "hover:border-primary/40 hover:bg-primary/5",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+            )}
+            aria-label={COHERENCE_STRIP_COPY.openReviewAria(chip.heroLabel, chip.warningCount)}
+        >
+            <span className="shrink-0 text-[11px] font-medium text-muted-foreground">
+                {COHERENCE_STRIP_COPY.phaseAlignmentShort}
+            </span>
+            <span
+                className={cn(
+                    "inline-flex shrink-0 items-center rounded-md border px-1.5 py-0.5 text-[10px] font-semibold",
+                    heroStatusBadgeClasses(chip.heroStatus),
+                )}
+            >
+                {chip.heroLabel}
+            </span>
+            {chip.warningCount > 0 ? (
+                <span className="truncate text-[10px] text-muted-foreground">
+                    {COHERENCE_STRIP_COPY.warningsCount(chip.warningCount)}
+                </span>
+            ) : null}
+            <ChevronRight
+                className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                aria-hidden
+            />
+        </button>
+    );
+}
+
 function dayPlanSourceLabel(
     rec: NonNullable<SessionRecommendationsResponse["recommendations"]>
 ): string {
@@ -191,6 +259,8 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
     const { data: fetchedCoherence } = useGetSessionCoherenceQuery(sessionId, {
         skip: !sessionId || !!embeddedCoherence,
     });
+
+    const { data: physicalQualities } = useGetPhysicalQualitiesQuery();
 
     const { currentRiskLevel, latestAnalysis } = useClientFatigue(clientId);
 
@@ -316,7 +386,7 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
                 </p>
                 {cohPct != null && (
                     <p className="text-xs text-muted-foreground">
-                        Coherencia plan{" "}
+                        {COHERENCE_STRIP_COPY.legacyVolIntLabel}{" "}
                         <span
                             className={cn(
                                 "font-semibold",
@@ -324,13 +394,19 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
                                 cohTone === "primary" && "text-primary",
                                 cohTone === "warning" && "text-[hsl(var(--warning))]",
                                 cohTone === "danger" && "text-destructive",
-                                cohTone === "neutral" && "text-foreground"
+                                cohTone === "neutral" && "text-foreground",
                             )}
+                            title="Coherencia de volumen e intensidad frente al día planificado (legacy)"
                         >
                             {Math.round(cohPct)}%
                         </span>
                     </p>
                 )}
+                <PhaseAlignmentChip
+                    sessionId={sessionId}
+                    coherence={coherence}
+                    qualityCatalog={physicalQualities}
+                />
             </Zone>
 
             <Divider />

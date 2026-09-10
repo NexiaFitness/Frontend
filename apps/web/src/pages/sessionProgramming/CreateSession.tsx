@@ -24,8 +24,11 @@ import { useScrollDashboardWhenReady } from "@/hooks/useScrollDashboardWhenReady
 import { usePreserveDashboardScrollOnConstructorPicker } from "@/hooks/usePreserveDashboardScrollOnConstructorPicker";
 import { cn } from "@/lib/utils";
 import { useNavigate, useSearchParams, useLocation } from "react-router-dom";
-import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
-import { useSelector } from "react-redux";
+import { buildReviewNavigationState } from "@/lib/sessionDetailNavigation";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch } from "@nexia/shared/store";
+import { trainingSessionsApi } from "@nexia/shared/api/trainingSessionsApi";
+import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
@@ -148,6 +151,7 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
 }) => {
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch<AppDispatch>();
     const [searchParams] = useSearchParams();
     const { user } = useSelector((state: RootState) => state.auth);
     const { showSuccess, showError, showWarning } = useToast();
@@ -640,9 +644,24 @@ export const CreateSession: React.FC<CreateSessionProps> = ({
                     showSuccess(emptySessionCreatedToast(false), 2000);
                 }
 
-                navigate(`/dashboard/session-programming/sessions/${createdSession.id}/review`, {
-                    state: returnToStateFromView(location),
-                });
+                let coherenceForReview: SessionCoherence | null | undefined =
+                    createdSession.coherence ?? null;
+                if (constructorRows.length > 0) {
+                    try {
+                        coherenceForReview = await dispatch(
+                            trainingSessionsApi.endpoints.getSessionCoherence.initiate(
+                                createdSession.id,
+                            ),
+                        ).unwrap();
+                    } catch {
+                        coherenceForReview = createdSession.coherence ?? null;
+                    }
+                }
+
+                navigate(
+                    `/dashboard/session-programming/sessions/${createdSession.id}/review`,
+                    { state: buildReviewNavigationState(location, coherenceForReview) },
+                );
             }
         } catch (err) {
             console.error("Error creando sesión:", err);

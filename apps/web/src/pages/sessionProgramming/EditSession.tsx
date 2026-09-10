@@ -81,7 +81,7 @@ import {
     type SessionBlockExercise,
 } from "@nexia/shared/types/sessionProgramming";
 import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
-import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import { buildReviewNavigationState } from "@/lib/sessionDetailNavigation";
 import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
@@ -597,7 +597,7 @@ export const EditSession: React.FC = () => {
                 };
             });
 
-            await updateTrainingSessionFull({
+            const updatedSession = await updateTrainingSessionFull({
                 id: sessionId,
                 body: {
                     session: sessionData,
@@ -608,7 +608,10 @@ export const EditSession: React.FC = () => {
             showSuccess("Sesión actualizada exitosamente. Redirigiendo...", 2000);
 
             navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
-                state: returnToStateFromView(location),
+                state: buildReviewNavigationState(
+                    location,
+                    updatedSession.coherence ?? null,
+                ),
             });
         } catch (err) {
             console.error("Error actualizando sesión:", err);
@@ -625,12 +628,12 @@ export const EditSession: React.FC = () => {
     };
 
     const trainerIdForDayPlan = trainerProfile?.id ?? session?.trainer_id ?? 0;
-    const canReviewAlignment = !!session?.period_block_id;
+    const canReviewAlignment = !!(session?.training_plan_id && session?.session_date);
 
     const handleReviewAlignment = useCallback(() => {
         if (!sessionId || !canReviewAlignment) return;
         navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
-            state: returnToStateFromView(location),
+            state: buildReviewNavigationState(location),
         });
     }, [navigate, sessionId, canReviewAlignment, location]);
 

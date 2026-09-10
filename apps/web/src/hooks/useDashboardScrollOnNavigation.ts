@@ -2,25 +2,31 @@
  * Restablece el scroll del main del dashboard al cambiar de ruta o query (tabs en URL, etc.).
  */
 
-import { useEffect, useLayoutEffect } from "react";
+import { useLayoutEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import {
-    dashboardRouteDefersScrollReset,
     scrollDashboardMainToTopAfterPaint,
+    shouldResetDashboardScrollOnNavigation,
 } from "@/lib/dashboardScroll";
 
 export function useDashboardScrollOnNavigation(): void {
     const location = useLocation();
-    const scrollKey = `${location.pathname}${location.search}${location.key ?? ""}`;
-    const deferScrollReset = dashboardRouteDefersScrollReset(location.search);
+    const prevLocationRef = useRef<{
+        pathname: string;
+        search: string;
+    } | null>(null);
 
     useLayoutEffect(() => {
-        if (deferScrollReset) return;
-        scrollDashboardMainToTopAfterPaint();
-    }, [scrollKey, deferScrollReset]);
+        const next = {
+            pathname: location.pathname,
+            search: location.search,
+        };
+        const prev = prevLocationRef.current;
+        prevLocationRef.current = next;
 
-    useEffect(() => {
-        if (deferScrollReset) return;
+        if (!shouldResetDashboardScrollOnNavigation(prev, next)) {
+            return;
+        }
         scrollDashboardMainToTopAfterPaint();
-    }, [scrollKey, deferScrollReset]);
+    }, [location.pathname, location.search, location.key]);
 }

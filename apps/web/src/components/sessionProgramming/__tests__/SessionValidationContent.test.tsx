@@ -71,4 +71,23 @@ describe("SessionValidationContent", () => {
         expect(screen.getByText("Carga axial")).toBeInTheDocument();
         expect(screen.getByText("Seguridad")).toBeInTheDocument();
     });
+
+    it("not_applicable muestra panel neutro, no alerta de error", () => {
+        render(
+            <SessionValidationContent
+                data={{
+                    ...basePayload,
+                    period_block_id: null,
+                    overall_status: "not_applicable",
+                    block_resolution_reason: "no_block_for_date",
+                    patterns: null,
+                    volume: null,
+                }}
+                isLoading={false}
+                error={null}
+            />
+        );
+        expect(screen.getByText("Fuera de un bloque de fase")).toBeInTheDocument();
+        expect(screen.queryByText(/Session does not belong/i)).not.toBeInTheDocument();
+    });
 });

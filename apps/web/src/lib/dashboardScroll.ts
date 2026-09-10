@@ -134,9 +134,78 @@ export function scrollDashboardMainToElementAfterPaint(
     return () => window.clearTimeout(timer);
 }
 
+/** Sub-journeys F5/F2 en perfil cliente (?tab=planning) — no son navegación de página. */
+export function hasPlanningSubJourneyParams(search: string): boolean {
+    const params = new URLSearchParams(search);
+    return (
+        params.has("planningMode") ||
+        params.has("blockAuthor") ||
+        params.has("blockWeeks")
+    );
+}
+
+export function isClientPlanningTabSearch(
+    search: string,
+    pathname: string,
+): boolean {
+    return (
+        pathname.includes("/dashboard/clients/") &&
+        new URLSearchParams(search).get("tab") === "planning"
+    );
+}
+
+/** Cambio de query dentro del tab Planificación (explore ↔ createWhen ↔ D-PAP). */
+export function isClientPlanningIntraTabSearchChange(
+    prevSearch: string,
+    nextSearch: string,
+    pathname: string,
+): boolean {
+    return (
+        isClientPlanningTabSearch(prevSearch, pathname) &&
+        isClientPlanningTabSearch(nextSearch, pathname)
+    );
+}
+
 /** Rutas con ?focus=… delegan el scroll a la vista destino. */
 export function dashboardRouteDefersScrollReset(search: string): boolean {
-    return new URLSearchParams(search).has("focus");
+    const params = new URLSearchParams(search);
+    if (params.has("focus")) return true;
+    return hasPlanningSubJourneyParams(search);
+}
+
+export interface DashboardNavigationLocation {
+    pathname: string;
+    search: string;
+}
+
+/** Política única: ¿resetear scroll del main tras un cambio de ruta/query? */
+export function shouldResetDashboardScrollOnNavigation(
+    prev: DashboardNavigationLocation | null,
+    next: DashboardNavigationLocation,
+): boolean {
+    if (prev == null) {
+        return true;
+    }
+    if (
+        prev.pathname === next.pathname &&
+        prev.search === next.search
+    ) {
+        return false;
+    }
+    if (dashboardRouteDefersScrollReset(next.search)) {
+        return false;
+    }
+    if (
+        prev.pathname === next.pathname &&
+        isClientPlanningIntraTabSearchChange(
+            prev.search,
+            next.search,
+            next.pathname,
+        )
+    ) {
+        return false;
+    }
+    return true;
 }
 
 /** Selector estable para anclar scroll al abrir/cerrar el picker inline del constructor. */

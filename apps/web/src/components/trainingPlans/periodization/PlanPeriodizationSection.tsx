@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from "react";
+import React, { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
 import {
@@ -48,7 +48,9 @@ import {
 } from "@/utils/planningHubUrl";
 import {
   findBlockContainingDate,
+  resolveCalendarMonthForDate,
   resolveInitialSelectedBlockId,
+  resolveNextPhaseStartDate,
 } from "./planningShellUtils";
 
 function formatDateFriendly(dateStr: string): string {
@@ -79,7 +81,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   onAuthoringChange,
 }) => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pendingCreateWhenStartRef = useRef<string | null>(null);
   const blockAuthorParams = useMemo(
     () => parseBlockAuthorParams(searchParams),
     [searchParams],
@@ -179,10 +182,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   }, [blocks]);
 
   useEffect(() => {
-    if (isCreateWhen) {
-      reset();
+    if (!isCreateWhen) {
+      return;
     }
-  }, [isCreateWhen, reset]);
+    reset();
+    const pendingStart = pendingCreateWhenStartRef.current;
+    if (pendingStart) {
+      pendingCreateWhenStartRef.current = null;
+      handleDayClick(pendingStart);
+    }
+  }, [isCreateWhen, reset, handleDayClick]);
 
   useEffect(() => {
     onAuthoringChange?.(
@@ -202,11 +211,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       if (clientId == null || clientId <= 0) {
         return;
       }
-      navigate(`/dashboard/clients/${clientId}?${nextParams.toString()}`, {
-        replace: true,
-      });
+      setSearchParams(nextParams, { replace: true });
     },
-    [clientId, navigate],
+    [clientId, setSearchParams],
   );
 
   const navigateToCreateAuthoring = useCallback(
@@ -270,9 +277,20 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
 
   const handleStartCreateBlock = useCallback(() => {
     reset();
+    pendingCreateWhenStartRef.current = null;
+    const nextStart = resolveNextPhaseStartDate(blocks, planStartDate);
+    if (nextStart) {
+      setCalMonth(resolveCalendarMonthForDate(nextStart));
+    }
     const next = applyPlanningModeCreateBlock(searchParams);
     navigateToClientPlanning(next);
-  }, [reset, searchParams, navigateToClientPlanning]);
+  }, [
+    reset,
+    blocks,
+    planStartDate,
+    searchParams,
+    navigateToClientPlanning,
+  ]);
 
   const handleCancelCreateWhen = useCallback(() => {
     reset();
@@ -348,9 +366,29 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       const block = findBlockContainingDate(blocks, dateStr);
       if (block) {
         setSelectedBlockId(block.id);
+        return;
       }
+      if (
+        planStartDate &&
+        planEndDate &&
+        !isDateInRange(dateStr, planStartDate, planEndDate)
+      ) {
+        showWarning("Solo puedes definir bloques dentro de la vigencia del plan.");
+        return;
+      }
+      pendingCreateWhenStartRef.current = dateStr;
+      setCalMonth(resolveCalendarMonthForDate(dateStr));
+      const next = applyPlanningModeCreateBlock(searchParams);
+      navigateToClientPlanning(next);
     },
-    [blocks],
+    [
+      blocks,
+      planStartDate,
+      planEndDate,
+      searchParams,
+      navigateToClientPlanning,
+      showWarning,
+    ],
   );
 
   const handleCreateWhenDayClick = useCallback(
@@ -373,6 +411,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           showWarning(
             `El ${formatDateFriendly(dateStr)} está dentro del bloque «${blockName}». El siguiente día libre es el ${formatDateFriendly(hint.nextFreeDate)}.`,
           );
+          setCalMonth(resolveCalendarMonthForDate(hint.nextFreeDate));
+          handleDayClick(hint.nextFreeDate);
+          return;
         }
       }
 
