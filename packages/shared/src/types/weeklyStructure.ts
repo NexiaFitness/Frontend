@@ -99,3 +99,18 @@ export interface WeeklyStructureApplyTemplateOut {
     applied_week_ordinals: number[];
     skipped_week_ordinals: number[];
 }
+
+// ---------------------------------------------------------------------------
+// Sync recurring structure from edit (atomic)
+// ---------------------------------------------------------------------------
+
+export interface WeeklyStructureSyncRecurringIn {
+    template_week: WeeklyStructureWeekCreate;
+    personalized_week_updates?: WeeklyStructureWeekCreate[];
+}
+
+export interface WeeklyStructureSyncRecurringOut {
+    applied_week_ordinals: number[];
+    preserved_week_ordinals: number[];
+    updated_personalized_ordinals: number[];
+}

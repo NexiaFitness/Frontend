@@ -57,6 +57,8 @@ import {
 } from "./blockAuthoringDaysUtils";
 import { allActiveDaysHavePatterns } from "./blockAuthoringPatternsUtils";
 import { weeklyStructureToDraft } from "./periodBlockPersistence";
+import { getSyncRecurringConfirmOrdinals } from "./syncRecurringStructureConfirm";
+import { SyncRecurringStructureConfirmModal } from "./SyncRecurringStructureConfirmModal";
 import {
     AUTHORING_HEADER_CLASS,
     AUTHORING_STEP_CARD_CLASS,
@@ -112,6 +114,9 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
     );
     const [structureLoaded, setStructureLoaded] = useState(false);
     const [discardModalOpen, setDiscardModalOpen] = useState(false);
+    const [syncConfirmOrdinals, setSyncConfirmOrdinals] = useState<
+        number[] | null
+    >(null);
     const createInitializedRef = useRef(false);
     const editBlockIdRef = useRef<number | null>(null);
 
@@ -280,12 +285,37 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
             } else {
                 set.add(dayOfWeek);
             }
-            setWeeklyStructure(
-                setActiveDaysOnWeek1([...set], form.weeklyStructure),
+            setWeeklyStructure((prev) =>
+                setActiveDaysOnWeek1([...set], prev, structureBaseline),
             );
         },
-        [activeDays, form.weeklyStructure, setWeeklyStructure],
+        [activeDays, setWeeklyStructure, structureBaseline],
     );
+
+    const handleSaveClick = useCallback(() => {
+        if (mode === "edit" && structureLoaded) {
+            const ordinals = getSyncRecurringConfirmOrdinals(
+                form.weeklyStructure,
+                structureBaseline,
+            );
+            if (ordinals.length > 0) {
+                setSyncConfirmOrdinals(ordinals);
+                return;
+            }
+        }
+        void save();
+    }, [
+        mode,
+        structureLoaded,
+        form.weeklyStructure,
+        structureBaseline,
+        save,
+    ]);
+
+    const handleSyncConfirmSave = useCallback(() => {
+        setSyncConfirmOrdinals(null);
+        void save();
+    }, [save]);
 
     const canAdvanceCurrentStep = useMemo(() => {
         switch (step) {
@@ -489,7 +519,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                               : !canAdvanceCurrentStep ||
                                 (structureHydrating && stepNeedsStructure))
                     }
-                    onClick={isSummary ? () => void save() : handleNext}
+                    onClick={isSummary ? handleSaveClick : handleNext}
                 >
                     {primaryLabel}
                 </Button>
@@ -606,6 +636,13 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                 isOpen={discardModalOpen}
                 onConfirm={handleConfirmDiscard}
                 onCancel={() => setDiscardModalOpen(false)}
+            />
+
+            <SyncRecurringStructureConfirmModal
+                isOpen={syncConfirmOrdinals != null}
+                personalizedOrdinals={syncConfirmOrdinals ?? []}
+                onConfirm={handleSyncConfirmSave}
+                onCancel={() => setSyncConfirmOrdinals(null)}
             />
         </div>
     );

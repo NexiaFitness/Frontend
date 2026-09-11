@@ -2,7 +2,7 @@
  * useBlockAuthoringPersistence.ts — Persistencia create/edit del journey D-PAP (F2).
  *
  * Create: POST atómico with-recurring-structure (D-PAP §8.4.5).
- * Edit: PUT bloque + persistBlockStructureEdit (template + apply-template + D-PRES).
+ * Edit: PUT bloque + persistBlockStructureEdit (sync-recurring atómico + D-PRES).
  */
 
 import { useCallback, useRef, useState } from "react";
@@ -18,7 +18,7 @@ import {
 import {
     useCreateWeeklyStructureWeekMutation,
     useUpdateWeeklyStructureWeekMutation,
-    useApplyWeeklyStructureTemplateMutation,
+    useSyncRecurringWeeklyStructureMutation,
 } from "@nexia/shared/api/weeklyStructureApi";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import type {
@@ -97,7 +97,7 @@ export function useBlockAuthoringPersistence({
         useUpdatePeriodBlockMutation();
     const [createWeek] = useCreateWeeklyStructureWeekMutation();
     const [updateWeek] = useUpdateWeeklyStructureWeekMutation();
-    const [applyTemplate] = useApplyWeeklyStructureTemplateMutation();
+    const [syncRecurring] = useSyncRecurringWeeklyStructureMutation();
     const [isSavingStructure, setIsSavingStructure] = useState(false);
 
     const existingStructureRef = useRef(existingStructure);
@@ -235,7 +235,7 @@ export function useBlockAuthoringPersistence({
                             existingStructureRef.current,
                             updateWeek,
                             createWeek,
-                            applyTemplate,
+                            syncRecurring,
                         );
                 } finally {
                     setIsSavingStructure(false);
@@ -317,7 +317,7 @@ export function useBlockAuthoringPersistence({
         updateBlock,
         createWeek,
         updateWeek,
-        applyTemplate,
+        syncRecurring,
         planId,
         markPersisted,
         refetchWeeklyStructure,

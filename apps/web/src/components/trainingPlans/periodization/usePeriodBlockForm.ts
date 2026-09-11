@@ -228,9 +228,24 @@ export function usePeriodBlockForm(
     setForm((prev) => ({ ...prev, constructorStep: step }));
   }, []);
 
-  const setWeeklyStructure = useCallback((draft: WeeklyStructureWeekCreate[]) => {
-    setForm((prev) => ({ ...prev, weeklyStructure: draft }));
-  }, []);
+  const setWeeklyStructure = useCallback(
+    (
+      draft:
+        | WeeklyStructureWeekCreate[]
+        | ((
+            prev: WeeklyStructureWeekCreate[],
+          ) => WeeklyStructureWeekCreate[]),
+    ) => {
+      setForm((prev) => ({
+        ...prev,
+        weeklyStructure:
+          typeof draft === "function"
+            ? draft(prev.weeklyStructure)
+            : draft,
+      }));
+    },
+    [],
+  );
 
   const reset = useCallback(() => {
     loadedBlockRef.current = null;

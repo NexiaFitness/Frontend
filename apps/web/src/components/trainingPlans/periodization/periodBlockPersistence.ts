@@ -4,7 +4,8 @@
  * Contexto: orquesta create/update de bloque y estructura semanal sin reescribir
  * semanas sin cambios; usado desde PlanPeriodizationSection.
  *
- * Notas de mantenimiento: diff estructural vía weekStructureDiff de @nexia/shared.
+ * Notas de mantenimiento: diff estructural vía weekStructureDiff de @nexia/shared;
+ * edit con cambio de semana tipo usa POST sync-recurring (atómico BE).
  *
  * @author Frontend Team
  * @since v9.0.0
@@ -19,6 +20,7 @@ import type {
 } from "@nexia/shared/types/planningCargas";
 import type {
     WeeklyStructureOut,
+    WeeklyStructureSyncRecurringIn,
     WeeklyStructureWeek,
     WeeklyStructureWeekCreate,
 } from "@nexia/shared/types/weeklyStructure";
@@ -143,13 +145,10 @@ type CreateWeekFn = (args: {
     body: WeeklyStructureWeekCreate;
 }) => { unwrap: () => Promise<unknown> };
 
-type ApplyTemplateFn = (args: {
+type SyncRecurringFn = (args: {
     planId: number;
     blockId: number;
-    body: {
-        source_week_ordinal: number;
-        respect_exceptions: boolean;
-    };
+    body: WeeklyStructureSyncRecurringIn;
 }) => { unwrap: () => Promise<unknown> };
 
 const TEMPLATE_WEEK_ORDINAL = 1;
@@ -248,8 +247,8 @@ async function putOrCreateWeekDraft(
 }
 
 /**
- * Edit D-PAP: PUT semana tipo + apply-template (heredadas) + PUT personalizadas locales.
- * Alineado con create atómico (template + respect_exceptions) sin DELETE masivo.
+ * Edit D-PAP: sync-recurring atómico cuando cambia semana tipo; PUT incremental
+ * para personalizadas locales o cambios que no tocan la plantilla.
  */
 export async function persistBlockStructureEdit(
     planId: number,
@@ -261,7 +260,7 @@ export async function persistBlockStructureEdit(
     existingStructure: WeeklyStructureOut | undefined,
     updateWeek: UpdateWeekFn,
     createWeek: CreateWeekFn,
-    applyTemplate: ApplyTemplateFn,
+    syncRecurring: SyncRecurringFn,
 ): Promise<boolean> {
     if (draft.length === 0 || diffBaseline.length === 0) {
         return false;
@@ -274,7 +273,8 @@ export async function persistBlockStructureEdit(
         (existingStructure?.weeks ?? []).map((w) => [w.week_ordinal, w]),
     );
     const weekIdsByOrdinal = mapWeekIdsByOrdinal(existingStructure);
-    const weekCount = getBlockCalendarWeekCount(blockStartDate, blockEndDate);
+    void blockStartDate;
+    void blockEndDate;
 
     const changedOrdinals = draft
         .filter((weekDraft) =>
@@ -293,52 +293,36 @@ export async function persistBlockStructureEdit(
         const templateDraft = draft.find(
             (w) => w.week_ordinal === TEMPLATE_WEEK_ORDINAL,
         );
-        if (templateDraft != null) {
-            await putOrCreateWeekDraft(
-                planId,
-                blockId,
-                templateDraft,
-                weekIdsByOrdinal,
-                existingByOrdinal,
-                updateWeek,
-                createWeek,
-            );
-            changed = true;
+        if (templateDraft == null) {
+            return false;
         }
 
-        if (weekCount > 1) {
-            await applyTemplate({
-                planId,
-                blockId,
-                body: {
-                    source_week_ordinal: TEMPLATE_WEEK_ORDINAL,
-                    respect_exceptions: true,
-                },
-            }).unwrap();
-        }
-
-        const weekKinds = classifyWeeksByTemplate(draft, TEMPLATE_WEEK_ORDINAL);
-        for (const weekDraft of draft) {
+        const baselineKinds = classifyWeeksByTemplate(
+            diffBaseline,
+            TEMPLATE_WEEK_ORDINAL,
+        );
+        const personalizedUpdates = draft.filter((weekDraft) => {
             if (weekDraft.week_ordinal === TEMPLATE_WEEK_ORDINAL) {
-                continue;
+                return false;
             }
-            if (!weekChangedVsBaseline(weekDraft, baselineByOrdinal)) {
-                continue;
+            if (baselineKinds[weekDraft.week_ordinal] !== "personalizada") {
+                return false;
             }
-            if (weekCount > 1 && weekKinds[weekDraft.week_ordinal] === "heredada") {
-                continue;
-            }
-            await putOrCreateWeekDraft(
-                planId,
-                blockId,
-                weekDraft,
-                weekIdsByOrdinal,
-                existingByOrdinal,
-                updateWeek,
-                createWeek,
-            );
-            changed = true;
-        }
+            return weekChangedVsBaseline(weekDraft, baselineByOrdinal);
+        });
+
+        await syncRecurring({
+            planId,
+            blockId,
+            body: {
+                template_week: templateDraft,
+                personalized_week_updates:
+                    personalizedUpdates.length > 0
+                        ? personalizedUpdates
+                        : undefined,
+            },
+        }).unwrap();
+        changed = true;
 
         return changed;
     }

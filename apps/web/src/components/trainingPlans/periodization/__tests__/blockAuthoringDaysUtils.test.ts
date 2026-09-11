@@ -35,10 +35,11 @@ describe("blockAuthoringDaysUtils", () => {
             .movement_pattern_id).toBe(9);
     });
 
-    it("setActiveDaysOnWeek1 propagates day rule to every week", () => {
-        const next = setActiveDaysOnWeek1([1, 2, 4], [
+    it("setActiveDaysOnWeek1 propagates day rule only to inherited weeks", () => {
+        const baseline = [
             {
                 week_ordinal: 1,
+                label: null,
                 days: [
                     { day_of_week: 2, patterns: [] },
                     { day_of_week: 4, patterns: [] },
@@ -47,16 +48,29 @@ describe("blockAuthoringDaysUtils", () => {
             },
             {
                 week_ordinal: 2,
+                label: null,
                 days: [
                     { day_of_week: 2, patterns: [] },
                     { day_of_week: 4, patterns: [] },
                     { day_of_week: 6, patterns: [] },
                 ],
             },
-        ]);
-        expect(next).toHaveLength(2);
-        for (const week of next) {
-            expect(week.days.map((d) => d.day_of_week)).toEqual([1, 2, 4]);
-        }
+            {
+                week_ordinal: 3,
+                label: null,
+                days: [{ day_of_week: 5, patterns: [{ movement_pattern_id: 7, sub_pattern: null }] }],
+            },
+        ];
+        const weeklyStructure = structuredClone(baseline);
+
+        const next = setActiveDaysOnWeek1([1, 2, 4], weeklyStructure, baseline);
+
+        expect(next.find((week) => week.week_ordinal === 1)?.days.map((d) => d.day_of_week)).toEqual(
+            [1, 2, 4],
+        );
+        expect(next.find((week) => week.week_ordinal === 2)?.days.map((d) => d.day_of_week)).toEqual(
+            [1, 2, 4],
+        );
+        expect(next.find((week) => week.week_ordinal === 3)).toEqual(baseline[2]);
     });
 });
