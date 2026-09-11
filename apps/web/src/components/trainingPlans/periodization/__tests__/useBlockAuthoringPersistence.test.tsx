@@ -213,28 +213,14 @@ describe("useBlockAuthoringPersistence", () => {
         };
 
         server.use(
-            http.put(
-                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/weeks/:weekId",
+            http.post(
+                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/sync-recurring",
                 () =>
-                    HttpResponse.json(
-                        {
-                            id: 5,
-                            week_ordinal: 1,
-                            label: null,
-                            days: [
-                                {
-                                    day_of_week: 1,
-                                    patterns: [
-                                        {
-                                            movement_pattern_id: 3,
-                                            sub_pattern: null,
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                        { status: 200 },
-                    ),
+                    HttpResponse.json({
+                        applied_week_ordinals: [],
+                        preserved_week_ordinals: [],
+                        updated_personalized_ordinals: [],
+                    }),
             ),
         );
 
@@ -302,7 +288,7 @@ describe("useBlockAuthoringPersistence", () => {
         expect(refetchWeeklyStructure).toHaveBeenCalled();
     });
 
-    it("edit multi-semana: PUT semana tipo + apply-template al cambiar patrones", async () => {
+    it("edit multi-semana: sync-recurring al cambiar patrones de semana tipo", async () => {
         const markPersisted = vi.fn();
         const refetchWeeklyStructure = vi.fn().mockResolvedValue({
             data: {
@@ -336,20 +322,17 @@ describe("useBlockAuthoringPersistence", () => {
                 ],
             },
         });
-        const applyTemplateCalls: unknown[] = [];
+        const syncRecurringCalls: unknown[] = [];
 
         server.use(
-            http.put(
-                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/weeks/:weekId",
-                () => HttpResponse.json({ id: 47, week_ordinal: 1, label: null, days: [] }),
-            ),
             http.post(
-                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/apply-template",
+                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/sync-recurring",
                 async ({ request }) => {
-                    applyTemplateCalls.push(await request.json());
+                    syncRecurringCalls.push(await request.json());
                     return HttpResponse.json({
                         applied_week_ordinals: [2],
-                        skipped_week_ordinals: [],
+                        preserved_week_ordinals: [],
+                        updated_personalized_ordinals: [],
                     });
                 },
             ),
@@ -476,9 +459,10 @@ describe("useBlockAuthoringPersistence", () => {
         await waitFor(() => {
             expect(markPersisted).toHaveBeenCalled();
         });
-        expect(applyTemplateCalls).toEqual([
-            { source_week_ordinal: 1, respect_exceptions: true },
-        ]);
+        expect(syncRecurringCalls).toHaveLength(1);
+        expect(syncRecurringCalls[0]).toMatchObject({
+            template_week: expect.objectContaining({ week_ordinal: 1 }),
+        });
         expect(refetchWeeklyStructure).toHaveBeenCalled();
     });
 
@@ -510,13 +494,14 @@ describe("useBlockAuthoringPersistence", () => {
         };
 
         server.use(
-            http.put(
-                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/weeks/:weekId",
+            http.post(
+                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/sync-recurring",
                 () =>
-                    HttpResponse.json(
-                        { id: 5, week_ordinal: 1, label: null, days: [] },
-                        { status: 200 },
-                    ),
+                    HttpResponse.json({
+                        applied_week_ordinals: [],
+                        preserved_week_ordinals: [],
+                        updated_personalized_ordinals: [],
+                    }),
             ),
         );
 
@@ -600,6 +585,15 @@ describe("useBlockAuthoringPersistence", () => {
                         { status: 200 },
                     );
                 },
+            ),
+            http.post(
+                "*/training-plans/:planId/period-blocks/:blockId/weekly-structure/sync-recurring",
+                () =>
+                    HttpResponse.json({
+                        applied_week_ordinals: [],
+                        preserved_week_ordinals: [],
+                        updated_personalized_ordinals: [],
+                    }),
             ),
         );
 

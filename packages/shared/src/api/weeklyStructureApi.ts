@@ -23,6 +23,8 @@ import type {
     WeeklyStructureWeekRepeatOut,
     WeeklyStructureApplyTemplateIn,
     WeeklyStructureApplyTemplateOut,
+    WeeklyStructureSyncRecurringIn,
+    WeeklyStructureSyncRecurringOut,
 } from "../types/weeklyStructure";
 
 export const weeklyStructureApi = baseApi.injectEndpoints({
@@ -132,6 +134,25 @@ export const weeklyStructureApi = baseApi.injectEndpoints({
                 { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
             ],
         }),
+
+        /** Sync template week + inherited weeks atomically after edit save. */
+        syncRecurringWeeklyStructure: builder.mutation<
+            WeeklyStructureSyncRecurringOut,
+            {
+                planId: number;
+                blockId: number;
+                body: WeeklyStructureSyncRecurringIn;
+            }
+        >({
+            query: ({ planId, blockId, body }) => ({
+                url: `/training-plans/${planId}/period-blocks/${blockId}/weekly-structure/sync-recurring`,
+                method: "POST",
+                body,
+            }),
+            invalidatesTags: (_result, _error, arg) => [
+                { type: "WeeklyStructure", id: `${arg.planId}-${arg.blockId}` },
+            ],
+        }),
     }),
     overrideExisting: false,
 });
@@ -143,4 +164,5 @@ export const {
     useDeleteWeeklyStructureWeekMutation,
     useRepeatWeeklyStructureWeekMutation,
     useApplyWeeklyStructureTemplateMutation,
+    useSyncRecurringWeeklyStructureMutation,
 } = weeklyStructureApi;
