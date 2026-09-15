@@ -18,6 +18,7 @@ import {
     clearPlanningView,
     isPlanningAnalyticsView,
     isPlanningCreateWhenMode,
+    isPlanningPlansHistoryView,
 } from "@/utils/planningHubUrl";
 
 export type ClientDetailTab = "overview" | "sessions" | "daily-coherence" | "testing" | "progress" | "planning" | "injuries";
@@ -80,7 +81,11 @@ export function isClientDetailHomeSearchParams(params: URLSearchParams): boolean
     if (parseBlockWeeksId(params) != null) {
         return false;
     }
-    if (isPlanningCreateWhenMode(params) || isPlanningAnalyticsView(params)) {
+    if (
+        isPlanningCreateWhenMode(params) ||
+        isPlanningAnalyticsView(params) ||
+        isPlanningPlansHistoryView(params)
+    ) {
         return false;
     }
     return true;

@@ -1,7 +1,7 @@
 /**
- * planningHubUrl.ts — Hub de planificación (explore · createWhen · analytics).
+ * planningHubUrl.ts — Query params del hub de planificación (selección de rango · analytics).
  *
- * Limpia sub-journeys F2 blockAuthor, gestión de semanas y modos F5 shell.
+ * `planningMode=createBlock` activa selección inline de fechas en PlanningExploreShell.
  */
 
 import {
@@ -11,6 +11,7 @@ import {
 
 export const PLANNING_MODE_CREATE_BLOCK = "createBlock";
 export const PLANNING_VIEW_ANALYTICS = "analytics";
+export const PLANNING_VIEW_PLANS_HISTORY = "plansHistory";
 
 export function isPlanningCreateWhenMode(params: URLSearchParams): boolean {
     return params.get("planningMode") === PLANNING_MODE_CREATE_BLOCK;
@@ -18,6 +19,10 @@ export function isPlanningCreateWhenMode(params: URLSearchParams): boolean {
 
 export function isPlanningAnalyticsView(params: URLSearchParams): boolean {
     return params.get("planningView") === PLANNING_VIEW_ANALYTICS;
+}
+
+export function isPlanningPlansHistoryView(params: URLSearchParams): boolean {
+    return params.get("planningView") === PLANNING_VIEW_PLANS_HISTORY;
 }
 
 export function applyPlanningModeCreateBlock(
@@ -40,6 +45,15 @@ export function applyPlanningViewAnalytics(
 ): URLSearchParams {
     const next = new URLSearchParams(prev);
     next.set("planningView", PLANNING_VIEW_ANALYTICS);
+    next.delete("planningMode");
+    return next;
+}
+
+export function applyPlanningViewPlansHistory(
+    prev: URLSearchParams,
+): URLSearchParams {
+    const next = new URLSearchParams(prev);
+    next.set("planningView", PLANNING_VIEW_PLANS_HISTORY);
     next.delete("planningMode");
     return next;
 }

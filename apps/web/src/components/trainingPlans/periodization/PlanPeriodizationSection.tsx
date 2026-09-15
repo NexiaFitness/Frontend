@@ -31,7 +31,6 @@ import { usePeriodizationVolumeRecommendations } from "@/hooks/trainingPlans/use
 import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { PlanningExploreShell } from "./PlanningExploreShell";
-import { PlanningCreateWhenShell } from "./PlanningCreateWhenShell";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
 import {
   clearBlockAuthorParams,
@@ -49,7 +48,6 @@ import {
 import {
   findBlockContainingDate,
   resolveCalendarMonthForDate,
-  resolveInitialSelectedBlockId,
   resolveNextPhaseStartDate,
 } from "./planningShellUtils";
 
@@ -69,6 +67,8 @@ interface Props {
   activePlan?: ActivePlanByClientOut;
   planGoalForRecommendations?: string;
   onAuthoringChange?: (active: boolean) => void;
+  showOtherPlansAction?: boolean;
+  onOpenOtherPlans?: () => void;
 }
 
 export const PlanPeriodizationSection: React.FC<Props> = ({
@@ -79,6 +79,8 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   activePlan,
   planGoalForRecommendations,
   onAuthoringChange,
+  showOtherPlansAction = false,
+  onOpenOtherPlans,
 }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -93,12 +95,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   );
   const isDapAuthoring = isBlockAuthoringActive(blockAuthorParams);
   const isBlockWeeksManage = blockWeeksId != null;
-  const isExplicitCreateWhen = isPlanningCreateWhenMode(searchParams);
+  const isPickingPhaseRange = isPlanningCreateWhenMode(searchParams);
 
   const { showWarning, showSuccess, showError } = useToast();
   const [calMonth, setCalMonth] = useState(() => new Date());
   const [deleteTarget, setDeleteTarget] = useState<{ id: number; label: string } | null>(null);
-  const [selectedBlockId, setSelectedBlockId] = useState<number | null>(null);
   const [exceptionModal, setExceptionModal] = useState<{ date: string } | null>(null);
   const [exceptionNote, setExceptionNote] = useState("");
   const { data: clientProfile } = useGetClientQuery(clientId!, { skip: !clientId });
@@ -110,8 +111,6 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     isError,
     error,
   } = useGetPeriodBlocksQuery(planId);
-  const isFirstBlockFlow = blocks.length === 0;
-  const isCreateWhen = isExplicitCreateWhen || isFirstBlockFlow;
   const { data: sessions = [] } = useGetTrainingSessionsQuery(planId);
 
   const sessionDates = useMemo(() => {
@@ -170,19 +169,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   } = usePeriodBlockForm(blocks, null, planStartDate, planEndDate);
 
   useEffect(() => {
-    setSelectedBlockId((prev) => {
-      if (blocks.length === 0) {
-        return null;
-      }
-      if (prev != null && blocks.some((block) => block.id === prev)) {
-        return prev;
-      }
-      return resolveInitialSelectedBlockId(blocks);
-    });
-  }, [blocks]);
-
-  useEffect(() => {
-    if (!isCreateWhen) {
+    if (!isPickingPhaseRange) {
       return;
     }
     reset();
@@ -191,18 +178,29 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       pendingCreateWhenStartRef.current = null;
       handleDayClick(pendingStart);
     }
-  }, [isCreateWhen, reset, handleDayClick]);
+  }, [isPickingPhaseRange, reset, handleDayClick]);
+
+  useEffect(() => {
+    if (!isPickingPhaseRange) {
+      return;
+    }
+    requestAnimationFrame(() => {
+      document
+        .getElementById("planning-calendar-section")
+        ?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }, [isPickingPhaseRange]);
 
   useEffect(() => {
     onAuthoringChange?.(
       isDapAuthoring ||
         isBlockWeeksManage ||
-        isCreateWhen,
+        isPickingPhaseRange,
     );
   }, [
     isDapAuthoring,
     isBlockWeeksManage,
-    isCreateWhen,
+    isPickingPhaseRange,
     onAuthoringChange,
   ]);
 
@@ -276,6 +274,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   }, [searchParams, navigateToClientPlanning]);
 
   const handleStartCreateBlock = useCallback(() => {
+    if (isPickingPhaseRange) {
+      reset();
+      navigateToClientPlanning(clearPlanningMode(searchParams));
+      return;
+    }
     reset();
     pendingCreateWhenStartRef.current = null;
     const nextStart = resolveNextPhaseStartDate(blocks, planStartDate);
@@ -285,18 +288,13 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     const next = applyPlanningModeCreateBlock(searchParams);
     navigateToClientPlanning(next);
   }, [
+    isPickingPhaseRange,
     reset,
     blocks,
     planStartDate,
     searchParams,
     navigateToClientPlanning,
   ]);
-
-  const handleCancelCreateWhen = useCallback(() => {
-    reset();
-    const next = clearPlanningMode(searchParams);
-    navigateToClientPlanning(next);
-  }, [reset, searchParams, navigateToClientPlanning]);
 
   const continueRangeDisabledReason = useMemo(() => {
     if (form.phase !== "rangeComplete") {
@@ -361,37 +359,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     [navigate, clientId],
   );
 
-  const handleExploreDayClick = useCallback(
-    (dateStr: string) => {
-      const block = findBlockContainingDate(blocks, dateStr);
-      if (block) {
-        setSelectedBlockId(block.id);
-        return;
-      }
-      if (
-        planStartDate &&
-        planEndDate &&
-        !isDateInRange(dateStr, planStartDate, planEndDate)
-      ) {
-        showWarning("Solo puedes definir bloques dentro de la vigencia del plan.");
-        return;
-      }
-      pendingCreateWhenStartRef.current = dateStr;
-      setCalMonth(resolveCalendarMonthForDate(dateStr));
-      const next = applyPlanningModeCreateBlock(searchParams);
-      navigateToClientPlanning(next);
-    },
-    [
-      blocks,
-      planStartDate,
-      planEndDate,
-      searchParams,
-      navigateToClientPlanning,
-      showWarning,
-    ],
-  );
-
-  const handleCreateWhenDayClick = useCallback(
+  const handlePickRangeDayClick = useCallback(
     (dateStr: string) => {
       if (
         planStartDate &&
@@ -429,9 +397,44 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     ],
   );
 
+  const handleCalendarDayClick = useCallback(
+    (dateStr: string) => {
+      if (isPickingPhaseRange) {
+        handlePickRangeDayClick(dateStr);
+        return;
+      }
+
+      if (findBlockContainingDate(blocks, dateStr)) {
+        return;
+      }
+      if (
+        planStartDate &&
+        planEndDate &&
+        !isDateInRange(dateStr, planStartDate, planEndDate)
+      ) {
+        showWarning("Solo puedes definir bloques dentro de la vigencia del plan.");
+        return;
+      }
+      pendingCreateWhenStartRef.current = dateStr;
+      setCalMonth(resolveCalendarMonthForDate(dateStr));
+      const next = applyPlanningModeCreateBlock(searchParams);
+      navigateToClientPlanning(next);
+    },
+    [
+      isPickingPhaseRange,
+      handlePickRangeDayClick,
+      blocks,
+      planStartDate,
+      planEndDate,
+      searchParams,
+      navigateToClientPlanning,
+      showWarning,
+    ],
+  );
+
   const handleDayContextMenu = useCallback(
     (dateStr: string) => {
-      if (isCreateWhen && form.phase !== "idle") {
+      if (isPickingPhaseRange && form.phase !== "idle") {
         return;
       }
       if (!clientId) {
@@ -455,7 +458,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       setExceptionModal({ date: dateStr });
     },
     [
-      isCreateWhen,
+      isPickingPhaseRange,
       form.phase,
       clientId,
       dayExceptions,
@@ -492,29 +495,28 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     try {
       await deleteBlock({ planId, blockId }).unwrap();
       setDeleteTarget(null);
-      if (selectedBlockId === blockId) {
-        setSelectedBlockId(null);
-      }
       showSuccess("Bloque de periodización eliminado.");
     } catch (err) {
       showError(getMutationErrorMessage(err));
     }
-  }, [deleteTarget, planId, deleteBlock, selectedBlockId, showSuccess, showError]);
+  }, [deleteTarget, planId, deleteBlock, showSuccess, showError]);
 
-  const createWhenWeekCount =
+  const pickRangeWeekCount =
     form.startDate && form.endDate
       ? getBlockCalendarWeekCount(form.startDate, form.endDate)
       : null;
 
-  const exploreFormState = useMemo(
-    () => ({
+  const calendarFormState = useMemo((): typeof form => {
+    if (isPickingPhaseRange) {
+      return form;
+    }
+    return {
       ...form,
       phase: "idle" as const,
       startDate: null,
       endDate: null,
-    }),
-    [form],
-  );
+    };
+  }, [form, isPickingPhaseRange]);
 
   if (isLoading) {
     return (
@@ -622,37 +624,11 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     );
   }
 
-  let shellContent: React.ReactNode;
-
-  if (isCreateWhen) {
-    shellContent = (
-      <PlanningCreateWhenShell
-        variant={isFirstBlockFlow ? "firstBlock" : "addPhase"}
-        blocks={blocks}
-        activePlan={activePlan}
-        planStartDate={planStartDate}
-        planEndDate={planEndDate}
-        trainingFrequencyLabel={trainingFrequencyLabel}
-        calMonth={calMonth}
-        onMonthChange={setCalMonth}
-        sessionDates={sessionDates}
-        exceptionDates={exceptionDates}
-        formState={form}
-        weekCount={createWhenWeekCount}
-        habitualTrainingDays={clientProfile?.training_days ?? null}
-        onDayClick={handleCreateWhenDayClick}
-        onCancel={handleCancelCreateWhen}
-        onContinueRange={handleContinueCreateRange}
-        canContinueRange={continueRangeDisabledReason == null}
-        continueRangeDisabledReason={continueRangeDisabledReason}
-      />
-    );
-  } else {
-    shellContent = (
+  return (
+    <>
       <PlanningExploreShell
         blocks={blocks}
         catalog={catalog}
-        selectedBlockId={selectedBlockId}
         sessionsByBlock={sessionsByBlock}
         activePlan={activePlan}
         planStartDate={planStartDate}
@@ -662,11 +638,15 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
         onMonthChange={setCalMonth}
         sessionDates={sessionDates}
         exceptionDates={exceptionDates}
-        formState={exploreFormState}
+        calendarFormState={calendarFormState}
+        isPickingPhaseRange={isPickingPhaseRange}
+        weekCount={pickRangeWeekCount}
+        onContinueRange={handleContinueCreateRange}
+        canContinueRange={continueRangeDisabledReason == null}
+        continueRangeDisabledReason={continueRangeDisabledReason}
         habitualTrainingDays={clientProfile?.training_days ?? null}
-        onDayClick={handleExploreDayClick}
+        onDayClick={handleCalendarDayClick}
         onDayRightClick={handleDayContextMenu}
-        onSelectBlock={setSelectedBlockId}
         onAddPhase={handleStartCreateBlock}
         onEditBlock={handleEditBlockNavigate}
         onViewWeeks={handleViewWeeks}
@@ -679,13 +659,9 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
           )
         }
         volumeIntensityPhase={volumeNominal.phase}
+        showOtherPlansAction={showOtherPlansAction}
+        onOpenOtherPlans={onOpenOtherPlans}
       />
-    );
-  }
-
-  return (
-    <>
-      {shellContent}
 
       {deleteTarget != null && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

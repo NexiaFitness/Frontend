@@ -1,32 +1,38 @@
 /**
- * PlanningExploreShell.tsx — Modo explore F5: chips + calendario + panel fase.
+ * PlanningExploreShell.tsx — Hub F5: programa, fases, calendario y selección de rango inline.
  */
 
-import React from "react";
+import React, { useMemo } from "react";
+import { ChevronDown } from "lucide-react";
+import { Button } from "@/components/ui/buttons";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
 import type { VolumeIntensityContext } from "@nexia/shared";
 import type { PeriodizationVolumeNominalPhase } from "@/hooks/trainingPlans/usePeriodizationVolumeRecommendations";
-import { PageTitle } from "@/components/dashboard/shared";
 import { PeriodizationCalendar } from "./PeriodizationCalendar";
 import { PeriodBlockCard } from "./PeriodBlockCard";
-import { PeriodBlockEmptyCallout } from "./PeriodBlockEmptyCallout";
-import { PlanningActivePlanCard } from "./PlanningActivePlanCard";
-import { PlanningPhaseChipStrip } from "./PlanningPhaseChipStrip";
-import type { PeriodBlockFormState } from "./usePeriodBlockForm";
-import { formatProgramDurationLabel } from "./planningShellUtils";
+import { PeriodBlockAddPhaseCard } from "./PeriodBlockAddPhaseCard";
 import {
-    PLANNING_EXPLORE_GRID_CLASS,
-    PLANNING_PROGRAM_EYEBROW,
-    PLANNING_PROGRAM_SUMMARY_CLASS,
+    canAddPeriodPhase,
+    resolveNextPhaseStartDate,
+} from "./planningShellUtils";
+import { BlockCalendarRangeHint } from "./BlockCalendarRangeHint";
+import { PlanningProgramSummaryCard } from "./PlanningProgramSummaryCard";
+import { PlanningShellBodyLayout } from "./PlanningShellBodyLayout";
+import type { PeriodBlockFormState } from "./usePeriodBlockForm";
+import {
+    PLANNING_EXPLORE_BLOCKS_ROW,
+    PLANNING_PLANS_HISTORY_TRIGGER,
+    PLANNING_PLANS_HISTORY_TRIGGER_ROW,
+    PLANNING_PROGRAM_SUMMARY_STACK,
+    PLANNING_SHELL_PANEL_STACK,
     PLANNING_SHELL_SECTION_CLASS,
 } from "./planningShellPresentation";
 
 interface Props {
     blocks: PlanPeriodBlock[];
     catalog: PhysicalQuality[];
-    selectedBlockId: number | null;
     sessionsByBlock: Map<number, TrainingSession[]>;
     activePlan?: ActivePlanByClientOut;
     planStartDate?: string | null;
@@ -36,11 +42,15 @@ interface Props {
     onMonthChange: (date: Date) => void;
     sessionDates: Set<string>;
     exceptionDates: Set<string>;
-    formState: PeriodBlockFormState;
+    calendarFormState: PeriodBlockFormState;
+    isPickingPhaseRange: boolean;
+    weekCount: number | null;
+    onContinueRange: () => void;
+    canContinueRange: boolean;
+    continueRangeDisabledReason: string | null;
     habitualTrainingDays?: readonly string[] | null;
     onDayClick: (dateStr: string) => void;
     onDayRightClick?: (dateStr: string) => void;
-    onSelectBlock: (blockId: number) => void;
     onAddPhase: () => void;
     onEditBlock: (block: PlanPeriodBlock) => void;
     onViewWeeks: (block: PlanPeriodBlock) => void;
@@ -51,12 +61,13 @@ interface Props {
         intensityLevel: number | null | undefined,
     ) => VolumeIntensityContext | null;
     volumeIntensityPhase: PeriodizationVolumeNominalPhase;
+    showOtherPlansAction?: boolean;
+    onOpenOtherPlans?: () => void;
 }
 
 export const PlanningExploreShell: React.FC<Props> = ({
     blocks,
     catalog,
-    selectedBlockId,
     sessionsByBlock,
     activePlan,
     planStartDate,
@@ -66,11 +77,15 @@ export const PlanningExploreShell: React.FC<Props> = ({
     onMonthChange,
     sessionDates,
     exceptionDates,
-    formState,
+    calendarFormState,
+    isPickingPhaseRange,
+    weekCount,
+    onContinueRange,
+    canContinueRange,
+    continueRangeDisabledReason,
     habitualTrainingDays,
     onDayClick,
     onDayRightClick,
-    onSelectBlock,
     onAddPhase,
     onEditBlock,
     onViewWeeks,
@@ -78,95 +93,129 @@ export const PlanningExploreShell: React.FC<Props> = ({
     onCreateSessionForBlock,
     buildVolumeContext,
     volumeIntensityPhase,
+    showOtherPlansAction = false,
+    onOpenOtherPlans,
 }) => {
-    const selectedBlock =
-        selectedBlockId != null
-            ? blocks.find((block) => block.id === selectedBlockId)
-            : undefined;
+    const hintFormPhase = isPickingPhaseRange ? calendarFormState.phase : "idle";
 
-    const programDuration =
-        planStartDate && planEndDate
-            ? formatProgramDurationLabel(planStartDate, planEndDate)
-            : null;
+    const showAddPhaseCard = useMemo(
+        () => canAddPeriodPhase(blocks, planStartDate, planEndDate),
+        [blocks, planStartDate, planEndDate],
+    );
+
+    const suggestedPhaseStartDate = useMemo(
+        () => resolveNextPhaseStartDate(blocks, planStartDate),
+        [blocks, planStartDate],
+    );
+
+    const showBlocksRow = blocks.length > 0 || showAddPhaseCard;
 
     return (
         <section
             className={PLANNING_SHELL_SECTION_CLASS}
             data-testid="planning-explore-shell"
         >
-            <div className="space-y-3">
-                <PageTitle titleAs="h3" title="Planificación" />
-                {(programDuration || blocks.length > 0 || trainingFrequencyLabel) && (
-                    <div className="space-y-1">
-                        <p className={PLANNING_PROGRAM_EYEBROW}>Programa actual</p>
-                        <p className={PLANNING_PROGRAM_SUMMARY_CLASS}>
-                            {[
-                                programDuration,
-                                blocks.length > 0
-                                    ? `${blocks.length} fase${blocks.length === 1 ? "" : "s"}`
-                                    : null,
-                                trainingFrequencyLabel,
-                            ]
-                                .filter(Boolean)
-                                .join(" · ")}
-                        </p>
-                    </div>
-                )}
-                {blocks.length > 0 ? (
-                    <PlanningPhaseChipStrip
-                        blocks={blocks}
-                        selectedBlockId={selectedBlockId}
-                        onSelectBlock={onSelectBlock}
-                        onAddPhase={onAddPhase}
-                    />
-                ) : null}
-            </div>
-
-            <div className={PLANNING_EXPLORE_GRID_CLASS}>
-                <div className="min-w-0">
-                    <PeriodizationCalendar
-                        currentMonth={calMonth}
-                        onMonthChange={onMonthChange}
-                        blocks={blocks}
-                        planStartDate={planStartDate}
-                        planEndDate={planEndDate}
-                        sessionDates={sessionDates}
-                        exceptionDates={exceptionDates}
-                        formState={formState}
-                        onDayClick={onDayClick}
-                        onDayRightClick={onDayRightClick}
-                        habitualTrainingDays={habitualTrainingDays}
-                    />
-                </div>
-
-                <div className="flex min-w-0 flex-col gap-4">
-                    {activePlan ? (
-                        <PlanningActivePlanCard activePlan={activePlan} />
+            {activePlan ? (
+                <div className={PLANNING_PROGRAM_SUMMARY_STACK}>
+                    {showOtherPlansAction && onOpenOtherPlans ? (
+                        <div className={PLANNING_PLANS_HISTORY_TRIGGER_ROW}>
+                            <Button
+                                type="button"
+                                variant="ghost-primary"
+                                size="sm"
+                                className={PLANNING_PLANS_HISTORY_TRIGGER}
+                                data-testid="planning-open-plans-history"
+                                onClick={onOpenOtherPlans}
+                            >
+                                <ChevronDown className="size-3.5" aria-hidden />
+                                Historial
+                            </Button>
+                        </div>
                     ) : null}
-
-                    {selectedBlock ? (
-                        <PeriodBlockCard
-                            block={selectedBlock}
-                            catalog={catalog}
-                            sessions={sessionsByBlock.get(selectedBlock.id) ?? []}
-                            onEdit={onEditBlock}
-                            onViewWeeks={onViewWeeks}
-                            onDelete={onDeleteBlock}
-                            onCreateSessionForBlock={onCreateSessionForBlock}
-                            volumeIntensityContext={buildVolumeContext(
-                                selectedBlock.volume_level,
-                                selectedBlock.intensity_level,
-                            )}
-                            volumeIntensityPhase={volumeIntensityPhase}
-                        />
-                    ) : (
-                        <PeriodBlockEmptyCallout
-                            primaryText="Selecciona una fase"
-                            secondaryText="Usa los chips o haz clic en un día del calendario para ver el detalle de la fase."
-                        />
-                    )}
+                    <PlanningProgramSummaryCard
+                        plan={activePlan}
+                        phaseCount={blocks.length}
+                        trainingFrequencyLabel={trainingFrequencyLabel}
+                    />
                 </div>
-            </div>
+            ) : null}
+
+            {showBlocksRow ? (
+                <div className={PLANNING_EXPLORE_BLOCKS_ROW} data-testid="planning-explore-blocks-row">
+                    {blocks.map((block) => (
+                        <div key={block.id} className="shrink-0 snap-start">
+                            <PeriodBlockCard
+                                block={block}
+                                catalog={catalog}
+                                sessions={sessionsByBlock.get(block.id) ?? []}
+                                onEdit={onEditBlock}
+                                onViewWeeks={onViewWeeks}
+                                onDelete={onDeleteBlock}
+                                onCreateSessionForBlock={onCreateSessionForBlock}
+                                volumeIntensityContext={buildVolumeContext(
+                                    block.volume_level,
+                                    block.intensity_level,
+                                )}
+                                volumeIntensityPhase={volumeIntensityPhase}
+                            />
+                        </div>
+                    ))}
+                    {showAddPhaseCard ? (
+                        <div className="shrink-0 snap-start">
+                            <PeriodBlockAddPhaseCard
+                                onAddPhase={onAddPhase}
+                                suggestedStartDate={suggestedPhaseStartDate}
+                            />
+                        </div>
+                    ) : null}
+                </div>
+            ) : null}
+
+            <PlanningShellBodyLayout
+                variant="createWhen"
+                main={
+                    <div
+                        id="planning-calendar-section"
+                        data-testid="planning-calendar-section"
+                        className="min-w-0 scroll-mt-24"
+                    >
+                        <PeriodizationCalendar
+                            currentMonth={calMonth}
+                            onMonthChange={onMonthChange}
+                            blocks={blocks}
+                            planStartDate={planStartDate}
+                            planEndDate={planEndDate}
+                            sessionDates={sessionDates}
+                            exceptionDates={exceptionDates}
+                            formState={calendarFormState}
+                            onDayClick={onDayClick}
+                            onDayRightClick={onDayRightClick}
+                            habitualTrainingDays={habitualTrainingDays}
+                        />
+                    </div>
+                }
+                sidebar={
+                    <div className={PLANNING_SHELL_PANEL_STACK}>
+                        <BlockCalendarRangeHint
+                            formPhase={hintFormPhase}
+                            startDate={
+                                isPickingPhaseRange ? calendarFormState.startDate : null
+                            }
+                            endDate={
+                                isPickingPhaseRange ? calendarFormState.endDate : null
+                            }
+                            weekCount={isPickingPhaseRange ? weekCount : null}
+                            onContinue={
+                                isPickingPhaseRange && hintFormPhase === "rangeComplete"
+                                    ? onContinueRange
+                                    : undefined
+                            }
+                            canContinue={canContinueRange}
+                            continueDisabledReason={continueRangeDisabledReason}
+                        />
+                    </div>
+                }
+            />
         </section>
     );
 };

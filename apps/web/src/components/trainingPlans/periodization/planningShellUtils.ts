@@ -2,7 +2,8 @@
  * planningShellUtils.ts — Helpers de dominio para shell F5 (explore · createWhen).
  */
 
-import { getBlockCalendarWeekCount } from "@nexia/shared";
+import type { ActivePlanByClientOut, TrainingPlan } from "@nexia/shared/types/training";
+import { TRAINING_PLAN_STATUS } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import {
     findNextFreeDate,
@@ -16,18 +17,6 @@ export function findBlockContainingDate(
     return blocks.find((block) =>
         isDateInRange(dateStr, block.start_date, block.end_date),
     );
-}
-
-export function formatPhaseChipLabel(
-    block: PlanPeriodBlock,
-    index: number,
-): string {
-    const weeks = getBlockCalendarWeekCount(block.start_date, block.end_date);
-    const name = block.name?.trim();
-    if (name) {
-        return `${name} · ${weeks} sem`;
-    }
-    return `Fase ${index + 1} · ${weeks} sem`;
 }
 
 function parseLocal(dateStr: string): Date {
@@ -60,18 +49,68 @@ export function resolveNextPhaseStartDate(
     return findNextFreeDate(latestEnd, blocks);
 }
 
+/** Hay al menos un día libre dentro de la vigencia del plan para otra fase. */
+export function canAddPeriodPhase(
+    blocks: PlanPeriodBlock[],
+    planStartDate?: string | null,
+    planEndDate?: string | null,
+): boolean {
+    if (!planStartDate || !planEndDate) {
+        return false;
+    }
+    const nextStart = resolveNextPhaseStartDate(blocks, planStartDate);
+    if (!nextStart) {
+        return false;
+    }
+    return isDateInRange(nextStart, planStartDate, planEndDate);
+}
+
 export function resolveCalendarMonthForDate(dateStr: string): Date {
     const [y, m] = dateStr.split("-").map(Number);
     return new Date(y, m - 1, 1);
 }
 
-export function resolveInitialSelectedBlockId(
-    blocks: PlanPeriodBlock[],
-): number | null {
-    if (blocks.length === 0) {
-        return null;
-    }
-    const today = new Date().toISOString().slice(0, 10);
-    const containing = findBlockContainingDate(blocks, today);
-    return containing?.id ?? blocks[0].id;
+/** Forma de plan para hero / panel (display_name / display_goal). */
+export function toActivePlanDisplay(plan: TrainingPlan): ActivePlanByClientOut {
+    return {
+        ...plan,
+        display_name: plan.name,
+        display_goal: plan.goal,
+    };
+}
+
+/** Historial de planes: solo tiene sentido si hay más de un plan asignado. */
+export function hasMultipleClientTrainingPlans(
+    trainingPlans: readonly TrainingPlan[] | undefined,
+): boolean {
+    return (trainingPlans?.length ?? 0) > 1;
+}
+
+function isClientPlanActive(plan: TrainingPlan): boolean {
+    return plan.status === TRAINING_PLAN_STATUS.ACTIVE || plan.is_active === true;
+}
+
+/** Clave ISO para ordenar historial (fin del plan, luego inicio). */
+function planHistorySortKey(plan: TrainingPlan): string {
+    return plan.end_date || plan.start_date || plan.created_at;
+}
+
+/**
+ * Listado de planes del cliente: activo primero; resto hacia atrás (más reciente → más antiguo).
+ */
+export function sortClientTrainingPlansForDisplay(
+    plans: readonly TrainingPlan[],
+): TrainingPlan[] {
+    return [...plans].sort((a, b) => {
+        const aActive = isClientPlanActive(a);
+        const bActive = isClientPlanActive(b);
+        if (aActive !== bActive) {
+            return aActive ? -1 : 1;
+        }
+        const byEnd = planHistorySortKey(b).localeCompare(planHistorySortKey(a));
+        if (byEnd !== 0) {
+            return byEnd;
+        }
+        return b.id - a.id;
+    });
 }

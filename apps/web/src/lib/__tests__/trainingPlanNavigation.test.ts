@@ -21,6 +21,11 @@ describe("trainingPlanNavigation — client home", () => {
                 new URLSearchParams("tab=planning&blockAuthor=create&blockStep=qualities"),
             ),
         ).toBe(false);
+        expect(
+            isClientDetailHomeSearchParams(
+                new URLSearchParams("tab=planning&planningView=plansHistory"),
+            ),
+        ).toBe(false);
     });
 
     it("applyClientDetailHomeSearchParams limpia sub-journeys y fija overview", () => {
