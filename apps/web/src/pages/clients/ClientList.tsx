@@ -9,6 +9,7 @@
  * @author Frontend Team
  * @since v2.6.0
  * @updated v6.0.0 - VISTA_CLIENTES_SPEC: grid/lista, SatisfactionIcon por level, PaginationBar, tokens.
+ * @updated v7.x - Premium glass (clientListPresentation.ts) · mobile-first · sidebar md+.
  */
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -28,11 +29,65 @@ import type { Invitation } from "@nexia/shared/types/invitation";
 import type { RootState } from "@nexia/shared/store";
 
 import { CompleteProfileModal } from "@/components/dashboard/modals/CompleteProfileModal";
+import {
+    CLIENT_LIST_ACTIVITY_ICON,
+    CLIENT_LIST_ACTIVITY_ITEM,
+    CLIENT_LIST_ACTIVITY_PANEL,
+    CLIENT_LIST_ACTIVITY_TEXT,
+    CLIENT_LIST_ACTIVITY_TIME,
+    CLIENT_LIST_ACTIVITY_TITLE,
+    CLIENT_LIST_ADHERENCE_LABEL,
+    CLIENT_LIST_ADHERENCE_PERCENT,
+    CLIENT_LIST_ASIDE,
+    CLIENT_LIST_BADGE_BASE,
+    CLIENT_LIST_CARD_BADGE_ROW,
+    CLIENT_LIST_CARD_EMAIL,
+    CLIENT_LIST_CARD_NAME,
+    CLIENT_LIST_CLIENT_CARD,
+    CLIENT_LIST_CONTENT_LAYOUT,
+    CLIENT_LIST_COPY,
+    CLIENT_LIST_EMPTY,
+    CLIENT_LIST_EMPTY_BODY,
+    CLIENT_LIST_EMPTY_GLOW,
+    CLIENT_LIST_EMPTY_TITLE,
+    CLIENT_LIST_FILTER_CHIP,
+    CLIENT_LIST_FILTER_COUNT,
+    CLIENT_LIST_EYEBROW,
+    CLIENT_LIST_GLOW,
+    CLIENT_LIST_GRID,
+    CLIENT_LIST_HEADER,
+    CLIENT_LIST_INVITATION_CARD,
+    CLIENT_LIST_LOADING,
+    CLIENT_LIST_MAIN,
+    CLIENT_LIST_PAGE,
+    CLIENT_LIST_PRIMARY_CTA,
+    CLIENT_LIST_SEARCH_ICON,
+    CLIENT_LIST_SEARCH_INPUT,
+    CLIENT_LIST_SEARCH_WRAP,
+    CLIENT_LIST_STACK,
+    CLIENT_LIST_SUBTITLE,
+    CLIENT_LIST_TABLE,
+    CLIENT_LIST_TABLE_CELL,
+    CLIENT_LIST_TABLE_HEAD,
+    CLIENT_LIST_TABLE_HEAD_CELL,
+    CLIENT_LIST_TABLE_ROW,
+    CLIENT_LIST_TABLE_SHELL,
+    CLIENT_LIST_TITLE,
+    CLIENT_LIST_TITLE_WRAP,
+    CLIENT_LIST_TOOLBAR,
+    CLIENT_LIST_TOOLBAR_ROW,
+    CLIENT_LIST_VIEW_TOGGLE,
+    clientListFatigueBadgeClass,
+    clientListStatusBadgeClass,
+    clientListViewToggleBtnClass,
+} from "@/components/clients/clientListPresentation";
 import { Button } from "@/components/ui/buttons";
+import { Input } from "@/components/ui/forms";
 import { LoadingSpinner, Alert, HintTooltip } from "@/components/ui/feedback";
 import { ClientAvatar } from "@/components/ui/avatar";
 import { AdherenceBar, SatisfactionIcon, TrendIcon } from "@/components/ui/indicators";
 import { PaginationBar } from "@/components/ui/pagination";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
 import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import {
@@ -43,16 +98,6 @@ import {
 } from "@/components/clients/invitations";
 
 const PAGE_SIZE = 9;
-
-function getFatigueColor(fatigue: string | null): string {
-    if (!fatigue) return "bg-muted text-muted-foreground";
-    const f = fatigue.toLowerCase();
-    if (f.includes("perfect")) return "bg-success/10 text-success";
-    if (f.includes("slightly")) return "bg-warning/10 text-warning";
-    if (f.includes("very")) return "bg-warning/10 text-warning";
-    if (f.includes("exhausted")) return "bg-destructive/10 text-destructive";
-    return "bg-muted text-muted-foreground";
-}
 
 function translateFatigue(fatigue: string | null): string {
     if (!fatigue) return "Sin datos";
@@ -81,12 +126,6 @@ function getStatusLabel(status: ClientStatus | null | undefined): string {
     if (status === "paused") return "Pausado";
     if (status === "inactive") return "Baja";
     return "—";
-}
-
-function getStatusBadgeClass(status: ClientStatus | null | undefined): string {
-    if (!status || status === "active") return "bg-success/10 text-success";
-    if (status === "paused") return "bg-warning/10 text-warning";
-    return "bg-destructive/10 text-destructive";
 }
 
 function formatTimeAgo(timestamp: string): string {
@@ -235,19 +274,43 @@ export const ClientList: React.FC = () => {
         (!showInvitations || invitationItems.length === 0);
     const rosterTotal = total + (showInvitations ? invitationItems.length : 0);
 
+    const renderActivityPanel = (className?: string) => (
+        <div className={cn(CLIENT_LIST_ACTIVITY_PANEL, className)}>
+            <NexiaGlassAccentRim />
+            <h2 className={cn(CLIENT_LIST_ACTIVITY_TITLE, "mb-3 sm:mb-4")}>
+                {CLIENT_LIST_COPY.activityTitle}
+            </h2>
+            <ul className="space-y-3 sm:space-y-4">
+                {activities.length === 0 ? (
+                    <li className="py-4 text-center text-sm text-muted-foreground">
+                        {CLIENT_LIST_COPY.activityEmpty}
+                    </li>
+                ) : (
+                    activities.map((activity) => (
+                        <li key={activity.id} className={CLIENT_LIST_ACTIVITY_ITEM}>
+                            <div className={CLIENT_LIST_ACTIVITY_ICON}>{getActivityIcon(activity.type)}</div>
+                            <div className="min-w-0 flex-1">
+                                <p className={CLIENT_LIST_ACTIVITY_TEXT}>
+                                    <span className="font-medium">{activity.actor_name}</span>{" "}
+                                    {activity.description}
+                                </p>
+                                <p className={CLIENT_LIST_ACTIVITY_TIME}>{formatTimeAgo(activity.timestamp)}</p>
+                            </div>
+                        </li>
+                    ))
+                )}
+            </ul>
+        </div>
+    );
+
     const renderInvitationGridCard = (invitation: Invitation) => {
         const displayName = getInvitationDisplayName(invitation.nombre, invitation.email);
         return (
-            <article
-                key={`invitation-${invitation.id}`}
-                className="rounded-lg border border-dashed border-border bg-surface p-4 text-left shadow-md sm:p-5"
-            >
+            <article key={`invitation-${invitation.id}`} className={CLIENT_LIST_INVITATION_CARD}>
                 <div className="mb-3 flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-foreground sm:text-base">
-                            {displayName}
-                        </p>
-                        <p className="truncate text-xs text-muted-foreground">{invitation.email}</p>
+                        <p className={CLIENT_LIST_CARD_NAME}>{displayName}</p>
+                        <p className={CLIENT_LIST_CARD_EMAIL}>{invitation.email}</p>
                     </div>
                 </div>
                 <span
@@ -297,58 +360,65 @@ export const ClientList: React.FC = () => {
 
     return (
         <>
-            <div className="space-y-4 sm:space-y-6">
-                {/* Header §4 — responsive: stack on xs, inline sm+ */}
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                        <h1 className="text-xl font-bold text-foreground sm:text-2xl">Clientes</h1>
-                        <p className="mt-1 text-sm text-muted-foreground">{rosterTotal} total</p>
+            <div className={CLIENT_LIST_PAGE}>
+                <div className={CLIENT_LIST_GLOW} aria-hidden />
+                <div className={CLIENT_LIST_STACK}>
+                <header className={CLIENT_LIST_HEADER}>
+                    <div className={CLIENT_LIST_TITLE_WRAP}>
+                        <p className={CLIENT_LIST_EYEBROW}>{CLIENT_LIST_COPY.eyebrow}</p>
+                        <h1 className={CLIENT_LIST_TITLE}>{CLIENT_LIST_COPY.title}</h1>
+                        <p className={CLIENT_LIST_SUBTITLE}>
+                            {rosterTotal} {CLIENT_LIST_COPY.totalSuffix}
+                        </p>
                     </div>
                     <Button
                         variant="primary"
                         size="sm"
                         onClick={handleAddClient}
-                        className="w-full min-h-touch sm:w-auto sm:min-h-0"
+                        className={CLIENT_LIST_PRIMARY_CTA}
                     >
                         <Plus className="mr-2 h-4 w-4 shrink-0" aria-hidden />
-                        Nuevo cliente
+                        {CLIENT_LIST_COPY.newClient}
                     </Button>
-                </div>
+                </header>
 
-                {/* Controles §5 — nuevo patrón de filtros */}
-                <div className="flex flex-wrap items-center gap-2">
-                    <div className="flex flex-wrap items-center gap-1.5" role="group" aria-label="Filtrar por estado">
-                        {(["all", "active", "paused"] as const).map((key) => (
-                            <button
-                                key={key}
-                                type="button"
-                                onClick={() => setStatusFilter(key)}
-                                aria-pressed={statusFilter === key}
-                                className={cn(
-                                    "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-xs font-medium transition-colors",
-                                    statusFilter === key
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                                )}
-                            >
-                                <span>{key === "all" ? "Todos" : key === "active" ? "Activos" : "Pausados"}</span>
-                                {key === "all" && total != null && (
-                                    <span className="tabular-nums font-normal text-primary/60">{total}</span>
-                                )}
-                            </button>
-                        ))}
+                <div className={CLIENT_LIST_TOOLBAR}>
+                    <NexiaGlassAccentRim />
+                    <div
+                        className={CLIENT_LIST_TOOLBAR_ROW}
+                        role="group"
+                        aria-label={CLIENT_LIST_COPY.filterGroup}
+                    >
+                        {(["all", "active", "paused"] as const).map((key) => {
+                            const active = statusFilter === key;
+                            return (
+                                <button
+                                    key={key}
+                                    type="button"
+                                    onClick={() => setStatusFilter(key)}
+                                    aria-pressed={active}
+                                    className={CLIENT_LIST_FILTER_CHIP(active)}
+                                >
+                                    <span>
+                                        {key === "all"
+                                            ? "Todos"
+                                            : key === "active"
+                                              ? "Activos"
+                                              : "Pausados"}
+                                    </span>
+                                    {key === "all" && total != null ? (
+                                        <span className={CLIENT_LIST_FILTER_COUNT(active)}>{total}</span>
+                                    ) : null}
+                                </button>
+                            );
+                        })}
                     </div>
-                    <div className="flex shrink-0 rounded-md border border-border">
+                    <div className={CLIENT_LIST_VIEW_TOGGLE}>
                         <button
                             type="button"
                             onClick={() => setViewMode("grid")}
-                            className={cn(
-                                "inline-flex h-9 w-9 items-center justify-center transition-colors",
-                                viewMode === "grid"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                            )}
-                            aria-label="Vista grid"
+                            className={clientListViewToggleBtnClass(viewMode === "grid")}
+                            aria-label={CLIENT_LIST_COPY.viewGrid}
                             aria-pressed={viewMode === "grid"}
                         >
                             <LayoutGrid className="h-4 w-4" aria-hidden />
@@ -356,35 +426,30 @@ export const ClientList: React.FC = () => {
                         <button
                             type="button"
                             onClick={() => setViewMode("list")}
-                            className={cn(
-                                "inline-flex h-9 w-9 items-center justify-center transition-colors",
-                                viewMode === "list"
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                            )}
-                            aria-label="Vista lista"
+                            className={clientListViewToggleBtnClass(viewMode === "list")}
+                            aria-label={CLIENT_LIST_COPY.viewList}
                             aria-pressed={viewMode === "list"}
                         >
                             <List className="h-4 w-4" aria-hidden />
                         </button>
                     </div>
-                    <div className="relative ml-auto h-9 w-full sm:w-56">
-                        <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-                        <input
+                    <div className={CLIENT_LIST_SEARCH_WRAP}>
+                        <Search className={CLIENT_LIST_SEARCH_ICON} aria-hidden />
+                        <Input
                             id="client-search"
-                            type="text"
-                            placeholder="Buscar por nombre o email..."
+                            type="search"
+                            size="sm"
+                            placeholder={CLIENT_LIST_COPY.searchPlaceholder}
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            className="block h-9 w-full rounded-md border border-input bg-background pl-8 pr-3 text-sm text-foreground placeholder:text-muted-foreground caret-primary focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)]"
-                            aria-label="Buscar cliente"
+                            className={CLIENT_LIST_SEARCH_INPUT}
+                            aria-label={CLIENT_LIST_COPY.searchAria}
                         />
                     </div>
                 </div>
 
-                {/* Loading */}
                 {listLoading && (
-                    <div className="flex justify-center py-16">
+                    <div className={CLIENT_LIST_LOADING}>
                         <LoadingSpinner size="lg" />
                     </div>
                 )}
@@ -392,7 +457,7 @@ export const ClientList: React.FC = () => {
                 {/* Error */}
                 {listError && (
                     <Alert variant="error">
-                        Error al cargar clientes:{" "}
+                        {CLIENT_LIST_COPY.loadError}:{" "}
                         {error && typeof error === "object" && "data" in error && error.data && typeof error.data === "object" && "detail" in error.data
                             ? String((error.data as { detail?: unknown }).detail)
                             : "Error desconocido"}
@@ -401,24 +466,27 @@ export const ClientList: React.FC = () => {
 
                 {/* Empty state §6 */}
                 {!listLoading && !listError && isEmpty && (
-                    <div className="flex flex-col items-center justify-center rounded-lg bg-surface px-4 py-12 sm:py-16">
+                    <div className={CLIENT_LIST_EMPTY}>
+                        <div className={CLIENT_LIST_EMPTY_GLOW} aria-hidden />
+                        <NexiaGlassAccentRim />
                         <UserPlus className="mb-4 h-10 w-10 text-muted-foreground sm:h-12 sm:w-12" aria-hidden />
-                        <p className="mb-1 text-center font-medium text-foreground sm:text-left">Aún no tienes clientes registrados.</p>
-                        <p className="mb-6 text-center text-sm text-muted-foreground sm:text-left">Añade tu primer cliente para empezar</p>
-                        <Button variant="primary" onClick={handleAddClient} className="w-full min-h-touch sm:w-auto sm:min-h-0">
+                        <p className={CLIENT_LIST_EMPTY_TITLE}>{CLIENT_LIST_COPY.emptyTitle}</p>
+                        <p className={cn(CLIENT_LIST_EMPTY_BODY, "mb-6 text-center")}>
+                            {CLIENT_LIST_COPY.emptyDetail}
+                        </p>
+                        <Button variant="primary" onClick={handleAddClient} className={CLIENT_LIST_PRIMARY_CTA}>
                             <Plus className="mr-2 h-4 w-4" aria-hidden />
-                            Añadir tu primer cliente
+                            {CLIENT_LIST_COPY.emptyCta}
                         </Button>
                     </div>
                 )}
 
                 {/* Contenido + sidebar §7 — col on mobile, row lg+ */}
                 {!listLoading && !listError && !isEmpty && (
-                    <div className="flex flex-col gap-4 lg:flex-row lg:gap-6">
-                        <div className="min-w-0 flex-1">
+                    <div className={CLIENT_LIST_CONTENT_LAYOUT}>
+                        <div className={CLIENT_LIST_MAIN}>
                             {viewMode === "grid" ? (
-                                /* Vista Grid §8 — 1 col xs, 2 sm, 3 xl */
-                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-3">
+                                <div className={CLIENT_LIST_GRID}>
                                     {showInvitations
                                         ? invitationItems.map(renderInvitationGridCard)
                                         : null}
@@ -429,7 +497,7 @@ export const ClientList: React.FC = () => {
                                             tabIndex={0}
                                             onClick={() => handleClientClick(client.id)}
                                             onKeyDown={(e) => e.key === "Enter" && handleClientClick(client.id)}
-                                            className="cursor-pointer rounded-lg bg-surface p-4 text-left shadow-md transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring active:scale-[0.99] sm:p-5"
+                                            className={CLIENT_LIST_CLIENT_CARD}
                                         >
                                             <div className="mb-3 flex items-start justify-between gap-2">
                                                 <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
@@ -440,7 +508,7 @@ export const ClientList: React.FC = () => {
                                                         size="sm"
                                                         className="h-9 w-9 shrink-0 sm:h-10 sm:w-10"
                                                     />
-                                                    <p className="min-w-0 truncate text-sm font-medium text-foreground sm:text-base">
+                                                    <p className={cn(CLIENT_LIST_CARD_NAME, "min-w-0")}>
                                                         {client.nombre} {client.apellidos}
                                                     </p>
                                                 </div>
@@ -457,18 +525,20 @@ export const ClientList: React.FC = () => {
                                                     );
                                                 })()}
                                             </div>
-                                            <div className="mb-3 flex flex-wrap items-center gap-1.5 sm:gap-2">
-                                                <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
+                                            <div className={CLIENT_LIST_CARD_BADGE_ROW}>
+                                                <span className={cn(CLIENT_LIST_BADGE_BASE, clientListStatusBadgeClass(client.status))}>
                                                     {getStatusLabel(client.status)}
                                                 </span>
-                                                <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                <span className={cn(CLIENT_LIST_BADGE_BASE, clientListFatigueBadgeClass(client.fatigue_level))}>
                                                     <FatigueBatteryIcon fatigue={client.fatigue_level} />
                                                     {translateFatigue(client.fatigue_level)}
                                                 </span>
                                             </div>
                                             <div className="w-full">
                                                 <div className="mb-1.5">
-                                                    <span className="text-label text-muted-foreground sm:text-caption">Adherencia</span>
+                                                    <span className={CLIENT_LIST_ADHERENCE_LABEL}>
+                                                        {CLIENT_LIST_COPY.adherenceLabel}
+                                                    </span>
                                                 </div>
                                                 <div className="flex items-center gap-2">
                                                     <AdherenceBar value={client.adherence_percentage ?? 0} className="min-w-0 flex-1" />
@@ -489,7 +559,7 @@ export const ClientList: React.FC = () => {
                                                         />
                                                         <span
                                                             className={cn(
-                                                                "whitespace-nowrap text-xs font-medium sm:text-sm",
+                                                                CLIENT_LIST_ADHERENCE_PERCENT,
                                                                 client.adherence_percentage == null
                                                                     ? "text-muted-foreground"
                                                                     : client.adherence_percentage >= 75
@@ -508,16 +578,22 @@ export const ClientList: React.FC = () => {
                                     ))}
                                 </div>
                             ) : (
-                                /* Vista Lista §9 — scroll horizontal en móvil */
-                                <div className="-mx-1 overflow-x-auto rounded-lg border border-border sm:mx-0">
-                                    <table className="w-full min-w-[560px] text-sm">
+                                <div className={CLIENT_LIST_TABLE_SHELL}>
+                                    <NexiaGlassAccentRim />
+                                    <table className={CLIENT_LIST_TABLE}>
                                         <thead>
-                                            <tr className="border-b border-border bg-surface text-left text-muted-foreground">
-                                                <th className="px-3 py-2.5 font-medium sm:px-4 sm:py-3">Nombre</th>
-                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Estado</th>
-                                                <th className="px-3 py-2.5 font-medium sm:px-4 sm:py-3">Satisfacción</th>
-                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Fatiga</th>
-                                                <th className="whitespace-nowrap px-3 py-2.5 font-medium sm:px-4 sm:py-3">Adherencia</th>
+                                            <tr className={CLIENT_LIST_TABLE_HEAD}>
+                                                <th className={CLIENT_LIST_TABLE_HEAD_CELL}>Nombre</th>
+                                                <th className={cn(CLIENT_LIST_TABLE_HEAD_CELL, "whitespace-nowrap")}>
+                                                    Estado
+                                                </th>
+                                                <th className={CLIENT_LIST_TABLE_HEAD_CELL}>Satisfacción</th>
+                                                <th className={cn(CLIENT_LIST_TABLE_HEAD_CELL, "whitespace-nowrap")}>
+                                                    Fatiga
+                                                </th>
+                                                <th className={cn(CLIENT_LIST_TABLE_HEAD_CELL, "whitespace-nowrap")}>
+                                                    Adherencia
+                                                </th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -528,9 +604,9 @@ export const ClientList: React.FC = () => {
                                                 <tr
                                                     key={client.id}
                                                     onClick={() => handleClientClick(client.id)}
-                                                    className="cursor-pointer border-b border-border bg-background transition-colors hover:bg-surface active:bg-surface"
+                                                    className={CLIENT_LIST_TABLE_ROW}
                                                 >
-                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                    <td className={CLIENT_LIST_TABLE_CELL}>
                                                         <div className="flex items-center gap-2">
                                                             <ClientAvatar
                                                                 clientId={client.id}
@@ -544,12 +620,12 @@ export const ClientList: React.FC = () => {
                                                             </span>
                                                         </div>
                                                     </td>
-                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                                                        <span className={cn("rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getStatusBadgeClass(client.status))}>
+                                                    <td className={CLIENT_LIST_TABLE_CELL}>
+                                                        <span className={cn(CLIENT_LIST_BADGE_BASE, clientListStatusBadgeClass(client.status))}>
                                                             {getStatusLabel(client.status)}
                                                         </span>
                                                     </td>
-                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                    <td className={CLIENT_LIST_TABLE_CELL}>
                                                         {(() => {
                                                             const satisfaction = getClientSatisfactionDisplay(client);
                                                             return (
@@ -563,13 +639,13 @@ export const ClientList: React.FC = () => {
                                                             );
                                                         })()}
                                                     </td>
-                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
-                                                        <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-caption font-medium sm:px-2.5 sm:text-xs", getFatigueColor(client.fatigue_level))}>
+                                                    <td className={CLIENT_LIST_TABLE_CELL}>
+                                                        <span className={cn(CLIENT_LIST_BADGE_BASE, clientListFatigueBadgeClass(client.fatigue_level))}>
                                                             <FatigueBatteryIcon fatigue={client.fatigue_level} />
                                                             {translateFatigue(client.fatigue_level)}
                                                         </span>
                                                     </td>
-                                                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
+                                                    <td className={CLIENT_LIST_TABLE_CELL}>
                                                         <div className="flex min-w-[100px] items-center gap-1.5 sm:w-40 sm:gap-2">
                                                             <AdherenceBar value={client.adherence_percentage ?? 0} />
                                                             <span className="whitespace-nowrap text-foreground text-xs sm:text-sm">
@@ -595,35 +671,14 @@ export const ClientList: React.FC = () => {
                             )}
                         </div>
 
-                        {/* Sidebar Actividad reciente §11 — oculto en móvil, ancho fijo lg+ */}
-                        <aside className="hidden w-full shrink-0 lg:block lg:w-72">
-                            <div className="rounded-lg bg-surface p-4 sm:p-5">
-                                <h2 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground sm:mb-4">
-                                    ACTIVIDAD RECIENTE
-                                </h2>
-                                <ul className="space-y-3 sm:space-y-4">
-                                    {activities.length === 0 ? (
-                                        <li className="py-4 text-center text-sm text-muted-foreground">No hay actividad reciente</li>
-                                    ) : (
-                                        activities.map((activity) => (
-                                            <li key={activity.id} className="flex gap-2 sm:gap-3">
-                                                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-surface-2 p-1 text-muted-foreground sm:h-8 sm:w-8 sm:p-1.5">
-                                                    {getActivityIcon(activity.type)}
-                                                </div>
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="line-clamp-2 text-xs text-foreground sm:text-sm">
-                                                        <span className="font-medium">{activity.actor_name}</span> {activity.description}
-                                                    </p>
-                                                    <p className="mt-0.5 text-label text-muted-foreground sm:mt-1 sm:text-xs">{formatTimeAgo(activity.timestamp)}</p>
-                                                </div>
-                                            </li>
-                                        ))
-                                    )}
-                                </ul>
-                            </div>
+                        <aside className={cn(CLIENT_LIST_ASIDE, "hidden md:block")}>
+                            {renderActivityPanel()}
                         </aside>
                     </div>
                 )}
+
+                {!listLoading && !listError && !isEmpty ? renderActivityPanel("md:hidden") : null}
+                </div>
             </div>
 
             <CompleteProfileModal

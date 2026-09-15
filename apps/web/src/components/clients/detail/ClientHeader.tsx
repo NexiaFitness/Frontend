@@ -6,6 +6,7 @@
 
 import React, { useState } from "react";
 import { Pencil } from "lucide-react";
+import { useClientDetailHomeNavigation } from "@/hooks/clients/useClientDetailHomeNavigation";
 import type { Client } from "@nexia/shared/types/client";
 import { TRAINING_DAY_LABELS, type TrainingDayValue } from "@nexia/shared";
 import {
@@ -19,12 +20,11 @@ import { ClientAvatar } from "@/components/ui/avatar";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/ui/Breadcrumbs";
 import { NexiaPremiumDivider } from "@/components/ui/surface/NexiaPremiumDivider";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { ClientProfileSidePanel } from "./ClientProfileSidePanel";
 import { ClientInboxBell } from "./ClientInboxBell";
 import { cn } from "@/lib/utils";
 import {
     CLIENT_HEADER_ACTION_BUTTON_MOBILE,
-    CLIENT_HEADER_AVATAR_BUTTON,
+    CLIENT_HEADER_AVATAR_RING,
     CLIENT_HEADER_DESKTOP_ACTIONS_WRAP,
     CLIENT_HEADER_HERO_OUTER,
     CLIENT_HEADER_IDENTITY_BLOCK,
@@ -32,7 +32,6 @@ import {
     CLIENT_HEADER_MOBILE_ACTIONS_WRAP,
     CLIENT_HEADER_NAME,
     CLIENT_HEADER_NAME_ROW,
-    CLIENT_HEADER_TITLE_ROW,
     CLIENT_HEADER_NOTE_BODY,
     CLIENT_HEADER_OBS_QUICK_NOTE,
     CLIENT_HEADER_OBS_HEADER,
@@ -50,6 +49,7 @@ import {
     CLIENT_HEADER_SHELL,
     CLIENT_HEADER_SHOW_GENERATE_REPORT,
     NEXIA_PORTAL_GREETING_NAME,
+    clientHeaderIdentityHomeClass,
 } from "./clientHeaderPresentation";
 
 interface ClientHeaderProps {
@@ -73,8 +73,9 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
 }) => {
     const [quickNoteOpen, setQuickNoteOpen] = useState(false);
     const [quickNoteDraft, setQuickNoteDraft] = useState("");
-    const [profileOpen, setProfileOpen] = useState(false);
     const clientId = clientIdProp ?? client.id;
+    const { goToClientHome, isAtClientHome } = useClientDetailHomeNavigation();
+    const clientDisplayName = [client.nombre, client.apellidos].filter(Boolean).join(" ").trim();
 
     const calculateAge = (birthdate: string | undefined | null): number | null => {
         if (!birthdate) return null;
@@ -186,27 +187,31 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                 <div className={CLIENT_HEADER_NAME_ROW}>
                     <button
                         type="button"
-                        onClick={() => setProfileOpen(true)}
-                        className={CLIENT_HEADER_AVATAR_BUTTON}
-                        aria-label="Ver perfil completo del cliente"
+                        onClick={goToClientHome}
+                        className={clientHeaderIdentityHomeClass(isAtClientHome)}
+                        aria-label={
+                            isAtClientHome
+                                ? `Resumen de ${clientDisplayName || "cliente"}`
+                                : `Ir al resumen de ${clientDisplayName || "cliente"}`
+                        }
+                        aria-current={isAtClientHome ? "page" : undefined}
                     >
-                        <ClientAvatar
-                            clientId={client.id}
-                            nombre={client.nombre}
-                            apellidos={client.apellidos}
-                            size="lg"
-                        />
-                    </button>
-
-                    <div className={CLIENT_HEADER_IDENTITY_BLOCK}>
-                        <div className={CLIENT_HEADER_TITLE_ROW}>
-                            <h1 className={cn(CLIENT_HEADER_NAME, "min-w-0 flex-1 sm:flex-none")}>
+                        <span className={CLIENT_HEADER_AVATAR_RING}>
+                            <ClientAvatar
+                                clientId={client.id}
+                                nombre={client.nombre}
+                                apellidos={client.apellidos}
+                                size="lg"
+                            />
+                        </span>
+                        <div className={CLIENT_HEADER_IDENTITY_BLOCK}>
+                            <h1 className={cn(CLIENT_HEADER_NAME, "min-w-0")}>
                                 <span className={NEXIA_PORTAL_GREETING_NAME}>{client.nombre}</span>
                                 {client.apellidos ? ` ${client.apellidos}` : ""}
                             </h1>
-                            <div className={CLIENT_HEADER_DESKTOP_ACTIONS_WRAP}>{headerActions}</div>
                         </div>
-                    </div>
+                    </button>
+                    <div className={CLIENT_HEADER_DESKTOP_ACTIONS_WRAP}>{headerActions}</div>
                 </div>
 
                 <p className={CLIENT_HEADER_META}>{metaLine}</p>
@@ -311,12 +316,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
                 </div>
             </div>
 
-            <ClientProfileSidePanel
-                client={client}
-                isOpen={profileOpen}
-                onClose={() => setProfileOpen(false)}
-                onEditProfile={onEditProfile}
-            />
         </div>
     );
 };

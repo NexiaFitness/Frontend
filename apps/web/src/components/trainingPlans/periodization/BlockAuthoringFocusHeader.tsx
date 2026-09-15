@@ -5,6 +5,7 @@
 
 import React, { useMemo } from "react";
 import { Trash2 } from "lucide-react";
+import { useClientDetailHomeNavigation } from "@/hooks/clients/useClientDetailHomeNavigation";
 import type { Client } from "@nexia/shared/types/client";
 import { Breadcrumbs } from "@/components/ui/Breadcrumbs";
 import type { BlockAuthorMode } from "./blockAuthoringModel";
@@ -27,6 +28,7 @@ import {
     AUTHORING_FOCUS_TASK_TITLE_SPACER_CLASS,
     AUTHORING_FOCUS_TOP_ROW_CLASS,
 } from "./phaseAuthoringPresentation";
+import { cn } from "@/lib/utils";
 
 interface Props {
     clientId: number;
@@ -51,6 +53,7 @@ export const BlockAuthoringFocusHeader: React.FC<Props> = ({
     onExit,
     stepper,
 }) => {
+    const { goToClientHome, isAtClientHome } = useClientDetailHomeNavigation();
     const showBlockPeriod = Boolean(blockStartDate && blockEndDate);
     const clientName = clientProfile
         ? formatClientDisplayName(clientProfile)
@@ -85,12 +88,22 @@ export const BlockAuthoringFocusHeader: React.FC<Props> = ({
             <div className={AUTHORING_FOCUS_TOP_ROW_CLASS}>
                 <div className="min-w-0 flex-1 space-y-1">
                     <div className={AUTHORING_FOCUS_IDENTITY_ROW_CLASS}>
-                        <h2 className={AUTHORING_FOCUS_NAME_CLASS}>
+                        <button
+                            type="button"
+                            onClick={goToClientHome}
+                            className={cn(
+                                AUTHORING_FOCUS_NAME_CLASS,
+                                "rounded-lg text-left transition-colors",
+                                "hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                            )}
+                            aria-label={`Ir al resumen de ${clientName}`}
+                            aria-current={isAtClientHome ? "page" : undefined}
+                        >
                             <span className={AUTHORING_FOCUS_NAME_GRADIENT_CLASS}>
                                 {firstName}
                             </span>
                             {lastName ? ` ${lastName}` : ""}
-                        </h2>
+                        </button>
 
                         {metaItems.length > 0 ? (
                             <p
