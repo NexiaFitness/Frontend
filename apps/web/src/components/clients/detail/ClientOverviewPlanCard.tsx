@@ -5,7 +5,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { CalendarRange, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/buttons";
+import { ClientNoActivePlanEmpty } from "./ClientNoActivePlanEmpty";
 import { Badge } from "@/components/ui/Badge";
 import { LoadingSpinner } from "@/components/ui/feedback";
 import type { OverviewPlanCompact } from "@/hooks/clients/clientOverviewPulse.types";
@@ -53,28 +53,11 @@ export const ClientOverviewPlanCard: React.FC<ClientOverviewPlanCardProps> = ({
 
     if (plan.kind === "none") {
         return (
-            <div className={shell} data-testid="client-overview-plan-empty">
-                <div className="flex flex-1 flex-col justify-between gap-4">
-                    <div>
-                        <div className="mb-3 flex items-center gap-2">
-                            <div className="rounded-lg bg-warning/20 p-2 text-warning">
-                                <CalendarRange className="size-5" aria-hidden />
-                            </div>
-                            <p className={TYPOGRAPHY.labelSmall}>
-                                {OVERVIEW_ZONE_TITLES.planEmpty}
-                            </p>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                            {OVERVIEW_ZONE_TITLES.planEmptyDetail}
-                        </p>
-                    </div>
-                    {onPlanificar ? (
-                        <Button variant="primary" size="sm" className="w-fit" onClick={onPlanificar}>
-                            Planificar
-                        </Button>
-                    ) : null}
-                </div>
-            </div>
+            <ClientNoActivePlanEmpty
+                onPlanificar={onPlanificar}
+                className={cn(embedded && "min-h-[280px] h-full justify-center")}
+                testId="client-overview-plan-empty"
+            />
         );
     }
 

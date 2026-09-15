@@ -1,5 +1,5 @@
 /**
- * planningShellPresentation.ts — Tokens layout shell F5 (explore · createWhen · analytics).
+ * planningShellPresentation.ts — Tokens layout shell F5 (explore · analytics).
  */
 
 import { cn } from "@/lib/utils";
@@ -13,14 +13,7 @@ import {
     NEXIA_PORTAL_GREETING_SUBTITLE,
     NEXIA_PORTAL_PAGE_EYEBROW,
 } from "@/components/athlete/account/athleteSettingsPresentation";
-import {
-    NEXIA_SEGMENTED_ITEM,
-    NEXIA_SEGMENTED_SCROLL,
-    NEXIA_SEGMENTED_SHELL,
-    NEXIA_SEGMENTED_TRACK_CONTENT,
-    PLATFORM_SECTION_LABEL,
-    nexiaSegmentedItemClass,
-} from "@/components/ui/surface/platformPremiumPresentation";
+import { PLATFORM_SECTION_LABEL } from "@/components/ui/surface/platformPremiumPresentation";
 
 export const PLANNING_SHELL_SECTION_CLASS = "space-y-6";
 
@@ -50,6 +43,62 @@ export const PLANNING_ACTIVE_PLAN_META = cn(
     "flex flex-wrap items-center gap-x-1.5 gap-y-0.5",
 );
 
+/** Barra resumen programa — informativa, ancho completo, baja altura (hub planificación). */
+export const PLANNING_PROGRAM_SUMMARY_CARD_CLASS = cn(
+    NEXIA_GLASS_CARD,
+    "relative w-full min-w-0 px-4 py-3 pt-4 sm:px-5 sm:py-3.5 sm:pt-4",
+);
+
+/** Dentro de sección Historial (ya tiene acento azul): sin rim superior en cada ítem. */
+export const PLANNING_PROGRAM_SUMMARY_CARD_NESTED = "pt-3 sm:pt-3.5";
+
+/** Lista historial / selector de plan — misma card glass, activable. */
+export const PLANNING_PROGRAM_SUMMARY_CARD_ACTIVATABLE = cn(
+    "cursor-pointer text-left",
+    "transition-[transform,box-shadow,background-color] duration-150",
+    "hover:-translate-y-px hover:bg-surface/40",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+);
+
+export const PLANNING_PROGRAM_SUMMARY_PRIMARY_ROW = cn(
+    "flex flex-wrap items-center justify-between gap-x-3 gap-y-1",
+);
+
+export const PLANNING_PROGRAM_SUMMARY_TITLE_ROW = cn(
+    "flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5",
+);
+
+export const PLANNING_PROGRAM_SUMMARY_EYEBROW = cn(
+    NEXIA_PORTAL_PAGE_EYEBROW,
+    "shrink-0 text-[10px] sm:text-[11px]",
+);
+
+export const PLANNING_PROGRAM_SUMMARY_TITLE = cn(
+    NEXIA_PORTAL_CARD_TITLE,
+    "truncate text-base font-semibold leading-tight sm:text-[1.05rem]",
+);
+
+export const PLANNING_PROGRAM_SUMMARY_BADGES = "flex shrink-0 flex-wrap items-center gap-1.5";
+
+export const PLANNING_PROGRAM_SUMMARY_META_ROW = cn(
+    NEXIA_PORTAL_CARD_DESCRIPTION,
+    "mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-xs leading-snug",
+);
+
+export const PLANNING_PROGRAM_SUMMARY_META_DOT = "text-muted-foreground/45 select-none";
+
+/** Historial (hermano anterior) + card resumen — botón fuera y encima del `<article>`. */
+export const PLANNING_PROGRAM_SUMMARY_STACK = cn(
+    "flex w-full min-w-0 flex-col gap-1",
+);
+
+export const PLANNING_PLANS_HISTORY_TRIGGER_ROW = "flex justify-end";
+
+export const PLANNING_PLANS_HISTORY_TRIGGER = cn(
+    "h-7 gap-1 px-1.5 text-xs font-semibold sm:h-8 sm:gap-1.5 sm:px-2",
+    "[&_svg]:text-primary",
+);
+
 export const PLANNING_PLAN_STATUS_BADGE: Record<string, string> = {
     active: "border-success/30 bg-success/10 text-success",
     completed: "border-primary/30 bg-primary/10 text-primary",
@@ -58,25 +107,15 @@ export const PLANNING_PLAN_STATUS_BADGE: Record<string, string> = {
 };
 
 export const PLANNING_PLAN_STATUS_BADGE_BASE = cn(
-    "inline-flex shrink-0 items-center rounded-full border px-2 py-0.5",
-    "text-[10px] font-semibold uppercase tracking-wide",
+    "inline-flex shrink-0 items-center rounded-full border px-2.5 py-1",
+    "text-xs font-semibold uppercase tracking-wide",
 );
 
-/** Navegación por fases — misma receta que PhaseSectionNav / TabsBar. */
-export const PLANNING_PHASE_NAV_SHELL = NEXIA_SEGMENTED_SHELL;
-
-export const PLANNING_PHASE_NAV_SCROLL = NEXIA_SEGMENTED_SCROLL;
-
-export const PLANNING_PHASE_NAV_TRACK = NEXIA_SEGMENTED_TRACK_CONTENT;
-
-export const planningPhaseNavItemClass = (selected: boolean): string =>
-    nexiaSegmentedItemClass(selected, "content");
-
-export const PLANNING_ADD_PHASE_NAV_ITEM = cn(
-    NEXIA_SEGMENTED_ITEM,
-    "shrink-0 border-dashed border-primary/40 text-primary",
-    "hover:border-primary hover:bg-primary/10",
+export const PLANNING_PROGRAM_GOAL_BADGE = cn(
+    "inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-medium",
 );
+
+export const PLANNING_PROGRAM_GOAL_BADGE_ICON = "size-3 shrink-0";
 
 /** Calendario explore — glass + rim externo. */
 export const PLANNING_CALENDAR_WRAP_CLASS = "relative min-w-0";
@@ -92,17 +131,42 @@ export const PLANNING_EMPTY_CALLOUT_CLASS = cn(
     "relative flex flex-col items-center justify-center space-y-3 border-2 border-dashed border-border/50 p-8 text-center",
 );
 
-export const PLANNING_EXPLORE_GRID_CLASS =
-    "flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)] lg:items-start";
+export type PlanningShellSplitVariant = "explore" | "createWhen";
 
-export const PLANNING_CREATE_WHEN_GRID_CLASS =
-    "flex flex-col gap-6 lg:grid lg:grid-cols-[minmax(0,13fr)_minmax(0,7fr)] lg:items-stretch";
+/** Calendario izquierda · panel derecha (desktop). */
+export const PLANNING_SHELL_SPLIT_BASE = cn(
+    "flex w-full min-w-0 flex-col gap-6",
+    "lg:grid lg:items-start",
+);
 
-/** Columna lateral createWhen — plan activo arriba, panel nuevo bloque ocupa el resto. */
-export const PLANNING_CREATE_WHEN_SIDEBAR_CLASS =
-    "flex min-h-0 flex-col gap-4 lg:h-full";
+export function planningShellSplitGridClass(variant: PlanningShellSplitVariant): string {
+    return cn(
+        PLANNING_SHELL_SPLIT_BASE,
+        variant === "createWhen"
+            ? "lg:grid-cols-[minmax(0,13fr)_minmax(0,7fr)] lg:items-stretch"
+            : "lg:grid-cols-[minmax(0,11fr)_minmax(0,9fr)]",
+    );
+}
 
-/** Panel guía selección rango — altura completa respecto al calendario. */
+/** Fila superior explore: todas las cards de bloque (scroll horizontal si hace falta). */
+export const PLANNING_EXPLORE_BLOCKS_ROW = cn(
+    "flex w-full min-w-0 gap-4 overflow-x-auto pb-1",
+    "snap-x snap-mandatory scrollbar-primary",
+);
+
+/** Columna izquierda del split (solo calendario). */
+export const PLANNING_SHELL_MAIN_COLUMN = "min-w-0";
+
+/** Plan activo + guía nuevo bloque (sidebar). */
+export const PLANNING_SHELL_PANEL_STACK = "flex min-w-0 flex-col gap-4";
+
+/** Columna lateral createWhen — plan activo arriba, guía nuevo bloque estira. */
+export const PLANNING_CREATE_WHEN_SIDEBAR_CLASS = cn(
+    PLANNING_SHELL_PANEL_STACK,
+    "min-h-0 lg:h-full",
+);
+
+/** Panel guía selección rango — altura alineada con calendario en desktop. */
 export const PLANNING_CREATE_BLOCK_PANEL_CLASS = cn(
     NEXIA_GLASS_CARD,
     "relative flex min-h-[18rem] min-w-0 flex-1 flex-col overflow-hidden lg:min-h-0",

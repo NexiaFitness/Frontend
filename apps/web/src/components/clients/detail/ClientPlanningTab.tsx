@@ -14,7 +14,7 @@
 import React, { useMemo, useCallback, Suspense, lazy, useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BarChart3, Plus } from "lucide-react";
-import type { ActivePlanByClientOut, TrainingPlan } from "@nexia/shared/types/training";
+import type { TrainingPlan } from "@nexia/shared/types/training";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { usePlanBlockAnalytics } from "@nexia/shared/hooks/training/usePlanBlockAnalytics";
 import {
@@ -37,15 +37,21 @@ import { PlanningExploreSectionCard } from "@/components/trainingPlans/periodiza
 import { PLANNING_EXPLORE_SECTIONS_STACK } from "@/components/trainingPlans/periodization/planningShellPresentation";
 import { MilestonesTab } from "@/components/trainingPlans";
 import {
+    applyPlanningViewPlansHistory,
     clearPlanningView,
     isPlanningAnalyticsView,
+    isPlanningPlansHistoryView,
 } from "@/utils/planningHubUrl";
 import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
 import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
-import { TYPOGRAPHY } from "@/utils/typography";
-import { OVERVIEW_ZONE_TITLES } from "./clientOverviewPresentation";
+import { ClientNoActivePlanEmpty } from "./ClientNoActivePlanEmpty";
+import {
+    hasMultipleClientTrainingPlans,
+    toActivePlanDisplay,
+} from "@/components/trainingPlans/periodization/planningShellUtils";
+import { ClientPlansSection } from "./ClientPlansSection";
 
 const ChartsTab = lazy(() =>
     import("@/components/trainingPlans").then((module) => ({
@@ -61,17 +67,9 @@ interface ClientPlanningTabProps {
     onPlanificar?: () => void;
 }
 
-function toActivePlanShape(plan: TrainingPlan): ActivePlanByClientOut {
-    return {
-        ...plan,
-        display_name: plan.name,
-        display_goal: plan.goal,
-    };
-}
-
 export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     clientId,
-    trainingPlans: _trainingPlans = [],
+    trainingPlans = [],
     isLoadingPlans = false,
     focusPlanId = null,
     onPlanificar,
@@ -150,7 +148,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 }
                 return {
                     kind: "ok" as const,
-                    plan: toActivePlanShape(focusedPlan),
+                    plan: toActivePlanDisplay(focusedPlan),
                     source: "focused" as const,
                 };
             }
@@ -182,8 +180,26 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const { data: physicalQualities = [] } = useGetPhysicalQualitiesQuery();
 
     const [analyticsOpen, setAnalyticsOpen] = useState(false);
+    const [plansHistoryOpen, setPlansHistoryOpen] = useState(false);
 
+    const showClientPlansHistory = hasMultipleClientTrainingPlans(trainingPlans);
     const showExploreSections = !blockAuthorActive && !isPhaseAuthoring;
+
+    const handleOpenPlansHistory = useCallback(() => {
+        setSearchParams((prev) => applyPlanningViewPlansHistory(prev), {
+            replace: true,
+        });
+    }, [setSearchParams]);
+
+    const handleViewPlanFromHistory = useCallback(
+        (planId: number) => {
+            navigate(buildClientTabPath(clientId, { tab: "planning", planId }));
+            requestAnimationFrame(() => {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        },
+        [clientId, navigate],
+    );
 
     useEffect(() => {
         if (!isPlanningAnalyticsView(searchParams)) {
@@ -194,6 +210,19 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         requestAnimationFrame(() => {
             document
                 .getElementById("planning-analytics-section")
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+    }, [searchParams, setSearchParams]);
+
+    useEffect(() => {
+        if (!isPlanningPlansHistoryView(searchParams)) {
+            return;
+        }
+        setPlansHistoryOpen(true);
+        setSearchParams((prev) => clearPlanningView(prev), { replace: true });
+        requestAnimationFrame(() => {
+            document
+                .getElementById("client-plans-history")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
         });
     }, [searchParams, setSearchParams]);
@@ -249,23 +278,10 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
 
     if (resolved.kind === "empty") {
         return (
-            <div className="rounded-xl border-2 border-dashed border-border bg-muted/30 p-8 text-center">
-                <p className={`${TYPOGRAPHY.sectionTitle} mb-2 text-foreground`}>
-                    {OVERVIEW_ZONE_TITLES.planEmpty}
-                </p>
-                <p className="mb-6 text-sm text-muted-foreground">
-                    {OVERVIEW_ZONE_TITLES.planEmptyDetail}
-                </p>
-                {onPlanificar ? (
-                    <Button
-                        variant="primary"
-                        onClick={onPlanificar}
-                        aria-label="Planificar entrenamiento"
-                    >
-                        Planificar
-                    </Button>
-                ) : null}
-            </div>
+            <ClientNoActivePlanEmpty
+                onPlanificar={onPlanificar}
+                testId="client-planning-tab-no-plan"
+            />
         );
     }
 
@@ -279,11 +295,8 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     return (
         <div
             className={cn(
-                "space-y-8",
-                cn(
-                    "min-w-0 overflow-x-hidden",
-                    !(isPhaseAuthoring || blockAuthorActive) && PLATFORM_PAGE_WITH_FIXED_FOOTER,
-                ),
+                "min-w-0 space-y-6 overflow-x-hidden",
+                !(isPhaseAuthoring || blockAuthorActive) && PLATFORM_PAGE_WITH_FIXED_FOOTER,
             )}
             data-testid="client-planning-tab"
         >
@@ -306,9 +319,11 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 clientId={clientId}
                 planStartDate={plan.start_date}
                 planEndDate={plan.end_date}
-                activePlan={source === "active" ? plan : undefined}
+                activePlan={toActivePlanDisplay(plan)}
                 planGoalForRecommendations={plan.goal}
                 onAuthoringChange={setIsPhaseAuthoring}
+                showOtherPlansAction={showClientPlansHistory}
+                onOpenOtherPlans={handleOpenPlansHistory}
             />
 
             {showExploreSections ? (
@@ -402,6 +417,25 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                     >
                         <MilestonesTab planId={plan.id} />
                     </PlanningExploreSectionCard>
+
+                    {showClientPlansHistory ? (
+                        <PlanningExploreSectionCard
+                            id="client-plans-history"
+                            title="Historial"
+                            description="Planes asignados a este cliente."
+                            testId="planning-plans-history-section"
+                            open={plansHistoryOpen}
+                            onOpenChange={setPlansHistoryOpen}
+                        >
+                            <ClientPlansSection
+                                clientId={clientId}
+                                trainingPlans={trainingPlans}
+                                isLoading={isLoadingPlans}
+                                embedded
+                                onViewPlan={handleViewPlanFromHistory}
+                            />
+                        </PlanningExploreSectionCard>
+                    ) : null}
                 </div>
             ) : null}
 

@@ -76,11 +76,20 @@ export const CLIENT_HEADER_INBOX_BELL = cn(
 
 export const CLIENT_HEADER_INBOX_BELL_ICON = "size-[18px] shrink-0 text-primary";
 
-export const CLIENT_HEADER_AVATAR_BUTTON = cn(
+export const CLIENT_HEADER_AVATAR_RING = cn(
     "shrink-0 rounded-full ring-2 ring-primary/25 transition-all duration-200",
-    "hover:ring-primary/50 hover:shadow-[0_0_24px_-8px] shadow-primary/35",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+    "group-hover:ring-primary/50 group-hover:shadow-[0_0_24px_-8px] group-hover:shadow-primary/35",
+    "group-focus-visible:ring-primary",
 );
+
+/** Avatar + nombre → resumen del cliente (misma fila, un solo control). */
+export function clientHeaderIdentityHomeClass(isHome: boolean): string {
+    return cn(
+        "group flex min-w-0 flex-1 items-center gap-3 rounded-xl text-left sm:gap-5",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+        isHome ? "cursor-default" : "cursor-pointer hover:bg-surface/35 active:bg-surface/50",
+    );
+}
 
 export const CLIENT_HEADER_PREF_GRID = cn(
     "grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5",

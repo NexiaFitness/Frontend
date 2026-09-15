@@ -6,7 +6,32 @@
  * `/dashboard/training-plans/:id` redirige aquí si el plan tiene cliente.
  */
 
+import {
+    clearBlockAuthorParams,
+    clearBlockWeeksParam,
+    isBlockAuthoringActive,
+    parseBlockAuthorParams,
+    parseBlockWeeksId,
+} from "@/utils/blockAuthoringUrl";
+import {
+    clearPlanningMode,
+    clearPlanningView,
+    isPlanningAnalyticsView,
+    isPlanningCreateWhenMode,
+    isPlanningPlansHistoryView,
+} from "@/utils/planningHubUrl";
+
 export type ClientDetailTab = "overview" | "sessions" | "daily-coherence" | "testing" | "progress" | "planning" | "injuries";
+
+export const CLIENT_DETAIL_HOME_TAB: ClientDetailTab = "overview";
+
+const CLIENT_DETAIL_JOURNEY_QUERY_KEYS = [
+    "plan",
+    "planTab",
+    "subtab",
+    "qp",
+    "focus",
+] as const;
 
 export interface ClientTabPathOptions {
     tab?: ClientDetailTab;
@@ -33,6 +58,50 @@ export function buildClientTabPath(clientId: number, options?: ClientTabPathOpti
         params.set("plan", String(options.planId));
     }
     return `/dashboard/clients/${clientId}?${params.toString()}`;
+}
+
+/** Resumen del cliente: tab overview sin sub-journeys (plan, bloque, analytics, …). */
+export function buildClientHomePath(clientId: number): string {
+    return `/dashboard/clients/${clientId}?tab=${CLIENT_DETAIL_HOME_TAB}`;
+}
+
+export function isClientDetailHomeSearchParams(params: URLSearchParams): boolean {
+    const tab = params.get("tab");
+    if (tab != null && tab !== CLIENT_DETAIL_HOME_TAB) {
+        return false;
+    }
+    for (const key of CLIENT_DETAIL_JOURNEY_QUERY_KEYS) {
+        if (params.get(key)) {
+            return false;
+        }
+    }
+    if (isBlockAuthoringActive(parseBlockAuthorParams(params))) {
+        return false;
+    }
+    if (parseBlockWeeksId(params) != null) {
+        return false;
+    }
+    if (
+        isPlanningCreateWhenMode(params) ||
+        isPlanningAnalyticsView(params) ||
+        isPlanningPlansHistoryView(params)
+    ) {
+        return false;
+    }
+    return true;
+}
+
+export function applyClientDetailHomeSearchParams(prev: URLSearchParams): URLSearchParams {
+    let next = new URLSearchParams(prev);
+    for (const key of CLIENT_DETAIL_JOURNEY_QUERY_KEYS) {
+        next.delete(key);
+    }
+    next = clearBlockAuthorParams(next);
+    next = clearBlockWeeksParam(next);
+    next = clearPlanningMode(next);
+    next = clearPlanningView(next);
+    next.set("tab", CLIENT_DETAIL_HOME_TAB);
+    return next;
 }
 
 /** Entrada al journey D-PAP (create/edit bloque) sobre la ruta canónica de planificación. */

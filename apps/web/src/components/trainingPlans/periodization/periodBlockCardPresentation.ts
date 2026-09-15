@@ -78,3 +78,30 @@ export const PERIOD_BLOCK_CARD_SESSIONS_CLASS =
 /** Grid contenedor lista de bloques — auto-fill tarjetas estrechas. */
 export const PERIOD_BLOCK_CARD_LIST_GRID_CLASS =
     "grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(17rem,19rem))]";
+
+/** Tarjeta CTA «Añadir fase» — misma anchura que PeriodBlockCard. */
+export const PERIOD_BLOCK_ADD_PHASE_CARD_CLASS = cn(
+    NEXIA_GLASS_CARD,
+    "relative flex h-full w-full max-w-[19rem] min-h-[14.5rem] flex-col",
+    "border-2 border-dashed border-primary/35 bg-primary/[0.04]",
+    "transition-all duration-200",
+    "hover:border-primary/55 hover:bg-primary/[0.07]",
+    "hover:shadow-[0_8px_32px_-12px] hover:shadow-primary/20",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/45 focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+);
+
+export const PERIOD_BLOCK_ADD_PHASE_CARD_BODY_CLASS =
+    "relative z-[1] flex flex-1 flex-col items-center justify-center gap-3 px-4 py-6 text-center";
+
+export const PERIOD_BLOCK_ADD_PHASE_ICON_WRAP = cn(
+    "flex size-11 items-center justify-center rounded-xl",
+    "border border-primary/30 bg-primary/10 text-primary",
+    "shadow-[0_0_20px_-6px] shadow-primary/35",
+);
+
+export const PERIOD_BLOCK_ADD_PHASE_TITLE =
+    "text-sm font-semibold text-foreground";
+
+export const PERIOD_BLOCK_ADD_PHASE_DESCRIPTION = cn(
+    "max-w-[14rem] text-xs leading-relaxed text-muted-foreground",
+);

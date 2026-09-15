@@ -140,15 +140,73 @@ describe("ClientPlanningTab", () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByTestId("planning-create-when-shell"),
+                    screen.getByTestId("planning-explore-shell"),
                 ).toBeInTheDocument();
             });
 
-            expect(screen.getByText("Planificación")).toBeInTheDocument();
-            expect(screen.getByText("Selecciona un rango")).toBeInTheDocument();
             expect(
-                screen.queryByText("Bloques configurados"),
-            ).not.toBeInTheDocument();
+                screen.getByTestId("planning-program-summary-card"),
+            ).toBeInTheDocument();
+        });
+
+        it("muestra historial de planes cuando hay más de un plan asignado", async () => {
+            server.use(
+                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+                ...planPeriodizationDependenciesHandlers(10),
+            );
+
+            const twoPlans = [
+                {
+                    id: 10,
+                    trainer_id: 1,
+                    client_id: 1,
+                    name: "Plan Maraton",
+                    description: null,
+                    start_date: "2026-01-01",
+                    end_date: "2026-12-31",
+                    goal: "Strength",
+                    status: "active",
+                    is_active: true,
+                    created_at: "2026-01-01T00:00:00.000Z",
+                    updated_at: "2026-01-01T00:00:00.000Z",
+                    sessions_completed: 0,
+                    sessions_total: 0,
+                },
+                {
+                    id: 11,
+                    trainer_id: 1,
+                    client_id: 1,
+                    name: "Plan Verano",
+                    description: null,
+                    start_date: "2025-06-01",
+                    end_date: "2025-08-31",
+                    goal: "Hypertrophy",
+                    status: "completed",
+                    is_active: false,
+                    created_at: "2025-06-01T00:00:00.000Z",
+                    updated_at: "2025-08-31T00:00:00.000Z",
+                    sessions_completed: 12,
+                    sessions_total: 12,
+                },
+            ];
+
+            render(
+                <ClientPlanningTab
+                    clientId={1}
+                    trainingPlans={twoPlans}
+                    isLoadingPlans={false}
+                />,
+            );
+
+            await waitFor(() => {
+                expect(
+                    screen.getByRole("button", { name: /historial/i }),
+                ).toBeInTheDocument();
+            });
+
+            expect(
+                screen.getByTestId("planning-plans-history-section"),
+            ).toBeInTheDocument();
         });
 
         it("muestra superficie focal D-PAP cuando blockAuthor=create en URL", async () => {
@@ -196,7 +254,6 @@ describe("ClientPlanningTab", () => {
                     name: /qué cualidades físicas trabajará este bloque/i,
                 }),
             ).toBeInTheDocument();
-            expect(screen.queryByText("Bloques configurados")).not.toBeInTheDocument();
         });
     });
 

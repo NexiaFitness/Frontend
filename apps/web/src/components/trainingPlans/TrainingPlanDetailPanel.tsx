@@ -27,6 +27,7 @@ import {
     SessionsTab,
     PlanPeriodizationSection,
 } from "@/components/trainingPlans";
+import { toActivePlanDisplay } from "@/components/trainingPlans/periodization/planningShellUtils";
 
 const ChartsTab = lazy(() =>
     import("@/components/trainingPlans").then((module) => ({
@@ -128,6 +129,7 @@ export const TrainingPlanDetailPanel: React.FC<TrainingPlanDetailPanelProps> = (
                         clientId={clientId}
                         planStartDate={plan.start_date}
                         planEndDate={plan.end_date}
+                        activePlan={toActivePlanDisplay(plan)}
                         planGoalForRecommendations={plan.goal}
                     />
                 );
