@@ -34,6 +34,11 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
 }) => {
     const navigate = useNavigate();
 
+    const sortedPlans = useMemo(
+        () => sortClientTrainingPlansForDisplay(trainingPlans ?? []),
+        [trainingPlans],
+    );
+
     if (!clientId || clientId <= 0) return null;
 
     if (isLoading) {
@@ -52,11 +57,6 @@ export const ClientPlansSection: React.FC<ClientPlansSectionProps> = ({
     }
 
     const hasPlans = trainingPlans && trainingPlans.length > 0;
-
-    const sortedPlans = useMemo(
-        () => sortClientTrainingPlansForDisplay(trainingPlans ?? []),
-        [trainingPlans],
-    );
 
     const openPlan = (planId: number) => {
         if (onViewPlan) {
