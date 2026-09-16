@@ -3,12 +3,14 @@
  *
  * Card con cabecera y fila de chips (predefinidos + custom). Al hacer click en un bloque
  * pasa a activo; la siguiente fila del Constructor usará ese bloque.
- * "+ Bloque Personalizado" abre flujo para crear nuevo tipo.
+ * Admin: "+ Bloque Personalizado" para crear tipos custom (trainers solo eligen chips).
  *
  * @spec IMPL_CREATE_EDIT_SESSION.md §15.2 — diseño Lovable con tokens agent.md
  */
 
 import React, { useState } from "react";
+import { useSelector } from "react-redux";
+import type { RootState } from "@nexia/shared/store";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/forms";
 import {
@@ -55,6 +57,9 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
     onSelect,
     className,
 }) => {
+    const { user } = useSelector((state: RootState) => state.auth);
+    const isAdmin = user?.role === "admin";
+
     const [customName, setCustomName] = useState("");
     const [showCustomInput, setShowCustomInput] = useState(false);
 
@@ -103,7 +108,7 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
                 <h3 className={SESSION_PROGRAMMING_PANEL_TITLE}>
                     Bloques de Entrenamiento
                 </h3>
-                {!showCustomInput && (
+                {isAdmin && !showCustomInput && (
                     <button
                         type="button"
                         onClick={() => setShowCustomInput(true)}
@@ -127,7 +132,7 @@ export const TrainingBlockSelector: React.FC<TrainingBlockSelectorProps> = ({
                 ))}
             </div>
 
-            {showCustomInput && (
+            {isAdmin && showCustomInput && (
                 <div className="flex flex-col gap-2 rounded-md border border-border/70 bg-surface/40 p-2 sm:flex-row sm:items-center">
                     <Input
                         type="text"
