@@ -371,6 +371,15 @@ export * from "./utils/validations";
 export * from "./utils/calculations";
 export * from "./utils/sessionProgramming";
 export { getMutationErrorMessage } from "./utils/errorMessage";
+export {
+    classifyFocusedPlanFetchError,
+    isTrainingPlanFetchNotFound,
+    resolveClientPlanningView,
+    type ClientPlanningViewKind,
+    type ClientPlanningViewResolution,
+    type FocusedPlanFetchErrorKind,
+    type ResolveClientPlanningViewParams,
+} from "./utils/clients/resolveClientPlanningView";
 export * from "./utils/clientListMetricsPresentation";
 export {
     getClientAvatarColor,

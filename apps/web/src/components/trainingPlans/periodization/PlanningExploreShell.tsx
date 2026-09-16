@@ -5,6 +5,7 @@
 import React, { useMemo } from "react";
 import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
+import { cn } from "@/lib/utils";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock, PhysicalQuality } from "@nexia/shared/types/planningCargas";
 import type { TrainingSession } from "@nexia/shared/types/trainingSessions";
@@ -116,7 +117,10 @@ export const PlanningExploreShell: React.FC<Props> = ({
             data-testid="planning-explore-shell"
         >
             {activePlan ? (
-                <div className={PLANNING_PROGRAM_SUMMARY_STACK}>
+                <div
+                    id="planning-program-anchor"
+                    className={cn(PLANNING_PROGRAM_SUMMARY_STACK, "scroll-mt-24")}
+                >
                     {showOtherPlansAction && onOpenOtherPlans ? (
                         <div className={PLANNING_PLANS_HISTORY_TRIGGER_ROW}>
                             <Button

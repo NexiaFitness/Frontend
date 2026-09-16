@@ -39,6 +39,15 @@ import {
 } from "./periodBlockPersistence";
 import type { PeriodBlockFormState } from "./usePeriodBlockForm";
 
+/** Edit: sin mutaciones — aviso y cierre del journey (Guardar = terminar). */
+function notifyEditNothingToPersist(
+    showWarning: (message: string) => void,
+    onEditSuccess?: () => void,
+): void {
+    showWarning("No hay cambios que guardar.");
+    onEditSuccess?.();
+}
+
 export interface UseBlockAuthoringPersistenceArgs {
     planId: number;
     mode: BlockAuthorMode;
@@ -67,6 +76,7 @@ export interface UseBlockAuthoringPersistenceArgs {
         structure: WeeklyStructureWeekCreate[],
     ) => void;
     onCreateSuccess: () => void;
+    onEditSuccess?: () => void;
     refetchWeeklyStructure?: () => Promise<{ data?: WeeklyStructureOut }>;
     /** false = Quick Program local draft (sin mutations). */
     enabled?: boolean;
@@ -87,6 +97,7 @@ export function useBlockAuthoringPersistence({
     patternsComplete,
     markPersisted,
     onCreateSuccess,
+    onEditSuccess,
     refetchWeeklyStructure,
     enabled = true,
 }: UseBlockAuthoringPersistenceArgs) {
@@ -163,6 +174,7 @@ export function useBlockAuthoringPersistence({
         planId,
         markPersisted,
         onCreateSuccess,
+        onEditSuccess,
         showSuccess,
         showWarning,
         showError,
@@ -246,8 +258,9 @@ export function useBlockAuthoringPersistence({
                         showWarning(
                             "Los datos del bloque se guardaron, pero la estructura semanal no cambió.",
                         );
+                        onEditSuccess?.();
                     } else {
-                        showWarning("No hay cambios que guardar.");
+                        notifyEditNothingToPersist(showWarning, onEditSuccess);
                     }
                     return;
                 }
@@ -280,11 +293,12 @@ export function useBlockAuthoringPersistence({
                     cloneWeeklyStructureDraft(synced),
                 );
                 showSuccess("Fase guardada correctamente.");
+                onEditSuccess?.();
                 return;
             }
 
             if (!blockFieldsPersisted) {
-                showWarning("No hay cambios que guardar.");
+                notifyEditNothingToPersist(showWarning, onEditSuccess);
                 return;
             }
 
@@ -300,6 +314,7 @@ export function useBlockAuthoringPersistence({
                 baselineSnapshot.length > 0 ? baselineSnapshot : draftSnapshot,
             );
             showSuccess("Fase guardada correctamente.");
+            onEditSuccess?.();
         } catch (err) {
             showError(getMutationErrorMessage(err));
         }

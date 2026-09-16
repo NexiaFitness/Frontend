@@ -21,6 +21,7 @@ import { useTrainingSessions } from '@nexia/shared/hooks/training/useTrainingSes
 import { SessionCard } from '@/components/trainingSessions';
 import { PeriodBlockEmptyCallout } from '@/components/trainingPlans/periodization/PeriodBlockEmptyCallout';
 import { periodBlockEmptyCalloutOutlineCtaClassName } from '@/components/trainingPlans/periodization/periodBlockEmptyCallout.styles';
+import { PERIOD_BLOCK_CARD_LIST_GRID_CLASS } from '@/components/trainingPlans/periodization/periodBlockCardPresentation';
 import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
 import { BaseModal } from '@/components/ui/modals/BaseModal';
@@ -238,7 +239,7 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
 
             {/* Lista de sesiones */}
             {displayedSessions.length > 0 && (
-                <div className="flex w-full flex-col gap-4">
+                <div className={PERIOD_BLOCK_CARD_LIST_GRID_CLASS}>
                     {displayedSessions.map((session) => (
                         <SessionCard
                             key={session.id}

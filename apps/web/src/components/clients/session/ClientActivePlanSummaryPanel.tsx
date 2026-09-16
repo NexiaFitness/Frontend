@@ -28,6 +28,17 @@ import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import { toLocalISO } from "@nexia/shared/utils/periodBlockOverlap";
 import { getPhysicalQualityColor } from "@nexia/shared/utils/physicalQualityColors";
 import { GOAL_LABEL_ES, toneFromGoal } from "@/components/trainingPlans/goalLabels";
+import { QualityShareBar } from "@/components/trainingPlans/periodization/QualityShareBar";
+import { BLOCK_LEVEL_METER_VALUE_CLASS } from "@/components/trainingPlans/periodization/blockLevelMeterPresentation";
+import { PERIOD_BLOCK_CARD_DURATION_BADGE_CLASS } from "@/components/trainingPlans/periodization/periodBlockCardPresentation";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
+import {
+  CLIENT_SESSIONS_ACTIVE_BLOCK_INNER,
+  CLIENT_SESSIONS_ACTIVE_BLOCK_LOAD_LABEL,
+  CLIENT_SESSIONS_ACTIVE_BLOCK_LOAD_ROW,
+  CLIENT_SESSIONS_PANEL_SHELL,
+} from "./clientSessionsTabPresentation";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -170,7 +181,9 @@ export const ClientActivePlanSummaryPanel: React.FC<
   const goalTone = toneFromGoal(activePlan.display_goal ?? activePlan.goal);
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-5 space-y-5 h-full">
+    <div className={CLIENT_SESSIONS_PANEL_SHELL}>
+      <NexiaGlassAccentRim />
+      <div className="relative z-[1] space-y-5">
       {/* ---- Plan header ---- */}
       <div className="space-y-2">
         <div className="flex items-start justify-between gap-2">
@@ -276,66 +289,64 @@ export const ClientActivePlanSummaryPanel: React.FC<
           <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
             Bloque activo
           </p>
-          <div className="rounded-md border border-primary/20 bg-primary/5 p-3 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-foreground">
+          <div className={CLIENT_SESSIONS_ACTIVE_BLOCK_INNER}>
+            <div className="flex items-start justify-between gap-2">
+              <span className="text-xs font-semibold leading-snug text-foreground">
                 {formatDateShort(activeBlock.start_date)} –{" "}
                 {formatDateShort(activeBlock.end_date)}
               </span>
-              <span className="text-[10px] text-muted-foreground">
+              <span className={PERIOD_BLOCK_CARD_DURATION_BADGE_CLASS}>
                 {daysBetween(activeBlock.start_date, activeBlock.end_date)} días
               </span>
             </div>
-            <div className="flex items-center gap-4">
+
+            <div className={CLIENT_SESSIONS_ACTIVE_BLOCK_LOAD_ROW}>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground uppercase">
+                <span className={CLIENT_SESSIONS_ACTIVE_BLOCK_LOAD_LABEL}>
                   Vol
                 </span>
-                <span className="text-xs font-bold text-primary tabular-nums">
+                <span
+                  className={cn(
+                    "text-xs tabular-nums",
+                    BLOCK_LEVEL_METER_VALUE_CLASS.volume,
+                  )}
+                >
                   {activeBlock.volume_level}/10
                 </span>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-muted-foreground uppercase">
+                <span className={CLIENT_SESSIONS_ACTIVE_BLOCK_LOAD_LABEL}>
                   Int
                 </span>
-                <span className="text-xs font-bold text-warning tabular-nums">
+                <span
+                  className={cn(
+                    "text-xs tabular-nums",
+                    BLOCK_LEVEL_METER_VALUE_CLASS.intensity,
+                  )}
+                >
                   {activeBlock.intensity_level}/10
                 </span>
               </div>
             </div>
-            {activeBlock.qualities.length > 0 && (
-              <div className="space-y-1.5 pt-1">
+
+            {activeBlock.qualities.length > 0 ? (
+              <div className="space-y-1.5 pt-0.5">
                 {activeBlock.qualities.map((q) => {
                   const slug = q.physical_quality_slug ?? "unknown";
-                  const name = q.physical_quality_name ?? `#${q.physical_quality_id}`;
+                  const name =
+                    q.physical_quality_name ?? `#${q.physical_quality_id}`;
                   const color = getPhysicalQualityColor(slug);
                   return (
-                    <div key={q.id} className="flex items-center gap-2">
-                      <span
-                        className="h-1.5 w-1.5 rounded-full shrink-0"
-                        style={{ backgroundColor: color.hex }}
-                      />
-                      <span className="text-[10px] text-muted-foreground w-20 truncate">
-                        {name}
-                      </span>
-                      <div className="flex-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${q.percentage}%`,
-                            backgroundColor: color.hex,
-                          }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-semibold tabular-nums w-8 text-right">
-                        {q.percentage}%
-                      </span>
-                    </div>
+                    <QualityShareBar
+                      key={q.id}
+                      name={name}
+                      percentage={q.percentage}
+                      colorHex={color.hex}
+                    />
                   );
                 })}
               </div>
-            )}
+            ) : null}
           </div>
         </div>
       ) : (
@@ -411,6 +422,7 @@ export const ClientActivePlanSummaryPanel: React.FC<
           Abrir planificación
           <ArrowUpRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
+      </div>
       </div>
     </div>
   );

@@ -80,7 +80,7 @@ export const BlockAuthoringFocusHeader: React.FC<Props> = ({
 
     return (
         <header
-            className={AUTHORING_FOCUS_SHELL_CLASS}
+            className={cn(AUTHORING_FOCUS_SHELL_CLASS, "scroll-mt-4")}
             data-testid="block-authoring-focus-header"
         >
             <Breadcrumbs items={breadcrumbItems} />

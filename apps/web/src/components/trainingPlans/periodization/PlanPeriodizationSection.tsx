@@ -32,6 +32,7 @@ import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { PlanningExploreShell } from "./PlanningExploreShell";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
+import { buildClientSessionsPath } from "@/utils/clientSessionsUrl";
 import {
   clearBlockAuthorParams,
   clearBlockWeeksParam,
@@ -56,6 +57,20 @@ function formatDateFriendly(dateStr: string): string {
   return new Date(y, m - 1, d).toLocaleDateString("es-ES", {
     day: "numeric",
     month: "short",
+  });
+}
+
+/** Tras salir de wizard/semanas: ancla en card del programa (no tabs ni observaciones). */
+function scrollToPlanningProgramAnchor(): void {
+  requestAnimationFrame(() => {
+    const anchor = document.getElementById("planning-program-anchor");
+    if (anchor) {
+      anchor.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    document
+      .querySelector('[data-testid="planning-explore-shell"]')
+      ?.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 }
 
@@ -85,6 +100,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pendingCreateWhenStartRef = useRef<string | null>(null);
+  const wasPlanningFocusSurfaceRef = useRef(false);
   const blockAuthorParams = useMemo(
     () => parseBlockAuthorParams(searchParams),
     [searchParams],
@@ -184,12 +200,31 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     if (!isPickingPhaseRange) {
       return;
     }
+    scrollToPlanningProgramAnchor();
+  }, [isPickingPhaseRange]);
+
+  useEffect(() => {
+    if (!isDapAuthoring) {
+      return;
+    }
     requestAnimationFrame(() => {
       document
-        .getElementById("planning-calendar-section")
+        .querySelector('[data-testid="block-authoring-focus-header"]')
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
-  }, [isPickingPhaseRange]);
+  }, [isDapAuthoring]);
+
+  useEffect(() => {
+    const inFocusSurface = isDapAuthoring || isBlockWeeksManage;
+    if (inFocusSurface) {
+      wasPlanningFocusSurfaceRef.current = true;
+      return;
+    }
+    if (wasPlanningFocusSurfaceRef.current) {
+      wasPlanningFocusSurfaceRef.current = false;
+      scrollToPlanningProgramAnchor();
+    }
+  }, [isDapAuthoring, isBlockWeeksManage]);
 
   useEffect(() => {
     onAuthoringChange?.(
@@ -350,11 +385,12 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
       if (clientId == null || clientId <= 0) {
         return;
       }
-      const params = new URLSearchParams({
-        tab: "sessions",
-        month: block.start_date,
-      });
-      navigate(`/dashboard/clients/${clientId}?${params.toString()}`);
+      navigate(
+        buildClientSessionsPath(clientId, {
+          month: block.start_date,
+          focusCalendar: true,
+        }),
+      );
     },
     [navigate, clientId],
   );

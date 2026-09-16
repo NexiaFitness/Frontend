@@ -22,6 +22,8 @@ interface DeleteTrainingPlanModalProps {
     onConfirm: () => void;
     plan: TrainingPlan | null;
     isLoading?: boolean;
+    /** Plan operativo del cliente (activo hoy); copy de confirmación reforzado. */
+    isOperationalPlan?: boolean;
 }
 
 export const DeleteTrainingPlanModal: React.FC<DeleteTrainingPlanModalProps> = ({
@@ -30,6 +32,7 @@ export const DeleteTrainingPlanModal: React.FC<DeleteTrainingPlanModalProps> = (
     onConfirm,
     plan,
     isLoading = false,
+    isOperationalPlan = false,
 }) => {
     if (!plan) return null;
 
@@ -47,10 +50,16 @@ export const DeleteTrainingPlanModal: React.FC<DeleteTrainingPlanModalProps> = (
             descriptionId="delete-plan-description"
         >
             {/* Warning text */}
-            <div className="text-center mb-6 sm:mb-8">
+            <div className="text-center mb-6 sm:mb-8 space-y-3">
                 <p className={`${TYPOGRAPHY.errorText} text-red-600 font-medium`}>
                     Esta acción eliminará permanentemente el plan y todas sus sesiones asociadas.
                 </p>
+                {isOperationalPlan ? (
+                    <p className="text-sm text-muted-foreground">
+                        Es el plan operativo de este cliente: tras eliminarlo no habrá plan activo
+                        hasta que planifiques uno nuevo.
+                    </p>
+                ) : null}
             </div>
 
             {/* Action buttons */}

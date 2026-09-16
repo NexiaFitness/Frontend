@@ -28,6 +28,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSearchParams, useLocation } from "react-router-dom";
 import { scrollDashboardMainToTopAfterPaint } from "@/lib/dashboardScroll";
+import { isSessionsCalendarFocus } from "@/utils/clientSessionsUrl";
 
 export interface UseTabNavigationOptions<T extends string> {
     /**
@@ -157,7 +158,12 @@ export function useTabNavigation<T extends string>(
     const [activeTab, setActiveTabState] = useState<T>(getInitialTab);
 
     useEffect(() => {
+        if (isSessionsCalendarFocus(searchParams)) {
+            return;
+        }
         scrollDashboardMainToTopAfterPaint();
+        // Solo al cambiar tab: incluir searchParams re-disparaba reset al limpiar sessionsFocus.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [activeTab]);
 
     // Sincronizar con cambios en URL (navegación del navegador)
