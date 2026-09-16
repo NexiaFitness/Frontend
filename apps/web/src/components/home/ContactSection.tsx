@@ -14,7 +14,10 @@
 
 import React from "react";
 import { Button } from "@/components/ui/buttons/Button";
+import { Input, Textarea, FormField } from "@/components/ui/forms";
 import { useAuthForm } from "@nexia/shared";
+
+const FORM_VARIANT = "premium" as const;
 
 // Tipos para el formulario de contacto
 interface ContactFormData extends Record<string, unknown> {
@@ -160,59 +163,47 @@ export const ContactSection: React.FC = () => {
                         </h4>
 
                         <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Nombre */}
-                            <div className="w-full">
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Nombre completo
-                                    <span className="text-destructive ml-1">*</span>
-                                </label>
-                                <input
+                            <FormField label="Nombre completo" required variant={FORM_VARIANT}>
+                                <Input
+                                    variant={FORM_VARIANT}
                                     type="text"
                                     placeholder="Tu nombre"
                                     value={typedFormData.name}
-                                    onChange={(e) => handleInputChange("name")(e)}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                    onChange={handleInputChange("name")}
+                                    className="sm:min-h-[44px] sm:text-base"
                                 />
-                                {errors.name && (
+                                {errors.name ? (
                                     <p className="mt-1 text-sm text-destructive">{errors.name}</p>
-                                )}
-                            </div>
+                                ) : null}
+                            </FormField>
 
-                            <div className="w-full">
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Correo electrónico
-                                    <span className="text-destructive ml-1">*</span>
-                                </label>
-                                <input
+                            <FormField label="Correo electrónico" required variant={FORM_VARIANT}>
+                                <Input
+                                    variant={FORM_VARIANT}
                                     type="email"
                                     placeholder="tu@email.com"
                                     value={typedFormData.email}
-                                    onChange={(e) => handleInputChange("email")(e)}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] placeholder:text-muted-foreground sm:px-4 sm:py-2.5 sm:text-base sm:min-h-[44px]"
+                                    onChange={handleInputChange("email")}
+                                    className="sm:min-h-[44px] sm:text-base"
                                 />
-                                {errors.email && (
+                                {errors.email ? (
                                     <p className="mt-1 text-sm text-destructive">{errors.email}</p>
-                                )}
-                            </div>
+                                ) : null}
+                            </FormField>
 
-                            <div className="w-full">
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Mensaje
-                                    <span className="text-destructive ml-1">*</span>
-                                </label>
-                                <textarea
+                            <FormField label="Mensaje" required variant={FORM_VARIANT}>
+                                <Textarea
+                                    variant={FORM_VARIANT}
                                     value={typedFormData.message}
-                                    onChange={(e) => handleInputChange("message")(e)}
+                                    onChange={handleInputChange("message")}
                                     placeholder="Cuéntanos qué necesitas..."
                                     rows={4}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground transition-colors focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] placeholder:text-muted-foreground resize-none"
+                                    className="resize-none"
                                 />
-                                {errors.message && (
-                                    <p className="mt-1 text-sm text-destructive">
-                                        {errors.message}
-                                    </p>
-                                )}
-                            </div>
+                                {errors.message ? (
+                                    <p className="mt-1 text-sm text-destructive">{errors.message}</p>
+                                ) : null}
+                            </FormField>
 
                             {serverError && (
                                 <div className="bg-destructive/10 border border-destructive/30 rounded-md p-3">
