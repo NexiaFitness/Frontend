@@ -19,7 +19,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/buttons";
 import { useToast, LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea, Slider, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, Textarea, DatePickerButton } from "@/components/ui/forms";
 import { useGetClientQuery } from "@nexia/shared/api/clientsApi";
 import { useGetTrainingPlanRecommendationsQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetTrainingPlanQuery } from "@nexia/shared/api/trainingPlansApi";
@@ -80,9 +80,53 @@ import {
     SET_TYPE,
     type SessionBlockExercise,
 } from "@nexia/shared/types/sessionProgramming";
-import { ArrowLeft, ChevronRight, Flame, Gauge } from "lucide-react";
+import { ArrowLeft, ChevronRight, ClipboardList } from "lucide-react";
 import { buildReviewNavigationState } from "@/lib/sessionDetailNavigation";
-import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
+import { DashboardFixedFooter } from "@/components/dashboard/shared";
+import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import {
+    SESSION_PROGRAMMING_BACK_BUTTON,
+    SESSION_PROGRAMMING_CLIENT_BANNER,
+    SESSION_PROGRAMMING_CLIENT_BANNER_SUBTITLE,
+    SESSION_PROGRAMMING_CLIENT_BANNER_TEXT,
+    SESSION_PROGRAMMING_COPY,
+    SESSION_PROGRAMMING_EMPTY_ACTION,
+    SESSION_PROGRAMMING_EMPTY_DESCRIPTION,
+    SESSION_PROGRAMMING_EMPTY_FOOTER,
+    SESSION_PROGRAMMING_EMPTY_GLOW,
+    SESSION_PROGRAMMING_EMPTY_SIDEBAR,
+    SESSION_PROGRAMMING_EMPTY_TITLE,
+    SESSION_PROGRAMMING_FIELD_COMPACT,
+    SESSION_PROGRAMMING_FIELD_CONTROL,
+    SESSION_PROGRAMMING_FIELD_ERROR,
+    SESSION_PROGRAMMING_FIELD_HINT,
+    SESSION_PROGRAMMING_FIELD_LABEL,
+    SESSION_PROGRAMMING_FIELD_METER,
+    SESSION_PROGRAMMING_FIELD_NAME,
+    SESSION_PROGRAMMING_FIELD_NAME_SOLO,
+    SESSION_PROGRAMMING_FIELD_PLAN,
+    SESSION_PROGRAMMING_SESSION_FIELDS_GRID,
+    SESSION_PROGRAMMING_FOOTER_ACTIONS,
+    SESSION_PROGRAMMING_FOOTER_CANCEL,
+    SESSION_PROGRAMMING_FOOTER_PRIMARY,
+    SESSION_PROGRAMMING_FOOTER_ROW,
+    SESSION_PROGRAMMING_FOOTER_SECONDARY,
+    SESSION_PROGRAMMING_FOOTER_SHELL,
+    SESSION_PROGRAMMING_FORM_SECTION,
+    SESSION_PROGRAMMING_FORM_STACK,
+    SESSION_PROGRAMMING_GLOW,
+    SESSION_PROGRAMMING_HEADER,
+    SESSION_PROGRAMMING_LOADING_ROW,
+    SESSION_PROGRAMMING_LOWER_STACK,
+    SESSION_PROGRAMMING_MAIN_GRID,
+    SESSION_PROGRAMMING_MAIN_GRID_WITH_SIDEBAR,
+    SESSION_PROGRAMMING_NOTES_SECTION,
+    SESSION_PROGRAMMING_PAGE,
+    SESSION_PROGRAMMING_SECTION_TITLE,
+    SESSION_PROGRAMMING_SIDEBAR,
+    SESSION_PROGRAMMING_STACK,
+} from "@/components/sessionProgramming/sessionProgrammingPresentation";
 import { WeeklyClientVolumePanel } from "@/components/sessionProgramming/WeeklyClientVolumePanel";
 import { useWeeklyClientVolumePanel } from "@nexia/shared/hooks/sessionProgramming/useWeeklyClientVolumePanel";
 import { useSessionVolumeIntensityPrefill } from "@nexia/shared/hooks/sessionProgramming/useSessionVolumeIntensityPrefill";
@@ -639,7 +683,7 @@ export const EditSession: React.FC = () => {
 
     if (isLoadingSession) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
+            <div className={SESSION_PROGRAMMING_LOADING_ROW}>
                 <LoadingSpinner size="lg" />
             </div>
         );
@@ -649,220 +693,281 @@ export const EditSession: React.FC = () => {
         return null;
     }
 
+    const useStandaloneSession = !session.training_plan_id;
+
     return (
         <>
-            <div className="space-y-6 pb-24">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <PageTitle title="Editar Sesión" />
-                    <Button variant="outline" size="sm" onClick={() => navigate(-1)}>
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                        Volver
-                    </Button>
-                </div>
-
-                {session.client_id && client && (
-                    <div className="flex items-center gap-3 bg-card border border-border rounded-lg p-4">
-                        <ClientAvatar
-                            clientId={session.client_id}
-                            nombre={client.nombre}
-                            apellidos={client.apellidos}
+            <div className={SESSION_PROGRAMMING_PAGE}>
+                <div className={SESSION_PROGRAMMING_GLOW} aria-hidden />
+                <div className={SESSION_PROGRAMMING_STACK}>
+                    <header className={SESSION_PROGRAMMING_HEADER}>
+                        <Button
+                            variant="ghost-primary"
                             size="sm"
-                        />
-                        <div>
-                            <p className="text-sm font-semibold text-foreground">
-                                Editando sesión para {client.nombre} {client.apellidos}
-                            </p>
-                        </div>
-                    </div>
-                )}
+                            className={SESSION_PROGRAMMING_BACK_BUTTON}
+                            onClick={() => navigate(-1)}
+                        >
+                            <ArrowLeft className="mr-2 h-4 w-4" aria-hidden />
+                            Volver
+                        </Button>
+                    </header>
 
-                <form id="edit-session-form" onSubmit={handleSubmit}>
-                    <div
-                        className={cn(
-                            "grid grid-cols-1 items-stretch gap-6",
-                            session.client_id ? "lg:grid-cols-[1fr_420px]" : "",
-                        )}
-                    >
-                        <div className="min-h-0 space-y-5">
-                            <div
-                                className={cn(
-                                    "grid gap-4",
-                                    session.client_id ? "grid-cols-1 md:grid-cols-2" : "",
-                                )}
-                            >
-                                <div>
-                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Nombre de la sesión
-                                    </label>
-                                    <Input
-                                        type="text"
-                                        value={formData.sessionName}
-                                        onChange={(e) => {
-                                            nameTouchedRef.current = true;
-                                            sessionUsesAutoNameRef.current = false;
-                                            setFormData({ ...formData, sessionName: e.target.value });
-                                        }}
-                                        placeholder="Ej: Fuerza — Tren superior A"
-                                        className="bg-surface"
-                                    />
-                                    <p className="text-xs text-muted-foreground mt-1">
-                                        Se genera automáticamente; puedes cambiarlo
-                                    </p>
-                                    {formErrors.sessionName && (
-                                        <p className="text-destructive text-xs mt-1">{formErrors.sessionName}</p>
-                                    )}
-                                </div>
-                                {session.client_id ? (
-                                    <div>
-                                        <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                            Plan de Entrenamiento
+                    {session.client_id && client ? (
+                        <div className={SESSION_PROGRAMMING_CLIENT_BANNER}>
+                            <NexiaGlassAccentRim />
+                            <ClientAvatar
+                                clientId={session.client_id}
+                                nombre={client.nombre}
+                                apellidos={client.apellidos}
+                                size="sm"
+                            />
+                            <div className="min-w-0">
+                                <p className={SESSION_PROGRAMMING_CLIENT_BANNER_TEXT}>
+                                    {SESSION_PROGRAMMING_COPY.editClientBannerPrefix}{" "}
+                                    {client.nombre} {client.apellidos}
+                                </p>
+                                <p className={SESSION_PROGRAMMING_CLIENT_BANNER_SUBTITLE}>
+                                    {SESSION_PROGRAMMING_COPY.editSubtitle}
+                                </p>
+                            </div>
+                        </div>
+                    ) : null}
+
+                    <form id="edit-session-form" onSubmit={handleSubmit} className={SESSION_PROGRAMMING_FORM_STACK}>
+                        <div
+                            className={
+                                session.client_id && useStandaloneSession
+                                    ? SESSION_PROGRAMMING_MAIN_GRID_WITH_SIDEBAR
+                                    : SESSION_PROGRAMMING_MAIN_GRID
+                            }
+                        >
+                            <section className={SESSION_PROGRAMMING_FORM_SECTION}>
+                                <NexiaGlassAccentRim />
+                                <h2 className={SESSION_PROGRAMMING_SECTION_TITLE}>
+                                    {SESSION_PROGRAMMING_COPY.sectionSessionData}
+                                </h2>
+                                <div className={SESSION_PROGRAMMING_SESSION_FIELDS_GRID}>
+                                    <div
+                                        className={
+                                            session.client_id
+                                                ? SESSION_PROGRAMMING_FIELD_NAME
+                                                : SESSION_PROGRAMMING_FIELD_NAME_SOLO
+                                        }
+                                    >
+                                        <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                            Nombre de la sesión
                                         </label>
-                                        {session.training_plan_id && plan ? (
-                                            <Input
-                                                type="text"
-                                                value={plan.name || "Cargando..."}
-                                                disabled
-                                                className="bg-muted"
-                                            />
-                                        ) : (
-                                            <Input
-                                                type="text"
-                                                value="Sesión libre"
-                                                disabled
-                                                className="bg-muted"
-                                            />
-                                        )}
-                                        {session.training_plan_id && plan ? (
-                                            <p className="mt-1 text-xs text-muted-foreground">
-                                                La sesión está vinculada a este plan para el seguimiento de
-                                                carga.
+                                        <Input
+                                            type="text"
+                                            value={formData.sessionName}
+                                            onChange={(e) => {
+                                                nameTouchedRef.current = true;
+                                                sessionUsesAutoNameRef.current = false;
+                                                setFormData({ ...formData, sessionName: e.target.value });
+                                            }}
+                                            placeholder="Ej: Fuerza — Tren superior A"
+                                            className={cn(SESSION_PROGRAMMING_FIELD_CONTROL, "bg-surface")}
+                                        />
+                                        <p className={SESSION_PROGRAMMING_FIELD_HINT}>
+                                            {SESSION_PROGRAMMING_COPY.nameHint}
+                                        </p>
+                                        {formErrors.sessionName ? (
+                                            <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
+                                                {formErrors.sessionName}
                                             </p>
                                         ) : null}
                                     </div>
-                                ) : null}
-                            </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label
-                                        htmlFor="edit-session-date"
-                                        className="block text-xs font-medium text-muted-foreground mb-1.5"
-                                    >
-                                        Fecha de la Sesión *
-                                    </label>
-                                    <DatePickerButton
-                                        label="Seleccionar fecha"
-                                        value={formData.sessionDate}
-                                        onChange={(v) => setFormData({ ...formData, sessionDate: v })}
-                                        variant="form"
-                                    />
-                                    {formErrors.sessionDate && (
-                                        <p className="mt-1 text-xs text-destructive">{formErrors.sessionDate}</p>
-                                    )}
-                                </div>
-                                <div>
-                                    <label
-                                        htmlFor="edit-session-type"
-                                        className="block text-xs font-medium text-muted-foreground mb-1.5"
-                                    >
-                                        Tipo de Sesión *
-                                    </label>
-                                    <FormSelect
-                                        id="edit-session-type"
-                                        value={formData.sessionType}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, sessionType: e.target.value })
-                                        }
-                                        required
-                                        options={SESSION_TYPES}
-                                    />
-                                    {formErrors.sessionType && (
-                                        <p className="text-destructive text-xs mt-1">{formErrors.sessionType}</p>
-                                    )}
-                                </div>
-                            </div>
+                                    {session.client_id ? (
+                                        <div className={SESSION_PROGRAMMING_FIELD_PLAN}>
+                                            <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                                Plan de Entrenamiento
+                                            </label>
+                                            <div className={SESSION_PROGRAMMING_FIELD_CONTROL}>
+                                                {session.training_plan_id && plan ? (
+                                                    <Input
+                                                        type="text"
+                                                        value={plan.name || "Cargando..."}
+                                                        disabled
+                                                        className="bg-muted"
+                                                    />
+                                                ) : (
+                                                    <Input
+                                                        type="text"
+                                                        value="Sesión libre"
+                                                        disabled
+                                                        className="bg-muted"
+                                                    />
+                                                )}
+                                            </div>
+                                            {session.training_plan_id && plan ? (
+                                                <p className={SESSION_PROGRAMMING_FIELD_HINT}>
+                                                    {SESSION_PROGRAMMING_COPY.planHint}
+                                                </p>
+                                            ) : null}
+                                        </div>
+                                    ) : null}
 
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div>
-                                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                                        Duración (min)
-                                    </label>
-                                    <Input
-                                        type="number"
-                                        value={formData.plannedDuration}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, plannedDuration: e.target.value })
-                                        }
-                                        placeholder="60"
-                                        className="bg-surface"
-                                    />
+                                    <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                        <label htmlFor="edit-session-date" className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                            Fecha *
+                                        </label>
+                                        <div className={SESSION_PROGRAMMING_FIELD_CONTROL}>
+                                            <DatePickerButton
+                                                label="Seleccionar fecha"
+                                                value={formData.sessionDate}
+                                                onChange={(v) => setFormData({ ...formData, sessionDate: v })}
+                                                variant="form"
+                                            />
+                                        </div>
+                                        {formErrors.sessionDate ? (
+                                            <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
+                                                {formErrors.sessionDate}
+                                            </p>
+                                        ) : null}
+                                    </div>
+
+                                    <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                        <label htmlFor="edit-session-type" className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                            Tipo *
+                                        </label>
+                                        <div className={SESSION_PROGRAMMING_FIELD_CONTROL}>
+                                            <FormCombobox
+                                                id="edit-session-type"
+                                                value={formData.sessionType}
+                                                onChange={(v) =>
+                                                    setFormData({ ...formData, sessionType: v })
+                                                }
+                                                options={SESSION_TYPES}
+                                                placeholder="Selecciona tipo"
+                                                ariaLabel="Tipo de sesión"
+                                            />
+                                        </div>
+                                        {formErrors.sessionType ? (
+                                            <p className={SESSION_PROGRAMMING_FIELD_ERROR}>
+                                                {formErrors.sessionType}
+                                            </p>
+                                        ) : null}
+                                    </div>
+
+                                    <div className={SESSION_PROGRAMMING_FIELD_COMPACT}>
+                                        <label className={SESSION_PROGRAMMING_FIELD_LABEL}>
+                                            Duración (min)
+                                        </label>
+                                        <Input
+                                            type="number"
+                                            value={formData.plannedDuration}
+                                            onChange={(e) =>
+                                                setFormData({ ...formData, plannedDuration: e.target.value })
+                                            }
+                                            placeholder="60"
+                                            className={cn(
+                                                SESSION_PROGRAMMING_FIELD_CONTROL,
+                                                "max-w-[7rem] bg-surface lg:max-w-none",
+                                            )}
+                                        />
+                                    </div>
+
+                                    <div className={SESSION_PROGRAMMING_FIELD_METER}>
+                                        <BlockLevelMeter
+                                            id="edit-session-volume"
+                                            tone="volume"
+                                            prefix="Volumen"
+                                            level={
+                                                formData.plannedVolume
+                                                    ? Number(formData.plannedVolume)
+                                                    : 5
+                                            }
+                                            hint={editSliderValueNote}
+                                            onChange={(v) => {
+                                                setVolumeIntensityTouched(true);
+                                                setFormData({ ...formData, plannedVolume: String(v) });
+                                            }}
+                                        />
+                                    </div>
+                                    <div className={SESSION_PROGRAMMING_FIELD_METER}>
+                                        <BlockLevelMeter
+                                            id="edit-session-intensity"
+                                            tone="intensity"
+                                            prefix="Intensidad"
+                                            level={
+                                                formData.plannedIntensity
+                                                    ? Number(formData.plannedIntensity)
+                                                    : 5
+                                            }
+                                            hint={editSliderValueNote}
+                                            onChange={(v) => {
+                                                setVolumeIntensityTouched(true);
+                                                setFormData((prev) => ({
+                                                    ...prev,
+                                                    plannedIntensity: String(v),
+                                                }));
+                                            }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="mt-3 md:mt-0">
-                                    <Slider
-                                        label="Volumen"
-                                        labelIcon={<Gauge className="h-3.5 w-3.5 text-primary" aria-hidden />}
-                                        value={sliderDisplay1to10(formData.plannedVolume, 5)}
-                                        min={1}
-                                        max={10}
-                                        color="primary"
-                                        valueNote={editSliderValueNote}
-                                        onChange={(v) => {
-                                            setVolumeIntensityTouched(true);
-                                            setFormData({ ...formData, plannedVolume: String(v) });
-                                        }}
-                                    />
-                                </div>
-                                <div className="mt-3 md:mt-0">
-                                    <Slider
-                                        label="Intensidad"
-                                        labelIcon={<Flame className="h-3.5 w-3.5 text-warning" aria-hidden />}
-                                        value={sliderDisplay1to10(formData.plannedIntensity, 5)}
-                                        min={1}
-                                        max={10}
-                                        color="warning"
-                                        valueNote={editSliderValueNote}
-                                        onChange={(v) => {
-                                            setVolumeIntensityTouched(true);
-                                            setFormData((prev) => ({ ...prev, plannedIntensity: String(v) }));
-                                        }}
-                                    />
-                                </div>
-                            </div>
+                            </section>
+
+                            {session.client_id && useStandaloneSession ? (
+                                <aside className={SESSION_PROGRAMMING_SIDEBAR}>
+                                    <div className={SESSION_PROGRAMMING_EMPTY_SIDEBAR}>
+                                        <div className={SESSION_PROGRAMMING_EMPTY_GLOW} aria-hidden />
+                                        <div className="relative z-[1] py-2 text-center">
+                                            <div className="mx-auto mb-3 text-muted-foreground/50 [&>svg]:h-8 [&>svg]:w-8">
+                                                <ClipboardList aria-hidden />
+                                            </div>
+                                            <p className={SESSION_PROGRAMMING_EMPTY_TITLE}>Sin plan asignado</p>
+                                            <p className={SESSION_PROGRAMMING_EMPTY_DESCRIPTION}>
+                                                Esta sesión no está vinculada a un plan de entrenamiento.
+                                            </p>
+                                            <div className={SESSION_PROGRAMMING_EMPTY_ACTION}>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline-primary"
+                                                    size="sm"
+                                                    className="w-full"
+                                                    onClick={() =>
+                                                        navigate(
+                                                            `/dashboard/training-plans/create?clientId=${session.client_id}`,
+                                                            { state: { from: location.pathname } },
+                                                        )
+                                                    }
+                                                >
+                                                    <ClipboardList className="mr-2 h-3.5 w-3.5" aria-hidden />
+                                                    Crear plan
+                                                </Button>
+                                            </div>
+                                            <p className={cn(SESSION_PROGRAMMING_EMPTY_FOOTER, "mt-3")}>
+                                                Puedes seguir editando la sesión libremente.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </aside>
+                            ) : null}
                         </div>
 
-                        {session.client_id ? (
-                            <div className="flex h-full min-h-0 flex-col lg:self-stretch">
+                        <div className={SESSION_PROGRAMMING_LOWER_STACK}>
+                            {session.client_id && !useStandaloneSession ? (
                                 <SessionDayContextPanel
-                                    layout="sidebar"
+                                    layout="hero"
                                     clientId={session.client_id}
                                     sessionDate={formData.sessionDate}
                                     trainerId={trainerIdForDayPlan}
                                 />
-                            </div>
-                        ) : null}
-                    </div>
+                            ) : null}
 
-                    <div className="mt-6 space-y-5 w-full">
-                        {session.client_id ? (
-                            <SessionDayContextPanel
-                                layout="hero"
-                                clientId={session.client_id}
-                                sessionDate={formData.sessionDate}
-                                trainerId={trainerIdForDayPlan}
-                            />
-                        ) : null}
+                            {session.client_id && hasActiveInjuries && client ? (
+                                <Alert variant="warning">
+                                    Atención: {client.nombre} {client.apellidos} tiene lesiones activas (
+                                    {clientActiveInjuries
+                                        .map((i) => i.joint_name_es || i.joint_name)
+                                        .filter(Boolean)
+                                        .join(", ") || "ver ficha del cliente"}
+                                    ). Los ejercicios contraindicados están marcados en la lista.
+                                </Alert>
+                            ) : null}
 
-                        {session.client_id && hasActiveInjuries && client ? (
-                            <Alert variant="warning">
-                                Atención: {client.nombre} {client.apellidos} tiene lesiones activas (
-                                {clientActiveInjuries.map((i) => i.joint_name_es || i.joint_name).filter(Boolean).join(", ") ||
-                                    "ver ficha del cliente"}
-                                ). Los ejercicios contraindicados están marcados en la lista.
-                            </Alert>
-                        ) : null}
-
-                        {session.client_id ? (
-                            <>
+                            {session.client_id ? (
                                 <WeeklyClientVolumePanel
                                     weekLabel={weeklyVolumePanel.weekLabel}
                                     rows={weeklyVolumePanel.rows}
@@ -881,13 +986,14 @@ export const EditSession: React.FC = () => {
                                     priorWeekLabel={weeklyVolumePanel.priorWeekLabel}
                                     showWeeklyConsultExtras={weeklyVolumePanel.showWeeklyConsultExtras}
                                 />
-                            </>
-                        ) : null}
+                            ) : null}
 
                             <div className="space-y-5">
                                 <TrainingBlockSelector
                                     selectedBlockTypeIds={[
-                                        ...new Set(constructorRows.map((r) => r.blockTypeId).filter(Boolean)),
+                                        ...new Set(
+                                            constructorRows.map((r) => r.blockTypeId).filter(Boolean),
+                                        ),
                                     ]}
                                     onSelect={(blockTypeId) => {
                                         if (!blockTypeId || !blockTypes.some((bt) => bt.id === blockTypeId))
@@ -941,8 +1047,12 @@ export const EditSession: React.FC = () => {
                                 </ConstructorValidationProvider>
                             </div>
 
-                            <div className="border-t border-border pt-6">
-                                <label className="block text-xs font-medium text-muted-foreground mb-1.5">
+                            <section className={SESSION_PROGRAMMING_NOTES_SECTION}>
+                                <NexiaGlassAccentRim />
+                                <h2 className={SESSION_PROGRAMMING_SECTION_TITLE}>
+                                    {SESSION_PROGRAMMING_COPY.sectionNotes}
+                                </h2>
+                                <label className={cn(SESSION_PROGRAMMING_FIELD_LABEL, "sr-only")}>
                                     Notas de la Sesión
                                 </label>
                                 <Textarea
@@ -951,34 +1061,37 @@ export const EditSession: React.FC = () => {
                                         setFormData({ ...formData, notes: e.target.value })
                                     }
                                     rows={3}
+                                    className="mt-1.5"
                                     placeholder="Instrucciones generales para la sesión..."
                                 />
-                            </div>
-                    </div>
-                </form>
+                            </section>
+                        </div>
+                    </form>
+                </div>
             </div>
 
-            <DashboardFixedFooter>
-                <div className="flex items-center justify-between gap-3">
+            <DashboardFixedFooter className={SESSION_PROGRAMMING_FOOTER_SHELL}>
+                <div className={SESSION_PROGRAMMING_FOOTER_ROW}>
                     {canReviewAlignment ? (
                         <Button
                             type="button"
-                            variant="ghost"
+                            variant="outline-primary"
                             size="sm"
+                            className={SESSION_PROGRAMMING_FOOTER_SECONDARY}
                             onClick={handleReviewAlignment}
-                            className="shrink-0 text-primary hover:bg-primary/10 hover:text-primary"
                         >
                             Revisar alineación
-                            <ChevronRight className="ml-0.5 h-4 w-4" aria-hidden />
+                            <ChevronRight className="ml-1 h-3.5 w-3.5" aria-hidden />
                         </Button>
                     ) : (
-                        <span className="shrink-0" aria-hidden />
+                        <span className="hidden sm:block sm:flex-1" aria-hidden />
                     )}
-                    <div className="flex items-center justify-end gap-3">
+                    <div className={SESSION_PROGRAMMING_FOOTER_ACTIONS}>
                         <Button
                             type="button"
                             variant="outline-destructive"
                             size="sm"
+                            className={SESSION_PROGRAMMING_FOOTER_CANCEL}
                             onClick={() => navigate(-1)}
                         >
                             Cancelar
@@ -988,15 +1101,15 @@ export const EditSession: React.FC = () => {
                             form="edit-session-form"
                             variant="primary"
                             size="sm"
+                            className={SESSION_PROGRAMMING_FOOTER_PRIMARY}
                             disabled={isSaving || isUpdatingSessionFull}
                             isLoading={isSaving || isUpdatingSessionFull}
                         >
-                            Actualizar Sesión
+                            Actualizar sesión
                         </Button>
                     </div>
                 </div>
             </DashboardFixedFooter>
-
         </>
     );
 };

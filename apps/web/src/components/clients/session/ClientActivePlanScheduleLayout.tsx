@@ -1,16 +1,16 @@
 /**
  * Fila calendario de periodización (plan activo) + panel lateral.
- * Vista pura: sin fetching; consumido por tab Sesiones y paso "Elegir día".
- *
- * Si se proporciona `panelContent`, se renderiza en la columna derecha (40 %).
- * Si no, se muestra un placeholder reservado (misma superficie que planificación).
+ * Misma rejilla y calendario que PlanningExploreShell (createWhen).
  */
 
 import React from "react";
 import type { ActivePlanByClientOut } from "@nexia/shared/types/training";
 import type { PlanPeriodBlock } from "@nexia/shared/types/planningCargas";
 import { PeriodizationCalendar } from "@/components/trainingPlans/periodization/PeriodizationCalendar";
+import { PlanningShellBodyLayout } from "@/components/trainingPlans/periodization/PlanningShellBodyLayout";
 import { IDLE_PERIOD_BLOCK_FORM_STATE } from "@/components/trainingPlans/periodization/usePeriodBlockForm";
+import { PLANNING_SHELL_PANEL_STACK } from "@/components/trainingPlans/periodization/planningShellPresentation";
+import { CLIENT_SESSIONS_CALENDAR_SECTION_ID } from "@/utils/clientSessionsUrl";
 
 export interface ClientActivePlanScheduleLayoutProps {
   activePlan: ActivePlanByClientOut;
@@ -22,7 +22,6 @@ export interface ClientActivePlanScheduleLayoutProps {
   sessionPickerDate?: string | null;
   onDayClick: (iso: string) => void;
   habitualTrainingDays?: readonly string[] | null;
-  /** Contenido del panel lateral derecho (40 %). Si no se pasa, queda un placeholder vacío. */
   panelContent?: React.ReactNode;
 }
 
@@ -38,9 +37,15 @@ export const ClientActivePlanScheduleLayout: React.FC<ClientActivePlanScheduleLa
   habitualTrainingDays = null,
   panelContent,
 }) => (
-  <div className="flex flex-col gap-6 lg:flex-row">
-    <div className="lg:w-[60%]">
-      <div className="rounded-lg bg-surface p-5 space-y-3">
+  <PlanningShellBodyLayout
+    variant="createWhen"
+    data-testid="client-sessions-active-plan-schedule"
+    main={
+      <div
+        id={CLIENT_SESSIONS_CALENDAR_SECTION_ID}
+        data-testid="client-sessions-calendar"
+        className="min-w-0 scroll-mt-24"
+      >
         <PeriodizationCalendar
           currentMonth={currentMonth}
           onMonthChange={onMonthChange}
@@ -55,14 +60,13 @@ export const ClientActivePlanScheduleLayout: React.FC<ClientActivePlanScheduleLa
           habitualTrainingDays={habitualTrainingDays}
         />
       </div>
-    </div>
-    <div className="lg:w-[40%]">
-      {panelContent ?? (
-        <div
-          className="rounded-lg border border-border bg-surface p-5 min-h-[480px]"
-          aria-label="Panel lateral reservado"
-        />
-      )}
-    </div>
-  </div>
+    }
+    sidebar={
+      <div className={PLANNING_SHELL_PANEL_STACK}>
+        {panelContent ?? (
+          <div className="min-h-[18rem] min-w-0 lg:min-h-0" aria-hidden />
+        )}
+      </div>
+    }
+  />
 );

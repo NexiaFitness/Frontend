@@ -79,11 +79,25 @@ export function toActivePlanDisplay(plan: TrainingPlan): ActivePlanByClientOut {
     };
 }
 
-/** Historial de planes: solo tiene sentido si hay más de un plan asignado. */
+/** Historial colapsable en detalle de plan: más de un plan asignado. */
 export function hasMultipleClientTrainingPlans(
     trainingPlans: readonly TrainingPlan[] | undefined,
 ): boolean {
     return (trainingPlans?.length ?? 0) > 1;
+}
+
+/** Hub sin plan operativo: mostrar lista si hay al menos un plan en el cliente. */
+export function shouldShowPlanningHubPlanList(
+    trainingPlans: readonly TrainingPlan[] | undefined,
+): boolean {
+    return (trainingPlans?.length ?? 0) >= 1;
+}
+
+/** Hub: título "Historial" solo con dos o más planes (un plan = tarjeta sin etiqueta). */
+export function shouldShowPlanningHubHistoryLabel(
+    trainingPlans: readonly TrainingPlan[] | undefined,
+): boolean {
+    return (trainingPlans?.length ?? 0) >= 2;
 }
 
 function isClientPlanActive(plan: TrainingPlan): boolean {

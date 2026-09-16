@@ -257,6 +257,66 @@ describe("ClientPlanningTab", () => {
         });
     });
 
+    describe("URL ?plan= obsoleta (plan borrado)", () => {
+        it("muestra hub sin botón de URL cuando el plan no existe y no hay activo", async () => {
+            setMockSearchParams({ tab: "planning", plan: "530" });
+
+            server.use(
+                ...planPeriodizationDependenciesHandlers(530),
+            );
+
+            render(
+                <ClientPlanningTab
+                    clientId={1}
+                    trainingPlans={[]}
+                    isLoadingPlans={false}
+                />,
+                {
+                    initialEntries: ["/dashboard/clients/1?tab=planning&plan=530"],
+                },
+            );
+
+            await waitFor(() => {
+                expect(screen.getByTestId("client-planning-hub")).toBeInTheDocument();
+            });
+
+            expect(
+                screen.getByText(OVERVIEW_ZONE_TITLES.planEmpty),
+            ).toBeInTheDocument();
+            expect(
+                screen.queryByRole("button", { name: /quitar plan de la url/i }),
+            ).not.toBeInTheDocument();
+        });
+
+        it("muestra plan activo cuando ?plan= apunta a un id borrado pero hay activo", async () => {
+            setMockSearchParams({ tab: "planning", plan: "530" });
+
+            server.use(
+                getActivePlanByClientWithPlanHandler({ id: 10, name: "Plan Maraton" }),
+                ...planPeriodizationDependenciesHandlers(10),
+            );
+
+            render(
+                <ClientPlanningTab
+                    clientId={1}
+                    trainingPlans={[]}
+                    isLoadingPlans={false}
+                />,
+                {
+                    initialEntries: ["/dashboard/clients/1?tab=planning&plan=530"],
+                },
+            );
+
+            await waitFor(() => {
+                expect(screen.getByTestId("client-planning-tab")).toBeInTheDocument();
+            });
+
+            expect(
+                screen.getByTestId("planning-program-summary-card"),
+            ).toBeInTheDocument();
+        });
+    });
+
     describe("Loading state", () => {
         it("muestra spinner cuando isLoadingPlans es true", () => {
             render(

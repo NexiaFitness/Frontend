@@ -24,8 +24,9 @@ export const ATHLETE_EMPTY_STATE_GLOW =
 export const ATHLETE_EMPTY_STATE_ART =
     "relative mb-5 flex h-[5.5rem] w-full max-w-[11rem] items-center justify-center";
 
+/** Icono en empty vertical (centro): mb-5 alinea con PLANNING_CREATE_BLOCK_ICON_WRAP y EmptyState (mb-4). */
 export const ATHLETE_EMPTY_STATE_ICON_WRAP = cn(
-    "relative z-[1] flex size-14 items-center justify-center rounded-2xl",
+    "relative z-[1] mb-5 flex size-14 items-center justify-center rounded-2xl",
     "border border-primary/30 bg-primary/12 text-primary backdrop-blur-sm",
     "shadow-[inset_0_1px_0] shadow-primary/15",
     "shadow-[0_0_28px_-8px] shadow-primary/35"

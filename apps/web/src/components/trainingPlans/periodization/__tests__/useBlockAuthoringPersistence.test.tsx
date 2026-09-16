@@ -175,6 +175,47 @@ describe("useBlockAuthoringPersistence", () => {
         });
     });
 
+    it("edit sin cambios avisa y cierra el journey (onEditSuccess)", async () => {
+        const onEditSuccess = vi.fn();
+        const markPersisted = vi.fn();
+
+        const { result } = renderHook(
+            () =>
+                useBlockAuthoringPersistence({
+                    planId: 10,
+                    mode: "edit",
+                    blockId: 42,
+                    form: {
+                        startDate: BASE_BLOCK.start_date,
+                        endDate: BASE_BLOCK.end_date,
+                        volumeLevel: BASE_BLOCK.volume_level,
+                        intensityLevel: BASE_BLOCK.intensity_level,
+                        qualities: [{ physical_quality_id: 1, percentage: 100 }],
+                        weeklyStructure: [],
+                    },
+                    blocks: [BASE_BLOCK],
+                    existingStructure: undefined,
+                    structureBaseline: [],
+                    structureReady: true,
+                    isStructureDirty: false,
+                    canPersist: true,
+                    activeDayCount: 0,
+                    patternsComplete: false,
+                    markPersisted,
+                    onCreateSuccess: vi.fn(),
+                    onEditSuccess,
+                }),
+            { wrapper },
+        );
+
+        await act(async () => {
+            await result.current.save();
+        });
+
+        expect(onEditSuccess).toHaveBeenCalledTimes(1);
+        expect(markPersisted).not.toHaveBeenCalled();
+    });
+
     it("edit persiste structure incremental cuando structureReady", async () => {
         const markPersisted = vi.fn();
         const refetchWeeklyStructure = vi.fn().mockResolvedValue({

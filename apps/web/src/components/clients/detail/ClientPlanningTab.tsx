@@ -15,7 +15,11 @@ import React, { useMemo, useCallback, Suspense, lazy, useState, useEffect } from
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { BarChart3, Plus } from "lucide-react";
 import type { TrainingPlan } from "@nexia/shared/types/training";
-import { getMutationErrorMessage } from "@nexia/shared";
+import {
+    classifyFocusedPlanFetchError,
+    getMutationErrorMessage,
+    resolveClientPlanningView,
+} from "@nexia/shared";
 import { usePlanBlockAnalytics } from "@nexia/shared/hooks/training/usePlanBlockAnalytics";
 import {
     useGetActivePlanByClientQuery,
@@ -46,12 +50,12 @@ import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTraini
 import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
 import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
-import { ClientNoActivePlanEmpty } from "./ClientNoActivePlanEmpty";
 import {
     hasMultipleClientTrainingPlans,
     toActivePlanDisplay,
 } from "@/components/trainingPlans/periodization/planningShellUtils";
 import { ClientPlansSection } from "./ClientPlansSection";
+import { ClientPlanningHubShell } from "./ClientPlanningHubShell";
 
 const ChartsTab = lazy(() =>
     import("@/components/trainingPlans").then((module) => ({
@@ -113,63 +117,69 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         error: focusedError,
     } = useGetTrainingPlanQuery(focusPlanId!, { skip: !clientId || clientId <= 0 || !useFocusedFetch });
 
-    const resolved = useMemo(() => {
-        if (!clientId || clientId <= 0) {
-            return { kind: "loading" as const };
-        }
-        if (focusPlanId != null && focusPlanId > 0) {
-            if (activePlan != null && activePlan.id === focusPlanId) {
-                return { kind: "ok" as const, plan: activePlan, source: "active" as const };
-            }
-            if (useFocusedFetch) {
-                if (isLoadingFocused) {
-                    return { kind: "loading" as const };
-                }
-                if (isFocusedError || !focusedPlan) {
-                    const isNotFound =
-                        focusedError &&
-                        typeof focusedError === "object" &&
-                        (("status" in focusedError &&
-                            (focusedError.status === 404 || focusedError.status === "PARSING_ERROR")) ||
-                            getMutationErrorMessage(focusedError).toLowerCase().includes("not found"));
-                    return {
-                        kind: "error" as const,
-                        message: isNotFound
-                            ? "El plan de entrenamiento no existe o ha sido eliminado."
-                            : focusedError &&
-                                typeof focusedError === "object" &&
-                                "data" in focusedError
-                              ? getMutationErrorMessage(focusedError)
-                              : "No se pudo cargar el plan.",
-                    };
-                }
-                if (focusedPlan.client_id !== clientId) {
-                    return { kind: "wrong_client" as const };
-                }
-                return {
-                    kind: "ok" as const,
-                    plan: toActivePlanDisplay(focusedPlan),
-                    source: "focused" as const,
-                };
-            }
-        }
-        if (activePlan != null && activePlan.id != null) {
-            return { kind: "ok" as const, plan: activePlan, source: "active" as const };
-        }
-        return { kind: "empty" as const };
-    }, [
-        clientId,
-        focusPlanId,
-        activePlan,
-        useFocusedFetch,
-        isLoadingFocused,
-        isFocusedError,
-        focusedPlan,
-        focusedError,
-    ]);
+    const focusedFetchErrorKind = useMemo(
+        () => classifyFocusedPlanFetchError(isFocusedError, focusedError, focusedPlan),
+        [isFocusedError, focusedError, focusedPlan],
+    );
 
-    const planIdForAnalytics =
-        resolved.kind === "ok" ? resolved.plan.id : null;
+    const focusedFetchErrorMessage = useMemo(() => {
+        if (focusedFetchErrorKind !== "recoverable" || !focusedError) {
+            return undefined;
+        }
+        return getMutationErrorMessage(focusedError);
+    }, [focusedFetchErrorKind, focusedError]);
+
+    const viewResolution = useMemo(
+        () =>
+            resolveClientPlanningView({
+                clientId,
+                focusPlanId,
+                activePlanId: activePlan?.id,
+                focusedFetchEnabled: useFocusedFetch,
+                focusedFetchLoading: isLoadingFocused,
+                focusedPlan: focusedPlan ?? null,
+                focusedFetchErrorKind,
+                focusedFetchErrorMessage,
+            }),
+        [
+            clientId,
+            focusPlanId,
+            activePlan?.id,
+            useFocusedFetch,
+            isLoadingFocused,
+            focusedPlan,
+            focusedFetchErrorKind,
+            focusedFetchErrorMessage,
+        ],
+    );
+
+    useEffect(() => {
+        if (!viewResolution.sanitizePlanParam) {
+            return;
+        }
+        clearPlanQuery();
+    }, [viewResolution.sanitizePlanParam, clearPlanQuery]);
+
+    const detailPlan = useMemo(() => {
+        if (viewResolution.kind !== "plan_detail") {
+            return null;
+        }
+        if (viewResolution.planSource === "active" && activePlan != null) {
+            return { plan: activePlan, source: "active" as const };
+        }
+        if (viewResolution.planSource === "focused" && focusedPlan) {
+            return {
+                plan: toActivePlanDisplay(focusedPlan),
+                source: "focused" as const,
+            };
+        }
+        if (activePlan != null) {
+            return { plan: activePlan, source: "active" as const };
+        }
+        return null;
+    }, [viewResolution, activePlan, focusedPlan]);
+
+    const planIdForAnalytics = detailPlan?.plan.id ?? null;
 
     const { sessions, isLoading: executionDataLoading } =
         usePlanBlockAnalytics(planIdForAnalytics);
@@ -230,19 +240,20 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
     const isLoading =
         isLoadingPlans ||
         isLoadingActive ||
-        resolved.kind === "loading";
+        viewResolution.kind === "loading" ||
+        (viewResolution.kind === "plan_detail" && detailPlan == null);
 
     const handleDeleteConfirm = useCallback(async () => {
-        if (resolved.kind !== "ok") return;
-        const plan = resolved.plan;
+        if (!detailPlan) return;
+        const { plan } = detailPlan;
         try {
             await deletePlan({ id: plan.id, clientId }).unwrap();
             setDeleteModalOpen(false);
-            navigate(buildClientTabPath(clientId, { tab: "sessions" }));
+            navigate(buildClientTabPath(clientId, { tab: "planning" }));
         } catch (err: unknown) {
             showError(getMutationErrorMessage(err));
         }
-    }, [resolved, deletePlan, clientId, navigate, showError]);
+    }, [detailPlan, deletePlan, clientId, navigate, showError]);
 
     if (isLoading) {
         return (
@@ -252,40 +263,44 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         );
     }
 
-    if (resolved.kind === "error") {
+    if (viewResolution.kind === "recoverable_error") {
         return (
-            <div className="space-y-4">
-                <Alert variant="error">{resolved.message}</Alert>
-                <Button variant="outline" size="sm" onClick={clearPlanQuery}>
-                    Quitar plan de la URL
-                </Button>
-            </div>
-        );
-    }
-
-    if (resolved.kind === "wrong_client") {
-        return (
-            <div className="space-y-4">
+            <div className="space-y-4" data-testid="client-planning-recoverable-error">
                 <Alert variant="error">
-                    El plan indicado en la URL no pertenece a este cliente.
+                    {viewResolution.errorMessage ??
+                        "No se pudo cargar el plan. Inténtalo de nuevo."}
                 </Alert>
-                <Button variant="outline" size="sm" onClick={clearPlanQuery}>
-                    Quitar plan de la URL
-                </Button>
             </div>
         );
     }
 
-    if (resolved.kind === "empty") {
+    if (viewResolution.kind === "hub") {
         return (
-            <ClientNoActivePlanEmpty
+            <ClientPlanningHubShell
+                clientId={clientId}
+                trainingPlans={trainingPlans}
+                isLoadingPlans={isLoadingPlans}
                 onPlanificar={onPlanificar}
-                testId="client-planning-tab-no-plan"
+                onViewPlan={handleViewPlanFromHistory}
             />
         );
     }
 
-    const { plan, source } = resolved;
+    if (!detailPlan) {
+        return (
+            <ClientPlanningHubShell
+                clientId={clientId}
+                trainingPlans={trainingPlans}
+                isLoadingPlans={isLoadingPlans}
+                onPlanificar={onPlanificar}
+                onViewPlan={handleViewPlanFromHistory}
+            />
+        );
+    }
+
+    const { plan, source } = detailPlan;
+    const isOperationalPlan =
+        activePlan?.id === plan.id || plan.lifecycle_status === "operational";
     const showNonActiveBanner =
         source === "focused" && (activePlan == null || activePlan.id !== plan.id);
 
@@ -478,6 +493,7 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
                 onConfirm={handleDeleteConfirm}
                 plan={plan}
                 isLoading={isDeletingPlan}
+                isOperationalPlan={isOperationalPlan}
             />
 
             <ConvertPlanToTemplateModal

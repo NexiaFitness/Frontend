@@ -218,13 +218,28 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         let cancelled = false;
 
         void (async () => {
-            const result = await confirmWeeklyStructureFromServer();
-            if (cancelled || !result.data?.weeks) {
-                return;
+            try {
+                const result = await confirmWeeklyStructureFromServer();
+                if (cancelled) {
+                    return;
+                }
+                if (!result.data) {
+                    showError(
+                        "No se pudo cargar la estructura semanal del bloque. Recarga e inténtalo de nuevo.",
+                    );
+                    return;
+                }
+                hydrateWeeklyStructure(
+                    weeklyStructureToDraft(result.data.weeks ?? []),
+                );
+                setStructureLoaded(true);
+            } catch {
+                if (!cancelled) {
+                    showError(
+                        "No se pudo cargar la estructura semanal del bloque. Recarga e inténtalo de nuevo.",
+                    );
+                }
             }
-
-            hydrateWeeklyStructure(weeklyStructureToDraft(result.data.weeks));
-            setStructureLoaded(true);
         })();
 
         return () => {
@@ -236,6 +251,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         structureLoaded,
         confirmWeeklyStructureFromServer,
         hydrateWeeklyStructure,
+        showError,
     ]);
 
     const activeDays = useMemo(
@@ -261,6 +277,7 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
         ),
         markPersisted,
         onCreateSuccess: onExit,
+        onEditSuccess: onExit,
         refetchWeeklyStructure: confirmWeeklyStructureFromServer,
     });
 
@@ -513,7 +530,8 @@ export const PlanBlockAuthoringSurface: React.FC<Props> = ({
                                       form.weeklyStructure,
                                       activeDays,
                                   )
-                                : !isDirty || !structureLoaded
+                                : !structureLoaded ||
+                                  (structureHydrating && stepNeedsStructure)
                             : step === "qualities" || step === "patterns"
                               ? false
                               : !canAdvanceCurrentStep ||

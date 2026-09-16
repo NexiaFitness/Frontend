@@ -3,6 +3,11 @@
  * Las vistas no deben usar window.scrollTo: el documento no es el contenedor con overflow.
  */
 
+import {
+    isSessionsCalendarFocus,
+    isSessionsCalendarFocusQueryCleanup,
+} from "@/utils/clientSessionsUrl";
+
 export const DASHBOARD_MAIN_SCROLL_ID = "dashboard-main-scroll";
 
 /**
@@ -170,6 +175,7 @@ export function isClientPlanningIntraTabSearchChange(
 export function dashboardRouteDefersScrollReset(search: string): boolean {
     const params = new URLSearchParams(search);
     if (params.has("focus")) return true;
+    if (isSessionsCalendarFocus(params)) return true;
     return hasPlanningSubJourneyParams(search);
 }
 
@@ -193,6 +199,12 @@ export function shouldResetDashboardScrollOnNavigation(
         return false;
     }
     if (dashboardRouteDefersScrollReset(next.search)) {
+        return false;
+    }
+    if (
+        prev.pathname === next.pathname &&
+        isSessionsCalendarFocusQueryCleanup(prev.search, next.search)
+    ) {
         return false;
     }
     if (

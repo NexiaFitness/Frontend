@@ -19,7 +19,7 @@
  * @since v6.2.0 - Ola 1 Sesiones unificadas
  */
 
-import React, { useState, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { ChevronDown, Calendar } from "lucide-react";
 import { useGetClientQuery, useGetClientTrainingSessionsQuery } from "@nexia/shared/api/clientsApi";
@@ -30,11 +30,31 @@ import type { TrainingSession } from "@nexia/shared/types/training";
 import type { ScheduledSession } from "@nexia/shared/types/scheduling";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
 import type { PlanTrainingSession } from "@nexia/shared";
-import { SessionCalendar, type SessionCalendarSession } from "@/components/sessionProgramming";
 import { ClientActivePlanScheduleLayout } from "@/components/clients/session/ClientActivePlanScheduleLayout";
 import { ClientActivePlanSummaryPanel } from "@/components/clients/session/ClientActivePlanSummaryPanel";
+import { ClientSessionPickDayPanel } from "@/components/clients/session/ClientSessionPickDayPanel";
+import { PlanningShellBodyLayout } from "@/components/trainingPlans/periodization/PlanningShellBodyLayout";
+import { PeriodizationCalendar } from "@/components/trainingPlans/periodization/PeriodizationCalendar";
+import { IDLE_PERIOD_BLOCK_FORM_STATE } from "@/components/trainingPlans/periodization/usePeriodBlockForm";
+import { PLANNING_SHELL_PANEL_STACK } from "@/components/trainingPlans/periodization/planningShellPresentation";
 import { useClientActivePlanSessionSchedule } from "@/hooks/clients/useClientActivePlanSessionSchedule";
 import { SessionCard } from "@/components/trainingSessions";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import {
+    CLIENT_SESSIONS_APPOINTMENT_CARD,
+    CLIENT_SESSIONS_APPOINTMENT_INNER,
+    CLIENT_SESSIONS_APPOINTMENT_META,
+    CLIENT_SESSIONS_APPOINTMENT_TITLE,
+    CLIENT_SESSIONS_EMPTY_FILTER,
+    CLIENT_SESSIONS_FILTER_CHIP,
+    CLIENT_SESSIONS_FILTER_ROW,
+    CLIENT_SESSIONS_LIST,
+    CLIENT_SESSIONS_LIST_COUNT,
+    CLIENT_SESSIONS_LIST_EYEBROW,
+    CLIENT_SESSIONS_LIST_SECTION,
+    CLIENT_SESSIONS_LIST_TOGGLE,
+    CLIENT_SESSIONS_TAB_STACK,
+} from "@/components/clients/session/clientSessionsTabPresentation";
 import { DashboardFixedFooter, PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { PaginationBar } from "@/components/ui/pagination";
@@ -42,6 +62,12 @@ import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { useToast } from "@/components/ui/feedback";
 import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
+import {
+    CLIENT_SESSIONS_CALENDAR_SECTION_ID,
+    clearSessionsFocus,
+    isSessionsCalendarFocus,
+    scrollToClientSessionsCalendar,
+} from "@/utils/clientSessionsUrl";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
@@ -53,6 +79,8 @@ interface ClientSessionsTabProps {
 type ListFilter = "all" | "planned" | "completed" | "cancelled" | "appointment";
 
 const LIST_PAGE_SIZE = 9;
+
+const EMPTY_EXCEPTION_DATES = new Set<string>();
 
 const LIST_FILTER_OPTIONS: { value: ListFilter; label: string }[] = [
     { value: "all", label: "Todo" },
@@ -90,7 +118,7 @@ function monthToStartEnd(date: Date): { start_date: string; end_date: string } {
 export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }) => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { showWarning } = useToast();
     const initialMonth = useMemo(() => {
         const monthParam = searchParams.get("month");
@@ -102,6 +130,17 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     }, [searchParams]);
     const [currentMonth, setCurrentMonth] = useState(() => initialMonth);
     const [periodCalMonth, setPeriodCalMonth] = useState(() => initialMonth);
+    const [pickedSessionDate, setPickedSessionDate] = useState<string | null>(null);
+    const calendarFocusPendingRef = useRef(isSessionsCalendarFocus(searchParams));
+
+    useEffect(() => {
+        const monthParam = searchParams.get("month");
+        if (!monthParam) return;
+        const parsed = parseISODateLocal(monthParam);
+        if (!parsed) return;
+        setPeriodCalMonth(parsed);
+        setCurrentMonth(parsed);
+    }, [searchParams]);
 
     const {
         activePlanForClient,
@@ -199,31 +238,38 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
     const isLoading =
         isLoadingSessions || isLoadingStandalone || isLoadingScheduled || isLoadingActivePlan;
+
+    useLayoutEffect(() => {
+        if (!calendarFocusPendingRef.current) return;
+        if (isLoading) return;
+
+        calendarFocusPendingRef.current = false;
+        scrollToClientSessionsCalendar();
+        setSearchParams((prev) => clearSessionsFocus(prev), { replace: true });
+    }, [isLoading, setSearchParams]);
+
     const isError = isErrorSessions || isErrorStandalone || isErrorScheduled;
     const errorMessage =
         sessionsError && typeof sessionsError === "object" && "data" in sessionsError
             ? String((sessionsError as { data: unknown }).data)
             : "No se pudieron cargar los datos";
 
-    const handleAddSession = () => {
+    const handleAddSession = useCallback(() => {
         navigate(`/dashboard/session-programming/create-session?clientId=${clientId}`);
-    };
+    }, [clientId, navigate]);
+
+    const handleCreateSessionOnPickedDay = useCallback(() => {
+        if (pickedSessionDate) {
+            navigate(
+                `/dashboard/session-programming/create-session?clientId=${clientId}&date=${pickedSessionDate}`,
+            );
+            return;
+        }
+        handleAddSession();
+    }, [clientId, handleAddSession, navigate, pickedSessionDate]);
 
     const handleScheduleAppointment = () => {
         navigate(`/dashboard/scheduling/new?clientId=${clientId}`);
-    };
-
-    const handleDateClickSession = (
-        _date: Date,
-        sessionsForDay: SessionCalendarSession[]
-    ) => {
-        if (sessionsForDay.length > 0 && sessionsForDay[0]?.id) {
-            const s = sessionsForDay[0];
-            const path = "session_kind" in s && s.session_kind === "standalone"
-                ? `/dashboard/standalone-sessions/${s.id}`
-                : `/dashboard/session-programming/sessions/${s.id}`;
-            navigate(path, { state: returnToStateFromView(location) });
-        }
     };
 
     const handleSessionClickScheduled = (session: ScheduledSession) => {
@@ -256,6 +302,46 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
         list.sort((a, b) => (b.session_date ?? "").localeCompare(a.session_date ?? ""));
         return list;
     }, [trainingSessions, standaloneSessions]);
+
+    const sessionDatesForCalendar = useMemo(() => {
+        const set = new Set<string>();
+        allSessions.forEach((s) => {
+            const raw = s.session_date;
+            if (!raw) return;
+            const match = String(raw).match(/^(\d{4}-\d{2}-\d{2})/);
+            set.add(match ? match[1] : String(raw).slice(0, 10));
+        });
+        return set;
+    }, [allSessions]);
+
+    const navigateToSessionItem = useCallback(
+        (s: SessionListItem) => {
+            const path =
+                s.session_kind === "standalone"
+                    ? `/dashboard/standalone-sessions/${s.id}`
+                    : `/dashboard/session-programming/sessions/${s.id}`;
+            navigate(path, { state: returnToStateFromView(location) });
+        },
+        [location, navigate],
+    );
+
+    const handleNoPlanCalendarDay = useCallback(
+        (dateStr: string) => {
+            const onDay = allSessions.filter((s) => {
+                const raw = s.session_date;
+                if (!raw) return false;
+                const match = String(raw).match(/^(\d{4}-\d{2}-\d{2})/);
+                const iso = match ? match[1] : String(raw).slice(0, 10);
+                return iso === dateStr;
+            });
+            if (onDay.length > 0 && onDay[0]?.id) {
+                navigateToSessionItem(onDay[0]);
+                return;
+            }
+            setPickedSessionDate(dateStr);
+        },
+        [allSessions, navigateToSessionItem],
+    );
 
     // Lista unificada cronológica: sesiones + citas, ordenadas por fecha
     const mergedList = useMemo(() => {
@@ -314,8 +400,7 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
     const appointmentCount = mergedList.filter((e) => e.type === "appointment").length;
 
     return (
-        <section className="space-y-6 pb-24">
-            {/* Header */}
+        <section className={CLIENT_SESSIONS_TAB_STACK}>
             <PageTitle titleAs="h3" title="Sesiones del cliente" />
 
             {/* Calendar + Panel — directly in the tab, no wrapper div */}
@@ -341,29 +426,51 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                     }
                 />
             ) : (
-                <SessionCalendar
-                    sessions={allSessions}
-                    currentMonth={currentMonth}
-                    onMonthChange={setCurrentMonth}
-                    onDateClick={handleDateClickSession}
+                <PlanningShellBodyLayout
+                    variant="createWhen"
+                    data-testid="client-sessions-no-plan-schedule"
+                    main={
+                        <div
+                            id={CLIENT_SESSIONS_CALENDAR_SECTION_ID}
+                            data-testid="client-sessions-calendar"
+                            className="min-w-0 scroll-mt-24"
+                        >
+                            <PeriodizationCalendar
+                                currentMonth={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                blocks={[]}
+                                sessionDates={sessionDatesForCalendar}
+                                exceptionDates={EMPTY_EXCEPTION_DATES}
+                                formState={IDLE_PERIOD_BLOCK_FORM_STATE}
+                                onDayClick={handleNoPlanCalendarDay}
+                                sessionPickerDate={pickedSessionDate}
+                                habitualTrainingDays={clientProfile?.training_days ?? null}
+                            />
+                        </div>
+                    }
+                    sidebar={
+                        <div className={PLANNING_SHELL_PANEL_STACK}>
+                            <ClientSessionPickDayPanel
+                                selectedDate={pickedSessionDate}
+                                onCreateSession={handleCreateSessionOnPickedDay}
+                            />
+                        </div>
+                    }
                 />
             )}
 
-            {/* Collapsible chronological list */}
-            <div>
+            <div className={CLIENT_SESSIONS_LIST_SECTION}>
                 <button
                     type="button"
                     onClick={() => setListOpen((v) => !v)}
-                    className="flex w-full items-center gap-2 group"
+                    className={CLIENT_SESSIONS_LIST_TOGGLE}
                 >
                     <ChevronDown
-                        className={`h-4 w-4 text-muted-foreground transition-transform ${listOpen ? "" : "-rotate-90"}`}
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${listOpen ? "" : "-rotate-90"}`}
                         aria-hidden
                     />
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground group-hover:text-foreground transition-colors">
-                        Lista cronológica
-                    </h4>
-                    <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+                    <h4 className={CLIENT_SESSIONS_LIST_EYEBROW}>Lista cronológica</h4>
+                    <span className={CLIENT_SESSIONS_LIST_COUNT}>
                         {sessionCount > 0 && `${sessionCount} sesión${sessionCount !== 1 ? "es" : ""}`}
                         {sessionCount > 0 && appointmentCount > 0 && " · "}
                         {appointmentCount > 0 && `${appointmentCount} cita${appointmentCount !== 1 ? "s" : ""}`}
@@ -373,31 +480,26 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
 
                 {listOpen && (
                     <div className="mt-3 space-y-3">
-                        {/* Filters */}
-                        <div className="flex flex-wrap items-center gap-1.5">
+                        <div className={CLIENT_SESSIONS_FILTER_ROW}>
                             {LIST_FILTER_OPTIONS.map(({ value, label }) => (
                                 <button
                                     key={value}
+                                    type="button"
                                     onClick={() => handleFilterChange(value)}
-                                    className={`px-2.5 py-1 text-xs font-medium rounded-md border transition-colors ${
-                                        listFilter === value
-                                            ? "border-primary text-primary bg-primary/10"
-                                            : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                                    }`}
+                                    className={CLIENT_SESSIONS_FILTER_CHIP(listFilter === value)}
                                 >
                                     {label}
                                 </button>
                             ))}
                         </div>
 
-                        {/* Items */}
                         {filteredList.length === 0 ? (
-                            <p className="text-xs text-muted-foreground italic py-3">
+                            <p className={CLIENT_SESSIONS_EMPTY_FILTER}>
                                 No hay sesiones ni citas que coincidan con los filtros.
                             </p>
                         ) : (
                             <>
-                                <ul className="space-y-3">
+                                <ul className={CLIENT_SESSIONS_LIST}>
                                     {paginatedList.map((entry) => {
                                         if (entry.type === "session") {
                                             const s = entry.item as SessionListItem;
@@ -418,32 +520,36 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                                 <button
                                                     type="button"
                                                     onClick={() => handleSessionClickScheduled(s)}
-                                                    className="w-full text-left rounded-lg border border-border p-4 transition-colors hover:border-primary/50 hover:bg-muted/20 focus:outline-none focus:ring-1 focus:ring-primary"
+                                                    className={CLIENT_SESSIONS_APPOINTMENT_CARD}
                                                 >
-                                                    <div className="flex items-start justify-between mb-1">
-                                                        <div className="flex items-center gap-2 flex-wrap min-w-0">
-                                                            <h4 className="text-base font-semibold text-foreground truncate">
+                                                    <NexiaGlassAccentRim />
+                                                    <div className={CLIENT_SESSIONS_APPOINTMENT_INNER}>
+                                                        <div className="flex flex-wrap items-center gap-2">
+                                                            <h4 className={CLIENT_SESSIONS_APPOINTMENT_TITLE}>
                                                                 {SCHED_TYPE_LABEL[s.session_type] ?? s.session_type}
                                                             </h4>
-                                                            <span className={`shrink-0 px-2 py-1 text-xs font-medium rounded border ${badge.cls}`}>
+                                                            <span
+                                                                className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold ${badge.cls}`}
+                                                            >
                                                                 {badge.label}
                                                             </span>
                                                         </div>
-                                                    </div>
-                                                    <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                                                        <Calendar className="h-4 w-4 shrink-0 text-primary" aria-hidden />
-                                                        {new Date(s.scheduled_date + "T12:00:00").toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })}
-                                                        {" · "}
-                                                        {s.start_time}–{s.end_time}
-                                                    </p>
-                                                    {s.notes && (
-                                                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                                                            {s.notes}
+                                                        <p className={CLIENT_SESSIONS_APPOINTMENT_META}>
+                                                            <Calendar className="inline h-3.5 w-3.5 shrink-0 text-primary" aria-hidden />{" "}
+                                                            {new Date(s.scheduled_date + "T12:00:00").toLocaleDateString("es-ES", {
+                                                                day: "numeric",
+                                                                month: "short",
+                                                                year: "numeric",
+                                                            })}
+                                                            {" · "}
+                                                            {s.start_time}–{s.end_time}
                                                         </p>
-                                                    )}
-                                                    <span className="inline-block mt-2 text-xs font-medium text-primary">
-                                                        Ver / Editar →
-                                                    </span>
+                                                        {s.notes ? (
+                                                            <p className="line-clamp-2 text-xs text-muted-foreground">
+                                                                {s.notes}
+                                                            </p>
+                                                        ) : null}
+                                                    </div>
                                                 </button>
                                             </li>
                                         );

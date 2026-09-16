@@ -7,6 +7,8 @@ import {
     canAddPeriodPhase,
     hasMultipleClientTrainingPlans,
     resolveNextPhaseStartDate,
+    shouldShowPlanningHubHistoryLabel,
+    shouldShowPlanningHubPlanList,
     sortClientTrainingPlansForDisplay,
 } from "../planningShellUtils";
 
@@ -45,6 +47,26 @@ describe("resolveNextPhaseStartDate", () => {
         expect(resolveNextPhaseStartDate(blocks, "2026-09-08")).toBe(
             "2026-10-01",
         );
+    });
+});
+
+describe("planning hub list helpers", () => {
+    it("shouldShowPlanningHubPlanList con 0 o 1+", () => {
+        expect(shouldShowPlanningHubPlanList([])).toBe(false);
+        expect(shouldShowPlanningHubPlanList([{ id: 1 } as TrainingPlan])).toBe(true);
+    });
+
+    it("shouldShowPlanningHubHistoryLabel solo con 2+", () => {
+        expect(shouldShowPlanningHubHistoryLabel([])).toBe(false);
+        expect(
+            shouldShowPlanningHubHistoryLabel([{ id: 1 } as TrainingPlan]),
+        ).toBe(false);
+        expect(
+            shouldShowPlanningHubHistoryLabel([
+                { id: 1 } as TrainingPlan,
+                { id: 2 } as TrainingPlan,
+            ]),
+        ).toBe(true);
     });
 });
 
