@@ -53,27 +53,29 @@ describe("DeleteClientModal", () => {
 
     it("no renderiza nada si isOpen=false", () => {
         render(<DeleteClientModal {...defaultProps} isOpen={false} />);
-        expect(screen.queryByRole("heading", { name: "Desvincular Cliente" })).not.toBeInTheDocument();
+        expect(screen.queryByRole("heading", { name: "Desvincular cliente" })).not.toBeInTheDocument();
     });
 
     it("renderiza título y descripción", () => {
         render(<DeleteClientModal {...defaultProps} />);
         expect(
-            screen.getByRole("heading", { name: "Desvincular Cliente" })
+            screen.getByRole("heading", { name: "Desvincular cliente" })
         ).toBeInTheDocument();
         expect(
-            screen.getByText(
-                `¿Estás seguro de que deseas desvincular a ${mockClient.nombre} ${mockClient.apellidos}?`
-            )
+            screen.getByText(/¿Estás seguro de que deseas desvincular a/i)
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(`${mockClient.nombre} ${mockClient.apellidos}`)
         ).toBeInTheDocument();
     });
 
     it("muestra la descripción del modal con el nombre del cliente", () => {
         render(<DeleteClientModal {...defaultProps} />);
         expect(
-            screen.getByText(
-                `¿Estás seguro de que deseas desvincular a ${mockClient.nombre} ${mockClient.apellidos}?`
-            )
+            screen.getByText(/¿Estás seguro de que deseas desvincular a/i)
+        ).toBeInTheDocument();
+        expect(
+            screen.getByText(`${mockClient.nombre} ${mockClient.apellidos}`)
         ).toBeInTheDocument();
     });
 

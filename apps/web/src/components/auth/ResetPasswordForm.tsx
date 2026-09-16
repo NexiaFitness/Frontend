@@ -154,6 +154,7 @@ export const ResetPasswordForm: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
+                    variant="premium"
                     type="password"
                     label="Nueva contraseña"
                     size="sm"
@@ -167,6 +168,7 @@ export const ResetPasswordForm: React.FC = () => {
                 />
 
                 <Input
+                    variant="premium"
                     type="password"
                     label="Confirmar nueva contraseña"
                     size="sm"

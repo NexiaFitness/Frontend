@@ -10,12 +10,13 @@
  */
 
 import React, { useCallback, useMemo, useState } from "react";
-import { Activity, Pencil, CheckCircle2, Trash2 } from "lucide-react";
+import { Pencil, CheckCircle2, Trash2 } from "lucide-react";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useToast } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
-import { EmptyStateCard } from "@/components/ui/cards";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
@@ -25,6 +26,17 @@ import {
 } from "@nexia/shared/api/injuriesApi";
 import type { InjuryWithDetails } from "@nexia/shared/types/injuries";
 import { InjuryFormModal } from "./InjuryFormModal";
+import { ClientInjuriesEmptyState } from "./ClientInjuriesEmptyState";
+import {
+    CLIENT_INJURIES_FILTER_CHIP_ACTIVE,
+    CLIENT_INJURIES_FILTER_CHIP_BASE,
+    CLIENT_INJURIES_FILTER_CHIP_IDLE,
+    CLIENT_INJURIES_FILTER_EMPTY_BODY,
+    CLIENT_INJURIES_FILTER_EMPTY_COPY,
+    CLIENT_INJURIES_FILTER_EMPTY_SHELL,
+    CLIENT_INJURIES_FILTER_EMPTY_TITLE,
+    CLIENT_INJURIES_TAB_STACK,
+} from "./clientInjuriesTabPresentation";
 
 interface ClientInjuriesTabProps {
     clientId: number;
@@ -126,7 +138,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
     const isEmpty = totalCount === 0;
 
     return (
-        <section className="space-y-6 pb-8">
+        <section className={CLIENT_INJURIES_TAB_STACK}>
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <PageTitle
@@ -151,16 +163,7 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                     <LoadingSpinner size="lg" />
                 </div>
             ) : isEmpty ? (
-                <EmptyStateCard
-                    icon={<Activity className="h-8 w-8" aria-hidden />}
-                    title="Sin lesiones registradas"
-                    description="Registra una lesión para hacer seguimiento, coherencia del plan y alternativas de ejercicio."
-                    action={
-                        <Button type="button" variant="primary" size="sm" onClick={openNew}>
-                            Registrar lesión
-                        </Button>
-                    }
-                />
+                <ClientInjuriesEmptyState onRegister={openNew} />
             ) : (
                 <div className="space-y-3">
                     {/* Filters */}
@@ -170,11 +173,12 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                                 key={value}
                                 type="button"
                                 onClick={() => handleFilterChange(value)}
-                                className={`rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
+                                className={cn(
+                                    CLIENT_INJURIES_FILTER_CHIP_BASE,
                                     filter === value
-                                        ? "border-primary bg-primary/10 text-primary"
-                                        : "border-border text-muted-foreground hover:border-input hover:text-foreground"
-                                }`}
+                                        ? CLIENT_INJURIES_FILTER_CHIP_ACTIVE
+                                        : CLIENT_INJURIES_FILTER_CHIP_IDLE,
+                                )}
                             >
                                 {lbl}
                             </button>
@@ -183,10 +187,19 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
 
                     {/* List */}
                     {sortedInjuries.length === 0 ? (
-                        <EmptyStateCard
-                            title="Nada que coincida con el filtro"
-                            description="Prueba otro filtro o selecciona «Todas» para ver todo el historial."
-                        />
+                        <div
+                            className={CLIENT_INJURIES_FILTER_EMPTY_SHELL}
+                            role="status"
+                            data-testid="client-injuries-filter-empty"
+                        >
+                            <NexiaGlassAccentRim />
+                            <p className={cn(CLIENT_INJURIES_FILTER_EMPTY_TITLE, "relative z-[1]")}>
+                                {CLIENT_INJURIES_FILTER_EMPTY_COPY.title}
+                            </p>
+                            <p className={cn(CLIENT_INJURIES_FILTER_EMPTY_BODY, "relative z-[1]")}>
+                                {CLIENT_INJURIES_FILTER_EMPTY_COPY.description}
+                            </p>
+                        </div>
                     ) : (
                         <ul className="space-y-2">
                             {sortedInjuries.map((injury) => {

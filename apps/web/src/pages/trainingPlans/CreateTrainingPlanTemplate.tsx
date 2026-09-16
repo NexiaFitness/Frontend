@@ -4,11 +4,20 @@
 
 import React, { useState, useEffect } from "react";
 import { ArrowLeft } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/buttons";
 import { PageTitle } from "@/components/dashboard/shared";
 import { useToast, LoadingSpinner } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
+import {
+    Input,
+    Textarea,
+    Checkbox,
+    FormCombobox,
+    FormField,
+} from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { useCreateTrainingPlanTemplateMutation } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -25,7 +34,6 @@ import {
     TEMPLATE_LIBRARY_COPY,
     TEMPLATE_LIBRARY_FORM_ACTIONS,
     TEMPLATE_LIBRARY_FORM_FIELD_ERROR,
-    TEMPLATE_LIBRARY_FORM_FIELD_LABEL,
     TEMPLATE_LIBRARY_FORM_FOOTER,
     TEMPLATE_LIBRARY_FORM_PAGE,
     TEMPLATE_LIBRARY_FORM_SECTION,
@@ -38,6 +46,7 @@ import {
     TEMPLATE_LIBRARY_PRIMARY_CTA,
     TEMPLATE_LIBRARY_TITLE_WRAP,
 } from "@/components/trainingPlans/templateLibraryPresentation";
+import { PLATFORM_FORM_FOOTER_BTN } from "@/components/ui/forms/platformFormPresentation";
 
 export const CreateTrainingPlanTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -189,45 +198,42 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                         {TEMPLATE_LIBRARY_COPY.sectionBasic}
                     </h2>
                     <div className="space-y-5">
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>
-                                Nombre de la plantilla *
-                            </label>
+                        <FormField label="Nombre de la plantilla" required variant={FORM_VARIANT}>
                             <Input
+                                variant={FORM_VARIANT}
                                 type="text"
                                 value={formData.name || ""}
                                 onChange={(e) =>
                                     setFormData({ ...formData, name: e.target.value })
                                 }
                                 placeholder="Ej: Hipertrofia 12 semanas"
-                                required
                             />
                             {formErrors.name ? (
                                 <p className={TEMPLATE_LIBRARY_FORM_FIELD_ERROR}>{formErrors.name}</p>
                             ) : null}
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Objetivo *</label>
-                            <FormSelect
+                        <FormField label="Objetivo" required variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
                                 value={formData.goal || ""}
-                                onChange={(e) =>
-                                    setFormData({ ...formData, goal: e.target.value })
-                                }
-                                required
+                                onChange={(next) => setFormData({ ...formData, goal: next })}
                                 options={[
                                     { value: "", label: "Selecciona un objetivo" },
                                     ...goalOptions,
                                 ]}
+                                placeholder="Selecciona un objetivo"
+                                ariaLabel="Objetivo"
                             />
                             {formErrors.goal ? (
                                 <p className={TEMPLATE_LIBRARY_FORM_FIELD_ERROR}>{formErrors.goal}</p>
                             ) : null}
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Descripción</label>
+                        <FormField label="Descripción" variant={FORM_VARIANT}>
                             <Textarea
+                                variant={FORM_VARIANT}
                                 value={formData.description || ""}
                                 onChange={(e) =>
                                     setFormData({
@@ -238,13 +244,11 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                 rows={4}
                                 placeholder="Objetivos y contexto de la plantilla…"
                             />
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>
-                                Categoría personalizada
-                            </label>
+                        <FormField label="Categoría personalizada" variant={FORM_VARIANT}>
                             <Input
+                                variant={FORM_VARIANT}
                                 type="text"
                                 value={formData.category || ""}
                                 onChange={(e) =>
@@ -252,12 +256,12 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                 }
                                 placeholder="Ej: Fuerza, Cardio, Hipertrofia"
                             />
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Etiquetas</label>
+                        <FormField label="Etiquetas" variant={FORM_VARIANT}>
                             <div className="flex gap-2">
                                 <Input
+                                    variant={FORM_VARIANT}
                                     type="text"
                                     value={tagInput}
                                     onChange={(e) => setTagInput(e.target.value)}
@@ -295,7 +299,7 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                     ))}
                                 </div>
                             ) : null}
-                        </div>
+                        </FormField>
                     </div>
                 </section>
 
@@ -305,9 +309,9 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                         {TEMPLATE_LIBRARY_COPY.sectionLibrary}
                     </h2>
                     <div className="space-y-5">
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Carpeta</label>
+                        <FormField label="Carpeta" variant={FORM_VARIANT}>
                             <Input
+                                variant={FORM_VARIANT}
                                 type="text"
                                 value={formData.folder_name || ""}
                                 onChange={(e) =>
@@ -318,21 +322,24 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                                 }
                                 placeholder="Ej: Fuerza básica"
                             />
-                        </div>
+                        </FormField>
 
-                        <div>
-                            <label className={TEMPLATE_LIBRARY_FORM_FIELD_LABEL}>Nivel</label>
-                            <FormSelect
+                        <FormField label="Nivel" variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
                                 value={formData.level || ""}
-                                onChange={(e) =>
+                                onChange={(next) =>
                                     setFormData({
                                         ...formData,
-                                        level: (e.target.value || null) as TemplateLevel | null,
+                                        level: (next || null) as TemplateLevel | null,
                                     })
                                 }
                                 options={levelOptions}
+                                placeholder="Selecciona un nivel"
+                                ariaLabel="Nivel"
                             />
-                        </div>
+                        </FormField>
                     </div>
                 </section>
 
@@ -357,20 +364,18 @@ export const CreateTrainingPlanTemplate: React.FC = () => {
                     <div className={TEMPLATE_LIBRARY_FORM_ACTIONS}>
                         <Button
                             type="button"
-                            variant="outline"
-                            size="lg"
+                            variant="outline-primary"
                             onClick={() => goBack()}
-                            className="w-full sm:w-auto"
+                            className={PLATFORM_FORM_FOOTER_BTN}
                         >
                             Cancelar
                         </Button>
                         <Button
                             type="submit"
                             variant="primary"
-                            size="lg"
                             disabled={isCreatingTemplate || !trainerId}
                             isLoading={isCreatingTemplate}
-                            className={TEMPLATE_LIBRARY_PRIMARY_CTA}
+                            className={cn(PLATFORM_FORM_FOOTER_BTN, TEMPLATE_LIBRARY_PRIMARY_CTA)}
                         >
                             {isCreatingTemplate ? "Creando…" : "Crear plantilla"}
                         </Button>

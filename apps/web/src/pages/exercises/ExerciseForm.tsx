@@ -1,5 +1,5 @@
 /**
- * ExerciseForm.tsx — Formulario crear/editar ejercicio
+ * ExerciseForm.tsx — Formulario crear/editar ejercicio (premium §5.3)
  *
  * Contexto:
  * - Ruta crear: /dashboard/exercises/create
@@ -14,9 +14,16 @@ import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { PageTitle } from "@/components/dashboard/shared";
-import { Input, FormSelect, Textarea } from "@/components/ui/forms";
+import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
+import {
+    Input,
+    Textarea,
+    FormCombobox,
+    FormField,
+} from "@/components/ui/forms";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import {
     useGetExerciseByIdQuery,
     useCreateExerciseMutation,
@@ -29,18 +36,58 @@ import {
     normalizeExerciseLoadType,
 } from "@nexia/shared/types/exerciseLoadType";
 import { useGetPhysicalQualitiesQuery } from "@nexia/shared/api/catalogsApi";
+import {
+    EXERCISE_FORM_BACK_BUTTON,
+    EXERCISE_FORM_BACK_LABEL,
+    EXERCISE_FORM_BODY,
+    EXERCISE_FORM_CANCEL,
+    EXERCISE_FORM_CARD,
+    EXERCISE_FORM_CATEGORY_LABEL,
+    EXERCISE_FORM_COMBO_PLACEHOLDER,
+    EXERCISE_FORM_DESCRIPTION_LABEL,
+    EXERCISE_FORM_EQUIPMENT_LABEL,
+    EXERCISE_FORM_FOOTER_ACTIONS,
+    EXERCISE_FORM_FOOTER_BTN,
+    EXERCISE_FORM_GLOW,
+    EXERCISE_FORM_GRID_2,
+    EXERCISE_FORM_GRID_3,
+    EXERCISE_FORM_HEADER,
+    EXERCISE_FORM_ICON_BACK_GAP,
+    EXERCISE_FORM_ICON_SM,
+    EXERCISE_FORM_ID_LABEL,
+    EXERCISE_FORM_INSTRUCTIONS_LABEL,
+    EXERCISE_FORM_LEVEL_LABEL,
+    EXERCISE_FORM_LEVEL_OPTIONS,
+    EXERCISE_FORM_LOAD_TYPE_LABEL,
+    EXERCISE_FORM_NAME_EN_LABEL,
+    EXERCISE_FORM_NAME_LABEL,
+    EXERCISE_FORM_NOTES_LABEL,
+    EXERCISE_FORM_PAGE,
+    EXERCISE_FORM_PAGE_SUBTITLE_CREATE,
+    EXERCISE_FORM_PAGE_SUBTITLE_EDIT,
+    EXERCISE_FORM_PAGE_TITLE_CREATE,
+    EXERCISE_FORM_PAGE_TITLE_EDIT,
+    EXERCISE_FORM_PATTERN_LABEL,
+    EXERCISE_FORM_PRIMARY_MUSCLES_LABEL,
+    EXERCISE_FORM_QUALITIES_HINT,
+    EXERCISE_FORM_QUALITIES_HINT_TEXT,
+    EXERCISE_FORM_QUALITIES_LABEL,
+    EXERCISE_FORM_SECONDARY_MUSCLES_LABEL,
+    EXERCISE_FORM_SECTION,
+    EXERCISE_FORM_SECTION_CLASSIFICATION,
+    EXERCISE_FORM_SECTION_CONTENT,
+    EXERCISE_FORM_SECTION_IDENTITY,
+    EXERCISE_FORM_SECTION_MUSCLES,
+    EXERCISE_FORM_SECTION_TITLE,
+    EXERCISE_FORM_SUBMIT_CREATE,
+    EXERCISE_FORM_SUBMIT_CTA,
+    EXERCISE_FORM_SUBMIT_EDIT,
+    EXERCISE_FORM_TITLE_WRAP,
+    EXERCISE_FORM_TYPE_LABEL,
+    EXERCISE_FORM_TYPE_OPTIONS,
+} from "./exerciseFormPresentation";
 
-const TIPO_OPTIONS = [
-    { value: "monoarticular", label: "Monoarticular" },
-    { value: "multiarticular", label: "Multiarticular" },
-    { value: "complex", label: "Complejo" },
-];
-
-const NIVEL_OPTIONS = [
-    { value: "beginner", label: "Principiante" },
-    { value: "intermediate", label: "Intermedio" },
-    { value: "advanced", label: "Avanzado" },
-];
+const FORM_VARIANT = "premium" as const;
 
 const defaultForm: Partial<ExerciseCreate> = {
     exercise_id: "",
@@ -59,6 +106,11 @@ const defaultForm: Partial<ExerciseCreate> = {
     notas: "",
 };
 
+const LOAD_TYPE_OPTIONS = EXERCISE_LOAD_TYPE_FILTER_OPTIONS.map((o) => ({
+    value: o.value,
+    label: o.label,
+}));
+
 export const ExerciseForm: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
@@ -72,7 +124,7 @@ export const ExerciseForm: React.FC = () => {
 
     const { data: exercise, isLoading: isLoadingExercise } = useGetExerciseByIdQuery(
         exerciseId!,
-        { skip: !isEdit || !exerciseId }
+        { skip: !isEdit || !exerciseId },
     );
 
     const [createExercise, { isLoading: isCreating }] = useCreateExerciseMutation();
@@ -100,7 +152,7 @@ export const ExerciseForm: React.FC = () => {
                 notas: exercise.notas ?? "",
             });
             setSelectedPhysicalQualityIds(
-                (exercise.physical_qualities ?? []).map((pq) => pq.id)
+                (exercise.physical_qualities ?? []).map((pq) => pq.id),
             );
         }
     }, [exercise]);
@@ -109,7 +161,9 @@ export const ExerciseForm: React.FC = () => {
         const err: Record<string, string> = {};
         if (!formData.exercise_id?.trim()) err.exercise_id = "ID de ejercicio obligatorio";
         if (!formData.nombre?.trim()) err.nombre = "Nombre obligatorio";
-        if (!formData.musculatura_principal?.trim()) err.musculatura_principal = "Músculos principales obligatorios";
+        if (!formData.musculatura_principal?.trim()) {
+            err.musculatura_principal = "Músculos principales obligatorios";
+        }
         if (!normalizeExerciseLoadType(formData.tipo_carga)) {
             err.tipo_carga = "Selecciona un tipo de carga válido";
         }
@@ -142,7 +196,8 @@ export const ExerciseForm: React.FC = () => {
                     descripcion: formData.descripcion?.trim() || null,
                     instrucciones: formData.instrucciones?.trim() || null,
                     notas: formData.notas?.trim() || null,
-                    physical_quality_ids: selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
+                    physical_quality_ids:
+                        selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
                 };
                 await updateExercise({ exerciseId, data: updatePayload }).unwrap();
                 showSuccess("Ejercicio actualizado correctamente");
@@ -163,7 +218,8 @@ export const ExerciseForm: React.FC = () => {
                     descripcion: formData.descripcion?.trim() || null,
                     instrucciones: formData.instrucciones?.trim() || null,
                     notas: formData.notas?.trim() || null,
-                    physical_quality_ids: selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
+                    physical_quality_ids:
+                        selectedPhysicalQualityIds.length > 0 ? selectedPhysicalQualityIds : null,
                 };
                 const created = await createExercise(createPayload).unwrap();
                 showSuccess("Ejercicio creado correctamente");
@@ -171,7 +227,12 @@ export const ExerciseForm: React.FC = () => {
             }
         } catch (err: unknown) {
             const msg =
-                err && typeof err === "object" && "data" in err && err.data && typeof err.data === "object" && "detail" in err.data
+                err &&
+                typeof err === "object" &&
+                "data" in err &&
+                err.data &&
+                typeof err.data === "object" &&
+                "detail" in err.data
                     ? String((err.data as { detail: unknown }).detail)
                     : "Error al guardar el ejercicio";
             showError(msg);
@@ -193,209 +254,322 @@ export const ExerciseForm: React.FC = () => {
         return (
             <div className="px-4 lg:px-8">
                 <Alert variant="error">Ejercicio no encontrado</Alert>
-                <Button onClick={() => navigate("/dashboard/exercises")} className="mt-4">
-                    Volver a Ejercicios
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={cn("mt-4", EXERCISE_FORM_BACK_BUTTON)}
+                    onClick={() => navigate("/dashboard/exercises")}
+                >
+                    <ArrowLeft
+                        className={cn(EXERCISE_FORM_ICON_BACK_GAP, EXERCISE_FORM_ICON_SM)}
+                        aria-hidden
+                    />
+                    {EXERCISE_FORM_BACK_LABEL}
                 </Button>
             </div>
         );
     }
 
+    const goBack = () => navigate("/dashboard/exercises");
+
     return (
-        <>
-                <div className="mb-6 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <PageTitle
-                            title={isEdit ? "Editar Ejercicio" : "Crear Ejercicio"}
-                            subtitle={
-                                isEdit
-                                    ? "Modifica los datos del ejercicio."
-                                    : "Añade un nuevo ejercicio a la base de datos."
-                            }
-                        />
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => navigate("/dashboard/exercises")}
-                            className="shrink-0"
-                        >
-                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                            Volver a Ejercicios
-                        </Button>
-                    </div>
-                </div>
+        <div className={EXERCISE_FORM_PAGE}>
+            <div className={EXERCISE_FORM_GLOW} aria-hidden />
 
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    <form onSubmit={handleSubmit} className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">ID de ejercicio *</label>
-                                <Input
-                                    value={formData.exercise_id ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, exercise_id: e.target.value })}
-                                    placeholder="ej: sentadilla-barra-1"
-                                    disabled={isEdit}
-                                />
-                                {formErrors.exercise_id && (
-                                    <p className="text-destructive text-xs mt-1">{formErrors.exercise_id}</p>
-                                )}
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Nombre *</label>
-                                <Input
-                                    value={formData.nombre ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
-                                    placeholder="Nombre del ejercicio"
-                                />
-                                {formErrors.nombre && <p className="text-destructive text-xs mt-1">{formErrors.nombre}</p>}
-                            </div>
-                        </div>
+            <div className={EXERCISE_FORM_HEADER}>
+                <PageTitle
+                    title={isEdit ? EXERCISE_FORM_PAGE_TITLE_EDIT : EXERCISE_FORM_PAGE_TITLE_CREATE}
+                    subtitle={
+                        isEdit
+                            ? EXERCISE_FORM_PAGE_SUBTITLE_EDIT
+                            : EXERCISE_FORM_PAGE_SUBTITLE_CREATE
+                    }
+                    className={EXERCISE_FORM_TITLE_WRAP}
+                />
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={EXERCISE_FORM_BACK_BUTTON}
+                    onClick={goBack}
+                >
+                    <ArrowLeft
+                        className={cn(EXERCISE_FORM_ICON_BACK_GAP, EXERCISE_FORM_ICON_SM)}
+                        aria-hidden
+                    />
+                    {EXERCISE_FORM_BACK_LABEL}
+                </Button>
+            </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Tipo *</label>
-                                <FormSelect
-                                    value={formData.tipo ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
-                                    options={[{ value: "", label: "Seleccionar" }, ...TIPO_OPTIONS]}
-                                />
+            <form id="exercise-form" onSubmit={handleSubmit}>
+                <article className={EXERCISE_FORM_CARD}>
+                    <NexiaGlassAccentRim />
+                    <div className={EXERCISE_FORM_BODY}>
+                        <section className={EXERCISE_FORM_SECTION} aria-label={EXERCISE_FORM_SECTION_IDENTITY}>
+                            <h2 className={EXERCISE_FORM_SECTION_TITLE}>
+                                {EXERCISE_FORM_SECTION_IDENTITY}
+                            </h2>
+                            <div className={EXERCISE_FORM_GRID_2}>
+                                <FormField label={EXERCISE_FORM_ID_LABEL} required variant={FORM_VARIANT}>
+                                    <Input
+                                        variant={FORM_VARIANT}
+                                        value={formData.exercise_id ?? ""}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, exercise_id: e.target.value })
+                                        }
+                                        placeholder="ej: sentadilla-barra-1"
+                                        disabled={isEdit}
+                                    />
+                                    {formErrors.exercise_id ? (
+                                        <p className="text-sm text-destructive">{formErrors.exercise_id}</p>
+                                    ) : null}
+                                </FormField>
+                                <FormField label={EXERCISE_FORM_NAME_LABEL} required variant={FORM_VARIANT}>
+                                    <Input
+                                        variant={FORM_VARIANT}
+                                        value={formData.nombre ?? ""}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, nombre: e.target.value })
+                                        }
+                                        placeholder="Nombre del ejercicio"
+                                    />
+                                    {formErrors.nombre ? (
+                                        <p className="text-sm text-destructive">{formErrors.nombre}</p>
+                                    ) : null}
+                                </FormField>
                             </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Nivel *</label>
-                                <FormSelect
-                                    value={formData.nivel ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, nivel: e.target.value })}
-                                    options={[{ value: "", label: "Seleccionar" }, ...NIVEL_OPTIONS]}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Categoría</label>
+                            <FormField label={EXERCISE_FORM_NAME_EN_LABEL} variant={FORM_VARIANT}>
                                 <Input
-                                    value={formData.categoria ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                                    placeholder="Basic"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Equipo</label>
-                                <Input
-                                    value={formData.equipo ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, equipo: e.target.value })}
-                                    placeholder="bodyweight, barra, mancuernas..."
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Patrón movimiento</label>
-                                <Input
-                                    value={formData.patron_movimiento ?? ""}
-                                    onChange={(e) => setFormData({ ...formData, patron_movimiento: e.target.value })}
-                                    placeholder="compound, push..."
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-semibold text-slate-700 mb-2">Tipo carga</label>
-                                <FormSelect
-                                    value={formData.tipo_carga ?? EXERCISE_LOAD_TYPE.EXTERNAL}
+                                    variant={FORM_VARIANT}
+                                    value={formData.nombre_ingles ?? ""}
                                     onChange={(e) =>
-                                        setFormData({ ...formData, tipo_carga: e.target.value })
+                                        setFormData({ ...formData, nombre_ingles: e.target.value })
                                     }
-                                    options={EXERCISE_LOAD_TYPE_FILTER_OPTIONS.map((o) => ({
-                                        value: o.value,
-                                        label: o.label,
-                                    }))}
+                                    placeholder="English name (optional)"
                                 />
-                                {formErrors.tipo_carga && (
-                                    <p className="text-destructive text-xs mt-1">{formErrors.tipo_carga}</p>
-                                )}
+                            </FormField>
+                        </section>
+
+                        <section
+                            className={EXERCISE_FORM_SECTION}
+                            aria-label={EXERCISE_FORM_SECTION_CLASSIFICATION}
+                        >
+                            <h2 className={EXERCISE_FORM_SECTION_TITLE}>
+                                {EXERCISE_FORM_SECTION_CLASSIFICATION}
+                            </h2>
+                            <div className={EXERCISE_FORM_GRID_3}>
+                                <FormField label={EXERCISE_FORM_TYPE_LABEL} required variant={FORM_VARIANT}>
+                                    <FormCombobox
+                                        size="sm"
+                                        variant={FORM_VARIANT}
+                                        value={formData.tipo ?? ""}
+                                        options={[...EXERCISE_FORM_TYPE_OPTIONS]}
+                                        onChange={(next) => setFormData({ ...formData, tipo: next })}
+                                        placeholder={EXERCISE_FORM_COMBO_PLACEHOLDER}
+                                        ariaLabel={EXERCISE_FORM_TYPE_LABEL}
+                                    />
+                                </FormField>
+                                <FormField label={EXERCISE_FORM_LEVEL_LABEL} required variant={FORM_VARIANT}>
+                                    <FormCombobox
+                                        size="sm"
+                                        variant={FORM_VARIANT}
+                                        value={formData.nivel ?? ""}
+                                        options={[...EXERCISE_FORM_LEVEL_OPTIONS]}
+                                        onChange={(next) => setFormData({ ...formData, nivel: next })}
+                                        placeholder={EXERCISE_FORM_COMBO_PLACEHOLDER}
+                                        ariaLabel={EXERCISE_FORM_LEVEL_LABEL}
+                                    />
+                                </FormField>
+                                <FormField label={EXERCISE_FORM_CATEGORY_LABEL} variant={FORM_VARIANT}>
+                                    <Input
+                                        variant={FORM_VARIANT}
+                                        value={formData.categoria ?? ""}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, categoria: e.target.value })
+                                        }
+                                        placeholder="Basic"
+                                    />
+                                </FormField>
                             </div>
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Músculos principales *</label>
-                            <Input
-                                value={formData.musculatura_principal ?? ""}
-                                onChange={(e) => setFormData({ ...formData, musculatura_principal: e.target.value })}
-                                placeholder="legs, quadriceps (separados por coma)"
-                            />
-                            {formErrors.musculatura_principal && (
-                                <p className="text-destructive text-xs mt-1">{formErrors.musculatura_principal}</p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Músculos secundarios</label>
-                            <Input
-                                value={formData.musculatura_secundaria ?? ""}
-                                onChange={(e) => setFormData({ ...formData, musculatura_secundaria: e.target.value })}
-                                placeholder="gluteos, core (separados por coma)"
-                            />
-                        </div>
-
-                        <div>
-                            <span className="block text-sm font-semibold text-slate-700 mb-2">Cualidades físicas</span>
-                            <p className="text-muted-foreground text-xs mb-2">
-                                Relaciona el ejercicio con las cualidades del catálogo (planificación y coherencia).
-                            </p>
-                            <div className="flex flex-wrap gap-x-6 gap-y-2" role="group" aria-label="Cualidades físicas">
-                                {physicalQualitiesCatalog
-                                    .slice()
-                                    .sort((a, b) => a.display_order - b.display_order)
-                                    .map((pq) => (
-                                        <label
-                                            key={pq.id}
-                                            className="flex items-center gap-2 cursor-pointer text-sm text-slate-700"
-                                        >
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedPhysicalQualityIds.includes(pq.id)}
-                                                onChange={() => {
-                                                    setSelectedPhysicalQualityIds((prev: number[]) =>
-                                                        prev.includes(pq.id)
-                                                            ? prev.filter((id: number) => id !== pq.id)
-                                                            : [...prev, pq.id]
-                                                    );
-                                                }}
-                                                className="rounded border-border"
-                                                aria-label={pq.name}
-                                            />
-                                            {pq.name}
-                                        </label>
-                                    ))}
+                            <div className={EXERCISE_FORM_GRID_3}>
+                                <FormField label={EXERCISE_FORM_EQUIPMENT_LABEL} variant={FORM_VARIANT}>
+                                    <Input
+                                        variant={FORM_VARIANT}
+                                        value={formData.equipo ?? ""}
+                                        onChange={(e) =>
+                                            setFormData({ ...formData, equipo: e.target.value })
+                                        }
+                                        placeholder="bodyweight, barra, mancuernas..."
+                                    />
+                                </FormField>
+                                <FormField label={EXERCISE_FORM_PATTERN_LABEL} variant={FORM_VARIANT}>
+                                    <Input
+                                        variant={FORM_VARIANT}
+                                        value={formData.patron_movimiento ?? ""}
+                                        onChange={(e) =>
+                                            setFormData({
+                                                ...formData,
+                                                patron_movimiento: e.target.value,
+                                            })
+                                        }
+                                        placeholder="compound, push..."
+                                    />
+                                </FormField>
+                                <FormField label={EXERCISE_FORM_LOAD_TYPE_LABEL} variant={FORM_VARIANT}>
+                                    <FormCombobox
+                                        size="sm"
+                                        variant={FORM_VARIANT}
+                                        value={formData.tipo_carga ?? EXERCISE_LOAD_TYPE.EXTERNAL}
+                                        options={LOAD_TYPE_OPTIONS}
+                                        onChange={(next) =>
+                                            setFormData({ ...formData, tipo_carga: next })
+                                        }
+                                        ariaLabel={EXERCISE_FORM_LOAD_TYPE_LABEL}
+                                    />
+                                    {formErrors.tipo_carga ? (
+                                        <p className="text-sm text-destructive">{formErrors.tipo_carga}</p>
+                                    ) : null}
+                                </FormField>
                             </div>
-                        </div>
+                        </section>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Descripción</label>
-                            <Textarea
-                                value={formData.descripcion ?? ""}
-                                onChange={(e) => setFormData({ ...formData, descripcion: e.target.value })}
-                                rows={3}
-                                placeholder="Descripción del ejercicio"
-                            />
-                        </div>
+                        <section className={EXERCISE_FORM_SECTION} aria-label={EXERCISE_FORM_SECTION_MUSCLES}>
+                            <h2 className={EXERCISE_FORM_SECTION_TITLE}>{EXERCISE_FORM_SECTION_MUSCLES}</h2>
+                            <FormField
+                                label={EXERCISE_FORM_PRIMARY_MUSCLES_LABEL}
+                                required
+                                variant={FORM_VARIANT}
+                            >
+                                <Input
+                                    variant={FORM_VARIANT}
+                                    value={formData.musculatura_principal ?? ""}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            musculatura_principal: e.target.value,
+                                        })
+                                    }
+                                    placeholder="legs, quadriceps (separados por coma)"
+                                />
+                                {formErrors.musculatura_principal ? (
+                                    <p className="text-sm text-destructive">
+                                        {formErrors.musculatura_principal}
+                                    </p>
+                                ) : null}
+                            </FormField>
+                            <FormField label={EXERCISE_FORM_SECONDARY_MUSCLES_LABEL} variant={FORM_VARIANT}>
+                                <Input
+                                    variant={FORM_VARIANT}
+                                    value={formData.musculatura_secundaria ?? ""}
+                                    onChange={(e) =>
+                                        setFormData({
+                                            ...formData,
+                                            musculatura_secundaria: e.target.value,
+                                        })
+                                    }
+                                    placeholder="gluteos, core (separados por coma)"
+                                />
+                            </FormField>
+                            <FormField label={EXERCISE_FORM_QUALITIES_LABEL} variant={FORM_VARIANT}>
+                                <p className={EXERCISE_FORM_QUALITIES_HINT}>
+                                    {EXERCISE_FORM_QUALITIES_HINT_TEXT}
+                                </p>
+                                <div
+                                    className="flex flex-wrap gap-x-6 gap-y-2 pt-1"
+                                    role="group"
+                                    aria-label={EXERCISE_FORM_QUALITIES_LABEL}
+                                >
+                                    {physicalQualitiesCatalog
+                                        .slice()
+                                        .sort((a, b) => a.display_order - b.display_order)
+                                        .map((pq) => (
+                                            <label
+                                                key={pq.id}
+                                                className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedPhysicalQualityIds.includes(pq.id)}
+                                                    onChange={() => {
+                                                        setSelectedPhysicalQualityIds((prev: number[]) =>
+                                                            prev.includes(pq.id)
+                                                                ? prev.filter((id: number) => id !== pq.id)
+                                                                : [...prev, pq.id],
+                                                        );
+                                                    }}
+                                                    className="rounded border-border"
+                                                    aria-label={pq.name}
+                                                />
+                                                {pq.name}
+                                            </label>
+                                        ))}
+                                </div>
+                            </FormField>
+                        </section>
 
-                        <div>
-                            <label className="block text-sm font-semibold text-slate-700 mb-2">Instrucciones</label>
-                            <Textarea
-                                value={formData.instrucciones ?? ""}
-                                onChange={(e) => setFormData({ ...formData, instrucciones: e.target.value })}
-                                rows={4}
-                                placeholder="Pasos para realizar el ejercicio"
-                            />
-                        </div>
+                        <section className={EXERCISE_FORM_SECTION} aria-label={EXERCISE_FORM_SECTION_CONTENT}>
+                            <h2 className={EXERCISE_FORM_SECTION_TITLE}>{EXERCISE_FORM_SECTION_CONTENT}</h2>
+                            <FormField label={EXERCISE_FORM_DESCRIPTION_LABEL} variant={FORM_VARIANT}>
+                                <Textarea
+                                    variant={FORM_VARIANT}
+                                    value={formData.descripcion ?? ""}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, descripcion: e.target.value })
+                                    }
+                                    rows={3}
+                                    placeholder="Descripción del ejercicio"
+                                />
+                            </FormField>
+                            <FormField label={EXERCISE_FORM_INSTRUCTIONS_LABEL} variant={FORM_VARIANT}>
+                                <Textarea
+                                    variant={FORM_VARIANT}
+                                    value={formData.instrucciones ?? ""}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, instrucciones: e.target.value })
+                                    }
+                                    rows={4}
+                                    placeholder="Pasos para realizar el ejercicio"
+                                />
+                            </FormField>
+                            <FormField label={EXERCISE_FORM_NOTES_LABEL} variant={FORM_VARIANT}>
+                                <Textarea
+                                    variant={FORM_VARIANT}
+                                    value={formData.notas ?? ""}
+                                    onChange={(e) =>
+                                        setFormData({ ...formData, notas: e.target.value })
+                                    }
+                                    rows={2}
+                                    placeholder="Notas internas"
+                                />
+                            </FormField>
+                        </section>
+                    </div>
+                </article>
+            </form>
 
-                        <div className="flex gap-3 pt-4">
-                            <Button type="submit" variant="primary" disabled={isLoading} isLoading={isLoading}>
-                                {isEdit ? "Guardar cambios" : "Crear ejercicio"}
-                            </Button>
-                            <Button type="button" variant="outline" onClick={() => navigate("/dashboard/exercises")}>
-                                Cancelar
-                            </Button>
-                        </div>
-                    </form>
+            <DashboardFixedFooter>
+                <div className={EXERCISE_FORM_FOOTER_ACTIONS}>
+                    <Button
+                        type="button"
+                        variant="outline-primary"
+                        className={EXERCISE_FORM_FOOTER_BTN}
+                        onClick={goBack}
+                    >
+                        {EXERCISE_FORM_CANCEL}
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="exercise-form"
+                        variant="primary"
+                        className={cn(EXERCISE_FORM_FOOTER_BTN, EXERCISE_FORM_SUBMIT_CTA)}
+                        disabled={isLoading}
+                        isLoading={isLoading}
+                    >
+                        {isEdit ? EXERCISE_FORM_SUBMIT_EDIT : EXERCISE_FORM_SUBMIT_CREATE}
+                    </Button>
                 </div>
-        </>
+            </DashboardFixedFooter>
+        </div>
     );
 };

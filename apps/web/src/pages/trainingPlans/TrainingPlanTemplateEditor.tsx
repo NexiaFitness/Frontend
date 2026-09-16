@@ -44,7 +44,9 @@ import type {
 } from "@nexia/shared/types/templateProgram";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import { Input, FormSelect } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField } from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
@@ -715,35 +717,44 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
             >
                 <div className="space-y-4 pt-2">
                     {blocks.length > 1 ? (
-                        <FormSelect
-                            label="Fase"
-                            value={String(sessionBlockId ?? "")}
-                            onChange={(e) => setSessionBlockId(Number(e.target.value))}
-                            options={blocks.map((b) => ({
-                                value: String(b.id),
-                                label: `Semanas ${b.program_week_start}–${b.program_week_end}`,
-                            }))}
-                        />
+                        <FormField label="Fase" variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
+                                value={String(sessionBlockId ?? "")}
+                                onChange={(next) => setSessionBlockId(Number(next))}
+                                options={blocks.map((b) => ({
+                                    value: String(b.id),
+                                    label: `Semanas ${b.program_week_start}–${b.program_week_end}`,
+                                }))}
+                                ariaLabel="Fase"
+                            />
+                        </FormField>
                     ) : null}
                     <Input
+                        variant={FORM_VARIANT}
                         placeholder="Nombre (opcional, ej. Empuje superior)"
                         value={sessionForm.sessionName}
                         onChange={(e) =>
                             setSessionForm({ ...sessionForm, sessionName: e.target.value })
                         }
                     />
-                    <FormSelect
-                        label="Tipo"
-                        value={sessionForm.sessionType}
-                        onChange={(e) =>
-                            setSessionForm({ ...sessionForm, sessionType: e.target.value })
-                        }
-                        options={SESSION_TYPES}
-                    />
+                    <FormField label="Tipo" variant={FORM_VARIANT}>
+                        <FormCombobox
+                            size="sm"
+                            variant={FORM_VARIANT}
+                            value={sessionForm.sessionType}
+                            onChange={(next) =>
+                                setSessionForm({ ...sessionForm, sessionType: next })
+                            }
+                            options={SESSION_TYPES}
+                            ariaLabel="Tipo de sesión"
+                        />
+                    </FormField>
                     <div className="grid grid-cols-2 gap-3">
-                        <div>
-                            <label className="mb-1 block text-sm font-medium">Semana</label>
+                        <FormField label="Semana" variant={FORM_VARIANT}>
                             <Input
+                                variant={FORM_VARIANT}
                                 type="number"
                                 min={1}
                                 value={sessionForm.programWeek}
@@ -751,15 +762,19 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                                     setSessionForm({ ...sessionForm, programWeek: e.target.value })
                                 }
                             />
-                        </div>
-                        <FormSelect
-                            label="Día"
-                            value={sessionForm.dayOfWeek}
-                            onChange={(e) =>
-                                setSessionForm({ ...sessionForm, dayOfWeek: e.target.value })
-                            }
-                            options={DAY_OPTIONS}
-                        />
+                        </FormField>
+                        <FormField label="Día" variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
+                                value={sessionForm.dayOfWeek}
+                                onChange={(next) =>
+                                    setSessionForm({ ...sessionForm, dayOfWeek: next })
+                                }
+                                options={DAY_OPTIONS}
+                                ariaLabel="Día"
+                            />
+                        </FormField>
                     </div>
                     <Button
                         variant="primary"

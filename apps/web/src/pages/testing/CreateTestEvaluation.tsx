@@ -24,10 +24,12 @@ import {
     Checkbox,
     DatePickerButton,
     FormCombobox,
+    FormField,
     Input,
-    Label,
     Textarea,
 } from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { cn } from "@/lib/utils";
@@ -53,6 +55,17 @@ import {
     CREATE_EVAL_CANCEL,
     CREATE_EVAL_CLIENT_LABEL,
     CREATE_EVAL_CONDITIONS_LABEL,
+    CREATE_EVAL_CONDITIONS_PLACEHOLDER,
+    CREATE_EVAL_FORM_DIVIDER,
+    CREATE_EVAL_OPTIONAL_BLOCK,
+    CREATE_EVAL_SECTION,
+    CREATE_EVAL_SECTION_TITLE,
+    CREATE_EVAL_SUBMIT_CTA,
+    CREATE_EVAL_SURFACE_PLACEHOLDER,
+    CREATE_EVAL_UNIT_PLACEHOLDER,
+    CREATE_EVAL_VALUE_PLACEHOLDER,
+    CREATE_EVAL_VALUE_PLACEHOLDER_TIME,
+    CREATE_EVAL_NOTES_PLACEHOLDER,
     CREATE_EVAL_CREATE_TEST_SUBMIT,
     CREATE_EVAL_CREATE_TEST_TOGGLE,
     CREATE_EVAL_CUSTOM_DESCRIPTION,
@@ -341,24 +354,30 @@ export const CreateTestEvaluation: React.FC = () => {
                 <form onSubmit={handleSubmit}>
                     <div className={CREATE_EVAL_FORM_CARD}>
                         <NexiaGlassAccentRim />
+                        <div className={CREATE_EVAL_FORM_DIVIDER} aria-hidden />
                         <div className={CREATE_EVAL_FORM_BODY}>
                     {formError && <Alert variant="error">{formError}</Alert>}
 
-                    <Input
-                        label={CREATE_EVAL_CLIENT_LABEL}
-                        value={
-                            client
-                                ? `${client.nombre} ${client.apellidos ?? ""}`.trim()
-                                : `Cliente #${clientId}`
-                        }
-                        readOnly
-                        disabled
-                    />
+                    <section className={CREATE_EVAL_SECTION} aria-label="Protocolo">
+                        <p className={CREATE_EVAL_SECTION_TITLE}>Protocolo</p>
 
-                    <div className="space-y-1.5">
-                        <Label className="text-foreground">{CREATE_EVAL_CATEGORY_LABEL}</Label>
+                    <FormField label={CREATE_EVAL_CLIENT_LABEL} variant={FORM_VARIANT}>
+                        <Input
+                            variant={FORM_VARIANT}
+                            value={
+                                client
+                                    ? `${client.nombre} ${client.apellidos ?? ""}`.trim()
+                                    : `Cliente #${clientId}`
+                            }
+                            readOnly
+                            disabled
+                        />
+                    </FormField>
+
+                    <FormField label={CREATE_EVAL_CATEGORY_LABEL} variant={FORM_VARIANT}>
                         <FormCombobox
                             size="sm"
+                            variant={FORM_VARIANT}
                             value={filterCategory}
                             options={TEST_CATEGORY_OPTIONS.map((option) => ({
                                 value: option.value,
@@ -370,12 +389,12 @@ export const CreateTestEvaluation: React.FC = () => {
                             }}
                             ariaLabel={CREATE_EVAL_CATEGORY_LABEL}
                         />
-                    </div>
+                    </FormField>
 
-                    <div className="space-y-1.5">
-                        <Label className="text-foreground">{CREATE_EVAL_TEST_LABEL}</Label>
+                    <FormField label={CREATE_EVAL_TEST_LABEL} variant={FORM_VARIANT}>
                         <FormCombobox
                             size="sm"
+                            variant={FORM_VARIANT}
                             value={selectedTestId === "" ? "" : String(selectedTestId)}
                             placeholder={CREATE_EVAL_TEST_PLACEHOLDER}
                             options={testOptions}
@@ -389,12 +408,12 @@ export const CreateTestEvaluation: React.FC = () => {
                                 No hay evaluaciones en esta categoría. Crea una nueva abajo.
                             </p>
                         )}
-                    </div>
+                    </FormField>
 
                     <div>
                         <Button
                             type="button"
-                            variant="ghost"
+                            variant="ghost-primary"
                             size="sm"
                             className={CREATE_EVAL_CREATE_TOGGLE}
                             onClick={() => setShowCustomForm((prev) => !prev)}
@@ -402,38 +421,50 @@ export const CreateTestEvaluation: React.FC = () => {
                             {CREATE_EVAL_CREATE_TEST_TOGGLE}
                         </Button>
                     </div>
+                    </section>
 
                     {showCustomForm && (
                         <section className={CREATE_EVAL_CUSTOM_PANEL}>
                             <NexiaGlassAccentRim />
-                            <Input
+                            <FormField
                                 label={CREATE_EVAL_CUSTOM_NAME}
-                                value={customName}
-                                onChange={(event) => setCustomName(event.target.value)}
-                                isRequired
-                            />
-                            <div className="space-y-1.5">
-                                <Label className="text-foreground">
-                                    {CREATE_EVAL_CUSTOM_UNIT}{" "}
-                                    <span className="text-destructive">*</span>
-                                </Label>
+                                required
+                                variant={FORM_VARIANT}
+                            >
+                                <Input
+                                    variant={FORM_VARIANT}
+                                    value={customName}
+                                    onChange={(event) => setCustomName(event.target.value)}
+                                    placeholder="Nombre visible en el catálogo"
+                                />
+                            </FormField>
+                            <FormField
+                                label={CREATE_EVAL_CUSTOM_UNIT}
+                                required
+                                variant={FORM_VARIANT}
+                            >
                                 <FormCombobox
                                     size="sm"
+                                    variant={FORM_VARIANT}
                                     value={customUnit}
                                     options={unitSelectOptions(customUnit)}
-                                    placeholder="Selecciona unidad"
+                                    placeholder={CREATE_EVAL_UNIT_PLACEHOLDER}
                                     onChange={setCustomUnit}
                                     ariaLabel={CREATE_EVAL_CUSTOM_UNIT}
                                 />
-                            </div>
-                            <Input
-                                label={CREATE_EVAL_CUSTOM_FREQUENCY}
-                                type="number"
-                                min={1}
-                                value={customFrequency}
-                                onChange={(event) => setCustomFrequency(event.target.value)}
-                            />
+                            </FormField>
+                            <FormField label={CREATE_EVAL_CUSTOM_FREQUENCY} variant={FORM_VARIANT}>
+                                <Input
+                                    variant={FORM_VARIANT}
+                                    type="number"
+                                    min={1}
+                                    value={customFrequency}
+                                    onChange={(event) => setCustomFrequency(event.target.value)}
+                                    placeholder="Semanas entre retests (opcional)"
+                                />
+                            </FormField>
                             <Textarea
+                                variant={FORM_VARIANT}
                                 label={CREATE_EVAL_CUSTOM_DESCRIPTION}
                                 value={customDescription}
                                 onChange={(event) => setCustomDescription(event.target.value)}
@@ -453,65 +484,89 @@ export const CreateTestEvaluation: React.FC = () => {
                         </section>
                     )}
 
+                    <div className={CREATE_EVAL_FORM_DIVIDER} aria-hidden />
+
+                    <section className={CREATE_EVAL_SECTION} aria-label="Resultado">
+                        <p className={CREATE_EVAL_SECTION_TITLE}>Resultado</p>
+
                     <div className={CREATE_EVAL_VALUE_GRID}>
-                        <Input
-                            label={CREATE_EVAL_VALUE_LABEL}
-                            type="text"
-                            inputMode={isTimeUnit(unit) ? "text" : "decimal"}
-                            value={value}
-                            onChange={(event) => setValue(event.target.value)}
-                            placeholder={isTimeUnit(unit) ? "1:25" : undefined}
-                            helperText={
-                                isTimeUnit(unit) ? CREATE_EVAL_VALUE_TIME_HINT : undefined
-                            }
-                            isRequired
-                        />
-                        <div className="space-y-1.5">
-                            <Label className="text-foreground">
-                                {CREATE_EVAL_UNIT_LABEL}{" "}
-                                <span className="text-destructive">*</span>
-                            </Label>
+                        <FormField label={CREATE_EVAL_VALUE_LABEL} required variant={FORM_VARIANT}>
+                            <Input
+                                variant={FORM_VARIANT}
+                                type="text"
+                                inputMode={isTimeUnit(unit) ? "text" : "decimal"}
+                                value={value}
+                                onChange={(event) => setValue(event.target.value)}
+                                placeholder={
+                                    isTimeUnit(unit)
+                                        ? CREATE_EVAL_VALUE_PLACEHOLDER_TIME
+                                        : CREATE_EVAL_VALUE_PLACEHOLDER
+                                }
+                                helperText={
+                                    isTimeUnit(unit) ? CREATE_EVAL_VALUE_TIME_HINT : undefined
+                                }
+                            />
+                        </FormField>
+                        <FormField label={CREATE_EVAL_UNIT_LABEL} required variant={FORM_VARIANT}>
                             <FormCombobox
                                 size="sm"
+                                variant={FORM_VARIANT}
                                 value={unit}
                                 options={unitSelectOptions(unit)}
-                                placeholder="Selecciona unidad"
+                                placeholder={CREATE_EVAL_UNIT_PLACEHOLDER}
                                 onChange={setUnit}
                                 ariaLabel={CREATE_EVAL_UNIT_LABEL}
                             />
-                        </div>
+                        </FormField>
                     </div>
 
-                    <DatePickerButton
-                        label={CREATE_EVAL_DATE_LABEL}
-                        value={testDate}
-                        onChange={setTestDate}
-                    />
+                    <FormField label={CREATE_EVAL_DATE_LABEL} variant={FORM_VARIANT}>
+                        <DatePickerButton
+                            label="Elegir fecha del test"
+                            variant="form"
+                            controlVariant={FORM_VARIANT}
+                            value={testDate}
+                            onChange={setTestDate}
+                        />
+                    </FormField>
 
                     <Checkbox
                         label={CREATE_EVAL_BASELINE_LABEL}
                         checked={isBaseline}
                         onChange={(event) => setIsBaseline(event.target.checked)}
                     />
+                    </section>
 
-                    <Input
-                        label={CREATE_EVAL_SURFACE_LABEL}
-                        value={surface}
-                        onChange={(event) => setSurface(event.target.value)}
-                    />
+                    <div className={CREATE_EVAL_OPTIONAL_BLOCK}>
+                        <p className={CREATE_EVAL_SECTION_TITLE}>Contexto (opcional)</p>
 
-                    <Input
-                        label={CREATE_EVAL_CONDITIONS_LABEL}
-                        value={conditions}
-                        onChange={(event) => setConditions(event.target.value)}
-                    />
+                    <FormField label={CREATE_EVAL_SURFACE_LABEL} variant={FORM_VARIANT}>
+                        <Input
+                            variant={FORM_VARIANT}
+                            value={surface}
+                            onChange={(event) => setSurface(event.target.value)}
+                            placeholder={CREATE_EVAL_SURFACE_PLACEHOLDER}
+                        />
+                    </FormField>
+
+                    <FormField label={CREATE_EVAL_CONDITIONS_LABEL} variant={FORM_VARIANT}>
+                        <Input
+                            variant={FORM_VARIANT}
+                            value={conditions}
+                            onChange={(event) => setConditions(event.target.value)}
+                            placeholder={CREATE_EVAL_CONDITIONS_PLACEHOLDER}
+                        />
+                    </FormField>
 
                     <Textarea
+                        variant={FORM_VARIANT}
                         label={CREATE_EVAL_NOTES_LABEL}
                         value={notes}
                         onChange={(event) => setNotes(event.target.value)}
+                        placeholder={CREATE_EVAL_NOTES_PLACEHOLDER}
                         rows={3}
                     />
+                    </div>
 
                     {showStrengthPrHint && (
                         <Alert variant="info">{CREATE_EVAL_STRENGTH_PR_HINT}</Alert>
@@ -529,7 +584,7 @@ export const CreateTestEvaluation: React.FC = () => {
                         <div className={CREATE_EVAL_FOOTER_ACTIONS}>
                             <Button
                                 type="button"
-                                variant="outline"
+                                variant="outline-primary"
                                 className={CREATE_EVAL_FOOTER_BTN}
                                 onClick={() => navigate(returnPath)}
                             >
@@ -538,7 +593,7 @@ export const CreateTestEvaluation: React.FC = () => {
                             <Button
                                 type="submit"
                                 variant="primary"
-                                className={CREATE_EVAL_FOOTER_BTN}
+                                className={cn(CREATE_EVAL_FOOTER_BTN, CREATE_EVAL_SUBMIT_CTA)}
                                 disabled={isRegistering || isCreatingTest || !trainerId}
                             >
                                 {isRegistering ? "Guardando…" : CREATE_EVAL_SUBMIT}

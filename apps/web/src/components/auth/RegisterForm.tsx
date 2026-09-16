@@ -184,6 +184,7 @@ export const RegisterForm: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
+                    variant="premium"
                     type="email"
                     label="Correo electrónico"
                     size="sm"
@@ -198,6 +199,7 @@ export const RegisterForm: React.FC = () => {
 
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Input
+                        variant="premium"
                         type="text"
                         label="Nombre"
                         size="sm"
@@ -211,6 +213,7 @@ export const RegisterForm: React.FC = () => {
                     />
 
                     <Input
+                        variant="premium"
                         type="text"
                         label="Apellidos"
                         size="sm"
@@ -225,6 +228,7 @@ export const RegisterForm: React.FC = () => {
                 </div>
 
                 <Input
+                    variant="premium"
                     type="password"
                     label="Contraseña"
                     size="sm"
@@ -238,6 +242,7 @@ export const RegisterForm: React.FC = () => {
                 />
 
                 <Input
+                    variant="premium"
                     type="password"
                     label="Confirmar contraseña"
                     size="sm"

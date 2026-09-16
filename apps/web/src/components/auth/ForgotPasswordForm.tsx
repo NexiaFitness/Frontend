@@ -119,6 +119,7 @@ export const ForgotPasswordForm: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
+                    variant="premium"
                     type="email"
                     label="Correo electrónico"
                     size="sm"

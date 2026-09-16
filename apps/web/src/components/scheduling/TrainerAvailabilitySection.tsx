@@ -8,7 +8,9 @@
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/buttons";
-import { Input, FormSelect, Checkbox } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField, Checkbox } from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import {
     useGetTrainerAvailabilityQuery,
@@ -196,16 +198,19 @@ const AvailabilitySlotCard: React.FC<AvailabilitySlotCardProps> = ({
     if (isEditing) {
         return (
             <div className="border border-border rounded-lg p-3 space-y-3">
-                <FormSelect
-                    label="Día"
-                    value={dayOfWeek.toString()}
-                    onChange={(e) => setDayOfWeek(parseInt(e.target.value, 10))}
-                    options={DAY_OPTIONS}
-                    size="sm"
-                />
+                <FormField label="Día" variant={FORM_VARIANT}>
+                    <FormCombobox
+                        size="sm"
+                        variant={FORM_VARIANT}
+                        value={dayOfWeek.toString()}
+                        onChange={(next) => setDayOfWeek(parseInt(next, 10))}
+                        options={DAY_OPTIONS}
+                        ariaLabel="Día"
+                    />
+                </FormField>
                 <div className="grid grid-cols-2 gap-2">
-                    <Input label="Desde" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} size="sm" />
-                    <Input label="Hasta" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} size="sm" />
+                    <Input variant={FORM_VARIANT} label="Desde" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} size="sm" />
+                    <Input variant={FORM_VARIANT} label="Hasta" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} size="sm" />
                 </div>
                 <Checkbox label="Recurrente (semanal)" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
                 <div className="flex gap-2">
@@ -280,16 +285,19 @@ const AddSlotForm: React.FC<AddSlotFormProps> = ({ onCancel, onSubmit, isLoading
 
     return (
         <div className="border border-border rounded-lg p-3 mt-3 space-y-3">
-            <FormSelect
-                label="Día"
-                value={dayOfWeek.toString()}
-                onChange={(e) => setDayOfWeek(parseInt(e.target.value, 10))}
-                options={DAY_OPTIONS}
-                size="sm"
-            />
+            <FormField label="Día" variant={FORM_VARIANT}>
+                <FormCombobox
+                    size="sm"
+                    variant={FORM_VARIANT}
+                    value={dayOfWeek.toString()}
+                    onChange={(next) => setDayOfWeek(parseInt(next, 10))}
+                    options={DAY_OPTIONS}
+                    ariaLabel="Día"
+                />
+            </FormField>
             <div className="grid grid-cols-2 gap-2">
-                <Input label="Desde" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} size="sm" />
-                <Input label="Hasta" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} size="sm" />
+                <Input variant={FORM_VARIANT} label="Desde" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} size="sm" />
+                <Input variant={FORM_VARIANT} label="Hasta" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} size="sm" />
             </div>
             <Checkbox label="Recurrente (semanal)" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} />
             <div className="flex gap-2">

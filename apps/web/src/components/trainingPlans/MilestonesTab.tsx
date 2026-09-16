@@ -33,7 +33,9 @@ import {
 } from "@nexia/shared/types/training";
 import type { Milestone } from "@nexia/shared/types/training";
 import { Button } from "@/components/ui/buttons";
-import { Input, FormSelect, Textarea, DatePickerButton } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField, Textarea, DatePickerButton } from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { Alert, LoadingSpinner, EmptyState } from "@/components/ui/feedback";
 import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 
@@ -259,20 +261,24 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                         </Alert>
                     )}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <FormSelect
-                            label="Tipo"
-                            value={formData.type}
-                            options={TYPE_OPTIONS}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    type: e.target.value as MilestoneType,
-                                })
-                            }
-                            size="sm"
-                        />
+                        <FormField label="Tipo" variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
+                                value={formData.type}
+                                options={TYPE_OPTIONS}
+                                onChange={(next) =>
+                                    setFormData({
+                                        ...formData,
+                                        type: next as MilestoneType,
+                                    })
+                                }
+                                ariaLabel="Tipo de hito"
+                            />
+                        </FormField>
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                             <Input
+                                variant={FORM_VARIANT}
                                 label="Nombre"
                                 value={formData.title}
                                 onChange={(e) =>
@@ -286,11 +292,7 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                                 autoFocus
                                 isRequired
                             />
-                            <div className="w-full">
-                                <label className="block text-sm font-medium text-foreground mb-1">
-                                    Fecha{" "}
-                                    <span className="text-destructive ml-1">*</span>
-                                </label>
+                            <FormField label="Fecha" required variant={FORM_VARIANT}>
                                 <DatePickerButton
                                     label="Seleccionar"
                                     value={formData.milestone_date}
@@ -301,23 +303,28 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                                         })
                                     }
                                     variant="form"
+                                    controlVariant={FORM_VARIANT}
                                     aria-label="Fecha del hito"
                                 />
-                            </div>
+                            </FormField>
                         </div>
-                        <FormSelect
-                            label="Importancia"
-                            value={formData.importance}
-                            options={IMPORTANCE_OPTIONS}
-                            onChange={(e) =>
-                                setFormData({
-                                    ...formData,
-                                    importance: e.target.value as MilestoneImportance,
-                                })
-                            }
-                            size="sm"
-                        />
+                        <FormField label="Importancia" variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
+                                value={formData.importance}
+                                options={IMPORTANCE_OPTIONS}
+                                onChange={(next) =>
+                                    setFormData({
+                                        ...formData,
+                                        importance: next as MilestoneImportance,
+                                    })
+                                }
+                                ariaLabel="Importancia"
+                            />
+                        </FormField>
                         <Textarea
+                            variant={FORM_VARIANT}
                             label="Notas"
                             value={formData.notes}
                             onChange={(e) =>

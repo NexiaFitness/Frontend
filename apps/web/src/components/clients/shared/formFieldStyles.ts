@@ -1,18 +1,29 @@
 /**
  * Estilos reutilizables para formularios de cliente (tokens del diseño).
- * Inputs, selects, textareas, labels, errores.
- * Para botones segmentados usar el componente SegmentButton (@/components/ui/buttons).
+ * Premium canónico: platformFormPresentation (DESIGN_PREMIUM §5.3).
  */
 
-export const inputClass =
-  "w-full h-9 rounded-md border border-input bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] disabled:opacity-50 disabled:cursor-not-allowed";
+import { cn } from "@/lib/utils";
+import {
+    PLATFORM_FORM_CONTROL,
+    platformFormLabelClass,
+} from "@/components/ui/forms/platformFormPresentation";
+
+export const labelClass = platformFormLabelClass("premium");
+
+export const inputClass = cn(
+    "w-full h-9 rounded-md px-3 py-1.5 text-sm text-foreground transition-colors",
+    "caret-primary disabled:cursor-not-allowed disabled:opacity-50",
+    PLATFORM_FORM_CONTROL,
+);
 
 export const selectClass = inputClass;
 
-export const textareaClass =
-  "w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:border-primary focus:shadow-[0_0_0_3px_hsl(var(--primary)/0.15)] resize-y min-h-[100px]";
-
-export const labelClass = "block text-sm font-medium text-foreground mb-1.5";
+export const textareaClass = cn(
+    "w-full min-h-[100px] resize-y rounded-md px-3 py-2 text-sm text-foreground transition-colors",
+    "caret-primary disabled:cursor-not-allowed disabled:opacity-50",
+    PLATFORM_FORM_CONTROL,
+);
 
 export const errorClass = "mt-1 text-sm text-destructive";
 
@@ -22,12 +33,10 @@ export const sectionHeadingClass = "text-lg font-semibold text-foreground";
 
 export const sectionDividerClass = "flex-1 h-0.5 bg-border";
 
-/** Card de sección (fondo surface oscuro) */
 export const sectionCardClass = "rounded-lg border border-border bg-surface p-6";
 
-/** Campo de solo lectura / display */
 export const displayFieldClass =
-  "w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground";
+    "w-full rounded-lg border border-border bg-muted/30 px-3 py-2 text-sm text-foreground";
 
-/** Badge "Auto" / calculado */
-export const badgeAutoClass = "text-xs bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-full";
+export const badgeAutoClass =
+    "text-xs bg-primary/20 text-primary border border-primary/30 px-2 py-0.5 rounded-full";

@@ -5,10 +5,12 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
-import { Input, FormSelect } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField } from "@/components/ui/forms";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { useCreateClientExercisePerformanceRecord } from "@nexia/shared/hooks/clients/useCreateClientExercisePerformanceRecord";
 import type { PerformanceMetric } from "@nexia/shared/types/exercisePerformance";
+
+const FORM_VARIANT = "premium" as const;
 
 const METRIC_OPTIONS = [
     { value: "best_weight_kg", label: "Peso máximo (kg)" },
@@ -99,15 +101,19 @@ export const ManualPerformanceRecordModal: React.FC<
             isLoading={isLoading}
         >
             <form onSubmit={handleSubmit} className="space-y-4">
-                <FormSelect
-                    label="Tipo de marca"
-                    value={metric}
-                    onChange={(e) => setMetric(e.target.value as PerformanceMetric)}
-                    options={METRIC_OPTIONS}
-                    isRequired
-                />
+                <FormField label="Tipo de marca" required variant={FORM_VARIANT}>
+                    <FormCombobox
+                        size="sm"
+                        variant={FORM_VARIANT}
+                        value={metric}
+                        onChange={(next) => setMetric(next as PerformanceMetric)}
+                        options={METRIC_OPTIONS}
+                        ariaLabel="Tipo de marca"
+                    />
+                </FormField>
 
                 <Input
+                    variant={FORM_VARIANT}
                     label="Peso (kg)"
                     type="number"
                     inputMode="decimal"
@@ -121,6 +127,7 @@ export const ManualPerformanceRecordModal: React.FC<
 
                 {metric === "best_weight_kg" && (
                     <Input
+                        variant={FORM_VARIANT}
                         label="Repeticiones (opcional)"
                         type="number"
                         inputMode="numeric"
@@ -134,6 +141,7 @@ export const ManualPerformanceRecordModal: React.FC<
                 )}
 
                 <Input
+                    variant={FORM_VARIANT}
                     label="Fecha"
                     type="date"
                     value={achievedAt}
@@ -141,6 +149,7 @@ export const ManualPerformanceRecordModal: React.FC<
                 />
 
                 <Input
+                    variant={FORM_VARIANT}
                     label="Notas (opcional)"
                     type="text"
                     value={notes}

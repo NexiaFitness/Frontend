@@ -18,6 +18,12 @@
 import React, { forwardRef, useId, useRef, useState, useImperativeHandle } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PlatformFormControlVariant } from "./platformFormPresentation";
+import {
+    platformFormControlClass,
+    platformFormLabelClass,
+    platformFormReadonlyControlClass,
+} from "./platformFormPresentation";
 
 export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
 export type InputSize = "xs" | "compact" | "sm" | "md" | "lg";
@@ -25,6 +31,8 @@ export type InputSize = "xs" | "compact" | "sm" | "md" | "lg";
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
     type?: InputType;
     size?: InputSize;
+    /** default = legacy dashboard; premium = paridad modales / DESIGN_PREMIUM §5.3 */
+    variant?: PlatformFormControlVariant;
     label?: string;
     error?: string;
     isRequired?: boolean;
@@ -86,7 +94,6 @@ const stateStyles = {
     error: "border-destructive focus:border-destructive",
 };
 
-const labelStyles = "block text-sm font-medium text-foreground mb-1";
 const errorStyles = "mt-1 text-sm text-destructive";
 const helperStyles = "mt-1 text-sm text-muted-foreground";
 
@@ -95,12 +102,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {
             type = "text",
             size = "sm",
+            variant = "default",
             label,
             error,
             isRequired = false,
             helperText,
             className = "",
             id,
+            readOnly,
+            disabled,
             ...props
         },
         ref
@@ -129,7 +139,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={inputId} className={labelStyles}>
+                    <label htmlFor={inputId} className={platformFormLabelClass(variant)}>
                         {label}
                         {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
@@ -149,8 +159,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                                 ? stateStyles.defaultXs
                                 : stateStyles.default,
                             isNumberType && "nexia-no-native-spinners",
+                            platformFormControlClass(variant),
+                            (readOnly || disabled) &&
+                                platformFormReadonlyControlClass(variant),
                             className
                         )}
+                        readOnly={readOnly}
+                        disabled={disabled}
                         {...props}
                     />
 

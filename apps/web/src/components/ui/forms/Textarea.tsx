@@ -7,12 +7,18 @@
  */
 
 import React, { forwardRef, useId } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
+import type { PlatformFormControlVariant } from "./platformFormPresentation";
+import {
+    platformFormControlClass,
+    platformFormLabelClass,
+} from "./platformFormPresentation";
 
 export type TextareaSize = "sm" | "md" | "lg";
 
 interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {
     size?: TextareaSize;
+    variant?: PlatformFormControlVariant;
     label?: string;
     error?: string;
     isRequired?: boolean;
@@ -33,7 +39,6 @@ const stateStyles = {
     error: "border-destructive focus:border-destructive",
 };
 
-const labelStyles = "block text-sm font-medium text-foreground mb-1";
 const errorStyles = "mt-1 text-sm text-destructive";
 const helperStyles = "mt-1 text-sm text-muted-foreground";
 
@@ -41,6 +46,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     (
         {
             size = "md",
+            variant = "default",
             label,
             error,
             isRequired = false,
@@ -57,20 +63,21 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={textareaId} className={labelStyles}>
+                    <label htmlFor={textareaId} className={platformFormLabelClass(variant)}>
                         {label}
-                        {isRequired && <span className="text-red-500 ml-1">*</span>}
+                        {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
                 )}
 
                 <textarea
                     ref={ref}
                     id={textareaId}
-                    className={clsx(
+                    className={cn(
                         baseStyles,
                         sizeStyles[size],
                         error ? stateStyles.error : stateStyles.default,
-                        className
+                        platformFormControlClass(variant),
+                        className,
                     )}
                     {...props}
                 />

@@ -8,6 +8,8 @@ import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea } from "@/components/ui/forms";
 
+const FORM_VARIANT = "premium" as const;
+
 export interface SaveAsTemplateModalProps {
     isOpen: boolean;
     onClose: () => void;
@@ -54,36 +56,30 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
             isLoading={isLoading}
         >
             <div className="space-y-4">
-                <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                        Nombre de la plantilla *
-                    </label>
-                    <Input
-                        type="text"
-                        value={templateName}
-                        onChange={(e) => {
-                            setTemplateName(e.target.value);
-                            if (nameError) setNameError(null);
-                        }}
-                        placeholder="Ej: Pierna A — hipertrofia"
-                        className="bg-surface"
-                        autoFocus
-                    />
-                    {nameError ? (
-                        <p className="text-destructive text-xs mt-1">{nameError}</p>
-                    ) : null}
-                </div>
-                <div>
-                    <label className="block text-xs font-medium text-muted-foreground mb-1.5">
-                        Descripción (opcional)
-                    </label>
-                    <Textarea
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        rows={2}
-                        placeholder="Notas para recordar cuándo usar esta plantilla"
-                    />
-                </div>
+                <Input
+                    variant={FORM_VARIANT}
+                    type="text"
+                    label="Nombre de la plantilla"
+                    isRequired
+                    value={templateName}
+                    onChange={(e) => {
+                        setTemplateName(e.target.value);
+                        if (nameError) setNameError(null);
+                    }}
+                    placeholder="Ej: Pierna A — hipertrofia"
+                    error={nameError ?? undefined}
+                    autoFocus
+                    size="sm"
+                />
+                <Textarea
+                    variant={FORM_VARIANT}
+                    label="Descripción (opcional)"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={2}
+                    placeholder="Notas para recordar cuándo usar esta plantilla"
+                    size="sm"
+                />
                 <div className="flex justify-end gap-2 pt-2">
                     <Button type="button" variant="outline" size="sm" onClick={onClose} disabled={isLoading}>
                         Cancelar

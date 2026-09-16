@@ -2,7 +2,6 @@
  * NexiaPremiumConfirmModal — confirmación premium (a11y básica).
  */
 
-import React from "react";
 import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { render } from "@/test-utils/render";
