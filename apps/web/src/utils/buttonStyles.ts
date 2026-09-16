@@ -29,9 +29,9 @@ export const BUTTON_PRESETS = {
     modalPrimary:
         "w-full sm:w-auto text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3",
 
-    // Botón destructivo en modales (delete account, delete client…)
+    // Ancho en modales destructivos — color vía Button variant="outline-destructive" (no sólido rojo)
     modalDanger:
-        "w-full sm:w-auto text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3 bg-red-600 text-white hover:bg-red-700",
+        "w-full sm:w-auto text-base px-4 py-2.5 lg:text-lg lg:px-6 lg:py-3",
 
     // Botones en modales con mismo ancho fijo (ej. DeleteAccountModal)
         modalEqual:

@@ -57,7 +57,6 @@ interface ClientHeaderProps {
     clientId?: number;
     onEditProfile?: () => void;
     breadcrumbItems?: BreadcrumbItem[];
-    onPlanificar?: () => void;
     onSaveQuickNote?: (text: string) => Promise<boolean>;
     isSavingQuickNote?: boolean;
 }
@@ -67,7 +66,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     clientId: clientIdProp,
     onEditProfile,
     breadcrumbItems,
-    onPlanificar,
     onSaveQuickNote,
     isSavingQuickNote = false,
 }) => {
@@ -147,17 +145,6 @@ export const ClientHeader: React.FC<ClientHeaderProps> = ({
     const headerActions = (
         <>
             <ClientInboxBell clientId={clientId} />
-            {onPlanificar && (
-                <Button
-                    variant="primary"
-                    size="sm"
-                    className={CLIENT_HEADER_ACTION_BUTTON_MOBILE}
-                    onClick={onPlanificar}
-                    aria-label="Planificar"
-                >
-                    Planificar
-                </Button>
-            )}
             {CLIENT_HEADER_SHOW_GENERATE_REPORT && (
                 <Button variant="outline" size="sm" disabled>
                     Generar Reporte

@@ -2,6 +2,7 @@
  * clientHeaderPresentation.ts — Tokens premium header ficha cliente (trainer).
  *
  * Tipografía NEXIA_PORTAL_*; glass en Observaciones (paridad dashboard widgets).
+ * Acciones header: inbox + Editar perfil (ghost-primary); sin CTA Planificar — ver 05_ACTION_HIERARCHY §2.2.
  * Doc: design/entrenador/UX-OVERVIEW-COCKPIT.md · design/platform/04_REGISTRY_CODIGO_FUENTE.md §11
  */
 

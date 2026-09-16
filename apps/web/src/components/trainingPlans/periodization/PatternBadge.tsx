@@ -49,7 +49,7 @@ export const PatternBadge: React.FC<Props> = ({
                 patternBadgeSizeClass(size),
                 selected
                     ? PATTERN_BADGE_SELECTED_BUCKET_CLASS[bucketKey]
-                    : bucketTintedIdle && onClick
+                    : bucketTintedIdle
                       ? PATTERN_BADGE_IDLE_BUCKET_CLASS[bucketKey]
                       : cn(
                             PATTERN_BADGE_IDLE_CLASS,

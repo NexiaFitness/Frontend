@@ -55,7 +55,11 @@ describe("Button", () => {
 
         it("renders danger variant correctly", () => {
             render(<Button variant="danger">Danger</Button>)
-            expect(screen.getByRole("button")).toHaveClass("bg-destructive", "text-destructive-foreground")
+            expect(screen.getByRole("button")).toHaveClass(
+                "border-destructive/30",
+                "bg-destructive/20",
+                "text-destructive"
+            )
         })
 
         it("renders outline variant correctly", () => {
@@ -180,7 +184,7 @@ describe("Button", () => {
         it("combines variant and size classes correctly", () => {
             render(<Button variant="danger" size="lg">Large Danger</Button>)
             const button = screen.getByRole("button")
-            expect(button).toHaveClass("bg-destructive")
+            expect(button).toHaveClass("border-destructive/30", "text-destructive")
             expect(button).toHaveClass("h-9", "px-8")
         })
     })

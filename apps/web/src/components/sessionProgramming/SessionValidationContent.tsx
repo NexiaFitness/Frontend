@@ -44,6 +44,24 @@ import { LoadingSpinner, Alert } from "@/components/ui/feedback";
 import { CollapsibleFormGroup } from "@/components/ui/forms/CollapsibleFormGroup";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import { cn } from "@/lib/utils";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import {
+    SESSION_VALIDATION_DEVIATION_TRACK,
+    SESSION_VALIDATION_EMPTY_HINT,
+    SESSION_VALIDATION_INSIGHT_BODY,
+    SESSION_VALIDATION_INSIGHT_CARD,
+    SESSION_VALIDATION_INSIGHT_HEADER,
+    SESSION_VALIDATION_INSIGHT_TITLE,
+    SESSION_VALIDATION_NOT_APPLICABLE,
+    SESSION_VALIDATION_PATTERN_TILE,
+    SESSION_VALIDATION_PATTERN_TILE_LABEL,
+    SESSION_VALIDATION_REVIEW_GRID,
+    SESSION_VALIDATION_SECTION_EYEBROW,
+    SESSION_VALIDATION_UNCOVERED_SHELL,
+    SESSION_VALIDATION_VOLUME_FULL,
+    sessionValidationAxialFillClass,
+    sessionValidationDeviationFillClass,
+} from "./sessionValidationReviewPresentation";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -121,58 +139,32 @@ export function StatusBadge({
     );
 }
 
-function deviationTone(percent: number): {
-    bar: string;
-    border: string;
-    text: string;
-    glow: string;
-} {
+function deviationTextClass(percent: number): string {
     const abs = Math.abs(percent);
-    if (abs <= 15) {
-        return {
-            bar: "bg-success",
-            border: "border-l-success",
-            text: "text-success",
-            glow: "shadow-[0_0_12px_-6px_hsl(var(--success)/0.5)]",
-        };
-    }
-    if (abs <= 30) {
-        return {
-            bar: "bg-warning",
-            border: "border-l-warning",
-            text: "text-warning",
-            glow: "shadow-[0_0_12px_-6px_hsl(var(--warning)/0.45)]",
-        };
-    }
-    return {
-        bar: "bg-destructive",
-        border: "border-l-destructive",
-        text: "text-destructive",
-        glow: "shadow-[0_0_12px_-6px_hsl(var(--destructive)/0.45)]",
-    };
+    if (abs <= 15) return "text-success";
+    if (abs <= 30) return "text-warning";
+    return "text-destructive";
 }
 
 export function DeviationBar({ percent, compact = false }: { percent: number; compact?: boolean }) {
     const abs = Math.abs(percent);
-    const tone = deviationTone(percent);
+    const widthPct = Math.min(abs, 100);
     return (
         <div className={cn("flex items-center gap-2", compact && "gap-1.5")}>
-            <div
-                className={cn(
-                    "flex-1 rounded-full bg-surface-2 overflow-hidden",
-                    compact ? "h-1" : "h-1.5"
-                )}
-            >
+            <div className={cn("flex-1", SESSION_VALIDATION_DEVIATION_TRACK, compact ? "h-2" : "h-2")}>
                 <div
-                    className={cn("h-full rounded-full transition-all", tone.bar)}
-                    style={{ width: `${Math.min(abs, 100)}%` }}
+                    className={cn(
+                        "h-full rounded-full transition-[width] duration-300 ease-out",
+                        sessionValidationDeviationFillClass(percent),
+                    )}
+                    style={{ width: `${widthPct}%` }}
                 />
             </div>
             <span
                 className={cn(
                     "shrink-0 tabular-nums text-right font-medium",
                     compact ? "w-10 text-[10px]" : "w-12 text-xs",
-                    tone.text
+                    deviationTextClass(percent),
                 )}
             >
                 {percent > 0 ? "+" : ""}
@@ -198,8 +190,8 @@ const PatternsSection: React.FC<{
                 {(data.missing.length > 0 || data.extra.length > 0) && (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         {data.missing.length > 0 ? (
-                            <div className="rounded-lg border border-destructive/25 bg-destructive/[0.06] px-3 py-2.5">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-destructive mb-1.5">
+                            <div className={cn(SESSION_VALIDATION_PATTERN_TILE, "border-destructive/25 bg-destructive/[0.06]")}>
+                                <p className={cn(SESSION_VALIDATION_PATTERN_TILE_LABEL, "text-destructive")}>
                                     Faltantes
                                 </p>
                                 <div className="flex flex-wrap gap-1">
@@ -210,8 +202,8 @@ const PatternsSection: React.FC<{
                             </div>
                         ) : null}
                         {data.extra.length > 0 ? (
-                            <div className="rounded-lg border border-primary/25 bg-primary/[0.06] px-3 py-2.5">
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1.5">
+                            <div className={cn(SESSION_VALIDATION_PATTERN_TILE, "border-primary/25 bg-primary/[0.06]")}>
+                                <p className={cn(SESSION_VALIDATION_PATTERN_TILE_LABEL, "text-primary")}>
                                     Extra
                                 </p>
                                 <div className="flex flex-wrap gap-1">
@@ -225,16 +217,12 @@ const PatternsSection: React.FC<{
                 )}
                 {data.expected.length > 0 ? (
                     <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 text-xs">
-                        <div className="rounded-lg border border-border/60 bg-surface/80 px-3 py-2.5">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                                Esperados
-                            </p>
+                        <div className={SESSION_VALIDATION_PATTERN_TILE}>
+                            <p className={SESSION_VALIDATION_PATTERN_TILE_LABEL}>Esperados</p>
                             <p className="text-foreground leading-snug">{data.expected.join(" · ")}</p>
                         </div>
-                        <div className="rounded-lg border border-border/60 bg-surface/80 px-3 py-2.5">
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-1">
-                                Actuales
-                            </p>
+                        <div className={SESSION_VALIDATION_PATTERN_TILE}>
+                            <p className={SESSION_VALIDATION_PATTERN_TILE_LABEL}>Actuales</p>
                             <p className="text-foreground leading-snug">{data.actual.join(" · ")}</p>
                         </div>
                     </div>
@@ -354,7 +342,7 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
 
             {coveredRows.length > 0 ? (
                 <div className="space-y-2.5">
-                    <h5 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <h5 className={SESSION_VALIDATION_SECTION_EYEBROW}>
                         {VOLUME_REVIEW_GROUPS_HEADING}
                     </h5>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -368,15 +356,15 @@ const VolumeSectionReview: React.FC<{ data: NonNullable<SessionValidationOut["vo
                     </div>
                 </div>
             ) : (
-                <p className="rounded-lg border border-border/60 bg-muted/15 px-3 py-2.5 text-sm text-muted-foreground">
+                <p className={SESSION_VALIDATION_EMPTY_HINT}>
                     Ningún grupo muscular del plan tiene series en esta sesión.
                 </p>
             )}
 
             {uncoveredRows.length > 0 ? (
-                <div className="space-y-2 rounded-lg border border-dashed border-border/50 bg-muted/10 px-3 py-3">
+                <div className={SESSION_VALIDATION_UNCOVERED_SHELL}>
                     <div className="flex flex-wrap items-baseline justify-between gap-2">
-                        <h5 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        <h5 className={SESSION_VALIDATION_SECTION_EYEBROW}>
                             Grupos previstos sin cobertura hoy
                         </h5>
                         <span className="text-[10px] tabular-nums text-muted-foreground">
@@ -433,19 +421,23 @@ const VolumeSection: React.FC<{
 const AxialLoadSection: React.FC<{ data: AxialScoreResponse | undefined }> = ({ data }) => {
     if (!data) return <p className="text-sm text-muted-foreground">Sin datos de carga axial.</p>;
     const { total_score, threshold, exceeds_threshold, exercises_breakdown } = data;
+    const axialTone = exceeds_threshold ? "text-destructive" : "text-success";
     return (
         <div className="space-y-3">
-            <div className="flex items-center justify-between">
-                <span className={cn("text-sm font-medium", exceeds_threshold ? "text-destructive" : "text-success")}>
+            <div className="flex items-center justify-between gap-2">
+                <span className={cn("text-sm tabular-nums text-foreground")}>
                     {total_score} / {threshold}
                 </span>
-                <span className={cn("text-xs font-medium", exceeds_threshold ? "text-destructive" : "text-success")}>
+                <span className={cn("text-xs font-normal", axialTone)}>
                     {exceeds_threshold ? "Excede umbral" : "Dentro del umbral"}
                 </span>
             </div>
-            <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+            <div className={SESSION_VALIDATION_DEVIATION_TRACK}>
                 <div
-                    className={cn("h-full rounded-full transition-all", exceeds_threshold ? "bg-destructive" : "bg-success")}
+                    className={cn(
+                        "h-full rounded-full transition-[width] duration-300 ease-out",
+                        sessionValidationAxialFillClass(exceeds_threshold),
+                    )}
                     style={{ width: `${Math.min((total_score / Math.max(threshold, 1)) * 100, 100)}%` }}
                 />
             </div>
@@ -517,44 +509,25 @@ const SafetySummarySection: React.FC<{ data: SessionSafetySummaryOut | undefined
 // Props
 // ---------------------------------------------------------------------------
 
-function validationBorderAccent(
-    status: ValidationStatus | "partially_aligned" | null | undefined
-): string {
-    switch (status) {
-        case "aligned":
-            return "border-l-success";
-        case "slight_deviation":
-            return "border-l-warning";
-        case "misaligned":
-            return "border-l-destructive";
-        case "partially_aligned":
-            return "border-l-primary";
-        default:
-            return "border-l-muted-foreground/40";
-    }
-}
-
-const VALIDATION_INSIGHT_SHELL =
-    "rounded-lg border border-border/60 border-l-[3px] bg-surface shadow-sm overflow-hidden transition-all hover:border-primary/30";
-
 function ValidationInsightCard({
     title,
     badge,
-    borderAccent,
     children,
+    className,
 }: {
     title: string;
-    badge: React.ReactNode;
-    borderAccent: string;
+    badge?: React.ReactNode;
     children: React.ReactNode;
+    className?: string;
 }) {
     return (
-        <article className={cn(VALIDATION_INSIGHT_SHELL, borderAccent)}>
-            <div className="flex items-center justify-between gap-3 border-b border-border/50 bg-surface/40 px-4 py-3">
-                <h4 className="text-sm font-semibold text-foreground">{title}</h4>
-                {badge}
+        <article className={cn(SESSION_VALIDATION_INSIGHT_CARD, "relative pt-1", className)}>
+            <NexiaGlassAccentRim />
+            <div className={SESSION_VALIDATION_INSIGHT_HEADER}>
+                <h4 className={SESSION_VALIDATION_INSIGHT_TITLE}>{title}</h4>
+                {badge ?? null}
             </div>
-            <div className="px-4 py-4">{children}</div>
+            <div className={SESSION_VALIDATION_INSIGHT_BODY}>{children}</div>
         </article>
     );
 }
@@ -598,14 +571,12 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
             ) : null}
 
             {data?.overall_status === "not_applicable" ? (
-                <section
-                    className="rounded-lg border border-border/60 border-l-[3px] border-l-muted-foreground/40 bg-muted/20 px-4 py-4"
-                    aria-label="Alineación con el plan no aplicable"
-                >
+                <section className={SESSION_VALIDATION_NOT_APPLICABLE} aria-label="Alineación con el plan no aplicable">
+                    <NexiaGlassAccentRim />
                     {(() => {
                         const copy = getNotApplicableCopy(data.block_resolution_reason);
                         return (
-                            <>
+                            <div className="relative z-[1]">
                                 <div className="flex items-start gap-2">
                                     <Info
                                         className="mt-0.5 size-4 shrink-0 text-muted-foreground"
@@ -620,48 +591,24 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                                         </p>
                                     </div>
                                 </div>
-                            </>
+                            </div>
                         );
                     })()}
                 </section>
             ) : null}
 
             {data && data.overall_status !== "not_applicable" ? (
-                <div className="space-y-6">
-                    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+                <div className="space-y-5 md:space-y-6">
+                    <div className={SESSION_VALIDATION_REVIEW_GRID}>
                         <ValidationInsightCard
                             title="Patrones de movimiento"
                             badge={<StatusBadge status={data.patterns?.status ?? null} />}
-                            borderAccent={validationBorderAccent(data.patterns?.status ?? null)}
                         >
                             <PatternsSection data={data.patterns} variant="review" />
                         </ValidationInsightCard>
 
-                        <div className="flex flex-col gap-3">
-                            <ValidationInsightCard
-                                title="Carga axial"
-                                badge={
-                                    <span
-                                        className={cn(
-                                            "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium",
-                                            data.axial_score?.exceeds_threshold
-                                                ? "border-destructive/30 bg-destructive/10 text-destructive"
-                                                : "border-success/30 bg-success/10 text-success"
-                                        )}
-                                    >
-                                        {data.axial_score
-                                            ? data.axial_score.exceeds_threshold
-                                                ? "Excede umbral"
-                                                : "Dentro del umbral"
-                                            : "No disponible"}
-                                    </span>
-                                }
-                                borderAccent={
-                                    data.axial_score?.exceeds_threshold
-                                        ? "border-l-destructive"
-                                        : "border-l-success"
-                                }
-                            >
+                        <div className="flex flex-col gap-4 md:gap-5">
+                            <ValidationInsightCard title="Carga axial">
                                 <AxialLoadSection data={data.axial_score} />
                             </ValidationInsightCard>
 
@@ -674,26 +621,19 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                                             : "No disponible"}
                                     </span>
                                 }
-                                borderAccent={
-                                    (data.safety_summary?.blocking_count ?? 0) > 0
-                                        ? "border-l-destructive"
-                                        : (data.safety_summary?.warning_count ?? 0) > 0
-                                          ? "border-l-warning"
-                                          : "border-l-success"
-                                }
                             >
                                 <SafetySummarySection data={data.safety_summary} />
                             </ValidationInsightCard>
                         </div>
-                    </div>
 
-                    <ValidationInsightCard
-                        title={VOLUME_REVIEW_SECTION_TITLE}
-                        badge={<StatusBadge status={data.volume?.status ?? null} />}
-                        borderAccent={validationBorderAccent(data.volume?.status ?? null)}
-                    >
-                        <VolumeSection data={data.volume} variant="review" />
-                    </ValidationInsightCard>
+                        <ValidationInsightCard
+                            className={SESSION_VALIDATION_VOLUME_FULL}
+                            title={VOLUME_REVIEW_SECTION_TITLE}
+                            badge={<StatusBadge status={data.volume?.status ?? null} />}
+                        >
+                            <VolumeSection data={data.volume} variant="review" />
+                        </ValidationInsightCard>
+                    </div>
                 </div>
             ) : null}
         </>
@@ -774,16 +714,7 @@ export const SessionValidationContent: React.FC<SessionValidationContentProps> =
                         <VolumeSection data={data.volume} />
                     </CollapsibleFormGroup>
 
-                    <CollapsibleFormGroup
-                        title="Carga axial"
-                        badge={
-                            data.axial_score
-                                ? data.axial_score.exceeds_threshold
-                                    ? "Excede umbral"
-                                    : "Dentro del umbral"
-                                : "No disponible"
-                        }
-                    >
+                    <CollapsibleFormGroup title="Carga axial">
                         <AxialLoadSection data={data.axial_score} />
                     </CollapsibleFormGroup>
 

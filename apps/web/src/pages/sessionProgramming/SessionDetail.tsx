@@ -6,7 +6,7 @@
  * @since v6.3.0
  */
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
     ArrowLeft,
@@ -42,7 +42,11 @@ import {
     SessionAlertsPanel,
     SessionExecutionSummary,
 } from "@/components/sessionProgramming/detail";
-import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+import {
+    navigateDashboardBack,
+    readSafeReturnTo,
+    returnToStateFromView,
+} from "@/lib/sessionDetailNavigation";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
@@ -112,13 +116,9 @@ export const SessionDetail: React.FC = () => {
     const location = useLocation();
     const { showSuccess, showError } = useToast();
     const backTarget = readSafeReturnTo(location.state) ?? null;
-    const goBack = () => {
-        if (backTarget) {
-            navigate(backTarget);
-        } else {
-            navigate(DEFAULT_BACK_TO_SESSIONS);
-        }
-    };
+    const goBack = useCallback(() => {
+        navigateDashboardBack(navigate, location.state, DEFAULT_BACK_TO_SESSIONS);
+    }, [navigate, location.state]);
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -282,7 +282,7 @@ export const SessionDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={goBack} className="shrink-0">
+                <Button variant="ghost-primary" size="sm" onClick={goBack} className="shrink-0">
                     <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                     Volver
                 </Button>
@@ -396,15 +396,19 @@ export const SessionDetail: React.FC = () => {
             <DashboardFixedFooter>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <Button
-                        variant="outline-destructive"
-                        onClick={() => setShowDeleteModal(true)}
+                        variant="primary"
+                        onClick={() =>
+                            navigate(`/dashboard/session-programming/edit-session/${session.id}`, {
+                                state: returnToStateFromView(location),
+                            })
+                        }
                     >
-                        <Trash2 className="mr-1 h-4 w-4" aria-hidden />
-                        Eliminar
+                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                        Editar sesión
                     </Button>
                     {session.period_block_id ? (
                         <Button
-                            variant="outline-primary"
+                            variant="ghost-primary"
                             onClick={replicateFlow.openModal}
                         >
                             <Copy className="mr-1 h-4 w-4" aria-hidden />
@@ -412,11 +416,11 @@ export const SessionDetail: React.FC = () => {
                         </Button>
                     ) : null}
                     <Button
-                        variant="primary"
-                        onClick={() => navigate(`/dashboard/session-programming/edit-session/${session.id}`)}
+                        variant="outline-destructive"
+                        onClick={() => setShowDeleteModal(true)}
                     >
-                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
-                        Editar sesión
+                        <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                        Eliminar
                     </Button>
                 </div>
             </DashboardFixedFooter>

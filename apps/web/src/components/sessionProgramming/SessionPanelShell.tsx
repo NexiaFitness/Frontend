@@ -5,6 +5,7 @@
 
 import React from "react";
 import { cn } from "@/lib/utils";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     SESSION_PROGRAMMING_PANEL,
     SESSION_PROGRAMMING_PANEL_BODY,
@@ -31,7 +32,8 @@ export const SessionPanelShell: React.FC<SessionPanelShellProps> = ({
     bodyClassName,
 }) => {
     return (
-        <div className={cn(SESSION_PROGRAMMING_PANEL, className)}>
+        <div className={cn(SESSION_PROGRAMMING_PANEL, "relative pt-1", className)}>
+            <NexiaGlassAccentRim />
             <div className={SESSION_PROGRAMMING_PANEL_HEADER}>
                 <div className="flex min-w-0 items-start justify-between gap-3">
                     <div className="min-w-0 space-y-1">

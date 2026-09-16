@@ -5,7 +5,8 @@
 import React, { useId, useMemo } from "react";
 import { ChevronRight, Copy, Pencil, Trash2 } from "lucide-react";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { returnToStateFromView } from "@/lib/sessionDetailNavigation";
 import type { PlanTrainingSession } from "@nexia/shared";
 import { useGetSessionCoherenceQuery } from "@nexia/shared/api/trainingSessionsApi";
 import { isSessionDeletable, SESSION_TYPE_LABELS } from "@nexia/shared";
@@ -75,6 +76,7 @@ function SessionCardPhaseChip({
     inlineCoherence?: SessionCoherence | null;
 }) {
     const navigate = useNavigate();
+    const location = useLocation();
     const hasUsableInlineCoherence = Boolean(
         inlineCoherence?.coherence_report ||
             (inlineCoherence?.coherence_warnings?.length ?? 0) > 0,
@@ -91,7 +93,9 @@ function SessionCardPhaseChip({
     if (!chip) return null;
 
     const handleOpenReview = () => {
-        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`);
+        navigate(`/dashboard/session-programming/sessions/${sessionId}/review`, {
+            state: returnToStateFromView(location),
+        });
     };
 
     return (

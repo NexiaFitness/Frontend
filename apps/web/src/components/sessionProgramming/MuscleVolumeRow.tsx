@@ -10,10 +10,19 @@ import {
     formatHalfSetVolume,
     formatVolumeRatioHoy,
     volumeBarWidthPct,
-    volumeStatusBarColorClass,
-    volumeStatusDotClass,
     volumeStatusLabel,
 } from "@nexia/shared";
+import {
+    MUSCLE_VOLUME_BAR_FILL_CLASS,
+    MUSCLE_VOLUME_BAR_TRACK_CLASS,
+    MUSCLE_VOLUME_ROW_BREAKDOWN_CLASS,
+    MUSCLE_VOLUME_ROW_CONTEXT_CLASS,
+    MUSCLE_VOLUME_ROW_META_CLASS,
+    MUSCLE_VOLUME_ROW_STATUS_BADGE,
+    MUSCLE_VOLUME_ROW_TITLE_CLASS,
+    MUSCLE_VOLUME_ROW_UNCOVERED_SHELL,
+    MUSCLE_VOLUME_STATUS_BADGE_CLASS,
+} from "./muscleVolumeRowPresentation";
 
 export interface MuscleVolumeRowProps {
     row: WeeklyVolumePanelRowModel;
@@ -46,74 +55,67 @@ export const MuscleVolumeRow: React.FC<MuscleVolumeRowProps> = ({
     const displayName = row.nameEs || `Grupo ${row.muscleGroupId}`;
     const totalSets = row.accumulated;
 
+    const statusBadge = (
+        <span
+            className={cn(
+                MUSCLE_VOLUME_ROW_STATUS_BADGE,
+                MUSCLE_VOLUME_STATUS_BADGE_CLASS[row.status],
+            )}
+        >
+            {volumeStatusLabel(row.status)}
+        </span>
+    );
+
     if (variant === "uncovered") {
         return (
-            <div
-                className={cn(
-                    "min-w-0 rounded-md border border-dashed border-border/55",
-                    "bg-background/50 px-3 py-2.5"
-                )}
-            >
-                <div className="flex flex-col gap-1">
-                    <span className="text-xs font-medium text-muted-foreground truncate">
+            <div className={MUSCLE_VOLUME_ROW_UNCOVERED_SHELL}>
+                <div className="flex flex-col gap-1.5">
+                    <span className={cn(MUSCLE_VOLUME_ROW_TITLE_CLASS, "text-muted-foreground")}>
                         {displayName}
                     </span>
-                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
-                        <span className="text-muted-foreground tabular-nums">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className={MUSCLE_VOLUME_ROW_META_CLASS}>
                             {formatVolumeRatioHoy(row, ratioStyle)}
                         </span>
-                        <span
-                            className={cn(
-                                "inline-flex items-center gap-1",
-                                volumeStatusDotClass(row.status)
-                            )}
-                        >
-                            <span className="text-current" aria-hidden>
-                                ●
-                            </span>
-                            <span className="text-foreground/80">{volumeStatusLabel(row.status)}</span>
-                        </span>
+                        {statusBadge}
                     </div>
                 </div>
             </div>
         );
     }
 
+    const widthPct = volumeBarWidthPct(row);
+
     return (
-        <div className="space-y-1.5 min-w-0">
-            <div className="flex items-center justify-between gap-2 min-w-0 text-xs">
-                <span className="font-medium text-foreground truncate min-w-0">{displayName}</span>
-                <div className="flex items-center gap-2 text-[11px] shrink-0">
-                    <span className="text-muted-foreground tabular-nums">
+        <div className="min-w-0 space-y-2">
+            <div className="flex items-center justify-between gap-2 min-w-0">
+                <span className={MUSCLE_VOLUME_ROW_TITLE_CLASS}>{displayName}</span>
+                <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                    <span className={MUSCLE_VOLUME_ROW_META_CLASS}>
                         {formatVolumeRatioHoy(row, ratioStyle)}
                     </span>
-                    <span
-                        className={cn(
-                            "inline-flex items-center gap-1",
-                            volumeStatusDotClass(row.status)
-                        )}
-                    >
-                        <span className="text-current" aria-hidden>
-                            ●
-                        </span>
-                        <span className="text-foreground/90">{volumeStatusLabel(row.status)}</span>
-                    </span>
+                    {statusBadge}
                 </div>
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+            <div
+                className={MUSCLE_VOLUME_BAR_TRACK_CLASS}
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(widthPct)}
+                aria-label={`${displayName}: ${volumeStatusLabel(row.status)}`}
+            >
                 <div
                     className={cn(
-                        "h-full rounded-full transition-all duration-300",
-                        volumeStatusBarColorClass(row.status)
+                        "h-full rounded-full transition-[width] duration-300 ease-out",
+                        MUSCLE_VOLUME_BAR_FILL_CLASS[row.status],
                     )}
-                    style={{ width: `${volumeBarWidthPct(row)}%` }}
+                    style={{ width: `${widthPct}%` }}
                 />
             </div>
-            {context ? (
-                <span className="text-[11px] text-muted-foreground leading-snug block">{context}</span>
-            ) : null}
+            {context ? <span className={MUSCLE_VOLUME_ROW_CONTEXT_CLASS}>{context}</span> : null}
             {hasBreakdown ? (
-                <div className="flex items-center gap-3 text-[11px] text-muted-foreground/80 pt-0.5">
+                <div className={MUSCLE_VOLUME_ROW_BREAKDOWN_CLASS}>
                     <span className="tabular-nums">
                         Directo:{" "}
                         <span className="font-medium text-foreground/70">

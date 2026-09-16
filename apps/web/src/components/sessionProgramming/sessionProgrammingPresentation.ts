@@ -2,6 +2,7 @@
  * sessionProgrammingPresentation.ts — Constructor / crear-editar sesión (premium compartido).
  *
  * Doc: DESIGN_PREMIUM.md (raíz) · design/platform/01_PREMIUM_MIGRATION.md
+ * Barras volumen muscular: muscleVolumeRowPresentation.ts (track = BlockLevelMeter).
  * Patrón: templateLibraryPresentation.ts · CreateTrainingPlanTemplate.tsx
  */
 
@@ -228,6 +229,7 @@ export const SESSION_PROGRAMMING_FOOTER_PRIMARY = cn(
     "xl:min-h-0 xl:w-auto xl:px-5 xl:text-sm xl:font-medium xl:shadow-none",
 );
 
+/** Secundaria premium (marco cyan): `Button variant="outline-primary"` — plantilla, revisar alineación. §05_ACTION_HIERARCHY §2.3.1 B */
 export const SESSION_PROGRAMMING_FOOTER_SECONDARY = cn(
     "w-full min-h-touch xl:min-h-0 xl:w-auto",
 );

@@ -4,7 +4,7 @@
  * Notas: validar ruta interna (evita open redirect).
  */
 
-import type { Location } from "react-router-dom";
+import type { Location, NavigateFunction } from "react-router-dom";
 import type { LocationStateReturnTo, SessionReviewLocationState } from "@nexia/shared";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 
@@ -56,6 +56,28 @@ export function readSafeReturnTo(state: unknown): string | null {
         return null;
     }
     return from;
+}
+
+/**
+ * Volver al origen: `state.from` (navigate con returnToStateFromView), historial del
+ * navegador, o ruta por defecto. Evita mandar siempre al listado de sesiones.
+ */
+export function navigateDashboardBack(
+    navigate: NavigateFunction,
+    state: unknown,
+    fallbackPath: string,
+): void {
+    const from = readSafeReturnTo(state);
+    if (from) {
+        navigate(from);
+        return;
+    }
+    const idx = (window.history.state as { idx?: number } | null)?.idx;
+    if (typeof idx === "number" && idx > 0) {
+        navigate(-1);
+        return;
+    }
+    navigate(fallbackPath);
 }
 
 /**
