@@ -1,25 +1,61 @@
 /**
- * GenerateReports.tsx — Página de generación de reportes
- *
- * Contexto:
- * - Vista protegida (solo trainers) para generar reportes
- * - Permite seleccionar tipo de reporte, cliente, fechas y formato
- * - Muestra resultado del reporte generado
- *
- * @author Frontend Team
- * @since v5.1.0
+ * GenerateReports.tsx — Generación de reportes (premium §5.3).
  */
 
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { PageTitle } from "@/components/dashboard/shared";
+import { ArrowLeft } from "lucide-react";
+import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
-import { Input, FormSelect } from "@/components/ui/forms";
+import {
+    DatePickerButton,
+    FormCombobox,
+    FormField,
+} from "@/components/ui/forms";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import { useGenerateReport } from "@nexia/shared";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
-import type { ReportFormData, ReportType, ReportFormat } from "@nexia/shared/types/reports";
-import { REPORT_TYPE, REPORT_FORMAT } from "@nexia/shared/types/reports";
+import type { ReportFormData, ReportFormat, ReportType } from "@nexia/shared/types/reports";
+import { REPORT_FORMAT, REPORT_TYPE } from "@nexia/shared/types/reports";
+import {
+    GENERATE_REPORTS_BACK_BUTTON,
+    GENERATE_REPORTS_BACK_LABEL,
+    GENERATE_REPORTS_CANCEL,
+    GENERATE_REPORTS_CLIENT_LABEL,
+    GENERATE_REPORTS_CLIENT_PLACEHOLDER,
+    GENERATE_REPORTS_DATE_GRID,
+    GENERATE_REPORTS_END_LABEL,
+    GENERATE_REPORTS_ERROR_CLIENT,
+    GENERATE_REPORTS_FOOTER_ACTIONS,
+    GENERATE_REPORTS_FOOTER_BTN,
+    GENERATE_REPORTS_FORMAT_LABEL,
+    GENERATE_REPORTS_FORMAT_OPTIONS,
+    GENERATE_REPORTS_FORM_BODY,
+    GENERATE_REPORTS_FORM_CARD,
+    GENERATE_REPORTS_FORM_DIVIDER,
+    GENERATE_REPORTS_GLOW,
+    GENERATE_REPORTS_HEADER,
+    GENERATE_REPORTS_ICON_BACK_GAP,
+    GENERATE_REPORTS_ICON_SM,
+    GENERATE_REPORTS_PAGE,
+    GENERATE_REPORTS_PAGE_SUBTITLE,
+    GENERATE_REPORTS_PAGE_TITLE,
+    GENERATE_REPORTS_SECTION,
+    GENERATE_REPORTS_SECTION_CONFIG,
+    GENERATE_REPORTS_SECTION_RESULT,
+    GENERATE_REPORTS_SECTION_TITLE,
+    GENERATE_REPORTS_START_LABEL,
+    GENERATE_REPORTS_SUBMIT,
+    GENERATE_REPORTS_SUBMIT_CTA,
+    GENERATE_REPORTS_TITLE_WRAP,
+    GENERATE_REPORTS_TYPE_LABEL,
+    GENERATE_REPORTS_TYPE_OPTIONS,
+    GENERATE_REPORTS_UPCOMING_HINT,
+} from "./generateReportsPresentation";
+
+const FORM_VARIANT = "premium" as const;
 
 export const GenerateReports: React.FC = () => {
     const navigate = useNavigate();
@@ -27,7 +63,7 @@ export const GenerateReports: React.FC = () => {
 
     const { data: clientsData } = useGetTrainerClientsQuery(
         { trainerId: trainerId ?? 0, page: 1, per_page: 50 },
-        { skip: !trainerId }
+        { skip: !trainerId },
     );
 
     const [formData, setFormData] = useState<ReportFormData>({
@@ -39,21 +75,31 @@ export const GenerateReports: React.FC = () => {
         format: REPORT_FORMAT.JSON,
     });
 
-    const [reportResult, setReportResult] = useState<{ report_id: string; data: Record<string, unknown> | null } | null>(null);
+    const [reportResult, setReportResult] = useState<{
+        report_id: string;
+        data: Record<string, unknown> | null;
+    } | null>(null);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+    const clientOptions = useMemo(
+        () => [
+            { value: "", label: GENERATE_REPORTS_CLIENT_PLACEHOLDER },
+            ...(clientsData?.items.map((client) => ({
+                value: client.id.toString(),
+                label: `${client.nombre} ${client.apellidos}`.trim(),
+            })) ?? []),
+        ],
+        [clientsData?.items],
+    );
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setFormErrors({});
         setReportResult(null);
 
-        // Validación
         const errors: Record<string, string> = {};
         if (formData.reportType === REPORT_TYPE.CLIENT_PROGRESS && !formData.clientId) {
-            errors.clientId = "Se requiere seleccionar un cliente para este tipo de reporte";
-        }
-        if (formData.reportType === REPORT_TYPE.TRAINING_SUMMARY && !formData.trainerId) {
-            errors.trainerId = "Se requiere trainer_id para este tipo de reporte";
+            errors.clientId = GENERATE_REPORTS_ERROR_CLIENT;
         }
 
         if (Object.keys(errors).length > 0) {
@@ -62,7 +108,10 @@ export const GenerateReports: React.FC = () => {
         }
 
         try {
-            const result = await generateReport(formData);
+            const result = await generateReport({
+                ...formData,
+                trainerId: trainerId ?? formData.trainerId,
+            });
             setReportResult({
                 report_id: result.report_id,
                 data: result.data,
@@ -73,161 +122,181 @@ export const GenerateReports: React.FC = () => {
     };
 
     return (
-        <>
-                <div className="mb-6 flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <PageTitle
-                        title="Generar Reportes"
-                        subtitle="Genera reportes detallados de progreso, entrenamientos y estadísticas"
+        <div className={GENERATE_REPORTS_PAGE}>
+            <div className={GENERATE_REPORTS_GLOW} aria-hidden />
+
+            <div className={GENERATE_REPORTS_HEADER}>
+                <PageTitle
+                    title={GENERATE_REPORTS_PAGE_TITLE}
+                    subtitle={GENERATE_REPORTS_PAGE_SUBTITLE}
+                    className={GENERATE_REPORTS_TITLE_WRAP}
+                />
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={GENERATE_REPORTS_BACK_BUTTON}
+                    onClick={() => navigate("/dashboard")}
+                >
+                    <ArrowLeft
+                        className={cn(GENERATE_REPORTS_ICON_BACK_GAP, GENERATE_REPORTS_ICON_SM)}
+                        aria-hidden
                     />
-                    <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")}>
-                        Volver al Dashboard
-                    </Button>
-                </div>
+                    {GENERATE_REPORTS_BACK_LABEL}
+                </Button>
+            </div>
 
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
+            <form onSubmit={handleSubmit}>
+                <article className={GENERATE_REPORTS_FORM_CARD}>
+                    <NexiaGlassAccentRim />
+                    <div className={GENERATE_REPORTS_FORM_BODY}>
+                        <section className={GENERATE_REPORTS_SECTION} aria-label={GENERATE_REPORTS_SECTION_CONFIG}>
+                            <h2 className={GENERATE_REPORTS_SECTION_TITLE}>
+                                {GENERATE_REPORTS_SECTION_CONFIG}
+                            </h2>
 
-                    {/* Formulario */}
-                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
-                        <h3 className="text-lg lg:text-xl font-bold text-foreground mb-6">Configuración del Reporte</h3>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Tipo de Reporte */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Tipo de Reporte *
-                                </label>
-                                <FormSelect
+                            <FormField label={GENERATE_REPORTS_TYPE_LABEL} required variant={FORM_VARIANT}>
+                                <FormCombobox
+                                    size="sm"
+                                    variant={FORM_VARIANT}
                                     value={formData.reportType}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, reportType: e.target.value as ReportType })
+                                    options={GENERATE_REPORTS_TYPE_OPTIONS}
+                                    onChange={(next) =>
+                                        setFormData({
+                                            ...formData,
+                                            reportType: next as ReportType,
+                                            clientId:
+                                                next === REPORT_TYPE.CLIENT_PROGRESS
+                                                    ? formData.clientId
+                                                    : null,
+                                        })
                                     }
-                                    required
-                                    options={[
-                                        { value: REPORT_TYPE.CLIENT_PROGRESS, label: "Progreso del Cliente" },
-                                        { value: REPORT_TYPE.TRAINING_SUMMARY, label: "Resumen de Entrenamientos" },
-                                        { value: REPORT_TYPE.BILLING_SUMMARY, label: "Resumen de Facturación (Próximamente)", disabled: true },
-                                        { value: REPORT_TYPE.ATTENDANCE_REPORT, label: "Reporte de Asistencia (Próximamente)", disabled: true },
-                                    ]}
+                                    ariaLabel={GENERATE_REPORTS_TYPE_LABEL}
                                 />
-                            </div>
+                                <p className={GENERATE_REPORTS_UPCOMING_HINT}>
+                                    Facturación y asistencia — próximamente.
+                                </p>
+                            </FormField>
 
-                            {/* Cliente (si aplica) */}
                             {formData.reportType === REPORT_TYPE.CLIENT_PROGRESS && (
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Cliente *
-                                    </label>
-                                    <FormSelect
+                                <FormField label={GENERATE_REPORTS_CLIENT_LABEL} required variant={FORM_VARIANT}>
+                                    <FormCombobox
+                                        size="sm"
+                                        variant={FORM_VARIANT}
                                         value={formData.clientId?.toString() ?? ""}
-                                        onChange={(e) =>
+                                        options={clientOptions}
+                                        onChange={(next) =>
                                             setFormData({
                                                 ...formData,
-                                                clientId: e.target.value ? Number(e.target.value) : null,
+                                                clientId: next ? Number(next) : null,
                                             })
                                         }
-                                        required
-                                        options={[
-                                            { value: "", label: "Seleccionar cliente" },
-                                            ...(clientsData?.items.map((client) => ({
-                                                value: client.id.toString(),
-                                                label: `${client.nombre} ${client.apellidos}`,
-                                            })) ?? []),
-                                        ]}
+                                        placeholder={GENERATE_REPORTS_CLIENT_PLACEHOLDER}
+                                        ariaLabel={GENERATE_REPORTS_CLIENT_LABEL}
                                     />
-                                    {formErrors.clientId && (
-                                        <p className="text-destructive text-xs mt-1">{formErrors.clientId}</p>
-                                    )}
-                                </div>
+                                    {formErrors.clientId ? (
+                                        <p className="text-sm text-destructive">{formErrors.clientId}</p>
+                                    ) : null}
+                                </FormField>
                             )}
 
-                            {/* Fechas */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Fecha Inicio
-                                    </label>
-                                    <Input
-                                        type="date"
+                            <div className={GENERATE_REPORTS_DATE_GRID}>
+                                <FormField label={GENERATE_REPORTS_START_LABEL} variant={FORM_VARIANT}>
+                                    <DatePickerButton
+                                        variant="form"
+                                        controlVariant={FORM_VARIANT}
+                                        label="Elegir fecha inicio"
                                         value={formData.startDate ?? ""}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, startDate: e.target.value || null })
+                                        onChange={(next) =>
+                                            setFormData({ ...formData, startDate: next || null })
                                         }
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Fecha Fin
-                                    </label>
-                                    <Input
-                                        type="date"
+                                </FormField>
+                                <FormField label={GENERATE_REPORTS_END_LABEL} variant={FORM_VARIANT}>
+                                    <DatePickerButton
+                                        variant="form"
+                                        controlVariant={FORM_VARIANT}
+                                        label="Elegir fecha fin"
                                         value={formData.endDate ?? ""}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, endDate: e.target.value || null })
+                                        onChange={(next) =>
+                                            setFormData({ ...formData, endDate: next || null })
                                         }
                                     />
-                                </div>
+                                </FormField>
                             </div>
 
-                            {/* Formato */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Formato
-                                </label>
-                                <FormSelect
+                            <FormField label={GENERATE_REPORTS_FORMAT_LABEL} variant={FORM_VARIANT}>
+                                <FormCombobox
+                                    size="sm"
+                                    variant={FORM_VARIANT}
                                     value={formData.format}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, format: e.target.value as ReportFormat })
+                                    options={GENERATE_REPORTS_FORMAT_OPTIONS}
+                                    onChange={(next) =>
+                                        setFormData({ ...formData, format: next as ReportFormat })
                                     }
-                                    options={[
-                                        { value: REPORT_FORMAT.JSON, label: "JSON" },
-                                        { value: REPORT_FORMAT.PDF, label: "PDF (Próximamente)", disabled: true },
-                                    ]}
+                                    ariaLabel={GENERATE_REPORTS_FORMAT_LABEL}
                                 />
-                            </div>
+                                <p className={GENERATE_REPORTS_UPCOMING_HINT}>PDF — próximamente.</p>
+                            </FormField>
+                        </section>
 
-                            {/* Botones */}
-                            <div className="flex gap-4 pt-4">
-                                <Button type="submit" variant="primary" disabled={isLoading}>
-                                    {isLoading ? "Generando..." : "Generar Reporte"}
-                                </Button>
-                                <Button type="button" variant="outline" onClick={() => navigate("/dashboard")}>
-                                    Cancelar
-                                </Button>
-                            </div>
-                        </form>
-
-                        {/* Error */}
-                        {isError && (
-                            <div className="mt-6">
-                                <Alert variant="error">
-                                    {error && typeof error === "object" && "data" in error
-                                        ? String((error as { data: unknown }).data)
-                                        : "Error al generar el reporte"}
-                                </Alert>
-                            </div>
-                        )}
+                        {isError ? (
+                            <Alert variant="error">
+                                {error && typeof error === "object" && "data" in error
+                                    ? String((error as { data: unknown }).data)
+                                    : "No se pudo generar el reporte."}
+                            </Alert>
+                        ) : null}
                     </div>
+                </article>
 
-                    {/* Resultado */}
-                    {reportResult && (
-                        <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                            <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-4">Reporte Generado</h3>
-                            <div className="mb-4">
-                                <p className="text-sm text-slate-600">
-                                    <span className="font-semibold">ID del Reporte:</span> {reportResult.report_id}
-                                </p>
-                            </div>
-                            {reportResult.data && (
-                                <div className="bg-muted rounded-lg p-4 overflow-auto max-h-96">
-                                    <pre className="text-xs text-foreground whitespace-pre-wrap">
+                <DashboardFixedFooter>
+                    <div className={GENERATE_REPORTS_FOOTER_ACTIONS}>
+                        <Button
+                            type="button"
+                            variant="outline-primary"
+                            className={GENERATE_REPORTS_FOOTER_BTN}
+                            onClick={() => navigate("/dashboard")}
+                            disabled={isLoading}
+                        >
+                            {GENERATE_REPORTS_CANCEL}
+                        </Button>
+                        <Button
+                            type="submit"
+                            variant="primary"
+                            className={cn(GENERATE_REPORTS_FOOTER_BTN, GENERATE_REPORTS_SUBMIT_CTA)}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Generando…" : GENERATE_REPORTS_SUBMIT}
+                        </Button>
+                    </div>
+                </DashboardFixedFooter>
+            </form>
+
+            {reportResult ? (
+                <article className={cn(GENERATE_REPORTS_FORM_CARD, "mt-6")}>
+                    <NexiaGlassAccentRim />
+                    <div className={GENERATE_REPORTS_FORM_BODY}>
+                        <div className={GENERATE_REPORTS_FORM_DIVIDER} aria-hidden />
+                        <section className={GENERATE_REPORTS_SECTION} aria-label={GENERATE_REPORTS_SECTION_RESULT}>
+                            <h2 className={GENERATE_REPORTS_SECTION_TITLE}>
+                                {GENERATE_REPORTS_SECTION_RESULT}
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                                ID:{" "}
+                                <span className="font-medium text-foreground">{reportResult.report_id}</span>
+                            </p>
+                            {reportResult.data ? (
+                                <div className="max-h-96 overflow-auto rounded-md border border-primary/20 bg-surface-2/40 p-4">
+                                    <pre className="whitespace-pre-wrap text-xs text-foreground">
                                         {JSON.stringify(reportResult.data, null, 2)}
                                     </pre>
                                 </div>
-                            )}
-                        </div>
-                    )}
-                </div>
-        </>
+                            ) : null}
+                        </section>
+                    </div>
+                </article>
+            ) : null}
+        </div>
     );
 };
-

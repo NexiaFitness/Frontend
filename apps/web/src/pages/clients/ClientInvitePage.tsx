@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/buttons";
 import { Input } from "@/components/ui/forms";
 import { Alert } from "@/components/ui/feedback";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
-import { AUTH_INPUT_MOBILE } from "@/components/auth/authFormPresentation";
+import { cn } from "@/lib/utils";
 import {
     CLIENT_INVITE_ACTIONS,
     CLIENT_INVITE_ASIDE,
@@ -23,13 +23,18 @@ import {
     CLIENT_INVITE_PAGE,
     CLIENT_INVITE_PAGE_GLOW,
     CLIENT_INVITE_SECTION_LABEL,
+    CLIENT_INVITE_FOOTER_BTN,
     CLIENT_INVITE_SUBMIT,
-    CLIENT_INVITE_SUBMIT_DESKTOP,
     CLIENT_INVITE_SUCCESS_CARD,
     CLIENT_INVITE_TIP_BLOCK,
+    CLIENT_INVITE_CARD_INNER,
     CLIENT_INVITE_TIPS_CARD,
+    CLIENT_INVITE_TIPS_LEAD,
+    CLIENT_INVITE_TIPS_NOTE,
     TrainerTransferAckModal,
 } from "@/components/clients/invitations";
+
+const FORM_VARIANT = "premium" as const;
 
 export const ClientInvitePage: React.FC = () => {
     const navigate = useNavigate();
@@ -101,20 +106,20 @@ export const ClientInvitePage: React.FC = () => {
                         </div>
                         <div className={`${CLIENT_INVITE_ACTIONS} pt-2`}>
                             <Button
-                                variant="primary"
-                                onClick={handleBackToList}
-                                className={`${CLIENT_INVITE_SUBMIT} ${CLIENT_INVITE_SUBMIT_DESKTOP}`}
-                            >
-                                Volver a clientes
-                            </Button>
-                            <Button
                                 variant="outline"
                                 onClick={() => {
                                     resetSuccess();
                                 }}
-                                className="min-h-touch lg:min-h-0"
+                                className={CLIENT_INVITE_FOOTER_BTN}
                             >
                                 Invitar a otro
+                            </Button>
+                            <Button
+                                variant="primary"
+                                onClick={handleBackToList}
+                                className={CLIENT_INVITE_SUBMIT}
+                            >
+                                Volver a clientes
                             </Button>
                         </div>
                     </div>
@@ -159,65 +164,49 @@ export const ClientInvitePage: React.FC = () => {
                     <form onSubmit={handleSubmit} className={CLIENT_INVITE_MAIN}>
                         <div className={CLIENT_INVITE_GLASS_CARD}>
                             <NexiaGlassAccentRim />
-                            <div className="relative space-y-5">
+                            <div className={CLIENT_INVITE_CARD_INNER}>
                                 <div className={CLIENT_INVITE_FIELDS_GRID}>
-                                    <div className={`space-y-2 ${CLIENT_INVITE_FIELD_FULL}`}>
-                                        <label
-                                            htmlFor="invite-nombre"
-                                            className="text-sm font-medium text-foreground"
-                                        >
-                                            Nombre <span className="text-destructive">*</span>
-                                        </label>
+                                    <div className={CLIENT_INVITE_FIELD_FULL}>
                                         <Input
                                             id="invite-nombre"
+                                            variant={FORM_VARIANT}
+                                            label="Nombre"
                                             type="text"
                                             value={values.nombre}
                                             onChange={(event) => setField("nombre", event.target.value)}
                                             placeholder="Ej: Juan"
                                             autoComplete="given-name"
+                                            isRequired
                                             required
-                                            className={AUTH_INPUT_MOBILE}
+                                            size="sm"
                                         />
                                     </div>
 
-                                    <div className="space-y-2">
-                                        <label
-                                            htmlFor="invite-apellidos"
-                                            className="text-sm font-medium text-foreground"
-                                        >
-                                            Apellidos{" "}
-                                            <span className="text-muted-foreground">(opcional)</span>
-                                        </label>
-                                        <Input
-                                            id="invite-apellidos"
-                                            type="text"
-                                            value={values.apellidos}
-                                            onChange={(event) => setField("apellidos", event.target.value)}
-                                            placeholder="Ej: Pérez"
-                                            autoComplete="family-name"
-                                            className={AUTH_INPUT_MOBILE}
-                                        />
-                                    </div>
+                                    <Input
+                                        id="invite-apellidos"
+                                        variant={FORM_VARIANT}
+                                        label="Apellidos (opcional)"
+                                        type="text"
+                                        value={values.apellidos}
+                                        onChange={(event) => setField("apellidos", event.target.value)}
+                                        placeholder="Ej: Pérez"
+                                        autoComplete="family-name"
+                                        size="sm"
+                                    />
 
-                                    <div className="space-y-2">
-                                        <label
-                                            htmlFor="invite-email"
-                                            className="text-sm font-medium text-foreground"
-                                        >
-                                            Correo electrónico{" "}
-                                            <span className="text-destructive">*</span>
-                                        </label>
-                                        <Input
-                                            id="invite-email"
-                                            type="email"
-                                            value={values.email}
-                                            onChange={(event) => setField("email", event.target.value)}
-                                            placeholder="ejemplo@correo.com"
-                                            autoComplete="email"
-                                            required
-                                            className={AUTH_INPUT_MOBILE}
-                                        />
-                                    </div>
+                                    <Input
+                                        id="invite-email"
+                                        variant={FORM_VARIANT}
+                                        label="Correo electrónico"
+                                        type="email"
+                                        value={values.email}
+                                        onChange={(event) => setField("email", event.target.value)}
+                                        placeholder="ejemplo@correo.com"
+                                        autoComplete="email"
+                                        isRequired
+                                        required
+                                        size="sm"
+                                    />
                                 </div>
 
                                 {errorMessage ? <Alert variant="error">{errorMessage}</Alert> : null}
@@ -236,22 +225,23 @@ export const ClientInvitePage: React.FC = () => {
                                     </Button>
                                 ) : null}
 
-                                <div className={CLIENT_INVITE_ACTIONS}>
-                                    <Button
-                                        type="submit"
-                                        variant="primary"
-                                        disabled={isSubmitting}
-                                        className={`${CLIENT_INVITE_SUBMIT} ${CLIENT_INVITE_SUBMIT_DESKTOP}`}
-                                    >
-                                        {isSubmitting ? "Enviando…" : "Enviar invitación"}
-                                    </Button>
+                                <div className={cn(CLIENT_INVITE_ACTIONS, "mt-auto")}>
                                     <Button
                                         type="button"
                                         variant="outline"
                                         onClick={() => navigate("/dashboard/clients")}
-                                        className="min-h-touch lg:min-h-0"
+                                        disabled={isSubmitting}
+                                        className={CLIENT_INVITE_FOOTER_BTN}
                                     >
                                         Cancelar
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        variant="primary"
+                                        disabled={isSubmitting}
+                                        className={CLIENT_INVITE_SUBMIT}
+                                    >
+                                        {isSubmitting ? "Enviando…" : "Enviar invitación"}
                                     </Button>
                                 </div>
                             </div>
@@ -261,24 +251,20 @@ export const ClientInvitePage: React.FC = () => {
                     <aside className={CLIENT_INVITE_ASIDE} aria-label="Información sobre la invitación">
                         <div className={CLIENT_INVITE_TIPS_CARD}>
                             <NexiaGlassAccentRim />
-                            <div className="relative space-y-4">
+                            <div className={CLIENT_INVITE_CARD_INNER}>
                                 <div className="flex items-center gap-2">
                                     <UserPlus className="size-4 text-primary" aria-hidden />
                                     <h2 className={CLIENT_INVITE_SECTION_LABEL}>Qué ocurre después</h2>
                                 </div>
                                 <div className={CLIENT_INVITE_TIP_BLOCK}>
-                                    <p className="text-sm leading-relaxed text-foreground">
-                                        El atleta recibe un email con enlace seguro (7 días). En tu lista
-                                        verás «Pendiente de aceptar» hasta que confirme.
+                                    <p className="text-sm leading-snug text-foreground">
+                                        {CLIENT_INVITE_TIPS_LEAD}
                                     </p>
                                 </div>
-                                <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                                    <Info className="mt-0.5 size-4 shrink-0 text-primary/80" aria-hidden />
-                                    <p className="leading-relaxed">
-                                        Si no llega el correo, revisa spam. Puedes reenviar o cancelar desde
-                                        la tarjeta del cliente. El nombre aparecerá pre-rellenado al aceptar.
-                                    </p>
-                                </div>
+                                <p className="mt-auto flex items-start gap-2 text-xs leading-snug text-muted-foreground">
+                                    <Info className="mt-0.5 size-3.5 shrink-0 text-primary/70" aria-hidden />
+                                    {CLIENT_INVITE_TIPS_NOTE}
+                                </p>
                             </div>
                         </div>
                     </aside>

@@ -14,9 +14,9 @@ import { scrollDashboardMainToTop } from "@/lib/dashboardScroll";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Briefcase, MapPin, Phone } from "lucide-react";
-import { FormCombobox } from "@/components/ui/forms/FormCombobox";
-import { Label } from "@/components/ui/forms/Label";
-import { Input } from "@/components/ui/forms/Input";
+import { FormCombobox, FormField, Input } from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { FormSection } from "@/components/ui/forms/FormSection";
 import { Button } from "@/components/ui/buttons/Button";
 import { ServerErrorBanner } from "@/components/ui/feedback";
@@ -64,13 +64,16 @@ const ProfileComboboxField: React.FC<ProfileComboboxFieldProps> = ({
     disabled = false,
     placeholder = "Seleccionar",
 }) => (
-    <div className="space-y-1.5">
-        <Label htmlFor={id} className="text-foreground">
-            {label}
-            {required && <span className="text-destructive ml-0.5">*</span>}
-        </Label>
+    <FormField
+        label={label}
+        htmlFor={id}
+        required={required}
+        variant={FORM_VARIANT}
+    >
         <FormCombobox
+            id={id}
             size="sm"
+            variant={FORM_VARIANT}
             value={value}
             onChange={onChange}
             options={options}
@@ -83,7 +86,7 @@ const ProfileComboboxField: React.FC<ProfileComboboxFieldProps> = ({
         {!error && helperText && (
             <p className="text-sm text-muted-foreground">{helperText}</p>
         )}
-    </div>
+    </FormField>
 );
 
 export const CompleteProfileForm: React.FC = () => {
@@ -284,6 +287,7 @@ export const CompleteProfileForm: React.FC = () => {
                 </p>
                 <Input
                     id="telefono"
+                    variant={FORM_VARIANT}
                     label="Teléfono"
                     type="tel"
                     value={formData.telefono}

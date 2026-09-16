@@ -1,24 +1,51 @@
 /**
- * CreateTemplate.tsx — Página para crear template nuevo
- *
- * Contexto:
- * - Vista protegida (solo trainers) para crear session template
- * - Permite configurar todos los detalles del template
- * - Después de crear, se puede agregar blocks y exercises
- *
- * @author Frontend Team
- * @since v5.3.0
+ * CreateTemplate.tsx — Página para crear template nuevo (premium §5.3)
  */
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/buttons";
-import { PageTitle } from "@/components/dashboard/shared";
-import { Alert } from "@/components/ui/feedback";
-import { Input, FormSelect, Textarea, Checkbox } from "@/components/ui/forms";
-import { useCreateTemplate } from "@nexia/shared";
 import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/buttons";
+import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
+import { Alert } from "@/components/ui/feedback";
+import {
+    Input,
+    Textarea,
+    FormCombobox,
+    FormField,
+    Checkbox,
+} from "@/components/ui/forms";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
+import { useCreateTemplate } from "@nexia/shared";
 import { SESSION_TYPES } from "./sessionFormConstants";
+import {
+    CREATE_TEMPLATE_INFO,
+    CREATE_TEMPLATE_PAGE_SUBTITLE,
+    CREATE_TEMPLATE_PAGE_TITLE,
+    CREATE_TEMPLATE_SECTION,
+    CREATE_TEMPLATE_SUBMIT,
+    SESSION_PROG_FORM_BACK_BUTTON,
+    SESSION_PROG_FORM_BACK_LABEL,
+    SESSION_PROG_FORM_BODY,
+    SESSION_PROG_FORM_CANCEL,
+    SESSION_PROG_FORM_CARD,
+    SESSION_PROG_FORM_FOOTER_ACTIONS,
+    SESSION_PROG_FORM_FOOTER_BTN,
+    SESSION_PROG_FORM_GLOW,
+    SESSION_PROG_FORM_GRID_2,
+    SESSION_PROG_FORM_HEADER,
+    SESSION_PROG_FORM_ICON_BACK_GAP,
+    SESSION_PROG_FORM_ICON_SM,
+    SESSION_PROG_FORM_INFO_PANEL,
+    SESSION_PROG_FORM_PAGE,
+    SESSION_PROG_FORM_SECTION,
+    SESSION_PROG_FORM_SECTION_TITLE,
+    SESSION_PROG_FORM_SUBMIT_CTA,
+    SESSION_PROG_FORM_TITLE_WRAP,
+} from "./sessionProgrammingFormPresentation";
+
+const FORM_VARIANT = "premium" as const;
 
 const DIFFICULTY_LEVELS = [
     { value: "beginner", label: "Principiante" },
@@ -68,7 +95,9 @@ export const CreateTemplate: React.FC = () => {
                 name: formData.name,
                 description: formData.description || null,
                 sessionType: formData.sessionType,
-                estimatedDuration: formData.estimatedDuration ? Number(formData.estimatedDuration) : null,
+                estimatedDuration: formData.estimatedDuration
+                    ? Number(formData.estimatedDuration)
+                    : null,
                 difficultyLevel: formData.difficultyLevel || null,
                 targetMuscles: formData.targetMuscles || null,
                 equipmentNeeded: formData.equipmentNeeded || null,
@@ -83,55 +112,58 @@ export const CreateTemplate: React.FC = () => {
         }
     };
 
+    const goBack = () => navigate("/dashboard");
+
     return (
-        <>
-                {/* Header */}
-                <div className="mb-6 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <PageTitle
-                            title="Nuevo Template"
-                            subtitle="Crear un nuevo template de sesión de entrenamiento"
-                        />
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="shrink-0">
-                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                            Volver al Dashboard
-                        </Button>
-                    </div>
-                </div>
+        <div className={SESSION_PROG_FORM_PAGE}>
+            <div className={SESSION_PROG_FORM_GLOW} aria-hidden />
 
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    {/* Formulario */}
-                    <div className="bg-card border border-border backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                        <h3 className="text-lg lg:text-xl font-bold text-slate-800 mb-6">
-                            Detalles del Template
-                        </h3>
+            <div className={SESSION_PROG_FORM_HEADER}>
+                <PageTitle
+                    title={CREATE_TEMPLATE_PAGE_TITLE}
+                    subtitle={CREATE_TEMPLATE_PAGE_SUBTITLE}
+                    className={SESSION_PROG_FORM_TITLE_WRAP}
+                />
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={SESSION_PROG_FORM_BACK_BUTTON}
+                    onClick={goBack}
+                >
+                    <ArrowLeft
+                        className={cn(SESSION_PROG_FORM_ICON_BACK_GAP, SESSION_PROG_FORM_ICON_SM)}
+                        aria-hidden
+                    />
+                    {SESSION_PROG_FORM_BACK_LABEL}
+                </Button>
+            </div>
 
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Nombre */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Nombre del Template *
-                                </label>
+            <form id="create-template-form" onSubmit={handleSubmit}>
+                <article className={SESSION_PROG_FORM_CARD}>
+                    <NexiaGlassAccentRim />
+                    <div className={SESSION_PROG_FORM_BODY}>
+                        <section className={SESSION_PROG_FORM_SECTION} aria-label={CREATE_TEMPLATE_SECTION}>
+                            <h2 className={SESSION_PROG_FORM_SECTION_TITLE}>{CREATE_TEMPLATE_SECTION}</h2>
+
+                            <FormField label="Nombre del template" required variant={FORM_VARIANT}>
                                 <Input
+                                    variant={FORM_VARIANT}
                                     type="text"
                                     value={formData.name}
                                     onChange={(e) =>
                                         setFormData({ ...formData, name: e.target.value })
                                     }
-                                    required
                                     placeholder="Ej: Upper Body Strength"
                                 />
-                                {formErrors.name && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.name}</p>
-                                )}
-                            </div>
+                                {formErrors.name ? (
+                                    <p className="text-sm text-destructive">{formErrors.name}</p>
+                                ) : null}
+                            </FormField>
 
-                            {/* Descripción */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Descripción
-                                </label>
+                            <FormField label="Descripción" variant={FORM_VARIANT}>
                                 <Textarea
+                                    variant={FORM_VARIANT}
                                     value={formData.description}
                                     onChange={(e) =>
                                         setFormData({ ...formData, description: e.target.value })
@@ -139,66 +171,62 @@ export const CreateTemplate: React.FC = () => {
                                     rows={3}
                                     placeholder="Descripción del template..."
                                 />
-                            </div>
+                            </FormField>
 
-                            {/* Tipo de Sesión */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Tipo de Sesión *
-                                </label>
-                                <FormSelect
+                            <FormField label="Tipo de sesión" required variant={FORM_VARIANT}>
+                                <FormCombobox
+                                    size="sm"
+                                    variant={FORM_VARIANT}
                                     value={formData.sessionType}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, sessionType: e.target.value })
-                                    }
-                                    required
                                     options={SESSION_TYPES}
+                                    onChange={(next) =>
+                                        setFormData({ ...formData, sessionType: next })
+                                    }
+                                    ariaLabel="Tipo de sesión"
                                 />
-                                {formErrors.sessionType && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.sessionType}</p>
-                                )}
-                            </div>
+                                {formErrors.sessionType ? (
+                                    <p className="text-sm text-destructive">{formErrors.sessionType}</p>
+                                ) : null}
+                            </FormField>
 
-                            {/* Duración y Dificultad */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Duración Estimada (min)
-                                    </label>
+                            <div className={SESSION_PROG_FORM_GRID_2}>
+                                <FormField label="Duración estimada (min)" variant={FORM_VARIANT}>
                                     <Input
+                                        variant={FORM_VARIANT}
                                         type="number"
                                         value={formData.estimatedDuration}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, estimatedDuration: e.target.value })
+                                            setFormData({
+                                                ...formData,
+                                                estimatedDuration: e.target.value,
+                                            })
                                         }
                                         min="0"
                                         placeholder="60"
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Nivel de Dificultad
-                                    </label>
-                                    <FormSelect
+                                </FormField>
+                                <FormField label="Nivel de dificultad" variant={FORM_VARIANT}>
+                                    <FormCombobox
+                                        size="sm"
+                                        variant={FORM_VARIANT}
                                         value={formData.difficultyLevel}
-                                        onChange={(e) =>
-                                            setFormData({ ...formData, difficultyLevel: e.target.value })
-                                        }
                                         options={[
                                             { value: "", label: "Seleccionar nivel" },
                                             ...DIFFICULTY_LEVELS,
                                         ]}
+                                        onChange={(next) =>
+                                            setFormData({ ...formData, difficultyLevel: next })
+                                        }
+                                        placeholder="Seleccionar nivel"
+                                        ariaLabel="Nivel de dificultad"
                                     />
-                                </div>
+                                </FormField>
                             </div>
 
-                            {/* Músculos Objetivo y Equipamiento */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Músculos Objetivo
-                                    </label>
+                            <div className={SESSION_PROG_FORM_GRID_2}>
+                                <FormField label="Músculos objetivo" variant={FORM_VARIANT}>
                                     <Input
+                                        variant={FORM_VARIANT}
                                         type="text"
                                         value={formData.targetMuscles}
                                         onChange={(e) =>
@@ -206,83 +234,75 @@ export const CreateTemplate: React.FC = () => {
                                         }
                                         placeholder="Ej: Pecho, Tríceps, Hombros"
                                     />
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-semibold text-foreground mb-2">
-                                        Equipamiento Necesario
-                                    </label>
+                                </FormField>
+                                <FormField label="Equipamiento necesario" variant={FORM_VARIANT}>
                                     <Input
+                                        variant={FORM_VARIANT}
                                         type="text"
                                         value={formData.equipmentNeeded}
                                         onChange={(e) =>
-                                            setFormData({ ...formData, equipmentNeeded: e.target.value })
+                                            setFormData({
+                                                ...formData,
+                                                equipmentNeeded: e.target.value,
+                                            })
                                         }
                                         placeholder="Ej: Mancuernas, Banco, Barra"
                                     />
-                                </div>
+                                </FormField>
                             </div>
 
-                            {/* Público */}
-                            <div>
-                                <Checkbox
-                                    checked={formData.isPublic}
-                                    onChange={(e) =>
-                                        setFormData({ ...formData, isPublic: e.target.checked })
-                                    }
-                                    label="Template público (visible para otros entrenadores)"
-                                />
+                            <Checkbox
+                                checked={formData.isPublic}
+                                onChange={(e) =>
+                                    setFormData({ ...formData, isPublic: e.target.checked })
+                                }
+                                label="Template público (visible para otros entrenadores)"
+                            />
+
+                            <div className={SESSION_PROG_FORM_INFO_PANEL}>
+                                <strong className="text-foreground">Nota:</strong> {CREATE_TEMPLATE_INFO}
                             </div>
 
-                            {/* Nota informativa */}
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                                <p className="text-sm text-blue-800">
-                                    <strong>Nota:</strong> Después de crear el template, podrás agregar
-                                    bloques y ejercicios desde la vista de edición.
-                                </p>
-                            </div>
-
-                            {/* Botones */}
-                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="lg"
-                                    onClick={() => navigate(-1)}
-                                    className="w-full sm:w-auto"
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="lg"
-                                    disabled={isCreating}
-                                    className="w-full sm:w-auto sm:ml-auto"
-                                >
-                                    {isCreating ? "Creando..." : "Crear Template"}
-                                </Button>
-                            </div>
-
-                            {/* Error */}
-                            {isError && (
+                            {isError ? (
                                 <Alert variant="error">
                                     {error && typeof error === "object" && "data" in error
                                         ? String((error as { data: unknown }).data)
                                         : "Error al crear el template"}
                                 </Alert>
-                            )}
+                            ) : null}
 
-                            {/* Success */}
-                            {success && (
+                            {success ? (
                                 <Alert variant="success">
                                     Template creado exitosamente. Redirigiendo...
                                 </Alert>
-                            )}
-                        </form>
+                            ) : null}
+                        </section>
                     </div>
+                </article>
+            </form>
+
+            <DashboardFixedFooter>
+                <div className={SESSION_PROG_FORM_FOOTER_ACTIONS}>
+                    <Button
+                        type="button"
+                        variant="outline-primary"
+                        className={SESSION_PROG_FORM_FOOTER_BTN}
+                        onClick={() => navigate(-1)}
+                    >
+                        {SESSION_PROG_FORM_CANCEL}
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="create-template-form"
+                        variant="primary"
+                        className={cn(SESSION_PROG_FORM_FOOTER_BTN, SESSION_PROG_FORM_SUBMIT_CTA)}
+                        disabled={isCreating}
+                        isLoading={isCreating}
+                    >
+                        {CREATE_TEMPLATE_SUBMIT}
+                    </Button>
                 </div>
-        </>
+            </DashboardFixedFooter>
+        </div>
     );
 };
-
-

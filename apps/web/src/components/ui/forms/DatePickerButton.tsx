@@ -12,6 +12,8 @@ import { DayPicker } from "react-day-picker";
 import { es } from "react-day-picker/locale";
 import "react-day-picker/style.css";
 import { cn } from "@/lib/utils";
+import type { PlatformFormControlVariant } from "./platformFormPresentation";
+import { platformFormControlClass } from "./platformFormPresentation";
 
 export interface DatePickerButtonProps {
     /** Etiqueta visible (ej. "Desde", "Hasta", "Seleccionar fecha") */
@@ -26,8 +28,10 @@ export interface DatePickerButtonProps {
     className?: string;
     /** aria-label para accesibilidad */
     "aria-label"?: string;
-    /** Variante form: w-full, estilo trigger FormCombobox */
+    /** form = trigger ancho tipo campo; default = chip compacto */
     variant?: "default" | "form";
+    /** Estilo control (premium = paridad modales) — aplica en variant form */
+    controlVariant?: PlatformFormControlVariant;
 }
 
 type PopoverCoords = { top: number; left: number; width: number };
@@ -62,6 +66,7 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
     className,
     "aria-label": ariaLabel,
     variant = "default",
+    controlVariant = "default",
 }) => {
     const [open, setOpen] = useState(false);
     const [month, setMonth] = useState<Date>(toDate(value) ?? new Date());
@@ -169,6 +174,7 @@ export const DatePickerButton: React.FC<DatePickerButtonProps> = ({
                         ? cn(
                               "h-9 w-full justify-start border border-border bg-surface-2 px-3",
                               value ? "text-foreground" : "text-muted-foreground",
+                              platformFormControlClass(controlVariant),
                           )
                         : cn(
                               "h-9 border border-primary/30 bg-transparent px-3 text-muted-foreground",

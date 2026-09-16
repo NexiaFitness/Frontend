@@ -23,10 +23,15 @@ import {
     NEXIA_FORM_CONTROL_BASE,
     NEXIA_FORM_CONTROL_ERROR,
     NEXIA_FORM_CONTROL_HELPER,
-    NEXIA_FORM_CONTROL_LABEL,
     NEXIA_FORM_CONTROL_SIZE,
     type NexiaFormControlSize,
 } from "./formControlPresentation";
+import type { PlatformFormControlVariant } from "./platformFormPresentation";
+import {
+    platformFormControlClass,
+    platformFormLabelClass,
+    platformFormReadonlyControlClass,
+} from "./platformFormPresentation";
 
 export type InputType = "text" | "email" | "password" | "date" | "time" | "number" | "url" | "tel" | "search";
 export type InputSize = NexiaFormControlSize;
@@ -34,6 +39,8 @@ export type InputSize = NexiaFormControlSize;
 interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "size"> {
     type?: InputType;
     size?: InputSize;
+    /** default = legacy dashboard; premium = paridad modales / DESIGN_PREMIUM §5.3 */
+    variant?: PlatformFormControlVariant;
     label?: string;
     error?: string;
     isRequired?: boolean;
@@ -83,12 +90,15 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {
             type = "text",
             size = "sm",
+            variant = "default",
             label,
             error,
             isRequired = false,
             helperText,
             className = "",
             id,
+            readOnly,
+            disabled,
             ...props
         },
         ref
@@ -111,7 +121,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={inputId} className={NEXIA_FORM_CONTROL_LABEL}>
+                    <label htmlFor={inputId} className={platformFormLabelClass(variant)}>
                         {label}
                         {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
@@ -133,8 +143,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                                   ? stateStyles.defaultXs
                                   : stateStyles.default,
                             isNumberType && "nexia-no-native-spinners",
+                            platformFormControlClass(variant),
+                            (readOnly || disabled) &&
+                                platformFormReadonlyControlClass(variant),
                             className
                         )}
+                        readOnly={readOnly}
+                        disabled={disabled}
                         {...props}
                     />
 

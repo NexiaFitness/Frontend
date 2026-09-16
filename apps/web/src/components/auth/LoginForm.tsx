@@ -120,6 +120,7 @@ export const LoginForm: React.FC = () => {
 
             <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <Input
+                    variant="premium"
                     type="email"
                     label="Correo electrónico"
                     size="sm"
@@ -134,6 +135,7 @@ export const LoginForm: React.FC = () => {
                 />
 
                 <Input
+                    variant="premium"
                     type="password"
                     label="Contraseña"
                     size="sm"

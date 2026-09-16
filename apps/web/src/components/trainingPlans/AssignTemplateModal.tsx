@@ -7,7 +7,10 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
-import { Input, FormSelect } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField } from "@/components/ui/forms";
+import { PLATFORM_FORM_FOOTER_BTN } from "@/components/ui/forms/platformFormPresentation";
+
+const FORM_VARIANT = "premium" as const;
 import { Alert, useToast } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
 import { getMutationErrorMessage } from "@nexia/shared";
@@ -249,28 +252,31 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                             </p>
                         </div>
                     ) : (
-                        <FormSelect
-                            label="Cliente"
-                            isRequired
-                            options={clientOptions}
-                            placeholder="Selecciona un cliente"
-                            value={formData.client_id}
-                            onChange={(e) => {
-                                setFormData((prev) => ({ ...prev, client_id: e.target.value }));
-                                if (errors.client_id) {
-                                    setErrors((prev) => ({ ...prev, client_id: "" }));
-                                }
-                            }}
-                            error={errors.client_id}
-                            disabled={clients.length === 0 || isAssigning}
-                        />
+                        <FormField label="Cliente" required variant={FORM_VARIANT}>
+                            <FormCombobox
+                                size="sm"
+                                variant={FORM_VARIANT}
+                                options={clientOptions}
+                                placeholder="Selecciona un cliente"
+                                value={formData.client_id}
+                                onChange={(next) => {
+                                    setFormData((prev) => ({ ...prev, client_id: next }));
+                                    if (errors.client_id) {
+                                        setErrors((prev) => ({ ...prev, client_id: "" }));
+                                    }
+                                }}
+                                disabled={clients.length === 0 || isAssigning}
+                                ariaLabel="Cliente"
+                            />
+                            {errors.client_id ? (
+                                <p className="text-sm text-destructive">{errors.client_id}</p>
+                            ) : null}
+                        </FormField>
                     )}
 
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-600">
-                            Nombre personalizado (opcional)
-                        </label>
+                    <FormField label="Nombre personalizado (opcional)" variant={FORM_VARIANT}>
                         <Input
+                            variant={FORM_VARIANT}
                             type="text"
                             placeholder={templateName || "Nombre del plan para este cliente"}
                             value={formData.name}
@@ -279,13 +285,11 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                             }
                             disabled={isAssigning}
                         />
-                    </div>
+                    </FormField>
 
-                    <div>
-                        <label className="mb-1 block text-sm font-medium text-gray-600">
-                            Fecha de inicio <span className="text-red-500">*</span>
-                        </label>
+                    <FormField label="Fecha de inicio" required variant={FORM_VARIANT}>
                         <Input
+                            variant={FORM_VARIANT}
                             type="date"
                             value={formData.start_date}
                             onChange={(e) => {
@@ -298,7 +302,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                             min={today}
                             disabled={isAssigning}
                         />
-                    </div>
+                    </FormField>
 
                     <div>
                         <label className="mb-1 block text-sm font-medium text-foreground">
@@ -324,12 +328,12 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                     ) : null}
                 </div>
 
-                <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
+                <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
                     <Button
-                        variant="outline"
+                        variant="outline-primary"
                         onClick={onClose}
                         disabled={isAssigning}
-                        className="flex-1 sm:flex-none"
+                        className={PLATFORM_FORM_FOOTER_BTN}
                     >
                         Cancelar
                     </Button>
@@ -343,7 +347,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                             isPreviewLoading ||
                             !preview?.assignable
                         }
-                        className="flex-1 sm:flex-none"
+                        className={PLATFORM_FORM_FOOTER_BTN}
                     >
                         {isAssigning ? "Asignando…" : "Asignar plantilla"}
                     </Button>

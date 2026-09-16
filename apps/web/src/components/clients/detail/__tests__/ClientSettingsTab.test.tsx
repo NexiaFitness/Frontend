@@ -235,9 +235,10 @@ describe("ClientSettingsTab", () => {
 
             await waitFor(() => {
                 expect(
-                    screen.getByText(
-                        `¿Estás seguro de que deseas desvincular a ${mockClient.nombre} ${mockClient.apellidos}?`
-                    )
+                    screen.getByText(/¿Estás seguro de que deseas desvincular a/i)
+                ).toBeInTheDocument();
+                expect(
+                    screen.getByText(`${mockClient.nombre} ${mockClient.apellidos}`)
                 ).toBeInTheDocument();
             });
         });

@@ -13,7 +13,10 @@
 import React, { useState, useEffect } from "react";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
-import { Input, FormSelect } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField } from "@/components/ui/forms";
+import { PLATFORM_FORM_FOOTER_BTN } from "@/components/ui/forms/platformFormPresentation";
+
+const FORM_VARIANT = "premium" as const;
 import { Alert } from "@/components/ui/feedback";
 import { useAssignTemplate } from "@nexia/shared/hooks/training/useAssignTemplate";
 import { useGetTrainerClientsQuery } from "@nexia/shared/api/clientsApi";
@@ -146,30 +149,30 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                 )}
 
                 <div className="space-y-4">
-                    <FormSelect
-                        id="assign-plan-client"
-                        label="Cliente"
-                        isRequired
-                        options={clientOptions}
-                        placeholder="Selecciona un cliente"
-                        value={formData.client_id}
-                        onChange={(e) => {
-                            setFormData((prev) => ({ ...prev, client_id: e.target.value }));
-                            if (errors.client_id) setErrors((prev) => ({ ...prev, client_id: "" }));
-                        }}
-                        error={errors.client_id}
-                        disabled={clients.length === 0 || isAssigning}
-                    />
+                    <FormField label="Cliente" required variant={FORM_VARIANT}>
+                        <FormCombobox
+                            id="assign-plan-client"
+                            size="sm"
+                            variant={FORM_VARIANT}
+                            options={clientOptions}
+                            placeholder="Selecciona un cliente"
+                            value={formData.client_id}
+                            onChange={(next) => {
+                                setFormData((prev) => ({ ...prev, client_id: next }));
+                                if (errors.client_id) setErrors((prev) => ({ ...prev, client_id: "" }));
+                            }}
+                            disabled={clients.length === 0 || isAssigning}
+                            ariaLabel="Cliente"
+                        />
+                        {errors.client_id ? (
+                            <p className="text-sm text-destructive">{errors.client_id}</p>
+                        ) : null}
+                    </FormField>
 
-                    <div>
-                        <label
-                            htmlFor="assign-plan-name"
-                            className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                            Nombre personalizado (opcional)
-                        </label>
+                    <FormField label="Nombre personalizado (opcional)" variant={FORM_VARIANT}>
                         <Input
                             id="assign-plan-name"
+                            variant={FORM_VARIANT}
                             type="text"
                             placeholder={planName || "Nombre del plan para este cliente"}
                             value={formData.name}
@@ -178,17 +181,12 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                             }
                             disabled={isAssigning}
                         />
-                    </div>
+                    </FormField>
 
-                    <div>
-                        <label
-                            htmlFor="assign-plan-start-date"
-                            className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                            Fecha de inicio <span className="text-red-500">*</span>
-                        </label>
+                    <FormField label="Fecha de inicio" required variant={FORM_VARIANT}>
                         <Input
                             id="assign-plan-start-date"
+                            variant={FORM_VARIANT}
                             type="date"
                             value={formData.start_date}
                             onChange={(e) => {
@@ -200,17 +198,12 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                             min={today}
                             disabled={isAssigning}
                         />
-                    </div>
+                    </FormField>
 
-                    <div>
-                        <label
-                            htmlFor="assign-plan-end-date"
-                            className="block text-sm font-medium text-gray-600 mb-1"
-                        >
-                            Fecha de fin <span className="text-red-500">*</span>
-                        </label>
+                    <FormField label="Fecha de fin" required variant={FORM_VARIANT}>
                         <Input
                             id="assign-plan-end-date"
+                            variant={FORM_VARIANT}
                             type="date"
                             value={formData.end_date}
                             onChange={(e) => {
@@ -222,15 +215,15 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                             min={formData.start_date || today}
                             disabled={isAssigning}
                         />
-                    </div>
+                    </FormField>
                 </div>
 
-                <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
+                <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-3 pt-4">
                     <Button
-                        variant="outline"
+                        variant="outline-primary"
                         onClick={onClose}
                         disabled={isAssigning}
-                        className="flex-1 sm:flex-none"
+                        className={PLATFORM_FORM_FOOTER_BTN}
                     >
                         Cancelar
                     </Button>
@@ -240,7 +233,7 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                         onClick={handleSubmit}
                         isLoading={isAssigning}
                         disabled={!trainerId || clients.length === 0 || isAssigning}
-                        className="flex-1 sm:flex-none"
+                        className={PLATFORM_FORM_FOOTER_BTN}
                     >
                         {isAssigning ? "Asignando…" : "Asignar plan"}
                     </Button>

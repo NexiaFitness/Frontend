@@ -13,6 +13,8 @@ import React, { useState, useRef, useEffect, useLayoutEffect, useCallback } from
 import { createPortal } from "react-dom";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { PlatformFormControlVariant } from "./platformFormPresentation";
+import { platformFormControlClass } from "./platformFormPresentation";
 
 export interface ComboboxOption {
     value: string;
@@ -28,6 +30,7 @@ export interface FormComboboxProps {
     className?: string;
     buttonClassName?: string;
     size?: "xs" | "sm" | "md" | "lg";
+    variant?: PlatformFormControlVariant;
     ariaLabel?: string;
     /** id del botón trigger (E2E / label htmlFor). */
     id?: string;
@@ -51,6 +54,7 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
     className,
     buttonClassName,
     size = "sm",
+    variant = "default",
     ariaLabel,
     id,
 }) => {
@@ -141,7 +145,8 @@ export const FormCombobox: React.FC<FormComboboxProps> = ({
                     "disabled:cursor-not-allowed disabled:opacity-50",
                     !value && "text-muted-foreground",
                     sizeStyles[size],
-                    buttonClassName
+                    platformFormControlClass(variant),
+                    buttonClassName,
                 )}
             >
                 <span className="truncate">{displayText}</span>

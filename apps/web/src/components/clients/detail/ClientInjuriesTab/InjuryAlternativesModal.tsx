@@ -13,7 +13,9 @@
 import React, { useState, useMemo } from "react";
 import { NexiaPremiumModal } from "@/components/ui/modals";
 import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
-import { FormSelect } from "@/components/ui/forms";
+import { FormCombobox, FormField } from "@/components/ui/forms";
+
+const FORM_VARIANT = "premium" as const;
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useGetExercisesQuery } from "@nexia/shared/hooks/exercises";
 import { exerciseDisplayName } from "@nexia/shared";
@@ -71,22 +73,22 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
             description={`Por lesión: ${injuryContext || "N/D"}`}
         >
             <div className="space-y-4">
-                <div>
-                    <label className="block text-sm font-semibold text-foreground mb-2">
-                        ¿Qué ejercicio quieres sustituir?
-                    </label>
-                    <p className="text-xs text-slate-500 mb-2">
+                <FormField label="¿Qué ejercicio quieres sustituir?" variant={FORM_VARIANT}>
+                    <p className="text-xs text-muted-foreground mb-2">
                         Busca el ejercicio que el cliente debe evitar y verás alternativas seguras.
                     </p>
                     <ExerciseSearch
                         onSearch={setExerciseSearch}
                         placeholder="Buscar ejercicio (ej: sentadilla, press banca...)"
                     />
-                    {exercises.length > 0 && (
-                        <FormSelect
+                    {exercises.length > 0 ? (
+                        <FormCombobox
+                            size="sm"
+                            variant={FORM_VARIANT}
+                            className="mt-2"
                             value={selectedExerciseId?.toString() ?? ""}
-                            onChange={(e) =>
-                                setSelectedExerciseId(e.target.value ? Number(e.target.value) : null)
+                            onChange={(next) =>
+                                setSelectedExerciseId(next ? Number(next) : null)
                             }
                             options={[
                                 { value: "", label: "Selecciona un ejercicio" },
@@ -95,10 +97,11 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                                     label: ex.nombre,
                                 })),
                             ]}
-                            className="mt-2"
+                            placeholder="Selecciona un ejercicio"
+                            ariaLabel="Ejercicio a sustituir"
                         />
-                    )}
-                </div>
+                    ) : null}
+                </FormField>
 
                 {selectedExerciseId && (
                     <div className="pt-2 border-t border-border">

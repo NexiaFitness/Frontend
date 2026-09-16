@@ -8,24 +8,34 @@ import {
     Checkbox,
     DatePickerButton,
     FormCombobox,
+    FormField,
     Input,
-    Label,
     Textarea,
 } from "@/components/ui/forms";
+import { PLATFORM_FORM_SECTION } from "@/components/ui/forms/platformFormPresentation";
+import { PLATFORM_SPEC_GRID } from "@/components/ui/surface/platformPremiumPresentation";
 import { Button } from "@/components/ui/buttons";
 import { Alert, LoadingSpinner, useToast } from "@/components/ui/feedback";
+import { cn } from "@/lib/utils";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { useUpdateTestResultMutation } from "@nexia/shared/api/clientsApi";
 import type { PhysicalTestResultOut } from "@nexia/shared/types/testing";
 import {
     CREATE_EVAL_BASELINE_LABEL,
     CREATE_EVAL_CONDITIONS_LABEL,
+    CREATE_EVAL_CONDITIONS_PLACEHOLDER,
     CREATE_EVAL_INVALID_VALUE,
     CREATE_EVAL_INVALID_TIME,
     CREATE_EVAL_NOTES_LABEL,
+    CREATE_EVAL_NOTES_PLACEHOLDER,
     CREATE_EVAL_SURFACE_LABEL,
+    CREATE_EVAL_SURFACE_PLACEHOLDER,
+    CREATE_EVAL_SUBMIT_CTA,
     CREATE_EVAL_UNIT_LABEL,
+    CREATE_EVAL_UNIT_PLACEHOLDER,
     CREATE_EVAL_VALUE_LABEL,
+    CREATE_EVAL_VALUE_PLACEHOLDER,
+    CREATE_EVAL_VALUE_PLACEHOLDER_TIME,
     CREATE_EVAL_VALUE_TIME_HINT,
     isTimeUnit,
     parseEvaluationValue,
@@ -36,6 +46,8 @@ import {
     TESTING_EDIT_SUCCESS,
     formatSecondsForTimeInput,
 } from "../clientTestingPresentation";
+
+const FORM_VARIANT = "premium" as const;
 
 interface EditTestResultModalProps {
     isOpen: boolean;
@@ -122,36 +134,47 @@ export const EditTestResultModal: React.FC<EditTestResultModalProps> = ({
                     <LoadingSpinner size="md" />
                 </div>
             ) : (
-            <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+            <form onSubmit={(e) => void handleSubmit(e)} className={cn(PLATFORM_FORM_SECTION, "pb-2")}>
                 {formError && <Alert variant="error">{formError}</Alert>}
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                    <Input
-                        label={CREATE_EVAL_VALUE_LABEL}
-                        type="text"
-                        inputMode={isTimeUnit(unit) ? "text" : "decimal"}
-                        value={value}
-                        onChange={(event) => setValue(event.target.value)}
-                        placeholder={isTimeUnit(unit) ? "1:25" : undefined}
-                        helperText={isTimeUnit(unit) ? CREATE_EVAL_VALUE_TIME_HINT : undefined}
-                        isRequired
-                    />
-                    <div className="space-y-1.5">
-                        <Label className="text-foreground">
-                            {CREATE_EVAL_UNIT_LABEL}{" "}
-                            <span className="text-destructive">*</span>
-                        </Label>
+                <div className={cn(PLATFORM_SPEC_GRID, "gap-4")}>
+                    <FormField label={CREATE_EVAL_VALUE_LABEL} required variant={FORM_VARIANT}>
+                        <Input
+                            variant={FORM_VARIANT}
+                            type="text"
+                            inputMode={isTimeUnit(unit) ? "text" : "decimal"}
+                            value={value}
+                            onChange={(event) => setValue(event.target.value)}
+                            placeholder={
+                                isTimeUnit(unit)
+                                    ? CREATE_EVAL_VALUE_PLACEHOLDER_TIME
+                                    : CREATE_EVAL_VALUE_PLACEHOLDER
+                            }
+                            helperText={isTimeUnit(unit) ? CREATE_EVAL_VALUE_TIME_HINT : undefined}
+                        />
+                    </FormField>
+                    <FormField label={CREATE_EVAL_UNIT_LABEL} required variant={FORM_VARIANT}>
                         <FormCombobox
                             size="sm"
+                            variant={FORM_VARIANT}
                             value={unit}
                             options={unitSelectOptions(unit)}
+                            placeholder={CREATE_EVAL_UNIT_PLACEHOLDER}
                             onChange={setUnit}
                             ariaLabel={CREATE_EVAL_UNIT_LABEL}
                         />
-                    </div>
+                    </FormField>
                 </div>
 
-                <DatePickerButton label="Fecha" value={testDate} onChange={setTestDate} />
+                <FormField label="Fecha" variant={FORM_VARIANT}>
+                    <DatePickerButton
+                        label="Elegir fecha del test"
+                        variant="form"
+                        controlVariant={FORM_VARIANT}
+                        value={testDate}
+                        onChange={setTestDate}
+                    />
+                </FormField>
 
                 <Checkbox
                     label={CREATE_EVAL_BASELINE_LABEL}
@@ -159,30 +182,43 @@ export const EditTestResultModal: React.FC<EditTestResultModalProps> = ({
                     onChange={(event) => setIsBaseline(event.target.checked)}
                 />
 
-                <Input
-                    label={CREATE_EVAL_SURFACE_LABEL}
-                    value={surface}
-                    onChange={(event) => setSurface(event.target.value)}
-                />
+                <FormField label={CREATE_EVAL_SURFACE_LABEL} variant={FORM_VARIANT}>
+                    <Input
+                        variant={FORM_VARIANT}
+                        value={surface}
+                        onChange={(event) => setSurface(event.target.value)}
+                        placeholder={CREATE_EVAL_SURFACE_PLACEHOLDER}
+                    />
+                </FormField>
 
-                <Input
-                    label={CREATE_EVAL_CONDITIONS_LABEL}
-                    value={conditions}
-                    onChange={(event) => setConditions(event.target.value)}
-                />
+                <FormField label={CREATE_EVAL_CONDITIONS_LABEL} variant={FORM_VARIANT}>
+                    <Input
+                        variant={FORM_VARIANT}
+                        value={conditions}
+                        onChange={(event) => setConditions(event.target.value)}
+                        placeholder={CREATE_EVAL_CONDITIONS_PLACEHOLDER}
+                    />
+                </FormField>
 
                 <Textarea
+                    variant={FORM_VARIANT}
                     label={CREATE_EVAL_NOTES_LABEL}
                     value={notes}
                     onChange={(event) => setNotes(event.target.value)}
+                    placeholder={CREATE_EVAL_NOTES_PLACEHOLDER}
                     rows={2}
                 />
 
                 <div className="flex justify-end gap-3 pt-2">
-                    <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
+                    <Button type="button" variant="outline-primary" onClick={onClose} disabled={isLoading}>
                         Cancelar
                     </Button>
-                    <Button type="submit" variant="primary" disabled={isLoading || !result}>
+                    <Button
+                        type="submit"
+                        variant="primary"
+                        className={CREATE_EVAL_SUBMIT_CTA}
+                        disabled={isLoading || !result}
+                    >
                         {isLoading ? "Guardando…" : "Guardar cambios"}
                     </Button>
                 </div>

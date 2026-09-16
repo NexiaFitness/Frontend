@@ -12,7 +12,6 @@ import {
     NexiaPremiumModal,
     NEXIA_PREMIUM_MODAL_FOOTER_ROW_CLASS,
     NEXIA_PREMIUM_MODAL_FORM_FOOTER_ACTIONS_CLASS,
-    NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS,
 } from "@/components/ui/modals";
 import { cn } from "@/lib/utils";
 

@@ -1,22 +1,17 @@
 /**
- * CreateSessionFromTemplate.tsx — Página para crear sesión desde template
- *
- * Contexto:
- * - Vista protegida (solo trainers) para crear sesión desde template
- * - Permite seleccionar fecha y plan de entrenamiento (Fase 6: training_plan_id)
- * - Cliente viene pre-rellenado desde query params
- *
- * @author Frontend Team
- * @since v5.3.0
+ * CreateSessionFromTemplate.tsx — Crear sesión desde template (premium §5.3)
  */
 
 import React, { useState, useEffect, useMemo } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
-import { PageTitle } from "@/components/dashboard/shared";
+import { PageTitle, DashboardFixedFooter } from "@/components/dashboard/shared";
 import { LoadingSpinner, Alert } from "@/components/ui/feedback";
-import { Input, FormSelect } from "@/components/ui/forms";
+import { Input, FormCombobox, FormField } from "@/components/ui/forms";
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { cn } from "@/lib/utils";
 import {
     useCreateSessionFromTemplate,
     clampSessionDateToPlan,
@@ -29,7 +24,30 @@ import { useGetClientQuery, useGetTrainerClientsQuery } from "@nexia/shared/api/
 import { useGetTrainingPlansQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
 import type { RootState } from "@nexia/shared/store";
-import { ArrowLeft } from "lucide-react";
+import {
+    CREATE_SESSION_FROM_TEMPLATE_PAGE_SUBTITLE,
+    CREATE_SESSION_FROM_TEMPLATE_PAGE_TITLE,
+    CREATE_SESSION_FROM_TEMPLATE_SECTION,
+    CREATE_SESSION_FROM_TEMPLATE_SUBMIT,
+    SESSION_PROG_FORM_BACK_BUTTON,
+    SESSION_PROG_FORM_BACK_LABEL,
+    SESSION_PROG_FORM_BODY,
+    SESSION_PROG_FORM_CANCEL,
+    SESSION_PROG_FORM_CARD,
+    SESSION_PROG_FORM_FOOTER_ACTIONS,
+    SESSION_PROG_FORM_FOOTER_BTN,
+    SESSION_PROG_FORM_GLOW,
+    SESSION_PROG_FORM_HEADER,
+    SESSION_PROG_FORM_ICON_BACK_GAP,
+    SESSION_PROG_FORM_ICON_SM,
+    SESSION_PROG_FORM_PAGE,
+    SESSION_PROG_FORM_SECTION,
+    SESSION_PROG_FORM_SECTION_TITLE,
+    SESSION_PROG_FORM_SUBMIT_CTA,
+    SESSION_PROG_FORM_TITLE_WRAP,
+} from "./sessionProgrammingFormPresentation";
+
+const FORM_VARIANT = "premium" as const;
 
 export const CreateSessionFromTemplate: React.FC = () => {
     const navigate = useNavigate();
@@ -63,13 +81,13 @@ export const CreateSessionFromTemplate: React.FC = () => {
 
     const { data: trainerClients } = useGetTrainerClientsQuery(
         { trainerId, page: 1, per_page: 50 },
-        { skip: !trainerId || clientIdFromUrl > 0 }
+        { skip: !trainerId || clientIdFromUrl > 0 },
     );
 
     const { data: client } = useGetClientQuery(clientId, { skip: !clientId });
     const { data: trainingPlans } = useGetTrainingPlansQuery(
         { client_id: clientId, limit: 100 },
-        { skip: !clientId }
+        { skip: !clientId },
     );
 
     const [formData, setFormData] = useState({
@@ -87,7 +105,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
 
     const sessionDateBounds = useMemo(
         () => resolveSessionDateBoundsForPlan(selectedPlan),
-        [selectedPlan]
+        [selectedPlan],
     );
 
     useEffect(() => {
@@ -149,7 +167,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
         } else {
             const dateRangeError = validateSessionDateWithinPlan(
                 formData.sessionDate,
-                selectedPlan
+                selectedPlan,
             );
             if (dateRangeError) {
                 errors.sessionDate = dateRangeError;
@@ -172,7 +190,7 @@ export const CreateSessionFromTemplate: React.FC = () => {
                 planDateRange: selectedPlan,
             });
             setSuccess(true);
-            const sessionDateStr = formData.sessionDate; // YYYY-MM-DD
+            const sessionDateStr = formData.sessionDate;
             setTimeout(() => {
                 if (clientId) {
                     const monthParam = sessionDateStr ? `&month=${sessionDateStr.slice(0, 7)}` : "";
@@ -185,6 +203,28 @@ export const CreateSessionFromTemplate: React.FC = () => {
             console.error("Error creando sesión:", err);
         }
     };
+
+    const clientOptions = useMemo(
+        () => [
+            { value: "", label: "Seleccione un cliente" },
+            ...(trainerClients?.items ?? []).map((c) => ({
+                value: String(c.id),
+                label: `${c.nombre} ${c.apellidos}`.trim(),
+            })),
+        ],
+        [trainerClients?.items],
+    );
+
+    const planOptions = useMemo(
+        () => [
+            { value: "", label: "Seleccione un plan" },
+            ...(trainingPlans || []).map((plan) => ({
+                value: plan.id.toString(),
+                label: plan.name || `Plan #${plan.id}`,
+            })),
+        ],
+        [trainingPlans],
+    );
 
     if (isLoadingTemplate) {
         return (
@@ -202,72 +242,82 @@ export const CreateSessionFromTemplate: React.FC = () => {
         );
     }
 
+    const pageSubtitle = `${CREATE_SESSION_FROM_TEMPLATE_PAGE_SUBTITLE} ${template.name}`;
+
     return (
-        <>
-                {/* Header */}
-                <div className="mb-6 px-4 lg:px-8">
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                        <PageTitle
-                            title="Usar Template"
-                            subtitle={`Crear sesión desde template: ${template.name}`}
-                        />
-                        <Button variant="outline" size="sm" onClick={() => navigate("/dashboard")} className="shrink-0">
-                            <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
-                            Volver al Dashboard
-                        </Button>
-                    </div>
-                </div>
+        <div className={SESSION_PROG_FORM_PAGE}>
+            <div className={SESSION_PROG_FORM_GLOW} aria-hidden />
 
-                <div className="px-4 lg:px-8 pb-12 lg:pb-20">
-                    {/* Template Info (read-only) */}
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8 mb-6">
-                        <h3 className="text-lg lg:text-xl font-bold text-foreground mb-4">
-                            Información del Template
-                        </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="text-slate-600 font-medium">Nombre:</span>
-                                <p className="text-foreground font-semibold">{template.name}</p>
-                            </div>
-                            {template.description && (
-                                <div>
-                                    <span className="text-slate-600 font-medium">Descripción:</span>
-                                    <p className="text-foreground">{template.description}</p>
-                                </div>
-                            )}
-                            <div>
-                                <span className="text-slate-600 font-medium">Tipo de Sesión:</span>
-                                <p className="text-foreground">{template.session_type}</p>
-                            </div>
-                            {template.estimated_duration && (
-                                <div>
-                                    <span className="text-slate-600 font-medium">Duración Estimada:</span>
-                                    <p className="text-foreground">{template.estimated_duration} min</p>
-                                </div>
-                            )}
-                            {template.difficulty_level && (
-                                <div>
-                                    <span className="text-slate-600 font-medium">Nivel de Dificultad:</span>
-                                    <p className="text-foreground">{template.difficulty_level}</p>
-                                </div>
-                            )}
+            <div className={SESSION_PROG_FORM_HEADER}>
+                <PageTitle
+                    title={CREATE_SESSION_FROM_TEMPLATE_PAGE_TITLE}
+                    subtitle={pageSubtitle}
+                    className={SESSION_PROG_FORM_TITLE_WRAP}
+                />
+                <Button
+                    type="button"
+                    variant="ghost-primary"
+                    size="sm"
+                    className={SESSION_PROG_FORM_BACK_BUTTON}
+                    onClick={() => navigate("/dashboard")}
+                >
+                    <ArrowLeft
+                        className={cn(SESSION_PROG_FORM_ICON_BACK_GAP, SESSION_PROG_FORM_ICON_SM)}
+                        aria-hidden
+                    />
+                    {SESSION_PROG_FORM_BACK_LABEL}
+                </Button>
+            </div>
+
+            <article className={cn(SESSION_PROG_FORM_CARD, "mb-6")}>
+                <NexiaGlassAccentRim />
+                <div className={SESSION_PROG_FORM_BODY}>
+                    <h2 className={SESSION_PROG_FORM_SECTION_TITLE}>Información del template</h2>
+                    <dl className="grid grid-cols-1 gap-3 text-sm md:grid-cols-2">
+                        <div>
+                            <dt className="text-muted-foreground">Nombre</dt>
+                            <dd className="font-semibold text-foreground">{template.name}</dd>
                         </div>
-                    </div>
-
-                    {/* Formulario */}
-                    <div className="bg-white/95 backdrop-blur-sm rounded-2xl shadow-xl p-6 lg:p-8">
-                        <h3 className="text-lg lg:text-xl font-bold text-foreground mb-6">
-                            Detalles de la Sesión
-                        </h3>
-
-                        <form onSubmit={handleSubmit} className="space-y-6">
-                            {/* Cliente: query param fija el cliente; si no, selector desde la lista del trainer */}
+                        {template.description ? (
                             <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Cliente{clientIdFromUrl <= 0 ? " *" : ""}
-                                </label>
+                                <dt className="text-muted-foreground">Descripción</dt>
+                                <dd className="text-foreground">{template.description}</dd>
+                            </div>
+                        ) : null}
+                        <div>
+                            <dt className="text-muted-foreground">Tipo de sesión</dt>
+                            <dd className="text-foreground">{template.session_type}</dd>
+                        </div>
+                        {template.estimated_duration ? (
+                            <div>
+                                <dt className="text-muted-foreground">Duración estimada</dt>
+                                <dd className="text-foreground">{template.estimated_duration} min</dd>
+                            </div>
+                        ) : null}
+                    </dl>
+                </div>
+            </article>
+
+            <form id="create-session-from-template" onSubmit={handleSubmit}>
+                <article className={SESSION_PROG_FORM_CARD}>
+                    <NexiaGlassAccentRim />
+                    <div className={SESSION_PROG_FORM_BODY}>
+                        <section
+                            className={SESSION_PROG_FORM_SECTION}
+                            aria-label={CREATE_SESSION_FROM_TEMPLATE_SECTION}
+                        >
+                            <h2 className={SESSION_PROG_FORM_SECTION_TITLE}>
+                                {CREATE_SESSION_FROM_TEMPLATE_SECTION}
+                            </h2>
+
+                            <FormField
+                                label="Cliente"
+                                required={clientIdFromUrl <= 0}
+                                variant={FORM_VARIANT}
+                            >
                                 {clientIdFromUrl > 0 ? (
                                     <Input
+                                        variant={FORM_VARIANT}
                                         type="text"
                                         value={
                                             client
@@ -275,64 +325,48 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                                 : "Cargando..."
                                         }
                                         disabled
-                                        className="bg-muted"
                                     />
                                 ) : (
-                                    <FormSelect
+                                    <FormCombobox
+                                        size="sm"
+                                        variant={FORM_VARIANT}
                                         value={pickedClientId > 0 ? String(pickedClientId) : ""}
-                                        onChange={(e) =>
-                                            setPickedClientId(
-                                                e.target.value ? Number(e.target.value) : 0
-                                            )
+                                        options={clientOptions}
+                                        onChange={(next) =>
+                                            setPickedClientId(next ? Number(next) : 0)
                                         }
-                                        options={[
-                                            { value: "", label: "Seleccione un cliente" },
-                                            ...(trainerClients?.items ?? []).map((c) => ({
-                                                value: String(c.id),
-                                                label: `${c.nombre} ${c.apellidos}`.trim(),
-                                            })),
-                                        ]}
-                                        required
+                                        ariaLabel="Cliente"
                                     />
                                 )}
-                                {formErrors.clientId && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.clientId}</p>
-                                )}
-                            </div>
+                                {formErrors.clientId ? (
+                                    <p className="text-sm text-destructive">{formErrors.clientId}</p>
+                                ) : null}
+                            </FormField>
 
-                            {/* Plan de entrenamiento (Fase 6: requerido) — antes de fecha: define vigencia */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Plan de entrenamiento
-                                </label>
-                                <FormSelect
+                            <FormField label="Plan de entrenamiento" required variant={FORM_VARIANT}>
+                                <FormCombobox
+                                    size="sm"
+                                    variant={FORM_VARIANT}
                                     value={formData.trainingPlanId}
-                                    onChange={(e) =>
+                                    options={planOptions}
+                                    onChange={(next) =>
                                         setFormData((prev) => ({
                                             ...prev,
-                                            trainingPlanId: e.target.value,
+                                            trainingPlanId: next,
                                         }))
                                     }
-                                    options={[
-                                        { value: "", label: "Seleccione un plan" },
-                                        ...(trainingPlans || []).map((plan) => ({
-                                            value: plan.id.toString(),
-                                            label: plan.name || `Plan #${plan.id}`,
-                                        })),
-                                    ]}
-                                    required
+                                    ariaLabel="Plan de entrenamiento"
                                 />
-                                {formErrors.trainingPlanId && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.trainingPlanId}</p>
-                                )}
-                            </div>
+                                {formErrors.trainingPlanId ? (
+                                    <p className="text-sm text-destructive">
+                                        {formErrors.trainingPlanId}
+                                    </p>
+                                ) : null}
+                            </FormField>
 
-                            {/* Fecha */}
-                            <div>
-                                <label className="block text-sm font-semibold text-foreground mb-2">
-                                    Fecha de la Sesión *
-                                </label>
+                            <FormField label="Fecha de la sesión" required variant={FORM_VARIANT}>
                                 <Input
+                                    variant={FORM_VARIANT}
                                     type="date"
                                     value={formData.sessionDate}
                                     onChange={(e) =>
@@ -341,7 +375,6 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                             sessionDate: e.target.value,
                                         }))
                                     }
-                                    required
                                     disabled={!selectedPlan}
                                     min={sessionDateBounds.min}
                                     max={sessionDateBounds.max}
@@ -352,56 +385,55 @@ export const CreateSessionFromTemplate: React.FC = () => {
                                     </p>
                                 ) : sessionDateBounds.min && sessionDateBounds.max ? (
                                     <p className="text-xs text-muted-foreground mt-1">
-                                        Vigencia del plan: {sessionDateBounds.min} — {sessionDateBounds.max}
+                                        Vigencia del plan: {sessionDateBounds.min} —{" "}
+                                        {sessionDateBounds.max}
                                     </p>
                                 ) : null}
-                                {formErrors.sessionDate && (
-                                    <p className="text-red-600 text-xs mt-1">{formErrors.sessionDate}</p>
-                                )}
-                            </div>
+                                {formErrors.sessionDate ? (
+                                    <p className="text-sm text-destructive">{formErrors.sessionDate}</p>
+                                ) : null}
+                            </FormField>
 
-                            {/* Botones */}
-                            <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => navigate(-1)}
-                                    className="w-full sm:w-auto"
-                                >
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="submit"
-                                    variant="primary"
-                                    size="sm"
-                                    disabled={isCreating || !trainerId || !clientId}
-                                    className="w-full sm:w-auto sm:ml-auto"
-                                >
-                                    {isCreating ? "Creando..." : "Crear Sesión"}
-                                </Button>
-                            </div>
-
-                            {/* Error */}
-                            {isError && (
+                            {isError ? (
                                 <Alert variant="error">
                                     {error && typeof error === "object" && "data" in error
                                         ? String((error as { data: unknown }).data)
                                         : "Error al crear la sesión"}
                                 </Alert>
-                            )}
+                            ) : null}
 
-                            {/* Success */}
-                            {success && (
+                            {success ? (
                                 <Alert variant="success">
                                     Sesión creada exitosamente. Redirigiendo...
                                 </Alert>
-                            )}
-                        </form>
+                            ) : null}
+                        </section>
                     </div>
+                </article>
+            </form>
+
+            <DashboardFixedFooter>
+                <div className={SESSION_PROG_FORM_FOOTER_ACTIONS}>
+                    <Button
+                        type="button"
+                        variant="outline-primary"
+                        className={SESSION_PROG_FORM_FOOTER_BTN}
+                        onClick={() => navigate(-1)}
+                    >
+                        {SESSION_PROG_FORM_CANCEL}
+                    </Button>
+                    <Button
+                        type="submit"
+                        form="create-session-from-template"
+                        variant="primary"
+                        className={cn(SESSION_PROG_FORM_FOOTER_BTN, SESSION_PROG_FORM_SUBMIT_CTA)}
+                        disabled={isCreating || !trainerId || !clientId}
+                        isLoading={isCreating}
+                    >
+                        {CREATE_SESSION_FROM_TEMPLATE_SUBMIT}
+                    </Button>
                 </div>
-        </>
+            </DashboardFixedFooter>
+        </div>
     );
 };
-
-

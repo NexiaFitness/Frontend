@@ -12,9 +12,13 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
 import { NexiaPremiumModal } from "@/components/ui/modals";
-import { Input, FormCombobox, Textarea } from "@/components/ui/forms";
 import type { ComboboxOption } from "@/components/ui/forms";
+import { FormCombobox, FormField, Input, Textarea } from "@/components/ui/forms";
+import { PLATFORM_FORM_SECTION } from "@/components/ui/forms/platformFormPresentation";
+
+const FORM_VARIANT = "premium" as const;
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback/Alert";
 import { getMutationErrorMessage } from "@nexia/shared";
@@ -85,8 +89,6 @@ const INITIAL_STATE: FormState = {
     notes: "",
     injury_date: new Date().toISOString().split("T")[0],
 };
-
-const FIELD_LABEL = "block text-sm font-medium text-foreground mb-1.5";
 
 export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
     isOpen,
@@ -226,28 +228,24 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
             closeOnEsc={!isSubmitting}
             isLoading={isSubmitting}
         >
-            <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Articulación + Movimiento doloroso */}
+            <form onSubmit={handleSubmit} className={cn(PLATFORM_FORM_SECTION, "space-y-5")}>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label className={FIELD_LABEL}>
-                            Articulación <span className="text-destructive">*</span>
-                        </label>
+                    <FormField label="Articulación" required variant={FORM_VARIANT}>
                         <FormCombobox
+                            variant={FORM_VARIANT}
                             value={form.joint_id}
                             onChange={(v) => handleChange("joint_id", v)}
                             options={jointOptions}
                             placeholder={isLoadingJoints ? "Cargando…" : "Seleccionar articulación"}
                             disabled={isSubmitting || isLoadingJoints}
                             size="sm"
+                            ariaLabel="Articulación"
                         />
-                    </div>
+                    </FormField>
 
-                    <div>
-                        <label className={FIELD_LABEL}>
-                            Movimiento doloroso <span className="text-destructive">*</span>
-                        </label>
+                    <FormField label="Movimiento doloroso" required variant={FORM_VARIANT}>
                         <FormCombobox
+                            variant={FORM_VARIANT}
                             value={form.painful_movement_id}
                             onChange={(v) => handleChange("painful_movement_id", v)}
                             options={movementOptions}
@@ -260,26 +258,32 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                             }
                             disabled={!form.joint_id || isLoadingMovements || isSubmitting}
                             size="sm"
+                            ariaLabel="Movimiento doloroso"
                         />
-                    </div>
+                    </FormField>
                 </div>
 
-                {/* Músculo + Fecha */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                        <label className={FIELD_LABEL}>Músculo (opcional)</label>
+                    <FormField label="Músculo (opcional)" variant={FORM_VARIANT}>
                         <FormCombobox
+                            variant={FORM_VARIANT}
                             value={form.affected_muscle_id}
                             onChange={(v) => handleChange("affected_muscle_id", v)}
                             options={muscleOptions}
-                            placeholder={!form.joint_id ? "Selecciona articulación primero" : "Seleccionar músculo"}
+                            placeholder={
+                                !form.joint_id
+                                    ? "Selecciona articulación primero"
+                                    : "Seleccionar músculo"
+                            }
                             disabled={!form.joint_id || isSubmitting}
                             size="sm"
+                            ariaLabel="Músculo"
                         />
-                    </div>
+                    </FormField>
 
                     <Input
                         type="date"
+                        variant={FORM_VARIANT}
                         label="Fecha de lesión"
                         isRequired
                         value={form.injury_date}
@@ -323,6 +327,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                 {/* Restricciones + Notas */}
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <Textarea
+                        variant={FORM_VARIANT}
                         label="Restricciones"
                         value={form.restrictions}
                         onChange={(e) => handleChange("restrictions", e.target.value)}
@@ -332,6 +337,7 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                         size="sm"
                     />
                     <Textarea
+                        variant={FORM_VARIANT}
                         label="Notas"
                         value={form.notes}
                         onChange={(e) => handleChange("notes", e.target.value)}

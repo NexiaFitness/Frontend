@@ -7,18 +7,23 @@
  */
 
 import React, { forwardRef, useId } from "react";
-import clsx from "clsx";
+import { cn } from "@/lib/utils";
 import {
     NEXIA_FORM_CONTROL_ERROR,
     NEXIA_FORM_CONTROL_HELPER,
-    NEXIA_FORM_CONTROL_LABEL,
     NEXIA_FORM_CONTROL_TEXTAREA_BASE,
 } from "./formControlPresentation";
+import type { PlatformFormControlVariant } from "./platformFormPresentation";
+import {
+    platformFormControlClass,
+    platformFormLabelClass,
+} from "./platformFormPresentation";
 
 export type TextareaSize = "sm" | "md" | "lg";
 
 interface TextareaProps extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, "size"> {
     size?: TextareaSize;
+    variant?: PlatformFormControlVariant;
     label?: string;
     error?: string;
     isRequired?: boolean;
@@ -38,14 +43,11 @@ const stateStyles = {
     error: "border-destructive focus:border-destructive",
 };
 
-const labelStyles = NEXIA_FORM_CONTROL_LABEL;
-const errorStyles = NEXIA_FORM_CONTROL_ERROR;
-const helperStyles = NEXIA_FORM_CONTROL_HELPER;
-
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     (
         {
             size = "md",
+            variant = "default",
             label,
             error,
             isRequired = false,
@@ -62,30 +64,31 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         return (
             <div className="w-full">
                 {label && (
-                    <label htmlFor={textareaId} className={labelStyles}>
+                    <label htmlFor={textareaId} className={platformFormLabelClass(variant)}>
                         {label}
-                        {isRequired && <span className="text-red-500 ml-1">*</span>}
+                        {isRequired && <span className="text-destructive ml-1">*</span>}
                     </label>
                 )}
 
                 <textarea
                     ref={ref}
                     id={textareaId}
-                    className={clsx(
+                    className={cn(
                         baseStyles,
                         sizeStyles[size],
                         error ? stateStyles.error : stateStyles.default,
-                        className
+                        platformFormControlClass(variant),
+                        className,
                     )}
                     {...props}
                 />
 
                 {error ? (
-                    <p className={errorStyles} data-testid="textarea-error">
+                    <p className={NEXIA_FORM_CONTROL_ERROR} data-testid="textarea-error">
                         {error}
                     </p>
                 ) : (
-                    helperText && <p className={helperStyles}>{helperText}</p>
+                    helperText && <p className={NEXIA_FORM_CONTROL_HELPER}>{helperText}</p>
                 )}
             </div>
         );
@@ -93,5 +96,3 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 
 Textarea.displayName = "Textarea";
-
-

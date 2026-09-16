@@ -1,16 +1,15 @@
 /**
- * createTestEvaluationPresentation — Copy + tokens premium (Spec 01 §5.3).
+ * createTestEvaluationPresentation — Copy + alias tokens (Spec 01 §5.3).
  *
- * Doc: docs/design/00_LEEME_PRIMERO.md · ref: exercisesLibraryPresentation.ts
+ * Layout/canónico: platformFormPresentation.ts · Doc: DESIGN_PREMIUM.md §5.3
  */
 
 import { cn } from "@/lib/utils";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
-import { NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP } from "@/components/ui/surface/glassSurfacePresentation";
+import { NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS } from "@/components/ui/modals/nexiaPremiumModalPresentation";
 import {
     PLATFORM_BACK_BUTTON,
     PLATFORM_BODY_MUTED,
-    PLATFORM_CARD_BODY,
     PLATFORM_ICON_BACK_GAP,
     PLATFORM_ICON_SM,
     PLATFORM_LOADING_ROW,
@@ -18,6 +17,17 @@ import {
     PLATFORM_PAGE_TITLE_WRAP,
     PLATFORM_SPEC_GRID,
 } from "@/components/ui/surface/platformPremiumPresentation";
+import {
+    PLATFORM_FORM_BODY,
+    PLATFORM_FORM_DIVIDER,
+    PLATFORM_FORM_FOOTER_ACTIONS,
+    PLATFORM_FORM_FOOTER_BTN,
+    PLATFORM_FORM_NESTED_PANEL,
+    PLATFORM_FORM_OPTIONAL_BLOCK,
+    PLATFORM_FORM_SECTION,
+    PLATFORM_FORM_SECTION_TITLE,
+    PLATFORM_FORM_SHELL,
+} from "@/components/ui/forms/platformFormPresentation";
 import type { TestCategory } from "@nexia/shared/types/testing";
 import { TEST_CATEGORIES } from "@nexia/shared/types/testing";
 
@@ -28,6 +38,13 @@ export {
     PLATFORM_LOADING_ROW as CREATE_EVAL_LOADING_ROW,
     PLATFORM_ICON_SM as CREATE_EVAL_ICON_SM,
     PLATFORM_ICON_BACK_GAP as CREATE_EVAL_ICON_BACK_GAP,
+    PLATFORM_FORM_SHELL as CREATE_EVAL_FORM_CARD,
+    PLATFORM_FORM_BODY as CREATE_EVAL_FORM_BODY,
+    PLATFORM_FORM_DIVIDER as CREATE_EVAL_FORM_DIVIDER,
+    PLATFORM_FORM_SECTION as CREATE_EVAL_SECTION,
+    PLATFORM_FORM_SECTION_TITLE as CREATE_EVAL_SECTION_TITLE,
+    PLATFORM_FORM_OPTIONAL_BLOCK as CREATE_EVAL_OPTIONAL_BLOCK,
+    PLATFORM_FORM_NESTED_PANEL as CREATE_EVAL_CUSTOM_PANEL,
 };
 
 export const CREATE_EVAL_PAGE = cn(
@@ -36,17 +53,9 @@ export const CREATE_EVAL_PAGE = cn(
 );
 
 export const CREATE_EVAL_GLOW =
-    "pointer-events-none absolute inset-x-0 -top-4 h-40 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.12),transparent_72%)]";
+    "pointer-events-none absolute inset-x-0 -top-4 h-48 bg-[radial-gradient(ellipse_at_top,hsl(var(--primary)/0.14),transparent_70%)]";
 
-export const CREATE_EVAL_FORM_CARD = cn(NEXIA_GLASS_CARD, NEXIA_GLASS_CARD_DESKTOP, "relative");
-
-export const CREATE_EVAL_FORM_BODY = PLATFORM_CARD_BODY;
-
-export const CREATE_EVAL_CUSTOM_PANEL = cn(
-    NEXIA_GLASS_CARD,
-    NEXIA_GLASS_CARD_DESKTOP,
-    "relative space-y-4 border-dashed p-4 sm:p-5",
-);
+export const CREATE_EVAL_SUBMIT_CTA = NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS;
 
 export const CREATE_EVAL_VALUE_GRID = PLATFORM_SPEC_GRID;
 
@@ -54,11 +63,11 @@ export const CREATE_EVAL_CREATE_TOGGLE =
     "h-auto px-0 text-sm font-medium text-primary hover:text-primary/90";
 
 export const CREATE_EVAL_FOOTER_ACTIONS = cn(
-    "mx-auto flex w-full max-w-2xl flex-col-reverse gap-3 lg:max-w-3xl",
-    "sm:flex-row sm:justify-end sm:gap-3",
+    "mx-auto w-full max-w-2xl lg:max-w-3xl",
+    PLATFORM_FORM_FOOTER_ACTIONS,
 );
 
-export const CREATE_EVAL_FOOTER_BTN = "w-full min-h-touch sm:w-auto sm:min-h-0";
+export const CREATE_EVAL_FOOTER_BTN = PLATFORM_FORM_FOOTER_BTN;
 
 export const CREATE_EVAL_EMPTY_HINT = cn(PLATFORM_BODY_MUTED, "text-xs");
 
@@ -69,9 +78,8 @@ export const CREATE_EVAL_CATEGORY_LABEL = "Categoría";
 export const CREATE_EVAL_PAGE_TITLE = "Registrar evaluación";
 
 export const CREATE_EVAL_PAGE_SUBTITLE =
-    "Protocolo formal de test físico. Los datos se guardan en la ficha del cliente.";
+    "Registro formal en la ficha del cliente — elige protocolo, resultado y contexto del test.";
 
-/** Subtítulo cuando se entra desde el banner de retest (testId en query). */
 export const CREATE_EVAL_PAGE_SUBTITLE_RETEST =
     "Retest: el protocolo viene preseleccionado. Misma ficha que una evaluación nueva.";
 
@@ -79,7 +87,20 @@ export const CREATE_EVAL_CLIENT_LABEL = "Cliente";
 
 export const CREATE_EVAL_TEST_LABEL = "Evaluación";
 
-export const CREATE_EVAL_TEST_PLACEHOLDER = "Selecciona una evaluación";
+export const CREATE_EVAL_TEST_PLACEHOLDER = "Busca o elige un protocolo del catálogo…";
+
+export const CREATE_EVAL_VALUE_PLACEHOLDER = "Valor medido";
+
+export const CREATE_EVAL_VALUE_PLACEHOLDER_TIME = "min:seg — ej. 1:25";
+
+export const CREATE_EVAL_UNIT_PLACEHOLDER = "Unidad del resultado";
+
+export const CREATE_EVAL_SURFACE_PLACEHOLDER = "Ej. tatami, césped, pista indoor…";
+
+export const CREATE_EVAL_CONDITIONS_PLACEHOLDER = "Temperatura, ayuno, calzado, etc.";
+
+export const CREATE_EVAL_NOTES_PLACEHOLDER =
+    "Observaciones para el historial (opcional)";
 
 export const CREATE_EVAL_VALUE_LABEL = "Resultado";
 
@@ -133,7 +154,6 @@ export const CREATE_EVAL_UNIT_LABEL = "Unidad";
 
 export const CREATE_EVAL_VALUE_TIME_HINT = "Formato min:seg (1:25) o segundos";
 
-/** Unidades del catálogo estándar + RM habituales. */
 export const TEST_UNIT_OPTIONS: { value: string; label: string }[] = [
     { value: "kg", label: "kg" },
     { value: "lb", label: "lb" },
@@ -146,16 +166,11 @@ export const TEST_UNIT_OPTIONS: { value: string; label: string }[] = [
     { value: "reps", label: "reps" },
 ];
 
-/** Catálogo y formularios usan `s` o `seg` para segundos. */
 export const isTimeUnit = (unit: string): boolean => {
     const normalized = unit.trim().toLowerCase();
     return normalized === "s" || normalized === "seg";
 };
 
-/**
- * Parse resultado: número decimal, o min:seg → segundos.
- * Ej. "1:25" → 85; "85" → 85; "1,5" → 1.5
- */
 export function parseEvaluationValue(
     raw: string,
     unit: string,
@@ -201,7 +216,6 @@ export const TEST_CATEGORY_OPTIONS: { value: TestCategory; label: string }[] = (
 export const isStrengthRmUnit = (category: TestCategory, unit: string): boolean =>
     category === "strength" && ["kg", "lb", "lbs"].includes(unit.trim().toLowerCase());
 
-/** Asegura que la unidad del test esté en el desplegable. */
 export function unitSelectOptions(currentUnit: string): { value: string; label: string }[] {
     const trimmed = currentUnit.trim();
     if (!trimmed) return TEST_UNIT_OPTIONS;
