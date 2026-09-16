@@ -1,20 +1,20 @@
 /**
- * ReplicateSessionModal.tsx — Modal principal para replicar una sesion a otras semanas.
- *
- * Responsabilidades:
- * - Mostrar checkboxes de semanas destino disponibles dentro del bloque.
- * - Permitir seleccionar/desseleccionar semanas.
- * - Ejecutar la primera replicacion con force=false.
- *
- * @author Frontend Team
- * @since v6.5.0
+ * ReplicateSessionModal.tsx — Replicar sesión a otras semanas (NexiaPremiumModal).
  */
 
 import React from "react";
 import { Copy } from "lucide-react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+
 import { Button } from "@/components/ui/buttons";
 import { Checkbox } from "@/components/ui/forms/Checkbox";
+import {
+    NexiaPremiumModal,
+    NEXIA_PREMIUM_MODAL_FOOTER_ROW_CLASS,
+    NEXIA_PREMIUM_MODAL_FORM_FOOTER_ACTIONS_CLASS,
+    NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS,
+    NEXIA_PREMIUM_MODAL_TITLE_ACCENT_CLASS,
+} from "@/components/ui/modals";
+import { cn } from "@/lib/utils";
 
 interface WeekOption {
     ordinal: number;
@@ -68,21 +68,51 @@ export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
     const canSubmit = selectedWeeks.length > 0 && !isLoading && !isBlockLoading;
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
-            title={`Replicar "${sessionName}"`}
-            description="Selecciona las semanas destino dentro del bloque."
-            iconType="info"
-            maxWidth="md"
+            maxWidth="lg"
             closeOnBackdrop={!isLoading}
             closeOnEsc={!isLoading}
-            isLoading={isLoading}
+            title={
+                <>
+                    Replicar{" "}
+                    <span className={NEXIA_PREMIUM_MODAL_TITLE_ACCENT_CLASS}>
+                        «{sessionName}»
+                    </span>
+                </>
+            }
+            description="Selecciona las semanas destino dentro del bloque."
+            footer={
+                <div className={NEXIA_PREMIUM_MODAL_FOOTER_ROW_CLASS}>
+                    <div className={NEXIA_PREMIUM_MODAL_FORM_FOOTER_ACTIONS_CLASS}>
+                        <Button
+                            type="button"
+                            variant="ghost-primary"
+                            onClick={onClose}
+                            disabled={isLoading}
+                        >
+                            Cancelar
+                        </Button>
+                        <Button
+                            type="button"
+                            variant="primary"
+                            onClick={onReplicate}
+                            disabled={!canSubmit}
+                            isLoading={isLoading}
+                            className={cn(NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS, "flex-1 sm:flex-none")}
+                        >
+                            <Copy className="mr-1.5 h-4 w-4" aria-hidden />
+                            Replicar
+                        </Button>
+                    </div>
+                </div>
+            }
         >
             <div className="space-y-4">
                 {!hasBlock && !isBlockLoading && (
                     <div className="rounded-lg bg-warning/10 p-3 text-sm text-warning">
-                        No se pudo cargar el bloque de periodizacion asociado.
+                        No se pudo cargar el bloque de periodización asociado.
                     </div>
                 )}
 
@@ -118,11 +148,11 @@ export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
                             </button>
                         </div>
 
-                        <div className="max-h-60 space-y-2 overflow-y-auto rounded-lg border border-border p-3">
+                        <div className="max-h-60 space-y-2 overflow-y-auto rounded-lg border border-border/50 p-3">
                             {weeks.map((week) => (
                                 <div
                                     key={week.ordinal}
-                                    className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent"
+                                    className="flex items-center justify-between rounded-md px-2 py-1.5 hover:bg-accent/50"
                                 >
                                     <Checkbox
                                         id={`week-${week.ordinal}`}
@@ -139,30 +169,7 @@ export const ReplicateSessionModal: React.FC<ReplicateSessionModalProps> = ({
                         </div>
                     </>
                 )}
-
-                <div className="flex gap-3 pt-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={onClose}
-                        disabled={isLoading}
-                        className="flex-1"
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="primary"
-                        onClick={onReplicate}
-                        disabled={!canSubmit}
-                        isLoading={isLoading}
-                        className="flex-1"
-                    >
-                        <Copy className="mr-1.5 h-4 w-4" />
-                        Replicar
-                    </Button>
-                </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

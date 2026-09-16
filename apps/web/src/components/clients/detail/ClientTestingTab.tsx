@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/Badge";
 import { RadarChart } from "@/components/ui/charts/RadarChart";
 import { ProgressLineChart } from "@/components/ui/charts/ProgressLineChart";
 import { Button } from "@/components/ui/buttons/Button";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { PageTitle } from "@/components/dashboard/shared";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -605,37 +605,21 @@ export const ClientTestingTab: React.FC<ClientTestingTabProps> = ({ clientId }) 
                 }
             />
 
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={deleteTarget != null}
                 onClose={() => setDeleteTarget(null)}
+                onConfirm={() => void handleDelete()}
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
                 title={TESTING_DELETE_MODAL_TITLE}
                 description={
                     deleteTarget
                         ? `${deleteTarget.testName}. ${TESTING_DELETE_MODAL_DESCRIPTION}`
                         : TESTING_DELETE_MODAL_DESCRIPTION
                 }
-                iconType="danger"
                 maxWidth="sm"
-            >
-                <div className="flex justify-end gap-3 pt-2">
-                    <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setDeleteTarget(null)}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        disabled={isDeleting}
-                        onClick={() => void handleDelete()}
-                    >
-                        {isDeleting ? "Eliminando…" : "Eliminar evaluación"}
-                    </Button>
-                </div>
-            </BaseModal>
+                confirmLabel="Eliminar evaluación"
+            />
         </section>
     );
 };

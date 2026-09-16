@@ -160,30 +160,21 @@ describe("LogoutConfirmationModal", () => {
     });
 
     describe("Modal Structure", () => {
-        it("renders warning icon", () => {
+        it("renders premium dialog shell", () => {
             render(<LogoutConfirmationModal {...defaultProps} />);
-
-            const warningIcon = document.querySelector("svg");
-            expect(warningIcon).toBeInTheDocument();
+            expect(screen.getByRole("dialog")).toBeInTheDocument();
         });
 
         it("renders backdrop", () => {
             render(<LogoutConfirmationModal {...defaultProps} />);
-
-            const backdrop = document.querySelector(".bg-black\\/60");
+            const backdrop = document.querySelector(".bg-black\\/65");
             expect(backdrop).toBeInTheDocument();
         });
 
-        it("applies correct button styling", () => {
+        it("applies confirm modal button variants", () => {
             render(<LogoutConfirmationModal {...defaultProps} />);
-
-            const cancelButton = screen.getByText("Cancelar");
-            const confirmButton = screen.getByText("Cerrar sesión");
-
-            expect(cancelButton).toHaveClass("btn-outline");
-            expect(confirmButton).toHaveClass("btn-danger");
-            expect(cancelButton).toHaveClass("w-full");
-            expect(confirmButton).toHaveClass("w-full");
+            expect(screen.getByText("Cancelar")).toHaveClass("btn-ghost-primary");
+            expect(screen.getByText("Cerrar sesión")).toHaveClass("btn-outline-destructive");
         });
     });
 
@@ -219,14 +210,10 @@ describe("LogoutConfirmationModal", () => {
             expect(onConfirm).toHaveBeenCalledTimes(3);
         });
 
-        it("maintains consistent button sizes", () => {
+        it("exposes cancel and confirm actions in footer", () => {
             render(<LogoutConfirmationModal {...defaultProps} />);
-
-            const cancelButton = screen.getByText("Cancelar");
-            const confirmButton = screen.getByText("Cerrar sesión");
-
-            expect(cancelButton).toHaveClass("sm:w-[160px]");
-            expect(confirmButton).toHaveClass("sm:w-[160px]");
+            expect(screen.getByRole("button", { name: "Cancelar" })).toBeInTheDocument();
+            expect(screen.getByRole("button", { name: "Cerrar sesión" })).toBeInTheDocument();
         });
     });
 });

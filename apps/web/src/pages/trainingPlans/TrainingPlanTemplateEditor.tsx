@@ -46,7 +46,7 @@ import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { PageTitle } from "@/components/dashboard/shared";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { DuplicateTemplateModal } from "@/components/trainingPlans/DuplicateTemplateModal";
 import { PeriodBlockQualitiesStep } from "@/components/trainingPlans/periodization/PeriodBlockQualitiesStep";
 import { TemplateProgramPhasesPanel } from "@/components/trainingPlans/TemplateProgramPhasesPanel";
@@ -551,7 +551,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                 }
             />
 
-            <BaseModal
+            <NexiaPremiumModal
                 isOpen={blockModalOpen}
                 onClose={() => {
                     setBlockModalOpen(false);
@@ -704,9 +704,9 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         Volver
                     </Button>
                 ) : null}
-            </BaseModal>
+            </NexiaPremiumModal>
 
-            <BaseModal
+            <NexiaPremiumModal
                 isOpen={sessionModalOpen}
                 onClose={() => setSessionModalOpen(false)}
                 title="Nueva sesión"
@@ -770,13 +770,12 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         Crear y editar ejercicios
                     </Button>
                 </div>
-            </BaseModal>
+            </NexiaPremiumModal>
 
-            <BaseModal
+            <NexiaPremiumModal
                 isOpen={!!deleteBlockTarget}
                 onClose={() => setDeleteBlockTarget(null)}
                 title="Eliminar fase"
-                iconType="danger"
                 maxWidth="sm"
             >
                 <p className="text-sm text-muted-foreground">
@@ -806,7 +805,7 @@ export const TrainingPlanTemplateEditor: React.FC = () => {
                         Eliminar
                     </Button>
                 </div>
-            </BaseModal>
+            </NexiaPremiumModal>
 
             <DuplicateTemplateModal
                 open={duplicateOpen}

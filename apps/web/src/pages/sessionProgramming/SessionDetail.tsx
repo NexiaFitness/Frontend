@@ -25,7 +25,10 @@ import type { RootState } from "@nexia/shared/store";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import {
+    NexiaPremiumConfirmModal,
+    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
+} from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import {
@@ -425,35 +428,29 @@ export const SessionDetail: React.FC = () => {
                 </div>
             </DashboardFixedFooter>
 
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     if (!isDeleting) setShowDeleteModal(false);
                 }}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
+                data-testid="session-delete-premium-modal"
                 title="Eliminar sesión"
-                description={`¿Seguro que quieres eliminar la sesión "${session.session_name}"? Esta acción no se puede deshacer.`}
-                iconType="danger"
+                description={
+                    <>
+                        ¿Seguro que quieres eliminar la sesión{" "}
+                        <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
+                            «{session.session_name}»
+                        </span>
+                        ? Esta acción no se puede deshacer.
+                    </>
+                }
                 closeOnBackdrop={!isDeleting}
                 closeOnEsc={!isDeleting}
-                isLoading={isDeleting}
-            >
-                <div className="mt-4 flex justify-end gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowDeleteModal(false)}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={handleConfirmDelete}
-                        disabled={isDeleting}
-                    >
-                        {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </Button>
-                </div>
-            </BaseModal>
+                confirmLabel="Eliminar"
+            />
         </div>
     );
 };

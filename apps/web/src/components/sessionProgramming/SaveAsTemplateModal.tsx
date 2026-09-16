@@ -4,7 +4,7 @@
 
 import React, { useEffect, useState } from "react";
 import { ClipboardList } from "lucide-react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Input, Textarea } from "@/components/ui/forms";
 
@@ -43,12 +43,11 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Guardar como plantilla"
             description="Las plantillas viven en tu biblioteca. Elige un nombre que te permita encontrarla después."
-            iconType="info"
             maxWidth="md"
             closeOnBackdrop={!isLoading}
             closeOnEsc={!isLoading}
@@ -102,6 +101,6 @@ export const SaveAsTemplateModal: React.FC<SaveAsTemplateModalProps> = ({
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

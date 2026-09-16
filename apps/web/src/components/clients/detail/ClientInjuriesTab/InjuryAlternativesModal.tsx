@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useMemo } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { ExerciseSearch } from "@/components/exercises/ExerciseSearch";
 import { FormSelect } from "@/components/ui/forms";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
@@ -64,7 +64,7 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={handleClose}
             title="Buscar alternativas"
@@ -146,6 +146,6 @@ export const InjuryAlternativesModal: React.FC<InjuryAlternativesModalProps> = (
                     </button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

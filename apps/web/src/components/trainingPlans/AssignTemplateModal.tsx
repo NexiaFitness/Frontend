@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { Alert, useToast } from "@/components/ui/feedback";
@@ -187,7 +187,7 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
     const today = new Date().toISOString().split("T")[0];
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
             title={TEMPLATE_ASSIGN_MODAL_COPY.title}
@@ -349,6 +349,6 @@ export const AssignTemplateModal: React.FC<AssignTemplateModalProps> = ({
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

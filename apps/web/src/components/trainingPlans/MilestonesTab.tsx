@@ -35,7 +35,7 @@ import type { Milestone } from "@nexia/shared/types/training";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect, Textarea, DatePickerButton } from "@/components/ui/forms";
 import { Alert, LoadingSpinner, EmptyState } from "@/components/ui/feedback";
-import { BaseModal } from "@/components/ui/modals";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 
 interface MilestonesTabProps {
     planId: number;
@@ -478,37 +478,18 @@ export const MilestonesTab: React.FC<MilestonesTabProps> = ({ planId }) => {
                 </div>
             )}
 
-            {/* Delete confirmation modal */}
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={deleteTargetId !== null}
                 onClose={() => {
                     if (!isDeleting) setDeleteTargetId(null);
                 }}
+                onConfirm={handleDeleteConfirm}
+                isLoading={isDeleting}
                 title="Eliminar hito"
                 description="Esta acción no se puede deshacer. ¿Seguro que quieres eliminar este hito?"
-                iconType="danger"
                 maxWidth="sm"
-                isLoading={isDeleting}
-            >
-                <div className="flex justify-center gap-3">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setDeleteTargetId(null)}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={handleDeleteConfirm}
-                        isLoading={isDeleting}
-                    >
-                        Eliminar
-                    </Button>
-                </div>
-            </BaseModal>
+                confirmLabel="Eliminar"
+            />
         </div>
     );
 };

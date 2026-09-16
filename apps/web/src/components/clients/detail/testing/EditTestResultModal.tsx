@@ -3,7 +3,7 @@
  */
 
 import React, { useEffect, useState } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import {
     Checkbox,
     DatePickerButton,
@@ -109,7 +109,7 @@ export const EditTestResultModal: React.FC<EditTestResultModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title={TESTING_EDIT_MODAL_TITLE}
@@ -188,6 +188,6 @@ export const EditTestResultModal: React.FC<EditTestResultModalProps> = ({
                 </div>
             </form>
             )}
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

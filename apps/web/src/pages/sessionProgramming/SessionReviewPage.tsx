@@ -46,7 +46,10 @@ import type { TrainingSessionStatus } from "@nexia/shared/types/trainingSessions
 
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import {
+    NexiaPremiumConfirmModal,
+    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
+} from "@/components/ui/modals";
 import { CoherenceConclusionsPanel } from "@/components/sessionProgramming/CoherenceConclusionsPanel";
 import { stripLegacyCoherenceFromNotes } from "@/components/sessionProgramming/coherenceConclusionsPresentation";
 import { SessionValidationContent } from "@/components/sessionProgramming/SessionValidationContent";
@@ -631,31 +634,28 @@ export const SessionReviewPage: React.FC = () => {
                 </div>
             </DashboardFixedFooter>
 
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     if (!isDeleting) setShowDeleteModal(false);
                 }}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
                 title="Eliminar sesión"
-                description={`¿Seguro que quieres eliminar la sesión "${session.session_name}"? Esta acción no se puede deshacer.`}
-                iconType="danger"
+                description={
+                    <>
+                        ¿Seguro que quieres eliminar la sesión{" "}
+                        <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
+                            «{session.session_name}»
+                        </span>
+                        ? Esta acción no se puede deshacer.
+                    </>
+                }
                 closeOnBackdrop={!isDeleting}
                 closeOnEsc={!isDeleting}
-                isLoading={isDeleting}
-            >
-                <div className="mt-4 flex justify-end gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowDeleteModal(false)}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeleting}>
-                        {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </Button>
-                </div>
-            </BaseModal>
+                confirmLabel="Eliminar"
+            />
 
             <ReplicateSessionModal
                 isOpen={replicateFlow.isOpen}

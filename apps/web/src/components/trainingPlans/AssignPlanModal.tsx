@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { Alert } from "@/components/ui/feedback";
@@ -113,7 +113,7 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
     const today = new Date().toISOString().split("T")[0];
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
             title="Asignar plan a cliente"
@@ -125,8 +125,6 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
             closeOnBackdrop={!isAssigning}
             closeOnEsc={!isAssigning}
             isLoading={isAssigning}
-            titleId="assign-plan-modal-title"
-            descriptionId="assign-plan-modal-description"
         >
             <div className="space-y-4">
                 {isError && (
@@ -248,6 +246,6 @@ export const AssignPlanModal: React.FC<AssignPlanModalProps> = ({
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

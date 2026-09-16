@@ -1,6 +1,8 @@
 /**
  * BaseModal - Modal base responsive y accesible
  *
+ * @deprecated Usar NexiaPremiumModal / NexiaPremiumConfirmModal en dashboard entrenador/admin.
+ *
  * Cambios v4.3.8:
  * - Añadida tipografía centralizada (TYPOGRAPHY.modalTitle / modalDescription).
  * - Todos los modales hijos heredan estilo tipográfico correcto automáticamente.

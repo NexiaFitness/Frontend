@@ -48,10 +48,8 @@ describe("DeleteAccountModal", () => {
             expect(screen.getByRole("button", { name: "Eliminar cuenta" })).toBeInTheDocument();
         });
 
-        it("shows danger icon and warning styling", () => {
+        it("shows irreversible warning in body", () => {
             render(<DeleteAccountModal {...defaultProps} />);
-            const dangerIcon = document.querySelector("svg");
-            expect(dangerIcon).toBeInTheDocument();
             const warningText = screen.getByText("Esta acción es irreversible.");
             expect(warningText).toHaveClass("text-destructive");
         });
@@ -114,6 +112,9 @@ describe("DeleteAccountModal", () => {
             const user = userEvent.setup();
             render(<DeleteAccountModal {...defaultProps} onDeleteSuccess={onDeleteSuccess} />);
             await user.click(screen.getByRole("button", { name: "Eliminar cuenta" }));
+            await waitFor(() => {
+                expect(screen.getByRole("button", { name: "Eliminar cuenta" })).toBeEnabled();
+            });
             await user.click(screen.getByRole("button", { name: "Eliminar cuenta" }));
             await waitFor(() => {
                 expect(onDeleteSuccess).toHaveBeenCalledTimes(1);
@@ -150,7 +151,7 @@ describe("DeleteAccountModal", () => {
             await user.click(screen.getByRole("button", { name: "Eliminar cuenta" }));
             await waitFor(() => {
                 expect(screen.getByRole("button", { name: "Cancelar" })).toBeDisabled();
-                expect(screen.getByRole("button", { name: "Eliminar cuenta" })).toBeDisabled();
+                expect(screen.getByText("Eliminando…").closest("button")).toBeDisabled();
             });
         });
     });
@@ -160,16 +161,16 @@ describe("DeleteAccountModal", () => {
             render(<DeleteAccountModal {...defaultProps} />);
             const modal = screen.getByRole("dialog");
             expect(modal).toHaveAttribute("aria-modal", "true");
-            expect(modal).toHaveAttribute("aria-labelledby", "delete-account-title");
-            expect(modal).toHaveAttribute("aria-describedby", "delete-account-description");
+            expect(modal.getAttribute("aria-labelledby")).toBeTruthy();
+            expect(modal.getAttribute("aria-describedby")).toBeTruthy();
         });
 
-        it("applies BUTTON_PRESETS.modalEqual styling", () => {
+        it("uses premium confirm footer button variants", () => {
             render(<DeleteAccountModal {...defaultProps} />);
-            const cancelButton = screen.getByRole("button", { name: "Cancelar" });
-            const deleteButton = screen.getByRole("button", { name: "Eliminar cuenta" });
-            expect(cancelButton).toHaveClass("sm:min-w-[160px]");
-            expect(deleteButton).toHaveClass("sm:min-w-[160px]");
+            expect(screen.getByRole("button", { name: "Cancelar" })).toHaveClass("text-primary");
+            expect(screen.getByRole("button", { name: "Eliminar cuenta" })).toHaveClass(
+                "text-destructive",
+            );
         });
     });
 });

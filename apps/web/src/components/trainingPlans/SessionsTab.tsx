@@ -27,7 +27,10 @@ import {
 } from '@/components/trainingSessions/sessionCardPresentation';
 import { Button } from '@/components/ui/buttons';
 import { LoadingSpinner, Alert } from '@/components/ui/feedback';
-import { BaseModal } from '@/components/ui/modals/BaseModal';
+import {
+    NexiaPremiumConfirmModal,
+    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
+} from '@/components/ui/modals';
 import { cn } from '@/lib/utils';
 import { returnToStateFromView } from '@/lib/sessionDetailNavigation';
 import { useReplicateSessionFlow } from '@/components/sessions/useReplicateSessionFlow';
@@ -278,36 +281,31 @@ export const SessionsTab: React.FC<SessionsTabProps> = ({ planId }) => {
                 isLoading={replicateFlow.isReplicating}
             />
 
-            {/* Modal de confirmación de eliminación */}
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     setShowDeleteModal(false);
                     setSessionToDelete(null);
                 }}
-                title="Eliminar Sesión"
-                description={`¿Estás seguro de que deseas eliminar la sesión "${sessionToDelete?.session_name}"? Esta acción no se puede deshacer.`}
-            >
-                <div className="flex gap-3 justify-end mt-6">
-                    <Button
-                        variant="outline"
-                        onClick={() => {
-                            setShowDeleteModal(false);
-                            setSessionToDelete(null);
-                        }}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={handleConfirmDelete}
-                        disabled={isDeleting}
-                    >
-                        {isDeleting ? 'Eliminando...' : 'Eliminar'}
-                    </Button>
-                </div>
-            </BaseModal>
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
+                title="Eliminar sesión"
+                description={
+                    sessionToDelete ? (
+                        <>
+                            ¿Estás seguro de que deseas eliminar la sesión{" "}
+                            <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
+                                «{sessionToDelete.session_name}»
+                            </span>
+                            ? Esta acción no se puede deshacer.
+                        </>
+                    ) : (
+                        "¿Estás seguro de que deseas eliminar esta sesión?"
+                    )
+                }
+                confirmLabel="Eliminar"
+            />
         </div>
     );
 };

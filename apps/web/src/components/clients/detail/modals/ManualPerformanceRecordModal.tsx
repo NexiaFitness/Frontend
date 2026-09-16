@@ -3,7 +3,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from "react";
-import { BaseModal } from "@/components/ui/modals";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect } from "@/components/ui/forms";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
@@ -90,7 +90,7 @@ export const ManualPerformanceRecordModal: React.FC<
         : "Registrar marca manual";
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title={title}
@@ -172,6 +172,6 @@ export const ManualPerformanceRecordModal: React.FC<
                     </Button>
                 </div>
             </form>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

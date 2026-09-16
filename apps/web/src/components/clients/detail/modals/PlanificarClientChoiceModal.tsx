@@ -5,7 +5,7 @@
 
 import React from "react";
 import { LayoutTemplate, PenLine } from "lucide-react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { TEMPLATE_TEMPORAL_BRIDGE_COPY } from "@nexia/shared";
 
@@ -25,7 +25,7 @@ export const PlanificarClientChoiceModal: React.FC<PlanificarClientChoiceModalPr
     onCreateCustomPlan,
 }) => {
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
             title="Planificar entrenamiento"
@@ -78,6 +78,6 @@ export const PlanificarClientChoiceModal: React.FC<PlanificarClientChoiceModalPr
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

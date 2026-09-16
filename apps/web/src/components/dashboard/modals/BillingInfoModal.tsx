@@ -13,7 +13,7 @@
  */
 
 import React from 'react';
-import { BaseModal } from '@/components/ui/modals';
+import { NexiaPremiumModal } from '@/components/ui/modals';
 import { Button } from '@/components/ui/buttons';
 import { Input } from '@/components/ui/forms';
 import { useBillingInfoModal } from '@nexia/shared';
@@ -59,14 +59,11 @@ export const BillingInfoModal: React.FC<BillingInfoModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={handleClose}
             title="Datos de facturación"
             description="Completa tus datos fiscales para emitir facturas legalmente válidas."
-            iconType="info"
-            titleId="billing-info-modal-title"
-            descriptionId="billing-info-modal-description"
             isLoading={isSubmitting}
             closeOnBackdrop={!isSubmitting}
             closeOnEsc={!isSubmitting}
@@ -149,6 +146,6 @@ export const BillingInfoModal: React.FC<BillingInfoModalProps> = ({
                     </Button>
                 </div>
             </form>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

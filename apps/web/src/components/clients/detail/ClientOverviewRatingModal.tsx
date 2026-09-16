@@ -5,7 +5,7 @@
 import React, { useState } from "react";
 import type { ClientRatingCreate } from "@nexia/shared/types/client";
 import { useCreateClientRatingMutation } from "@nexia/shared/api/clientsApi";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 
 export interface ClientOverviewRatingModalProps {
@@ -30,7 +30,7 @@ export const ClientOverviewRatingModal: React.FC<ClientOverviewRatingModalProps>
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={handleClose}
             title="Registrar valoración"
@@ -93,6 +93,6 @@ export const ClientOverviewRatingModal: React.FC<ClientOverviewRatingModalProps>
                     </Button>
                 </div>
             </form>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

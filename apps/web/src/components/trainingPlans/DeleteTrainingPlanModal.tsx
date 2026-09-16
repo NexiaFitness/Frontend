@@ -1,20 +1,16 @@
 /**
- * DeleteTrainingPlanModal.tsx — Modal de confirmación para eliminar un plan de entrenamiento.
- *
- * Contexto:
- * - Proporciona una confirmación profesional antes de eliminar datos críticos.
- * - Alineado con el diseño de DeleteClientModal y el sistema BaseModal.
- *
- * @author Frontend Team
- * @since v6.0.0
+ * DeleteTrainingPlanModal.tsx — Confirmación eliminar plan (NexiaPremiumConfirmModal).
  */
 
 import React from "react";
-import { Button } from "@/components/ui/buttons";
-import { BaseModal } from "@/components/ui/modals";
-import { TYPOGRAPHY } from "@/utils/typography";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
+
 import type { TrainingPlan } from "@nexia/shared/types/training";
+
+import {
+    NexiaPremiumConfirmModal,
+    NEXIA_PREMIUM_CONFIRM_AUXILIARY_CLASS,
+    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
+} from "@/components/ui/modals";
 
 interface DeleteTrainingPlanModalProps {
     isOpen: boolean;
@@ -22,7 +18,6 @@ interface DeleteTrainingPlanModalProps {
     onConfirm: () => void;
     plan: TrainingPlan | null;
     isLoading?: boolean;
-    /** Plan operativo del cliente (activo hoy); copy de confirmación reforzado. */
     isOperationalPlan?: boolean;
 }
 
@@ -36,54 +31,38 @@ export const DeleteTrainingPlanModal: React.FC<DeleteTrainingPlanModalProps> = (
 }) => {
     if (!plan) return null;
 
-    const description = `¿Estás seguro de que deseas eliminar el plan "${plan.name}"?`;
-
     return (
-        <BaseModal
+        <NexiaPremiumConfirmModal
             isOpen={isOpen}
             onClose={onClose}
-            title="Eliminar Plan de Entrenamiento"
-            description={description}
-            iconType="danger"
+            onConfirm={onConfirm}
             isLoading={isLoading}
-            titleId="delete-plan-title"
-            descriptionId="delete-plan-description"
-        >
-            {/* Warning text */}
-            <div className="text-center mb-6 sm:mb-8 space-y-3">
-                <p className={`${TYPOGRAPHY.errorText} text-red-600 font-medium`}>
-                    Esta acción eliminará permanentemente el plan y todas sus sesiones asociadas.
-                </p>
-                {isOperationalPlan ? (
-                    <p className="text-sm text-muted-foreground">
-                        Es el plan operativo de este cliente: tras eliminarlo no habrá plan activo
-                        hasta que planifiques uno nuevo.
+            loadingConfirmLabel="Eliminando…"
+            title="Eliminar plan de entrenamiento"
+            description={
+                <>
+                    ¿Estás seguro de que deseas eliminar el plan{" "}
+                    <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
+                        «{plan.name}»
+                    </span>
+                    ?
+                </>
+            }
+            bodyContent={
+                <div className="space-y-3">
+                    <p className={NEXIA_PREMIUM_CONFIRM_AUXILIARY_CLASS}>
+                        Esta acción eliminará permanentemente el plan y todas sus sesiones
+                        asociadas.
                     </p>
-                ) : null}
-            </div>
-
-            {/* Action buttons */}
-            <div className="flex flex-col md:flex-row gap-3 justify-center">
-                <Button
-                    variant="outline"
-                    onClick={onClose}
-                    disabled={isLoading}
-                    size="md"
-                    className={BUTTON_PRESETS.modalEqual}
-                >
-                    Cancelar
-                </Button>
-                <Button
-                    variant="danger"
-                    onClick={onConfirm}
-                    isLoading={isLoading}
-                    disabled={isLoading}
-                    size="md"
-                    className={BUTTON_PRESETS.modalEqual}
-                >
-                    Eliminar Plan
-                </Button>
-            </div>
-        </BaseModal>
+                    {isOperationalPlan ? (
+                        <p className="text-sm text-muted-foreground">
+                            Es el plan operativo de este cliente: tras eliminarlo no habrá plan
+                            activo hasta que planifiques uno nuevo.
+                        </p>
+                    ) : null}
+                </div>
+            }
+            confirmLabel="Eliminar plan"
+        />
     );
 };

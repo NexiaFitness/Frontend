@@ -20,7 +20,7 @@
  */
 
 import React, { useState, useEffect, useMemo } from "react";
-import { BaseModal } from "@/components/ui/modals";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { BUTTON_PRESETS } from "@/utils/buttonStyles";
 import { TYPOGRAPHY } from "@/utils/typography";
@@ -131,15 +131,12 @@ export const EditProgressModal: React.FC<EditProgressModalProps> = ({
     }), [formData]);
 
     return (
-            <BaseModal
+            <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Editar métricas del progreso"
             description="Modifica los valores del registro seleccionado. El IMC se recalcula automáticamente por el backend."
-            iconType="info"
             isLoading={isLoading}
-            titleId="edit-progress-title"
-            descriptionId="edit-progress-description"
         >
             <div className="space-y-6">
                 {/* Fecha readonly (no editable) */}
@@ -210,6 +207,6 @@ export const EditProgressModal: React.FC<EditProgressModalProps> = ({
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Alert, useToast } from "@/components/ui/feedback";
 import { useDuplicateTrainingPlanTemplate } from "@nexia/shared/hooks/training/useDuplicateTrainingPlanTemplate";
@@ -62,7 +62,7 @@ export const DuplicateTemplateModal: React.FC<DuplicateTemplateModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
             title={DUPLICATE_TEMPLATE_MODAL_COPY.title}
@@ -100,6 +100,6 @@ export const DuplicateTemplateModal: React.FC<DuplicateTemplateModalProps> = ({
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

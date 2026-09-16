@@ -6,7 +6,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { Alert } from "@/components/ui/feedback";
 import { useConvertPlanToTemplate } from "@nexia/shared/hooks/training/useConvertPlanToTemplate";
@@ -64,7 +64,7 @@ export const ConvertPlanToTemplateModal: React.FC<ConvertPlanToTemplateModalProp
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
             title="Convertir en plantilla"
@@ -101,6 +101,6 @@ export const ConvertPlanToTemplateModal: React.FC<ConvertPlanToTemplateModalProp
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };
