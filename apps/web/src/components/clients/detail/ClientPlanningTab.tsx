@@ -49,6 +49,7 @@ import {
 import { DeleteTrainingPlanModal } from "@/components/trainingPlans/DeleteTrainingPlanModal";
 import { ConvertPlanToTemplateModal } from "@/components/trainingPlans/ConvertPlanToTemplateModal";
 import { buildClientTabPath } from "@/lib/trainingPlanNavigation";
+import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
 import { isBlockAuthoringActive, parseBlockAuthorParams } from "@/utils/blockAuthoringUrl";
 import {
     hasMultipleClientTrainingPlans,
@@ -217,11 +218,9 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         }
         setAnalyticsOpen(true);
         setSearchParams((prev) => clearPlanningView(prev), { replace: true });
-        requestAnimationFrame(() => {
-            document
-                .getElementById("planning-analytics-section")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
+        return scrollDashboardMainToAnchorAfterPaint(() =>
+            document.getElementById("planning-analytics-section"),
+        );
     }, [searchParams, setSearchParams]);
 
     useEffect(() => {
@@ -230,11 +229,9 @@ export const ClientPlanningTab: React.FC<ClientPlanningTabProps> = ({
         }
         setPlansHistoryOpen(true);
         setSearchParams((prev) => clearPlanningView(prev), { replace: true });
-        requestAnimationFrame(() => {
-            document
-                .getElementById("client-plans-history")
-                ?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
+        return scrollDashboardMainToAnchorAfterPaint(() =>
+            document.getElementById("client-plans-history"),
+        );
     }, [searchParams, setSearchParams]);
 
     const isLoading =

@@ -18,7 +18,8 @@ import {
     templateLibraryFilterChipClass,
     templateLibraryFilterCountClass,
 } from "@/components/trainingPlans/templateLibraryPresentation";
-import { PERIOD_BLOCK_CARD_LIST_GRID_CLASS, PERIOD_BLOCK_CARD_SHELL_CLASS } from "@/components/trainingPlans/periodization/periodBlockCardPresentation";
+import { PERIOD_BLOCK_CARD_SHELL_CLASS } from "@/components/trainingPlans/periodization/periodBlockCardPresentation";
+import { SESSION_CARD_LIST_GRID_CLASS } from "@/components/trainingSessions/sessionCardPresentation";
 
 export const CLIENT_SESSIONS_TAB_STACK = cn(PLATFORM_PAGE_SHELL, "space-y-5 pb-24 sm:space-y-6");
 
@@ -74,7 +75,7 @@ export const CLIENT_SESSIONS_FILTER_CHIP = templateLibraryFilterChipClass;
 
 export const CLIENT_SESSIONS_FILTER_COUNT = templateLibraryFilterCountClass;
 
-export const CLIENT_SESSIONS_LIST = PERIOD_BLOCK_CARD_LIST_GRID_CLASS;
+export const CLIENT_SESSIONS_LIST = SESSION_CARD_LIST_GRID_CLASS;
 
 export const CLIENT_SESSIONS_APPOINTMENT_CARD = cn(
     PERIOD_BLOCK_CARD_SHELL_CLASS,

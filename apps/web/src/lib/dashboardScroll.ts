@@ -77,6 +77,32 @@ export interface ScrollDashboardElementOptions {
     align?: "start" | "contain";
 }
 
+/** Margen estándar anclas premium (scroll-mt-24 + header main). */
+export const DASHBOARD_ANCHOR_OFFSET_TOP = 96;
+
+export const DASHBOARD_ANCHOR_OFFSET_BOTTOM = 160;
+
+export const DASHBOARD_ANCHOR_SCROLL_OPTIONS: ScrollDashboardElementOptions = {
+    behavior: "auto",
+    align: "start",
+    offsetTop: DASHBOARD_ANCHOR_OFFSET_TOP,
+    offsetBottom: DASHBOARD_ANCHOR_OFFSET_BOTTOM,
+};
+
+function tryScrollElementIntoView(
+    target: HTMLElement,
+    behavior: ScrollBehavior,
+    align: ScrollDashboardElementOptions["align"],
+): void {
+    if (typeof target.scrollIntoView !== "function") {
+        return;
+    }
+    target.scrollIntoView({
+        behavior,
+        block: align === "start" ? "start" : "nearest",
+    });
+}
+
 /** Desplaza el main del dashboard hasta dejar `target` visible. */
 export function scrollDashboardMainToElement(
     target: HTMLElement,
@@ -89,7 +115,7 @@ export function scrollDashboardMainToElement(
     const align = options.align ?? "contain";
 
     if (!main) {
-        target.scrollIntoView({ behavior, block: align === "start" ? "start" : "nearest" });
+        tryScrollElementIntoView(target, behavior, align);
         if (target instanceof HTMLElement && "focus" in target) {
             target.focus({ preventScroll: true });
         }
@@ -117,6 +143,17 @@ export function scrollDashboardMainToElement(
     if (target instanceof HTMLElement && "focus" in target) {
         target.focus({ preventScroll: true });
     }
+}
+
+/** Ancla premium tras paint (planificación, sesiones, acordeones). */
+export function scrollDashboardMainToAnchorAfterPaint(
+    getTarget: () => HTMLElement | null,
+    options?: ScrollDashboardElementOptions,
+): () => void {
+    return scrollDashboardMainToElementAfterPaint(getTarget, {
+        ...DASHBOARD_ANCHOR_SCROLL_OPTIONS,
+        ...options,
+    });
 }
 
 /** Reintenta tras paint/layout (p. ej. datos async o secciones colapsables). */

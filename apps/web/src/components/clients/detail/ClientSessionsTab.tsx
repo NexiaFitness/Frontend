@@ -39,6 +39,7 @@ import { IDLE_PERIOD_BLOCK_FORM_STATE } from "@/components/trainingPlans/periodi
 import { PLANNING_SHELL_PANEL_STACK } from "@/components/trainingPlans/periodization/planningShellPresentation";
 import { useClientActivePlanSessionSchedule } from "@/hooks/clients/useClientActivePlanSessionSchedule";
 import { SessionCard } from "@/components/trainingSessions";
+import { SESSION_CARD_LIST_ITEM_CLASS } from "@/components/trainingSessions/sessionCardPresentation";
 import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
 import {
     CLIENT_SESSIONS_APPOINTMENT_CARD,
@@ -78,7 +79,7 @@ interface ClientSessionsTabProps {
 
 type ListFilter = "all" | "planned" | "completed" | "cancelled" | "appointment";
 
-const LIST_PAGE_SIZE = 9;
+const LIST_PAGE_SIZE = 10;
 
 const EMPTY_EXCEPTION_DATES = new Set<string>();
 
@@ -504,7 +505,10 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                                         if (entry.type === "session") {
                                             const s = entry.item as SessionListItem;
                                             return (
-                                                <li key={`s-${s.session_kind}-${s.id}`}>
+                                                <li
+                                                    key={`s-${s.session_kind}-${s.id}`}
+                                                    className={SESSION_CARD_LIST_ITEM_CLASS}
+                                                >
                                                     <SessionCard
                                                         session={s}
                                                         onViewDetail={handleViewSessionDetail}

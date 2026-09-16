@@ -19,7 +19,6 @@ import {
 import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import { PeriodBlockIconButton } from "@/components/trainingPlans/periodization/PeriodBlockIconButton";
 import {
-    PERIOD_BLOCK_CARD_BODY_CLASS,
     PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS,
     PERIOD_BLOCK_CARD_DATE_TEXT_CLASS,
     PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS,
@@ -29,7 +28,6 @@ import {
     PERIOD_BLOCK_CARD_HEADER_CLASS,
     PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS,
     PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS,
-    PERIOD_BLOCK_CARD_SHELL_CLASS,
 } from "@/components/trainingPlans/periodization/periodBlockCardPresentation";
 import type { TrainingSession as LegacyTrainingSession } from "@nexia/shared/types/training";
 import type { SessionListItem } from "@nexia/shared/types/standaloneSessions";
@@ -38,7 +36,12 @@ import { Button } from "@/components/ui/buttons";
 import {
     resolveSessionCardStatusTone,
     SESSION_CARD_COHERENCE_CHIP,
+    SESSION_CARD_BODY_LIST_CLASS,
+    SESSION_CARD_CARGA_STACK_CLASS,
     SESSION_CARD_DEFAULT_STATUS,
+    SESSION_CARD_FOOTER_PIN_CLASS,
+    SESSION_CARD_MAIN_STACK_CLASS,
+    SESSION_CARD_SHELL_LIST_CLASS,
     SESSION_CARD_STANDALONE_BADGE,
 } from "./sessionCardPresentation";
 
@@ -178,10 +181,10 @@ export const SessionCard: React.FC<SessionCardProps> = ({
     const showFooter = !!(onViewDetail || onReplicate);
 
     return (
-        <article aria-labelledby={titleId} className={PERIOD_BLOCK_CARD_SHELL_CLASS}>
+        <article aria-labelledby={titleId} className={SESSION_CARD_SHELL_LIST_CLASS}>
             <NexiaGlassAccentRim />
 
-            <header className={PERIOD_BLOCK_CARD_HEADER_CLASS}>
+            <header className={cn(PERIOD_BLOCK_CARD_HEADER_CLASS, "shrink-0")}>
                 <div className="flex min-w-0 items-start gap-2">
                     <span
                         className={cn(
@@ -229,64 +232,70 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                 <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
             </div>
 
-            <div className={PERIOD_BLOCK_CARD_BODY_CLASS}>
-                <div className={PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS}>
-                    <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>Sesión</p>
-                    <p className="truncate text-xs font-semibold text-foreground">
-                        {session.session_name}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">{typeLabel}</p>
-                    {isStandalone ? (
-                        <span className={cn(SESSION_CARD_STANDALONE_BADGE, "mt-1 w-fit text-[10px]")}>
-                            Sesión libre
-                        </span>
-                    ) : null}
-                    {showPhaseChip ? (
-                        <SessionCardPhaseChip
-                            sessionId={session.id}
-                            inlineCoherence={inlineCoherence}
-                        />
-                    ) : null}
+            <div className={SESSION_CARD_MAIN_STACK_CLASS}>
+                <div className={SESSION_CARD_BODY_LIST_CLASS}>
+                    <div className={PERIOD_BLOCK_CARD_QUALITIES_COLUMN_CLASS}>
+                        <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>Sesión</p>
+                        <p className="truncate text-xs font-semibold text-foreground">
+                            {session.session_name}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground">{typeLabel}</p>
+                        {isStandalone ? (
+                            <span className={cn(SESSION_CARD_STANDALONE_BADGE, "mt-1 w-fit text-[10px]")}>
+                                Sesión libre
+                            </span>
+                        ) : null}
+                        {showPhaseChip ? (
+                            <SessionCardPhaseChip
+                                sessionId={session.id}
+                                inlineCoherence={inlineCoherence}
+                            />
+                        ) : null}
+                    </div>
+
+                    <div className={PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS}>
+                        <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>Carga</p>
+                        <div className={SESSION_CARD_CARGA_STACK_CLASS}>
+                            {hasCarga ? (
+                                <>
+                                    {plannedVolume != null ? (
+                                        <BlockLevelMeter
+                                            tone="volume"
+                                            level={plannedVolume}
+                                            prefix="Volumen"
+                                        />
+                                    ) : null}
+                                    {plannedIntensity != null ? (
+                                        <BlockLevelMeter
+                                            tone="intensity"
+                                            level={plannedIntensity}
+                                            prefix="Intensidad"
+                                        />
+                                    ) : null}
+                                </>
+                            ) : (
+                                <p className="text-[11px] text-muted-foreground">
+                                    Sin carga planificada
+                                </p>
+                            )}
+                        </div>
+                    </div>
                 </div>
 
-                <div className={PERIOD_BLOCK_CARD_METRICS_COLUMN_CLASS}>
-                    <p className={PERIOD_BLOCK_CARD_COLUMN_LABEL_CLASS}>Carga</p>
-                    {hasCarga ? (
-                        <>
-                            {plannedVolume != null ? (
-                                <BlockLevelMeter
-                                    tone="volume"
-                                    level={plannedVolume}
-                                    prefix="Volumen"
-                                />
-                            ) : null}
-                            {plannedIntensity != null ? (
-                                <BlockLevelMeter
-                                    tone="intensity"
-                                    level={plannedIntensity}
-                                    prefix="Intensidad"
-                                />
-                            ) : null}
-                        </>
-                    ) : (
-                        <p className="text-[11px] text-muted-foreground">Sin carga planificada</p>
-                    )}
-                </div>
+                {trainerNotes ? (
+                    <>
+                        <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
+                            <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
+                        </div>
+                        <p className="relative z-[1] shrink-0 px-4 py-2.5 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
+                            {trainerNotes}
+                        </p>
+                    </>
+                ) : null}
             </div>
 
-            {trainerNotes ? (
-                <>
-                    <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
-                        <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
-                    </div>
-                    <p className="relative z-[1] px-4 py-2.5 text-[11px] leading-relaxed text-muted-foreground line-clamp-2">
-                        {trainerNotes}
-                    </p>
-                </>
-            ) : null}
-
             {showFooter ? (
-                <>
+                <div className={SESSION_CARD_FOOTER_PIN_CLASS}>
                     <div className={PERIOD_BLOCK_CARD_DIVIDER_WRAP_CLASS} aria-hidden>
                         <div className={PERIOD_BLOCK_CARD_DIVIDER_LINE_CLASS} />
                     </div>
@@ -316,7 +325,7 @@ export const SessionCard: React.FC<SessionCardProps> = ({
                             </Button>
                         ) : null}
                     </footer>
-                </>
+                </div>
             ) : null}
         </article>
     );

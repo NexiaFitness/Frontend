@@ -4,6 +4,7 @@ import {
     dashboardRouteDefersScrollReset,
     hasPlanningSubJourneyParams,
     isClientPlanningIntraTabSearchChange,
+    scrollDashboardMainToElement,
     shouldResetDashboardScrollOnNavigation,
 } from "../dashboardScroll";
 
@@ -81,5 +82,14 @@ describe("dashboardScroll — planificación intra-tab", () => {
             search: "tab=sessions",
         };
         expect(shouldResetDashboardScrollOnNavigation(prev, next)).toBe(true);
+    });
+});
+
+describe("scrollDashboardMainToElement — entornos sin scrollIntoView (jsdom)", () => {
+    it("no lanza si el target no implementa scrollIntoView", () => {
+        const target = document.createElement("div");
+        expect(() =>
+            scrollDashboardMainToElement(target, { align: "start" }),
+        ).not.toThrow();
     });
 });
