@@ -15,7 +15,9 @@
  */
 
 import React, { useMemo } from "react";
-import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
+import { Info } from "lucide-react";
+import { NexiaSemanticIcon } from "@/components/ui/feedback";
+import type { NexiaSemanticTone } from "@/components/ui/feedback/nexiaSemanticIconPresentation";
 
 import { getNotApplicableCopy } from "./sessionValidationPresentation";
 
@@ -71,47 +73,54 @@ const STATUS_CONFIG: Record<
     ValidationStatus | "partially_aligned" | "not_applicable" | "null",
     {
     label: string;
-    icon: React.ReactNode;
+    tone: NexiaSemanticTone | "neutral";
     container: string;
     text: string;
 }> = {
     aligned: {
         label: "Alineado",
-        icon: <CheckCircle2 className="h-4 w-4" />,
+        tone: "success",
         container: "bg-success/10 border-success/30",
         text: "text-success",
     },
     slight_deviation: {
         label: "Desviación leve",
-        icon: <AlertTriangle className="h-4 w-4" />,
+        tone: "warning",
         container: "bg-warning/10 border-warning/30",
         text: "text-warning",
     },
     misaligned: {
         label: "Desalineado",
-        icon: <XCircle className="h-4 w-4" />,
+        tone: "error",
         container: "bg-destructive/10 border-destructive/30",
         text: "text-destructive",
     },
     partially_aligned: {
         label: "Parcialmente alineado",
-        icon: <Info className="h-4 w-4" />,
+        tone: "info",
         container: "bg-primary/10 border-primary/30",
         text: "text-primary",
     },
     not_applicable: {
         label: "No aplicable",
-        icon: <Info className="h-4 w-4" />,
+        tone: "neutral",
         container: "bg-muted border-border/50",
         text: "text-muted-foreground",
     },
     null: {
         label: "No disponible",
-        icon: <Info className="h-4 w-4" />,
+        tone: "neutral",
         container: "bg-muted border-border/50",
         text: "text-muted-foreground",
     },
 };
+
+function statusBadgeIcon(tone: NexiaSemanticTone | "neutral"): React.ReactNode {
+    if (tone === "neutral") {
+        return <Info className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />;
+    }
+    return <NexiaSemanticIcon tone={tone} size="sm" />;
+}
 
 function getValidationStatusLabel(
     status: SessionValidationOverallStatus | null
@@ -133,7 +142,7 @@ export function StatusBadge({
                 config.text
             )}
         >
-            {config.icon}
+            {statusBadgeIcon(config.tone)}
             {config.label}
         </span>
     );
@@ -480,7 +489,7 @@ const SafetySummarySection: React.FC<{ data: SessionSafetySummaryOut | undefined
                     <p className="text-xs font-medium text-destructive">Ejercicios bloqueantes</p>
                     {details.filter((d: ExerciseSafetyResponse) => d.blocking).map((d, i) => (
                         <div key={i} className="flex items-start gap-2 rounded-md border border-destructive/30 bg-destructive/10 p-2">
-                            <XCircle className="mt-0.5 h-3 w-3 shrink-0 text-destructive" />
+                            <NexiaSemanticIcon tone="error" size="sm" className="mt-0.5" />
                             <div className="min-w-0">
                                 <p className="text-xs font-medium text-destructive">{d.reason ?? "Contraindicado"}</p>
                             </div>
@@ -493,7 +502,7 @@ const SafetySummarySection: React.FC<{ data: SessionSafetySummaryOut | undefined
                     <p className="text-xs font-medium text-warning">Advertencias</p>
                     {details.filter((d: ExerciseSafetyResponse) => !d.blocking && !d.is_safe).map((d, i) => (
                         <div key={i} className="flex items-start gap-2 rounded-md border border-warning/30 bg-warning/10 p-2">
-                            <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0 text-warning" />
+                            <NexiaSemanticIcon tone="warning" size="sm" className="mt-0.5" />
                             <div className="min-w-0">
                                 <p className="text-xs font-medium text-warning">{d.reason ?? "Precaución"}</p>
                             </div>
