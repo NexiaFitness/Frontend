@@ -32,6 +32,7 @@ import { PlanBlockAuthoringSurface } from "./PlanBlockAuthoringSurface";
 import { BlockWeeksManageSurface } from "./BlockWeeksManageSurface";
 import { PlanningExploreShell } from "./PlanningExploreShell";
 import { buildBlockAuthorPath } from "@/lib/trainingPlanNavigation";
+import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
 import { buildClientSessionsPath } from "@/utils/clientSessionsUrl";
 import {
   clearBlockAuthorParams,
@@ -60,18 +61,21 @@ function formatDateFriendly(dateStr: string): string {
   });
 }
 
+const BLOCK_AUTHORING_FOCUS_HEADER_SELECTOR =
+  '[data-testid="block-authoring-focus-header"]';
+
+function getPlanningProgramAnchorElement(): HTMLElement | null {
+  return (
+    document.getElementById("planning-program-anchor") ??
+    (document.querySelector(
+      '[data-testid="planning-explore-shell"]',
+    ) as HTMLElement | null)
+  );
+}
+
 /** Tras salir de wizard/semanas: ancla en card del programa (no tabs ni observaciones). */
-function scrollToPlanningProgramAnchor(): void {
-  requestAnimationFrame(() => {
-    const anchor = document.getElementById("planning-program-anchor");
-    if (anchor) {
-      anchor.scrollIntoView({ behavior: "smooth", block: "start" });
-      return;
-    }
-    document
-      .querySelector('[data-testid="planning-explore-shell"]')
-      ?.scrollIntoView({ behavior: "smooth", block: "start" });
-  });
+function scrollToPlanningProgramAnchor(): () => void {
+  return scrollDashboardMainToAnchorAfterPaint(getPlanningProgramAnchorElement);
 }
 
 interface Props {
@@ -200,18 +204,16 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     if (!isPickingPhaseRange) {
       return;
     }
-    scrollToPlanningProgramAnchor();
+    return scrollToPlanningProgramAnchor();
   }, [isPickingPhaseRange]);
 
   useEffect(() => {
     if (!isDapAuthoring) {
       return;
     }
-    requestAnimationFrame(() => {
-      document
-        .querySelector('[data-testid="block-authoring-focus-header"]')
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
+    return scrollDashboardMainToAnchorAfterPaint(() =>
+      document.querySelector(BLOCK_AUTHORING_FOCUS_HEADER_SELECTOR) as HTMLElement | null,
+    );
   }, [isDapAuthoring]);
 
   useEffect(() => {
@@ -222,7 +224,7 @@ export const PlanPeriodizationSection: React.FC<Props> = ({
     }
     if (wasPlanningFocusSurfaceRef.current) {
       wasPlanningFocusSurfaceRef.current = false;
-      scrollToPlanningProgramAnchor();
+      return scrollToPlanningProgramAnchor();
     }
   }, [isDapAuthoring, isBlockWeeksManage]);
 

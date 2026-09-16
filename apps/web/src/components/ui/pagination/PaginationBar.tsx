@@ -1,18 +1,20 @@
 /**
  * PaginationBar — Barra de paginación reutilizable (VISTA_CLIENTES_SPEC §10).
  *
- * Contexto:
- * - Diseño: texto "X–Y de Z" a la izquierda; botones Anterior, números de página, Siguiente a la derecha.
- * - Solo visible cuando totalPages > 1. Usar en Clientes y en otras vistas con listas paginadas.
- * - Tokens: text-muted-foreground, bg-primary, text-primary-foreground, bg-surface, border-border.
- *
- * @author Frontend Team
- * @since v6.0.0
+ * Tokens: paginationPresentation.ts (premium · outline-primary).
  */
 
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+    PAGINATION_BAR_SHELL,
+    PAGINATION_NAV,
+    PAGINATION_NAV_BUTTON_CLASS,
+    PAGINATION_PAGE_ACTIVE_CLASS,
+    PAGINATION_PAGE_BUTTON_CLASS,
+    PAGINATION_RANGE_LABEL,
+} from "./paginationPresentation";
 
 export interface PaginationBarProps {
     /** Página actual (1-based). */
@@ -46,22 +48,17 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
         return null;
     }
 
-    const buttonBase =
-        "inline-flex min-h-touch min-w-touch items-center justify-center rounded-md text-sm font-medium transition-colors disabled:pointer-events-none disabled:opacity-40 sm:min-h-8 sm:min-w-8";
     const pageNumbers = Array.from({ length: totalPages }, (_, i) => i + 1);
 
     return (
-        <div className={cn("flex flex-col gap-3 pt-4 sm:flex-row sm:items-center sm:justify-between", className)}>
-            <p className="text-center text-sm text-muted-foreground sm:text-left">{rangeLabel}</p>
-            <nav className="flex items-center justify-center gap-1 overflow-x-auto pb-1 sm:justify-end sm:overflow-visible sm:pb-0" aria-label="Paginación">
+        <div className={cn(PAGINATION_BAR_SHELL, className)}>
+            <p className={PAGINATION_RANGE_LABEL}>{rangeLabel}</p>
+            <nav className={PAGINATION_NAV} aria-label="Paginación">
                 <button
                     type="button"
                     onClick={() => onPageChange(Math.max(1, safeCurrentPage - 1))}
                     disabled={safeCurrentPage <= 1}
-                    className={cn(
-                        buttonBase,
-                        "shrink-0 text-muted-foreground hover:bg-surface hover:text-foreground"
-                    )}
+                    className={PAGINATION_NAV_BUTTON_CLASS}
                     aria-label="Página anterior"
                 >
                     <ChevronLeft className="h-4 w-4" />
@@ -72,13 +69,11 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
                             key={page}
                             type="button"
                             onClick={() => onPageChange(page)}
-                            className={cn(
-                                buttonBase,
-                                "shrink-0",
+                            className={
                                 page === safeCurrentPage
-                                    ? "bg-primary text-primary-foreground"
-                                    : "text-muted-foreground hover:bg-surface hover:text-foreground"
-                            )}
+                                    ? PAGINATION_PAGE_ACTIVE_CLASS
+                                    : PAGINATION_PAGE_BUTTON_CLASS
+                            }
                             aria-label={`Página ${page}`}
                             aria-current={page === safeCurrentPage ? "page" : undefined}
                         >
@@ -90,10 +85,7 @@ export const PaginationBar: React.FC<PaginationBarProps> = ({
                     type="button"
                     onClick={() => onPageChange(Math.min(totalPages, safeCurrentPage + 1))}
                     disabled={safeCurrentPage >= totalPages}
-                    className={cn(
-                        buttonBase,
-                        "shrink-0 text-muted-foreground hover:bg-surface hover:text-foreground"
-                    )}
+                    className={PAGINATION_NAV_BUTTON_CLASS}
                     aria-label="Página siguiente"
                 >
                     <ChevronRight className="h-4 w-4" />

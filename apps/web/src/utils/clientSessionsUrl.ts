@@ -2,7 +2,7 @@
  * clientSessionsUrl.ts — Deep links del tab Sesiones (calendario · mes).
  */
 
-import { scrollDashboardMainToElementAfterPaint } from "@/lib/dashboardScroll";
+import { scrollDashboardMainToAnchorAfterPaint } from "@/lib/dashboardScroll";
 
 export const CLIENT_SESSIONS_CALENDAR_SECTION_ID = "client-sessions-calendar-section";
 
@@ -46,20 +46,9 @@ function getClientSessionsCalendarAnchor(): HTMLElement | null {
     );
 }
 
-const SESSIONS_CALENDAR_SCROLL_OPTIONS = {
-    behavior: "auto" as const,
-    align: "start" as const,
-    /** Alineado con scroll-mt-24 del ancla + margen del main. */
-    offsetTop: 96,
-    offsetBottom: 160,
-};
-
 /** Tras entrar desde bloque/planificación: scroll en #dashboard-main-scroll. */
 export function scrollToClientSessionsCalendar(): void {
-    scrollDashboardMainToElementAfterPaint(
-        getClientSessionsCalendarAnchor,
-        SESSIONS_CALENDAR_SCROLL_OPTIONS,
-    );
+    scrollDashboardMainToAnchorAfterPaint(getClientSessionsCalendarAnchor);
 }
 
 export interface ClientSessionsPathOptions {

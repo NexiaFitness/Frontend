@@ -26,6 +26,32 @@ export const SESSION_CARD_SHELL_CLASS = cn(
     "hover:border-primary/35 hover:shadow-[0_8px_32px_-12px] hover:shadow-primary/15",
 );
 
+/** Lista cliente/plan: altura uniforme, ancho fluido (sin max-w de bloque). */
+export const SESSION_CARD_SHELL_LIST_CLASS = cn(
+    SESSION_CARD_SHELL_CLASS,
+    "flex h-full max-w-none flex-col",
+);
+
+export const SESSION_CARD_LIST_ITEM_CLASS = "flex min-h-0 h-full min-w-0";
+
+/** Rejilla responsive — columnas 1fr para rellenar fila (sin hueco a la derecha). */
+export const SESSION_CARD_LIST_GRID_CLASS = cn(
+    "grid w-full min-w-0 gap-4",
+    "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5",
+);
+
+export const SESSION_CARD_MAIN_STACK_CLASS = "relative z-[1] flex min-h-0 flex-1 flex-col";
+
+export const SESSION_CARD_BODY_LIST_CLASS = cn(
+    "relative z-[1] grid flex-1 grid-cols-2 items-stretch gap-3 px-4 py-3.5",
+);
+
+export const SESSION_CARD_CARGA_STACK_CLASS = "flex min-h-[7.25rem] flex-1 flex-col";
+
+export const SESSION_CARD_FOOTER_PIN_CLASS = cn(
+    "relative z-[1] mt-auto shrink-0",
+);
+
 export const SESSION_CARD_HEADER_CLASS = PERIOD_BLOCK_CARD_HEADER_CLASS;
 
 export const SESSION_CARD_HEADER_MAIN = "flex min-w-0 flex-1 items-start gap-2.5";
