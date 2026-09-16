@@ -16,7 +16,7 @@ import { useToast } from "@/components/ui/feedback";
 import { PageTitle } from "@/components/dashboard/shared";
 import { Button } from "@/components/ui/buttons";
 import { EmptyStateCard } from "@/components/ui/cards";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import { getMutationErrorMessage } from "@nexia/shared";
 import { useClientInjuries } from "@nexia/shared/hooks/injuries/useClientInjuries";
 import {
@@ -283,79 +283,79 @@ export const ClientInjuriesTab: React.FC<ClientInjuriesTabProps> = ({ clientId }
                 injury={selectedInjury}
             />
 
-            {/* Resolve confirmation */}
-            {resolveId != null && resolveInjury && (
-                <BaseModal
+            {resolveId != null && resolveInjury ? (
+                <NexiaPremiumConfirmModal
                     isOpen
                     onClose={() => setResolveId(null)}
+                    onConfirm={handleResolve}
+                    isLoading={isResolving}
                     title="¿Resolver esta lesión?"
                     description="La lesión dejará de aparecer como activa."
-                    iconType="success"
-                >
-                    <div className="space-y-4">
-                        <div className="rounded-lg border border-border bg-surface-2 p-3 space-y-1">
-                            <p className="text-sm font-semibold text-foreground">
-                                {cap(label(resolveInjury, "joint") ?? "N/D")}
-                                {label(resolveInjury, "movement") && (
-                                    <span className="font-normal text-muted-foreground"> · {cap(label(resolveInjury, "movement")!)}</span>
-                                )}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Dolor {resolveInjury.pain_level}/5
-                                {resolveInjury.start_date && ` · Desde ${fmtDate(resolveInjury.start_date)}`}
+                    confirmLabel="Marcar como resuelta"
+                    confirmVariant="primary"
+                    bodyContent={
+                        <div className="space-y-3">
+                            <div className="rounded-lg border border-border/50 bg-surface-2/80 p-3 space-y-1">
+                                <p className="text-sm font-semibold text-foreground">
+                                    {cap(label(resolveInjury, "joint") ?? "N/D")}
+                                    {label(resolveInjury, "movement") ? (
+                                        <span className="font-normal text-muted-foreground">
+                                            {" "}
+                                            · {cap(label(resolveInjury, "movement")!)}
+                                        </span>
+                                    ) : null}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Dolor {resolveInjury.pain_level}/5
+                                    {resolveInjury.start_date
+                                        ? ` · Desde ${fmtDate(resolveInjury.start_date)}`
+                                        : ""}
+                                </p>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Puedes revertir este cambio editando el registro más adelante.
                             </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            Puedes revertir este cambio editando el registro más adelante.
-                        </p>
-                        <div className="flex flex-col justify-end gap-2 sm:flex-row">
-                            <Button type="button" variant="outline-destructive" size="sm" onClick={() => setResolveId(null)} disabled={isResolving} className="sm:min-w-[100px]">
-                                Cancelar
-                            </Button>
-                            <Button type="button" variant="primary" size="sm" onClick={handleResolve} disabled={isResolving} isLoading={isResolving} className="sm:min-w-[100px]">
-                                Marcar como resuelta
-                            </Button>
-                        </div>
-                    </div>
-                </BaseModal>
-            )}
+                    }
+                />
+            ) : null}
 
-            {/* Delete confirmation */}
-            {deleteId != null && deleteInjury_ && (
-                <BaseModal
+            {deleteId != null && deleteInjury_ ? (
+                <NexiaPremiumConfirmModal
                     isOpen
                     onClose={() => setDeleteId(null)}
+                    onConfirm={handleDelete}
+                    isLoading={isDeleting}
                     title="¿Eliminar esta lesión?"
                     description="Esta acción es permanente y no se puede deshacer."
-                    iconType="danger"
-                >
-                    <div className="space-y-4">
-                        <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-1">
-                            <p className="text-sm font-semibold text-foreground">
-                                {cap(label(deleteInjury_, "joint") ?? "N/D")}
-                                {label(deleteInjury_, "movement") && (
-                                    <span className="font-normal text-muted-foreground"> · {cap(label(deleteInjury_, "movement")!)}</span>
-                                )}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                                Dolor {deleteInjury_.pain_level}/5
-                                {deleteInjury_.start_date && ` · Desde ${fmtDate(deleteInjury_.start_date)}`}
+                    confirmLabel="Eliminar lesión"
+                    bodyContent={
+                        <div className="space-y-3">
+                            <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 space-y-1">
+                                <p className="text-sm font-semibold text-foreground">
+                                    {cap(label(deleteInjury_, "joint") ?? "N/D")}
+                                    {label(deleteInjury_, "movement") ? (
+                                        <span className="font-normal text-muted-foreground">
+                                            {" "}
+                                            · {cap(label(deleteInjury_, "movement")!)}
+                                        </span>
+                                    ) : null}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    Dolor {deleteInjury_.pain_level}/5
+                                    {deleteInjury_.start_date
+                                        ? ` · Desde ${fmtDate(deleteInjury_.start_date)}`
+                                        : ""}
+                                </p>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                                Se eliminará permanentemente del historial del cliente. El plan de
+                                entrenamiento dejará de considerar esta lesión.
                             </p>
                         </div>
-                        <p className="text-sm text-muted-foreground">
-                            Se eliminará permanentemente del historial del cliente. El plan de entrenamiento dejará de considerar esta lesión.
-                        </p>
-                        <div className="flex flex-col justify-end gap-2 sm:flex-row">
-                            <Button type="button" variant="outline" size="sm" onClick={() => setDeleteId(null)} disabled={isDeleting} className="sm:min-w-[100px]">
-                                Cancelar
-                            </Button>
-                            <Button type="button" variant="danger" size="sm" onClick={handleDelete} disabled={isDeleting} isLoading={isDeleting} className="sm:min-w-[100px]">
-                                Eliminar lesión
-                            </Button>
-                        </div>
-                    </div>
-                </BaseModal>
-            )}
+                    }
+                />
+            ) : null}
         </section>
     );
 };

@@ -1,5 +1,8 @@
 /**
  * clientSessionsTabPresentation.ts — Tab Sesiones del cliente (premium · tablet-first).
+ *
+ * Footer acciones: primary = Crear sesión; auxiliar = ghost-primary Agendar cita.
+ * @see design/platform/05_ACTION_HIERARCHY.md §2.3
  */
 
 import { cn } from "@/lib/utils";

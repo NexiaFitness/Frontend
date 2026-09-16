@@ -6,7 +6,7 @@
  * @since v6.3.0
  */
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import {
     ArrowLeft,
@@ -25,7 +25,10 @@ import type { RootState } from "@nexia/shared/store";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import {
+    NexiaPremiumConfirmModal,
+    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
+} from "@/components/ui/modals";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { DASHBOARD_FIXED_FOOTER_PADDING_CLASS } from "@/lib/dashboardScroll";
 import {
@@ -42,7 +45,11 @@ import {
     SessionAlertsPanel,
     SessionExecutionSummary,
 } from "@/components/sessionProgramming/detail";
-import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+import {
+    navigateDashboardBack,
+    readSafeReturnTo,
+    returnToStateFromView,
+} from "@/lib/sessionDetailNavigation";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionModal";
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
@@ -112,13 +119,9 @@ export const SessionDetail: React.FC = () => {
     const location = useLocation();
     const { showSuccess, showError } = useToast();
     const backTarget = readSafeReturnTo(location.state) ?? null;
-    const goBack = () => {
-        if (backTarget) {
-            navigate(backTarget);
-        } else {
-            navigate(DEFAULT_BACK_TO_SESSIONS);
-        }
-    };
+    const goBack = useCallback(() => {
+        navigateDashboardBack(navigate, location.state, DEFAULT_BACK_TO_SESSIONS);
+    }, [navigate, location.state]);
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
     const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
@@ -282,7 +285,7 @@ export const SessionDetail: React.FC = () => {
                         </div>
                     </div>
                 </div>
-                <Button variant="outline" size="sm" onClick={goBack} className="shrink-0">
+                <Button variant="ghost-primary" size="sm" onClick={goBack} className="shrink-0">
                     <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
                     Volver
                 </Button>
@@ -396,15 +399,19 @@ export const SessionDetail: React.FC = () => {
             <DashboardFixedFooter>
                 <div className="flex flex-wrap items-center justify-end gap-2">
                     <Button
-                        variant="outline-destructive"
-                        onClick={() => setShowDeleteModal(true)}
+                        variant="primary"
+                        onClick={() =>
+                            navigate(`/dashboard/session-programming/edit-session/${session.id}`, {
+                                state: returnToStateFromView(location),
+                            })
+                        }
                     >
-                        <Trash2 className="mr-1 h-4 w-4" aria-hidden />
-                        Eliminar
+                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                        Editar sesión
                     </Button>
                     {session.period_block_id ? (
                         <Button
-                            variant="outline-primary"
+                            variant="ghost-primary"
                             onClick={replicateFlow.openModal}
                         >
                             <Copy className="mr-1 h-4 w-4" aria-hidden />
@@ -412,44 +419,38 @@ export const SessionDetail: React.FC = () => {
                         </Button>
                     ) : null}
                     <Button
-                        variant="primary"
-                        onClick={() => navigate(`/dashboard/session-programming/edit-session/${session.id}`)}
+                        variant="outline-destructive"
+                        onClick={() => setShowDeleteModal(true)}
                     >
-                        <Pencil className="mr-1 h-4 w-4" aria-hidden />
-                        Editar sesión
+                        <Trash2 className="mr-1 h-4 w-4" aria-hidden />
+                        Eliminar
                     </Button>
                 </div>
             </DashboardFixedFooter>
 
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     if (!isDeleting) setShowDeleteModal(false);
                 }}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
+                data-testid="session-delete-premium-modal"
                 title="Eliminar sesión"
-                description={`¿Seguro que quieres eliminar la sesión "${session.session_name}"? Esta acción no se puede deshacer.`}
-                iconType="danger"
+                description={
+                    <>
+                        ¿Seguro que quieres eliminar la sesión{" "}
+                        <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
+                            «{session.session_name}»
+                        </span>
+                        ? Esta acción no se puede deshacer.
+                    </>
+                }
                 closeOnBackdrop={!isDeleting}
                 closeOnEsc={!isDeleting}
-                isLoading={isDeleting}
-            >
-                <div className="mt-4 flex justify-end gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowDeleteModal(false)}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button
-                        variant="danger"
-                        onClick={handleConfirmDelete}
-                        disabled={isDeleting}
-                    >
-                        {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </Button>
-                </div>
-            </BaseModal>
+                confirmLabel="Eliminar"
+            />
         </div>
     );
 };

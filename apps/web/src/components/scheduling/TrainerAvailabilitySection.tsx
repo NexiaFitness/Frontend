@@ -9,8 +9,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/buttons";
 import { Input, FormSelect, Checkbox } from "@/components/ui/forms";
-import { BaseModal } from "@/components/ui/modals";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
+import { NexiaPremiumConfirmModal } from "@/components/ui/modals";
 import {
     useGetTrainerAvailabilityQuery,
     useCreateTrainerAvailabilityMutation,
@@ -146,38 +145,19 @@ export const TrainerAvailabilitySection: React.FC<TrainerAvailabilitySectionProp
                 </>
             )}
 
-            {deleteConfirmId && (
-                <BaseModal
-                    isOpen={!!deleteConfirmId}
+            {deleteConfirmId ? (
+                <NexiaPremiumConfirmModal
+                    isOpen
                     onClose={() => setDeleteConfirmId(null)}
+                    onConfirm={() => {
+                        if (deleteConfirmId) handleDelete(deleteConfirmId);
+                    }}
+                    isLoading={isDeleting}
                     title="Eliminar slot"
                     description="¿Estás seguro de que deseas eliminar este slot de disponibilidad?"
-                    iconType="danger"
-                    isLoading={isDeleting}
-                >
-                    <div className="flex flex-col md:flex-row gap-3 justify-center">
-                        <Button
-                            variant="outline"
-                            onClick={() => setDeleteConfirmId(null)}
-                            disabled={isDeleting}
-                            size="md"
-                            className={BUTTON_PRESETS.modalEqual}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            variant="danger"
-                            onClick={() => deleteConfirmId && handleDelete(deleteConfirmId)}
-                            isLoading={isDeleting}
-                            disabled={isDeleting}
-                            size="md"
-                            className={BUTTON_PRESETS.modalEqual}
-                        >
-                            Eliminar
-                        </Button>
-                    </div>
-                </BaseModal>
-            )}
+                    confirmLabel="Eliminar"
+                />
+            ) : null}
         </div>
     );
 };

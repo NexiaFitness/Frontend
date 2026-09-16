@@ -14,7 +14,7 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BaseModal } from '@/components/ui/modals';
+import { NexiaPremiumModal } from '@/components/ui/modals';
 import { Button } from '@/components/ui/buttons';
 import { useCompleteProfileModal } from '@nexia/shared';
 
@@ -36,14 +36,11 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Completa tu perfil profesional"
             description="Para crear clientes necesitas completar tu perfil con los siguientes datos:"
-            iconType="warning"
-            titleId="complete-profile-modal-title"
-            descriptionId="complete-profile-modal-description"
         >
             {/* Lista de campos faltantes */}
             <div className="mb-6 sm:mb-8">
@@ -88,6 +85,6 @@ export const CompleteProfileModal: React.FC<CompleteProfileModalProps> = ({
                     Cancelar
                 </Button>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

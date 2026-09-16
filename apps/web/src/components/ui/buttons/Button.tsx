@@ -15,7 +15,9 @@
  * @author Frontend Team
  * @since v1.0.0
  * @updated v5.0.0 - Nexia Sparkle Flow: tokens, cn(), variantes default/destructive/ghost/link
- * @updated 2026-07 - Añadida variante "ghost-primary" (texto azul primary, sin fondo ni borde en reposo) para CTAs terciarios que no deben leerse como acciones neutras (cancelar/cerrar).
+ * @updated 2026-07 - Variante "ghost-primary" (auxiliar de marca: Volver, Editar perfil, Agendar cita).
+ * @updated 2026-09 - Destructivas: solo receta glass (outline-destructive); `destructive`/`danger` son alias.
+ * @see design/platform/05_ACTION_HIERARCHY.md — jerarquía primary / ghost-primary / outline-primary por zona.
  */
 
 import React, { forwardRef } from "react";
@@ -44,21 +46,23 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 const baseStyles =
     "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0";
 
+/** Canónico premium: borde + tinte glass (footer Eliminar, modales confirmación). Ver DESIGN_PREMIUM §4.4. */
+const destructiveOutlineStyles =
+    "rounded-lg border border-destructive/30 bg-destructive/20 text-destructive hover:bg-destructive/30 hover:border-destructive/50";
+
 const variantStyles: Record<string, string> = {
     default:
         "border border-transparent bg-primary text-primary-foreground hover:bg-primary/90",
     primary:
         "border border-transparent bg-gradient-to-r from-[hsl(190,100%,45%)] to-[hsl(210,100%,55%)] text-primary-foreground shadow-[0_0_20px_-4px_hsl(190,100%,50%,0.4)] hover:shadow-[0_0_28px_-4px_hsl(190,100%,50%,0.6)] hover:brightness-110 active:brightness-95 disabled:opacity-100 disabled:brightness-100",
-    destructive:
-        "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
-    danger:
-        "border border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/90",
+    destructive: destructiveOutlineStyles,
+    danger: destructiveOutlineStyles,
     outline:
         "border border-primary text-primary bg-transparent hover:bg-primary/10",
+    // Secundaria premium (marco cyan) — design/platform/05_ACTION_HIERARCHY.md §1 nivel 3
     "outline-primary":
         "rounded-lg border border-primary/30 bg-primary/20 text-primary hover:bg-primary/30 hover:border-primary/50",
-    "outline-destructive":
-        "rounded-lg border border-destructive/30 bg-destructive/20 text-destructive hover:bg-destructive/30 hover:border-destructive/50",
+    "outline-destructive": destructiveOutlineStyles,
     secondary:
         "border border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
     ghost:

@@ -46,7 +46,10 @@ import type { TrainingSessionStatus } from "@nexia/shared/types/trainingSessions
 
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import {
+    NexiaPremiumConfirmModal,
+    NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS,
+} from "@/components/ui/modals";
 import { CoherenceConclusionsPanel } from "@/components/sessionProgramming/CoherenceConclusionsPanel";
 import { stripLegacyCoherenceFromNotes } from "@/components/sessionProgramming/coherenceConclusionsPresentation";
 import { SessionValidationContent } from "@/components/sessionProgramming/SessionValidationContent";
@@ -56,30 +59,49 @@ import { ReplicateSessionModal } from "@/components/sessions/ReplicateSessionMod
 import { ReplicateSessionConflictModal } from "@/components/sessions/ReplicateSessionConflictModal";
 import { useReplicateSessionFlow } from "@/components/sessions/useReplicateSessionFlow";
 import {
+    navigateDashboardBack,
     readReviewBackTarget,
     readReviewCoherenceFromState,
     returnToStateFromView,
 } from "@/lib/sessionDetailNavigation";
 import { cn } from "@/lib/utils";
-import { TYPOGRAPHY } from "@/utils/typography";
-
-const SUMMARY_SHELL =
-    "rounded-lg border border-border/60 border-l-[3px] border-l-primary bg-surface shadow-sm overflow-hidden";
-
-function statusBadgeClasses(status: string): string {
-    switch (status) {
-        case "completed":
-            return "bg-success/10 text-success border-success/30";
-        case "planned":
-            return "bg-primary/10 text-primary border-primary/30";
-        case "skipped":
-            return "bg-destructive/10 text-destructive border-destructive/30";
-        case "modified":
-            return "bg-warning/10 text-warning border-warning/30";
-        default:
-            return "bg-secondary text-secondary-foreground border-border";
-    }
-}
+import { NexiaGlassAccentRim } from "@/components/ui/surface/NexiaGlassAccentRim";
+import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
+import {
+    SESSION_REVIEW_ALERT_BODY,
+    SESSION_REVIEW_ALERT_HEADER,
+    SESSION_REVIEW_ALERT_ITEM,
+    SESSION_REVIEW_ALERT_PANEL,
+    SESSION_REVIEW_BREADCRUMB,
+    SESSION_REVIEW_BREADCRUMB_CURRENT,
+    SESSION_REVIEW_BREADCRUMB_LINK,
+    SESSION_REVIEW_CLIENT_META,
+    SESSION_REVIEW_FOOTER_MGMT,
+    SESSION_REVIEW_FOOTER_ROW,
+    SESSION_REVIEW_FOOTER_SHELL,
+    SESSION_REVIEW_FOOTER_VIEW_ACTION,
+    SESSION_REVIEW_GLOW,
+    SESSION_REVIEW_HEADER_ACTIONS,
+    SESSION_REVIEW_HERO,
+    SESSION_REVIEW_HERO_ROW,
+    SESSION_REVIEW_META_CHIP,
+    SESSION_REVIEW_METRIC_CELL,
+    SESSION_REVIEW_METRIC_DURATION,
+    SESSION_REVIEW_METRIC_GRID,
+    SESSION_REVIEW_METRIC_LABEL,
+    SESSION_REVIEW_NOTES_SHELL,
+    SESSION_REVIEW_PAGE,
+    SESSION_REVIEW_STACK,
+    SESSION_REVIEW_STATUS_BADGE,
+    SESSION_REVIEW_SUMMARY_BODY,
+    SESSION_REVIEW_SUMMARY_CARD,
+    SESSION_REVIEW_SUMMARY_HEADER,
+    SESSION_REVIEW_SUMMARY_SUBTITLE,
+    SESSION_REVIEW_SUMMARY_TITLE,
+    SESSION_REVIEW_TITLE,
+    SESSION_REVIEW_TYPE_CHIP,
+    sessionReviewStatusBadgeClass,
+} from "@/components/sessionProgramming/sessionReviewPresentation";
 
 function formatDuration(min: number | null): string {
     if (min == null) return "—";
@@ -105,29 +127,22 @@ function addOneLocalDay(dateISO: string): string | null {
 }
 
 
-function PlanActualMetric({
-    label,
+function DurationMetric({
     planned,
     actual,
-    accentClass,
 }: {
-    label: string;
     planned: string;
     actual: string;
-    accentClass: string;
 }) {
     const hasActual = actual !== "—";
     return (
-        <div className="flex flex-col gap-1 min-w-0 rounded-md border border-border/60 bg-surface/80 px-2.5 py-1.5">
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                {label}
-            </span>
-            <div className="space-y-0.5 text-xs tabular-nums">
-                <p className="text-muted-foreground">
-                    Programado:{" "}
-                    <span className="font-medium text-foreground">{planned}</span>
+        <div className={SESSION_REVIEW_METRIC_CELL}>
+            <span className={SESSION_REVIEW_METRIC_LABEL}>Duración</span>
+            <div className={SESSION_REVIEW_METRIC_DURATION}>
+                <p>
+                    Programado: <span className="font-medium text-foreground">{planned}</span>
                 </p>
-                <p className={hasActual ? accentClass : "text-muted-foreground"}>
+                <p className={hasActual ? "text-foreground" : undefined}>
                     Registrado:{" "}
                     <span className={cn("font-semibold", hasActual ? "text-foreground" : "")}>
                         {actual}
@@ -156,20 +171,21 @@ const SessionReviewHeader: React.FC<{
         TRAINING_SESSION_STATUS_LABELS[session.status as TrainingSessionStatus] ?? session.status;
 
     return (
-        <div className="space-y-4">
-            <nav className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                <button type="button" onClick={onBack} className="hover:text-foreground transition-colors">
+        <header className={SESSION_REVIEW_HERO}>
+            <NexiaGlassAccentRim />
+            <nav className={cn(SESSION_REVIEW_BREADCRUMB, "relative z-[1]")} aria-label="Ruta">
+                <button type="button" onClick={onBack} className={SESSION_REVIEW_BREADCRUMB_LINK}>
                     Sesiones
                 </button>
                 <ChevronRight className="size-4 shrink-0" aria-hidden />
-                <span className="truncate max-w-[200px] sm:max-w-xs text-foreground font-medium">
+                <span className={cn(SESSION_REVIEW_BREADCRUMB_CURRENT, "max-w-[200px] sm:max-w-xs")}>
                     {session.session_name}
                 </span>
                 <ChevronRight className="size-4 shrink-0" aria-hidden />
-                <span className="text-foreground font-medium">Revisión</span>
+                <span className={SESSION_REVIEW_BREADCRUMB_CURRENT}>Revisión</span>
             </nav>
 
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+            <div className={cn(SESSION_REVIEW_HERO_ROW, "relative z-[1]")}>
                 {isLoadingClient ? (
                     <div className="size-16 rounded-full bg-surface-2 animate-pulse shrink-0" />
                 ) : client ? (
@@ -184,13 +200,11 @@ const SessionReviewHeader: React.FC<{
 
                 <div className="min-w-0 flex-1 space-y-1">
                     <div className="flex flex-wrap items-center gap-2 gap-y-1">
-                        <h1 className={cn(TYPOGRAPHY.detailPageTitle, "text-foreground")}>
-                            {session.session_name}
-                        </h1>
+                        <h1 className={SESSION_REVIEW_TITLE}>{session.session_name}</h1>
                         <span
                             className={cn(
-                                "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-xs font-semibold",
-                                statusBadgeClasses(session.status)
+                                SESSION_REVIEW_STATUS_BADGE,
+                                sessionReviewStatusBadgeClass(session.status),
                             )}
                         >
                             {session.status === "completed" ? (
@@ -200,7 +214,7 @@ const SessionReviewHeader: React.FC<{
                         </span>
                     </div>
                     {client ? (
-                        <p className="text-sm text-muted-foreground">
+                        <p className={SESSION_REVIEW_CLIENT_META}>
                             {[client.nombre, client.apellidos, client.objetivo_entrenamiento]
                                 .filter(Boolean)
                                 .join(" · ")}
@@ -208,18 +222,18 @@ const SessionReviewHeader: React.FC<{
                     ) : null}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                    <Button variant="outline" size="sm" onClick={onBack}>
-                        <ArrowLeft className="mr-1 h-4 w-4" aria-hidden />
+                <div className={SESSION_REVIEW_HEADER_ACTIONS}>
+                    <Button variant="ghost-primary" size="sm" onClick={onBack}>
+                        <ArrowLeft className="size-3.5 shrink-0" aria-hidden />
                         Volver
                     </Button>
                     <Button variant="primary" size="sm" onClick={onSchedule}>
-                        <CalendarPlus className="mr-1 h-4 w-4" aria-hidden />
+                        <CalendarPlus className="size-3.5 shrink-0" aria-hidden />
                         Programar siguiente
                     </Button>
                 </div>
             </div>
-        </div>
+        </header>
     );
 };
 
@@ -229,23 +243,18 @@ const CoherenceAlertsPanel: React.FC<{
     if (warnings.length === 0) return null;
 
     return (
-        <section
-            className="rounded-lg border border-warning/30 border-l-[3px] border-l-warning bg-warning/10 overflow-hidden"
-            aria-label="Avisos de coherencia"
-        >
-            <div className="flex items-center gap-2 border-b border-warning/20 px-4 py-3">
-                <AlertTriangle className="size-4 text-warning shrink-0" aria-hidden />
+        <section className={SESSION_REVIEW_ALERT_PANEL} aria-label="Avisos de coherencia">
+            <NexiaGlassAccentRim />
+            <div className={SESSION_REVIEW_ALERT_HEADER}>
+                <AlertTriangle className="size-4 shrink-0 text-warning" aria-hidden />
                 <h2 className="text-sm font-semibold text-foreground">Avisos de coherencia</h2>
                 <span className="ml-auto rounded-md border border-warning/30 bg-warning/10 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-warning">
                     {warnings.length}
                 </span>
             </div>
-            <ul className="space-y-2 px-4 py-3">
+            <ul className={SESSION_REVIEW_ALERT_BODY}>
                 {warnings.map((w, i) => (
-                    <li
-                        key={i}
-                        className="text-sm leading-relaxed text-foreground before:mr-2 before:text-warning before:content-['•']"
-                    >
+                    <li key={i} className={SESSION_REVIEW_ALERT_ITEM}>
                         {w.message}
                     </li>
                 ))}
@@ -273,60 +282,70 @@ const SessionPlanSummaryCard: React.FC<{
         session.session_type;
     const trainerNotes = stripLegacyCoherenceFromNotes(session.notes);
 
+    const plannedVol = Math.min(10, Math.max(1, session.planned_volume ?? 5));
+    const plannedInt = Math.min(10, Math.max(1, session.planned_intensity ?? 5));
+
     return (
-        <section className={SUMMARY_SHELL} aria-label="Resumen de sesión">
-            <div className="flex items-start gap-2.5 border-b border-primary/20 bg-primary/[0.06] px-5 py-3.5">
-                <span
-                    className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary)/0.55)]"
-                    aria-hidden
-                />
-                <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-foreground">Resumen de sesión</p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
+        <section className={SESSION_REVIEW_SUMMARY_CARD} aria-label="Resumen de sesión">
+            <NexiaGlassAccentRim />
+            <div className={SESSION_REVIEW_SUMMARY_HEADER}>
+                <div className="min-w-0 space-y-1">
+                    <p className={SESSION_REVIEW_SUMMARY_TITLE}>Resumen de sesión</p>
+                    <p className={SESSION_REVIEW_SUMMARY_SUBTITLE}>
                         Planificado vs. registrado en esta sesión
                     </p>
                 </div>
             </div>
 
-            <div className="space-y-4 px-5 py-4">
+            <div className={SESSION_REVIEW_SUMMARY_BODY}>
                 <div className="flex flex-wrap gap-2">
-                    <span className="inline-flex items-center rounded-md border border-border/60 bg-surface/80 px-2.5 py-1 text-xs text-foreground">
-                        <span className="text-muted-foreground mr-1.5">Fecha</span>
+                    <span className={SESSION_REVIEW_META_CHIP}>
+                        <span className="mr-1.5 text-muted-foreground">Fecha</span>
                         {session.session_date ?? "—"}
                         {session.session_time ? ` · ${session.session_time.slice(0, 5)}` : ""}
                     </span>
-                    <span className="inline-flex items-center rounded-md border border-primary/45 bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
-                        {typeLabel}
-                    </span>
+                    <span className={SESSION_REVIEW_TYPE_CHIP}>{typeLabel}</span>
                 </div>
 
-                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-                    <PlanActualMetric
-                        label="Duración"
+                <div className={SESSION_REVIEW_METRIC_GRID}>
+                    <DurationMetric
                         planned={formatDuration(session.planned_duration)}
                         actual={formatDuration(session.actual_duration)}
-                        accentClass="text-foreground"
                     />
-                    <PlanActualMetric
-                        label="Intensidad"
-                        planned={formatMetric(session.planned_intensity)}
-                        actual={formatMetric(session.actual_intensity)}
-                        accentClass="text-warning"
-                    />
-                    <PlanActualMetric
-                        label="Volumen"
-                        planned={formatMetric(session.planned_volume)}
-                        actual={formatMetric(session.actual_volume)}
-                        accentClass="text-primary"
-                    />
+                    <div className={SESSION_REVIEW_METRIC_CELL}>
+                        <BlockLevelMeter
+                            id="review-planned-intensity"
+                            tone="intensity"
+                            prefix="Intensidad"
+                            level={plannedInt}
+                            hint={
+                                session.actual_intensity != null
+                                    ? `Registrado: ${formatMetric(session.actual_intensity)}`
+                                    : "Registrado: —"
+                            }
+                            qualitativeLabel
+                        />
+                    </div>
+                    <div className={SESSION_REVIEW_METRIC_CELL}>
+                        <BlockLevelMeter
+                            id="review-planned-volume"
+                            tone="volume"
+                            prefix="Volumen"
+                            level={plannedVol}
+                            hint={
+                                session.actual_volume != null
+                                    ? `Registrado: ${formatMetric(session.actual_volume)}`
+                                    : "Registrado: —"
+                            }
+                            qualitativeLabel
+                        />
+                    </div>
                 </div>
 
                 {trainerNotes ? (
-                    <div className="rounded-lg border border-border/60 bg-surface/80 px-3 py-2.5">
-                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Notas del entrenador
-                        </p>
-                        <p className="mt-1 text-sm text-foreground whitespace-pre-wrap">{trainerNotes}</p>
+                    <div className={SESSION_REVIEW_NOTES_SHELL}>
+                        <p className={SESSION_REVIEW_METRIC_LABEL}>Notas del entrenador</p>
+                        <p className="mt-1 text-sm whitespace-pre-wrap text-foreground">{trainerNotes}</p>
                     </div>
                 ) : null}
             </div>
@@ -347,8 +366,6 @@ export const SessionReviewPage: React.FC = () => {
     );
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [deleteSession, { isLoading: isDeleting }] = useDeleteTrainingSessionMutation();
-
-    const backTarget = readReviewBackTarget(location.state);
 
     const {
         data: session,
@@ -426,16 +443,17 @@ export const SessionReviewPage: React.FC = () => {
     }, [sessionId, validateSession]);
 
     const handleBack = useCallback(() => {
-        if (backTarget) {
-            navigate(backTarget);
-        } else if (sessionId > 0) {
-            navigate(`/dashboard/session-programming/sessions/${sessionId}`, {
-                state: returnToStateFromView(location),
-            });
-        } else {
-            navigate(-1);
+        const explicitTarget = readReviewBackTarget(location.state);
+        if (explicitTarget) {
+            navigate(explicitTarget);
+            return;
         }
-    }, [backTarget, navigate, sessionId, location]);
+        const fallback =
+            sessionId > 0
+                ? `/dashboard/session-programming/sessions/${sessionId}`
+                : "/dashboard/sessions";
+        navigateDashboardBack(navigate, location.state, fallback);
+    }, [navigate, location.state, sessionId]);
 
     const handleViewSession = useCallback(() => {
         navigate(`/dashboard/session-programming/sessions/${sessionId}`, {
@@ -544,7 +562,9 @@ export const SessionReviewPage: React.FC = () => {
 
     return (
         <>
-            <div className="space-y-6 pb-24 px-4 lg:px-8">
+            <div className={SESSION_REVIEW_PAGE}>
+                <div className={SESSION_REVIEW_GLOW} aria-hidden />
+                <div className={SESSION_REVIEW_STACK}>
                 <SessionReviewHeader
                     session={session}
                     onBack={handleBack}
@@ -567,68 +587,75 @@ export const SessionReviewPage: React.FC = () => {
                     error={validationError ?? null}
                     layout="review"
                 />
+                </div>
             </div>
 
-            <DashboardFixedFooter>
-                <div className="flex w-full flex-wrap items-center justify-between gap-2">
-                    <Button variant="primary" size="sm" onClick={handleViewSession}>
-                        <Eye className="mr-1 h-4 w-4" aria-hidden />
+            <DashboardFixedFooter className={SESSION_REVIEW_FOOTER_SHELL}>
+                <div className={SESSION_REVIEW_FOOTER_ROW}>
+                    <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className={SESSION_REVIEW_FOOTER_VIEW_ACTION}
+                        onClick={handleViewSession}
+                    >
+                        <Eye className="size-3.5 shrink-0" aria-hidden />
                         Ver sesión
                     </Button>
-                    <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Button
-                            variant="outline-destructive"
-                            size="sm"
-                            onClick={() => setShowDeleteModal(true)}
-                        >
-                            <Trash2 className="mr-1 h-4 w-4" aria-hidden />
-                            Eliminar
-                        </Button>
+                    <div className={SESSION_REVIEW_FOOTER_MGMT}>
                         {canReplicate ? (
-                            <Button variant="outline-primary" size="sm" onClick={replicateFlow.openModal}>
-                                <Copy className="mr-1 h-4 w-4" aria-hidden />
+                            <Button
+                                variant="ghost-primary"
+                                size="sm"
+                                onClick={replicateFlow.openModal}
+                            >
+                                <Copy className="size-3.5 shrink-0" aria-hidden />
                                 Replicar
                             </Button>
                         ) : null}
                         <Button
-                            variant="outline"
+                            variant="ghost-primary"
                             size="sm"
                             onClick={() =>
                                 navigate(`/dashboard/session-programming/edit-session/${sessionId}`)
                             }
                         >
-                            <Pencil className="mr-1 h-4 w-4" aria-hidden />
+                            <Pencil className="size-3.5 shrink-0" aria-hidden />
                             Editar
+                        </Button>
+                        <Button
+                            variant="outline-destructive"
+                            size="sm"
+                            onClick={() => setShowDeleteModal(true)}
+                        >
+                            <Trash2 className="size-3.5 shrink-0" aria-hidden />
+                            Eliminar
                         </Button>
                     </div>
                 </div>
             </DashboardFixedFooter>
 
-            <BaseModal
+            <NexiaPremiumConfirmModal
                 isOpen={showDeleteModal}
                 onClose={() => {
                     if (!isDeleting) setShowDeleteModal(false);
                 }}
+                onConfirm={handleConfirmDelete}
+                isLoading={isDeleting}
+                loadingConfirmLabel="Eliminando…"
                 title="Eliminar sesión"
-                description={`¿Seguro que quieres eliminar la sesión "${session.session_name}"? Esta acción no se puede deshacer.`}
-                iconType="danger"
+                description={
+                    <>
+                        ¿Seguro que quieres eliminar la sesión{" "}
+                        <span className={NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS}>
+                            «{session.session_name}»
+                        </span>
+                        ? Esta acción no se puede deshacer.
+                    </>
+                }
                 closeOnBackdrop={!isDeleting}
                 closeOnEsc={!isDeleting}
-                isLoading={isDeleting}
-            >
-                <div className="mt-4 flex justify-end gap-3">
-                    <Button
-                        variant="outline"
-                        onClick={() => setShowDeleteModal(false)}
-                        disabled={isDeleting}
-                    >
-                        Cancelar
-                    </Button>
-                    <Button variant="danger" onClick={handleConfirmDelete} disabled={isDeleting}>
-                        {isDeleting ? "Eliminando..." : "Eliminar"}
-                    </Button>
-                </div>
-            </BaseModal>
+                confirmLabel="Eliminar"
+            />
 
             <ReplicateSessionModal
                 isOpen={replicateFlow.isOpen}

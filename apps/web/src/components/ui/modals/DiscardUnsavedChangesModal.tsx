@@ -1,11 +1,10 @@
 /**
- * DiscardUnsavedChangesModal — Confirmación premium al salir con cambios sin guardar.
+ * DiscardUnsavedChangesModal — Confirmación salir sin guardar (NexiaPremiumConfirmModal).
  */
 
 import React from "react";
-import { Button } from "@/components/ui/buttons";
-import { BaseModal } from "@/components/ui/modals";
-import { BUTTON_PRESETS } from "@/utils/buttonStyles";
+
+import { NexiaPremiumConfirmModal } from "./NexiaPremiumConfirmModal";
 
 interface DiscardUnsavedChangesModalProps {
     isOpen: boolean;
@@ -26,32 +25,14 @@ export const DiscardUnsavedChangesModal: React.FC<DiscardUnsavedChangesModalProp
     confirmLabel = "Salir sin guardar",
     cancelLabel = "Seguir editando",
 }) => (
-    <BaseModal
+    <NexiaPremiumConfirmModal
         isOpen={isOpen}
         onClose={onCancel}
+        onConfirm={onConfirm}
         title={title}
         description={description}
-        iconType="warning"
-        titleId="discard-unsaved-title"
-        descriptionId="discard-unsaved-description"
-    >
-        <div className="flex flex-col md:flex-row gap-3 justify-center">
-            <Button
-                variant="outline"
-                onClick={onCancel}
-                size="md"
-                className={BUTTON_PRESETS.modalEqual}
-            >
-                {cancelLabel}
-            </Button>
-            <Button
-                variant="danger"
-                onClick={onConfirm}
-                size="md"
-                className={BUTTON_PRESETS.modalEqual}
-            >
-                {confirmLabel}
-            </Button>
-        </div>
-    </BaseModal>
+        confirmLabel={confirmLabel}
+        cancelLabel={cancelLabel}
+        confirmVariant="destructive"
+    />
 );

@@ -10,7 +10,7 @@ import React from "react";
 import type { MovementPattern } from "@nexia/shared/types/exercise";
 import type { WeeklyStructureWeekCreate } from "@nexia/shared/types/weeklyStructure";
 
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 
 import { PeriodizationWeeklyStructureEditor } from "./PeriodizationWeeklyStructureEditor";
@@ -51,7 +51,7 @@ export const PeriodizationWeeklyStructureModal: React.FC<
     );
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Estructura semanal"
@@ -79,6 +79,6 @@ export const PeriodizationWeeklyStructureModal: React.FC<
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

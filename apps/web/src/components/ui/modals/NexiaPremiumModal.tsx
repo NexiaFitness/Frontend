@@ -38,6 +38,8 @@ export interface NexiaPremiumModalProps {
     maxWidth?: NexiaPremiumModalMaxWidth;
     closeOnBackdrop?: boolean;
     closeOnEsc?: boolean;
+    /** Bloquea cierre por backdrop/ESC mientras hay mutación en curso. */
+    isLoading?: boolean;
     showCloseButton?: boolean;
     className?: string;
     bodyClassName?: string;
@@ -55,6 +57,7 @@ export const NexiaPremiumModal: React.FC<NexiaPremiumModalProps> = ({
     maxWidth = "2xl",
     closeOnBackdrop = true,
     closeOnEsc = true,
+    isLoading = false,
     showCloseButton = true,
     className,
     bodyClassName,
@@ -65,9 +68,11 @@ export const NexiaPremiumModal: React.FC<NexiaPremiumModalProps> = ({
     const titleId = useId();
     const descriptionId = useId();
 
+    const blockClose = isLoading;
+
     useEffect(() => {
         const handleEscapeKey = (event: KeyboardEvent) => {
-            if (event.key === "Escape" && isOpen && closeOnEsc) {
+            if (event.key === "Escape" && isOpen && closeOnEsc && !blockClose) {
                 onClose();
             }
         };
@@ -82,7 +87,7 @@ export const NexiaPremiumModal: React.FC<NexiaPremiumModalProps> = ({
             document.removeEventListener("keydown", handleEscapeKey);
             document.body.style.overflow = "unset";
         };
-    }, [isOpen, closeOnEsc, onClose]);
+    }, [isOpen, closeOnEsc, blockClose, onClose]);
 
     if (!isOpen) return null;
 
@@ -91,7 +96,7 @@ export const NexiaPremiumModal: React.FC<NexiaPremiumModalProps> = ({
     if (!portalTarget) return null;
 
     const handleBackdropClick = () => {
-        if (closeOnBackdrop) {
+        if (closeOnBackdrop && !blockClose) {
             onClose();
         }
     };

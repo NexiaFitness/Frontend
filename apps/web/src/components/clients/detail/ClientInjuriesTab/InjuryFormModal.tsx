@@ -12,7 +12,7 @@
  */
 
 import React, { useEffect, useMemo, useState } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Input, FormCombobox, Textarea } from "@/components/ui/forms";
 import type { ComboboxOption } from "@/components/ui/forms";
 import { Button } from "@/components/ui/buttons";
@@ -216,13 +216,11 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
     const muscleOptions = useMemo(() => dedupeAndCapitalize(muscles), [muscles]);
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title={isEdit ? "Editar lesión" : "Registrar lesión"}
             description="Completa los datos de la lesión para llevar control y seguimiento."
-            titleId="injury-modal-title"
-            descriptionId="injury-modal-description"
             maxWidth="lg"
             closeOnBackdrop={!isSubmitting}
             closeOnEsc={!isSubmitting}
@@ -370,6 +368,6 @@ export const InjuryFormModal: React.FC<InjuryFormModalProps> = ({
                     </Button>
                 </div>
             </form>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

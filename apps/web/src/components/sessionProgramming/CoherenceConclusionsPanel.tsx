@@ -20,12 +20,18 @@ import { SessionPanelShell } from "./SessionPanelShell";
 import {
     buildCoherenceConclusionsViewModel,
     COHERENCE_CONCLUSIONS_COPY,
+    COHERENCE_EXPAND_ROW,
+    COHERENCE_EXPAND_TRIGGER,
+    COHERENCE_EXPAND_LABEL,
+    COHERENCE_EXPAND_COUNT,
+    COHERENCE_EXPAND_CHEVRON,
     conclusionToneClasses,
     heroStatusBadgeClasses,
     type CoherenceConclusionViewModel,
     type CoherenceHeroStatus,
 } from "./coherenceConclusionsPresentation";
 import { cn } from "@/lib/utils";
+import { sessionReviewConclusionItemClass } from "./sessionReviewPresentation";
 
 export interface CoherenceConclusionsPanelProps {
     report: CoherenceReport | null | undefined;
@@ -55,15 +61,7 @@ function ConclusionRow({ item }: { item: CoherenceConclusionViewModel }) {
               : Info;
 
     return (
-        <li
-            className={cn(
-                "rounded-lg border border-l-[3px] px-4 py-3",
-                tone.container,
-                item.tone === "caution" && "border-l-warning",
-                item.tone === "positive" && "border-l-success",
-                item.tone === "neutral" && "border-l-muted-foreground/50",
-            )}
-        >
+        <li className={sessionReviewConclusionItemClass(item.tone)}>
             <div className="flex items-start gap-2.5">
                 <Icon className={cn("mt-0.5 size-4 shrink-0", tone.icon)} aria-hidden />
                 <div className="min-w-0 space-y-1">
@@ -101,7 +99,6 @@ export const CoherenceConclusionsPanel: React.FC<CoherenceConclusionsPanelProps>
             title={COHERENCE_CONCLUSIONS_COPY.panelTitle}
             subtitle={COHERENCE_CONCLUSIONS_COPY.panelSubtitle}
             headerAccessory={headerBadge}
-            className="border-l-[3px] border-l-primary/50"
         >
             {isLoading ? (
                 <div className="flex items-center justify-center gap-3 py-10">
@@ -113,7 +110,7 @@ export const CoherenceConclusionsPanel: React.FC<CoherenceConclusionsPanelProps>
             ) : null}
 
             {!isLoading && !viewModel ? (
-                <div className="rounded-lg border border-border/60 bg-muted/20 px-4 py-4">
+                <div className="rounded-xl border border-border/45 bg-surface-2/35 px-4 py-4 backdrop-blur-sm">
                     <p className="text-sm font-semibold text-foreground">
                         {COHERENCE_CONCLUSIONS_COPY.emptyTitle}
                     </p>
@@ -148,25 +145,28 @@ export const CoherenceConclusionsPanel: React.FC<CoherenceConclusionsPanelProps>
                     )}
 
                     {viewModel.hiddenCount > 0 ? (
-                        <div className="border-t border-border/60 pt-4">
+                        <div className={COHERENCE_EXPAND_ROW}>
                             <button
                                 type="button"
                                 onClick={() => setExpanded((v) => !v)}
-                                className="flex w-full items-center justify-between gap-3 rounded-md px-1 py-1 text-left transition-colors hover:bg-surface/30"
+                                className={COHERENCE_EXPAND_TRIGGER}
                                 aria-expanded={expanded}
                             >
-                                <span className="text-sm font-medium text-foreground">
+                                <span className={COHERENCE_EXPAND_LABEL}>
                                     {expanded
                                         ? COHERENCE_CONCLUSIONS_COPY.collapseLabel
                                         : COHERENCE_CONCLUSIONS_COPY.expandLabel}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                    <span className="rounded-md border border-border bg-muted/50 px-2 py-0.5 text-xs tabular-nums text-muted-foreground">
-                                        +{viewModel.hiddenCount}
-                                    </span>
+                                    {!expanded ? (
+                                        <span className={COHERENCE_EXPAND_COUNT}>
+                                            +{viewModel.hiddenCount}
+                                        </span>
+                                    ) : null}
                                     <ChevronDown
                                         className={cn(
-                                            "size-4 shrink-0 text-muted-foreground transition-transform duration-200",
+                                            COHERENCE_EXPAND_CHEVRON,
+                                            "transition-transform duration-200",
                                             expanded && "rotate-180",
                                         )}
                                         aria-hidden

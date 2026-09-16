@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { useGetTrainingPlanTemplateQuery } from "@nexia/shared/api/trainingPlansApi";
 import {
@@ -43,12 +43,11 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Vista previa de la plantilla"
             description="Metadata y estado del programa"
-            iconType="info"
             closeOnBackdrop
             closeOnEsc
             isLoading={isLoading}
@@ -216,6 +215,6 @@ export const TemplatePreviewModal: React.FC<TemplatePreviewModalProps> = ({
                     <p className="text-muted-foreground">No se pudo cargar la plantilla</p>
                 </div>
             )}
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

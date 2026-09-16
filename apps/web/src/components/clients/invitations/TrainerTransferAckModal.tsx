@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { BaseModal } from "@/components/ui/modals";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import type { InvitationWarning } from "@nexia/shared/types/invitation";
 
@@ -27,14 +27,11 @@ export const TrainerTransferAckModal: React.FC<TrainerTransferAckModalProps> = (
         "Este atleta está vinculado a otro entrenador. Si acepta, se desvinculará.";
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onCancel}
             title="Cambio de entrenador"
             description={primaryMessage}
-            iconType="warning"
-            titleId="trainer-transfer-ack-title"
-            descriptionId="trainer-transfer-ack-description"
         >
             {warnings[0]?.current_trainer_name ? (
                 <p className="mb-6 text-sm text-muted-foreground">
@@ -65,6 +62,6 @@ export const TrainerTransferAckModal: React.FC<TrainerTransferAckModalProps> = (
                     Cancelar
                 </Button>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

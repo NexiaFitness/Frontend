@@ -15,8 +15,24 @@ import type {
     Evaluability,
 } from "@nexia/shared/types/coherenceReport";
 import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
+import { cn } from "@/lib/utils";
 
 export type CoherenceHeroStatus = "ok" | "review" | "limited_data";
+
+/** Fila «Ver detalle» — contador y chevron en cyan premium (outline-primary). */
+export const COHERENCE_EXPAND_ROW =
+    "border-t border-border/50 pt-4";
+export const COHERENCE_EXPAND_TRIGGER = cn(
+    "flex w-full min-h-touch sm:min-h-10 items-center justify-between gap-3 rounded-lg px-2 py-2 text-left",
+    "transition-colors hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+);
+export const COHERENCE_EXPAND_LABEL =
+    "text-sm font-medium text-primary";
+export const COHERENCE_EXPAND_COUNT = cn(
+    "inline-flex items-center rounded-md border border-primary/30 bg-primary/20 px-2.5 py-0.5",
+    "text-xs font-semibold tabular-nums text-primary",
+);
+export const COHERENCE_EXPAND_CHEVRON = "size-4 shrink-0 text-primary";
 
 export type ConclusionTone = "neutral" | "info" | "caution" | "positive";
 

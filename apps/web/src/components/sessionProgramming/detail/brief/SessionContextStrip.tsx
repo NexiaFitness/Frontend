@@ -7,9 +7,8 @@
  *   2. Plan del día (cualidad + vol/int del motor real)
  *   3. Estado del cliente (fatiga · vol/int día legacy · chip L2 alineación fase → review)
  *
- * Sin badges-pill en esquinas, sin chips de colores sueltos. La tipografía,
- * la jerarquía y un dot semántico de 6px hacen el trabajo. Esto deja a las
- * cards de ejercicios ser las únicas con presencia visual fuerte en la página.
+ * Barras vol/int: BlockLevelMeter (mismo patrón que SessionCard / review).
+ * Patrones: PatternBadge con tinte por ui_bucket (reconocimiento entrenador).
  *
  * @author Frontend Team
  * @since v6.5.0
@@ -36,6 +35,7 @@ import type { SessionCoherence } from "@nexia/shared/types/trainingSessions";
 import type { SessionRecommendationsResponse } from "@nexia/shared/types/sessionRecommendations";
 import type { RiskLevel } from "@nexia/shared/types/training";
 import { Badge, type BadgeVariant } from "@/components/ui/Badge";
+import { BlockLevelMeter } from "@/components/trainingPlans/periodization/BlockLevelMeter";
 import { PatternBadge } from "@/components/trainingPlans/periodization/PatternBadge";
 import {
     buildCoherencePhaseChipViewModel,
@@ -101,27 +101,6 @@ const TONE_TO_BADGE: Record<Tone, BadgeVariant> = {
     primary: "subtle",
     neutral: "subtle-secondary",
 };
-
-function MicroBar({
-    value,
-    max = 10,
-    tone = "primary",
-}: {
-    value: number;
-    max?: number;
-    tone?: "primary" | "warning";
-}) {
-    const ratio = Math.max(0, Math.min(1, value / max));
-    const fill = tone === "warning" ? "bg-[hsl(var(--warning))]" : "bg-primary";
-    return (
-        <span className="inline-block h-1 w-10 rounded-full bg-surface-2 align-middle overflow-hidden">
-            <span
-                className={cn("block h-full rounded-full", fill)}
-                style={{ width: `${ratio * 100}%` }}
-            />
-        </span>
-    );
-}
 
 // ---------------------------------------------------------------------------
 // Helpers de mapeo (puros)
@@ -342,24 +321,28 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
             <Zone icon={<Target className="h-3.5 w-3.5" />} label="Plan del día">
                 <p className="text-sm font-semibold text-foreground truncate">{dayPrimary}</p>
                 <p className="text-xs text-muted-foreground truncate">{daySub}</p>
-                {rec && (
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1.5">
-                            Vol
-                            <span className="font-semibold text-primary">
-                                {rec.planned_volume_scale.toFixed(1)}
-                            </span>
-                            <MicroBar value={rec.planned_volume_scale} tone="primary" />
-                        </span>
-                        <span className="inline-flex items-center gap-1.5">
-                            Int
-                            <span className="font-semibold text-[hsl(var(--warning))]">
-                                {rec.planned_intensity_scale.toFixed(1)}
-                            </span>
-                            <MicroBar value={rec.planned_intensity_scale} tone="warning" />
-                        </span>
+                {rec ? (
+                    <div className="flex flex-col gap-2 min-w-0 max-w-[220px]">
+                        <BlockLevelMeter
+                            tone="volume"
+                            level={rec.planned_volume_scale}
+                            prefix="Volumen"
+                            qualitativeLabel={false}
+                            min={0}
+                            max={10}
+                            className="space-y-1"
+                        />
+                        <BlockLevelMeter
+                            tone="intensity"
+                            level={rec.planned_intensity_scale}
+                            prefix="Intensidad"
+                            qualitativeLabel={false}
+                            min={0}
+                            max={10}
+                            className="space-y-1"
+                        />
                     </div>
-                )}
+                ) : null}
             </Zone>
 
             <Divider />
@@ -420,6 +403,7 @@ export const SessionContextStrip: React.FC<SessionContextStripProps> = ({
                                 key={p.id}
                                 name={p.name_es}
                                 uiBucket={p.ui_bucket}
+                                bucketTintedIdle
                             />
                         ))}
                     </div>

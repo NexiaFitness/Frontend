@@ -597,11 +597,12 @@ export const ClientSessionsTab: React.FC<ClientSessionsTabProps> = ({ clientId }
                 <div className="flex items-center justify-end gap-3">
                     <Button
                         type="button"
-                        variant="outline"
+                        variant="ghost-primary"
                         size="sm"
                         onClick={handleScheduleAppointment}
                     >
-                        + Agendar cita
+                        <Calendar className="size-3.5 shrink-0" aria-hidden />
+                        Agendar cita
                     </Button>
                     <Button type="button" variant="primary" size="sm" onClick={handleAddSession}>
                         + Crear sesión

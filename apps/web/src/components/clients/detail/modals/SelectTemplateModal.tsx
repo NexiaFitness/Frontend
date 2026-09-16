@@ -3,7 +3,7 @@
  */
 
 import React, { useMemo } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { useGetTrainingPlanTemplatesQuery } from "@nexia/shared/api/trainingPlansApi";
 import { useGetCurrentTrainerProfileQuery } from "@nexia/shared/api/trainerApi";
@@ -46,7 +46,7 @@ export const SelectTemplateModal: React.FC<SelectTemplateModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={open}
             onClose={onClose}
             title="Elegir plantilla"
@@ -88,6 +88,6 @@ export const SelectTemplateModal: React.FC<SelectTemplateModalProps> = ({
                     </ul>
                 )}
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

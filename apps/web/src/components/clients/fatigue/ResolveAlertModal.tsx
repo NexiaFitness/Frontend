@@ -11,7 +11,7 @@
  */
 
 import React, { useState, useEffect, useCallback } from "react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons/Button";
 import { TYPOGRAPHY } from "@/utils/typography";
 
@@ -74,7 +74,7 @@ export const ResolveAlertModal: React.FC<ResolveAlertModalProps> = ({
     );
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Resolver Alerta"
@@ -83,7 +83,6 @@ export const ResolveAlertModal: React.FC<ResolveAlertModalProps> = ({
                     ? `¿Resolver la alerta "${alertTitle}"?`
                     : "¿Resolver esta alerta? La alerta se moverá al historial."
             }
-            iconType="success"
             closeOnBackdrop={!isResolving}
             closeOnEsc={!isResolving}
             isLoading={isResolving}
@@ -131,7 +130,7 @@ export const ResolveAlertModal: React.FC<ResolveAlertModalProps> = ({
                     </Button>
                 </div>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };
 

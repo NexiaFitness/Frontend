@@ -142,7 +142,7 @@ export const ClientDetail: React.FC = () => {
 
     const { saveQuickNote, isSavingQuickNote } = useClientQuickNote(client, clientId);
 
-    // Fase 4.1: plan activo para CTA "Planificar" (si hay plan → tab Planificación; si no → modal crear plan)
+    // Planificar: CTAs en Resumen / tab Planificación (hub), no en header global
     const { data: activePlan } = useGetActivePlanByClientQuery(clientId, {
         skip: !clientId || clientId <= 0,
     });
@@ -333,7 +333,6 @@ export const ClientDetail: React.FC = () => {
                     clientId={clientId}
                     onEditProfile={() => navigate(`/dashboard/clients/${clientId}/edit`)}
                     breadcrumbItems={breadcrumbItems}
-                    onPlanificar={handlePlanificar}
                     onSaveQuickNote={saveQuickNote}
                     isSavingQuickNote={isSavingQuickNote}
                 />

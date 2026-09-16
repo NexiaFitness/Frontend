@@ -59,7 +59,7 @@ import { PatternBadge } from "./PatternBadge";
 import { Button } from "@/components/ui/buttons";
 import { DashboardFixedFooter } from "@/components/dashboard/shared";
 import { LoadingSpinner, Alert, useToast } from "@/components/ui/feedback";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -931,12 +931,11 @@ export const WeeklyStructureEditor = forwardRef<
             )}
 
             {/* Delete confirmation modal */}
-            <BaseModal
+            <NexiaPremiumModal
                 isOpen={!!deleteTarget}
                 onClose={() => setDeleteTarget(null)}
                 title="Eliminar semana"
                 description={`¿Eliminar ${deleteTarget?.label || `Semana ${deleteTarget?.week_ordinal}`}? Esta acción no se puede deshacer.`}
-                iconType="danger"
                 maxWidth="sm"
             >
                 <div className="flex items-center justify-end gap-2 pt-4">
@@ -952,11 +951,11 @@ export const WeeklyStructureEditor = forwardRef<
                         Eliminar
                     </Button>
                 </div>
-            </BaseModal>
+            </NexiaPremiumModal>
 
             {/* Repeat week modal — solo planes (no aplica a plantillas) */}
             {!isTemplateScope ? (
-            <BaseModal
+            <NexiaPremiumModal
                 isOpen={repeatModalOpen}
                 onClose={() => {
                     setRepeatModalOpen(false);
@@ -967,7 +966,6 @@ export const WeeklyStructureEditor = forwardRef<
                 }}
                 title={`Repetir ${repeatTargetWeek?.label || `Semana ${repeatTargetWeek?.week_ordinal}`}`}
                 description="Selecciona las semanas destino donde copiar la estructura y las sesiones."
-                iconType="info"
                 maxWidth="md"
             >
                 <div className="space-y-4">
@@ -1061,7 +1059,7 @@ export const WeeklyStructureEditor = forwardRef<
                         </Button>
                     </div>
                 </div>
-            </BaseModal>
+            </NexiaPremiumModal>
             ) : null}
         </>
     );

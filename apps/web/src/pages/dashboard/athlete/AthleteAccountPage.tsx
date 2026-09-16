@@ -16,7 +16,7 @@ import { AthleteChangePasswordSheetForm } from "@/components/athlete/account/Ath
 import { AthleteSheetSubmitButton } from "@/components/athlete/account/AthleteSheetSubmitButton";
 import { DeleteAccountModal } from "@/components/account/modals/DeleteAccountModal";
 import { BottomSheet } from "@/components/ui/layout/BottomSheet";
-import { BaseModal } from "@/components/ui/modals";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Button } from "@/components/ui/buttons";
 import { useAthleteAccount } from "@/hooks/athlete/useAthleteAccount";
 import { useChangePasswordForm } from "@/hooks/account/useChangePasswordForm";
@@ -113,7 +113,7 @@ export const AthleteAccountPage: React.FC = () => {
 
             {isDesktop ? (
                 <>
-                    <BaseModal
+                    <NexiaPremiumModal
                         isOpen={editSheetOpen}
                         onClose={closeEditSheet}
                         title="Editar perfil"
@@ -138,9 +138,9 @@ export const AthleteAccountPage: React.FC = () => {
                                 />
                             </div>
                         </div>
-                    </BaseModal>
+                    </NexiaPremiumModal>
 
-                    <BaseModal
+                    <NexiaPremiumModal
                         isOpen={passwordSheetOpen}
                         onClose={closePasswordSheet}
                         title="Cambiar contraseña"
@@ -165,7 +165,7 @@ export const AthleteAccountPage: React.FC = () => {
                                 />
                             </div>
                         </div>
-                    </BaseModal>
+                    </NexiaPremiumModal>
                 </>
             ) : (
                 <>

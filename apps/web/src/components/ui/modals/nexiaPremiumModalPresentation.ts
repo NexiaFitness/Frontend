@@ -14,12 +14,20 @@ import {
 } from "@/components/athlete/account/athleteSettingsPresentation";
 import { NEXIA_DIVIDER_GLOW } from "@/components/ui/surface/nexiaDividerPresentation";
 
-export type NexiaPremiumModalMaxWidth = "lg" | "xl" | "2xl" | "3xl";
+export type NexiaPremiumModalMaxWidth =
+    | "sm"
+    | "md"
+    | "lg"
+    | "xl"
+    | "2xl"
+    | "3xl";
 
 const NEXIA_PREMIUM_MODAL_MAX_WIDTH_CLASS: Record<
     NexiaPremiumModalMaxWidth,
     string
 > = {
+    sm: "sm:max-w-sm",
+    md: "sm:max-w-md",
     lg: "sm:max-w-lg",
     xl: "sm:max-w-xl",
     "2xl": "sm:max-w-2xl",
@@ -98,3 +106,12 @@ export const NEXIA_PREMIUM_MODAL_CLOSE_BTN_CLASS = cn(
 export const NEXIA_PREMIUM_MODAL_PRIMARY_CTA_CLASS = cn(
     "min-w-[7.5rem] shadow-[0_8px_28px_-10px] shadow-primary/35",
 );
+
+/** Confirmaciones (eliminar, logout): acciones alineadas a la derecha en el footer fijo. */
+export const NEXIA_PREMIUM_MODAL_CONFIRM_ACTIONS_CLASS = cn(
+    "ml-auto flex flex-wrap items-center justify-end gap-2 sm:gap-3",
+);
+
+/** Nombre de entidad en copy destructivo (sesión, plan, cliente). */
+export const NEXIA_PREMIUM_MODAL_ENTITY_EMPHASIS_CLASS =
+    "font-medium text-foreground";

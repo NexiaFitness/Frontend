@@ -10,7 +10,7 @@
  * @since P2 — Plan integración flujo planificación UX
  */
 
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
 import { ArrowLeft, Calendar, ChevronRight, Clock, Timer } from "lucide-react";
 import { Button } from "@/components/ui/buttons";
@@ -25,7 +25,7 @@ import type { SessionExerciseDisplay } from "@nexia/shared/hooks/sessionProgramm
 import { SessionDetailExerciseCard } from "@/components/sessionProgramming";
 import { StandaloneSessionLoadSummary } from "@/components/standaloneSessions/StandaloneSessionLoadSummary";
 import { cn } from "@/lib/utils";
-import { readSafeReturnTo } from "@/lib/sessionDetailNavigation";
+import { navigateDashboardBack, readSafeReturnTo } from "@/lib/sessionDetailNavigation";
 
 const DEFAULT_STANDALONE_BACK = "/dashboard/sessions";
 
@@ -83,13 +83,9 @@ export const StandaloneSessionDetail: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const backTarget = readSafeReturnTo(location.state) ?? null;
-    const goBack = () => {
-        if (backTarget) {
-            navigate(backTarget);
-        } else {
-            navigate(DEFAULT_STANDALONE_BACK);
-        }
-    };
+    const goBack = useCallback(() => {
+        navigateDashboardBack(navigate, location.state, DEFAULT_STANDALONE_BACK);
+    }, [navigate, location.state]);
     const { id } = useParams<{ id: string }>();
     const sessionId = id ? Number(id) : 0;
 

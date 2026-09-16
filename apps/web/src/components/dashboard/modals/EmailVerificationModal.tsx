@@ -13,7 +13,7 @@
  */
 
 import React, { useState } from 'react';
-import { BaseModal } from '@/components/ui/modals';
+import { NexiaPremiumModal } from '@/components/ui/modals';
 import { Button } from '@/components/ui/buttons';
 import { useEmailVerificationModal } from '@nexia/shared';
 
@@ -58,14 +58,11 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
     };
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title="Verifica tu email"
             description="Para emitir facturas necesitas verificar tu dirección de email."
-            iconType="info"
-            titleId="email-verification-modal-title"
-            descriptionId="email-verification-modal-description"
             isLoading={isResending || isChecking}
         >
             {/* Email actual */}
@@ -132,6 +129,6 @@ export const EmailVerificationModal: React.FC<EmailVerificationModalProps> = ({
                     Cambiar email →
                 </a>
             </div>
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };

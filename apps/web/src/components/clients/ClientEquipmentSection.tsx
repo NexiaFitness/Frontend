@@ -11,7 +11,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/buttons";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Alert } from "@/components/ui/feedback/Alert";
-import { BaseModal } from "@/components/ui/modals";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { Input } from "@/components/ui/forms";
 import {
     useGetClientEquipmentQuery,
@@ -182,13 +182,11 @@ export const ClientEquipmentSection: React.FC<ClientEquipmentSectionProps> = ({ 
             )}
 
             {/* Modal crear/editar */}
-            <BaseModal
+            <NexiaPremiumModal
                 isOpen={modalOpen}
                 onClose={closeModal}
                 title={editing ? "Editar equipo" : "Añadir equipo"}
                 description={editing ? "Modifica los datos del equipo." : "Añade un equipo o material que tenga el cliente."}
-                titleId="client-equipment-modal-title"
-                descriptionId="client-equipment-modal-description"
             >
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
@@ -265,7 +263,7 @@ export const ClientEquipmentSection: React.FC<ClientEquipmentSectionProps> = ({ 
                         </Button>
                     </div>
                 </form>
-            </BaseModal>
+            </NexiaPremiumModal>
         </div>
     );
 };

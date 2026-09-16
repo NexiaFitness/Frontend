@@ -4,7 +4,7 @@
 
 import React from "react";
 import { Pencil, Trash2 } from "lucide-react";
-import { BaseModal } from "@/components/ui/modals/BaseModal";
+import { NexiaPremiumModal } from "@/components/ui/modals";
 import { LoadingSpinner } from "@/components/ui/feedback/LoadingSpinner";
 import { Badge } from "@/components/ui/Badge";
 import { useGetClientTestResultsQuery } from "@nexia/shared/api/clientsApi";
@@ -46,7 +46,7 @@ export const TestHistoryModal: React.FC<TestHistoryModalProps> = ({
     );
 
     return (
-        <BaseModal
+        <NexiaPremiumModal
             isOpen={isOpen}
             onClose={onClose}
             title={TESTING_HISTORY_MODAL_TITLE}
@@ -107,6 +107,6 @@ export const TestHistoryModal: React.FC<TestHistoryModalProps> = ({
                     ))}
                 </ul>
             )}
-        </BaseModal>
+        </NexiaPremiumModal>
     );
 };
